@@ -11,7 +11,7 @@ function check(cond, msg) {
 const AS = { SCREENS: 0, MATCH: 1, MANUAL: 2 };
 const SS = { TITLE: 0, MENU: 1, RESULTS: 2, PRESENT: 3, COMP: 4, CODE: 5, PALMARES: 6, TRAIN_RES: 7, COMP_END: 8 };
 const O = { MODE: 1, TYPE: 2, P1: 3, P2: 4, LEVEL: 5, SURF: 6, ENV: 7, COND: 8, FMT: 9, REPLAY: 10, COMP: 11,
-            CSIZE: 12, CPROG: 13, CVAR: 14, EX: 15, SIDE: 16, SPEED: 17, SPIN: 18, COUNT: 19 };
+            CSIZE: 12, CPROG: 13, CVAR: 14, EX: 15, SIDE: 16, SPEED: 17, SPIN: 18, COUNT: 19, CPART: 20 };
 const MODE = { P1: 0, P2: 1, TEAM: 2, COMP: 3, TRAIN: 4, DEMO: 5 };
 const CFG = { CTRL: 2, LEVEL: 10, GAMES: 17, REPLAYS: 19 };
 
@@ -369,6 +369,35 @@ console.log('Compétition en double, levée de coupe et club nudiste');
   }
   f.tap('START'); f.run(40);
   check(scr(f) === SS.COMP && f.peek('nude_unlocked') === 1, `code ${code} (1 trophée) : club nudiste débloqué`);
+}
+
+console.log('Compétition en double à deux joueurs humains');
+{
+  const e = boot(); startWith(e, { MODE: MODE.COMP, COMP: 2, TYPE: 1, P2: 3, CPART: 1 });
+  check(scr(e) === SS.COMP && e.text(3, 23, 18) === 'DOUBLE A 2 JOUEURS', 'championnat en double à 2 joueurs');
+  e.tap('A'); e.run(10);
+  check(e.text(18, 11, 11) === '+ MANETTE 2', 'présentation : partenaire à la manette 2');
+  e.tap('A'); e.run(40);
+  const c = e.addr('cfg');
+  check(app(e) === AS.MATCH && e.nes.cpu.mem[c + 2] === 0 && e.nes.cpu.mem[c + 4] === 1 && e.nes.cpu.mem[c + 3] === 2 && e.nes.cpu.mem[c + 5] === 2,
+    'manette 1 et manette 2 dans la même équipe, adversaires CPU');
+  runUntil(e, () => e.peek('ms') === 2 || e.peek('ms') === 0, 300);
+  const x0 = e.peekS16('plx', 4); e.down('RIGHT', 2); e.run(20); e.up('RIGHT', 2);
+  check(e.peekS16('plx', 4) !== x0, 'la manette 2 déplace le partenaire');
+  // victoire forcée puis reprise par code sur une autre console
+  e.poke('sc_winner', 0); e.poke('sc_over', 1); e.poke('ms', 4); e.poke('ms_timer', 2);
+  runUntil(e, () => app(e) === AS.SCREENS, 60); e.run(20); e.tap('A'); e.run(40);
+  const code = e.text(10, 21, 15).replace(/ /g, '');
+  const f = boot(); f.tap('UP'); f.tap('A'); f.run(10);
+  const AL = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  for (let i = 0; i < 13; i++) {
+    const n = AL.indexOf(code[i]);
+    for (let k = 0; k < n; k++) f.tap('UP', 1, 1, 1);
+    if (i < 12) f.tap('RIGHT', 1, 1, 1);
+  }
+  f.tap('START'); f.run(40);
+  check(scr(f) === SS.COMP && f.peek('c_hum2') === 1 && f.peek('c_dbl') === 1 && f.peek('c_pl2', 0) === 3,
+    `code ${code} : double à 2 joueurs restauré`);
 }
 
 console.log('Compensation 50 Hz (PAL)');

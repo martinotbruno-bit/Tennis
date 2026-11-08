@@ -16,7 +16,7 @@ int main(void)
         d.type = rand() % 5; d.stage = rand() % 16; d.seed = rand() & 255; d.chr = rand() % 16;
         d.surf = rand() % 6; d.fmt = rand() % 4; d.cond = rand() % 3; d.env = rand() % 4;
         d.lvl = rand() % 3; d.results = rand() & 255; d.opts = rand() % 8; d.trophies = rand() % 16;
-        d.doubles = rand() & 1; d.partner = (d.chr + 1 + rand() % 15) % 16;
+        d.doubles = rand() & 1; d.partner = (d.chr + 1 + rand() % 15) % 16; d.hum2 = d.doubles ? (rand() & 1) : 0;
         pw_encode(code, &d);
         ++total;
         if (pw_decode(code, &e) && same(&d, &e)) ++ok;

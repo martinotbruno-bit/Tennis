@@ -148,7 +148,7 @@ Conditions :
 | Personnalisé | 4 ou 8 joueurs ; adversaires de niveau fixe ou progressif ; même surface ou surface différente à chaque tour |
 
 Toutes les compétitions se jouent **en simple ou en double** (ligne JEU) :
-- en double, vous choisissez votre partenaire, qui est contrôlé par l'ordinateur ;
+- en double, vous choisissez votre partenaire (ligne PARTENAIRE), puis qui le joue (ligne JOUE PAR) : l'ordinateur ou la **manette 2**. À deux joueurs humains, vous formez une seule équipe contre les équipes CPU ;
 - les autres équipes sont tirées au sort parmi les 16 personnages, qui sont tous différents.
 
 Quand vous gagnez une compétition, votre joueur (et votre partenaire) **brandit la coupe** sous une pluie de confettis.
@@ -173,7 +173,7 @@ Votre meilleur score de chaque exercice est conservé dans le palmarès.
 
 ## 8. Codes de reprise
 
-Dans une compétition, l'écran d'étape affiche un **code de 13 signes** (lettres et chiffres). Il contient la compétition, l'étape, vos résultats, votre personnage (et votre partenaire en double), les réglages et le nombre de trophées.
+Dans une compétition, l'écran d'étape affiche un **code de 13 signes** (lettres et chiffres). Il contient la compétition, l'étape, vos résultats, votre personnage (et, en double, votre partenaire et qui le joue), les réglages et le nombre de trophées.
 
 Pour reprendre plus tard :
 1. À l'écran titre, choisissez **CODE DE REPRISE** (ou appuyez sur **SELECT**).
@@ -189,7 +189,7 @@ Le palmarès comporte 3 pages (GAUCHE/DROITE) :
 - **Résultats** : meilleur résultat par type de compétition et historique des 8 dernières.
 - **Records d'entraînement** : meilleur score par exercice.
 
-Seuls les matchs où la manette 1 joue sont comptés. Pour tout effacer, appuyez deux fois sur **SELECT**.
+Seuls les matchs où la manette 1 joue sont comptés ; en double, ce sont les statistiques de son équipe (donc aussi celles de la manette 2 si elle joue le partenaire). Pour tout effacer, appuyez deux fois sur **SELECT**.
 
 Le palmarès est conservé tant que la console reste allumée. Sur une cartouche équipée d'une pile, il est conservé même éteinte.
 

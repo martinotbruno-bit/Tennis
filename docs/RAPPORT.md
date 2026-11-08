@@ -10,7 +10,7 @@ Comme l'exige le CDC (§ 17.5), ce rapport distingue ce qui est **réalisé**, *
 
 | Demande | Réalisation |
 |---|---|
-| Compétitions en double | Les 5 compétitions se jouent en simple ou en double. Partenaire choisi par le joueur ; 16 personnages au lieu de 10, donc 8 équipes toutes différentes ; code de reprise sur 13 signes (double + partenaire) |
+| Compétitions en double | Les 5 compétitions se jouent en simple ou en double, avec un partenaire joué par l'ordinateur **ou par la manette 2** (deux joueurs humains dans la même équipe). Partenaire choisi par le joueur ; 16 personnages au lieu de 10, donc 8 équipes toutes différentes ; code de reprise sur 13 signes (double + partenaire) |
 | Levée de coupe | À la victoire d'une compétition, le joueur (et son partenaire) brandit la coupe sous les confettis |
 | Mode nudiste à débloquer | Gagner une compétition (ou saisir un code avec un trophée) débloque le lieu « Club nudiste Les Bronzés » : <ul><li>joueurs au naturel, sans aucun détail anatomique, avec une serviette aux couleurs de l'équipe ;</li><li>public au naturel sur des serviettes dans l'herbe, sans gradins ;</li><li>annonces humoristiques de l'arbitre.</li></ul> |
 
@@ -32,11 +32,11 @@ Pour loger ce contenu, la cartouche passe de NROM (32 Ko) à **MMC1** : 128 Ko d
 | Suite | Résultat |
 |---|---|
 | Règles (`rules_test`) | 42/42 |
-| Codes (`password_test`) | 200 000/200 000 aller-retour ; 99,95 % des codes altérés d'un signe refusés |
-| Émulateur (`emu_test`) | 103/103 vérifications (environ 12 min) |
+| Codes (`password_test`) | 200 000/200 000 aller-retour ; 99,99 % des codes altérés d'un signe refusés |
+| Émulateur (`emu_test`) | 108/108 vérifications (environ 12 min) |
 | Profil CPU, simple, 6 000 trames | 1 trame d'échange en dépassement |
 | Profil CPU, double, 6 000 trames | 11 trames d'échange en dépassement (0,2 %), sans défaut d'image |
-| Compilation | Reproductible : SHA-256 `50fb34d69b4636461656cefb2111dd8123520b6f35e2ec9478c70d15f5d9fb4f` sur deux compilations propres |
+| Compilation | Reproductible : SHA-256 `36f9668428727518519dafd80c0108e76a9e96c820acbd35ac1403251c4a1b08` sur deux compilations propres |
 
 ## 3. Conformité par section du CDC
 
@@ -53,7 +53,7 @@ Légende : ✅ réalisé et testé en émulation · 🟡 partiel · 🔧 nécess
 | 3.7 | Pas d'endurance | ✅ | |
 | 4.1 | Règles modernes, formats configurables | ✅ | |
 | 4.2 | Formats de compétition (simple et double) | ✅ | Match amical, simple, double, élimination directe, plusieurs niveaux (progressif), poules, toutes rondes (championnat), saison, personnalisé, exhibition (démo), défis (exercices), entraînement |
-| 4.3 | Multijoueur local | ✅ | 1 joueur, 2 adversaires, 2 en équipe en double, équipes CPU, revanche immédiate |
+| 4.3 | Multijoueur local | ✅ | 1 joueur, 2 adversaires, 2 en équipe en double (en match et en compétition), équipes CPU, revanche immédiate |
 | 5.1–5.3 | Personnages | ✅ | 16 personnages (8 hommes, 8 femmes), tous disponibles ; seul le lieu bonus « club nudiste » est à débloquer |
 | 5.2 | Animations | ✅ | Course, frappe, service, joie, **déception** |
 | 6.1 | Surfaces | ✅ | Terre, gazon, dur, moquette + **plage** et **glace** (fantaisie) |

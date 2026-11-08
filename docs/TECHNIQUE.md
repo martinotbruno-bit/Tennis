@@ -35,9 +35,9 @@ La version 1.0 tenait en NROM-256 (32 Ko, plein à 87 %). Il a fallu plus de pla
 
 | Banque | Contenu | Occupation |
 |---|---|---|
-| 7 (fixe, $C000) | Démarrage, NMI, primitives (sprites, VRAM, manettes, trampolines `bank_call` / `far_call`, enregistrement des ralentis), boucle principale, règles, codes, palettes, 16 personnages, noms des compétitions, échange des tuiles de personnages, son, bibliothèque cc65 | 9 559 |
+| 7 (fixe, $C000) | Démarrage, NMI, primitives (sprites, VRAM, manettes, trampolines `bank_call` / `far_call`, enregistrement des ralentis), boucle principale, règles, codes, palettes, 16 personnages, noms des compétitions, échange des tuiles de personnages, son, bibliothèque cc65 | 9 634 |
 | 0 | Moteur de match : physique, frappes, service, arbitrage, IA | 16 314 |
-| 1 | Écrans : titre, configuration, présentation, résultats, compétitions, levée de coupe, saisie de code, palmarès | 13 430 |
+| 1 | Écrans : titre, configuration, présentation, résultats, compétitions, levée de coupe, saisie de code, palmarès | 13 548 |
 | 2 | Motifs graphiques (8 Ko), copiés en CHR-RAM au démarrage | 8 192 |
 | 3 | Annexes du match : score et annonces du club nudiste, courts (4 lieux), public animé, pluie, ralentis, exercices, tutoriel | 9 008 |
 | 4 | Mode d'emploi | 3 528 |
@@ -121,12 +121,13 @@ $7800-$7FFF  palmarès (sauvegardé si la cartouche a une pile ; signature + som
 
 ### Codes de reprise (`password.c`)
 
-50 bits de données (dont double et partenaire) + 2 bits de version + 12 bits de somme de contrôle = 64 bits, écrits en 13 symboles de 5 bits (alphabet sans I, O, 0, 1). Les symboles sont brouillés en chaîne pour qu'une erreur en modifie plusieurs.
+51 bits de données (dont double, partenaire et « partenaire joué par la manette 2 ») + 2 bits de version + 12 bits de somme de contrôle = 65 bits, écrits en 13 symboles de 5 bits (alphabet sans I, O, 0, 1). Les symboles sont brouillés en chaîne pour qu'une erreur en modifie plusieurs.
 
 ### Compétitions en double
 
 - **Tirage** : avec 16 personnages, les 8 équipes d'un tableau sont toutes différentes. Le joueur et le partenaire choisi forment l'équipe 1 ; les 14 autres personnages sont mélangés par la graine et appariés deux à deux.
 - **Simulation** : les mêmes formules qu'en simple, avec le niveau de l'équipe.
+- **Deux joueurs** : option « JOUE PAR : CPU / MANETTE 2 ». Avec la manette 2, `cfg.ctrl[2]` passe à la manette 2 pour tous les matchs de la compétition ; le réglage est mémorisé dans le code de reprise.
 - **Affichage** : les noms sont abrégés en « AL/MA ».
 
 ### Levée de coupe
@@ -216,7 +217,7 @@ Outils de mise au point :
 | Suite | Contenu |
 |---|---|
 | `tests/rules_test.c` | 42 vérifications des règles |
-| `tests/password_test.c` | 200 000 codes aléatoires en aller-retour ; 8,06 millions de codes altérés d'un signe, refusés à 99,95 % |
-| `tests/emu_test.mjs` | 103 vérifications : démarrage MMC1 et CHR-RAM, mode d'emploi, menus adaptatifs, présentation, menu de pause, lancer du serveur du haut, let, matchs complets (6 surfaces × 3 lieux × 3 conditions, double), ralentis, revanche, palmarès, 9 exercices (joueur robot via la manette), 5 compétitions (dont éliminations), double en compétition, levée de coupe, déblocage et club nudiste (tenues échangées en CHR-RAM puis restaurées), reprise par code, 50 Hz |
+| `tests/password_test.c` | 200 000 codes aléatoires en aller-retour ; 8,06 millions de codes altérés d'un signe, refusés à 99,99 % |
+| `tests/emu_test.mjs` | 108 vérifications : démarrage MMC1 et CHR-RAM, mode d'emploi, menus adaptatifs, présentation, menu de pause, lancer du serveur du haut, let, matchs complets (6 surfaces × 3 lieux × 3 conditions, double), ralentis, revanche, palmarès, 9 exercices (joueur robot via la manette), 5 compétitions (dont éliminations), double en compétition (dont à 2 joueurs humains), levée de coupe, déblocage et club nudiste (tenues échangées en CHR-RAM puis restaurées), reprise par code, 50 Hz |
 
 Les résultats détaillés sont dans le [rapport](RAPPORT.md).

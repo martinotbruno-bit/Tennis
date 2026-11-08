@@ -16,7 +16,7 @@
 u8 c_active, c_type, c_stage, c_seed, c_results, c_trophies, c_opts, c_lvl, c_over, c_rank;
 u8 c_surf, c_env, c_cond, c_fmt;
 u8 c_pl[8], c_rt[8], c_n;
-u8 c_pl2[8], c_dbl;   /* double : partenaire de chaque inscrit */
+u8 c_pl2[8], c_dbl, c_hum2;   /* double : partenaire de chaque inscrit */
 char comp_l1[24], comp_l2[24];
 
 static u16 rs;

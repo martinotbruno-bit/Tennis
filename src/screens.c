@@ -46,7 +46,8 @@ u8 scr_state;
 #define O_SPEED  17
 #define O_SPIN   18
 #define O_COUNT  19
-#define NOPT     20
+#define O_CPART  20
+#define NOPT     21
 
 #define MODE_1P      0
 #define MODE_2P      1
@@ -56,12 +57,12 @@ u8 scr_state;
 #define MODE_DEMO    5
 #define NMODES       6
 
-u8 opt_val[NOPT] = { 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 2, 1, 0, 1 };
-static const u8 opt_max[NOPT] = { 1, NMODES, 2, NCHARS, NCHARS, 3, NSURF, NENV, 3, 4, 2, NCT, 2, 2, 2, NEX, 4, 3, 3, 3 };
+u8 opt_val[NOPT] = { 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 2, 1, 0, 1, 0 };
+static const u8 opt_max[NOPT] = { 1, NMODES, 2, NCHARS, NCHARS, 3, NSURF, NENV, 3, 4, 2, NCT, 2, 2, 2, NEX, 4, 3, 3, 3, 2 };
 static const char * const opt_label[NOPT] = {
     "COMMENCER", "MODE", "JEU", "JOUEUR 1", "JOUEUR 2", "NIVEAU CPU", "SURFACE", "LIEU",
     "CONDITIONS", "FORMAT", "RALENTIS", "COMPETITION", "JOUEURS", "ADVERSAIRES", "SURFACES",
-    "EXERCICE", "COTE", "VITESSE", "EFFET", "BALLES" };
+    "EXERCICE", "COTE", "VITESSE", "EFFET", "BALLES", "JOUE PAR" };
 static const char * const mode_name[NMODES] = {
     "1 JOUEUR VS CPU", "2 J. ADVERSAIRES", "2 J. EQUIPE", "COMPETITION", "ENTRAINEMENT", "DEMO CPU" };
 static const char * const cond_name[3] = { "JOUR", "NUIT", "PLUIE" };
@@ -92,7 +93,7 @@ static void build_visible(void)
         if (opt_val[O_COMP] == CT_CUSTOM) { vis[nvis++] = O_CSIZE; vis[nvis++] = O_CPROG; vis[nvis++] = O_CVAR; }
         vis[nvis++] = O_TYPE;
         vis[nvis++] = O_P1;
-        if (opt_val[O_TYPE]) vis[nvis++] = O_P2;      /* partenaire */
+        if (opt_val[O_TYPE]) { vis[nvis++] = O_P2; vis[nvis++] = O_CPART; }   /* partenaire */
         vis[nvis++] = O_LEVEL;
         if (opt_val[O_COMP] != CT_SEASON) vis[nvis++] = O_SURF;
         vis[nvis++] = O_ENV;
@@ -145,6 +146,7 @@ static const char *opt_text(u8 o)
     case O_SPEED:  return speed_name[v];
     case O_SPIN:   return spin_name[v];
     case O_COUNT:  return v == 0 ? "10" : v == 1 ? "20" : "30";
+    case O_CPART:  return v ? "MANETTE 2" : "CPU";
     }
     return "";
 }
@@ -335,6 +337,7 @@ static void comp_cfg(void)
         cfg.chr[3] = c_pl2[o];
         cfg.level[3] = cfg.level[1];
         cfg.level[2] = (u8)(c_lvl ? c_lvl : 1);
+        if (c_hum2) cfg.ctrl[2] = CTRL_PAD2;    /* partenaire joué par la manette 2 */
     }
     cfg.surface = COMP(comp_surface, 0);
     cfg.env = c_env;
@@ -408,7 +411,7 @@ static void make_code(void)
     pw.type = c_type; pw.stage = c_stage; pw.seed = c_seed; pw.chr = c_pl[0];
     pw.surf = c_surf; pw.fmt = c_fmt; pw.cond = c_cond; pw.env = c_env; pw.lvl = c_lvl;
     pw.results = c_results; pw.opts = c_opts; pw.trophies = c_trophies;
-    pw.doubles = c_dbl; pw.partner = (u8)(c_dbl ? c_pl2[0] : 0);
+    pw.doubles = c_dbl; pw.partner = (u8)(c_dbl ? c_pl2[0] : 0); pw.hum2 = c_hum2;
     pw_encode(code_buf, &pw);
     code_buf[PW_LEN] = 0;
 }
@@ -437,7 +440,7 @@ static void comp_screen(void)
     txt_at(3, 21, "CODE :");
     vram_adr(NTADR(10, 21));
     for (o = 0; o < PW_LEN; ++o) { vram_put((u8)code_buf[o]); if (o == 3 || o == 7) vram_put(' '); }
-    if (c_dbl) txt_at(3, 23, "COMPETITION EN DOUBLE");
+    if (c_dbl) txt_at(3, 23, c_hum2 ? "DOUBLE A 2 JOUEURS" : "COMPETITION EN DOUBLE");
     txt_at(3, 25, "A : JOUER   B : MENU");
     ppu_on();
     scr_state = SS_COMP;
@@ -527,6 +530,7 @@ static void start_comp(void)
     c_fmt = opt_val[O_FMT];
     c_pl[0] = opt_val[O_P1];
     c_dbl = opt_val[O_TYPE];
+    c_hum2 = (u8)(c_dbl && opt_val[O_CPART]);
     c_pl2[0] = opt_val[O_P2];
     if (c_dbl && c_pl2[0] == c_pl[0]) c_pl2[0] = (u8)((c_pl[0] + 1) % NCHARS);
     c_seed = (u8)(rand8() ^ frame_cnt);
@@ -572,7 +576,7 @@ static void code_tick(void)
             c_type = pw.type; c_stage = pw.stage; c_seed = pw.seed; c_pl[0] = pw.chr;
             c_surf = pw.surf; c_fmt = pw.fmt; c_cond = pw.cond; c_env = pw.env; c_lvl = pw.lvl;
             c_results = pw.results; c_opts = pw.opts; c_trophies = pw.trophies;
-            c_dbl = pw.doubles; c_pl2[0] = pw.partner;
+            c_dbl = pw.doubles; c_pl2[0] = pw.partner; c_hum2 = pw.hum2;
             if (c_trophies) nude_unlocked = 1;     /* un trophée débloque le club nudiste */
             COMP(comp_build, 0);
             opt_val[O_P1] = c_pl[0];
