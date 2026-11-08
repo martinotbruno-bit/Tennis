@@ -6,6 +6,14 @@ Comme l'exige le CDC (§ 17.5), ce rapport distingue ce qui est **réalisé**, *
 
 ## 1. Évolutions
 
+### Version 2.2
+
+| Demande | Réalisation |
+|---|---|
+| Joueurs plus rapides | +17 % pour les humains (1,88 → 2,19 px/trame) et +9 à +15 % pour l'IA selon le niveau, pour garder l'équilibre |
+| Lancer de service plus haut, sans sortir de l'écran ni changer le terrain | Sommet du lancer à ~56 px au lieu de ~47. Pour le serveur du bas, il est affiché à sa hauteur réelle (environ 2,4 fois plus haut à l'écran qu'avant) ; pour celui du haut, la hauteur affichée est réduite pour que la balle reste à l'écran (point le plus haut à 12 px du bord). Terrain inchangé |
+| Mode d'emploi, page 1 : un mot repoussé sur la ligne suivante | Trois lignes dépassaient 28 caractères ; page reformatée, et toutes les lignes du mode d'emploi vérifiées |
+
 ### Version 2.1
 
 | Demande | Réalisation |
@@ -36,7 +44,7 @@ Pour loger ce contenu, la cartouche passe de NROM (32 Ko) à **MMC1** : 128 Ko d
 | Émulateur (`emu_test`) | 108/108 vérifications (environ 12 min) |
 | Profil CPU, simple, 6 000 trames | 1 trame d'échange en dépassement |
 | Profil CPU, double, 6 000 trames | 11 trames d'échange en dépassement (0,2 %), sans défaut d'image |
-| Compilation | Reproductible : SHA-256 `c5dee08932963a74ad0d8d2eae2b3eafb1a01f8ab3469ebe75bbbcd9d3adbea2` sur deux compilations propres |
+| Compilation | Reproductible : SHA-256 `1b8114a9a9115b6eeecf1957793e3588257b67ae2fb2d5f6daecba76b952ff95` sur deux compilations propres |
 
 ## 3. Conformité par section du CDC
 

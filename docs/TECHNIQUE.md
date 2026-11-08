@@ -162,7 +162,7 @@ Grâce à la CHR-RAM, les 6 motifs de spectateurs sont remplacés par leur versi
   - 16 palettes de personnages.
   - Partenaires de double : couleurs de leur équipe (limite de 4 palettes de sprites).
 - **Score** : dans les coins supérieurs. Les joueurs sont limités à x = 48..208 et la colonne 0 n'est pas utilisée (zone rognée par les téléviseurs).
-- **Service** : la hauteur du lancer est affichée à moitié, pour que la balle reste visible quand le serveur est en haut de l'écran.
+- **Service** : le lancer monte à environ 56 px. Il est affiché à sa hauteur réelle pour le serveur du bas, et réduit (× 9/16) pour celui du haut afin que la balle reste à l'écran. Les joueurs humains se déplacent à 2,19 px/trame.
 
 ## 6. Audio
 

@@ -7,17 +7,18 @@
 
 #define NPAGES 8
 #define NLINES 18
+/* 28 caractères au plus par ligne (colonnes 2 à 29 : hors zone rognée) */
 
 static const char * const page_title[NPAGES] = {
     "COMMANDES DE BASE", "LES COUPS", "LE SERVICE", "LES REGLES",
     "LE DOUBLE", "MODES DE JEU", "COMPETITIONS ET CODES", "CONSEILS" };
 
 static const char * const page_text[NPAGES][NLINES] = {
-  { "CROIX    : SE DEPLACER", "",
-    "A        : FRAPPE LIFTEE", "           MAINTENIR A AVANT",
-    "           L'IMPACT = PLUS FORT", "",
-    "B        : COUP COUPE (SLICE)", "",
-    "START    : PAUSE", "           CONTINUER / QUITTER", "",
+  { "CROIX : SE DEPLACER", "",
+    "A     : FRAPPE LIFTEE", "        MAINTENIR A AVANT",
+    "        L'IMPACT = PLUS FORT", "",
+    "B     : COUP COUPE (SLICE)", "",
+    "START : PAUSE", "        CONTINUER / QUITTER", "",
     "LA FRAPPE PART TOUTE SEULE", "QUAND LA BALLE ARRIVE A",
     "PORTEE PENDANT QUE VOUS", "ARMEZ, OU JUSTE APRES AVOIR",
     "RELACHE LE BOUTON.", "", "" },

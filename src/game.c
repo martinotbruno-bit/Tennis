@@ -71,12 +71,13 @@ char msg1[16], msg2[16];
 static const u8 surf_rest[6] = { 196, 150, 176, 160, 214, 116 };
 static const u8 surf_fric[6] = { 200, 244, 226, 236, 170, 253 };
 /* IA : vitesse (FP/trame), délai de réaction, dispersion, marge visée */
-static const u8 ai_speed[3]  = { 78, 98, 116 };
+/* vitesses (FP/trame) ; ≤ 127 car doublées en double (ai_x2) */
+static const u8 ai_speed[3]  = { 90, 110, 126 };
 static const u8 ai_react[3]  = { 16, 9, 3 };
 static const u8 ai_spread[3] = { 30, 18, 11 };
 static const u8 ai_margin[3] = { 26, 15, 9 };
 static const u8 ai_power[3]  = { 4, 12, 20 };
-#define HUMAN_SPEED 120
+#define HUMAN_SPEED 140
 
 /* styles de jeu (CDC 10.2), indexés par char_style[] :
    équilibré, fond de court, puissance, filet, défensif, offensif, tactique, placement */
@@ -511,7 +512,7 @@ static void toss(u8 p)
     by = ply[p];
     bz = 18 * FP;
     bvx = bvy = 0;
-    bvz = 150;
+    bvz = 172;          /* lancer plus haut : sommet ~56 px */
     bgrav = 6;
     b_vis = 1;
     b_live = 0;
@@ -1069,7 +1070,11 @@ void match_draw(void)
     if (b_vis) {
         /* pendant le lancer de service, la hauteur est affichée à moitié :
            la balle reste visible même pour le serveur du haut de l'écran */
-        sy = PX(by) - (ms == MS_TOSS ? PX(bz) >> 1 : PX(bz)) - 3;
+        sy = PX(bz);
+        /* lancer de service : hauteur réelle pour le serveur du bas ; réduite
+           (x 9/16) pour celui du haut, afin que la balle reste à l'écran */
+        if (ms == MS_TOSS && by < NET_Y * FP) sy = (sy + (sy << 3)) >> 4;
+        sy = PX(by) - sy - 3;
         if (sy < 8) sy = 8;
         spr1((u8)(PX(bx) - 3), (u8)sy, 1, 2);
         spr1((u8)(PX(bx) - 3), (u8)(PX(by) - 3), 2, 2);
