@@ -28,6 +28,7 @@ extern u8 pose_cache[4], flip_cache[4];
 #define SPIN_FLAT 0
 #define SPIN_TOP  1
 #define SPIN_SLICE 2
+#define SPIN_DROP  3   /* amortie */
 
 /* types de coups (tutoriel, statistiques) */
 #define SH_DRIVE  0

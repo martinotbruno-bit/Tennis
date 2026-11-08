@@ -89,6 +89,7 @@ $7800-$7FFF  palmarès (sauvegardé si la cartouche a une pile ; signature + som
 
 - Positions en virgule fixe 10.6 (1/64 de pixel), hauteur `z` séparée.
 - Gravité selon le coup ; restitution et adhérence selon la surface, l'effet et la pluie.
+- Amortie : vitesse 40, gravité 5 (trajectoire basse juste au-dessus du filet) et effet propre `SPIN_DROP` : au rebond, restitution divisée par 2 et adhérence par 4, la balle « meurt » près du filet.
 - `launch()` atteint la cible en T trames et contrôle sans division le passage au-dessus du filet.
 - **Filet** :
   - balle sous la bande : renvoyée vers le frappeur ;

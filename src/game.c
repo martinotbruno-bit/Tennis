@@ -247,6 +247,7 @@ static void ball_bounce(void)
 
     if (bspin == SPIN_TOP)   { rest = (u8)(rest + 24); if (fric < 240) fric += 12; }
     if (bspin == SPIN_SLICE) { rest = (u8)(rest - 46); }
+    if (bspin == SPIN_DROP) { rest >>= 1; fric >>= 2; }   /* amortie : rebond bas, balle freinée */
     if (cfg.cond == COND_RAIN) { rest = (u8)(rest - 20); if (fric < 248) fric += 6; }  /* court glissant */
     bvz = mulfrac(-bvz, rest);
     bvx = mulfrac(bvx, fric);
@@ -400,7 +401,9 @@ static void do_hit(u8 p, u8 pad, u8 btn, u8 power, u8 spread)
     } else if (btn == PAD_B && (pad & PAD_UP)) {        /* lob */
         depth = 74; speed = 24; grav = 6; bspin = SPIN_TOP; last_shot = SH_LOB;
     } else if (btn == PAD_B && (pad & PAD_DOWN)) {      /* amortie */
-        depth = 18; speed = 20; grav = 9; bspin = SPIN_SLICE; spread += 3; last_shot = SH_DROP;
+        /* amortie : trajectoire basse et vive juste au-dessus du filet, puis la
+           balle « meurt » au rebond (effet SPIN_DROP) */
+        depth = 18; speed = 40; grav = 5; bspin = SPIN_DROP; spread += 3; last_shot = SH_DROP;
     } else if (btn == PAD_B) {                          /* coupé */
         depth = 66; speed = 36; grav = 4; bspin = SPIN_SLICE; last_shot = SH_SLICE;
     } else if (pad & PAD_UP) {                          /* frappe à plat appuyée */

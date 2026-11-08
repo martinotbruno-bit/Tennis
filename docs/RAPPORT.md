@@ -27,6 +27,7 @@ Comme l'exige le CDC (§ 17.5), ce rapport distingue ce qui est **réalisé**, *
 | Personnages qui se confondent avec le court (sans liseré) | Couleurs des 6 surfaces, des 16 tenues et assombrissement de nuit/pluie recalculés avec `tools/contrast.py` : plus aucune paire personnage/court sous ΔE 25 (plusieurs étaient identiques, ΔE 0) |
 | Court rose « Margaux » au décor girly | Nouveau lieu « Court Margaux » disponible d'emblée : court rose, abords prune, cœurs, fleurs et étoiles qui scintillent, panneau au nom de Margaux. Couleurs contrôlées (aucune paire sous ΔE 25) |
 | Balle peu visible sur le sable jaune de la plage | Balle blanche sur la plage uniquement (ΔE 73 au lieu de 30) ; jaune pâle ailleurs (ΔE ≥ 51 partout, vérifié par `tools/contrast.py`) |
+| Amortie peu réaliste | Depuis le fond, l'amortie partait comme un lob géant (110 px de haut, 1,25 s de vol, balle hors de l'écran). Désormais : trajectoire basse et vive (~20 px, ~0,7 s), premier rebond 15 à 22 px derrière le filet, rebond très bas (2-3 px), balle freinée (~7 px avant le 2e rebond) |
 
 ### Version 2.1
 
@@ -58,7 +59,7 @@ Pour loger ce contenu, la cartouche passe de NROM (32 Ko) à **MMC1** : 128 Ko d
 | Émulateur (`emu_test`) | 118/118 vérifications (environ 13 min) |
 | Profil CPU, simple, 6 000 trames | 1 trame d'échange en dépassement |
 | Profil CPU, double, 6 000 trames | 11 trames d'échange en dépassement (0,2 %), sans défaut d'image |
-| Compilation | Reproductible : SHA-256 `5f84fcfe618fc30df31c8fe4d73e266a6f786405bcbe9926171e8db1bd7b9663` sur deux compilations propres |
+| Compilation | Reproductible : SHA-256 `dc5996c9fd19b01c1e753aa216e0b3cfa47f1e31c916db11cbe2d862650b6510` sur deux compilations propres |
 
 ## 3. Conformité par section du CDC
 
@@ -115,4 +116,4 @@ Légende : ✅ réalisé et testé en émulation · 🟡 partiel · 🔧 nécess
 2. **Dépassements CPU** : 0,2 % des trames d'échange en double (frappes, début de ralenti) et quelques trames de transition entre les points. Pas d'impact sur les commandes.
 3. **Équilibrage** : calibré avec un robot, pas avec un panel de joueurs ; à confirmer en jouant.
 4. **Tenues en double** : les partenaires portent la palette de leur équipe (4 palettes de sprites).
-5. **Espace** : la banque du moteur (0) est presque pleine (16 314 / 16 368 octets). Toute évolution du moteur passera par la banque des annexes (3) ou par la banque libre (6).
+5. **Espace** : la banque du moteur (0) est pleine (16 366 / 16 368 octets). Toute évolution du moteur passera par la banque des annexes (3) ou par la banque libre (6).
