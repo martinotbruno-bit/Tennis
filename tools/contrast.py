@@ -48,6 +48,14 @@ for si, (univ, court, lines, net) in enumerate(sp):
                     d = dE(col, bg)
                     if d < SEUIL:
                         worst.append((d, surf[si], cond, names[ci], part, '%02X' % col, bgn, '%02X' % bg))
+# balle (palette de sprites 2) : jaune pâle $38, blanche $30 sur la plage (gfx.c)
+for si, (univ, court, lines, net) in enumerate(sp):
+    ball = 0x30 if si == 4 else 0x38
+    for cond in ('jour', 'nuit', 'pluie'):
+        c = darken(court) if cond == 'pluie' else court
+        d = dE(ball, c)
+        if d < SEUIL:
+            worst.append((d, surf[si], cond, 'balle', '-', '%02X' % ball, 'court', '%02X' % c))
 worst.sort()
 for w in worst:
     print('ΔE %5.1f  %-8s %-5s %-4s %-6s $%s sur %-6s $%s' % w)

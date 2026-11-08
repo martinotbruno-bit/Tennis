@@ -78,7 +78,9 @@ void pal_set_court(u8 s, u8 cond, u8 env)
     pal_buf[8] = p[0]; pal_buf[9] = e[0]; pal_buf[10] = e[1]; pal_buf[11] = e[2]; /* bords */
     pal_buf[12] = p[0]; pal_buf[13] = 0x0F; pal_buf[14] = 0x28; pal_buf[15] = 0x30;
     /* sprites : 0/1 joueurs (définis à part), 2 balle, 3 effets */
-    pal_buf[16 + 8] = p[0]; pal_buf[16 + 9] = 0x38; pal_buf[16 + 10] = 0x0F; pal_buf[16 + 11] = 0x30;
+    pal_buf[16 + 8] = p[0];
+    /* balle jaune pâle, sauf sur le sable jaune de la plage : blanche */
+    pal_buf[16 + 9] = (u8)(p == surf_pal[4] ? 0x30 : 0x38); pal_buf[16 + 10] = 0x0F; pal_buf[16 + 11] = 0x30;
     pal_buf[16 + 12] = p[0]; pal_buf[16 + 13] = 0x30; pal_buf[16 + 14] = 0x21; pal_buf[16 + 15] = 0x28;
     if (cond == 2) {
         /* pluie : ciel couvert, couleurs ternies */
