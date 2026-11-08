@@ -138,7 +138,7 @@ Conditions :
 ## 7. Modes
 
 - **Match** : simple ou double, contre l'ordinateur ou à deux.
-  - **2 joueurs en équipe** : en double, les manettes 1 et 2 jouent ensemble contre deux joueurs CPU.
+  - **2 joueurs en équipe** : toujours en double (la ligne JEU n'est pas proposée). Les manettes 1 et 2 jouent ensemble contre deux joueurs CPU ; JOUEUR 2 choisit le personnage de la manette 2.
   - **2 joueurs adversaires** : en double, chacun a un partenaire CPU.
 - **Démo** : l'ordinateur joue seul.
 

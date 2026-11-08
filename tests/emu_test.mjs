@@ -107,6 +107,19 @@ console.log('Menu de configuration');
   check(scr(e) === SS.TITLE, 'B revient au titre');
 }
 
+console.log('Mode 2 joueurs en équipe');
+{
+  const e = boot(); toMenu(e); setOpts(e, { MODE: MODE.TEAM, TYPE: 0 }); e.tap('B'); e.run(5); toMenu(e);
+  check(e.peek('nvis') === 10, 'la ligne JEU (simple/double) n\'est pas proposée');
+  e.tap('START'); e.run(15);
+  check(e.text(4, 4, 15) === 'MATCH DE DOUBLE' && e.text(18, 11, 11) === '+ MANETTE 2', 'toujours un double, manette 2 partenaire');
+  e.tap('A'); e.run(30);
+  const c = e.addr('cfg');
+  check(e.nes.cpu.mem[c + 1] === 1 && e.nes.cpu.mem[c + 2] === 0 && e.nes.cpu.mem[c + 4] === 1 && e.nes.cpu.mem[c + 3] === 2,
+    'manettes 1 et 2 dans la même équipe face à deux joueurs CPU');
+  check(e.nes.cpu.mem[c + 8] === e.peek('opt_val', O.P2), 'JOUEUR 2 = personnage de la manette 2');
+}
+
 console.log('Présentation et pause');
 {
   const e = boot(); toMenu(e); e.tap('START'); e.run(10);

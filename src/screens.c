@@ -108,7 +108,8 @@ static void build_visible(void)
         vis[nvis++] = O_ENV;
         vis[nvis++] = O_COND;
     } else {
-        vis[nvis++] = O_TYPE;
+        /* « 2 J. EQUIPE » : deux joueurs dans la même équipe, donc toujours en double */
+        if (m != MODE_2P_TEAM) vis[nvis++] = O_TYPE;
         vis[nvis++] = O_P1;
         vis[nvis++] = O_P2;
         vis[nvis++] = O_LEVEL;
@@ -302,7 +303,13 @@ static void setup_cfg(u8 mode)
     switch (mode) {
     case MODE_2P: cfg.ctrl[1] = CTRL_PAD2; break;
     case MODE_2P_TEAM:
-        if (cfg.doubles) cfg.ctrl[2] = CTRL_PAD2; else cfg.ctrl[1] = CTRL_PAD2;
+        /* deux joueurs dans la même équipe : toujours un double ; JOUEUR 2 est
+           le personnage de la manette 2, les adversaires CPU sont tirés à part */
+        cfg.doubles = 1;
+        cfg.ctrl[2] = CTRL_PAD2;
+        cfg.chr[2] = opt_val[O_P2] == cfg.chr[0] ? unused_char(cfg.chr[0], 255, 255) : opt_val[O_P2];
+        cfg.chr[1] = unused_char(cfg.chr[0], cfg.chr[2], 255);
+        cfg.chr[3] = unused_char(cfg.chr[0], cfg.chr[1], cfg.chr[2]);
         break;
     case MODE_TRAIN:
         cfg.mode = GM_TRAIN;
