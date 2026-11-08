@@ -6,6 +6,32 @@
 **Destinataire :** IA de développement autonome.  
 **Objectif :** Concevoir, programmer, optimiser, tester et livrer une évolution ambitieuse du jeu Tennis de la NES, avec un contenu considérablement enrichi et une finition maximale, tout en conservant une compatibilité réelle avec le matériel d'origine.
 
+| Version | Date | Statut |
+|---|---|---|
+| 1.0 | 2026-11-08 | Version initiale |
+
+## Sommaire
+
+1. [Vision et objectifs du projet](#1-vision-et-objectifs-du-projet)
+2. [Plateformes et contraintes matérielles](#2-plateformes-et-contraintes-matérielles)
+3. [Gameplay et mécaniques de tennis](#3-gameplay-et-mécaniques-de-tennis)
+4. [Règles et formats de compétition](#4-règles-et-formats-de-compétition)
+5. [Personnages et apparence](#5-personnages-et-apparence)
+6. [Terrains et environnements](#6-terrains-et-environnements)
+7. [Graphismes et animations](#7-graphismes-et-animations)
+8. [Interface et menus](#8-interface-et-menus)
+9. [Modes d'entraînement](#9-modes-dentraînement)
+10. [Intelligence artificielle](#10-intelligence-artificielle)
+11. [Audio et musique](#11-audio-et-musique)
+12. [Statistiques, résultats et sauvegardes](#12-statistiques-résultats-et-sauvegardes)
+13. [Architecture logicielle et optimisation](#13-architecture-logicielle-et-optimisation)
+14. [Méthode de développement autonome](#14-méthode-de-développement-autonome)
+15. [Tests et validation](#15-tests-et-validation)
+16. [Critères d'acceptation](#16-critères-dacceptation)
+17. [Livrables obligatoires](#17-livrables-obligatoires)
+18. [Priorités en cas de compromis](#18-priorités-en-cas-de-compromis)
+19. [Directive finale à l'IA de développement](#19-directive-finale-à-lia-de-développement)
+
 ---
 
 # 1. VISION ET OBJECTIFS DU PROJET
