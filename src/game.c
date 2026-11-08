@@ -1068,16 +1068,13 @@ void match_draw(void)
     spr_begin();
     /* balle et ombre en tête (priorité d'affichage maximale) */
     if (b_vis) {
-        /* pendant le lancer de service, la hauteur est affichée à moitié :
-           la balle reste visible même pour le serveur du haut de l'écran */
-        sy = PX(bz);
         /* lancer de service : hauteur réelle pour le serveur du bas ; réduite
-           (x 9/16) pour celui du haut, afin que la balle reste à l'écran */
+           (x 9/16) pour celui du haut, afin que la balle reste à l'écran.
+           La balle grossit avec sa hauteur (spr_ball, banque fixe). */
+        sy = bz < 0 ? 0 : PX(bz);
+        k = (u8)sy;
         if (ms == MS_TOSS && by < NET_Y * FP) sy = (sy + (sy << 3)) >> 4;
-        sy = PX(by) - sy - 3;
-        if (sy < 8) sy = 8;
-        spr1((u8)(PX(bx) - 3), (u8)sy, 1, 2);
-        spr1((u8)(PX(bx) - 3), (u8)(PX(by) - 3), 2, 2);
+        spr_ball((u8)PX(bx), PX(by) - sy - 3, (u8)PX(by), k);
     }
     if (tgt_x) spr1(tgt_x, tgt_y, 3, 3);   /* cible d'entraînement */
     /* tri par profondeur : le joueur le plus bas à l'écran passe devant */

@@ -330,8 +330,8 @@ console.log('Compétition en double, levée de coupe et club nudiste');
   check(pl.size === 16, '8 équipes de 2 : 16 personnages différents');
   // levée de coupe : les tuiles du trophée sont à l'écran
   e.run(80);
-  const tt = e.peek('trophy_tile'); let cup = 0, conf = 0;
-  for (let i = 0; i < 64; i++) { const t = e.nes.cpu.mem[0x201 + i * 4], y = e.nes.cpu.mem[0x200 + i * 4]; if (y < 0xEF) { if (t >= tt && t < tt + 4) cup++; if (t === tt + 4) conf++; } }
+  const tt = e.peek('trophy_tile'), ct = e.peek('confetti_tile'); let cup = 0, conf = 0;
+  for (let i = 0; i < 64; i++) { const t = e.nes.cpu.mem[0x201 + i * 4], y = e.nes.cpu.mem[0x200 + i * 4]; if (y < 0xEF) { if (t >= tt && t < tt + 4) cup++; if (t === ct) conf++; } }
   check(cup === 4 && conf >= 8, `levée de coupe affichée (coupe ${cup} tuiles, ${conf} confettis)`);
   check(e.peek('nude_unlocked') === 1 && e.text(3, 23, 21) === 'MODE NUDISTE DEBLOQUE', 'victoire : club nudiste débloqué');
   check(/^[A-Z2-9]{13}$/.test(code), `code de reprise en double : ${code}`);

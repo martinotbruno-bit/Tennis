@@ -494,18 +494,25 @@ def line(c, x0, y0, x1, y1, v):
     for i in range(n+1):
         put(c, round(x0 + (x1-x0)*i/n), round(y0 + (y1-y0)*i/n), v)
 
-def racket(c, hx, hy, ang):
-    """Raquette : manche depuis la main (hx,hy) selon une direction."""
-    dx, dy = {'up': (0,-1), 'right': (1,0), 'upright': (1,-1), 'down': (0,1),
-              'downright': (1,1)}[ang]
-    # manche 2 px puis tamis 3x4
-    put(c, hx+dx, hy+dy, 3)
-    cx, cy = hx + dx*4, hy + dy*4
-    if dx == 0:
-        fill(c, cx-1, cy-1, cx+1, cy+1, 3); put(c, cx, cy, 0)
-        put(c, cx, cy-2*(-dy if dy else 1), 3)
-    else:
-        fill(c, cx-1, cy-1, cx+1, cy+1, 3); put(c, cx, cy, 0)
+def racket(c, hx, hy, cx, cy, h=7):
+    """Raquette bien visible : manche (couleur 3) de la main (hx, hy) jusqu'au
+    tamis, puis tamis ovale 5 x h centré en (cx, cy) : cadre sombre et cordage
+    en damier (pixels transparents entre les cordes)."""
+    ry = (h - 1) / 2.0
+    # manche : de la main vers le bord du tamis le plus proche
+    ey = cy + (ry + 0.5 if hy > cy else -(ry + 0.5)) if abs(hy - cy) > ry else cy
+    line(c, hx, hy, round(cx + (hx - cx) * 0.3), round(ey), 3)
+    pts = set()
+    for y in range(int(cy - ry) - 1, int(cy + ry) + 2):
+        for x in range(cx - 3, cx + 4):
+            if ((x - cx) / 2.6) ** 2 + ((y - cy) / (ry + 0.6)) ** 2 <= 1.0:
+                pts.add((x, y))
+    for (x, y) in pts:
+        edge = any((x + dx, y + dy) not in pts for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)))
+        if edge:
+            put(c, x, y, 3)
+        else:
+            put(c, x, y, 3 if (x + y) % 2 == 0 else 0)
 
 def draw_person(view, legs, arms, female, nude=False):
     c = new_canvas()
@@ -571,25 +578,25 @@ def draw_person(view, legs, arms, female, nude=False):
     # bras + raquette (main droite côté écran droit)
     if arms == 'ready':
         fill(c, 3, 9, 3, 12, 1); fill(c, 12, 9, 12, 12, 1)
-        put(c, 4, 13, 1); put(c, 11, 13, 1)
-        racket(c, 12, 13, 'downright')
+        put(c, 4, 13, 1); put(c, 12, 13, 1)
+        racket(c, 12, 14, 13, 19)            # raquette tenue basse, devant soi
     elif arms == 'swing':
         fill(c, 3, 9, 3, 12, 1)
-        line(c, 11, 9, 14, 9, 1)
-        racket(c, 14, 9, 'up')
+        line(c, 11, 9, 13, 9, 1)
+        racket(c, 13, 8, 13, 3)              # bras tendu, tamis levé
     elif arms == 'follow':
-        fill(c, 2, 8, 4, 8, 1); line(c, 11, 9, 13, 7, 1)
-        racket(c, 13, 6, 'up')
+        fill(c, 2, 8, 4, 8, 1); line(c, 11, 9, 12, 7, 1)
+        racket(c, 12, 6, 13, 2, 5)           # accompagnement au-dessus de l'épaule
     elif arms == 'down':
         # déception : bras ballants, raquette vers le sol, tête baissée
         fill(c, 4, 9, 4, 14, 1); fill(c, 11, 9, 11, 14, 1)
-        racket(c, 11, 15, 'down')
+        racket(c, 11, 15, 12, 20)
         if view == 'front':
             put(c, 7, 3, 1); put(c, 9, 3, 1); put(c, 7, 4, 3); put(c, 9, 4, 3)
     elif arms == 'serve':
         line(c, 4, 8, 3, 3, 1)          # bras de lancer levé
-        line(c, 11, 8, 12, 4, 1)
-        racket(c, 12, 3, 'up')
+        line(c, 11, 8, 12, 6, 1)
+        racket(c, 12, 5, 12, 2, 5)      # raquette armée au-dessus de la tête
     return c
 
 def canvas_tiles(c):
@@ -656,6 +663,23 @@ TROPHY_TILE = next_spr
 for ty in range(2):
     for tx in range(2):
         spr_tile(next_spr, [cup[ty*8+y][tx*8:tx*8+8] for y in range(8)]); next_spr += 1
+# balle moyenne (5x5) et grande (7x7) : la taille suit la hauteur de la balle
+BALL_MID_TILE = next_spr
+bm = blank()
+for y in range(5):
+    for x in range(5):
+        if (x - 2) ** 2 + (y - 2) ** 2 <= 5:
+            bm[y + 1][x + 1] = 1
+bm[2][2] = 3
+spr_tile(next_spr, bm); next_spr += 1
+BALL_BIG_TILE = next_spr
+bb = blank()
+for y in range(7):
+    for x in range(7):
+        if (x - 3) ** 2 + (y - 3) ** 2 <= 10:
+            bb[y][x] = 1
+bb[1][2] = 3; bb[2][1] = 3; bb[2][2] = 3
+spr_tile(next_spr, bb); next_spr += 1
 CONFETTI_TILE = next_spr
 conf = blank()
 for (x, y) in ((3, 3), (4, 3), (3, 4), (4, 4)):
@@ -715,7 +739,7 @@ src.append(c_array('logo_tiles', bytes(logo)))
 src.append(c_array('bigball_tiles', bytes(ball_tiles)))
 src.append('const unsigned char person_base[4] = {0x%02X,0x%02X,0x%02X,0x%02X};\n' % (
     person_base[(0,'back')], person_base[(0,'front')], person_base[(1,'back')], person_base[(1,'front')]))
-src.append('const unsigned char trophy_tile = 0x%02X;\nconst unsigned char confetti_tile = 0x%02X;\n' % (TROPHY_TILE, CONFETTI_TILE))
+src.append('const unsigned char trophy_tile = 0x%02X;\nconst unsigned char confetti_tile = 0x%02X;\nconst unsigned char ball_mid_tile = 0x%02X;\nconst unsigned char ball_big_tile = 0x%02X;\n' % (TROPHY_TILE, CONFETTI_TILE, BALL_MID_TILE, BALL_BIG_TILE))
 with open(os.path.join(ROOT, 'src', 'assets_data.c'), 'w') as f:
     f.write('\n'.join(src))
 

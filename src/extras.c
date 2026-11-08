@@ -171,10 +171,7 @@ void rp_play(void)
     u8 ord[4], i, j, k, p, a;
     if (pad1_new & (PAD_A | PAD_B | PAD_START)) { rp_done = 1; rp_count = 0; return; }
     spr_begin();
-    if (e[3]) {
-        spr1((u8)(e[0] - 3), (u8)(e[1] - e[2] < 11 ? 8 : e[1] - e[2] - 3), 1, 2);
-        spr1((u8)(e[0] - 3), (u8)(e[1] - 3), 2, 2);
-    }
+    if (e[3]) spr_ball(e[0], (s16)e[1] - e[2] - 3, e[1], e[2]);
     for (i = 0; i < npl; ++i) ord[i] = i;
     for (i = 1; i < npl; ++i) {
         k = ord[i];

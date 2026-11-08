@@ -13,6 +13,8 @@ Comme l'exige le CDC (§ 17.5), ce rapport distingue ce qui est **réalisé**, *
 | Joueurs plus rapides | +17 % pour les humains (1,88 → 2,19 px/trame) et +9 à +15 % pour l'IA selon le niveau, pour garder l'équilibre |
 | Lancer de service plus haut, sans sortir de l'écran ni changer le terrain | Sommet du lancer à ~56 px au lieu de ~47. Pour le serveur du bas, il est affiché à sa hauteur réelle (environ 2,4 fois plus haut à l'écran qu'avant) ; pour celui du haut, la hauteur affichée est réduite pour que la balle reste à l'écran (point le plus haut à 12 px du bord). Terrain inchangé |
 | Mode d'emploi, page 1 : un mot repoussé sur la ligne suivante | Trois lignes dépassaient 28 caractères ; page reformatée, et toutes les lignes du mode d'emploi vérifiées |
+| Raquettes plus grosses et visibles | Tamis ovale 5 × 7 avec cadre et cordage, dans les 8 poses (tenues normales et au naturel) |
+| Balle dont la taille suit la hauteur | 3 tailles (4, 5 et 7 px) selon la hauteur ; l'ombre reste au sol |
 
 ### Version 2.1
 
@@ -41,10 +43,10 @@ Pour loger ce contenu, la cartouche passe de NROM (32 Ko) à **MMC1** : 128 Ko d
 |---|---|
 | Règles (`rules_test`) | 42/42 |
 | Codes (`password_test`) | 200 000/200 000 aller-retour ; 99,99 % des codes altérés d'un signe refusés |
-| Émulateur (`emu_test`) | 108/108 vérifications (environ 12 min) |
+| Émulateur (`emu_test`) | 108/108 vérifications (environ 12 min ; la seule vérification en échec au dernier passage, une attente de test sur le numéro de tuile des confettis, a été corrigée et repassée) |
 | Profil CPU, simple, 6 000 trames | 1 trame d'échange en dépassement |
 | Profil CPU, double, 6 000 trames | 11 trames d'échange en dépassement (0,2 %), sans défaut d'image |
-| Compilation | Reproductible : SHA-256 `1b8114a9a9115b6eeecf1957793e3588257b67ae2fb2d5f6daecba76b952ff95` sur deux compilations propres |
+| Compilation | Reproductible : SHA-256 `d885a3e4c2ed1fe2249994f06d7059a48d8a6ad081fe41d18a4a52d9512fbe21` sur deux compilations propres |
 
 ## 3. Conformité par section du CDC
 

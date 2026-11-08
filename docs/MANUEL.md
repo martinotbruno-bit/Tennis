@@ -126,6 +126,8 @@ Le lancer reste visible quelle que soit votre position, y compris quand vous ser
 
 L'effet modifie aussi le rebond : le lifté rebondit plus haut, le coupé reste bas.
 
+La balle grossit quand elle monte et rapetisse près du sol ; son ombre indique toujours où elle se trouve sur le court.
+
 Conditions :
 - **Nuit** : décor assombri.
 - **Pluie** : gouttes à l'écran, rebonds plus bas et balle qui glisse.

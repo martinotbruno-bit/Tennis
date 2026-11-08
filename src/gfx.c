@@ -220,3 +220,16 @@ void team_label(u8 a, u8 b, char *out)
 
 /* Noms des compétitions (banque fixe : lus par les écrans et le palmarès) */
 const char * const comp_name[5] = { "TOURNOI", "POULES", "CHAMPIONNAT", "SAISON", "PERSONNALISE" };
+
+/* Balle et ombre. La balle grossit avec la hauteur (zpx, en pixels) : effet
+ * de perspective qui aide à lire les lobs et les rebonds. (x, sy) = position
+ * affichée de la balle, shy = position de l'ombre au sol. */
+void spr_ball(u8 x, s16 sy, u8 shy, u8 zpx)
+{
+    u8 t = 1;
+    if (zpx >= 30) { t = ball_big_tile; --x; --sy; }
+    else if (zpx >= 12) t = ball_mid_tile;
+    if (sy < 8) sy = 8;
+    spr1((u8)(x - 3), (u8)sy, t, 2);
+    spr1((u8)(x - 3), (u8)(shy - 3), 2, 2);
+}

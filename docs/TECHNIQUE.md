@@ -157,7 +157,9 @@ Grâce à la CHR-RAM, les 6 motifs de spectateurs sont remplacés par leur versi
 ## 5. Graphismes
 
 - **Fond** : 242 tuiles sur 256. Quatre écrans de court compressés en RLE (stade 657 octets, club 648, salle 647, club nudiste 648). La surface et les conditions ne changent que les palettes.
-- **Sprites** : 213 tuiles sur 256 (dont la coupe et les confettis).
+- **Sprites** : 215 tuiles sur 256 (dont la coupe, les confettis et 3 tailles de balle).
+  - Raquettes : tamis ovale de 5 × 7 px (5 × 5 au-dessus de la tête), cadre sombre et cordage en damier, manche de 2 à 3 px.
+  - Balle : petite (4 × 4) près du sol, moyenne (5 × 5) à partir de 12 px de hauteur, grande (7 × 7) à partir de 30 px (`spr_ball`, banque fixe), aussi dans les ralentis. L'ombre reste au sol.
   - 2 vues (dos et face) × 2 silhouettes (homme et femme) × 8 poses : attente, course ×2, frappe ×2, service, joie, déception.
   - 16 palettes de personnages.
   - Partenaires de double : couleurs de leur équipe (limite de 4 palettes de sprites).
