@@ -15,6 +15,7 @@ Comme l'exige le CDC (§ 17.5), ce rapport distingue ce qui est **réalisé**, *
 | Mode d'emploi, page 1 : un mot repoussé sur la ligne suivante | Trois lignes dépassaient 28 caractères ; page reformatée, et toutes les lignes du mode d'emploi vérifiées |
 | Raquettes plus grosses et visibles | Tamis ovale 5 × 7 avec cadre et cordage, dans les 8 poses (tenues normales et au naturel) |
 | Balle dont la taille suit la hauteur | 3 tailles (4, 5 et 7 px) selon la hauteur ; l'ombre reste au sol |
+| Balle ratée bloquée en haut ou en bas de l'écran | La balle ratée poursuit sa trajectoire et disparaît une fois sortie de l'écran ; une balle très haute n'est plus collée au bord supérieur (seule son ombre reste visible). Arbitrage inchangé |
 
 ### Version 2.1
 
@@ -43,10 +44,10 @@ Pour loger ce contenu, la cartouche passe de NROM (32 Ko) à **MMC1** : 128 Ko d
 |---|---|
 | Règles (`rules_test`) | 42/42 |
 | Codes (`password_test`) | 200 000/200 000 aller-retour ; 99,99 % des codes altérés d'un signe refusés |
-| Émulateur (`emu_test`) | 108/108 vérifications (environ 12 min ; la seule vérification en échec au dernier passage, une attente de test sur le numéro de tuile des confettis, a été corrigée et repassée) |
+| Émulateur (`emu_test`) | 109/109 vérifications (environ 12 min) |
 | Profil CPU, simple, 6 000 trames | 1 trame d'échange en dépassement |
 | Profil CPU, double, 6 000 trames | 11 trames d'échange en dépassement (0,2 %), sans défaut d'image |
-| Compilation | Reproductible : SHA-256 `d885a3e4c2ed1fe2249994f06d7059a48d8a6ad081fe41d18a4a52d9512fbe21` sur deux compilations propres |
+| Compilation | Reproductible : SHA-256 `c71d5cbd8085fa1cce74e4d838e5f1eae2b548976376c0102ff1c90f5d203b62` sur deux compilations propres |
 
 ## 3. Conformité par section du CDC
 

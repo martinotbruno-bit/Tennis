@@ -137,6 +137,23 @@ console.log('Service : lancer visible pour le joueur du haut');
   check(e.peek('hitter') === 1, 'le serveur du haut est bien le frappeur');
 }
 
+console.log('Balle ratée : elle sort de l\'écran');
+{
+  const e = boot(); startWith(e, {});
+  runUntil(e, () => e.peek('ms') === 0, 300);
+  e.poke('sc_server', 1);            // l'ordinateur sert, le joueur ne bouge pas
+  runUntil(e, () => e.peek('ms') === 2, 300);
+  let maxY = 0, gone = false, stuckFrames = 0, lastY = -1;
+  for (let i = 0; i < 400 && !gone; i++) {
+    e.run(1);
+    const y = e.peekS16('by') / 64;
+    if (e.peek('b_vis') === 0) gone = true;
+    else { maxY = Math.max(maxY, y); stuckFrames = (y === lastY && e.peekS16('bvy') === 0 && e.peek('ms') === 3) ? stuckFrames + 1 : 0; lastY = y; }
+    if (stuckFrames > 30) break;
+  }
+  check(gone && maxY > 236, `la balle ratée continue jusqu'au bas de l'écran puis disparaît (y max ${maxY.toFixed(0)})`);
+}
+
 console.log('Filet effleuré au service (let)');
 {
   const e = boot(); startWith(e, {});

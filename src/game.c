@@ -351,11 +351,12 @@ static void ball_update(void)
                 else point_over((u8)(hitter ^ 1), 1);
             } else point_over(hitter, 2);
         }
-        bvx = bvy = 0;
-        if (bx < 8 * FP) bx = 8 * FP;
-        if (bx > 248 * FP) bx = 248 * FP;
-        if (by < 20 * FP) by = 20 * FP;
-        if (by > 238 * FP) by = 238 * FP;
+    }
+    /* la balle ratée poursuit sa course et disparaît une fois sortie de
+       l'écran (au lieu de rester bloquée contre le bord) */
+    if (bx < 4 * FP || bx > 252 * FP || by < 0 || by > 248 * FP) {
+        b_vis = 0;
+        bvx = bvy = bvz = 0;
     }
 }
 

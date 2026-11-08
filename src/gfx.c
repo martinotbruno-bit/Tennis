@@ -229,7 +229,7 @@ void spr_ball(u8 x, s16 sy, u8 shy, u8 zpx)
     u8 t = 1;
     if (zpx >= 30) { t = ball_big_tile; --x; --sy; }
     else if (zpx >= 12) t = ball_mid_tile;
-    if (sy < 8) sy = 8;
-    spr1((u8)(x - 3), (u8)sy, t, 2);
+    /* balle au-dessus du haut de l'écran : seule l'ombre reste visible */
+    if (sy >= 0) spr1((u8)(x - 3), (u8)sy, t, 2);
     spr1((u8)(x - 3), (u8)(shy - 3), 2, 2);
 }
