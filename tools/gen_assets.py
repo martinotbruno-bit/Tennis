@@ -16,8 +16,8 @@ random.seed(1234)  # génération déterministe (compilation reproductible)
 # --------------------------------------------------------------------------
 # Géométrie du court (doit rester identique à src/court.h)
 # --------------------------------------------------------------------------
-TOP_BASE, BOT_BASE, NET_Y = 58, 214, 136
-TOP_SERV, BOT_SERV = 94, 178
+TOP_BASE, BOT_BASE, NET_Y = 48, 216, 132
+TOP_SERV, BOT_SERV = 87, 177
 SGL_L, SGL_R = 74, 182
 DBL_L, DBL_R = 54, 202
 CENTER_X = 128
@@ -500,7 +500,7 @@ def rle(data):
         else:
             out += data[i:j]
         i = j
-    out += bytes([mark, 0])  # compte 0 = fin
+    out += bytes([mark, 0, 0])  # MARK, valeur, compte 0 = fin
     return bytes(out)
 
 def c_array(name, data):

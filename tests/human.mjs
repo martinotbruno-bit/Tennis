@@ -2,7 +2,7 @@
 import { Emu } from './emu.mjs';
 const e = new Emu(process.argv[2]);
 const N = +(process.argv[3] ?? 20000);
-e.run(30); e.tap('START'); e.run(10); e.poke('opt_val', +(process.argv[4] ?? 0), 4); e.tap('START'); e.run(5);
+e.run(30); e.tap('START'); e.run(10); e.poke('opt_val', +(process.argv[4] ?? 0), 5); e.tap('START'); e.run(5);
 const P = (n, i = 0) => e.peekS16(n, i * 2) / 64;
 let returns = 0, swings = 0, serves = 0, lastRh = 0, aHeld = 0;
 for (let i = 0; i < N && e.peek('app_state') === 2; i++) {

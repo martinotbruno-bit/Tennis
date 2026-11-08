@@ -1,11 +1,11 @@
 /* Géométrie du court en pixels (identique à tools/gen_assets.py) */
 #ifndef COURT_H
 #define COURT_H
-#define TOP_BASE 58
-#define BOT_BASE 214
-#define NET_Y    136
-#define TOP_SERV 94
-#define BOT_SERV 178
+#define TOP_BASE 48
+#define BOT_BASE 216
+#define NET_Y    132
+#define TOP_SERV 87
+#define BOT_SERV 177
 #define SGL_L    74
 #define SGL_R    182
 #define DBL_L    54

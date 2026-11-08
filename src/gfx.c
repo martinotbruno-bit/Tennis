@@ -23,7 +23,6 @@ static const u8 surf_pal[NSURF][7] = {
     { 0x06, 0x15, 0x30, 0x0F, 0x0F, 0x11, 0x36 },
 };
 
-u8 oam_i;
 
 static u8 darken(u8 c)
 {
@@ -31,7 +30,7 @@ static u8 darken(u8 c)
     return (c >= 0x10) ? (u8)(c - 0x10) : 0x0F;
 }
 
-void pal_set_court(u8 s, u8 night)
+void pal_set_court(u8 s, u8 cond)
 {
     const u8 *p = surf_pal[s];
     u8 i;
@@ -42,7 +41,15 @@ void pal_set_court(u8 s, u8 night)
     /* sprites : 0/1 joueurs (définis à part), 2 balle, 3 effets */
     pal_buf[16 + 8] = p[0]; pal_buf[16 + 9] = 0x38; pal_buf[16 + 10] = 0x0F; pal_buf[16 + 11] = 0x30;
     pal_buf[16 + 12] = p[0]; pal_buf[16 + 13] = 0x30; pal_buf[16 + 14] = 0x21; pal_buf[16 + 15] = 0x28;
-    if (night) {
+    if (cond == 2) {
+        /* pluie : ciel couvert, couleurs ternies */
+        pal_buf[0] = darken(pal_buf[0]);
+        for (i = 4; i < 16; i += 4) pal_buf[i] = pal_buf[0];
+        pal_buf[1] = darken(pal_buf[1]);
+        pal_buf[16 + 8] = pal_buf[16 + 12] = pal_buf[0];
+        pal_buf[16 + 13] = 0x21; pal_buf[16 + 15] = 0x31;   /* gouttes */
+    }
+    if (cond == 1) {
         /* match de nuit : décors assombris, court éclairé */
         pal_buf[0] = 0x0F;
         for (i = 4; i < 16; i += 4) pal_buf[i] = 0x0F;
@@ -76,44 +83,19 @@ void pal_set_player(u8 slot, u8 c)
 
 void spr_begin(void) { oam_i = 0; }
 
-void spr_end(void)
-{
-    u8 i = oam_i;
-    do { oam_buf[i] = 0xFF; i += 4; } while (i != 0);
-}
-
-void __fastcall__ spr1(u8 x, u8 y, u8 tile, u8 attr)
-{
-    u8 i = oam_i;
-    oam_buf[i] = (u8)(y - 1);
-    oam_buf[i + 1] = tile;
-    oam_buf[i + 2] = attr;
-    oam_buf[i + 3] = x;
-    oam_i = (u8)(i + 4);
-}
-
-/* (x, y) = position des pieds ; sprite 16x24 */
+/* (x, y) = position des pieds ; sprite 16x24 dessiné par spr_meta (asm) */
 void spr_person(s16 x, s16 y, u8 c, u8 front, u8 pose, u8 flip, u8 pal)
 {
-    u8 base, t, sx, sy, row;
     s16 l = x - 8, top = y - 24;
     if (l < 0) l = 0;
     if (l > 240) l = 240;
     if (top < 0) top = 0;
     if (top > 216) top = 216;
-    sx = (u8)l; sy = (u8)top;
-    base = (u8)(person_base[(char_female[c] << 1) | front] + pose * 6);
-    for (row = 0; row < 3; ++row) {
-        t = (u8)(base + row * 2);
-        if (flip) {
-            spr1(sx, sy, (u8)(t + 1), (u8)(pal | 0x40));
-            spr1((u8)(sx + 8), sy, t, (u8)(pal | 0x40));
-        } else {
-            spr1(sx, sy, t, pal);
-            spr1((u8)(sx + 8), sy, (u8)(t + 1), pal);
-        }
-        sy += 8;
-    }
+    meta_x = (u8)l;
+    meta_y = (u8)top;
+    meta_tile = (u8)(person_base[(char_female[c] << 1) | front] + pose * 6);
+    meta_attr = (u8)(flip ? (pal | 0x40) : pal);
+    spr_meta();
 }
 
 void txt_at(u8 x, u8 y, const char *s)

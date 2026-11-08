@@ -9,9 +9,8 @@ extern const u8 char_female[NCHARS];
 #define NSURF 4
 extern const char * const surf_name[NSURF];
 
-extern u8 oam_i;
 
-void pal_set_court(u8 surface, u8 night);
+void pal_set_court(u8 surface, u8 cond);   /* cond : 0 jour, 1 nuit, 2 pluie */
 void pal_set_menu(void);
 void pal_set_player(u8 slot, u8 character);
 void spr_begin(void);

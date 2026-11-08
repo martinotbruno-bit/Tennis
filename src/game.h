@@ -8,17 +8,24 @@
 #define CTRL_CPU  2
 
 /* modes de partie */
-#define GM_MATCH     0
+#define GM_MATCH       0
 #define GM_TRAIN_RALLY 1   /* lanceur de balles */
 #define GM_TRAIN_SERVE 2   /* travail du service */
 
+/* conditions */
+#define COND_DAY   0
+#define COND_NIGHT 1
+#define COND_RAIN  2
+
+/* joueurs : index 0..3 ; équipe = index & 1 ; 2 et 3 = partenaires en double */
 typedef struct {
     u8 mode;            /* GM_* */
-    u8 ctrl[2];         /* contrôleur de chaque équipe */
-    u8 chr[2];          /* personnage de chaque équipe */
-    u8 level[2];        /* niveau IA 0..2 */
+    u8 doubles;         /* 0 simple, 1 double */
+    u8 ctrl[4];         /* contrôleur de chaque joueur */
+    u8 chr[4];          /* personnage de chaque joueur */
+    u8 level[4];        /* niveau IA 0..2 */
     u8 surface;
-    u8 night;
+    u8 cond;            /* COND_* */
     u8 sets_to_win;
     u8 games_per_set;
 } MatchCfg;

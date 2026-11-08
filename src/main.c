@@ -23,29 +23,32 @@ u8 is_pal, pal_acc;
 /* options du menu */
 #define OPT_START 0
 #define OPT_MODE  1
-#define OPT_P1    2
-#define OPT_P2    3
-#define OPT_LEVEL 4
-#define OPT_SURF  5
-#define OPT_TIME  6
-#define OPT_FMT   7
-#define NOPT      8
+#define OPT_TYPE  2
+#define OPT_P1    3
+#define OPT_P2    4
+#define OPT_LEVEL 5
+#define OPT_SURF  6
+#define OPT_TIME  7
+#define OPT_FMT   8
+#define NOPT      9
 #define MODE_1P   0
 #define MODE_2P   1
-#define MODE_TOUR 2
-#define MODE_TR_RALLY 3
-#define MODE_TR_SERVE 4
-#define MODE_DEMO 5
-#define NMODES    6
+#define MODE_2P_TEAM 2
+#define MODE_TOUR 3
+#define MODE_TR_RALLY 4
+#define MODE_TR_SERVE 5
+#define MODE_DEMO 6
+#define NMODES    7
 static const char * const mode_name[NMODES] = {
-    "1 JOUEUR VS CPU", "2 JOUEURS      ", "TOURNOI        ",
+    "1 JOUEUR VS CPU", "2 J. ADVERSAIRES", "2 J. EQUIPE    ", "TOURNOI        ",
     "ENTRAINEMENT   ", "SERVICE        ", "DEMO CPU VS CPU" };
+static const char * const cond_name[3] = { "JOUR", "NUIT", "PLUIE" };
 static const char * const level_name[3] = { "FACILE", "NORMAL", "EXPERT" };
 static const char * const fmt_name[4] = { "1 SET      ", "3 SETS     ", "5 SETS     ", "RAPIDE 4 JX" };
 static const char * const opt_label[NOPT] = {
-    "COMMENCER", "MODE", "JOUEUR 1", "JOUEUR 2", "NIVEAU CPU", "SURFACE", "MOMENT", "FORMAT" };
-u8 opt_val[NOPT] = { 0, 0, 0, 1, 1, 0, 0, 0 };
-static u8 opt_max[NOPT] = { 1, NMODES, NCHARS, NCHARS, 3, NSURF, 2, 4 };
+    "COMMENCER", "MODE", "JEU", "JOUEUR 1", "JOUEUR 2", "NIVEAU CPU", "SURFACE", "CONDITIONS", "FORMAT" };
+u8 opt_val[NOPT] = { 0, 0, 0, 0, 1, 1, 0, 0, 0 };
+static const u8 opt_max[NOPT] = { 1, NMODES, 2, NCHARS, NCHARS, 3, NSURF, 3, 4 };
 static u8 cursor;
 
 /* tournoi */
@@ -122,7 +125,8 @@ static void menu_value(u8 o, char *buf)
     case OPT_P2:    s = char_name[v]; break;
     case OPT_LEVEL: s = level_name[v]; break;
     case OPT_SURF:  s = surf_name[v]; break;
-    case OPT_TIME:  s = v ? "NUIT" : "JOUR"; break;
+    case OPT_TYPE:  s = v ? "DOUBLE" : "SIMPLE"; break;
+    case OPT_TIME:  s = cond_name[v]; break;
     case OPT_FMT:   s = fmt_name[v]; break;
     }
     for (i = 0; i < 15; ++i) buf[i] = *s ? *s++ : ' ';
@@ -156,32 +160,48 @@ static void menu_sprites(void)
 {
     spr_begin();
     spr1(8, (u8)(5 * 8 + cursor * 16), 3, 3);
-    spr_person(200, 196, opt_val[OPT_P1], 1, (u8)((frame_cnt >> 4) & 1 ? 0 : 6), 0, 0);
-    spr_person(232, 196, opt_val[OPT_P2], 1, (u8)((frame_cnt >> 4) & 1 ? 6 : 0), 1, 1);
+    spr_person(230, 214, opt_val[OPT_P1], 1, (u8)((frame_cnt >> 4) & 1 ? 0 : 6), 0, 0);
+    spr_person(246, 214, opt_val[OPT_P2], 1, (u8)((frame_cnt >> 4) & 1 ? 6 : 0), 1, 1);
     spr_end();
+}
+
+static u8 unused_char(u8 a, u8 b, u8 c)
+{
+    u8 i;
+    for (i = 0; i < NCHARS; ++i) if (i != a && i != b && i != c) return i;
+    return 0;
 }
 
 static void setup_cfg(u8 mode)
 {
-    u8 f = opt_val[OPT_FMT];
+    u8 f = opt_val[OPT_FMT], i, lv = opt_val[OPT_LEVEL];
     cfg.surface = opt_val[OPT_SURF];
-    cfg.night = opt_val[OPT_TIME];
+    cfg.cond = opt_val[OPT_TIME];
+    cfg.doubles = opt_val[OPT_TYPE];
     cfg.chr[0] = opt_val[OPT_P1];
     cfg.chr[1] = opt_val[OPT_P2];
-    cfg.level[0] = cfg.level[1] = opt_val[OPT_LEVEL];
+    if (mode == MODE_TOUR) cfg.chr[1] = tour_opp[tour_round];
+    if (cfg.chr[1] == cfg.chr[0]) cfg.chr[1] = unused_char(cfg.chr[0], 255, 255);
+    cfg.chr[2] = unused_char(cfg.chr[0], cfg.chr[1], 255);
+    cfg.chr[3] = unused_char(cfg.chr[0], cfg.chr[1], cfg.chr[2]);
+    for (i = 0; i < 4; ++i) { cfg.level[i] = lv; cfg.ctrl[i] = CTRL_CPU; }
     cfg.sets_to_win = (u8)(f == 1 ? 2 : f == 2 ? 3 : 1);
     cfg.games_per_set = (u8)(f == 3 ? 4 : 6);
     cfg.ctrl[0] = CTRL_PAD1;
-    cfg.ctrl[1] = CTRL_CPU;
     cfg.mode = GM_MATCH;
     switch (mode) {
     case MODE_2P: cfg.ctrl[1] = CTRL_PAD2; break;
-    case MODE_TR_RALLY: cfg.mode = GM_TRAIN_RALLY; break;
-    case MODE_TR_SERVE: cfg.mode = GM_TRAIN_SERVE; break;
-    case MODE_DEMO: cfg.ctrl[0] = CTRL_CPU; cfg.level[0] = 2; cfg.level[1] = 1; break;
+    case MODE_2P_TEAM:
+        if (cfg.doubles) cfg.ctrl[2] = CTRL_PAD2; else cfg.ctrl[1] = CTRL_PAD2;
+        break;
+    case MODE_TR_RALLY: cfg.mode = GM_TRAIN_RALLY; cfg.doubles = 0; break;
+    case MODE_TR_SERVE: cfg.mode = GM_TRAIN_SERVE; cfg.doubles = 0; break;
+    case MODE_DEMO:
+        cfg.ctrl[0] = CTRL_CPU;
+        cfg.level[0] = cfg.level[2] = 2; cfg.level[1] = cfg.level[3] = 1;
+        break;
     case MODE_TOUR:
-        cfg.chr[1] = tour_opp[tour_round];
-        cfg.level[1] = tour_round;
+        cfg.level[1] = cfg.level[3] = tour_round;
         break;
     }
     last_mode = mode;
@@ -193,7 +213,7 @@ static void start_match(void)
     vbuf_reset();
     vram_adr(0x2000);
     vram_unrle(court_nt_rle);
-    pal_set_court(cfg.surface, cfg.night);
+    pal_set_court(cfg.surface, cfg.cond);
     pal_set_player(0, cfg.chr[0]);
     pal_set_player(1, cfg.chr[1]);
     music_play(MUS_NONE);

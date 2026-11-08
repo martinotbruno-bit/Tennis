@@ -1,5 +1,7 @@
 /* Pixel Open — moteur de match : déplacements, frappes, service,
  * physique de la balle, arbitrage et intelligence artificielle.
+ * Gère le simple (joueurs 0 et 1) et le double (joueurs 0..3,
+ * équipe = index & 1).
  *
  * Unités : positions et vitesses en virgule fixe 1/64 de pixel (FP).
  * La hauteur de balle (z) utilise la même unité ; elle est dessinée en
@@ -21,22 +23,26 @@ u8 st_points[2], st_aces[2], st_dfaults[2], st_winners[2], st_errors[2];
 u8 st_first_in[2], st_first_tot[2], st_longest;
 u8 tr_score, tr_total, tr_target;
 
-/* ---------------- état des joueurs (une entrée par équipe en simple) ---- */
-/* non statiques : lisibles par les tests automatiques (fichier .lbl) */
-s16 plx[2], ply[2];
-static u8 pl_state[2], pl_timer[2], pl_charge[2], pl_btn[2], pl_hit[2];
-static u8 pl_walk[2], pl_moving[2], pl_flip[2];
-static u8 ai_delay[2], ai_net[2];
+/* ---------------- joueurs (non statiques : lus par les tests) ---------- */
+u8 npl;                         /* 2 en simple, 4 en double */
+s16 plx[4], ply[4];
+static u8 pl_state[4], pl_timer[4], pl_charge[4], pl_btn[4], pl_hit[4];
+static u8 pl_walk[4], pl_moving[4], pl_flip[4];
+static u8 ai_delay[4], ai_net[4];
 static u8 hit_margin;
+static s16 pcache_x[4], pcache_y[4];   /* prédictions IA en cache */
+static s16 ai_gx[4], ai_gy[4];         /* destination courante de l'IA (FP) */
+static u8 ai_x2;                       /* 1 : pas de déplacement doublé */
+static u8 hit_now;                     /* une frappe a eu lieu dans cette trame */
+u8 srv_slot[2];                 /* double : quel partenaire sert pour l'équipe */
 #define ST_IDLE   0
 #define ST_CHARGE 1
 #define ST_SWING  2
 #define ST_TOSS   3
-#define ST_SERVED 4
 
 /* ---------------- balle ----------------------------------------------- */
 s16 bx, by, bz, bvx, bvy, bvz;
-u8 bgrav, bspin, bounces, hitter, b_serve, b_vis, b_live;
+u8 bgrav, bspin, bounces, hitter, hitter_p, b_serve, b_vis, b_live;
 s16 land_x, land_y;
 u8 rally_hits;
 #define SPIN_FLAT 0
@@ -47,7 +53,7 @@ u8 rally_hits;
 u8 ms, ms_timer, faults, paused;
 static u8 end_reason, pending_winner;
 static u8 hud_dirty, msg_timer;
-static char msg1[12], msg2[12];
+static char msg1[16], msg2[16];
 #define MS_SERVE  0     /* serveur en place, attend le lancer */
 #define MS_TOSS   1     /* balle lancée, attend la frappe */
 #define MS_RALLY  2
@@ -68,14 +74,14 @@ static const u8 ai_margin[3] = { 26, 15, 9 };
 static const u8 ai_power[3]  = { 4, 12, 20 };
 #define HUMAN_SPEED 120
 
-static u8 side_of(u8 t) { return (u8)(t ^ sc_swap); }   /* 0 = bas, 1 = haut */
-static u8 serving_team(void) { return sc_server; }
+/* gouttes de pluie (effet visuel) */
+#define NRAIN 10
+static u8 rain_x[NRAIN], rain_y[NRAIN];
 
-static s16 mulfrac(s16 v, u8 k)
-{
-    return (s16)(((long)v * k) >> 8);
-}
+#define side_of(t) ((u8)(((t) & 1) ^ sc_swap))   /* 0 = bas, 1 = haut */
 
+/* v * k / 256 en 16 bits (|v| < 2600) : évite la multiplication 32 bits */
+static s16 mulfrac(s16 v, u8 k) { return (s16)(((v >> 3) * (s16)k) >> 5); }
 static s16 iabs(s16 v) { return v < 0 ? -v : v; }
 
 static s8 rnd_spread(u8 spread)
@@ -87,9 +93,22 @@ static s8 rnd_spread(u8 spread)
 static void set_msg(const char *a, const char *b, u8 t)
 {
     u8 i;
-    for (i = 0; i < 11; ++i) { msg1[i] = *a ? *a++ : ' '; msg2[i] = *b ? *b++ : ' '; }
+    for (i = 0; i < 14; ++i) { msg1[i] = *a ? *a++ : ' '; msg2[i] = *b ? *b++ : ' '; }
     msg_timer = t;
     hud_dirty = 1;
+}
+
+/* joueur au service et receveur (simple : index = équipe) */
+static u8 server_p(void)
+{
+    u8 t = sc_server;
+    return (u8)(cfg.doubles ? t + 2 * srv_slot[t] : t);
+}
+static u8 receiver_p(void)
+{
+    u8 t = (u8)(sc_server ^ 1);
+    /* double : le partenaire 0 reçoit côté égalité, le 2 côté avantage */
+    return (u8)(cfg.doubles ? t + 2 * rules_ad_side() : t);
 }
 
 /* ====================================================================== */
@@ -97,24 +116,31 @@ static void set_msg(const char *a, const char *b, u8 t)
 /* ====================================================================== */
 static void launch(s16 tx, s16 ty, u8 T, u8 grav)
 {
-    long zn;
-    s16 tn, tt;
+    s16 tt, dy, zn, n, d;
+    u16 frac = 0, tn;
     u8 tries;
-    for (tries = 0; tries < 12; ++tries) {
-        /* division signée explicite : cc65 divise en non signé un
-           entier par un unsigned char */
-        tt = (s16)T;
-        bvx = (tx * FP - bx) / tt;
-        bvy = (ty * FP - by) / tt;
-        bvz = (s16)(((u16)grav * T) / 2) - bz / tt;
-        /* contrôle de passage au-dessus du filet */
-        if (bvy == 0) break;
-        tn = (s16)((NET_Y * FP - by) / bvy);
-        if (tn <= 0 || tn >= T) break;
-        zn = (long)bz + (long)bvz * tn - ((long)grav * tn * tn) / 2;
-        if (zn >= (NET_H + 3) * FP) break;
-        T += 3;
+    /* fraction du trajet (sur 256) à laquelle la balle passe le filet :
+       une seule division 16 bits, hors de la boucle (optimisation CPU) */
+    dy = ty * FP - by;
+    n = NET_Y - PX(by);
+    d = ty - PX(by);
+    if ((n < 0) == (d < 0) && d != 0) {
+        if (n < 0) { n = -n; d = -d; }
+        frac = ((u16)n << 8) / (u16)d;
     }
+    /* hauteur au filet sans division : la parabole passant par z(0) = bz et
+       z(T) = 0 vaut z(t) = bz.(1 - t/T) + g.t.(T - t)/2 (calcul en FP/4) */
+    for (tries = 0; tries < 5 && frac && frac < 256; ++tries) {
+        tn = (frac * T) >> 8;
+        zn = (s16)((((u16)bz >> 4) * (256 - frac)) >> 6)
+           + (s16)((((u16)grav * tn) >> 3) * (u16)(T - tn));
+        if (zn >= ((NET_H + 3) * FP) >> 2) break;
+        T = (u8)(T + (T >> 3) + 3);
+    }
+    tt = (s16)T;      /* division signée explicite (cc65 : s16 / u8 = non signé) */
+    bvz = (s16)(((u16)grav * T) >> 1) - bz / tt;
+    bvx = (tx * FP - bx) / tt;
+    bvy = dy / tt;
     bgrav = grav;
     land_x = tx;
     land_y = ty;
@@ -140,13 +166,13 @@ static void point_over(u8 winner, u8 reason)
     if (reason == 2) {
         ++st_winners[winner];
         if (rally_hits == 1) { ++st_aces[winner]; set_msg("ACE !", "", 70); }
-        else set_msg("COUP", "GAGNANT !", 70);
+        else set_msg("COUP GAGNANT !", "", 70);
         sfx_crowd(7);
     } else if (reason == 1) {
         ++st_errors[winner ^ 1];
         sfx_crowd(2);
     }
-    if (rally_hits >= 12) { set_msg("QUEL", "ECHANGE !", 70); sfx_crowd(7); }
+    if (rally_hits >= 12) { set_msg("QUEL ECHANGE !", "", 70); sfx_crowd(7); }
 }
 
 static void serve_fault(const char *why)
@@ -156,16 +182,16 @@ static void serve_fault(const char *why)
     b_live = 0;
     sfx_fault();
     if (cfg.mode == GM_TRAIN_SERVE) {
-        ++tr_total; end_reason = END_FAULT; set_msg(why, "", 50); return;
+        ++tr_total; end_reason = END_FAULT; set_msg("FAUTE", why, 50); hud_dirty = 1; return;
     }
     if (faults == 0) {
         end_reason = END_FAULT;
         set_msg("FAUTE", why, 55);
     } else {
-        ++st_dfaults[serving_team()];
-        set_msg("DOUBLE", "FAUTE", 70);
+        ++st_dfaults[sc_server];
+        set_msg("DOUBLE FAUTE", "", 70);
         end_reason = END_POINT;
-        pending_winner = (u8)(serving_team() ^ 1);
+        pending_winner = (u8)(sc_server ^ 1);
         ++st_points[pending_winner];
     }
 }
@@ -192,9 +218,11 @@ static void ball_bounce(void)
     u8 recv = (u8)(hitter ^ 1);
     u8 rest = surf_rest[cfg.surface], fric = surf_fric[cfg.surface];
     s16 x = PX(bx), y = PX(by);
+    s16 l = cfg.doubles ? DBL_L : SGL_L, r = cfg.doubles ? DBL_R : SGL_R;
 
     if (bspin == SPIN_TOP)   { rest = (u8)(rest + 24); if (fric < 240) fric += 12; }
     if (bspin == SPIN_SLICE) { rest = (u8)(rest - 46); }
+    if (cfg.cond == COND_RAIN) { rest = (u8)(rest - 20); if (fric < 248) fric += 6; }  /* court glissant */
     bvz = mulfrac(-bvz, rest);
     bvx = mulfrac(bvx, fric);
     bvy = mulfrac(bvy, fric);
@@ -217,11 +245,11 @@ static void ball_bounce(void)
             if (cfg.mode == GM_TRAIN_SERVE) {
                 ++tr_score; ++tr_total;
                 ms = MS_DEAD; ms_timer = 50; b_live = 0; end_reason = END_FAULT;
-                set_msg("BON", "SERVICE", 40);
+                set_msg("BON SERVICE", "", 40);
                 ++bounces;
                 return;
             }
-        } else if (x < SGL_L || x > SGL_R || y < TOP_BASE || y > BOT_BASE) {
+        } else if (x < l || x > r || y < TOP_BASE || y > BOT_BASE) {
             set_msg("DEHORS", "", 50);
             point_over(recv, 1);
             ++bounces;
@@ -231,9 +259,8 @@ static void ball_bounce(void)
             ++tr_score;
             if (y < TOP_SERV && ((tr_target == 0 && x < CENTER_X) || (tr_target == 1 && x >= CENTER_X))) {
                 ++tr_score;
-                set_msg("CIBLE !", "+2", 40);
-            } else set_msg("BONNE", "+1", 40);
-            hud_dirty = 1;
+                set_msg("CIBLE ! +2", "", 40);
+            } else set_msg("BONNE +1", "", 40);
             ms = MS_DEAD; ms_timer = 40; b_live = 0; end_reason = END_FAULT;
             ++bounces;
             return;
@@ -273,7 +300,7 @@ static void ball_update(void)
         if (b_live) {
             if (bounces == 0) {
                 set_msg("DEHORS", "", 50);
-                if (b_serve) { serve_fault(""); }
+                if (b_serve) serve_fault("");
                 else point_over((u8)(hitter ^ 1), 1);
             } else point_over(hitter, 2);
         }
@@ -288,31 +315,34 @@ static void ball_update(void)
 /* ====================================================================== */
 /* Frappes                                                                 */
 /* ====================================================================== */
-static u8 can_hit(u8 t)
+static u8 can_hit(u8 p)
 {
     s16 dx, dy;
+    u8 t = (u8)(p & 1);
     if (ms != MS_RALLY || !b_live || hitter == t) return 0;
     if (bounces > 1) return 0;
     if ((PX(by) < NET_Y ? 1 : 0) != side_of(t)) return 0;
     if (b_serve && bounces == 0) return 0;      /* le retour se joue après rebond */
-    dx = PX(bx) - PX(plx[t]);
-    dy = PX(by) - PX(ply[t]);
+    dx = PX(bx) - PX(plx[p]);
+    dy = PX(by) - PX(ply[p]);
     if (dx < -20 || dx > 20 || dy < -12 || dy > 8) return 0;
     if (bz > 36 * FP) return 0;
     return 1;
 }
 
 /* pad : directions maintenues ; btn : PAD_A ou PAD_B ; power 0..32 */
-static void do_hit(u8 t, u8 pad, u8 btn, u8 power, u8 spread)
+static void do_hit(u8 p, u8 pad, u8 btn, u8 power, u8 spread)
 {
+    u8 t = (u8)(p & 1);
     u8 side = side_of(t);
     s8 dir = side ? 1 : -1;          /* vers l'adversaire en y */
     s16 depth, tx, ty, dist, dx;
     u8 speed, grav, T;
     u8 smash = (u8)(bounces == 0 && bz > 20 * FP);
     u8 volley = (u8)(bounces == 0);
+    s16 l = cfg.doubles ? DBL_L : SGL_L, r = cfg.doubles ? DBL_R : SGL_R;
 
-    dx = PX(bx) - PX(plx[t]);
+    dx = PX(bx) - PX(plx[p]);
     if (dx > 14 || dx < -14) spread += 8;          /* frappe en extension */
 
     bspin = SPIN_FLAT;
@@ -335,10 +365,10 @@ static void do_hit(u8 t, u8 pad, u8 btn, u8 power, u8 spread)
     if (volley && !smash) { depth = (s16)(depth - 10); if (speed > 42) speed = 42; }
 
     /* direction : croix gauche/droite, sinon croisé naturel */
-    if (pad & PAD_LEFT) tx = SGL_L + hit_margin;
-    else if (pad & PAD_RIGHT) tx = SGL_R - hit_margin;
-    else tx = CENTER_X + ((CENTER_X - PX(plx[t])) >> 1);
-    if (depth < 30 && !(pad & (PAD_LEFT | PAD_RIGHT))) tx = PX(plx[t]);
+    if (pad & PAD_LEFT) tx = l + hit_margin;
+    else if (pad & PAD_RIGHT) tx = r - hit_margin;
+    else tx = CENTER_X + ((CENTER_X - PX(plx[p])) >> 1);
+    if (depth < 30 && !(pad & (PAD_LEFT | PAD_RIGHT))) tx = PX(plx[p]);
     spread = (u8)(spread + (power >> 2));
     if (spread > 100) spread = 100;
     tx += rnd_spread(spread);
@@ -351,62 +381,81 @@ static void do_hit(u8 t, u8 pad, u8 btn, u8 power, u8 spread)
     if (T < 14) T = 14;
 
     hitter = t;
+    hitter_p = p;
+    hit_now = 1;
     b_serve = 0;
     ++rally_hits;
-    pl_hit[t] = 1;
-    pl_flip[t] = (u8)(dx < 0);
+    pl_hit[p] = 1;
+    pl_flip[p] = (u8)(dx < 0);
     launch(tx, ty, T, grav);
     sfx_hit((u8)(power >> 3));
-    /* l'adversaire IA réagit après un délai */
+    /* les adversaires IA réagissent après un délai */
     ai_delay[t ^ 1] = ai_react[cfg.level[t ^ 1]];
+    if (npl == 4) ai_delay[(t ^ 1) + 2] = ai_react[cfg.level[(t ^ 1) + 2]];
+    pcache_y[0] = pcache_y[1] = pcache_y[2] = pcache_y[3] = 0x7FFF;
+    ai_gy[0] = ai_gy[1] = ai_gy[2] = ai_gy[3] = 0x7FFF;
 }
 
 /* ====================================================================== */
 /* Service                                                                 */
 /* ====================================================================== */
+static s16 base_y(u8 side, s8 off) { return (side == 0 ? BOT_BASE + off : TOP_BASE - off) * FP; }
+static s16 net_y(u8 side) { return (side == 0 ? NET_Y + 34 : NET_Y - 30) * FP; }
+
 static void place_for_serve(void)
 {
-    u8 srv = serving_team(), rcv = (u8)(srv ^ 1);
-    u8 ss = side_of(srv);
+    u8 srv = sc_server, rcv = (u8)(srv ^ 1);
+    u8 sp = server_p(), rp = receiver_p();
+    u8 ss = side_of(srv), rs = side_of(rcv);
     u8 ad = rules_ad_side();
     u8 left = (u8)((ss == 0) == (ad == 0));     /* carré visé à gauche ? */
-    plx[srv] = (left ? CENTER_X + 22 : CENTER_X - 22) * FP;
-    ply[srv] = (ss == 0 ? BOT_BASE + 8 : TOP_BASE - 4) * FP;
-    plx[rcv] = (left ? CENTER_X - 46 : CENTER_X + 46) * FP;
-    ply[rcv] = (ss == 0 ? TOP_BASE - 2 : BOT_BASE + 6) * FP;
-    pl_state[0] = pl_state[1] = ST_IDLE;
-    ai_net[0] = ai_net[1] = 0;
-    pl_charge[0] = pl_charge[1] = 0;
+    u8 i;
+    plx[sp] = (left ? CENTER_X + 22 : CENTER_X - 22) * FP;
+    ply[sp] = base_y(ss, 8);
+    plx[rp] = (left ? CENTER_X - 46 : CENTER_X + 46) * FP;
+    ply[rp] = base_y(rs, 2);
+    if (npl == 4) {
+        /* partenaire du serveur au filet, partenaire du receveur à la ligne de service */
+        u8 sm = (u8)(sp ^ 2), rm = (u8)(rp ^ 2);
+        plx[sm] = (left ? CENTER_X - 34 : CENTER_X + 34) * FP;
+        ply[sm] = net_y(ss);
+        plx[rm] = (left ? CENTER_X + 40 : CENTER_X - 40) * FP;
+        ply[rm] = (rs == 0 ? BOT_SERV + 4 : TOP_SERV - 4) * FP;
+    }
+    for (i = 0; i < 4; ++i) {
+        pl_state[i] = ST_IDLE;
+        pl_charge[i] = 0;
+        ai_net[i] = 0;
+    }
+    if (npl == 4) { ai_net[sp ^ 2] = 1; }
     b_vis = 0;
     b_live = 0;
     rally_hits = 0;
     ms = MS_SERVE;
     ms_timer = (u8)(40 + (rand8() & 31));
-    if (cfg.mode == GM_TRAIN_RALLY) {
-        /* le lanceur sert toujours depuis le haut vers le joueur (équipe 0 en bas) */
-        ms_timer = 50;
-    }
+    if (cfg.mode == GM_TRAIN_RALLY) ms_timer = 50;
     hud_dirty = 1;
 }
 
-static void toss(u8 t)
+static void toss(u8 p)
 {
-    bx = plx[t] + 5 * FP;
-    by = ply[t];
+    bx = plx[p] + 5 * FP;
+    by = ply[p];
     bz = 18 * FP;
     bvx = bvy = 0;
     bvz = 150;
     bgrav = 6;
     b_vis = 1;
     b_live = 0;
-    pl_state[t] = ST_TOSS;
+    pl_state[p] = ST_TOSS;
     ms = MS_TOSS;
     sfx_toss();
 }
 
 /* frappe de service ; quality : 0 parfait .. grand = mauvais */
-static void serve_hit(u8 t, u8 pad, u8 btn, u8 quality, u8 spread)
+static void serve_hit(u8 p, u8 pad, u8 btn, u8 quality, u8 spread)
 {
+    u8 t = (u8)(p & 1);
     u8 ss = side_of(t);
     u8 ad = rules_ad_side();
     u8 left = (u8)((ss == 0) == (ad == 0));
@@ -426,105 +475,113 @@ static void serve_hit(u8 t, u8 pad, u8 btn, u8 quality, u8 spread)
     T = (u8)((dist * 16) / speed);
     if (T < 14) T = 14;
     hitter = t;
+    hitter_p = p;
     b_serve = 1;
     rally_hits = 1;
     if (faults == 0) ++st_first_tot[t];
     launch(tx, ty, T, grav);
     ms = MS_RALLY;
-    pl_state[t] = ST_SWING;
-    pl_timer[t] = 12;
+    pl_state[p] = ST_SWING;
+    pl_timer[p] = 12;
     sfx_hit(btn == PAD_B ? 1 : 3);
     ai_delay[t ^ 1] = ai_react[cfg.level[t ^ 1]];
+    if (npl == 4) ai_delay[(t ^ 1) + 2] = ai_react[cfg.level[(t ^ 1) + 2]];
+    pcache_y[0] = pcache_y[1] = pcache_y[2] = pcache_y[3] = 0x7FFF;
+    ai_gy[0] = ai_gy[1] = ai_gy[2] = ai_gy[3] = 0x7FFF;
+}
+
+/* ====================================================================== */
+/* Déplacements                                                            */
+/* ====================================================================== */
+static void move_toward(u8 p, s16 tx, s16 ty, u8 speed)
+{
+    s16 dx = tx - plx[p], dy = ty - ply[p];
+    s16 sx = speed, sy = speed;
+    pl_moving[p] = 0;
+    if (iabs(dx) > 2 * FP && iabs(dy) > 2 * FP) { sx = (s16)((speed * 3) >> 2); sy = sx; }
+    if (dx > sx) { plx[p] += sx; pl_moving[p] = 1; }
+    else if (dx < -sx) { plx[p] -= sx; pl_moving[p] = 1; }
+    else plx[p] = tx;
+    if (dy > sy) { ply[p] += sy; pl_moving[p] = 1; }
+    else if (dy < -sy) { ply[p] -= sy; pl_moving[p] = 1; }
+    else ply[p] = ty;
+}
+
+static void clamp_player(u8 p)
+{
+    s16 ymin, ymax;
+    if (side_of(p) == 0) { ymin = (NET_Y + 10) * FP; ymax = 228 * FP; }
+    else { ymin = 30 * FP; ymax = (NET_Y - 6) * FP; }
+    if (ms == MS_SERVE && p == server_p()) {
+        /* le serveur reste derrière sa ligne de fond */
+        if (side_of(p) == 0) ymin = (BOT_BASE + 6) * FP; else ymax = (TOP_BASE - 3) * FP;
+    }
+    /* x limité à 48..208 : les sprites n'empiètent pas sur les panneaux de score */
+    if (plx[p] < 48 * FP) plx[p] = 48 * FP;
+    if (plx[p] > 208 * FP) plx[p] = 208 * FP;
+    if (ply[p] < ymin) ply[p] = ymin;
+    if (ply[p] > ymax) ply[p] = ymax;
 }
 
 /* ====================================================================== */
 /* Contrôle humain                                                         */
 /* ====================================================================== */
-static void move_toward(u8 t, s16 tx, s16 ty, u8 speed)
-{
-    s16 dx = tx - plx[t], dy = ty - ply[t];
-    s16 sx = speed, sy = speed;
-    pl_moving[t] = 0;
-    if (iabs(dx) > 2 * FP && iabs(dy) > 2 * FP) { sx = (s16)((speed * 3) >> 2); sy = sx; }
-    if (dx > sx) { plx[t] += sx; pl_moving[t] = 1; }
-    else if (dx < -sx) { plx[t] -= sx; pl_moving[t] = 1; }
-    else plx[t] = tx;
-    if (dy > sy) { ply[t] += sy; pl_moving[t] = 1; }
-    else if (dy < -sy) { ply[t] -= sy; pl_moving[t] = 1; }
-    else ply[t] = ty;
-}
-
-static void clamp_player(u8 t)
-{
-    s16 ymin, ymax;
-    if (side_of(t) == 0) { ymin = (NET_Y + 10) * FP; ymax = 228 * FP; }
-    else { ymin = 44 * FP; ymax = (NET_Y - 6) * FP; }
-    if (ms == MS_SERVE && t == serving_team()) {
-        /* le serveur reste derrière sa ligne de fond, dans sa moitié */
-        if (side_of(t) == 0) ymin = (BOT_BASE + 6) * FP; else ymax = (TOP_BASE - 3) * FP;
-    }
-    if (plx[t] < 36 * FP) plx[t] = 36 * FP;
-    if (plx[t] > 220 * FP) plx[t] = 220 * FP;
-    if (ply[t] < ymin) ply[t] = ymin;
-    if (ply[t] > ymax) ply[t] = ymax;
-}
-
-static void human_update(u8 t, u8 pad, u8 pressed)
+static void human_update(u8 p, u8 pad, u8 pressed)
 {
     s16 sp = HUMAN_SPEED;
-    s16 nx = plx[t], ny = ply[t];
-    u8 st = pl_state[t];
+    s16 nx = plx[p], ny = ply[p];
+    u8 st = pl_state[p];
 
-    if (ms == MS_SERVE && t == serving_team()) {
-        if (pressed & (PAD_A | PAD_B)) { toss(t); return; }
-        if (pad & PAD_LEFT) plx[t] -= 64;
-        if (pad & PAD_RIGHT) plx[t] += 64;
-        /* rester du bon côté du centre */
+    if (ms == MS_SERVE && p == server_p()) {
+        if (pressed & (PAD_A | PAD_B)) { toss(p); return; }
+        if (pad & PAD_LEFT) plx[p] -= 64;
+        if (pad & PAD_RIGHT) plx[p] += 64;
         {
-            u8 left = (u8)((side_of(t) == 0) == (rules_ad_side() == 0));
-            if (left && plx[t] < (CENTER_X + 4) * FP) plx[t] = (CENTER_X + 4) * FP;
-            if (left && plx[t] > (SGL_R + 10) * FP) plx[t] = (SGL_R + 10) * FP;
-            if (!left && plx[t] > (CENTER_X - 4) * FP) plx[t] = (CENTER_X - 4) * FP;
-            if (!left && plx[t] < (SGL_L - 10) * FP) plx[t] = (SGL_L - 10) * FP;
+            /* rester du bon côté du centre */
+            u8 left = (u8)((side_of(p) == 0) == (rules_ad_side() == 0));
+            if (left && plx[p] < (CENTER_X + 4) * FP) plx[p] = (CENTER_X + 4) * FP;
+            if (left && plx[p] > (SGL_R + 10) * FP) plx[p] = (SGL_R + 10) * FP;
+            if (!left && plx[p] > (CENTER_X - 4) * FP) plx[p] = (CENTER_X - 4) * FP;
+            if (!left && plx[p] < (SGL_L - 10) * FP) plx[p] = (SGL_L - 10) * FP;
         }
-        pl_moving[t] = (u8)((pad & (PAD_LEFT | PAD_RIGHT)) != 0);
+        pl_moving[p] = (u8)((pad & (PAD_LEFT | PAD_RIGHT)) != 0);
         return;
     }
-    if (ms == MS_TOSS && t == serving_team()) {
+    if (ms == MS_TOSS && p == server_p()) {
         if (pressed & (PAD_A | PAD_B)) {
             s16 q = iabs(bvz) >> 3;          /* 0 au sommet du lancer */
-            serve_hit(t, pad, (u8)(pressed & PAD_A ? PAD_A : PAD_B), (u8)(q > 20 ? 20 : q), 3);
+            serve_hit(p, pad, (u8)(pressed & PAD_A ? PAD_A : PAD_B), (u8)(q > 20 ? 20 : q), 3);
         }
         return;
     }
     if (ms == MS_SERVE || ms == MS_TOSS) {
-        /* receveur : petits ajustements latéraux avant le service */
-        if (pad & PAD_LEFT) plx[t] -= 64;
-        if (pad & PAD_RIGHT) plx[t] += 64;
-        clamp_player(t);
+        /* avant le service : petits ajustements latéraux */
+        if (pad & PAD_LEFT) plx[p] -= 64;
+        if (pad & PAD_RIGHT) plx[p] += 64;
+        clamp_player(p);
         return;
     }
 
     /* frappe : appui = armer (la puissance monte), relâcher = frapper */
     if (st == ST_IDLE && (pressed & (PAD_A | PAD_B))) {
-        pl_state[t] = st = ST_CHARGE;
-        pl_btn[t] = (u8)(pressed & PAD_A ? PAD_A : PAD_B);
-        pl_charge[t] = 0;
-        pl_hit[t] = 0;
+        pl_state[p] = st = ST_CHARGE;
+        pl_btn[p] = (u8)(pressed & PAD_A ? PAD_A : PAD_B);
+        pl_charge[p] = 0;
+        pl_hit[p] = 0;
     }
     if (st == ST_CHARGE) {
-        if (pad & pl_btn[t]) { if (pl_charge[t] < 32) ++pl_charge[t]; }
-        else { pl_state[t] = st = ST_SWING; pl_timer[t] = 14; }
+        if (pad & pl_btn[p]) { if (pl_charge[p] < 32) ++pl_charge[p]; }
+        else { pl_state[p] = st = ST_SWING; pl_timer[p] = 14; }
         sp = HUMAN_SPEED / 2;
     }
-    if ((st == ST_CHARGE || (st == ST_SWING && pl_timer[t] > 4)) && !pl_hit[t] && can_hit(t)) {
-        do_hit(t, pad, pl_btn[t], pl_charge[t], 3);
-        pl_state[t] = ST_SWING;
-        pl_timer[t] = 10;
+    if ((st == ST_CHARGE || (st == ST_SWING && pl_timer[p] > 4)) && !pl_hit[p] && can_hit(p)) {
+        do_hit(p, pad, pl_btn[p], pl_charge[p], 3);
+        pl_state[p] = ST_SWING;
+        pl_timer[p] = 10;
     }
     if (st == ST_SWING) {
         sp = HUMAN_SPEED / 3;
-        if (--pl_timer[t] == 0) pl_state[t] = ST_IDLE;
+        if (--pl_timer[p] == 0) pl_state[p] = ST_IDLE;
     }
     if (ms == MS_DEAD || ms == MS_OVER) sp = HUMAN_SPEED / 2;
 
@@ -532,28 +589,67 @@ static void human_update(u8 t, u8 pad, u8 pressed)
     if (pad & PAD_RIGHT) nx += sp;
     if (pad & PAD_UP) ny -= sp;
     if (pad & PAD_DOWN) ny += sp;
-    pl_moving[t] = (u8)(nx != plx[t] || ny != ply[t]);
-    plx[t] = nx; ply[t] = ny;
-    clamp_player(t);
+    pl_moving[p] = (u8)(nx != plx[p] || ny != ply[p]);
+    plx[p] = nx; ply[p] = ny;
+    clamp_player(p);
 }
 
 /* ====================================================================== */
 /* Intelligence artificielle                                               */
 /* ====================================================================== */
-static void ai_update(u8 t)
+/* Point de frappe prévu pour le joueur p (pixels). Recalculé une trame
+ * sur quatre par joueur (calcul en 32 bits coûteux sur 6502). */
+static s16 pred_x, pred_y;
+static void predict(u8 p)
 {
-    u8 lv = cfg.level[t];
+    if (((u8)(frame_cnt + p) & 3) != 0 && ai_delay[p] == 0 && pcache_y[p] != 0x7FFF) {
+        pred_x = pcache_x[p]; pred_y = pcache_y[p];
+        return;
+    }
+    if (bounces == 0) {
+        pred_x = land_x + PX(bvx * 12);
+        pred_y = land_y + PX(bvy * 12);
+        /* joueur au filet : interception de volée */
+        if (iabs(PX(ply[p]) - NET_Y) < 46 && !b_serve) {
+            pred_y = PX(ply[p]);
+            if ((bvy >> 2) != 0) pred_x = PX(bx) + ((pred_y - PX(by)) * (bvx >> 2)) / (bvy >> 2);
+        }
+    } else {
+        pred_x = PX(bx + bvx * 6);
+        pred_y = PX(by + bvy * 6);
+    }
+    pcache_x[p] = pred_x; pcache_y[p] = pred_y;
+}
+
+/* En double, un seul partenaire joue la balle : celui dont la moitié
+ * (gauche/droite) contient le point de frappe, ou le plus proche si les
+ * deux sont du même côté. Évite que les deux partenaires se gênent. */
+static u8 responsible(u8 p)
+{
+    u8 m = (u8)(p ^ 2);
+    s16 dp, dm;
+    if (npl != 4) return 1;
+    if (ms == MS_RALLY && b_serve) return (u8)(p == receiver_p());
+    dp = iabs(PX(plx[p]) - pred_x) + iabs(PX(ply[p]) - pred_y);
+    dm = iabs(PX(plx[m]) - pred_x) + iabs(PX(ply[m]) - pred_y);
+    if (dp == dm) return (u8)(p < m);
+    return (u8)(dp < dm);
+}
+
+static void ai_update(u8 p)
+{
+    u8 t = (u8)(p & 1);
+    u8 lv = cfg.level[p];
     u8 side = side_of(t);
-    u8 opp = (u8)(t ^ 1);
     s16 tx, ty;
     u8 pad = 0, btn = PAD_A;
 
     if (ms == MS_SERVE) {
-        if (t == serving_team()) {
+        if (p == server_p()) {
             if (cfg.mode == GM_TRAIN_RALLY && --ms_timer == 0) {
                 /* lanceur de balles : envoie une balle vers le joueur */
                 bx = (CENTER_X + rnd_spread(30)) * FP; by = (TOP_BASE - 4) * FP; bz = 22 * FP;
-                b_vis = 1; hitter = t; b_serve = 0; rally_hits = 0;
+                b_vis = 1; hitter = t; hitter_p = p; b_serve = 0; rally_hits = 0;
                 ++tr_total; hud_dirty = 1;
                 tx = CENTER_X + rnd_spread(40);
                 ty = BOT_BASE - 30 + rnd_spread(12);
@@ -564,122 +660,145 @@ static void ai_update(u8 t)
                 tr_target = (u8)(rand8() & 1);
                 return;
             }
-            if (cfg.mode != GM_TRAIN_RALLY && --ms_timer == 0) toss(t);
+            if (cfg.mode != GM_TRAIN_RALLY && --ms_timer == 0) toss(p);
         }
-        pl_moving[t] = 0;
+        pl_moving[p] = 0;
         return;
     }
     if (ms == MS_TOSS) {
-        if (t == serving_team() && bvz <= 0) {
+        if (p == server_p() && bvz <= 0) {
             u8 q = (u8)(rand8() % (u8)(10 - lv * 3));
-            if (faults == 0) serve_hit(t, (u8)(rand8() & 1 ? PAD_LEFT : PAD_RIGHT), PAD_A, q, (u8)(ai_spread[lv] >> 2));
-            else serve_hit(t, 0, PAD_B, (u8)(q >> 1), (u8)(ai_spread[lv] >> 3));
+            if (faults == 0) serve_hit(p, (u8)(rand8() & 1 ? PAD_LEFT : PAD_RIGHT), PAD_A, q, (u8)(ai_spread[lv] >> 2));
+            else serve_hit(p, 0, PAD_B, (u8)(q >> 1), (u8)(ai_spread[lv] >> 3));
         }
         return;
     }
     if (cfg.mode == GM_TRAIN_RALLY || cfg.mode == GM_TRAIN_SERVE) {
-        /* adversaire d'entraînement immobile */
-        pl_moving[t] = 0;
+        pl_moving[p] = 0;               /* adversaire d'entraînement immobile */
         return;
     }
 
     if (ms == MS_RALLY && b_live && hitter != t) {
-        if (ai_delay[t]) { --ai_delay[t]; pl_moving[t] = 0; return; }
-        if (bounces == 0) {
-            /* point de frappe prévu : un peu après le rebond annoncé */
-            tx = land_x + PX(bvx * 12);
-            ty = land_y + PX(bvy * 12);
-            /* joueur au filet : interception de volée */
-            if (iabs(PX(ply[t]) - NET_Y) < 46 && !b_serve) {
-                ty = PX(ply[t]);
-                if (bvy != 0) tx = PX(bx) + (s16)(((long)(ty - PX(by)) * bvx) / bvy);
-            }
-        } else {
-            tx = PX(bx + bvx * 6);
-            ty = PX(by + bvy * 6);
+        if (ai_delay[p]) {
+            --ai_delay[p];
+            if (ai_x2 && ai_delay[p]) --ai_delay[p];
+            pl_moving[p] = 0;
+            return;
         }
-        /* se placer pour avoir la balle sur le côté */
-        tx += (PX(plx[t]) < tx) ? -10 : 10;
-        if (side == 0 && ty < NET_Y + 12) ty = NET_Y + 12;
-        if (side == 1 && ty > NET_Y - 8) ty = NET_Y - 8;
-        move_toward(t, tx * FP, ty * FP, ai_speed[lv]);
-        clamp_player(t);
-
-        if (can_hit(t) && (bounces == 1 || bz > 14 * FP || iabs(PX(ply[t]) - NET_Y) < 50)) {
+        if (can_hit(p) && (bounces == 1 || bz > 14 * FP || iabs(PX(ply[p]) - NET_Y) < 50)) {
             u8 spread = ai_spread[lv];
-            s16 ox = PX(plx[opp]);
-            /* viser loin de l'adversaire */
+            u8 o = (u8)(t ^ 1);
+            s16 ox = PX(plx[o]), oy = PX(ply[o]);
+            if (npl == 4) {
+                /* viser l'adversaire du fond ou le trou entre les deux */
+                ox = (PX(plx[o]) + PX(plx[o + 2])) >> 1;
+                if (iabs(PX(ply[o + 2]) - NET_Y) > iabs(oy - NET_Y)) oy = PX(ply[o + 2]);
+            }
             if (ox > CENTER_X + 10) pad = PAD_LEFT;
             else if (ox < CENTER_X - 10) pad = PAD_RIGHT;
             else pad = (u8)(rand8() & 1 ? PAD_LEFT : PAD_RIGHT);
             /* choix tactiques selon le niveau */
-            if (lv >= 1 && iabs(PX(ply[opp]) - NET_Y) < 50 && (rand8() & 3) == 0) {
+            if (lv >= 1 && iabs(oy - NET_Y) < 50 && (rand8() & 3) == 0) {
                 btn = PAD_B; pad |= PAD_UP;                     /* lob sur le volleyeur */
-            } else if (lv == 2 && iabs(PX(ply[opp]) - NET_Y) > 90 && (rand8() & 7) == 0) {
+            } else if (lv == 2 && iabs(oy - NET_Y) > 90 && (rand8() & 7) == 0) {
                 btn = PAD_B; pad |= PAD_DOWN;                   /* amortie */
             } else if ((rand8() & 3) == 0) {
                 btn = PAD_B;                                    /* coupé de variation */
             }
             if (lv == 0 && (rand8() & 7) == 0) spread += 20;    /* faute directe */
-            /* la marge visée (distance aux lignes) dépend du niveau */
             hit_margin = ai_margin[lv];
-            do_hit(t, pad, btn, ai_power[lv], spread);
-            pl_state[t] = ST_SWING;
-            pl_timer[t] = 12;
+            do_hit(p, pad, btn, ai_power[lv], spread);
+            pl_state[p] = ST_SWING;
+            pl_timer[p] = 12;
             /* montée au filet après une frappe à l'intérieur du court */
-            if (lv >= 1 && iabs(PX(ply[t]) - NET_Y) < 66 && (rand8() & (lv == 2 ? 1 : 3)) == 0) ai_net[t] = 1;
+            if (npl == 2 && lv >= 1 && iabs(PX(ply[p]) - NET_Y) < 66 && (rand8() & (lv == 2 ? 1 : 3)) == 0) ai_net[p] = 1;
+            return;   /* trame de frappe : pas de calcul de déplacement */
         }
+        /* en simple, la décision (coûteuse) est prise une trame sur deux ;
+           le déplacement vers la dernière destination a lieu à chaque trame */
+        if (ai_x2 || ((u8)(frame_cnt ^ p) & 1) == 0 || ai_gy[p] == 0x7FFF) {
+            predict(p);
+            if (responsible(p)) {
+                tx = pred_x; ty = pred_y;
+                /* se placer pour avoir la balle sur le côté */
+                tx += (PX(plx[p]) < tx) ? -10 : 10;
+            } else {
+                /* partenaire : couvre sa moitié du court */
+                tx = (PX(plx[p ^ 2]) < CENTER_X) ? CENTER_X + 34 : CENTER_X - 34;
+                ty = PX(ply[p]);
+            }
+            if (side == 0 && ty < NET_Y + 12) ty = NET_Y + 12;
+            if (side == 1 && ty > NET_Y - 8) ty = NET_Y - 8;
+            ai_gx[p] = tx * FP; ai_gy[p] = ty * FP;
+        }
+        move_toward(p, ai_gx[p], ai_gy[p], (u8)(ai_speed[lv] << ai_x2));
+        clamp_player(p);
+
     } else {
-        /* replacement : centre, derrière la ligne de fond (ou au filet) */
-        tx = CENTER_X + ((PX(bx) - CENTER_X) >> 2);
-        if (ai_net[t]) ty = side ? NET_Y - 34 : NET_Y + 36;
-        else ty = side ? TOP_BASE - 6 : BOT_BASE + 8;
-        if (ms == MS_DEAD) ty = PX(ply[t]);
-        move_toward(t, tx * FP, ty * FP, (u8)(ai_speed[lv] - 20));
-        clamp_player(t);
+        /* replacement : centre (ou sa moitié en double), au fond ou au filet */
+        if (npl == 4) tx = (PX(plx[p]) < PX(plx[p ^ 2])) ? CENTER_X - 34 : CENTER_X + 34;
+        else tx = CENTER_X + ((PX(bx) - CENTER_X) >> 2);
+        if (ai_net[p]) ty = PX(net_y(side));
+        else ty = PX(base_y(side, 8));
+        if (ms == MS_DEAD) ty = PX(ply[p]);
+        move_toward(p, tx * FP, ty * FP, (u8)((ai_speed[lv] - 20) << ai_x2));
+        clamp_player(p);
     }
-    if (pl_state[t] == ST_SWING && --pl_timer[t] == 0) pl_state[t] = ST_IDLE;
+    if (pl_state[p] == ST_SWING) {
+        if (ai_x2 && pl_timer[p] > 1) --pl_timer[p];
+        if (--pl_timer[p] == 0) pl_state[p] = ST_IDLE;
+    }
 }
 
 /* ====================================================================== */
-/* Score affiché                                                           */
+/* Score : deux panneaux dans les coins supérieurs, au-dessus des tribunes */
+/* (les joueurs n'y vont jamais) ; messages au centre du bandeau.          */
 /* ====================================================================== */
+static void team_name(u8 t, char *out)
+{
+    const char *a = char_name[cfg.chr[t]];
+    if (cfg.doubles) {
+        const char *b = char_name[cfg.chr[t + 2]];
+        out[0] = a[0]; out[1] = a[1]; out[2] = b[0]; out[3] = b[1];
+    } else { out[0] = a[0]; out[1] = a[1]; out[2] = a[2]; out[3] = a[3]; }
+}
+
 static void hud_update(void)
 {
-    static char line[16];
-    u8 t;
+    static char line[5];
+    u8 t, x;
     vbuf_reset();
     if (cfg.mode == GM_MATCH) {
         for (t = 0; t < 2; ++t) {
-            const char *n = char_name[cfg.chr[t]];
-            line[0] = n[0]; line[1] = n[1]; line[2] = n[2]; line[3] = n[3];
-            line[4] = ' ';
-            num2(line + 5, sc_sets[t]);
-            line[7] = ' ';
-            num2(line + 8, sc_games[t]);
-            line[10] = ' ';
-            rules_point_label(t, line + 11);
-            line[13] = ' ';
-            line[14] = (char)(serving_team() == t ? '*' : ' ');
-            line[15] = 0;
-            vbuf_text(2, (u8)(1 + t), line, 15);
+            /* panneau de l'équipe affichée en bas à gauche, l'autre à droite */
+            x = (u8)(side_of(t) == 0 ? 1 : 27);   /* colonne 0 : zone de débordement TV */
+            team_name(t, line);
+            vbuf_text(x, 1, line, 4);
+            line[0] = (char)('0' + sc_sets[t]); line[1] = '-';
+            num2(line + 2, sc_games[t]);
+            if (line[2] == ' ') { line[2] = line[3]; line[3] = ' '; }
+            vbuf_text(x, 2, line, 4);
+            rules_point_label(t, line);
+            line[2] = ' ';
+            line[3] = (char)(sc_server == t ? '*' : ' ');
+            vbuf_text(x, 3, line, 4);
         }
     } else {
-        vbuf_text(2, 1, cfg.mode == GM_TRAIN_RALLY ? "FRAPPES" : "SERVICE", 15);
-        line[0] = 'P'; line[1] = 'T'; line[2] = 'S'; line[3] = ' ';
-        num2(line + 4, tr_score); line[6] = '/';
-        num2(line + 7, tr_total); line[9] = 0;
-        vbuf_text(2, 2, line, 15);
+        vbuf_text(1, 1, cfg.mode == GM_TRAIN_RALLY ? "FRAP" : "SERV", 4);
+        num2(line, tr_score); line[2] = ' '; line[3] = ' ';
+        vbuf_text(1, 2, line, 4);
+        line[0] = '/'; num2(line + 1, tr_total); line[3] = ' ';
+        vbuf_text(1, 3, line, 4);
     }
     if (paused) {
-        vbuf_text(19, 1, "  PAUSE", 11);
-        vbuf_text(19, 2, "SEL:QUITTER", 11);
+        vbuf_text(9, 1, "    PAUSE", 14);
+        vbuf_text(9, 2, "SELECT:QUITTER", 14);
     } else if (msg_timer) {
-        vbuf_text(19, 1, msg1, 11);
-        vbuf_text(19, 2, msg2, 11);
+        vbuf_text(9, 1, msg1, 14);
+        vbuf_text(9, 2, msg2, 14);
     } else {
-        vbuf_text(19, 1, "", 11);
-        vbuf_text(19, 2, sc_tiebreak ? "JEU DECISIF" : "", 11);
+        vbuf_text(9, 1, "", 14);
+        vbuf_text(9, 2, sc_tiebreak ? " JEU DECISIF" : "", 14);
     }
     hud_dirty = 0;
 }
@@ -687,15 +806,17 @@ static void hud_update(void)
 /* ====================================================================== */
 void match_start(void)
 {
-    u8 t;
+    u8 i;
+    npl = (u8)(cfg.doubles ? 4 : 2);
     rules_init(cfg.sets_to_win, cfg.games_per_set, (u8)(cfg.mode == GM_MATCH ? (rand8() & 1) : 1));
     if (cfg.mode == GM_TRAIN_SERVE) sc_server = 0;
-    for (t = 0; t < 2; ++t) {
-        st_points[t] = st_aces[t] = st_dfaults[t] = st_winners[t] = st_errors[t] = 0;
-        st_first_in[t] = st_first_tot[t] = 0;
-        ai_net[t] = 0;
-        pl_flip[t] = 0;
+    for (i = 0; i < 2; ++i) {
+        st_points[i] = st_aces[i] = st_dfaults[i] = st_winners[i] = st_errors[i] = 0;
+        st_first_in[i] = st_first_tot[i] = 0;
+        srv_slot[i] = 0;
     }
+    for (i = 0; i < 4; ++i) { pl_flip[i] = 0; plx[i] = 128 * FP; ply[i] = 0; }
+    for (i = 0; i < NRAIN; ++i) { rain_x[i] = (u8)(32 + i * 19); rain_y[i] = (u8)(i * 23); }
     st_longest = 0;
     tr_score = tr_total = 0;
     faults = 0;
@@ -708,7 +829,7 @@ void match_start(void)
 
 static void after_point(void)
 {
-    u8 ev, w = pending_winner;
+    u8 ev, w = pending_winner, prev;
     if (end_reason == END_FAULT) {
         if (cfg.mode == GM_MATCH) faults = 1;
         if (cfg.mode == GM_TRAIN_SERVE) sc_points[0] ^= 1;   /* alterne les côtés */
@@ -717,25 +838,35 @@ static void after_point(void)
     }
     faults = 0;
     if (cfg.mode != GM_MATCH) { place_for_serve(); return; }
+    prev = sc_server;
     ev = rules_point(w);
+    /* double : quand une équipe perd le service, son autre joueur servira */
+    if (sc_server != prev) srv_slot[prev] ^= 1;
     if (ev & EV_MATCH) {
         ms = MS_OVER;
         ms_timer = 160;
-        set_msg("JEU, SET", "ET MATCH", 160);
+        set_msg("JEU, SET", "ET MATCH !", 160);
         sfx_whistle();
         music_play(cfg.ctrl[w] == CTRL_CPU && cfg.ctrl[w ^ 1] != CTRL_CPU ? MUS_DEFEAT : MUS_VICTORY);
         sfx_crowd(7);
         return;
     }
-    if (ev & EV_SET) { set_msg("JEU ET SET", char_name[cfg.chr[w]], 90); music_play(MUS_GAME); }
-    else if (ev & EV_TIEBREAK) { set_msg("6 PARTOUT", "JEU DECISIF", 90); music_play(MUS_GAME); }
-    else if (ev & EV_GAME) { set_msg("JEU", char_name[cfg.chr[w]], 70); music_play(MUS_GAME); }
-    else {
-        if (rules_is_match_point(0) || rules_is_match_point(1)) set_msg("BALLE DE", "MATCH", 70);
-        else if (rules_is_set_point(0) || rules_is_set_point(1)) set_msg("BALLE DE", "SET", 70);
-        else if (!sc_tiebreak && sc_points[0] >= 3 && sc_points[0] == sc_points[1]) set_msg("EGALITE", "", 60);
-        else if (!sc_tiebreak && sc_points[0] >= 3 && sc_points[1] >= 3) set_msg("AVANTAGE", char_name[cfg.chr[sc_points[0] > sc_points[1] ? 0 : 1]], 60);
-        music_play(MUS_POINT);
+    {
+        static char nm[5];
+        team_name(w, nm); nm[4] = 0;
+        if (ev & EV_SET) { set_msg("JEU ET SET", nm, 90); music_play(MUS_GAME); }
+        else if (ev & EV_TIEBREAK) { set_msg("6 PARTOUT", "JEU DECISIF", 90); music_play(MUS_GAME); }
+        else if (ev & EV_GAME) { set_msg("JEU", nm, 70); music_play(MUS_GAME); }
+        else {
+            if (rules_is_match_point(0) || rules_is_match_point(1)) set_msg("BALLE DE MATCH", "", 70);
+            else if (rules_is_set_point(0) || rules_is_set_point(1)) set_msg("BALLE DE SET", "", 70);
+            else if (!sc_tiebreak && sc_points[0] >= 3 && sc_points[0] == sc_points[1]) set_msg("EGALITE", "", 60);
+            else if (!sc_tiebreak && sc_points[0] >= 3 && sc_points[1] >= 3) {
+                team_name((u8)(sc_points[0] > sc_points[1] ? 0 : 1), nm);
+                set_msg("AVANTAGE", nm, 60);
+            }
+            music_play(MUS_POINT);
+        }
     }
     if (ev & EV_CHANGE) set_msg("CHANGEMENT", "DE COTE", 90);
     place_for_serve();
@@ -743,7 +874,7 @@ static void after_point(void)
 
 u8 match_tick(void)
 {
-    u8 t, ctrl, pad, pressed;
+    u8 p, ctrl, pad, pressed;
 
     /* pause : START ; SELECT pendant la pause = quitter */
     if ((pad1_new & PAD_START) && ms != MS_OVER) { paused ^= 1; hud_dirty = 1; }
@@ -753,16 +884,26 @@ u8 match_tick(void)
         return 0;
     }
 
-    for (t = 0; t < 2; ++t) {
-        ctrl = cfg.ctrl[t];
-        if (ctrl == CTRL_CPU) ai_update(t);
+    hit_now = 0;
+    for (p = 0; p < npl; ++p) {
+        ctrl = cfg.ctrl[p];
+        if (ctrl == CTRL_CPU) {
+            /* double : chaque IA est mise à jour une trame sur deux (vitesse
+               doublée), pour tenir dans le budget CPU d'une trame */
+            if (npl == 4 && ms == MS_RALLY) {
+                /* trame de frappe (calcul de trajectoire) : les IA restantes
+                   attendent la trame suivante */
+                if (hit_now) continue;
+                if (((u8)(frame_cnt ^ p) & 1) == 0) { ai_x2 = 1; ai_update(p); ai_x2 = 0; }
+            } else ai_update(p);
+        }
         else {
             pad = ctrl == CTRL_PAD1 ? pad1 : pad2;
             pressed = ctrl == CTRL_PAD1 ? pad1_new : pad2_new;
             hit_margin = 8;
-            human_update(t, pad, pressed);
+            human_update(p, pad, pressed);
         }
-        if (pl_moving[t]) ++pl_walk[t];
+        if (pl_moving[p]) ++pl_walk[p];
     }
 
     if (ms == MS_TOSS) {
@@ -773,7 +914,7 @@ u8 match_tick(void)
             b_vis = 0;
             ms = MS_SERVE;
             ms_timer = 30;
-            pl_state[serving_team()] = ST_IDLE;
+            pl_state[server_p()] = ST_IDLE;
         }
     } else {
         ball_update();
@@ -785,26 +926,37 @@ u8 match_tick(void)
         if (--ms_timer == 0) return 1;
     }
 
+    if (cfg.cond == COND_RAIN) {
+        for (p = 0; p < NRAIN; ++p) {
+            rain_y[p] += 5;
+            rain_x[p] -= 1;
+            if (rain_y[p] > 230) { rain_y[p] = (u8)(32 + (rand8() & 15)); rain_x[p] = (u8)(40 + (rand8() % 180)); }
+        }
+    }
+
     if (msg_timer) { if (--msg_timer == 0) hud_dirty = 1; }
     if (hud_dirty) hud_update();
     return 0;
 }
 
-static u8 pose_of(u8 t)
+static u8 pose_of(u8 p)
 {
-    u8 st = pl_state[t];
+    u8 st = pl_state[p];
     if (ms == MS_OVER) return (u8)((ms_timer & 16) ? 5 : 6);
     if (st == ST_TOSS) return 5;
-    if (st == ST_SWING) return (u8)(pl_timer[t] > 6 ? 3 : 4);
+    if (st == ST_SWING) return (u8)(pl_timer[p] > 6 ? 3 : 4);
     if (st == ST_CHARGE) return 6;
-    if (pl_moving[t]) return (u8)((pl_walk[t] & 8) ? 1 : 2);
+    if (pl_moving[p]) return (u8)((pl_walk[p] & 8) ? 1 : 2);
     return 0;
 }
 
 void match_draw(void)
 {
-    u8 order0, t, i;
+    u8 ord[4], i, j, k, p;
     s16 sy;
+    /* trame de frappe (calcul de trajectoire coûteux) : on garde les sprites
+       de la trame précédente, ce qui évite tout ralentissement */
+    if (hit_now) return;
     spr_begin();
     /* balle et ombre en tête (priorité d'affichage maximale) */
     if (b_vis) {
@@ -813,17 +965,23 @@ void match_draw(void)
         spr1((u8)(PX(bx) - 3), (u8)sy, 1, 2);
         spr1((u8)(PX(bx) - 3), (u8)(PX(by) - 3), 2, 2);
     }
-    /* entraînement : cible */
-    if (cfg.mode == GM_TRAIN_RALLY) {
-        spr1(tr_target ? 158 : 94, 64, 3, 3);
+    if (cfg.mode == GM_TRAIN_RALLY) spr1(tr_target ? 158 : 94, 64, 3, 3);   /* cible */
+    /* tri par profondeur : le joueur le plus bas à l'écran passe devant */
+    for (i = 0; i < npl; ++i) ord[i] = i;
+    for (i = 1; i < npl; ++i) {
+        k = ord[i];
+        for (j = i; j > 0 && ply[ord[j - 1]] < ply[k]; --j) ord[j] = ord[j - 1];
+        ord[j] = k;
     }
-    /* le joueur le plus bas à l'écran est dessiné devant */
-    order0 = (u8)(ply[0] > ply[1] ? 0 : 1);
-    for (i = 0; i < 2; ++i) {
-        t = (u8)(i ? order0 ^ 1 : order0);
-        if (cfg.mode == GM_TRAIN_RALLY && t == 1) continue;   /* lanceur invisible */
-        spr_person(PX(plx[t]), PX(ply[t]), cfg.chr[t], side_of(t), pose_of(t),
-                   (u8)(pl_state[t] == ST_SWING ? pl_flip[t] : 0), t);
+    for (i = 0; i < npl; ++i) {
+        p = ord[i];
+        if (cfg.mode == GM_TRAIN_RALLY && p == 1) continue;   /* lanceur invisible */
+        spr_person(PX(plx[p]), PX(ply[p]), cfg.chr[p], side_of(p), pose_of(p),
+                   (u8)(pl_state[p] == ST_SWING ? pl_flip[p] : 0), (u8)(p & 1));
+    }
+    if (cfg.cond == COND_RAIN) {
+        /* une goutte sur deux par trame : limite à 8 sprites par ligne */
+        for (i = (u8)(frame_cnt & 1); i < NRAIN; i += 2) spr1(rain_x[i], rain_y[i], 4, 3);
     }
     spr_end();
 }

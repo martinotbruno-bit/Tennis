@@ -40,6 +40,15 @@ extern u8 pad2_new;
 extern u8 vram_len;
 #pragma zpsym("vram_len")
 
+extern u8 oam_i, meta_x, meta_y, meta_tile, meta_attr;
+#pragma zpsym("oam_i")
+#pragma zpsym("meta_x")
+#pragma zpsym("meta_y")
+#pragma zpsym("meta_tile")
+#pragma zpsym("meta_attr")
+void __fastcall__ spr1(u8 x, u8 y, u8 tile, u8 attr);
+void spr_meta(void);
+void spr_end(void);
 void wait_frame(void);
 void pad_poll(void);
 void ppu_off(void);

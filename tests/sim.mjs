@@ -3,11 +3,11 @@ const e = new Emu(process.argv[2]);
 const lv = +(process.argv[3] ?? 1), surf = +(process.argv[4] ?? 0);
 e.run(30); e.tap('START'); e.run(10);
 // niveau / surface via opt_val
-e.poke('opt_val', lv, 4); e.poke('opt_val', surf, 5);
+e.poke('opt_val', lv, 5); e.poke('opt_val', surf, 6); e.poke('opt_val', +(process.argv[5] ?? 0), 2);
 e.tap('START'); e.run(5);
 // CPU des deux côtés
 const cfg = e.addr('cfg');
-e.nes.cpu.mem[cfg + 1] = 2; e.nes.cpu.mem[cfg + 5] = lv;
+e.nes.cpu.mem[cfg + 2] = 2; e.nes.cpu.mem[cfg + 10] = lv;
 let lastPts = [0,0], points = 0, rallies = [], f0 = e.frames;
 const ms = () => e.nes.cpu.mem[e.addr('ms')];
 let stuck = 0, lastMs = -1, maxSame = 0;

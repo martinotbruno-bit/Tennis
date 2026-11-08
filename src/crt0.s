@@ -10,6 +10,8 @@
 .export _pad1, _pad2, _pad1_new, _pad2_new, _region_cnt
 .export _wait_frame, _pad_poll, _ppu_off, _ppu_on, _vram_adr, _vram_put
 .export _vram_fill, _vram_unrle, _rand8, _rand_seed
+.export _spr1, _spr_meta, _spr_end, _oam_i
+.export _meta_x, _meta_y, _meta_tile, _meta_attr
 .import _main, zerobss, copydata
 .import __CSTACK_START__, __CSTACK_SIZE__
 .importzp sp, ptr1, tmp1, tmp2
@@ -55,6 +57,11 @@ _pad2_new:  .res 1
 _vram_len:  .res 1
 _rand_seed: .res 2
 pad_tmp:    .res 1
+_oam_i:     .res 1      ; prochain emplacement libre dans _oam_buf
+_meta_x:    .res 1      ; paramètres de _spr_meta (personnage 2x3 tuiles)
+_meta_y:    .res 1
+_meta_tile: .res 1
+_meta_attr: .res 1      ; bit 6 = miroir horizontal
 _region_cnt:.res 2      ; nombre de boucles entre deux VBlank (détection NTSC/PAL)
 
 .segment "BSS"
@@ -383,6 +390,101 @@ read_pads:
     eor #$FF
     and _pad2
     sta _pad2_new
+    rts
+
+; -------------------------------------------------------------------------
+; Sprites (routines critiques : environ 10 fois plus rapides qu'en C)
+; -------------------------------------------------------------------------
+; void __fastcall__ spr1(u8 x, u8 y, u8 tile, u8 attr)
+; A = attr ; pile C : tile (sp+0), y (sp+1), x (sp+2)
+_spr1:
+    ldx _oam_i
+    sta _oam_buf+2,x
+    ldy #0
+    lda (sp),y
+    sta _oam_buf+1,x
+    iny
+    lda (sp),y
+    sec
+    sbc #1
+    sta _oam_buf,x
+    iny
+    lda (sp),y
+    sta _oam_buf+3,x
+    txa
+    clc
+    adc #4
+    sta _oam_i
+    lda sp
+    clc
+    adc #3
+    sta sp
+    bcc :+
+    inc sp+1
+:   rts
+
+; void spr_meta(void) : personnage 16x24 (2 colonnes x 3 rangées de tuiles
+; consécutives) en (_meta_x, _meta_y), tuile de base _meta_tile.
+_spr_meta:
+    ldx _oam_i
+    ldy _meta_y
+    dey                 ; le PPU affiche les sprites une ligne plus bas
+    lda #3
+    sta tmp1            ; rangées restantes
+    lda _meta_tile
+    sta tmp2
+@row:
+    tya
+    sta _oam_buf,x
+    sta _oam_buf+4,x
+    lda _meta_attr
+    sta _oam_buf+2,x
+    sta _oam_buf+6,x
+    and #$40
+    bne @flip
+    lda tmp2
+    sta _oam_buf+1,x
+    clc
+    adc #1
+    sta _oam_buf+5,x
+    jmp @pos
+@flip:
+    lda tmp2
+    sta _oam_buf+5,x
+    clc
+    adc #1
+    sta _oam_buf+1,x
+@pos:
+    lda _meta_x
+    sta _oam_buf+3,x
+    clc
+    adc #8
+    sta _oam_buf+7,x
+    inc tmp2
+    inc tmp2
+    tya
+    clc
+    adc #8
+    tay
+    txa
+    clc
+    adc #8
+    tax
+    dec tmp1
+    bne @row
+    stx _oam_i
+    rts
+
+; void spr_end(void) : cache les sprites inutilisés
+_spr_end:
+    ldx _oam_i
+    lda #$FF
+@h: sta _oam_buf,x
+    inx
+    inx
+    inx
+    inx
+    bne @h
     rts
 
 ; unsigned char rand8(void) : LFSR 16 bits (Galois)
