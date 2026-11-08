@@ -687,6 +687,57 @@ for (x, y) in ((3, 3), (4, 3), (3, 4), (4, 4)):
     conf[y][x] = 1
 conf[3][4] = 3
 spr_tile(next_spr, conf); next_spr += 1
+
+# --- course de profil (vue de côté, tournée vers la droite ; miroir à gauche)
+def draw_profile(frame, female, nude=False):
+    c = new_canvas()
+    # tête : cheveux à l'arrière, visage tourné vers la droite
+    fill(c, 6, 1, 10, 5, 1)
+    fill(c, 5, 0, 9, 1, 3); fill(c, 5, 1, 6, 4, 3)
+    put(c, 9, 2, 3)                     # oeil
+    put(c, 11, 3, 1)                    # nez
+    if female:
+        fill(c, 3, 2, 4, 4, 3); put(c, 4, 1, 3)   # queue de cheval
+    fill(c, 7, 6, 8, 6, 1)              # cou
+    # buste de profil (plus étroit)
+    if nude:
+        fill(c, 6, 7, 9, 15, 1)
+        for k in range(5):
+            put(c, 6 + (k % 4), 7 + k, 2)
+    else:
+        fill(c, 6, 7, 9, 13, 2)
+        if female:
+            fill(c, 5, 14, 10, 15, 2); fill(c, 5, 15, 10, 15, 3)
+        else:
+            fill(c, 6, 14, 9, 15, 3)
+    if frame == 0:
+        # foulée : bras opposés, jambes écartées
+        line(c, 6, 8, 4, 11, 1)                          # bras arrière
+        line(c, 9, 8, 11, 11, 1)                         # bras avant
+        racket(c, 11, 12, 13, 17, 5)                     # raquette tenue devant
+        line(c, 8, 16, 11, 21, 1); line(c, 9, 16, 12, 21, 1)   # jambe avant
+        line(c, 7, 16, 4, 21, 1); line(c, 6, 16, 3, 21, 1)     # jambe arrière
+        fill(c, 11, 22, 13, 23, 1 if nude else 3); fill(c, 2, 22, 4, 23, 1 if nude else 3)
+    else:
+        # jambes croisées (passage), bras le long du corps
+        line(c, 6, 8, 5, 12, 1)
+        line(c, 9, 8, 10, 12, 1)
+        racket(c, 10, 13, 12, 18, 5)
+        fill(c, 7, 16, 8, 21, 1)
+        line(c, 7, 16, 5, 20, 1)
+        fill(c, 7, 22, 9, 23, 1 if nude else 3); put(c, 4, 21, 1 if nude else 3)
+    return c
+
+PROFILE_BASE = next_spr
+nude_profile = bytearray()
+for female in (0, 1):
+    for frame in (0, 1):
+        cv = draw_profile(frame, female)
+        preview_people.append(cv)
+        for t in canvas_tiles(cv):
+            spr_tile(next_spr, t); next_spr += 1
+        for t in canvas_tiles(draw_profile(frame, female, nude=True)):
+            nude_profile += encode_tile(t)
 assert next_spr <= 256, "trop de tuiles de sprites"
 
 # --------------------------------------------------------------------------
@@ -740,7 +791,7 @@ src.append(c_array('logo_tiles', bytes(logo)))
 src.append(c_array('bigball_tiles', bytes(ball_tiles)))
 src.append('const unsigned char person_base[4] = {0x%02X,0x%02X,0x%02X,0x%02X};\n' % (
     person_base[(0,'back')], person_base[(0,'front')], person_base[(1,'back')], person_base[(1,'front')]))
-src.append('const unsigned char trophy_tile = 0x%02X;\nconst unsigned char confetti_tile = 0x%02X;\nconst unsigned char ball_mid_tile = 0x%02X;\nconst unsigned char ball_big_tile = 0x%02X;\n' % (TROPHY_TILE, CONFETTI_TILE, BALL_MID_TILE, BALL_BIG_TILE))
+src.append('const unsigned char trophy_tile = 0x%02X;\nconst unsigned char confetti_tile = 0x%02X;\nconst unsigned char ball_mid_tile = 0x%02X;\nconst unsigned char ball_big_tile = 0x%02X;\nconst unsigned char profile_base = 0x%02X;\n' % (TROPHY_TILE, CONFETTI_TILE, BALL_MID_TILE, BALL_BIG_TILE, PROFILE_BASE))
 with open(os.path.join(ROOT, 'src', 'assets_data.c'), 'w') as f:
     f.write('\n'.join(src))
 
@@ -748,6 +799,7 @@ with open(os.path.join(ROOT, 'src', 'assets_data.c'), 'w') as f:
 src = ['/* Fichier généré par tools/gen_assets.py — ne pas modifier. */',
        '#include "assets.h"', '']
 src.append(c_array('nude_people', bytes(nude_people)))
+src.append(c_array('nude_profile', bytes(nude_profile)))
 with open(os.path.join(ROOT, 'src', 'assets_nude.c'), 'w') as f:
     f.write('\n'.join(src))
 

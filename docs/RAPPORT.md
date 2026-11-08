@@ -21,6 +21,9 @@ Comme l'exige le CDC (§ 17.5), ce rapport distingue ce qui est **réalisé**, *
 | Normal un peu trop difficile | Difficulté recalibrée avec un robot « humain » (`tests/calib.mjs`) : Normal plus lent, plus tardif, moins puissant et plus fautif ; IA moins parfaite dans son anticipation ; écart Normal → Expert adouci (le robot passe de 0 % à ~30 % des points contre Expert) |
 | Mode « 2 J. équipe » proposé en simple | Incohérence corrigée : ce mode est toujours un double (ligne JEU masquée), et JOUEUR 2 désigne le personnage de la manette 2 (et non plus l'adversaire) |
 | En équipe : partenaire au choix | Mode renommé « En équipe » ; ligne « JOUE PAR : CPU / MANETTE 2 » pour le partenaire |
+| Bruits de pas discrets | Un bruit sourd très faible à chaque foulée, coupé dès qu'un rebond, une frappe ou le public utilise le canal |
+| Joueurs de profil en déplacement | Nouvelle course vue de côté (2 images, hommes/femmes, aussi au club nudiste), orientée selon le sens du déplacement |
+| Jeu « encore très difficile » | IA Facile et Normal nettement assouplies (plus lentes, plus tardives, plus fautives, anticipation moins précise) ; Expert un peu adouci ; zone de frappe plus généreuse pour tous |
 
 ### Version 2.1
 
@@ -49,10 +52,10 @@ Pour loger ce contenu, la cartouche passe de NROM (32 Ko) à **MMC1** : 128 Ko d
 |---|---|
 | Règles (`rules_test`) | 42/42 |
 | Codes (`password_test`) | 200 000/200 000 aller-retour ; 99,99 % des codes altérés d'un signe refusés |
-| Émulateur (`emu_test`) | 114/114 vérifications (environ 13 min) |
+| Émulateur (`emu_test`) | 114/114 vérifications (113 au passage complet ; l'échec restant, un réglage du robot de test du tutoriel, a été corrigé et sa section repassée) |
 | Profil CPU, simple, 6 000 trames | 1 trame d'échange en dépassement |
 | Profil CPU, double, 6 000 trames | 11 trames d'échange en dépassement (0,2 %), sans défaut d'image |
-| Compilation | Reproductible : SHA-256 `160654e73d769a7110bb999f8e1040b994f877cb6e15beb7c7b94f1634453b63` sur deux compilations propres |
+| Compilation | Reproductible : SHA-256 `f038ee91ff235f78643d128ee2c6e9ca70299bfb3094831073343c5513efff63` sur deux compilations propres |
 
 ## 3. Conformité par section du CDC
 

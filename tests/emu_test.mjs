@@ -62,7 +62,7 @@ function botStep(e, btns = ['A']) {
   if (near && (b >= 1 || e.peek('cfg', 21) === 4)) {
     // bouton d'abord ; la direction seulement au dernier moment (sinon on s'éloigne)
     e.down(btns[0]);
-    if (btns[1] && Math.abs(P(e, 'by') - py) < 14) e.down(btns[1]);
+    if (btns[1] && Math.abs(P(e, 'by') - py) < 22) e.down(btns[1]);
   }
 }
 

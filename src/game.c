@@ -74,13 +74,13 @@ static const u8 surf_fric[6] = { 200, 244, 226, 236, 170, 253 };
 /* IA : vitesse (FP/trame), délai de réaction, dispersion, marge visée */
 /* vitesses (FP/trame) ; ≤ 127 car doublées en double (ai_x2) */
 /* réglages v2.3 : Normal rendu plus abordable (retour de test joueur) */
-static const u8 ai_speed[3]  = { 84, 98, 118 };
-static const u8 ai_react[3]  = { 18, 12, 4 };
-static const u8 ai_spread[3] = { 30, 22, 15 };
-static const u8 ai_margin[3] = { 26, 18, 10 };
-static const u8 ai_power[3]  = { 2, 8, 16 };
-static const u8 ai_guess[3]  = { 14, 7, 3 };    /* imprécision d'anticipation (px) */
-static const u8 ai_fault[3]  = { 7, 15, 31 };   /* faute directe : 1 frappe sur 8 / 16 / 32 */
+static const u8 ai_speed[3]  = { 74, 86, 110 };
+static const u8 ai_react[3]  = { 22, 16, 6 };
+static const u8 ai_spread[3] = { 34, 26, 16 };
+static const u8 ai_margin[3] = { 28, 22, 11 };
+static const u8 ai_power[3]  = { 0, 4, 14 };
+static const u8 ai_guess[3]  = { 18, 12, 5 };    /* imprécision d'anticipation (px) */
+static const u8 ai_fault[3]  = { 3, 7, 15 };   /* faute directe : 1 frappe sur 4 / 8 / 16 */
 #define HUMAN_SPEED 140
 
 /* styles de jeu (CDC 10.2), indexés par char_style[] :
@@ -372,8 +372,9 @@ static u8 can_hit(u8 p)
     if (b_serve && bounces == 0) return 0;      /* le retour se joue après rebond */
     dx = PX(bx) - PX(plx[p]);
     dy = PX(by) - PX(ply[p]);
-    if (dx < -20 || dx > 20 || dy < -12 || dy > 8) return 0;
-    if (bz > 36 * FP) return 0;
+    /* zone de frappe généreuse : les balles un peu loin partent quand même */
+    if (dx < -24 || dx > 24 || dy < -15 || dy > 10) return 0;
+    if (bz > 40 * FP) return 0;
     return 1;
 }
 

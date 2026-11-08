@@ -3,6 +3,8 @@
  * Toutes les mélodies sont des compositions originales. */
 #include "audio.h"
 
+static u8 noise_hold;   /* le canal de bruit sert à un bruitage : pas de pas */
+
 static const u16 note_period[48] = {
  1709,1613,1523,1437,1356,1280,1208,1140,1076,1016,959,905,
  854,806,761,718,678,640,604,570,538,507,479,452,
@@ -97,6 +99,7 @@ u8 music_none(void) { return (u8)(mel_ptr == 0); }
 
 void audio_update(void)
 {
+    if (noise_hold) --noise_hold;
     if (mel_ptr) {
         if (--mel_timer == 0) {
             if (mel_ptr[0] == END) {
@@ -135,6 +138,7 @@ static void pulse1(u8 env, u8 sweep, u16 period)
 
 static void noise(u8 env, u8 period)
 {
+    noise_hold = 10;
     APU(0x400C) = env;
     APU(0x400E) = period;
     APU(0x400F) = 0x08;
@@ -150,7 +154,16 @@ void sfx_bounce(void)     { noise(0x01, 0x0C); }
 void sfx_net(void)        { noise(0x03, 0x0E); pulse1(0x83, 0x00, 900); }
 void sfx_fault(void)      { pulse1(0x84, 0x00, 1140); }
 void sfx_whistle(void)    { pulse1(0x45, 0xB1, 100); }
-void sfx_crowd(u8 s)      { noise((u8)(0x08 + (s & 7)), 0x02); }
+void sfx_crowd(u8 s)      { noise((u8)(0x08 + (s & 7)), 0x02); noise_hold = 40; }
 void sfx_menu_move(void)  { pulse1(0x81, 0x00, 240); }
 void sfx_menu_ok(void)    { pulse1(0x82, 0x89, 180); }
 void sfx_toss(void)       { pulse1(0x81, 0x8B, 400); }
+/* pas : bruit sourd très bref à faible volume constant, jamais par-dessus un
+   rebond, une frappe ou le public */
+void sfx_step(void)
+{
+    if (noise_hold) return;
+    APU(0x400C) = 0x11;     /* volume constant 1, compteur de durée actif */
+    APU(0x400E) = 0x0D;
+    APU(0x400F) = 0x18;     /* durée très courte */
+}

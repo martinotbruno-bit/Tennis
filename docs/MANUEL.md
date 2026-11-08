@@ -131,6 +131,8 @@ L'effet modifie aussi le rebond : le lifté rebondit plus haut, le coupé reste 
 
 La balle grossit quand elle monte et rapetisse près du sol ; son ombre indique toujours où elle se trouve sur le court.
 
+Les joueurs courent de profil quand ils se déplacent sur le côté, et l'on entend discrètement leurs pas.
+
 Conditions :
 - **Nuit** : décor assombri.
 - **Pluie** : gouttes à l'écran, rebonds plus bas et balle qui glisse.

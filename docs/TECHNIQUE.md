@@ -101,15 +101,17 @@ $7800-$7FFF  palmarès (sauvegardé si la cartouche a une pile ; signature + som
 
   | Paramètre | Facile | Normal | Expert |
   |---|---|---|---|
-  | Vitesse (px/trame) | 1,31 | 1,53 | 1,84 |
-  | Délai de réaction (trames) | 18 | 12 | 4 |
-  | Dispersion de visée (px) | 30 | 22 | 15 |
-  | Marge par rapport aux lignes (px) | 26 | 18 | 10 |
-  | Puissance | très faible | faible | forte |
-  | Imprécision d'anticipation (px, tirée à chaque frappe adverse) | ±14 | ±7 | ±3 |
-  | Faute directe | 1 frappe sur 8 | 1 sur 16 | 1 sur 32 |
+  | Vitesse (px/trame) | 1,16 | 1,34 | 1,72 |
+  | Délai de réaction (trames) | 22 | 16 | 6 |
+  | Dispersion de visée (px) | 34 | 26 | 16 |
+  | Marge par rapport aux lignes (px) | 28 | 22 | 11 |
+  | Puissance | nulle | très faible | forte |
+  | Imprécision d'anticipation (px, tirée à chaque frappe adverse) | ±18 | ±12 | ±5 |
+  | Faute directe | 1 frappe sur 4 | 1 sur 8 | 1 sur 16 |
 
-  **Calibrage** (version 2.3, après un retour de test : « Normal un peu trop difficile ») : `tests/calib.mjs` fait jouer un robot « humain » contre l'IA. Ce robot réagit en 9 à 16 trames, se place avec une erreur qui se corrige à l'approche de la balle et frappe dans des directions variées. Sur 4 parties par niveau, il gagne environ 99 % des points contre Facile, la grande majorité contre Normal et environ 30 % contre Expert (0 % avant le calibrage). Le robot étant plus régulier qu'un humain, Normal doit paraître équilibré et Expert exigeant.
+  Zone de frappe (tous les joueurs) : ±24 px en largeur, de -15 à +10 px en profondeur, jusqu'à 40 px de hauteur.
+
+  **Calibrage** (versions 2.3 puis 2.4, après deux retours de test : « Normal un peu trop difficile », puis « encore très difficile ») : `tests/calib.mjs` fait jouer un robot « humain » contre l'IA. Ce robot réagit en 9 à 16 trames, se place avec une erreur qui se corrige à l'approche de la balle et frappe dans des directions variées. Sur 4 parties par niveau (v2.4), il gagne environ 94 % des points contre Normal, avec des échanges bien plus courts qu'avant, et environ 53 % contre Expert. Le robot étant plus régulier qu'un humain, Normal doit maintenant être abordable et Expert rester exigeant.
 
 - **Huit styles** (CDC 10.2), propres à chaque personnage. Ils modifient :
   - la puissance, la marge et la dispersion ;
@@ -171,6 +173,7 @@ Grâce à la CHR-RAM, les 6 motifs de spectateurs sont remplacés par leur versi
 
 - **Fond** : 242 tuiles sur 256. Quatre écrans de court compressés en RLE (stade 657 octets, club 648, salle 647, club nudiste 648). La surface et les conditions ne changent que les palettes.
 - **Sprites** : 215 tuiles sur 256 (dont la coupe, les confettis et 3 tailles de balle).
+  - Course : de profil (2 images de foulée, miroir selon le sens) dès que le déplacement est surtout latéral, de face ou de dos sinon ; la direction est mémorisée par personnage dans `spr_person` (banque fixe) pour ne pas clignoter.
   - Raquettes : tamis ovale de 5 × 7 px (5 × 5 au-dessus de la tête), cadre sombre et cordage en damier, manche de 2 à 3 px.
   - Balle : petite (4 × 4) près du sol, moyenne (5 × 5) à partir de 12 px de hauteur, grande (7 × 7) à partir de 30 px (`spr_ball`, banque fixe), aussi dans les ralentis. L'ombre reste au sol.
   - 2 vues (dos et face) × 2 silhouettes (homme et femme) × 8 poses : attente, course ×2, frappe ×2, service, joie, déception.
@@ -182,7 +185,7 @@ Grâce à la CHR-RAM, les 6 motifs de spectateurs sont remplacés par leur versi
 ## 6. Audio
 
 Le jeu n'utilise que l'APU natif :
-- **carré 1 + bruit** : bruitages ;
+- **carré 1 + bruit** : bruitages, dont des bruits de pas très discrets à chaque foulée (bruit sourd au volume 1, jamais par-dessus un rebond, une frappe ou le public) ;
 - **carré 2 + triangle** : musiques et jingles.
 
 Aucune musique pendant les échanges. Toutes les mélodies sont originales.

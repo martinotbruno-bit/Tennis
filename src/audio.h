@@ -13,6 +13,7 @@ void sfx_crowd(u8 strength);      /* réaction du public */
 void sfx_menu_move(void);
 void sfx_menu_ok(void);
 void sfx_toss(void);
+void sfx_step(void);               /* bruit de pas discret */
 #define MUS_NONE    0
 #define MUS_TITLE   1
 #define MUS_POINT   2

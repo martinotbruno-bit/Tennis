@@ -2,6 +2,7 @@
 #include "gfx.h"
 #include "assets.h"
 #include "app.h"
+#include "audio.h"
 
 const char * const char_name[NCHARS] = {
     "ALEX", "MAYA", "LEON", "NINA", "OMAR", "ZOE ", "HUGO", "EMMA",
@@ -112,16 +113,46 @@ void pal_set_player(u8 slot, u8 c)
 void spr_begin(void) { oam_i = 0; }
 
 /* (x, y) = position des pieds ; sprite 16x24 dessiné par spr_meta (asm) */
+/* Direction de course mémorisée par personnage (16 personnages distincts
+ * dans un match) : 0 face/dos, 1 profil vers la droite, 2 profil vers la
+ * gauche. Elle n'est mise à jour que si le joueur s'est déplacé, pour éviter
+ * le clignotement quand l'IA ne bouge qu'une trame sur deux. */
+#pragma bss-name(push, "WBSS")   /* RAM de cartouche : la RAM interne est pleine */
+static s16 run_x[NCHARS], run_y[NCHARS];
+static u8 run_dir[NCHARS], run_pose[NCHARS];
+#pragma bss-name(pop)
+
 void spr_person(s16 x, s16 y, u8 c, u8 front, u8 pose, u8 flip, u8 pal)
 {
-    s16 l = x - 8, top = y - 24;
+    s16 l = x - 8, top = y - 24, dx, dy;
+    u8 tile;
     if (l < 0) l = 0;
     if (l > 240) l = 240;
     if (top < 0) top = 0;
     if (top > 216) top = 216;
     meta_x = (u8)l;
     meta_y = (u8)top;
-    meta_tile = (u8)(person_base[(char_female[c] << 1) | front] + pose * 6);
+    tile = (u8)(person_base[(char_female[c] << 1) | front] + pose * 6);
+    if (pose == POSE_RUN1 || pose == POSE_RUN2) {
+        dx = x - run_x[c];
+        dy = y - run_y[c];
+        if (dx || dy) {
+            if (dx < 0) dx = -dx;
+            if (dy < 0) dy = -dy;
+            /* déplacement surtout latéral : course de profil */
+            run_dir[c] = (u8)(dx >= dy ? (x > run_x[c] ? 1 : 2) : 0);
+        }
+        if (run_dir[c]) {
+            tile = (u8)(profile_base + (char_female[c] ? 12 : 0) + (pose == POSE_RUN2 ? 6 : 0));
+            flip = (u8)(run_dir[c] == 2);
+        }
+        /* bruit de pas discret à chaque foulée */
+        if (pose == POSE_RUN1 && run_pose[c] == POSE_RUN2) sfx_step();
+    } else run_dir[c] = 0;
+    run_x[c] = x;
+    run_y[c] = y;
+    run_pose[c] = pose;
+    meta_tile = tile;
     meta_attr = (u8)(flip ? (pal | 0x40) : pal);
     spr_meta();
 }
@@ -203,8 +234,13 @@ static void chr_copy(u8 bank, const u8 *src, u16 dst, u16 len)
 void people_tiles(u8 nude)
 {
     if (nude == chr_nude) return;
-    if (nude) chr_copy(BANK_NUDE, nude_people, 0x1100, 3072);
-    else chr_copy(BANK_CHR, chr_data + 0x1100, 0x1100, 3072);
+    if (nude) {
+        chr_copy(BANK_NUDE, nude_people, 0x1100, 3072);
+        chr_copy(BANK_NUDE, nude_profile, 0x1000 + ((u16)profile_base << 4), 384);
+    } else {
+        chr_copy(BANK_CHR, chr_data + 0x1100, 0x1100, 3072);
+        chr_copy(BANK_CHR, chr_data + 0x1000 + ((u16)profile_base << 4), 0x1000 + ((u16)profile_base << 4), 384);
+    }
     chr_nude = nude;
 }
 
