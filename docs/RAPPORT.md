@@ -12,7 +12,7 @@ Comme l'exige le CDC (§ 17.5), ce rapport distingue ce qui est **réalisé**, *
 |---|---|
 | Compétitions en double | Les 5 compétitions se jouent en simple ou en double, avec un partenaire joué par l'ordinateur **ou par la manette 2** (deux joueurs humains dans la même équipe). Partenaire choisi par le joueur ; 16 personnages au lieu de 10, donc 8 équipes toutes différentes ; code de reprise sur 13 signes (double + partenaire) |
 | Levée de coupe | À la victoire d'une compétition, le joueur (et son partenaire) brandit la coupe sous les confettis |
-| Mode nudiste à débloquer | Gagner une compétition (ou saisir un code avec un trophée) débloque le lieu « Club nudiste Les Bronzés » : <ul><li>joueurs au naturel, sans aucun détail anatomique, avec une serviette aux couleurs de l'équipe ;</li><li>public au naturel sur des serviettes dans l'herbe, sans gradins ;</li><li>annonces humoristiques de l'arbitre.</li></ul> |
+| Mode nudiste à débloquer | Gagner une compétition (ou saisir un code avec un trophée) débloque le lieu « Club nudiste Les Bronzés » : <ul><li>joueurs au naturel, sans aucun détail anatomique, avec une serviette aux couleurs de l'équipe ;</li><li>public au naturel debout dans l'herbe, en pied, sans gradins ;</li><li>annonces humoristiques de l'arbitre.</li></ul> |
 
 **Écart volontaire au CDC § 5.3** (« pas de déblocage ») : le club nudiste est un bonus demandé explicitement. Tout le contenu du CDC reste disponible dès le départ.
 
@@ -36,7 +36,7 @@ Pour loger ce contenu, la cartouche passe de NROM (32 Ko) à **MMC1** : 128 Ko d
 | Émulateur (`emu_test`) | 108/108 vérifications (environ 12 min) |
 | Profil CPU, simple, 6 000 trames | 1 trame d'échange en dépassement |
 | Profil CPU, double, 6 000 trames | 11 trames d'échange en dépassement (0,2 %), sans défaut d'image |
-| Compilation | Reproductible : SHA-256 `36f9668428727518519dafd80c0108e76a9e96c820acbd35ac1403251c4a1b08` sur deux compilations propres |
+| Compilation | Reproductible : SHA-256 `c5dee08932963a74ad0d8d2eae2b3eafb1a01f8ab3469ebe75bbbcd9d3adbea2` sur deux compilations propres |
 
 ## 3. Conformité par section du CDC
 

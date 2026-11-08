@@ -48,7 +48,7 @@ static const u8 env_pal[NENV][3] = {
     { 0x27, 0x16, 0x37 },     /* stade : public */
     { 0x1A, 0x09, 0x07 },     /* club : haies, arbres, troncs */
     { 0x00, 0x2A, 0x0F },     /* salle : murs, panneaux, projecteurs */
-    { 0x1A, 0x27, 0x16 },     /* club nudiste : herbe, peau, serviettes */
+    { 0x1A, 0x27, 0x07 },     /* club nudiste : herbe, peau, cheveux/chapeaux/serviettes */
 };
 
 static u8 darken(u8 c)

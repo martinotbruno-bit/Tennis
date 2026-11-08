@@ -7,9 +7,9 @@ extern const unsigned char person_base[4];
 extern const unsigned char trophy_tile, confetti_tile;
 /* banque du moteur de jeu (BANK0) */
 extern const unsigned char * const court_nt_rle[4];
-extern const unsigned char crowd_idx3[12];
-extern const unsigned char crowd_norm3[192];
-extern const unsigned char crowd_cheer3[192];
+extern const unsigned char crowd_idx3[18];
+extern const unsigned char crowd_norm3[288];
+extern const unsigned char crowd_cheer3[288];
 /* banque 6 */
 extern const unsigned char nude_people[3072];
 extern const unsigned char crowd_idx[6];

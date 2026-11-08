@@ -136,7 +136,7 @@ void load_court(void)
 void crowd_tick(void)
 {
     u8 nude = (u8)(cfg.env == ENV_NUDE);
-    u8 n = (u8)(nude ? 12 : 6);
+    u8 n = (u8)(nude ? 18 : 6);
     u8 k = (u8)(crowd_timer % n);
     u8 cheer = (u8)(crowd_timer >= n && ((crowd_timer >> 3) & 1));
     const u8 *src = nude ? (cheer ? crowd_cheer3 : crowd_norm3) : (cheer ? crowd_cheer : crowd_norm);

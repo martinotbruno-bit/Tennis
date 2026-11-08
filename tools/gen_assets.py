@@ -237,16 +237,20 @@ def draw_court(env=0):
             for y in range(32, 240):
                 for x in range(x0, x0+32):
                     b[y][x] = 1
-            for r2 in range(2, 15):
-                for c2 in range(2):
-                    if (r2 + c2 + side) % 2 == 0:
-                        fan = NUDE_FANS[(r2 + c2 * 2 + side) % 3]
-                        for q in range(4):
-                            ty = r2 * 16 + (q // 2) * 8
-                            tx = x0 + c2 * 16 + (q % 2) * 8
-                            for yy in range(8):
-                                for xx in range(8):
-                                    b[ty+yy][tx+xx] = fan[q][yy][xx]
+            # quelques spectateurs debout, centrés dans la bande latérale
+            # (hors de la zone rognée par les téléviseurs) ; à gauche, la place
+            # de la chaise d'arbitre reste libre
+            for k in range(5):
+                if side == 0 and k == 2:
+                    continue
+                ty0 = 40 + k * 40
+                fan = NUDE_FANS[(k + side) % 3]
+                for q in range(6):
+                    ty = ty0 + (q // 2) * 8
+                    tx = x0 + 8 + (q % 2) * 8
+                    for yy in range(8):
+                        for xx in range(8):
+                            b[ty+yy][tx+xx] = fan[q][yy][xx]
         else:
             # SALLE : murs, panneaux publicitaires et projecteurs
             for y in range(32, 240):
@@ -320,35 +324,46 @@ CHEER = [cheer_tile(i) for i in range(6)]
 crowd_idx = [bg_alloc(t) for t in CROWD]
 
 def nude_fan(kind, cheer=False):
-    """Spectateur du club nudiste (16x16) assis sur sa serviette, dans l'herbe :
-    silhouette couleur peau (2) sans aucun détail anatomique, cheveux et
-    serviette (3), herbe (1). Debout, bras levés, quand le public s'enthousiasme."""
-    t = [[1]*16 for _ in range(16)]
+    """Spectateur du club nudiste, debout et en pied (16x24) : silhouette
+    couleur peau (2) sans aucun détail anatomique ; cheveux, chapeau de soleil
+    ou serviette en couleur 3 ; herbe (1). Bras levés quand il applaudit."""
+    t = [[1]*16 for _ in range(24)]
     def f(x0, y0, x1, y1, v):
         for y in range(y0, y1 + 1):
             for x in range(x0, x1 + 1):
-                if 0 <= x < 16 and 0 <= y < 16:
+                if 0 <= x < 16 and 0 <= y < 24:
                     t[y][x] = v
-    f(1, 12, 14, 15, 3)                         # serviette
-    up = 3 if cheer else 0
-    f(6, 2 - up, 9, 5 - up, 2)                  # tête
-    if kind == 1: f(5, 1 - up, 10, 2 - up, 3)   # cheveux
-    if kind == 2: f(5, 1 - up, 10, 1 - up, 3); f(5, 2 - up, 5, 6 - up, 3); f(10, 2 - up, 10, 6 - up, 3)
-    f(5, 6 - up, 10, 11, 2)                     # buste
+    f(6, 1, 9, 5, 2)                      # tête
+    f(5, 2, 10, 4, 2)
+    if kind == 0:                         # cheveux courts
+        f(6, 0, 9, 1, 3); f(5, 1, 5, 2, 3); f(10, 1, 10, 2, 3)
+    elif kind == 1:                       # cheveux longs
+        f(5, 0, 10, 1, 3); f(4, 1, 4, 6, 3); f(11, 1, 11, 6, 3)
+    else:                                 # chapeau de soleil
+        f(3, 1, 12, 1, 3); f(6, 0, 9, 0, 3)
+    f(7, 6, 8, 6, 2)                      # cou
+    f(5, 7, 10, 15, 2)                    # buste
+    f(4, 8, 11, 9, 2)                     # épaules
+    if kind == 0:
+        for k in range(6):                # serviette en écharpe
+            f(5 + k, 7 + k, 6 + k, 7 + k, 3)
     if cheer:
-        f(3, 0, 4, 6, 2); f(11, 0, 12, 6, 2)    # bras levés
-        f(6, 11, 7, 13, 2); f(8, 11, 9, 13, 2)  # debout
+        f(3, 1, 3, 8, 2); f(12, 1, 12, 8, 2)      # bras levés
+        f(2, 0, 3, 1, 2); f(12, 0, 13, 1, 2)       # mains
     else:
-        f(3, 8, 4, 11, 2); f(11, 8, 12, 11, 2)  # bras posés
-        f(3, 11, 12, 12, 2)                     # jambes croisées
+        f(3, 9, 3, 15, 2); f(12, 9, 12, 15, 2)     # bras le long du corps
+        if kind == 2:
+            f(12, 14, 14, 19, 3)                   # serviette à la main
+    f(5, 16, 6, 22, 2); f(9, 16, 10, 22, 2)        # jambes
+    f(4, 23, 6, 23, 2); f(9, 23, 11, 23, 2)        # pieds nus
     return t
 
-def split4(t):
-    return [[r[tx*8:tx*8+8] for r in t[ty*8:ty*8+8]] for ty in range(2) for tx in range(2)]
+def split6(t):
+    return [[r[tx*8:tx*8+8] for r in t[ty*8:ty*8+8]] for ty in range(3) for tx in range(2)]
 
-NUDE_FANS = [split4(nude_fan(k)) for k in range(3)]
-NUDE_FANS_CHEER = [split4(nude_fan(k, True)) for k in range(3)]
-NUDE_CROWD = [tile for fan in NUDE_FANS for tile in fan]          # 12 tuiles
+NUDE_FANS = [split6(nude_fan(k)) for k in range(3)]
+NUDE_FANS_CHEER = [split6(nude_fan(k, True)) for k in range(3)]
+NUDE_CROWD = [tile for fan in NUDE_FANS for tile in fan]          # 18 tuiles
 NUDE_CHEER = [tile for fan in NUDE_FANS_CHEER for tile in fan]
 crowd_idx3 = [bg_alloc(t) for t in NUDE_CROWD]
 

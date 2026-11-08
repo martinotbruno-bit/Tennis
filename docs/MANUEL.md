@@ -197,7 +197,7 @@ Le palmarès est conservé tant que la console reste allumée. Sur une cartouche
 
 Gagnez une compétition (tournoi, poules, championnat, saison ou personnalisé, en simple ou en double) pour débloquer un nouveau lieu : le **club nudiste « Les Bronzés »**.
 - Les joueurs y jouent au naturel. Les silhouettes sont couleur peau, sans aucun détail ; une serviette en écharpe aux couleurs de l'équipe permet de distinguer les camps.
-- Pas de gradins : le public, lui aussi au naturel, est assis sur ses serviettes dans l'herbe et se lève pour applaudir.
+- Pas de gradins : quelques spectateurs, eux aussi au naturel et sans aucun détail, se tiennent debout dans l'herbe, en pied, avec cheveux, chapeau de soleil ou serviette. Ils lèvent les bras pour applaudir.
 - L'arbitre adapte ses annonces au lieu : « FAUTE — PAS DE POCHE ! », « ÉGALITÉ — NU À NU », « COUP GAGNANT — BRONZAGE TOTAL », « CHANGEMENT DE CÔTÉ — ET DE CRÈME ! »… En pause, il rappelle la crème solaire.
 
 Le déblocage est gardé dans le palmarès (définitivement si la cartouche a une pile). Un code de reprise contenant au moins un trophée débloque aussi le club sur une autre console.

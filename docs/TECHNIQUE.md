@@ -39,7 +39,7 @@ La version 1.0 tenait en NROM-256 (32 Ko, plein à 87 %). Il a fallu plus de pla
 | 0 | Moteur de match : physique, frappes, service, arbitrage, IA | 16 314 |
 | 1 | Écrans : titre, configuration, présentation, résultats, compétitions, levée de coupe, saisie de code, palmarès | 13 548 |
 | 2 | Motifs graphiques (8 Ko), copiés en CHR-RAM au démarrage | 8 192 |
-| 3 | Annexes du match : score et annonces du club nudiste, courts (4 lieux), public animé, pluie, ralentis, exercices, tutoriel | 9 008 |
+| 3 | Annexes du match : score et annonces du club nudiste, courts (4 lieux), public animé, pluie, ralentis, exercices, tutoriel | 9 186 |
 | 4 | Mode d'emploi | 3 528 |
 | 5 | Compétitions (tirages, simulations, classements, équipes de double) et palmarès | 7 218 |
 | 6 | Tuiles des personnages « au naturel » (club nudiste), copiées en CHR-RAM à la demande | 3 072 |
@@ -141,7 +141,7 @@ $7800-$7FFF  palmarès (sauvegardé si la cartouche a une pile ; signature + som
 
 - **Déblocage** : par la première victoire en compétition. Il est stocké dans le palmarès (`sv.nude`) et dans la RAM (`nude_unlocked`) ; un code de reprise contenant au moins un trophée débloque aussi le club.
 - **Tenues** : `people_tiles(1)` (banque fixe) copie en CHR-RAM, rendu coupé, les 192 tuiles des personnages au naturel depuis la banque 6 ; `people_tiles(0)` restaure les tuiles normales depuis la banque 2. Les silhouettes n'ont aucun détail anatomique ; une serviette aux couleurs de l'équipe distingue les camps.
-- **Court** : un 4ᵉ écran de court, sans gradins. Le public est fait de spectateurs 16 × 16 sur des serviettes dans l'herbe ; leur version debout est échangée en CHR-RAM quand le public applaudit.
+- **Court** : un 4ᵉ écran de court, sans gradins. 9 spectateurs debout, en pied (16 × 24, 3 modèles de 6 tuiles), placés au centre des bandes latérales, hors de la zone rognée par les téléviseurs ; leur version bras levés est échangée en CHR-RAM quand le public applaudit.
 - **Annonces** : un complément humoristique est ajouté par `hud_update` (banque 3), sans toucher au moteur.
 - **Écart au CDC** : contrairement au § 5.3 (tout accessible dès le départ), ce lieu est à débloquer. C'est un bonus demandé explicitement, en dehors du contenu de base.
 
@@ -156,7 +156,7 @@ Grâce à la CHR-RAM, les 6 motifs de spectateurs sont remplacés par leur versi
 
 ## 5. Graphismes
 
-- **Fond** : 244 tuiles sur 256. Quatre écrans de court compressés en RLE (stade 657 octets, club 648, salle 647, club nudiste 668). La surface et les conditions ne changent que les palettes.
+- **Fond** : 242 tuiles sur 256. Quatre écrans de court compressés en RLE (stade 657 octets, club 648, salle 647, club nudiste 648). La surface et les conditions ne changent que les palettes.
 - **Sprites** : 213 tuiles sur 256 (dont la coupe et les confettis).
   - 2 vues (dos et face) × 2 silhouettes (homme et femme) × 8 poses : attente, course ×2, frappe ×2, service, joie, déception.
   - 16 palettes de personnages.
