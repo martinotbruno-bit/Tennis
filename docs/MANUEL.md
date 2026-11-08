@@ -105,7 +105,10 @@ Le lancer reste visible quelle que soit votre position, y compris quand vous ser
 
 - Les deux **panneaux de score** occupent les coins supérieurs, au-dessus des tribunes ; les joueurs ne peuvent pas les masquer.
   - Coin gauche : l'équipe qui joue en bas de l'écran ; coin droit : celle du haut.
-  - Chaque panneau affiche le nom, les sets et jeux (« 1-3 »), puis les points. `*` désigne le serveur.
+  - Chaque panneau ne concerne qu'un joueur (ou une équipe) :
+    - ligne 1 : le nom ;
+    - ligne 2 : les jeux gagnés dans le set en cours (« J 3 »), suivis de `*` si ce joueur sert ;
+    - ligne 3 : les points du jeu en cours (0, 15, 30, 40, AV), suivis d'un rond plein par set gagné.
 - Les **annonces** de l'arbitre s'affichent au centre du bandeau : faute, let, égalité, avantage, balle de set ou de match, jeu décisif, changement de côté, ace, coup gagnant…
 - Le **public** se lève et applaudit après les beaux points. Après un ace, un coup gagnant ou un long échange, un **ralenti** rejoue le point (A pour le passer).
 - **En fin de match** :

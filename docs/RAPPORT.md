@@ -17,6 +17,7 @@ Comme l'exige le CDC (§ 17.5), ce rapport distingue ce qui est **réalisé**, *
 | Balle dont la taille suit la hauteur | 3 tailles (4, 5 et 7 px) selon la hauteur ; l'ombre reste au sol |
 | Balle ratée bloquée en haut ou en bas de l'écran | La balle ratée poursuit sa trajectoire et disparaît une fois sortie de l'écran ; une balle très haute n'est plus collée au bord supérieur (seule son ombre reste visible). Arbitrage inchangé |
 | Serveur du haut trop loin de la ligne de fond | Pieds 2 px derrière la ligne (au lieu de 8) : le sprite se dessine au-dessus des pieds, le recul paraissait plus grand en haut. Le serveur du bas est inchangé |
+| Affichage des jeux confus (« 0-3 » lu comme un score entre les deux joueurs) | Panneau repensé : « J 3 » pour les jeux du set, un rond plein par set gagné à côté des points, `*` pour le serveur |
 
 ### Version 2.1
 
@@ -48,7 +49,7 @@ Pour loger ce contenu, la cartouche passe de NROM (32 Ko) à **MMC1** : 128 Ko d
 | Émulateur (`emu_test`) | 109/109 vérifications (environ 12 min) |
 | Profil CPU, simple, 6 000 trames | 1 trame d'échange en dépassement |
 | Profil CPU, double, 6 000 trames | 11 trames d'échange en dépassement (0,2 %), sans défaut d'image |
-| Compilation | Reproductible : SHA-256 `1aa94ac479bdadccd54909031da3a0717759fe130c221a98d7cc531257b639c8` sur deux compilations propres |
+| Compilation | Reproductible : SHA-256 `6c66957c65dfac53e878a0bccd98b381238339a698f2169ed9d6e25d781a3604` sur deux compilations propres |
 
 ## 3. Conformité par section du CDC
 
