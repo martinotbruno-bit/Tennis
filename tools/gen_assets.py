@@ -1,0 +1,556 @@
+#!/usr/bin/env python3
+"""Génère toutes les ressources graphiques originales de Pixel Open.
+
+Sorties :
+  assets/tiles.chr      8 Ko de CHR (table 0 = décors/texte, table 1 = sprites)
+  src/assets_data.c     nametables compressées + tables de tuiles des sprites
+  assets/preview_*.png  aperçus (si Pillow est disponible)
+
+Tout est dessiné par programme : aucune ressource externe.
+"""
+import os, sys, random
+
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+random.seed(1234)  # génération déterministe (compilation reproductible)
+
+# --------------------------------------------------------------------------
+# Géométrie du court (doit rester identique à src/court.h)
+# --------------------------------------------------------------------------
+TOP_BASE, BOT_BASE, NET_Y = 58, 214, 136
+TOP_SERV, BOT_SERV = 94, 178
+SGL_L, SGL_R = 74, 182
+DBL_L, DBL_R = 54, 202
+CENTER_X = 128
+
+# --------------------------------------------------------------------------
+# Police 5x7 (majuscules sans accents, chiffres, ponctuation)
+# --------------------------------------------------------------------------
+FONT = {
+ 'A':["01110","10001","10001","11111","10001","10001","10001"],
+ 'B':["11110","10001","10001","11110","10001","10001","11110"],
+ 'C':["01110","10001","10000","10000","10000","10001","01110"],
+ 'D':["11110","10001","10001","10001","10001","10001","11110"],
+ 'E':["11111","10000","10000","11110","10000","10000","11111"],
+ 'F':["11111","10000","10000","11110","10000","10000","10000"],
+ 'G':["01110","10001","10000","10111","10001","10001","01111"],
+ 'H':["10001","10001","10001","11111","10001","10001","10001"],
+ 'I':["01110","00100","00100","00100","00100","00100","01110"],
+ 'J':["00111","00010","00010","00010","00010","10010","01100"],
+ 'K':["10001","10010","10100","11000","10100","10010","10001"],
+ 'L':["10000","10000","10000","10000","10000","10000","11111"],
+ 'M':["10001","11011","10101","10101","10001","10001","10001"],
+ 'N':["10001","11001","10101","10011","10001","10001","10001"],
+ 'O':["01110","10001","10001","10001","10001","10001","01110"],
+ 'P':["11110","10001","10001","11110","10000","10000","10000"],
+ 'Q':["01110","10001","10001","10001","10101","10010","01101"],
+ 'R':["11110","10001","10001","11110","10100","10010","10001"],
+ 'S':["01111","10000","10000","01110","00001","00001","11110"],
+ 'T':["11111","00100","00100","00100","00100","00100","00100"],
+ 'U':["10001","10001","10001","10001","10001","10001","01110"],
+ 'V':["10001","10001","10001","10001","10001","01010","00100"],
+ 'W':["10001","10001","10001","10101","10101","10101","01010"],
+ 'X':["10001","10001","01010","00100","01010","10001","10001"],
+ 'Y':["10001","10001","01010","00100","00100","00100","00100"],
+ 'Z':["11111","00001","00010","00100","01000","10000","11111"],
+ '0':["01110","10001","10011","10101","11001","10001","01110"],
+ '1':["00100","01100","00100","00100","00100","00100","01110"],
+ '2':["01110","10001","00001","00010","00100","01000","11111"],
+ '3':["11111","00010","00100","00010","00001","10001","01110"],
+ '4':["00010","00110","01010","10010","11111","00010","00010"],
+ '5':["11111","10000","11110","00001","00001","10001","01110"],
+ '6':["00110","01000","10000","11110","10001","10001","01110"],
+ '7':["11111","00001","00010","00100","01000","01000","01000"],
+ '8':["01110","10001","10001","01110","10001","10001","01110"],
+ '9':["01110","10001","10001","01111","00001","00010","01100"],
+ ':':["00000","00100","00100","00000","00100","00100","00000"],
+ '-':["00000","00000","00000","11111","00000","00000","00000"],
+ '.':["00000","00000","00000","00000","00000","01100","01100"],
+ '!':["00100","00100","00100","00100","00100","00000","00100"],
+ '?':["01110","10001","00001","00010","00100","00000","00100"],
+ '/':["00001","00010","00010","00100","01000","01000","10000"],
+ "'":["00100","00100","01000","00000","00000","00000","00000"],
+ '>':["01000","00100","00010","00001","00010","00100","01000"],
+ '<':["00010","00100","01000","10000","01000","00100","00010"],
+ '*':["00000","00100","10101","01110","10101","00100","00000"],
+ '=':["00000","00000","11111","00000","11111","00000","00000"],
+ '+':["00000","00100","00100","11111","00100","00100","00000"],
+ '(':["00010","00100","01000","01000","01000","00100","00010"],
+ ')':["01000","00100","00010","00010","00010","00100","01000"],
+ '#':["01010","11111","01010","01010","11111","01010","00000"],
+}
+
+def font_tile(ch):
+    """Tuile 8x8 : texte couleur 3 avec ombre portée couleur 1."""
+    t = [[0]*8 for _ in range(8)]
+    g = FONT.get(ch)
+    if not g:
+        return t
+    for y, row in enumerate(g):
+        for x, c in enumerate(row):
+            if c == '1':
+                # ombre en bas à droite
+                if x+2 < 8 and y+1 < 8 and t[y+1][x+2] == 0:
+                    t[y+1][x+2] = 1
+    for y, row in enumerate(g):
+        for x, c in enumerate(row):
+            if c == '1':
+                t[y][x+1] = 3
+    return t
+
+def blank():
+    return [[0]*8 for _ in range(8)]
+
+# --------------------------------------------------------------------------
+# Encodage CHR
+# --------------------------------------------------------------------------
+def encode_tile(t):
+    lo = bytearray(8); hi = bytearray(8)
+    for y in range(8):
+        for x in range(8):
+            v = t[y][x]
+            if v & 1: lo[y] |= 0x80 >> x
+            if v & 2: hi[y] |= 0x80 >> x
+    return bytes(lo) + bytes(hi)
+
+def tkey(t):
+    return tuple(tuple(r) for r in t)
+
+# --------------------------------------------------------------------------
+# Table 0 : arrière-plans
+# --------------------------------------------------------------------------
+bg_tiles = [None]*256
+for code in range(0x20, 0x60):
+    bg_tiles[code] = font_tile(chr(code))
+bg_tiles[0] = blank()
+# Tuile 0x01 : bloc plein couleur 1 (cadres de menu), 0x02 : couleur 2, 0x03 : couleur 3
+for i, c in ((1, 1), (2, 2), (3, 3)):
+    bg_tiles[i] = [[c]*8 for _ in range(8)]
+# 0x04 : flèche curseur (couleur 3)
+cur = blank()
+for y in range(7):
+    w = 4 - abs(3 - y)
+    for x in range(w + 1):
+        cur[y][x+1] = 3
+bg_tiles[4] = cur
+
+free_bg = [i for i in range(256) if bg_tiles[i] is None]
+bg_index = {}
+for i, t in enumerate(bg_tiles):
+    if t is not None:
+        bg_index.setdefault(tkey(t), i)
+
+def bg_alloc(t):
+    k = tkey(t)
+    if k in bg_index:
+        return bg_index[k]
+    if not free_bg:
+        sys.exit("ERREUR : plus de tuiles libres dans la table d'arrière-plan")
+    i = free_bg.pop(0)
+    bg_tiles[i] = t
+    bg_index[k] = i
+    return i
+
+def bitmap_to_nametable(bmp, attr_fn):
+    """bmp[240][256] -> 960 octets de tuiles + 64 octets d'attributs."""
+    nt = bytearray(960)
+    for ty in range(30):
+        for tx in range(32):
+            t = [bmp[ty*8+y][tx*8:tx*8+8] for y in range(8)]
+            nt[ty*32+tx] = bg_alloc([list(r) for r in t])
+    at = bytearray(64)
+    for ay in range(8):
+        for ax in range(8):
+            v = 0
+            for q, (dx, dy) in enumerate(((0,0),(1,0),(0,1),(1,1))):
+                bx, by = ax*2+dx, ay*2+dy
+                v |= (attr_fn(bx, by) & 3) << (q*2)
+            at[ay*8+ax] = v
+    return bytes(nt) + bytes(at)
+
+# ---------------------------- Court --------------------------------------
+def draw_court():
+    W, H = 256, 240
+    b = [[0]*W for _ in range(H)]
+    def rect(x0, y0, x1, y1, c):
+        for y in range(max(0,y0), min(H,y1+1)):
+            for x in range(max(0,x0), min(W,x1+1)):
+                b[y][x] = c
+    # surface de jeu (couleur 1) avec une marge de dégagement
+    rect(DBL_L-10, TOP_BASE-14, DBL_R+10, BOT_BASE+14, 1)
+    # lignes (couleur 2)
+    rect(DBL_L, TOP_BASE-1, DBL_R, TOP_BASE, 2)        # ligne de fond haute
+    rect(DBL_L, BOT_BASE, DBL_R, BOT_BASE+1, 2)        # ligne de fond basse
+    for x in (DBL_L, SGL_L, SGL_R, DBL_R):
+        rect(x, TOP_BASE, x, BOT_BASE, 2)               # lignes de côté
+    rect(SGL_L, TOP_SERV, SGL_R, TOP_SERV, 2)          # lignes de service
+    rect(SGL_L, BOT_SERV, SGL_R, BOT_SERV, 2)
+    rect(CENTER_X, TOP_SERV, CENTER_X, BOT_SERV, 2)    # ligne médiane de service
+    rect(CENTER_X, TOP_BASE+1, CENTER_X, TOP_BASE+3, 2)  # marques centrales
+    rect(CENTER_X, BOT_BASE-3, CENTER_X, BOT_BASE-1, 2)
+    # filet : bande blanche + mailles sombres (couleur 3)
+    for y in range(NET_Y-5, NET_Y+1):
+        for x in range(DBL_L-6, DBL_R+7):
+            b[y][x] = 3 if ((x + y) % 2 == 0 or y == NET_Y) else 1
+    rect(DBL_L-6, NET_Y-6, DBL_R+6, NET_Y-6, 2)
+    rect(DBL_L-8, NET_Y-9, DBL_L-6, NET_Y, 3)           # poteaux
+    rect(DBL_R+6, NET_Y-9, DBL_R+8, NET_Y, 3)
+    # tribunes latérales (palette 2) : rangées de spectateurs
+    for side in (0, 1):
+        x0 = 0 if side == 0 else 224
+        for y in range(32, 240):
+            for x in range(x0, x0+32):
+                b[y][x] = 0
+        for row in range(4, 30):
+            for col in range(4):
+                tx = x0 + col*8
+                ty = row*8
+                pat = random.choice(CROWD)
+                for yy in range(8):
+                    for xx in range(8):
+                        b[ty+yy][tx+xx] = pat[yy][xx]
+        # rambarde
+        bx = 31 if side == 0 else 224
+        for y in range(32, 240):
+            b[y][bx] = 3
+    # chaise d'arbitre dans la tribune gauche, au niveau du filet
+    rect(18, NET_Y-14, 29, NET_Y+2, 0)
+    rect(20, NET_Y-14, 27, NET_Y-9, 3)
+    rect(22, NET_Y-20, 25, NET_Y-15, 2)
+    rect(20, NET_Y-8, 21, NET_Y+2, 3)
+    rect(26, NET_Y-8, 27, NET_Y+2, 3)
+    # bandeau supérieur réservé au score (couleur 0)
+    for y in range(0, 32):
+        for x in range(W):
+            b[y][x] = 0
+    return b
+
+def crowd_tile(seed):
+    r = random.Random(seed)
+    t = blank()
+    for hx in (1, 5):
+        c = r.choice((1, 2, 3))
+        hy = r.choice((0, 1))
+        # tête (couleur 1 = peau), corps couleur c
+        for yy in range(hy, hy+3):
+            for xx in range(hx, hx+2):
+                t[yy][xx] = 1
+        for yy in range(hy+3, 8):
+            for xx in range(hx-1, hx+3):
+                if 0 <= xx < 8:
+                    t[yy][xx] = 2 if c == 1 else c
+    return t
+
+CROWD = [crowd_tile(i) for i in range(6)]
+
+def court_attr(bx, by):
+    if by < 2:
+        return 1                      # bandeau score
+    if bx < 2 or bx >= 14:
+        return 2                      # tribunes
+    return 0
+
+court_nt = bitmap_to_nametable(draw_court(), court_attr)
+
+# ---------------------------- Titre --------------------------------------
+LOGO = "PIXEL OPEN"
+def big_letter_tiles(ch):
+    """Lettre géante 16x16 (police x2) avec contour."""
+    g = FONT[ch]
+    px = [[0]*16 for _ in range(16)]
+    for y, row in enumerate(g):
+        for x, c in enumerate(row):
+            if c == '1':
+                for dy in range(2):
+                    for dx in range(2):
+                        px[1+y*2+dy][3+x*2+dx] = 3
+    out = [[v for v in r] for r in px]
+    for y in range(16):
+        for x in range(16):
+            if px[y][x] == 0:
+                for dy in (-1,0,1):
+                    for dx in (-1,0,1):
+                        yy, xx = y+dy, x+dx
+                        if 0 <= yy < 16 and 0 <= xx < 16 and px[yy][xx] == 3:
+                            out[y][x] = 1
+    # dégradé : moitié basse en couleur 2
+    for y in range(9, 16):
+        for x in range(16):
+            if out[y][x] == 3:
+                out[y][x] = 2
+    tiles = []
+    for ty in range(2):
+        for tx in range(2):
+            tiles.append([out[ty*8+y][tx*8:tx*8+8] for y in range(8)])
+    return tiles
+
+logo_tiles = {}
+for ch in set(LOGO.replace(' ', '')):
+    logo_tiles[ch] = [bg_alloc(t) for t in big_letter_tiles(ch)]
+
+# Balle géante décorative 4x4 tuiles pour l'écran titre
+def big_ball():
+    px = [[0]*32 for _ in range(32)]
+    for y in range(32):
+        for x in range(32):
+            d = (x-15.5)**2 + (y-15.5)**2
+            if d < 15.5**2:
+                px[y][x] = 2
+                if d > 13.5**2:
+                    px[y][x] = 1
+    # coutures blanches
+    import math
+    for a in range(0, 360, 2):
+        r = math.radians(a)
+        for (cx, cy) in ((-14, 16), (46, 16)):
+            x = int(cx + 20*math.cos(r)); y = int(cy + 20*math.sin(r))
+            if 0 <= x < 32 and 0 <= y < 32 and px[y][x] == 2:
+                px[y][x] = 3
+    # reflet
+    for y in range(7, 11):
+        for x in range(9, 13):
+            if px[y][x] == 2:
+                px[y][x] = 3
+    tiles = []
+    for ty in range(4):
+        for tx in range(4):
+            tiles.append(bg_alloc([px[ty*8+y][tx*8:tx*8+8] for y in range(8)]))
+    return tiles
+ball_tiles = big_ball()
+
+# ---------------------------- Sprites (table 1) --------------------------
+spr_tiles = [None]*256
+spr_tiles[0] = blank()
+def spr_tile(i, t):
+    spr_tiles[i] = t
+
+# balle (couleur 1) et ombre (couleur 2)
+ball = blank()
+for (x, y) in ((2,1),(3,1),(1,2),(2,2),(3,2),(4,2),(1,3),(2,3),(3,3),(4,3),(2,4),(3,4)):
+    ball[y][x] = 1
+ball[2][2] = 3
+spr_tile(1, ball)
+shadow = blank()
+for (x, y) in ((1,3),(2,3),(3,3),(4,3),(2,4),(3,4),(1,4),(4,4)):
+    shadow[y][x] = 2
+spr_tile(2, shadow)
+# petite balle (loin / très haute) inutilisée pour l'instant : réserve
+# curseur de visée / indicateur de serveur
+star = blank()
+for (x, y) in ((3,0),(3,1),(2,2),(3,2),(4,2),(0,3),(1,3),(2,3),(3,3),(4,3),(5,3),(6,3),(2,4),(3,4),(4,4),(1,5),(2,5),(4,5),(5,5),(1,6),(5,6)):
+    star[y][x] = 3
+spr_tile(3, star)
+# gouttes de pluie (réservé pour la météo)
+rain = blank()
+for y in range(1, 6):
+    rain[y][4 - y//3] = 3
+spr_tile(4, rain)
+
+# Personnages 16x24 : 0 transparent, 1 peau, 2 tenue, 3 sombre
+def new_canvas():
+    return [[0]*16 for _ in range(24)]
+
+def put(c, x, y, v):
+    if 0 <= x < 16 and 0 <= y < 24:
+        c[y][x] = v
+
+def fill(c, x0, y0, x1, y1, v):
+    for y in range(y0, y1+1):
+        for x in range(x0, x1+1):
+            put(c, x, y, v)
+
+def line(c, x0, y0, x1, y1, v):
+    n = max(abs(x1-x0), abs(y1-y0), 1)
+    for i in range(n+1):
+        put(c, round(x0 + (x1-x0)*i/n), round(y0 + (y1-y0)*i/n), v)
+
+def racket(c, hx, hy, ang):
+    """Raquette : manche depuis la main (hx,hy) selon une direction."""
+    dx, dy = {'up': (0,-1), 'right': (1,0), 'upright': (1,-1), 'down': (0,1),
+              'downright': (1,1)}[ang]
+    # manche 2 px puis tamis 3x4
+    put(c, hx+dx, hy+dy, 3)
+    cx, cy = hx + dx*4, hy + dy*4
+    if dx == 0:
+        fill(c, cx-1, cy-1, cx+1, cy+1, 3); put(c, cx, cy, 0)
+        put(c, cx, cy-2*(-dy if dy else 1), 3)
+    else:
+        fill(c, cx-1, cy-1, cx+1, cy+1, 3); put(c, cx, cy, 0)
+
+def draw_person(view, legs, arms, female):
+    c = new_canvas()
+    # --- tête
+    fill(c, 6, 1, 9, 5, 1)
+    put(c, 5, 2, 1); put(c, 10, 2, 1); put(c, 5, 3, 1); put(c, 10, 3, 1); put(c, 5, 4, 1); put(c, 10, 4, 1)
+    # cheveux
+    fill(c, 6, 0, 9, 0, 3); fill(c, 5, 1, 10, 1, 3)
+    if view == 'back':
+        fill(c, 5, 1, 10, 4, 3); fill(c, 6, 5, 9, 5, 3)
+        put(c, 6, 5, 1); put(c, 9, 5, 1)
+        if female:
+            fill(c, 7, 6, 8, 8, 3)  # queue de cheval
+    else:
+        put(c, 5, 2, 3); put(c, 10, 2, 3)
+        put(c, 7, 3, 3); put(c, 9, 3, 3)  # yeux
+        if female:
+            fill(c, 4, 2, 4, 6, 3); fill(c, 11, 2, 11, 6, 3)
+            put(c, 5, 5, 3); put(c, 10, 5, 3)
+    # cou
+    fill(c, 7, 6, 8, 6, 1)
+    if female and view == 'back':
+        put(c, 7, 6, 3); put(c, 8, 6, 3)
+    # torse
+    fill(c, 5, 7, 10, 13, 2)
+    fill(c, 4, 8, 11, 9, 2)
+    put(c, 7, 7, 1) if view == 'front' else None
+    # short / jupe
+    if female:
+        fill(c, 4, 14, 11, 15, 2); fill(c, 4, 15, 11, 15, 3)
+    else:
+        fill(c, 5, 14, 10, 15, 3)
+    # jambes
+    if legs == 'stand':
+        fill(c, 5, 16, 6, 21, 1); fill(c, 9, 16, 10, 21, 1)
+        fill(c, 4, 22, 6, 23, 3); fill(c, 9, 22, 11, 23, 3)
+    elif legs == 'runA':
+        fill(c, 4, 16, 5, 20, 1); fill(c, 10, 16, 11, 19, 1)
+        fill(c, 3, 21, 5, 22, 3); fill(c, 10, 20, 12, 21, 3)
+    elif legs == 'runB':
+        fill(c, 5, 16, 6, 19, 1); fill(c, 9, 16, 10, 21, 1)
+        fill(c, 4, 20, 6, 21, 3); fill(c, 9, 22, 11, 23, 3)
+    elif legs == 'wide':
+        line(c, 5, 16, 3, 21, 1); line(c, 6, 16, 4, 21, 1)
+        line(c, 9, 16, 11, 21, 1); line(c, 10, 16, 12, 21, 1)
+        fill(c, 2, 22, 4, 23, 3); fill(c, 11, 22, 13, 23, 3)
+    # bras + raquette (main droite côté écran droit)
+    if arms == 'ready':
+        fill(c, 3, 9, 3, 12, 1); fill(c, 12, 9, 12, 12, 1)
+        put(c, 4, 13, 1); put(c, 11, 13, 1)
+        racket(c, 12, 13, 'downright')
+    elif arms == 'swing':
+        fill(c, 3, 9, 3, 12, 1)
+        line(c, 11, 9, 14, 9, 1)
+        racket(c, 14, 9, 'up')
+    elif arms == 'follow':
+        fill(c, 2, 8, 4, 8, 1); line(c, 11, 9, 13, 7, 1)
+        racket(c, 13, 6, 'up')
+    elif arms == 'serve':
+        line(c, 4, 8, 3, 3, 1)          # bras de lancer levé
+        line(c, 11, 8, 12, 4, 1)
+        racket(c, 12, 3, 'up')
+    return c
+
+def canvas_tiles(c):
+    out = []
+    for ty in range(3):
+        for tx in range(2):
+            out.append([c[ty*8+y][tx*8:tx*8+8] for y in range(8)])
+    return out
+
+POSES = [  # (jambes, bras) — l'ordre est repris dans src/gfx.c
+    ('stand', 'ready'),   # 0 attente
+    ('runA', 'ready'),    # 1 course A
+    ('runB', 'ready'),    # 2 course B
+    ('wide', 'swing'),    # 3 frappe (armé)
+    ('wide', 'follow'),   # 4 frappe (accompagnement)
+    ('stand', 'serve'),   # 5 service
+    ('wide', 'ready'),    # 6 joie / fente
+]
+NPOSE = len(POSES)
+next_spr = 0x10
+person_base = {}
+preview_people = []
+for female in (0, 1):
+    for view in ('back', 'front'):
+        base = next_spr
+        person_base[(female, view)] = base
+        for (legs, arms) in POSES:
+            cv = draw_person(view, legs, arms, female)
+            preview_people.append(cv)
+            for t in canvas_tiles(cv):
+                spr_tile(next_spr, t)
+                next_spr += 1
+assert next_spr <= 256, "trop de tuiles de sprites"
+
+# --------------------------------------------------------------------------
+# Sorties
+# --------------------------------------------------------------------------
+chr_data = bytearray()
+for t in bg_tiles:
+    chr_data += encode_tile(t if t is not None else blank())
+for t in spr_tiles:
+    chr_data += encode_tile(t if t is not None else blank())
+assert len(chr_data) == 8192
+os.makedirs(os.path.join(ROOT, 'assets'), exist_ok=True)
+with open(os.path.join(ROOT, 'assets', 'tiles.chr'), 'wb') as f:
+    f.write(chr_data)
+
+def rle(data):
+    """RLE simple : <octet> ou <MARK, octet, compte>. MARK = octet absent."""
+    used = set(data)
+    mark = next(i for i in range(256) if i not in used)
+    out = bytearray([mark])
+    i = 0
+    while i < len(data):
+        j = i
+        while j < len(data) and data[j] == data[i] and j - i < 255:
+            j += 1
+        n = j - i
+        if n >= 3:
+            out += bytes([mark, data[i], n])
+        else:
+            out += data[i:j]
+        i = j
+    out += bytes([mark, 0])  # compte 0 = fin
+    return bytes(out)
+
+def c_array(name, data):
+    s = 'const unsigned char %s[%d] = {\n' % (name, len(data))
+    for i in range(0, len(data), 16):
+        s += '  ' + ','.join('0x%02X' % b for b in data[i:i+16]) + ',\n'
+    return s + '};\n'
+
+court_rle = rle(court_nt)
+src = ['/* Fichier généré par tools/gen_assets.py — ne pas modifier. */',
+       '#include "assets.h"', '']
+src.append(c_array('court_nt_rle', court_rle))
+logo = []
+for ch in LOGO:
+    if ch == ' ':
+        logo += [0, 0, 0, 0]
+    else:
+        logo += logo_tiles[ch]
+src.append(c_array('logo_tiles', bytes(logo)))
+src.append(c_array('bigball_tiles', bytes(ball_tiles)))
+src.append('const unsigned char person_base[4] = {0x%02X,0x%02X,0x%02X,0x%02X};\n' % (
+    person_base[(0,'back')], person_base[(0,'front')], person_base[(1,'back')], person_base[(1,'front')]))
+with open(os.path.join(ROOT, 'src', 'assets_data.c'), 'w') as f:
+    f.write('\n'.join(src))
+
+used_bg = sum(1 for t in bg_tiles if t is not None)
+print("tuiles BG utilisées : %d/256, sprites : %d/256, court RLE : %d octets" % (
+    used_bg, next_spr, len(court_rle)))
+
+# aperçu facultatif
+try:
+    from PIL import Image
+    NESPAL = {0: (200, 120, 60), 1: (230, 150, 90), 2: (255, 255, 255), 3: (30, 30, 30)}
+    img = Image.new('RGB', (256, 240))
+    for ty in range(30):
+        for tx in range(32):
+            t = bg_tiles[court_nt[ty*32+tx]]
+            for y in range(8):
+                for x in range(8):
+                    img.putpixel((tx*8+x, ty*8+y), NESPAL[t[y][x]])
+    img.save(os.path.join(ROOT, 'assets', 'preview_court.png'))
+    pal = {0: (0, 120, 0), 1: (250, 190, 150), 2: (220, 40, 40), 3: (20, 20, 60)}
+    sp = Image.new('RGB', (16*NPOSE*2+2*NPOSE*2, 24*2+2))
+    for i, cv in enumerate(preview_people):
+        ox = (i % (NPOSE*2)) * 18; oy = (i // (NPOSE*2)) * 26
+        for y in range(24):
+            for x in range(16):
+                if oy+y < sp.size[1] and ox+x < sp.size[0]:
+                    sp.putpixel((ox+x, oy+y), pal[cv[y][x]])
+    sp = sp.resize((sp.size[0]*4, sp.size[1]*4), Image.NEAREST)
+    sp.save(os.path.join(ROOT, 'assets', 'preview_sprites.png'))
+except ImportError:
+    pass
