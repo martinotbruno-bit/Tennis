@@ -10,22 +10,24 @@ const char * const char_name[NCHARS] = {
 const u8 char_female[NCHARS] = { 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1 };
 /* peau, tenue, sombre (cheveux/short/raquette) */
 static const u8 char_pal[NCHARS][3] = {
-    { 0x27, 0x16, 0x07 },
-    { 0x37, 0x12, 0x0F },
-    { 0x17, 0x1A, 0x0F },
-    { 0x27, 0x14, 0x08 },
-    { 0x07, 0x21, 0x0F },
-    { 0x36, 0x25, 0x18 },
-    { 0x37, 0x19, 0x07 },
-    { 0x27, 0x13, 0x0F },
-    { 0x36, 0x28, 0x0F },
-    { 0x17, 0x2C, 0x08 },
-    { 0x27, 0x1C, 0x0F },
-    { 0x36, 0x15, 0x07 },
-    { 0x37, 0x0B, 0x0F },
-    { 0x17, 0x24, 0x0F },
-    { 0x07, 0x29, 0x0F },
-    { 0x27, 0x11, 0x08 },
+    /* tenues choisies pour ressortir sur toutes les surfaces et se distinguer
+       de la peau ; cheveux / short / raquette en noir ou brun foncé */
+    { 0x27, 0x25, 0x0F },   /* ALEX : rose */
+    { 0x37, 0x1C, 0x0F },   /* MAYA : bleu canard */
+    { 0x17, 0x3B, 0x0F },   /* LEON : vert menthe */
+    { 0x27, 0x24, 0x0F },   /* NINA : magenta */
+    { 0x07, 0x3C, 0x0F },   /* OMAR : cyan clair */
+    { 0x36, 0x0C, 0x0F },   /* ZOE  : canard foncé */
+    { 0x37, 0x15, 0x07 },   /* HUGO : framboise */
+    { 0x27, 0x2C, 0x0F },   /* EMMA : cyan */
+    { 0x36, 0x34, 0x0F },   /* IVAN : lilas */
+    { 0x17, 0x3A, 0x0F },   /* LINA : vert pâle */
+    { 0x27, 0x33, 0x0F },   /* TOM  : lavande */
+    { 0x36, 0x2B, 0x0F },   /* JADE : vert */
+    { 0x37, 0x39, 0x0F },   /* LUCA : vert anis */
+    { 0x17, 0x31, 0x0F },   /* SARA : bleu clair */
+    { 0x07, 0x23, 0x0F },   /* NOAH : violet */
+    { 0x27, 0x32, 0x0F },   /* INES : pervenche */
 };
 const char * const style_name[NSTYLES] = {
     "EQUILIBRE", "FOND DE COURT", "PUISSANCE", "FILET",
@@ -37,12 +39,14 @@ const char * const surf_name[NSURF] = {
 const char * const env_name[NENV] = { "STADE", "CLUB ", "SALLE", "CLUB NUDISTE" };
 /* fond universel, surface, lignes, filet */
 static const u8 surf_pal[NSURF][4] = {
-    { 0x17, 0x27, 0x30, 0x0F },
-    { 0x09, 0x1A, 0x30, 0x0F },
-    { 0x0A, 0x12, 0x30, 0x0F },
-    { 0x06, 0x15, 0x30, 0x0F },
-    { 0x21, 0x28, 0x16, 0x0F },   /* plage : sable jaune, distinct des teintes de peau */
-    { 0x0C, 0x31, 0x12, 0x0F },
+    /* couleurs choisies pour se distinguer des 5 teintes de peau, des tenues
+       et des cheveux, de jour, de nuit et sous la pluie (tools/contrast.py) */
+    { 0x05, 0x26, 0x30, 0x0F },   /* terre battue : brique clair, abords lie-de-vin */
+    { 0x1A, 0x2A, 0x30, 0x0F },   /* gazon : vert clair, abords vert */
+    { 0x02, 0x12, 0x30, 0x0F },   /* dur : bleu, abords bleu nuit */
+    { 0x03, 0x13, 0x30, 0x0F },   /* moquette : violet, abords violet sombre */
+    { 0x22, 0x28, 0x16, 0x0F },   /* plage : sable jaune, mer */
+    { 0x12, 0x21, 0x30, 0x0F },   /* glace : bleu ciel, abords bleu */
 };
 /* palette 2 (bords du court) selon le lieu */
 static const u8 env_pal[NENV][3] = {
@@ -54,8 +58,10 @@ static const u8 env_pal[NENV][3] = {
 
 static u8 darken(u8 c)
 {
+    /* un cran plus sombre, sans jamais tomber au noir : le noir est la couleur
+       des cheveux et des raquettes, qui doivent rester visibles */
     if (c == 0x0F || c == 0x30) return c;
-    return (c >= 0x10) ? (u8)(c - 0x10) : 0x0F;
+    return (c >= 0x10) ? (u8)(c - 0x10) : c;
 }
 
 void pal_set_court(u8 s, u8 cond, u8 env)
@@ -79,11 +85,11 @@ void pal_set_court(u8 s, u8 cond, u8 env)
         pal_buf[16 + 13] = 0x21; pal_buf[16 + 15] = 0x31;   /* gouttes */
     }
     if (cond == 1) {
-        /* match de nuit : décors assombris, court éclairé */
-        pal_buf[0] = 0x0F;
-        for (i = 4; i < 16; i += 4) pal_buf[i] = 0x0F;
-        pal_buf[10] = darken(pal_buf[10]); pal_buf[11] = darken(pal_buf[11]); pal_buf[9] = 0x07;
-        pal_buf[16 + 8] = 0x0F; pal_buf[16 + 12] = 0x0F;
+        /* match de nuit : décors assombris (sans noir), court éclairé */
+        pal_buf[0] = darken(pal_buf[0]);
+        for (i = 4; i < 16; i += 4) pal_buf[i] = pal_buf[0];
+        pal_buf[10] = darken(pal_buf[10]); pal_buf[11] = darken(pal_buf[11]); pal_buf[9] = darken(pal_buf[9]);
+        pal_buf[16 + 8] = pal_buf[16 + 12] = pal_buf[0];
     }
     pal_buf[16] = pal_buf[20] = pal_buf[0];
     pal_dirty = 1;

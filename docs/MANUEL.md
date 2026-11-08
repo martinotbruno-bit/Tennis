@@ -120,7 +120,7 @@ Le lancer reste visible quelle que soit votre position, y compris quand vous ser
 
 | Surface | Comportement |
 |---|---|
-| Terre battue | Rebond haut, balle ralentie : échanges longs |
+| Terre battue (brique) | Rebond haut, balle ralentie : échanges longs |
 | Gazon | Rebond bas, balle qui fuse : avantage au service-volée |
 | Dur | Compromis équilibré |
 | Moquette | Rapide et assez bas |

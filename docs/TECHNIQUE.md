@@ -182,6 +182,16 @@ Grâce à la CHR-RAM, les 6 motifs de spectateurs sont remplacés par leur versi
 - **Score** : dans les coins supérieurs, un panneau de 4 caractères par équipe : nom ; « J » + jeux du set + `*` (serveur) ; points + un rond par set gagné (glyphe `@` de la police). Les joueurs sont limités à x = 48..208 et la colonne 0 n'est pas utilisée (zone rognée par les téléviseurs).
 - **Service** : le lancer monte à environ 56 px. Il est affiché à sa hauteur réelle pour le serveur du bas, et réduit (× 9/16) pour celui du haut afin que la balle reste à l'écran. Les joueurs humains se déplacent à 2,19 px/trame.
 
+### Lisibilité des couleurs
+
+`tools/contrast.py` mesure, sur la palette réelle de la NES, l'écart de couleur perçu (ΔE CIE76) entre chaque couleur de chaque personnage (peau, tenue, cheveux/raquette) et le court et ses abords des 6 surfaces, de jour, de nuit et sous la pluie.
+
+Les surfaces, les 16 tenues et la règle d'assombrissement (nuit, pluie : un cran plus sombre, jamais jusqu'au noir des cheveux et des raquettes) ont été choisies pour que **toutes les paires dépassent ΔE 25**, sans liseré. Avant ce réglage, plusieurs couleurs étaient strictement identiques : la peau sur la terre battue, des tenues de la couleur exacte d'un court. Le minimum est maintenant de 26.
+
+```sh
+python3 tools/contrast.py 25    # liste les paires sous le seuil (aucune actuellement)
+```
+
 ## 6. Audio
 
 Le jeu n'utilise que l'APU natif :
