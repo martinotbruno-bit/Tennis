@@ -471,7 +471,9 @@ static void place_for_serve(void)
     u8 left = (u8)((ss == 0) == (ad == 0));     /* carré visé à gauche ? */
     u8 i;
     plx[sp] = (left ? CENTER_X + 22 : CENTER_X - 22) * FP;
-    ply[sp] = base_y(ss, 8);
+    /* serveur juste derrière la ligne de fond ; en haut, le sprite se dessine
+       au-dessus des pieds : 2 px de recul suffisent (8 px en bas) */
+    ply[sp] = ss ? (TOP_BASE - 2) * FP : base_y(0, 8);
     plx[rp] = (left ? CENTER_X - 46 : CENTER_X + 46) * FP;
     ply[rp] = base_y(rs, 2);
     if (npl == 4) {
@@ -584,7 +586,7 @@ static void clamp_player(u8 p)
     else { ymin = 30 * FP; ymax = (NET_Y - 6) * FP; }
     if (ms == MS_SERVE && p == server_p()) {
         /* le serveur reste derrière sa ligne de fond */
-        if (side_of(p) == 0) ymin = (BOT_BASE + 6) * FP; else ymax = (TOP_BASE - 3) * FP;
+        if (side_of(p) == 0) ymin = (BOT_BASE + 6) * FP; else ymax = (TOP_BASE - 1) * FP;
     }
     /* x limité à 48..208 : les sprites n'empiètent pas sur les panneaux de score */
     if (plx[p] < 48 * FP) plx[p] = 48 * FP;
