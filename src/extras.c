@@ -29,6 +29,34 @@ static void team_name(u8 t, char *out)
 static const char * const ex_short[NEX] = {
     "FRAP", "DEPL", "SERI", "PREC", "VOLE", "SERV", "ECHG", "PERS", "TUTO" };
 
+/* Club nudiste : l'arbitre ajoute son grain de sel aux annonces. */
+static u8 starts(const char *a, const char *b)
+{
+    while (*b) if (*a++ != *b++) return 0;
+    return 1;
+}
+static void set2(const char *s)
+{
+    u8 i;
+    for (i = 0; i < 14; ++i) msg2[i] = *s ? *s++ : ' ';
+}
+static void nude_quip(void)
+{
+    if (msg2[0] != ' ' && !starts(msg1, "JEU, SET") && !starts(msg1, "CHANGEMENT")) return;
+    if (starts(msg1, "CHANGEMENT")) set2("ET DE CREME !");
+    if (starts(msg1, "JEU !")) set2("TENUE : AUCUNE");
+    else if (starts(msg1, "FAUTE")) set2("PAS DE POCHE !");
+    else if (starts(msg1, "ACE")) set2("TOUT NU, TOUT ACE");
+    else if (starts(msg1, "COUP GAGNANT")) set2("BRONZAGE TOTAL");
+    else if (starts(msg1, "EGALITE")) set2("NU A NU");
+    else if (starts(msg1, "FILET")) set2("ATTENTION...");
+    else if (starts(msg1, "DEHORS")) set2("COMME NOUS");
+    else if (starts(msg1, "QUEL ECHANGE")) set2("EN TOUTE NUDITE");
+    else if (starts(msg1, "JEU, SET")) set2("ET SERVIETTE !");
+    else if (starts(msg1, "BALLE DE MATCH")) set2("SANS FILET");
+    else if (starts(msg1, "LET")) set2("CHATOUILLE");
+}
+
 void hud_update(void)
 {
     static char line[5];
@@ -59,15 +87,19 @@ void hud_update(void)
         vbuf_text(1, 3, line, 4);
     }
     if (paused) {
+        if (cfg.env == ENV_NUDE) vbuf_text(9, 3, "CREME SOLAIRE?", 14);
         vbuf_text(9, 1, pause_cur ? "  CONTINUER" : "> CONTINUER", 14);
         vbuf_text(9, 2, pause_cur ? "> QUITTER" : "  QUITTER", 14);
     } else if (msg_timer) {
+        if (cfg.env == ENV_NUDE) nude_quip();
         vbuf_text(9, 1, msg1, 14);
         vbuf_text(9, 2, msg2, 14);
     } else {
         vbuf_text(9, 1, "", 14);
         vbuf_text(9, 2, sc_tiebreak ? " JEU DECISIF" : "", 14);
     }
+    /* panneau du club (masqué pendant la pause par la crème solaire) */
+    if (cfg.env == ENV_NUDE && !paused) vbuf_text(9, 3, " CLUB NUDISTE", 14);
     hud_dirty = 0;
 }
 
@@ -94,6 +126,7 @@ void rain_draw(void)
 void load_court(void)
 {
     vram_unrle(court_nt_rle[cfg.env]);
+    people_tiles((u8)(cfg.env == ENV_NUDE));
 }
 
 /* ---------------------------------------------------------------------- */
@@ -102,9 +135,12 @@ void load_court(void)
  * budget VBlank. */
 void crowd_tick(void)
 {
-    u8 k = (u8)(crowd_timer % 6);
-    u8 cheer = (u8)(crowd_timer >= 6 && ((crowd_timer >> 3) & 1));
-    if (vbuf_raw((u16)crowd_idx[k] << 4, (cheer ? crowd_cheer : crowd_norm) + (k << 4), 16))
+    u8 nude = (u8)(cfg.env == ENV_NUDE);
+    u8 n = (u8)(nude ? 12 : 6);
+    u8 k = (u8)(crowd_timer % n);
+    u8 cheer = (u8)(crowd_timer >= n && ((crowd_timer >> 3) & 1));
+    const u8 *src = nude ? (cheer ? crowd_cheer3 : crowd_norm3) : (cheer ? crowd_cheer : crowd_norm);
+    if (vbuf_raw((u16)(nude ? crowd_idx3[k] : crowd_idx[k]) << 4, src + (k << 4), 16))
         --crowd_timer;
 }
 

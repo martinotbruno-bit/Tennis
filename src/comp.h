@@ -19,6 +19,7 @@ extern const char * const comp_name[NCT];
 extern u8 c_active, c_type, c_stage, c_seed, c_results, c_trophies, c_opts, c_lvl, c_over, c_rank;
 extern u8 c_surf, c_env, c_cond, c_fmt;
 extern u8 c_pl[8], c_rt[8], c_n;
+extern u8 c_pl2[8], c_dbl;
 
 extern char comp_l1[24], comp_l2[24];   /* libellés de l'étape (comp_stage_name) */
 

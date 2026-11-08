@@ -90,7 +90,9 @@ static void build_visible(void)
     if (m == MODE_COMP) {
         vis[nvis++] = O_COMP;
         if (opt_val[O_COMP] == CT_CUSTOM) { vis[nvis++] = O_CSIZE; vis[nvis++] = O_CPROG; vis[nvis++] = O_CVAR; }
+        vis[nvis++] = O_TYPE;
         vis[nvis++] = O_P1;
+        if (opt_val[O_TYPE]) vis[nvis++] = O_P2;      /* partenaire */
         vis[nvis++] = O_LEVEL;
         if (opt_val[O_COMP] != CT_SEASON) vis[nvis++] = O_SURF;
         vis[nvis++] = O_ENV;
@@ -159,6 +161,7 @@ static void screen_begin(void)
 {
     ppu_off();
     vbuf_reset();
+    people_tiles(0);
     clear_screen();
     pal_set_menu();
     spr_begin(); spr_end();
@@ -190,6 +193,8 @@ static const char * const title_items[4] = { "JOUER", "MODE D'EMPLOI", "PALMARES
 static void title_screen(void)
 {
     u8 i;
+    SV(sv_check);
+    if (sv.nude) nude_unlocked = 1;
     screen_begin();
     set_attr_rows(4, 7, 2);
     draw_logo(4);
@@ -214,7 +219,11 @@ static void title_screen(void)
 static void menu_draw_row(u8 i, u8 direct)
 {
     pad_text(opt_text(vis[i]), 15);
-    if (direct) { txt_at(3, (u8)(4 + i), opt_label[vis[i]]); txt_at(16, (u8)(4 + i), line); }
+    if (direct) {
+        if (vis[i] == O_P2 && opt_val[O_MODE] == MODE_COMP) txt_at(3, (u8)(4 + i), "PARTENAIRE");
+        else txt_at(3, (u8)(4 + i), opt_label[vis[i]]);
+        txt_at(16, (u8)(4 + i), line);
+    }
     else vbuf_text(16, (u8)(4 + i), line, 15);
 }
 
@@ -319,6 +328,14 @@ static void comp_cfg(void)
     cfg.chr[0] = c_pl[0];
     cfg.chr[1] = c_pl[o];
     cfg.level[1] = COMP(comp_level, 0);
+    if (c_dbl) {
+        /* double : partenaire du joueur (CPU) et partenaire de l'adversaire */
+        cfg.doubles = 1;
+        cfg.chr[2] = c_pl2[0];
+        cfg.chr[3] = c_pl2[o];
+        cfg.level[3] = cfg.level[1];
+        cfg.level[2] = (u8)(c_lvl ? c_lvl : 1);
+    }
     cfg.surface = COMP(comp_surface, 0);
     cfg.env = c_env;
     cfg.cond = c_cond;
@@ -343,8 +360,13 @@ static void team_line(u8 t, u8 y)
 static void present_screen(void)
 {
     screen_begin();
+    people_tiles((u8)(cfg.env == ENV_NUDE));
     pal_set_player(0, cfg.chr[0]);
     pal_set_player(1, cfg.chr[1]);
+    if (cfg.env == ENV_NUDE) {
+        txt_at(4, 24, "CLUB NUDISTE LES BRONZES");
+        txt_at(4, 25, "TENUE EXIGEE : AUCUNE");
+    }
     txt_at(8, 2, "PIXEL OPEN 2026");
     if (last_mode == MODE_COMP) {
         txt_at(4, 4, comp_name[c_type]);
@@ -359,7 +381,7 @@ static void present_screen(void)
     txt_at(17, 21, env_name[cfg.env]);
     txt_at(4, 22, cond_name[cfg.cond]);
     txt_at(17, 22, fmt_name[opt_val[O_FMT]]);
-    txt_at(4, 26, "A : JOUER   B : RETOUR");
+    txt_at(4, 27, "A : JOUER   B : RETOUR");
     ppu_on();
     scr_state = SS_PRESENT;
 }
@@ -386,6 +408,7 @@ static void make_code(void)
     pw.type = c_type; pw.stage = c_stage; pw.seed = c_seed; pw.chr = c_pl[0];
     pw.surf = c_surf; pw.fmt = c_fmt; pw.cond = c_cond; pw.env = c_env; pw.lvl = c_lvl;
     pw.results = c_results; pw.opts = c_opts; pw.trophies = c_trophies;
+    pw.doubles = c_dbl; pw.partner = (u8)(c_dbl ? c_pl2[0] : 0);
     pw_encode(code_buf, &pw);
     code_buf[PW_LEN] = 0;
 }
@@ -400,9 +423,11 @@ static void comp_screen(void)
     txt_at(3, 3, comp_l1);
     txt_at(3, 4, comp_l2);
     o = COMP(comp_opponent, 0);
-    txt_at(3, 6, char_name[c_pl[0]]);
-    txt_at(8, 6, "CONTRE");
-    txt_at(15, 6, char_name[c_pl[o]]);
+    team_label(c_pl[0], c_pl2[0], line);
+    txt_at(3, 6, line);
+    txt_at(9, 6, "CONTRE");
+    team_label(c_pl[o], c_pl2[o], line);
+    txt_at(16, 6, line);
     txt_at(3, 7, "ADVERSAIRE :");
     txt_at(16, 7, level_name[COMP(comp_level, 0)]);
     txt_at(3, 8, surf_name[COMP(comp_surface, 0)]);
@@ -412,19 +437,22 @@ static void comp_screen(void)
     txt_at(3, 21, "CODE :");
     vram_adr(NTADR(10, 21));
     for (o = 0; o < PW_LEN; ++o) { vram_put((u8)code_buf[o]); if (o == 3 || o == 7) vram_put(' '); }
+    if (c_dbl) txt_at(3, 23, "COMPETITION EN DOUBLE");
     txt_at(3, 25, "A : JOUER   B : MENU");
     ppu_on();
     scr_state = SS_COMP;
 }
 
 static const char * const rank_txt[6] = { "", "VAINQUEUR !", "FINALISTE", "DEMI-FINALISTE", "4E", "ELIMINE" };
+static u8 cup_t, was_unlocked;
 static void comp_end_screen(void)
 {
-    char b[4];
+    char b[6];
     screen_begin();
     pal_set_player(0, c_pl[0]);
     txt_at(3, 2, "PIXEL OPEN -");
     txt_at(16, 2, comp_name[c_type]);
+    if (c_dbl) { team_label(c_pl[0], c_pl2[0], b); txt_at(3, 3, b); txt_at(9, 3, "(DOUBLE)"); }
     if (c_type == CT_LEAGUE || c_type == CT_SEASON) {
         txt_at(5, 6, "CLASSEMENT FINAL :");
         b[0] = (char)('0' + c_rank); b[1] = 'E'; b[2] = 0;
@@ -439,12 +467,53 @@ static void comp_end_screen(void)
     txt_at(5, 21, "TROPHEES :");
     num2(b, c_trophies); b[2] = 0;
     txt_at(16, 21, b);
-    txt_at(5, 25, "A : RETOUR AU TITRE");
+    was_unlocked = nude_unlocked;
+    if (c_rank == 1) {
+        nude_unlocked = 1;
+        if (!was_unlocked) {
+            txt_at(3, 23, "MODE NUDISTE DEBLOQUE !");
+            txt_at(3, 24, "LIEU : CLUB NUDISTE");
+        }
+    }
+    txt_at(5, 26, "A : RETOUR AU TITRE");
+    if (c_dbl) pal_set_player(1, c_pl2[0]);
     ppu_on();
     SV(sv_comp_end);
     music_play(c_rank == 1 ? MUS_VICTORY : MUS_DEFEAT);
+    if (c_rank == 1) sfx_crowd(7);
     c_active = 0;
+    cup_t = 0;
     scr_state = SS_COMP_END;
+}
+
+/* Levée de coupe : le vainqueur brandit le trophée, les confettis tombent */
+static const u8 conf_x[10] = { 20, 52, 84, 116, 148, 180, 212, 236, 36, 132 };
+static const u8 conf_v[10] = { 1, 2, 1, 3, 2, 1, 2, 3, 2, 1 };
+static void comp_end_sprites(void)
+{
+    u8 i, cy, pose, x = 200, y = 206;
+    if (c_rank != 1) {
+        spr_begin();
+        spr_person(x, y, c_pl[0], 1, POSE_SAD, 0, 0);
+        spr_end();
+        return;
+    }
+    if (cup_t < 255) ++cup_t;
+    /* la coupe monte des mains au-dessus de la tête, puis oscille */
+    if (cup_t < 24) { cy = (u8)(y - 30); pose = POSE_JOY; }
+    else if (cup_t < 54) { cy = (u8)(y - 30 - ((cup_t - 24) >> 1)); pose = POSE_SERVE; }
+    else { cy = (u8)(y - 45 + (((frame_cnt >> 3) & 1) ? 1 : 0)); pose = POSE_SERVE; }
+    spr_begin();
+    spr1((u8)(x - 8), cy, trophy_tile, 2);
+    spr1(x, cy, (u8)(trophy_tile + 1), 2);
+    spr1((u8)(x - 8), (u8)(cy + 8), (u8)(trophy_tile + 2), 2);
+    spr1(x, (u8)(cy + 8), (u8)(trophy_tile + 3), 2);
+    spr_person(x, y, c_pl[0], 1, pose, 0, 0);
+    if (c_dbl) spr_person((u8)(x + 22), y, c_pl2[0], 1, (u8)((frame_cnt >> 4) & 1 ? POSE_JOY : POSE_SERVE), 0, 1);
+    if (cup_t >= 24)
+        for (i = 0; i < 10; ++i)
+            spr1(conf_x[i], (u8)(((u16)cup_t * conf_v[i] + i * 23) % 200 + 16), confetti_tile, (u8)(i & 3));
+    spr_end();
 }
 
 static void start_comp(void)
@@ -457,6 +526,9 @@ static void start_comp(void)
     c_cond = opt_val[O_COND];
     c_fmt = opt_val[O_FMT];
     c_pl[0] = opt_val[O_P1];
+    c_dbl = opt_val[O_TYPE];
+    c_pl2[0] = opt_val[O_P2];
+    if (c_dbl && c_pl2[0] == c_pl[0]) c_pl2[0] = (u8)((c_pl[0] + 1) % NCHARS);
     c_seed = (u8)(rand8() ^ frame_cnt);
     COMP(comp_new, 0);
     comp_screen();
@@ -473,7 +545,7 @@ static void code_screen(void)
     for (i = 0; i < PW_LEN; ++i) code_buf[i] = 'A';
     code_buf[PW_LEN] = 0;
     code_pos = 0;
-    txt_at(10, 10, code_buf);
+    txt_at(9, 10, code_buf);
     txt_at(3, 19, "HAUT/BAS : CARACTERE");
     txt_at(3, 20, "GAUCHE/DROITE : POSITION");
     txt_at(3, 21, "START : VALIDER");
@@ -493,13 +565,15 @@ static void code_tick(void)
     if ((pad1_new & PAD_RIGHT) && code_pos < PW_LEN - 1) ++code_pos;
     if ((pad1_new & PAD_LEFT) && code_pos > 0) --code_pos;
     vbuf_reset();
-    vbuf_text(10, 10, code_buf, PW_LEN);
+    vbuf_text(9, 10, code_buf, PW_LEN);
     if (pad1_new & PAD_B) { title_screen(); return; }
     if (pad1_new & PAD_START) {
         if (pw_decode(code_buf, &pw)) {
             c_type = pw.type; c_stage = pw.stage; c_seed = pw.seed; c_pl[0] = pw.chr;
             c_surf = pw.surf; c_fmt = pw.fmt; c_cond = pw.cond; c_env = pw.env; c_lvl = pw.lvl;
             c_results = pw.results; c_opts = pw.opts; c_trophies = pw.trophies;
+            c_dbl = pw.doubles; c_pl2[0] = pw.partner;
+            if (c_trophies) nude_unlocked = 1;     /* un trophée débloque le club nudiste */
             COMP(comp_build, 0);
             opt_val[O_P1] = c_pl[0];
             sfx_menu_ok();
@@ -510,7 +584,7 @@ static void code_tick(void)
         vbuf_text(9, 13, "CODE INVALIDE", 13);
     }
     spr_begin();
-    spr1((u8)(10 * 8 + code_pos * 8), 90, 3, 3);
+    spr1((u8)(9 * 8 + code_pos * 8), 90, 3, 3);
     spr_end();
 }
 
@@ -532,6 +606,7 @@ static void results_screen(void)
     u8 i, w = sc_winner;
     char b[5];
     screen_begin();
+    people_tiles((u8)(cfg.env == ENV_NUDE));
     pal_set_player(0, cfg.chr[0]);
     pal_set_player(1, cfg.chr[1]);
     txt_at(8, 1, "VICTOIRE DE");
@@ -712,11 +787,14 @@ void screens_tick(void)
         o = vis[cursor];
         if (o != O_START && (pad1_new & (PAD_LEFT | PAD_RIGHT))) {
             v = opt_val[o];
-            if (pad1_new & PAD_RIGHT) v = (u8)(v + 1 == opt_max[o] ? 0 : v + 1);
-            else v = (u8)(v ? v - 1 : opt_max[o] - 1);
+            /* le club nudiste n'apparaît qu'une fois débloqué */
+            i = (u8)(o == O_ENV ? (nude_unlocked ? NENV : NENV - 1) : opt_max[o]);
+            if (v >= i) v = 0;
+            if (pad1_new & PAD_RIGHT) v = (u8)(v + 1 == i ? 0 : v + 1);
+            else v = (u8)(v ? v - 1 : i - 1);
             opt_val[o] = v;
             sfx_menu_move();
-            if (o == O_MODE || o == O_COMP || o == O_EX) { menu_screen(); break; }
+            if (o == O_MODE || o == O_COMP || o == O_EX || (o == O_TYPE && opt_val[O_MODE] == MODE_COMP)) { menu_screen(); break; }
             vbuf_reset();
             menu_draw_row(cursor, 0);
             if (o == O_ENV || o == O_COND) {
@@ -748,7 +826,8 @@ void screens_tick(void)
         if (pad1_new & PAD_B) menu_screen();
         break;
     case SS_COMP_END:
-        if (pad1_new & (PAD_A | PAD_START)) title_screen();
+        if (pad1_new & (PAD_A | PAD_START)) { title_screen(); break; }
+        comp_end_sprites();
         break;
     case SS_RESULTS:
         if (pad1_new & PAD_A) {

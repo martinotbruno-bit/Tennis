@@ -33,6 +33,7 @@
 #define ENV_STADIUM 0
 #define ENV_CLUB    1
 #define ENV_HALL    2
+#define ENV_NUDE    3   /* club nudiste (débloqué par une victoire en compétition) */
 
 /* joueurs : index 0..3 ; équipe = index & 1 ; 2 et 3 = partenaires en double */
 typedef struct {

@@ -22,7 +22,10 @@ function toMenu(e) { e.tap('START'); e.run(10); }
 function setOpts(e, opts) { for (const [k, v] of Object.entries(opts)) e.poke('opt_val', v, O[k]); }
 // depuis le titre : configure et lance (présentation -> A si nécessaire)
 function startWith(e, opts) {
-  toMenu(e); setOpts(e, opts); e.tap('START'); e.run(10);
+  toMenu(e); setOpts(e, opts); e.tap('START');
+  // certains écrans (classements) se construisent en plusieurs trames
+  for (let n = 0; n < 90 && app(e) === AS.SCREENS && scr(e) === SS.MENU; n++) e.run(1);
+  e.run(10);
   if (app(e) === AS.SCREENS && scr(e) === SS.PRESENT) { e.tap('A'); e.run(5); }
 }
 function allCpu(e) { const c = e.addr('cfg'); for (let i = 0; i < 4; i++) e.nes.cpu.mem[c + CFG.CTRL + i] = 2; }
@@ -97,7 +100,7 @@ console.log('Menu de configuration');
   const e = boot(); toMenu(e);
   check(scr(e) === SS.MENU && e.peek('nvis') === 11, 'configuration match : 11 lignes');
   e.tap('DOWN'); e.tap('RIGHT'); e.tap('RIGHT'); e.tap('RIGHT'); e.run(5);
-  check(e.peek('opt_val', O.MODE) === MODE.COMP && e.peek('nvis') === 10, 'mode compétition : lignes adaptées');
+  check(e.peek('opt_val', O.MODE) === MODE.COMP && e.peek('nvis') === 11, 'mode compétition : lignes adaptées');
   e.tap('RIGHT'); e.run(5);
   check(e.peek('opt_val', O.MODE) === MODE.TRAIN && e.peek('nvis') === 7, 'mode entraînement : lignes adaptées');
   e.tap('B'); e.run(5);
@@ -236,23 +239,24 @@ console.log('Compétitions');
 function playComp(type, opts, wins) {
   const e = boot(); startWith(e, Object.assign({ MODE: MODE.COMP, COMP: type, FMT: 3 }, opts));
   let matches = 0, code = '';
-  check(scr(e) === SS.COMP, `${['tournoi','poules','championnat','saison','personnalisé'][type]} : écran d'étape`);
+  const CN = ['TOURNOI', 'POULES', 'CHAMPIONNAT', 'SAISON', 'PERSONNALISE'][type];
+  check(scr(e) === SS.COMP && e.text(16, 1, CN.length) === CN, `${CN} : écran d'étape (titre lisible)`);
   while (scr(e) === SS.COMP && matches < 20) {
-    if (matches === 1) code = e.text(10, 21, 14).replace(/ /g, '');
+    if (matches === 1) code = e.text(10, 21, 15).replace(/ /g, '');
     e.tap('A'); e.run(5); e.tap('A'); e.run(30);
     if (app(e) !== AS.MATCH) break;
     // victoire forcée du joueur pour parcourir la compétition
     e.poke('sc_winner', wins(matches) ? 0 : 1); e.poke('sc_over', 1); e.poke('ms', 4); e.poke('ms_timer', 2);
     runUntil(e, () => app(e) === AS.SCREENS, 60); e.run(20);
     matches++;
-    e.tap('A'); e.run(10);
+    e.tap('A'); e.run(40);
   }
   return { e, matches, code };
 }
 {
   const { e, matches, code } = playComp(0, {}, () => true);
   check(matches === 3 && scr(e) === SS.COMP_END && e.peek('c_rank') === 1, `tournoi gagné en 3 matchs`);
-  check(/^[A-Z2-9]{12}$/.test(code), `code de reprise affiché : ${code}`);
+  check(/^[A-Z2-9]{13}$/.test(code), `code de reprise affiché : ${code}`);
   check(e.peek('sv', 0x14 + 0) >= 0, 'palmarès mis à jour');
 }
 {
@@ -289,23 +293,82 @@ console.log('Code de reprise');
   const e = boot(); startWith(e, { MODE: MODE.COMP, COMP: 2, P1: 6, SURF: 4, ENV: 1, COND: 2 });
   e.tap('A'); e.run(5); e.tap('A'); e.run(30);
   e.poke('sc_winner', 0); e.poke('sc_over', 1); e.poke('ms', 4); e.poke('ms_timer', 2);
-  runUntil(e, () => app(e) === AS.SCREENS, 60); e.run(20); e.tap('A'); e.run(10);
-  const code = e.text(10, 21, 14).replace(/ /g, '');
+  runUntil(e, () => app(e) === AS.SCREENS, 60); e.run(20); e.tap('A'); e.run(40);
+  const code = e.text(10, 21, 15).replace(/ /g, '');
   const want = ['c_type', 'c_stage', 'c_seed', 'c_results', 'c_surf', 'c_env', 'c_cond'].map(n => e.peek(n));
   const f = boot(); f.tap('UP'); f.tap('A'); f.run(10);
   check(scr(f) === SS.CODE, 'saisie du code depuis le titre');
   const AL = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-  for (let i = 0; i < 12; i++) {
+  for (let i = 0; i < 13; i++) {
     const n = AL.indexOf(code[i]);
     for (let k = 0; k < n; k++) f.tap('UP', 1, 1, 1);
-    if (i < 11) f.tap('RIGHT', 1, 1, 1);
+    if (i < 12) f.tap('RIGHT', 1, 1, 1);
   }
-  f.tap('START'); f.run(10);
+  f.tap('START'); f.run(40);
   const got = ['c_type', 'c_stage', 'c_seed', 'c_results', 'c_surf', 'c_env', 'c_cond'].map(n => f.peek(n));
   check(scr(f) === SS.COMP && JSON.stringify(got) === JSON.stringify(want), `code ${code} : championnat restauré (journée 2)`);
-  check(f.text(15, 6, 4) === e.text(15, 6, 4), "même adversaire après reprise");
+  check(f.text(16, 6, 5) === e.text(16, 6, 5), "même adversaire après reprise");
   const g = boot(); g.tap('UP'); g.tap('A'); g.run(10); g.tap('START'); g.run(10);
   check(scr(g) === SS.CODE, 'code invalide refusé');
+}
+
+console.log('Compétition en double, levée de coupe et club nudiste');
+{
+  const e = boot();
+  check(e.peek('nude_unlocked') === 0, 'club nudiste verrouillé au départ');
+  toMenu(e);
+  let envs = new Set();
+  for (let k = 0; k < 7; k++) e.tap('DOWN');
+  for (let i = 0; i < 6; i++) { e.tap('RIGHT'); envs.add(e.peek('opt_val', O.ENV)); }
+  check(!envs.has(3) && envs.size === 3, 'lieu « club nudiste » absent avant déblocage');
+}
+{
+  const { e, matches, code } = playComp(0, { TYPE: 1, P2: 5 }, () => true);
+  check(e.peek('c_dbl') === 1 && matches === 3 && e.peek('c_rank') === 1, 'tournoi en double gagné (3 matchs)');
+  check(e.peek('c_pl2', 0) === 5, 'partenaire choisi (ZOE) conservé');
+  const pl = new Set(); for (let i = 0; i < 8; i++) { pl.add(e.peek('c_pl', i)); pl.add(e.peek('c_pl2', i)); }
+  check(pl.size === 16, '8 équipes de 2 : 16 personnages différents');
+  // levée de coupe : les tuiles du trophée sont à l'écran
+  e.run(80);
+  const tt = e.peek('trophy_tile'); let cup = 0, conf = 0;
+  for (let i = 0; i < 64; i++) { const t = e.nes.cpu.mem[0x201 + i * 4], y = e.nes.cpu.mem[0x200 + i * 4]; if (y < 0xEF) { if (t >= tt && t < tt + 4) cup++; if (t === tt + 4) conf++; } }
+  check(cup === 4 && conf >= 8, `levée de coupe affichée (coupe ${cup} tuiles, ${conf} confettis)`);
+  check(e.peek('nude_unlocked') === 1 && e.text(3, 23, 21) === 'MODE NUDISTE DEBLOQUE', 'victoire : club nudiste débloqué');
+  check(/^[A-Z2-9]{13}$/.test(code), `code de reprise en double : ${code}`);
+  // le lieu « club nudiste » est maintenant proposé
+  e.tap('A'); e.run(10); toMenu(e);
+  setOpts(e, { MODE: MODE.P1, TYPE: 0 }); e.tap('B'); e.run(5); toMenu(e);
+  for (let k = 0; k < 7; k++) e.tap('DOWN');
+  let seen = false; for (let i = 0; i < 4; i++) { e.tap('RIGHT'); if (e.peek('opt_val', O.ENV) === 3) seen = true; }
+  check(seen, 'lieu « club nudiste » proposé après déblocage');
+  setOpts(e, { ENV: 3 }); e.tap('START'); e.run(15);
+  check(e.text(4, 24, 24) === 'CLUB NUDISTE LES BRONZES', 'présentation du club nudiste');
+  e.tap('A'); e.run(40); allCpu(e);
+  const v = e.nes.ppu.vramMem;
+  check(e.peek('cur_bank') === 0 && e.text(10, 3, 12) === 'CLUB NUDISTE', 'match au club nudiste (panneau du club)');
+  // tuiles des personnages remplacées en CHR-RAM, puis restaurées au retour aux menus
+  const nudeTile = [...v.slice(0x1100 + 2 * 16, 0x1100 + 3 * 16)].join(',');   // torse
+  runUntil(e, () => app(e) === AS.SCREENS, 60 * 60 * 25); e.run(80);
+  e.tap('B'); e.run(40);
+  const normTile = [...e.nes.ppu.vramMem.slice(0x1100 + 2 * 16, 0x1100 + 3 * 16)].join(',');
+  check(nudeTile !== normTile, 'tenues remplacées au club nudiste puis restaurées dans les menus');
+  check(e.peek16('sv', 6) >= 1, 'palmarès : match de double compté');
+}
+{
+  // un code portant un trophée débloque aussi le club nudiste sur une autre console
+  const { e } = playComp(4, { CSIZE: 0 }, () => true);
+  e.tap('A'); e.run(10); toMenu(e); setOpts(e, { MODE: MODE.COMP, COMP: 0 }); e.tap('START'); e.run(40);
+  const code = e.text(10, 21, 15).replace(/ /g, '');
+  check(e.peek('c_trophies') === 1, 'les trophées se cumulent d\'une compétition à l\'autre');
+  const f = boot(); f.tap('UP'); f.tap('A'); f.run(10);
+  const AL = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  for (let i = 0; i < 13; i++) {
+    const n = AL.indexOf(code[i]);
+    for (let k = 0; k < n; k++) f.tap('UP', 1, 1, 1);
+    if (i < 12) f.tap('RIGHT', 1, 1, 1);
+  }
+  f.tap('START'); f.run(40);
+  check(scr(f) === SS.COMP && f.peek('nude_unlocked') === 1, `code ${code} (1 trophée) : club nudiste débloqué`);
 }
 
 console.log('Compensation 50 Hz (PAL)');

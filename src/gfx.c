@@ -1,10 +1,12 @@
 /* Pixel Open — affichage : palettes, sprites, texte. */
 #include "gfx.h"
 #include "assets.h"
+#include "app.h"
 
 const char * const char_name[NCHARS] = {
-    "ALEX", "MAYA", "LEON", "NINA", "OMAR", "ZOE ", "HUGO", "EMMA", "IVAN", "LINA" };
-const u8 char_female[NCHARS] = { 0, 1, 0, 1, 0, 1, 0, 1, 0, 1 };
+    "ALEX", "MAYA", "LEON", "NINA", "OMAR", "ZOE ", "HUGO", "EMMA",
+    "IVAN", "LINA", "TOM ", "JADE", "LUCA", "SARA", "NOAH", "INES" };
+const u8 char_female[NCHARS] = { 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1 };
 /* peau, tenue, sombre (cheveux/short/raquette) */
 static const u8 char_pal[NCHARS][3] = {
     { 0x27, 0x16, 0x07 },
@@ -17,15 +19,21 @@ static const u8 char_pal[NCHARS][3] = {
     { 0x27, 0x13, 0x0F },
     { 0x36, 0x28, 0x0F },
     { 0x17, 0x2C, 0x08 },
+    { 0x27, 0x1C, 0x0F },
+    { 0x36, 0x15, 0x07 },
+    { 0x37, 0x0B, 0x0F },
+    { 0x17, 0x24, 0x0F },
+    { 0x07, 0x29, 0x0F },
+    { 0x27, 0x11, 0x08 },
 };
 const char * const style_name[NSTYLES] = {
     "EQUILIBRE", "FOND DE COURT", "PUISSANCE", "FILET",
     "DEFENSIF", "OFFENSIF", "TACTIQUE", "PLACEMENT" };
-const u8 char_style[NCHARS] = { 0, 1, 2, 3, 4, 5, 6, 7, 2, 3 };
+const u8 char_style[NCHARS] = { 0, 1, 2, 3, 4, 5, 6, 7, 2, 3, 5, 4, 1, 7, 6, 0 };
 
 const char * const surf_name[NSURF] = {
     "TERRE BATTUE", "GAZON       ", "DUR         ", "MOQUETTE    ", "PLAGE       ", "GLACE       " };
-const char * const env_name[NENV] = { "STADE", "CLUB ", "SALLE" };
+const char * const env_name[NENV] = { "STADE", "CLUB ", "SALLE", "CLUB NUDISTE" };
 /* fond universel, surface, lignes, filet */
 static const u8 surf_pal[NSURF][4] = {
     { 0x17, 0x27, 0x30, 0x0F },
@@ -40,6 +48,7 @@ static const u8 env_pal[NENV][3] = {
     { 0x27, 0x16, 0x37 },     /* stade : public */
     { 0x1A, 0x09, 0x07 },     /* club : haies, arbres, troncs */
     { 0x00, 0x2A, 0x0F },     /* salle : murs, panneaux, projecteurs */
+    { 0x1A, 0x27, 0x16 },     /* club nudiste : herbe, peau, serviettes */
 };
 
 static u8 darken(u8 c)
@@ -175,3 +184,39 @@ void clear_screen(void)
     vram_adr(0x2000);
     vram_fill(0, 1024);
 }
+
+/* ---------------------------------------------------------------------- */
+/* Tuiles des personnages en CHR-RAM : tenue normale (copie de la banque 2)
+ * ou « au naturel » (banque 6). Rendu coupé uniquement. */
+u8 nude_unlocked;       /* mode nudiste débloqué (victoire en compétition) */
+static u8 chr_nude;
+
+static void chr_copy(u8 bank, const u8 *src, u16 dst, u16 len)
+{
+    u8 old = cur_bank;
+    set_bank(bank);
+    vram_adr(dst);
+    while (len--) vram_put(*src++);
+    set_bank(old);
+}
+
+void people_tiles(u8 nude)
+{
+    if (nude == chr_nude) return;
+    if (nude) chr_copy(BANK_NUDE, nude_people, 0x1100, 3072);
+    else chr_copy(BANK_CHR, chr_data + 0x1100, 0x1100, 3072);
+    chr_nude = nude;
+}
+
+/* Nom d'équipe : « ALEX » en simple, « AL/MA » en double (b = 255 : simple) */
+void team_label(u8 a, u8 b, char *out)
+{
+    const char *n = char_name[a];
+    if (b == 255) { out[0] = n[0]; out[1] = n[1]; out[2] = n[2]; out[3] = n[3]; out[4] = 0; return; }
+    out[0] = n[0]; out[1] = n[1]; out[2] = '/';
+    n = char_name[b];
+    out[3] = n[0]; out[4] = n[1]; out[5] = 0;
+}
+
+/* Noms des compétitions (banque fixe : lus par les écrans et le palmarès) */
+const char * const comp_name[5] = { "TOURNOI", "POULES", "CHAMPIONNAT", "SAISON", "PERSONNALISE" };

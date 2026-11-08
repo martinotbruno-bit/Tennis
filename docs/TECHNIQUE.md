@@ -35,14 +35,14 @@ La version 1.0 tenait en NROM-256 (32 Ko, plein à 87 %). Il a fallu plus de pla
 
 | Banque | Contenu | Occupation |
 |---|---|---|
-| 7 (fixe, $C000) | Démarrage, NMI, primitives (sprites, VRAM, manettes, trampolines `bank_call` / `far_call`, enregistrement des ralentis), boucle principale, règles, codes, palettes, son, bibliothèque cc65 | 8 816 |
+| 7 (fixe, $C000) | Démarrage, NMI, primitives (sprites, VRAM, manettes, trampolines `bank_call` / `far_call`, enregistrement des ralentis), boucle principale, règles, codes, palettes, 16 personnages, noms des compétitions, échange des tuiles de personnages, son, bibliothèque cc65 | 9 559 |
 | 0 | Moteur de match : physique, frappes, service, arbitrage, IA | 16 314 |
-| 1 | Écrans : titre, configuration, présentation, résultats, compétitions, saisie de code, palmarès | 12 172 |
+| 1 | Écrans : titre, configuration, présentation, résultats, compétitions, levée de coupe, saisie de code, palmarès | 13 430 |
 | 2 | Motifs graphiques (8 Ko), copiés en CHR-RAM au démarrage | 8 192 |
-| 3 | Annexes du match : score, courts (3 lieux), public animé, pluie, ralentis, exercices, tutoriel | 6 996 |
-| 4 | Mode d'emploi | 3 470 |
-| 5 | Compétitions (tirages, simulations, classements) et palmarès | 7 324 |
-| 6 | Libre | 0 |
+| 3 | Annexes du match : score et annonces du club nudiste, courts (4 lieux), public animé, pluie, ralentis, exercices, tutoriel | 9 008 |
+| 4 | Mode d'emploi | 3 528 |
+| 5 | Compétitions (tirages, simulations, classements, équipes de double) et palmarès | 7 218 |
+| 6 | Tuiles des personnages « au naturel » (club nudiste), copiées en CHR-RAM à la demande | 3 072 |
 
 ### RAM
 
@@ -121,7 +121,28 @@ $7800-$7FFF  palmarès (sauvegardé si la cartouche a une pile ; signature + som
 
 ### Codes de reprise (`password.c`)
 
-45 bits de données + 3 bits de version + 12 bits de somme de contrôle = 60 bits, soit 12 symboles de 5 bits (alphabet sans I, O, 0, 1). Les symboles sont brouillés en chaîne pour qu'une erreur en modifie plusieurs.
+50 bits de données (dont double et partenaire) + 2 bits de version + 12 bits de somme de contrôle = 64 bits, écrits en 13 symboles de 5 bits (alphabet sans I, O, 0, 1). Les symboles sont brouillés en chaîne pour qu'une erreur en modifie plusieurs.
+
+### Compétitions en double
+
+- **Tirage** : avec 16 personnages, les 8 équipes d'un tableau sont toutes différentes. Le joueur et le partenaire choisi forment l'équipe 1 ; les 14 autres personnages sont mélangés par la graine et appariés deux à deux.
+- **Simulation** : les mêmes formules qu'en simple, avec le niveau de l'équipe.
+- **Affichage** : les noms sont abrégés en « AL/MA ».
+
+### Levée de coupe
+
+Écran de fin de compétition en cas de victoire, en sprites :
+- le joueur (et son partenaire) en pose bras levés ;
+- la coupe (2 × 2 tuiles) monte des mains au-dessus de la tête puis oscille ;
+- 10 confettis tombent, multiplexés sur les 4 palettes.
+
+### Club nudiste (bonus)
+
+- **Déblocage** : par la première victoire en compétition. Il est stocké dans le palmarès (`sv.nude`) et dans la RAM (`nude_unlocked`) ; un code de reprise contenant au moins un trophée débloque aussi le club.
+- **Tenues** : `people_tiles(1)` (banque fixe) copie en CHR-RAM, rendu coupé, les 192 tuiles des personnages au naturel depuis la banque 6 ; `people_tiles(0)` restaure les tuiles normales depuis la banque 2. Les silhouettes n'ont aucun détail anatomique ; une serviette aux couleurs de l'équipe distingue les camps.
+- **Court** : un 4ᵉ écran de court, sans gradins. Le public est fait de spectateurs 16 × 16 sur des serviettes dans l'herbe ; leur version debout est échangée en CHR-RAM quand le public applaudit.
+- **Annonces** : un complément humoristique est ajouté par `hud_update` (banque 3), sans toucher au moteur.
+- **Écart au CDC** : contrairement au § 5.3 (tout accessible dès le départ), ce lieu est à débloquer. C'est un bonus demandé explicitement, en dehors du contenu de base.
 
 ### Ralentis
 
@@ -134,10 +155,10 @@ Grâce à la CHR-RAM, les 6 motifs de spectateurs sont remplacés par leur versi
 
 ## 5. Graphismes
 
-- **Fond** : 221 tuiles sur 256. Trois écrans de court compressés en RLE (stade 657 octets, club 648, salle 647). La surface et les conditions ne changent que les palettes.
-- **Sprites** : 208 tuiles sur 256.
+- **Fond** : 244 tuiles sur 256. Quatre écrans de court compressés en RLE (stade 657 octets, club 648, salle 647, club nudiste 668). La surface et les conditions ne changent que les palettes.
+- **Sprites** : 213 tuiles sur 256 (dont la coupe et les confettis).
   - 2 vues (dos et face) × 2 silhouettes (homme et femme) × 8 poses : attente, course ×2, frappe ×2, service, joie, déception.
-  - 10 palettes de personnages.
+  - 16 palettes de personnages.
   - Partenaires de double : couleurs de leur équipe (limite de 4 palettes de sprites).
 - **Score** : dans les coins supérieurs. Les joueurs sont limités à x = 48..208 et la colonne 0 n'est pas utilisée (zone rognée par les téléviseurs).
 - **Service** : la hauteur du lancer est affichée à moitié, pour que la balle reste visible quand le serveur est en haut de l'écran.
@@ -195,7 +216,7 @@ Outils de mise au point :
 | Suite | Contenu |
 |---|---|
 | `tests/rules_test.c` | 42 vérifications des règles |
-| `tests/password_test.c` | 200 000 codes aléatoires en aller-retour ; 7,44 millions de codes altérés d'un signe, refusés à 99,99 % |
-| `tests/emu_test.mjs` | 86 vérifications : démarrage MMC1 et CHR-RAM, mode d'emploi, menus adaptatifs, présentation, menu de pause, lancer du serveur du haut, let, matchs complets (6 surfaces × 3 lieux × 3 conditions, double), ralentis, revanche, palmarès, 9 exercices (joueur robot via la manette), 5 compétitions (dont éliminations), reprise par code, 50 Hz |
+| `tests/password_test.c` | 200 000 codes aléatoires en aller-retour ; 8,06 millions de codes altérés d'un signe, refusés à 99,95 % |
+| `tests/emu_test.mjs` | 103 vérifications : démarrage MMC1 et CHR-RAM, mode d'emploi, menus adaptatifs, présentation, menu de pause, lancer du serveur du haut, let, matchs complets (6 surfaces × 3 lieux × 3 conditions, double), ralentis, revanche, palmarès, 9 exercices (joueur robot via la manette), 5 compétitions (dont éliminations), double en compétition, levée de coupe, déblocage et club nudiste (tenues échangées en CHR-RAM puis restaurées), reprise par code, 50 Hz |
 
 Les résultats détaillés sont dans le [rapport](RAPPORT.md).

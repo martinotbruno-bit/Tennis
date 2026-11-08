@@ -27,10 +27,10 @@ Sans action pendant 20 secondes, une démonstration démarre (alternativement en
 |---|---|
 | MODE | 1 joueur contre CPU · 2 joueurs adversaires · 2 joueurs en équipe · Compétition · Entraînement · Démo |
 | JEU | Simple · Double |
-| JOUEUR 1 / JOUEUR 2 | 10 personnages (5 hommes, 5 femmes), chacun avec son style de jeu |
+| JOUEUR 1 / JOUEUR 2 | 16 personnages (8 hommes, 8 femmes), chacun avec son style de jeu. En compétition de double, JOUEUR 2 devient PARTENAIRE |
 | NIVEAU CPU | Facile · Normal · Expert |
 | SURFACE | Terre battue · Gazon · Dur · Moquette · Plage · Glace (les deux dernières sont des terrains fantaisie) |
-| LIEU | Stade (tribunes pleines) · Club (extérieur, arbres) · Salle (intérieur) |
+| LIEU | Stade (tribunes pleines) · Club (extérieur, arbres) · Salle (intérieur) · Club nudiste (bonus à débloquer, voir § 9 bis) |
 | CONDITIONS | Jour · Nuit · Pluie. Il ne pleut pas en salle : la pluie y devient « jour » |
 | FORMAT | 1 set · 3 sets · 5 sets · Rapide (sets de 4 jeux) |
 | RALENTIS | Oui/Non : ralenti automatique après les plus beaux points |
@@ -43,14 +43,14 @@ La ligne **STYLE** indique le style de jeu de l'adversaire choisi.
 
 | Personnage | Style |
 |---|---|
-| Alex | Équilibré |
-| Maya | Fond de court |
+| Alex, Ines | Équilibré |
+| Maya, Luca | Fond de court |
 | Leon, Ivan | Puissance |
 | Nina, Lina | Filet (service-volée) |
-| Omar | Défensif |
-| Zoé | Offensif |
-| Hugo | Tactique (lobs, amorties) |
-| Emma | Placement (précision) |
+| Omar, Jade | Défensif |
+| Zoé, Tom | Offensif |
+| Hugo, Noah | Tactique (lobs, amorties) |
+| Emma, Sara | Placement (précision) |
 
 Avant chaque match, un **écran de présentation** rappelle l'épreuve, les joueurs, leur niveau et leur style, la surface, le lieu, les conditions et le format. **A** lance le match.
 
@@ -147,6 +147,12 @@ Conditions :
 | Saison | 4 tournois de 8 joueurs sur terre, gazon, dur puis moquette. Points : 45 (quart), 90 (demi), 150 (finale), 250 (victoire). Classement général à la fin |
 | Personnalisé | 4 ou 8 joueurs ; adversaires de niveau fixe ou progressif ; même surface ou surface différente à chaque tour |
 
+Toutes les compétitions se jouent **en simple ou en double** (ligne JEU) :
+- en double, vous choisissez votre partenaire, qui est contrôlé par l'ordinateur ;
+- les autres équipes sont tirées au sort parmi les 16 personnages, qui sont tous différents.
+
+Quand vous gagnez une compétition, votre joueur (et votre partenaire) **brandit la coupe** sous une pluie de confettis.
+
 L'écran d'étape montre le prochain adversaire (niveau, surface), le tableau ou le classement, et le **code de reprise**. Les matchs entre joueurs CPU sont simulés selon leur niveau.
 
 ### Entraînement
@@ -167,7 +173,7 @@ Votre meilleur score de chaque exercice est conservé dans le palmarès.
 
 ## 8. Codes de reprise
 
-Dans une compétition, l'écran d'étape affiche un **code de 12 signes** (lettres et chiffres). Il contient la compétition, l'étape, vos résultats, votre personnage, les réglages et le nombre de trophées.
+Dans une compétition, l'écran d'étape affiche un **code de 13 signes** (lettres et chiffres). Il contient la compétition, l'étape, vos résultats, votre personnage (et votre partenaire en double), les réglages et le nombre de trophées.
 
 Pour reprendre plus tard :
 1. À l'écran titre, choisissez **CODE DE REPRISE** (ou appuyez sur **SELECT**).
@@ -186,6 +192,15 @@ Le palmarès comporte 3 pages (GAUCHE/DROITE) :
 Seuls les matchs où la manette 1 joue sont comptés. Pour tout effacer, appuyez deux fois sur **SELECT**.
 
 Le palmarès est conservé tant que la console reste allumée. Sur une cartouche équipée d'une pile, il est conservé même éteinte.
+
+## 9 bis. Bonus : le club nudiste
+
+Gagnez une compétition (tournoi, poules, championnat, saison ou personnalisé, en simple ou en double) pour débloquer un nouveau lieu : le **club nudiste « Les Bronzés »**.
+- Les joueurs y jouent au naturel. Les silhouettes sont couleur peau, sans aucun détail ; une serviette en écharpe aux couleurs de l'équipe permet de distinguer les camps.
+- Pas de gradins : le public, lui aussi au naturel, est assis sur ses serviettes dans l'herbe et se lève pour applaudir.
+- L'arbitre adapte ses annonces au lieu : « FAUTE — PAS DE POCHE ! », « ÉGALITÉ — NU À NU », « COUP GAGNANT — BRONZAGE TOTAL », « CHANGEMENT DE CÔTÉ — ET DE CRÈME ! »… En pause, il rappelle la crème solaire.
+
+Le déblocage est gardé dans le palmarès (définitivement si la cartouche a une pile). Un code de reprise contenant au moins un trophée débloque aussi le club sur une autre console.
 
 ## 10. Conseils
 

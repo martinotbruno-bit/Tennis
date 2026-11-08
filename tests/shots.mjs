@@ -31,3 +31,15 @@ e = boot(); menu(e, { MODE: 3, COMP: 1 }); e.tap('START'); e.run(20); e.screensh
 e = boot(); menu(e, { MODE: 3, COMP: 3 }); e.tap('START'); e.run(20); e.screenshot(`${out}/saison.png`);
 // palmarès
 e = boot(); e.tap('DOWN'); e.tap('DOWN'); e.tap('A'); e.run(20); e.screenshot(`${out}/palmares.png`);
+// club nudiste (débloqué pour la capture)
+e = boot(); e.poke('nude_unlocked', 1); menu(e, { ENV: 3, SURF: 1 }); e.tap('START'); e.run(20); e.screenshot(`${out}/nudiste_presentation.png`);
+e.tap('A'); e.run(5); allCpu(e); e.run(450); e.screenshot(`${out}/nudiste_match.png`);
+// compétition en double et levée de coupe
+e = boot(); menu(e, { MODE: 3, COMP: 0, TYPE: 1, P2: 5 }); e.tap('START'); e.run(40); e.screenshot(`${out}/competition_double.png`);
+for (let m = 0; m < 3; m++) {
+  e.tap('A'); e.run(5); e.tap('A'); e.run(30);
+  e.poke('sc_winner', 0); e.poke('sc_over', 1); e.poke('ms', 4); e.poke('ms_timer', 2);
+  for (let n = 0; n < 100 && e.peek('app_state') !== 0; n++) e.run(1);
+  e.run(40); e.tap('A'); e.run(40);
+}
+e.run(90); e.screenshot(`${out}/levee_de_coupe.png`);

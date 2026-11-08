@@ -1,10 +1,22 @@
-# Pixel Open — Rapport de réalisation (version 2.0)
+# Pixel Open — Rapport de réalisation (version 2.1)
 
 Comme l'exige le CDC (§ 17.5), ce rapport distingue ce qui est **réalisé**, **testé**, **validé sur matériel réel**, **validé uniquement en émulation**, **dépendant d'une extension**, et les **limitations restantes**.
 
 > **Validation matérielle : aucune.** Aucun test n'a été fait sur console réelle (NES, Famicom, PAL, cartouche MMC1). Toutes les validations ont eu lieu en émulation (jsnes) et par des tests unitaires sur PC. Les critères « vérifié sur console physique » (CDC § 2.1, 15.4, 16.A) **ne sont pas remplis**. Ce point ne peut pas être traité dans l'environnement de développement utilisé.
 
-## 1. Évolutions de la version 2.0
+## 1. Évolutions
+
+### Version 2.1
+
+| Demande | Réalisation |
+|---|---|
+| Compétitions en double | Les 5 compétitions se jouent en simple ou en double. Partenaire choisi par le joueur ; 16 personnages au lieu de 10, donc 8 équipes toutes différentes ; code de reprise sur 13 signes (double + partenaire) |
+| Levée de coupe | À la victoire d'une compétition, le joueur (et son partenaire) brandit la coupe sous les confettis |
+| Mode nudiste à débloquer | Gagner une compétition (ou saisir un code avec un trophée) débloque le lieu « Club nudiste Les Bronzés » : <ul><li>joueurs au naturel, sans aucun détail anatomique, avec une serviette aux couleurs de l'équipe ;</li><li>public au naturel sur des serviettes dans l'herbe, sans gradins ;</li><li>annonces humoristiques de l'arbitre.</li></ul> |
+
+**Écart volontaire au CDC § 5.3** (« pas de déblocage ») : le club nudiste est un bonus demandé explicitement. Tout le contenu du CDC reste disponible dès le départ.
+
+### Version 2.0
 
 | Demande | Réalisation |
 |---|---|
@@ -20,11 +32,11 @@ Pour loger ce contenu, la cartouche passe de NROM (32 Ko) à **MMC1** : 128 Ko d
 | Suite | Résultat |
 |---|---|
 | Règles (`rules_test`) | 42/42 |
-| Codes (`password_test`) | 200 000/200 000 aller-retour ; 99,99 % des codes altérés d'un signe refusés |
-| Émulateur (`emu_test`) | 86/86 vérifications (environ 10 min) |
+| Codes (`password_test`) | 200 000/200 000 aller-retour ; 99,95 % des codes altérés d'un signe refusés |
+| Émulateur (`emu_test`) | 103/103 vérifications (environ 12 min) |
 | Profil CPU, simple, 6 000 trames | 1 trame d'échange en dépassement |
 | Profil CPU, double, 6 000 trames | 11 trames d'échange en dépassement (0,2 %), sans défaut d'image |
-| Compilation | Reproductible : SHA-256 `ac38565df3fbbd210cd5e6ad2312006f9954095a863f00fb011d3a27794af5e9` sur deux compilations propres |
+| Compilation | Reproductible : SHA-256 `50fb34d69b4636461656cefb2111dd8123520b6f35e2ec9478c70d15f5d9fb4f` sur deux compilations propres |
 
 ## 3. Conformité par section du CDC
 
@@ -40,16 +52,16 @@ Légende : ✅ réalisé et testé en émulation · 🟡 partiel · 🔧 nécess
 | 3.1–3.6 | Déplacements, 11 types de frappe, contrôles, effets, service, physique | ✅ | Let et balle qui frôle la bande ajoutés |
 | 3.7 | Pas d'endurance | ✅ | |
 | 4.1 | Règles modernes, formats configurables | ✅ | |
-| 4.2 | Formats de compétition | ✅ | Match amical, simple, double, élimination directe, plusieurs niveaux (progressif), poules, toutes rondes (championnat), saison, personnalisé, exhibition (démo), défis (exercices), entraînement |
+| 4.2 | Formats de compétition (simple et double) | ✅ | Match amical, simple, double, élimination directe, plusieurs niveaux (progressif), poules, toutes rondes (championnat), saison, personnalisé, exhibition (démo), défis (exercices), entraînement |
 | 4.3 | Multijoueur local | ✅ | 1 joueur, 2 adversaires, 2 en équipe en double, équipes CPU, revanche immédiate |
-| 5.1–5.3 | Personnages | ✅ | 10 personnages (5 hommes, 5 femmes), tout débloqué |
+| 5.1–5.3 | Personnages | ✅ | 16 personnages (8 hommes, 8 femmes), tous disponibles ; seul le lieu bonus « club nudiste » est à débloquer |
 | 5.2 | Animations | ✅ | Course, frappe, service, joie, **déception** |
 | 6.1 | Surfaces | ✅ | Terre, gazon, dur, moquette + **plage** et **glace** (fantaisie) |
-| 6.2 | Environnements | ✅ | **Stade, club extérieur, salle** ; jour/nuit |
+| 6.2 | Environnements | ✅ | **Stade, club extérieur, salle** ; jour/nuit ; + club nudiste (bonus) |
 | 6.3 | Météo cohérente | ✅ | Pluie, sauf en salle |
 | 6.4 | Influence des surfaces | ✅ | Restitution et adhérence propres à chacune des 6 surfaces |
 | 7.3 | Public | ✅ | Réactions sonores + **animation visuelle** (spectateurs debout, bras levés, en CHR-RAM) |
-| 7.5 | Présentations, victoire/défaite, ralentis | ✅ | Écran de présentation avant chaque match ; joie et déception à la fin ; **ralentis** des aces, coups gagnants et longs échanges (désactivables, passables, jamais pendant un échange) |
+| 7.5 | Présentations, victoire/défaite, ralentis | ✅ | Écran de présentation avant chaque match ; joie et déception à la fin ; levée de coupe ; **ralentis** des aces, coups gagnants et longs échanges (désactivables, passables, jamais pendant un échange) |
 | 8.1–8.5 | Menus, sélection, réglages rapides, pause, affichage | ✅ | Menu adapté au mode ; pause CONTINUER/QUITTER ; score hors de la zone de jeu |
 | 8.6 | Tutoriel des commandes | ✅ | Mode d'emploi intégré + tutoriel interactif guidé |
 | 9 | Entraînement (10 points du CDC) | ✅ | Adversaire immobile, cibles, zones, personnalisable, service, frappes, déplacements, placement, précision, régularité |
@@ -79,7 +91,6 @@ Légende : ✅ réalisé et testé en émulation · 🟡 partiel · 🔧 nécess
 
    Il faut aussi passer la ROM dans Mesen et Nestopia : seul jsnes a été utilisé.
 2. **Dépassements CPU** : 0,2 % des trames d'échange en double (frappes, début de ralenti) et quelques trames de transition entre les points. Pas d'impact sur les commandes.
-3. **Compétitions en double** : elles se jouent en simple. Le double est disponible en match et en démo.
-4. **Équilibrage** : un joueur robot parfait bat le niveau expert ; l'expert pourrait être plus agressif.
-5. **Tenues en double** : les partenaires portent la palette de leur équipe (4 palettes de sprites).
-6. **Espace** : la banque du moteur (0) est presque pleine (16 314 / 16 368 octets). Toute évolution du moteur passera par la banque des annexes (3) ou par la banque libre (6).
+3. **Équilibrage** : un joueur robot parfait bat le niveau expert ; l'expert pourrait être plus agressif.
+4. **Tenues en double** : les partenaires portent la palette de leur équipe (4 palettes de sprites).
+5. **Espace** : la banque du moteur (0) est presque pleine (16 314 / 16 368 octets). Toute évolution du moteur passera par la banque des annexes (3) ou par la banque libre (6).

@@ -10,6 +10,7 @@
 .export _pad1, _pad2, _pad1_new, _pad2_new, _region_cnt
 .export _wait_frame, _pad_poll, _ppu_off, _ppu_on, _vram_adr, _vram_put
 .export _vram_fill, _vram_unrle, _rand8, _rand_seed
+.export _chr_data
 .export _spr1, _spr_meta, _spr_end, _oam_i, _set_bank, _cur_bank, _bank_call, _far_call, _rp_record
 .import _bx, _by, _bz, _b_vis, _plx, _ply, _pose_cache, _flip_cache, _sc_swap
 .import _rp_buf, _rp_head, _rp_count

@@ -11,11 +11,12 @@
 
 #pragma static-locals(on)
 
-const char * const comp_name[NCT] = { "TOURNOI", "POULES", "CHAMPIONNAT", "SAISON", "PERSONNALISE" };
+/* comp_name[] est dans la banque fixe (gfx.c) : lu depuis plusieurs banques */
 
 u8 c_active, c_type, c_stage, c_seed, c_results, c_trophies, c_opts, c_lvl, c_over, c_rank;
 u8 c_surf, c_env, c_cond, c_fmt;
 u8 c_pl[8], c_rt[8], c_n;
+u8 c_pl2[8], c_dbl;   /* double : partenaire de chaque inscrit */
 char comp_l1[24], comp_l2[24];
 
 static u16 rs;
@@ -48,12 +49,14 @@ u8 __fastcall__ comp_build(u8 unused)
     c_n = 8;
     if (c_type == CT_LEAGUE) c_n = 6;
     if (c_type == CT_CUSTOM && !(c_opts & CO_SIZE8)) c_n = 4;
-    for (i = 0; i < NCHARS; ++i) if (i != c_pl[0]) pool[np++] = i;
+    for (i = 0; i < NCHARS; ++i) if (i != c_pl[0] && (!c_dbl || i != c_pl2[0])) pool[np++] = i;
     rs_seed(c_seed, 0x33);
     for (i = np - 1; i > 0; --i) { j = (u8)(rn() % (u8)(i + 1)); t = pool[i]; pool[i] = pool[j]; pool[j] = t; }
     c_rt[0] = 1;
+    if (!c_dbl) c_pl2[0] = 255;
     for (i = 1; i < c_n; ++i) {
-        c_pl[i] = pool[i - 1];
+        if (c_dbl) { c_pl[i] = pool[(i - 1) * 2]; c_pl2[i] = pool[(i - 1) * 2 + 1]; }
+        else { c_pl[i] = pool[i - 1]; c_pl2[i] = 255; }
         c_rt[i] = c_n == 8 ? rt8[i - 1] : c_n == 6 ? rt6[i - 1] : rt4[i - 1];
     }
     /* mélange des niveaux pour que les têtes de série ne soient pas toujours au même endroit */
@@ -69,7 +72,7 @@ u8 __fastcall__ comp_new(u8 unused)
 {
     c_stage = 0;
     c_results = 0;
-    c_trophies = 0;
+    /* c_trophies : cumulé sur la session (et transmis par les codes) */
     return comp_build(unused);
 }
 
@@ -322,6 +325,13 @@ u8 __fastcall__ comp_record(u8 won)
     return c_over;
 }
 
+static char nb[6];
+static void ent_at(u8 i, u8 x, u8 y)
+{
+    team_label(c_pl[i], c_pl2[i], nb);
+    txt_at(x, y, nb);
+}
+
 static const char * const ko_round_name[3] = { "FINALE", "DEMI-FINALE", "QUART DE FINALE" };
 static void copy_txt(char *d, const char *s) { while (*s) *d++ = *s++; *d = 0; }
 
@@ -365,18 +375,18 @@ u8 __fastcall__ comp_draw_table(u8 y)
             groups_wins(c_stage);
             txt_at(3, y, "POULE A      POULE B");
             for (i = 0; i < 4; ++i) {
-                txt_at(3, (u8)(y + 1 + i), char_name[c_pl[i]]);
-                num2(line, wins[i]); line[2] = 'V'; line[3] = 0; txt_at(8, (u8)(y + 1 + i), line);
-                txt_at(16, (u8)(y + 1 + i), char_name[c_pl[i + 4]]);
-                num2(line, wins[i + 4]); txt_at(21, (u8)(y + 1 + i), line);
+                ent_at(i, 3, (u8)(y + 1 + i));
+                num2(line, wins[i]); line[2] = 'V'; line[3] = 0; txt_at(9, (u8)(y + 1 + i), line);
+                ent_at((u8)(i + 4), 16, (u8)(y + 1 + i));
+                num2(line, wins[i + 4]); txt_at(22, (u8)(y + 1 + i), line);
             }
         } else {
             groups_semis();
             txt_at(3, y, "DEMI-FINALES");
             for (i = 0; i < 2; ++i) {
-                txt_at(3, (u8)(y + 1 + i), char_name[c_pl[sf_a[i]]]);
-                txt_at(8, (u8)(y + 1 + i), "-");
-                txt_at(10, (u8)(y + 1 + i), char_name[c_pl[sf_b[i]]]);
+                ent_at(sf_a[i], 3, (u8)(y + 1 + i));
+                txt_at(9, (u8)(y + 1 + i), "-");
+                ent_at(sf_b[i], 11, (u8)(y + 1 + i));
             }
         }
         break;
@@ -387,7 +397,7 @@ u8 __fastcall__ comp_draw_table(u8 y)
         for (i = 0; i < 6; ++i) {
             line[0] = (char)('1' + i); line[1] = '.'; line[2] = 0;
             txt_at(3, (u8)(y + 1 + i), line);
-            txt_at(6, (u8)(y + 1 + i), char_name[c_pl[order[i]]]);
+            ent_at(order[i], 6, (u8)(y + 1 + i));
             num2(line, wins[order[i]]); line[2] = 0;
             txt_at(17, (u8)(y + 1 + i), line);
         }
@@ -399,7 +409,7 @@ u8 __fastcall__ comp_draw_table(u8 y)
         for (i = 0; i < 8; ++i) {
             line[0] = (char)('1' + i); line[1] = '.'; line[2] = 0;
             txt_at(3, (u8)(y + 1 + i), line);
-            txt_at(6, (u8)(y + 1 + i), char_name[c_pl[order[i]]]);
+            ent_at(order[i], 6, (u8)(y + 1 + i));
             num3(line, pts[order[i]]); line[3] = 0;
             txt_at(16, (u8)(y + 1 + i), line);
         }
@@ -410,9 +420,9 @@ u8 __fastcall__ comp_draw_table(u8 y)
         txt_at(3, y, "TABLEAU");
         for (i = 0; i < (u8)(n >> 1); ++i) {
             a = ko_cur[i * 2]; b = ko_cur[i * 2 + 1];
-            txt_at(3, (u8)(y + 1 + i), char_name[c_pl[a]]);
-            txt_at(8, (u8)(y + 1 + i), "-");
-            txt_at(10, (u8)(y + 1 + i), char_name[c_pl[b]]);
+            ent_at(a, 3, (u8)(y + 1 + i));
+            txt_at(9, (u8)(y + 1 + i), "-");
+            ent_at(b, 11, (u8)(y + 1 + i));
         }
         break;
     }

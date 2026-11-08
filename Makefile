@@ -13,12 +13,13 @@ BANK1 = screens
 BANK5 = comp stats
 BANK3 = extras assets_court
 BANK4 = manual
-CSRC = $(FIXED) $(BANK0) $(BANK1) $(BANK3) $(BANK4) $(BANK5)
+BANK6 = assets_nude
+CSRC = $(FIXED) $(BANK0) $(BANK1) $(BANK3) $(BANK4) $(BANK5) $(BANK6)
 OBJS = $(BUILD)/crt0.o $(addprefix $(BUILD)/,$(addsuffix .o,$(CSRC)))
 
 all: $(ROM)
 
-assets/tiles.chr src/assets_data.c src/assets_court.c: tools/gen_assets.py
+assets/tiles.chr src/assets_data.c src/assets_court.c src/assets_nude.c: tools/gen_assets.py
 	python3 tools/gen_assets.py
 
 $(BUILD):
@@ -30,11 +31,12 @@ $(addprefix $(BUILD)/,$(addsuffix .s,$(BANK1))): SEGS = --code-name BANK1 --roda
 $(addprefix $(BUILD)/,$(addsuffix .s,$(BANK3))): SEGS = --code-name BANK3 --rodata-name RODATA3
 $(addprefix $(BUILD)/,$(addsuffix .s,$(BANK4))): SEGS = --code-name BANK4 --rodata-name RODATA4
 $(addprefix $(BUILD)/,$(addsuffix .s,$(BANK5))): SEGS = --code-name BANK5 --rodata-name RODATA5 --bss-name WBSS
+$(addprefix $(BUILD)/,$(addsuffix .s,$(BANK6))): SEGS = --code-name BANK6 --rodata-name RODATA6
 
 $(BUILD)/crt0.o: src/crt0.s assets/tiles.chr | $(BUILD)
 	$(CA65) -t nes -g -o $@ src/crt0.s
 
-$(BUILD)/%.s: src/%.c src/*.h src/assets_data.c src/assets_court.c | $(BUILD)
+$(BUILD)/%.s: src/%.c src/*.h src/assets_data.c src/assets_court.c src/assets_nude.c | $(BUILD)
 	$(CC65) $(CFLAGS) $(SEGS) -o $@ $<
 
 $(BUILD)/%.o: $(BUILD)/%.s

@@ -2,7 +2,7 @@
 #define GFX_H
 #include "runtime.h"
 
-#define NCHARS 10
+#define NCHARS 16
 extern const char * const char_name[NCHARS];
 extern const u8 char_female[NCHARS];
 extern const u8 char_style[NCHARS];
@@ -13,7 +13,8 @@ extern const char * const style_name[NSTYLES];
 
 #define NSURF 6         /* 4 surfaces réelles + 2 fantaisie */
 extern const char * const surf_name[NSURF];
-#define NENV 3          /* stade, club, salle */
+#define NENV 4          /* stade, club, salle, club nudiste (à débloquer) */
+#define ENV_NUDE 3
 extern const char * const env_name[NENV];
 
 void pal_set_court(u8 surface, u8 cond, u8 env);   /* cond : 0 jour, 1 nuit, 2 pluie */
@@ -44,5 +45,10 @@ void vbuf_reset(void);
 void num2(char *out, u8 v);
 void num3(char *out, u16 v);
 void clear_screen(void);
+/* tuiles des personnages : 0 tenue normale, 1 au naturel (rendu coupé) */
+void people_tiles(u8 nude);
+extern u8 nude_unlocked;
+void team_label(u8 a, u8 b, char *out);
+extern const u8 chr_data[];
 #define VBUF_MAX 96     /* octets envoyés au PPU par trame (budget VBlank) */
 #endif

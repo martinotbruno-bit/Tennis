@@ -231,6 +231,22 @@ def draw_court(env=0):
                     for yy in range(8):
                         for xx in range(8):
                             b[row*8+yy][x0+col*8+xx] = pat[yy][xx]
+        elif env == 3:
+            # CLUB NUDISTE : pas de gradins, spectateurs (au naturel) sur des
+            # serviettes dans l'herbe. Couleurs : 1 herbe, 2 peau, 3 serviette
+            for y in range(32, 240):
+                for x in range(x0, x0+32):
+                    b[y][x] = 1
+            for r2 in range(2, 15):
+                for c2 in range(2):
+                    if (r2 + c2 + side) % 2 == 0:
+                        fan = NUDE_FANS[(r2 + c2 * 2 + side) % 3]
+                        for q in range(4):
+                            ty = r2 * 16 + (q // 2) * 8
+                            tx = x0 + c2 * 16 + (q % 2) * 8
+                            for yy in range(8):
+                                for xx in range(8):
+                                    b[ty+yy][tx+xx] = fan[q][yy][xx]
         else:
             # SALLE : murs, panneaux publicitaires et projecteurs
             for y in range(32, 240):
@@ -246,10 +262,10 @@ def draw_court(env=0):
                     for x in range(x0+8, x0+24, 3):
                         if 32 <= y < 240:
                             b[y][x] = 3
-        # rambarde
+        # rambarde (pas de barrière au club nudiste : simple haie basse)
         bx = 31 if side == 0 else 224
         for y in range(32, 240):
-            b[y][bx] = 3
+            b[y][bx] = 3 if env != 3 else (3 if y % 4 < 2 else 1)
     # chaise d'arbitre dans la tribune gauche, au niveau du filet
     rect(18, NET_Y-14, 29, NET_Y+2, 0)
     rect(20, NET_Y-14, 27, NET_Y-9, 3)
@@ -303,6 +319,39 @@ def cheer_tile(seed):
 CHEER = [cheer_tile(i) for i in range(6)]
 crowd_idx = [bg_alloc(t) for t in CROWD]
 
+def nude_fan(kind, cheer=False):
+    """Spectateur du club nudiste (16x16) assis sur sa serviette, dans l'herbe :
+    silhouette couleur peau (2) sans aucun détail anatomique, cheveux et
+    serviette (3), herbe (1). Debout, bras levés, quand le public s'enthousiasme."""
+    t = [[1]*16 for _ in range(16)]
+    def f(x0, y0, x1, y1, v):
+        for y in range(y0, y1 + 1):
+            for x in range(x0, x1 + 1):
+                if 0 <= x < 16 and 0 <= y < 16:
+                    t[y][x] = v
+    f(1, 12, 14, 15, 3)                         # serviette
+    up = 3 if cheer else 0
+    f(6, 2 - up, 9, 5 - up, 2)                  # tête
+    if kind == 1: f(5, 1 - up, 10, 2 - up, 3)   # cheveux
+    if kind == 2: f(5, 1 - up, 10, 1 - up, 3); f(5, 2 - up, 5, 6 - up, 3); f(10, 2 - up, 10, 6 - up, 3)
+    f(5, 6 - up, 10, 11, 2)                     # buste
+    if cheer:
+        f(3, 0, 4, 6, 2); f(11, 0, 12, 6, 2)    # bras levés
+        f(6, 11, 7, 13, 2); f(8, 11, 9, 13, 2)  # debout
+    else:
+        f(3, 8, 4, 11, 2); f(11, 8, 12, 11, 2)  # bras posés
+        f(3, 11, 12, 12, 2)                     # jambes croisées
+    return t
+
+def split4(t):
+    return [[r[tx*8:tx*8+8] for r in t[ty*8:ty*8+8]] for ty in range(2) for tx in range(2)]
+
+NUDE_FANS = [split4(nude_fan(k)) for k in range(3)]
+NUDE_FANS_CHEER = [split4(nude_fan(k, True)) for k in range(3)]
+NUDE_CROWD = [tile for fan in NUDE_FANS for tile in fan]          # 12 tuiles
+NUDE_CHEER = [tile for fan in NUDE_FANS_CHEER for tile in fan]
+crowd_idx3 = [bg_alloc(t) for t in NUDE_CROWD]
+
 def court_attr(bx, by):
     if by < 2:
         return 1                      # bandeau score
@@ -310,7 +359,12 @@ def court_attr(bx, by):
         return 2                      # tribunes
     return 0
 
-court_nts = [bitmap_to_nametable(draw_court(e), court_attr) for e in range(3)]
+court_nts = [bitmap_to_nametable(draw_court(e), court_attr) for e in range(4)]
+# panneau du club nudiste, ligne 3 du bandeau (police ASCII = n° de tuile)
+_nt3 = bytearray(court_nts[3])
+for i, ch in enumerate("CLUB NUDISTE"):
+    _nt3[3 * 32 + 10 + i] = ord(ch)
+court_nts[3] = bytes(_nt3)
 court_nt = court_nts[0]
 
 # ---------------------------- Titre --------------------------------------
@@ -438,7 +492,7 @@ def racket(c, hx, hy, ang):
     else:
         fill(c, cx-1, cy-1, cx+1, cy+1, 3); put(c, cx, cy, 0)
 
-def draw_person(view, legs, arms, female):
+def draw_person(view, legs, arms, female, nude=False):
     c = new_canvas()
     # --- tête
     fill(c, 6, 1, 9, 5, 1)
@@ -461,11 +515,21 @@ def draw_person(view, legs, arms, female):
     if female and view == 'back':
         put(c, 7, 6, 3); put(c, 8, 6, 3)
     # torse
-    fill(c, 5, 7, 10, 13, 2)
-    fill(c, 4, 8, 11, 9, 2)
-    put(c, 7, 7, 1) if view == 'front' else None
+    if nude:
+        # au naturel : silhouette couleur peau, sans détail anatomique ;
+        # seule une serviette en écharpe (couleur de l'équipe) distingue les camps
+        fill(c, 5, 7, 10, 15, 1)
+        fill(c, 4, 8, 11, 9, 1)
+        for k in range(6):
+            put(c, 5 + k, 7 + k, 2); put(c, 6 + k, 7 + k, 2)
+    else:
+        fill(c, 5, 7, 10, 13, 2)
+        fill(c, 4, 8, 11, 9, 2)
+        put(c, 7, 7, 1) if view == 'front' else None
     # short / jupe
-    if female:
+    if nude:
+        pass
+    elif female:
         fill(c, 4, 14, 11, 15, 2); fill(c, 4, 15, 11, 15, 3)
     else:
         fill(c, 5, 14, 10, 15, 3)
@@ -483,6 +547,12 @@ def draw_person(view, legs, arms, female):
         line(c, 5, 16, 3, 21, 1); line(c, 6, 16, 4, 21, 1)
         line(c, 9, 16, 11, 21, 1); line(c, 10, 16, 12, 21, 1)
         fill(c, 2, 22, 4, 23, 3); fill(c, 11, 22, 13, 23, 3)
+    if nude:
+        # pieds nus
+        for y in range(20, 24):
+            for x in range(16):
+                if c[y][x] == 3:
+                    c[y][x] = 1
     # bras + raquette (main droite côté écran droit)
     if arms == 'ready':
         fill(c, 3, 9, 3, 12, 1); fill(c, 12, 9, 12, 12, 1)
@@ -538,6 +608,45 @@ for female in (0, 1):
             for t in canvas_tiles(cv):
                 spr_tile(next_spr, t)
                 next_spr += 1
+nude_people = bytearray()
+for female in (0, 1):
+    for view in ('back', 'front'):
+        for (legs, arms) in POSES:
+            cv = draw_person(view, legs, arms, female, nude=True)
+            preview_people.append(cv)
+            for t in canvas_tiles(cv):
+                nude_people += encode_tile(t)
+assert len(nude_people) == (next_spr - 0x10) * 16
+
+# coupe (2x2 tuiles, palette 2 : 1 or clair, 2 sombre, 3 reflet) et confettis
+cup = [[0]*16 for _ in range(16)]
+for y in range(0, 9):
+    w = 6 if y < 6 else 6 - (y - 5) * 2
+    for x in range(8 - w, 8 + w):
+        cup[y][x] = 1
+for y in range(1, 6):
+    cup[y][1] = 1; cup[y][14] = 1          # anses
+cup[0][1] = cup[0][14] = 1
+for y in range(9, 13):
+    cup[y][7] = cup[y][8] = 1               # pied
+for x in range(4, 12):
+    cup[13][x] = 2; cup[14][x] = 2          # socle
+for y in range(1, 5):
+    cup[y][4] = 3                           # reflet
+for y in range(0, 9):
+    for x in range(16):
+        if cup[y][x] == 1 and (x == 0 or cup[y][x-1] == 0 or x == 15 or cup[y][x+1] == 0):
+            cup[y][x] = 2 if y > 0 else cup[y][x]
+TROPHY_TILE = next_spr
+for ty in range(2):
+    for tx in range(2):
+        spr_tile(next_spr, [cup[ty*8+y][tx*8:tx*8+8] for y in range(8)]); next_spr += 1
+CONFETTI_TILE = next_spr
+conf = blank()
+for (x, y) in ((3, 3), (4, 3), (3, 4), (4, 4)):
+    conf[y][x] = 1
+conf[3][4] = 3
+spr_tile(next_spr, conf); next_spr += 1
 assert next_spr <= 256, "trop de tuiles de sprites"
 
 # --------------------------------------------------------------------------
@@ -591,15 +700,26 @@ src.append(c_array('logo_tiles', bytes(logo)))
 src.append(c_array('bigball_tiles', bytes(ball_tiles)))
 src.append('const unsigned char person_base[4] = {0x%02X,0x%02X,0x%02X,0x%02X};\n' % (
     person_base[(0,'back')], person_base[(0,'front')], person_base[(1,'back')], person_base[(1,'front')]))
+src.append('const unsigned char trophy_tile = 0x%02X;\nconst unsigned char confetti_tile = 0x%02X;\n' % (TROPHY_TILE, CONFETTI_TILE))
 with open(os.path.join(ROOT, 'src', 'assets_data.c'), 'w') as f:
+    f.write('\n'.join(src))
+
+# personnages au naturel (banque 6) : remplacent les tuiles $10.. en CHR-RAM
+src = ['/* Fichier généré par tools/gen_assets.py — ne pas modifier. */',
+       '#include "assets.h"', '']
+src.append(c_array('nude_people', bytes(nude_people)))
+with open(os.path.join(ROOT, 'src', 'assets_nude.c'), 'w') as f:
     f.write('\n'.join(src))
 
 # données du court et du public : banque du moteur de jeu
 src = ['/* Fichier généré par tools/gen_assets.py — ne pas modifier. */',
        '#include "assets.h"', '']
-for e in range(3):
+for e in range(4):
     src.append(c_array('court_nt_rle%d' % e, court_rles[e]))
-src.append('const unsigned char * const court_nt_rle[3] = { court_nt_rle0, court_nt_rle1, court_nt_rle2 };\n')
+src.append('const unsigned char * const court_nt_rle[4] = { court_nt_rle0, court_nt_rle1, court_nt_rle2, court_nt_rle3 };\n')
+src.append(c_array('crowd_idx3', bytes(crowd_idx3)))
+src.append(c_array('crowd_norm3', b''.join(encode_tile(t) for t in NUDE_CROWD)))  # 12 tuiles
+src.append(c_array('crowd_cheer3', b''.join(encode_tile(t) for t in NUDE_CHEER)))
 src.append(c_array('crowd_idx', bytes(crowd_idx)))
 src.append(c_array('crowd_norm', b''.join(encode_tile(t) for t in CROWD)))
 src.append(c_array('crowd_cheer', b''.join(encode_tile(t) for t in CHEER)))
@@ -623,7 +743,7 @@ try:
                 for x in range(8):
                     img.putpixel((tx*8+x, ty*8+y), NESPAL[t[y][x]])
     img.save(os.path.join(ROOT, 'assets', 'preview_court.png'))
-    for e in (1, 2):
+    for e in (1, 2, 3):
         im2 = Image.new('RGB', (256, 240))
         for ty in range(30):
             for tx in range(32):

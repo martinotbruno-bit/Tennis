@@ -15,6 +15,7 @@ typedef struct {
     u8 hist_n;
     u8 hist[8][4];                 /* type, rang, personnage, surface */
     u8 comp_best[5];               /* meilleur rang par type (0 = jamais joué) */
+    u8 nude;                       /* club nudiste débloqué */
     u8 sum;
 } SaveData;
 

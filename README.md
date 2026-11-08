@@ -2,9 +2,10 @@
 
 Jeu de tennis 8 bits original pour **NES / Famicom** (NTSC et PAL), sur cartouche MMC1 :
 - simple et double, à 1 ou 2 joueurs ;
-- 10 personnages aux styles de jeu différents, IA à 3 niveaux qui s'adapte au joueur ;
+- 16 personnages aux styles de jeu différents, IA à 3 niveaux qui s'adapte au joueur ;
 - 6 surfaces (dont plage et glace), 3 lieux (stade, club, salle), jour, nuit et pluie ;
-- compétitions (tournoi, poules, championnat, saison, personnalisé) avec codes de reprise ;
+- compétitions en simple ou en double (tournoi, poules, championnat, saison, personnalisé) avec codes de reprise et levée de coupe ;
+- un lieu bonus à débloquer : le club nudiste « Les Bronzés » ;
 - 9 exercices d'entraînement dont un tutoriel ;
 - ralentis, palmarès et mode d'emploi intégré.
 
@@ -36,7 +37,7 @@ Outils : `cc65` 2.19, `python3`, `make` ; pour les tests, `gcc` et `node` ≥ 18
 
 ```sh
 make          # build/pixel_open.nes (+ occupation de chaque banque)
-make test     # règles + codes (natif) et 86 vérifications sur émulateur (jsnes)
+make test     # règles + codes (natif) et la suite complète sur émulateur (jsnes)
 ```
 
 ## Organisation
@@ -53,4 +54,4 @@ dist/       ROM finale
 
 ## État
 
-Version 2.0 : tout le contenu du cahier des charges est réalisé et testé **en émulation**. Les tests sur consoles réelles restent à faire ; voir le [rapport](docs/RAPPORT.md).
+Version 2.1 : tout le contenu du cahier des charges est réalisé et testé **en émulation**. Les tests sur consoles réelles restent à faire ; voir le [rapport](docs/RAPPORT.md).

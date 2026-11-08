@@ -10,6 +10,7 @@
 #define BANK_EXTRAS  3   /* ralentis, exercices, public animé, tutoriel */
 #define BANK_MANUAL  4   /* mode d'emploi */
 #define BANK_COMP    5   /* compétitions et palmarès */
+#define BANK_NUDE    6   /* tuiles des personnages au naturel */
 
 /* état de l'application (lu par la boucle principale, banque fixe) */
 #define AS_SCREENS 0

@@ -74,6 +74,7 @@ u8 __fastcall__ sv_comp_end(u8 unused)
     sv_check(unused);
     if (sv.comps < 255) ++sv.comps;
     if (rank == 1 && sv.titles < 255) ++sv.titles;
+    if (rank == 1) sv.nude = 1;
     if (!sv.comp_best[type] || rank < sv.comp_best[type]) sv.comp_best[type] = rank;
     /* historique : les 8 dernières compétitions, la plus récente en tête */
     for (i = 7; i > 0; --i) {
