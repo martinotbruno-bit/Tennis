@@ -1,14 +1,15 @@
 # CAHIER DES CHARGES PROFESSIONNEL
 ## Création d'un jeu de tennis NES/Famicom de nouvelle génération
 
-**Nom du projet :** Tennis NES – Édition ultime  
+**Nom du projet :** Pixel Open  
 **Nature du projet :** Création autonome d'un jeu vidéo de tennis 8 bits pour Nintendo Entertainment System (NES) et Famicom.  
 **Destinataire :** IA de développement autonome.  
-**Objectif :** Concevoir, programmer, optimiser, tester et livrer une évolution ambitieuse du jeu Tennis de la NES, avec un contenu considérablement enrichi et une finition maximale, tout en conservant une compatibilité réelle avec le matériel d'origine.
+**Objectif :** Concevoir, programmer, optimiser, tester et livrer un jeu de tennis 8 bits original et ambitieux, dans la tradition des jeux de tennis de la NES, avec un contenu considérablement enrichi et une finition maximale, tout en conservant une compatibilité réelle avec le matériel d'origine.
 
 | Version | Date | Statut |
 |---|---|---|
 | 1.0 | 2026-11-08 | Version initiale |
+| 1.1 | 2026-11-08 | Nom du projet : Pixel Open |
 
 ## Sommaire
 
@@ -38,7 +39,7 @@
 
 ## 1.1 Objectif principal
 
-Développer un jeu de tennis inspiré du jeu Nintendo NES Tennis, mais considérablement amélioré dans tous les domaines possibles :
+Développer un jeu de tennis original, inspiré des jeux de tennis classiques de la NES, mais considérablement plus riche dans tous les domaines possibles :
 
 - Gameplay et profondeur des échanges.
 - Physique de la balle.
@@ -76,7 +77,7 @@ Aucune amélioration graphique ne devra rendre les commandes imprécises ou dég
 
 ## 1.3 Création originale
 
-Le jeu doit être une réalisation indépendante inspirée des principes de gameplay de Tennis NES.
+Le jeu doit être une réalisation indépendante inspirée des principes de gameplay des jeux de tennis 8 bits.
 
 Ne pas réutiliser le code source original, les graphismes propriétaires, les musiques, les sons ou les ressources protégées du jeu d'origine sans autorisation.
 
@@ -360,7 +361,7 @@ Créer une identité visuelle 8 bits soignée.
 
 Étudier :
 
-- Apparence proche de l'esprit du jeu original.
+- Apparence fidèle à l'esprit des jeux de tennis 8 bits, avec une identité visuelle propre.
 - Sprites 8 bits détaillés.
 - Plusieurs tenues.
 - Variantes de couleurs.
@@ -1139,6 +1140,6 @@ Tu dois documenter toute limitation technique et proposer la meilleure alternati
 
 Tu ne dois jamais déclarer le projet terminé tant que les critères d'acceptation et les livrables obligatoires ne sont pas vérifiés.
 
-**Résultat final attendu : un jeu de tennis 8 bits exceptionnel, considérablement supérieur au Tennis NES d'origine en contenu, en gameplay et en finition, exploitant au maximum les possibilités techniques de la NES/Famicom, tout en restant réellement compatible avec les consoles d'origine.**
+**Résultat final attendu : un jeu de tennis 8 bits exceptionnel, considérablement plus riche que les jeux de tennis 8 bits classiques en contenu, en gameplay et en finition, exploitant au maximum les possibilités techniques de la NES/Famicom, tout en restant réellement compatible avec les consoles d'origine.**
 
 **FIN DU CAHIER DES CHARGES**

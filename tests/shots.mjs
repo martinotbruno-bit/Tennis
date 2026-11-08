@@ -16,3 +16,12 @@ match({}, 420, 'simple_terre');
 match({ 2: 1, 6: 2 }, 520, 'double_dur');
 match({ 6: 1, 7: 2 }, 450, 'pluie_gazon');
 match({ 6: 3, 7: 1 }, 450, 'nuit_moquette');
+{
+  const r = new Emu(rom); r.run(30); r.tap('START'); r.run(10);
+  r.poke('opt_val', 3, 8); r.tap('START'); r.run(5);
+  const c = r.addr('cfg'); for (let i = 0; i < 4; i++) r.nes.cpu.mem[c + 2 + i] = 2;
+  let n = 0; while (r.peek('app_state') !== 3 && n++ < 60 * 60 * 30) r.run(1);
+  r.run(20); r.screenshot(`${out}/resultats.png`);
+  const t = new Emu(rom); t.run(30); t.tap('START'); t.run(10);
+  t.poke('opt_val', 3, 1); t.tap('START'); t.run(20); t.screenshot(`${out}/tournoi.png`);
+}

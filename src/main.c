@@ -253,7 +253,7 @@ static void tourney_screen(void)
         txt_at(13, 10, "VS");
         txt_at(16, 10, char_name[tour_opp[tour_round]]);
         txt_at(8, 12, surf_name[opt_val[OPT_SURF]]);
-        txt_at(8, 13, level_name[tour_round]);
+        txt_at(8, 14, "NIVEAU"); txt_at(15, 14, level_name[tour_round]);
         txt_at(6, 17, "CODE DE REPRISE :");
         pw_encode(code, tour_round, opt_val[OPT_P1], opt_val[OPT_SURF], opt_val[OPT_FMT], opt_val[OPT_TIME], tour_wins);
         code[6] = 0;
