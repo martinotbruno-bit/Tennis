@@ -93,6 +93,8 @@ void music_play(u8 id)
     mel_timer = bass_timer = 1;
 }
 
+u8 music_none(void) { return (u8)(mel_ptr == 0); }
+
 void audio_update(void)
 {
     if (mel_ptr) {

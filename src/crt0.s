@@ -10,11 +10,14 @@
 .export _pad1, _pad2, _pad1_new, _pad2_new, _region_cnt
 .export _wait_frame, _pad_poll, _ppu_off, _ppu_on, _vram_adr, _vram_put
 .export _vram_fill, _vram_unrle, _rand8, _rand_seed
-.export _spr1, _spr_meta, _spr_end, _oam_i
+.export _spr1, _spr_meta, _spr_end, _oam_i, _set_bank, _cur_bank, _bank_call, _far_call, _rp_record
+.import _bx, _by, _bz, _b_vis, _plx, _ply, _pose_cache, _flip_cache, _sc_swap
+.import _rp_buf, _rp_head, _rp_count
+.import __WBSS_RUN__, __WBSS_SIZE__
 .export _meta_x, _meta_y, _meta_tile, _meta_attr
 .import _main, zerobss, copydata
 .import __CSTACK_START__, __CSTACK_SIZE__
-.importzp sp, ptr1, tmp1, tmp2
+.importzp sp, ptr1, ptr2, tmp1, tmp2
 
 PPUCTRL   = $2000
 PPUMASK   = $2001
@@ -32,11 +35,25 @@ CTRL_VAL  = %10001000
 
 .segment "HEADER"
     .byte "NES", $1A
-    .byte 2             ; 2 x 16 Ko PRG
-    .byte 1             ; 1 x 8 Ko CHR
-    .byte $01           ; mapper 0, miroir vertical
+    .byte 8             ; 8 x 16 Ko PRG (128 Ko)
+    .byte 0             ; 0 = CHR-RAM (8 Ko)
+    .byte $12           ; mapper 1 (MMC1), PRG-RAM sauvegardée par pile
     .byte $00
-    .res 8, 0
+    .byte $00           ; 8 Ko de PRG-RAM
+    .res 7, 0
+
+; Écriture série dans un registre MMC1 (5 bits, poids faible d'abord)
+.macro MMC1_WRITE addr
+    sta addr
+    lsr a
+    sta addr
+    lsr a
+    sta addr
+    lsr a
+    sta addr
+    lsr a
+    sta addr
+.endmacro
 
 .segment "OAM"
 _oam_buf:   .res 256
@@ -62,6 +79,9 @@ _meta_x:    .res 1      ; paramètres de _spr_meta (personnage 2x3 tuiles)
 _meta_y:    .res 1
 _meta_tile: .res 1
 _meta_attr: .res 1      ; bit 6 = miroir horizontal
+_cur_bank:  .res 1      ; banque commutable actuellement en $8000
+call_vec:   .res 2      ; adresse appelée par _bank_call / _far_call
+far_arg:    .res 2      ; argument (A/X) puis résultat de _far_call
 _region_cnt:.res 2      ; nombre de boucles entre deux VBlank (détection NTSC/PAL)
 
 .segment "BSS"
@@ -71,6 +91,8 @@ _pal_buf:   .res 32
 reset:
     sei
     cld
+    ldx #$FF
+    stx $8000           ; réinitialise le MMC1 (mode : dernière banque fixe en $C000)
     ldx #$40
     stx JOY2            ; désactive l'IRQ de trame de l'APU
     ldx #$FF
@@ -118,6 +140,52 @@ reset:
     bpl @cnt            ; 3  => ~16 cycles
     stx _region_cnt
     sty _region_cnt+1
+
+    ; MMC1 : miroir vertical, $8000 commutable, CHR 8 Ko ; banque 0
+    lda #$0E
+    MMC1_WRITE $8000
+    lda #0
+    MMC1_WRITE $A000
+    lda #0
+    MMC1_WRITE $C000
+    lda #2
+    jsr _set_bank       ; banque 2 : motifs graphiques
+    ; copie des 8 Ko de motifs dans la CHR-RAM
+    lda #<_chr_data
+    sta ptr1
+    lda #>_chr_data
+    sta ptr1+1
+    bit PPUSTATUS
+    lda #0
+    sta PPUADDR
+    sta PPUADDR
+    ldx #32             ; 32 pages de 256 octets
+    ldy #0
+@chr:
+    lda (ptr1),y
+    sta PPUDATA
+    iny
+    bne @chr
+    inc ptr1+1
+    dex
+    bne @chr
+    lda #0
+    jsr _set_bank
+    ; efface la RAM de cartouche de travail (la zone de sauvegarde est conservée)
+    lda #<__WBSS_RUN__
+    sta ptr1
+    lda #>__WBSS_RUN__
+    sta ptr1+1
+    ldx #>(__WBSS_SIZE__ + 255)
+    lda #0
+    tay
+@wclr:
+    sta (ptr1),y
+    iny
+    bne @wclr
+    inc ptr1+1
+    dex
+    bne @wclr
 
     ; APU : canaux carrés, triangle et bruit activés
     lda #$0F
@@ -487,6 +555,187 @@ _spr_end:
     bne @h
     rts
 
+; void __fastcall__ set_bank(u8 bank) : banque commutable en $8000
+; (bit 4 = 0 : PRG-RAM activée)
+_set_bank:
+    and #$0F
+    sta _cur_bank
+    MMC1_WRITE $E000
+    rts
+
+; void __fastcall__ bank_call(u8 bank, void (*fn)(void))
+; Appelle une fonction sans argument située dans une autre banque commutable,
+; puis restaure la banque d'origine (trampoline en banque fixe).
+_bank_call:
+    sta call_vec
+    stx call_vec+1
+    ldy #0
+    lda (sp),y          ; banque cible
+    inc sp
+    bne :+
+    inc sp+1
+:   tay
+    lda _cur_bank
+    pha
+    tya
+    jsr _set_bank
+    jsr @go
+    pla
+    jmp _set_bank
+@go:
+    jmp (call_vec)
+
+; u16 __fastcall__ far_call(u8 bank, void *fn, u16 arg)
+; Appelle fn (fastcall, un argument en A/X, résultat en A/X) dans une autre
+; banque commutable, puis restaure la banque d'origine.
+_far_call:
+    sta far_arg
+    stx far_arg+1
+    ldy #0
+    lda (sp),y          ; fn (poids faible)
+    sta call_vec
+    iny
+    lda (sp),y
+    sta call_vec+1
+    iny
+    lda (sp),y          ; banque
+    tay
+    lda sp
+    clc
+    adc #3
+    sta sp
+    bcc :+
+    inc sp+1
+:   lda _cur_bank
+    pha
+    tya
+    jsr _set_bank
+    lda far_arg
+    ldx far_arg+1
+    jsr @go
+    sta far_arg
+    stx far_arg+1
+    pla
+    jsr _set_bank
+    lda far_arg
+    ldx far_arg+1
+    rts
+@go:
+    jmp (call_vec)
+
+; void rp_record(void) : enregistre la trame courante pour les ralentis
+; (16 octets : balle x, y, z, visible, puis x, y, pose de 4 joueurs).
+; Version assembleur (~450 cycles) : la version C coûtait ~1 700 cycles par
+; trame et faisait déborder le double.
+RP_LEN = 160
+; A = (v >> 6) & $FF pour la valeur 16 bits pointée par ptr2 (positions < 16384)
+.macro PX_TO_A addr, off
+    lda addr+off+1
+    sta tmp1
+    lda addr+off
+    asl a
+    rol tmp1
+    asl a
+    rol tmp1
+    lda tmp1
+.endmacro
+_rp_record:
+    ; ptr1 = rp_buf + rp_head * 16
+    lda _rp_head
+    sta ptr1
+    lda #0
+    sta ptr1+1
+    ldx #4
+@sh:
+    asl ptr1
+    rol ptr1+1
+    dex
+    bne @sh
+    lda ptr1
+    clc
+    adc #<_rp_buf
+    sta ptr1
+    lda ptr1+1
+    adc #>_rp_buf
+    sta ptr1+1
+    ldy #0
+    PX_TO_A _bx, 0
+    sta (ptr1),y
+    iny
+    PX_TO_A _by, 0
+    sta (ptr1),y
+    iny
+    lda _bz+1
+    bpl @zpos
+    lda #0
+    beq @zst
+@zpos:
+    PX_TO_A _bz, 0
+@zst:
+    sta (ptr1),y
+    iny
+    lda _b_vis
+    sta (ptr1),y
+    ldx #0              ; joueur
+@pl:
+    stx tmp2
+    txa
+    asl a
+    tax                 ; index des tableaux 16 bits
+    lda _plx+1,x
+    sta tmp1
+    lda _plx,x
+    asl a
+    rol tmp1
+    asl a
+    rol tmp1
+    iny
+    lda tmp1
+    sta (ptr1),y
+    lda _ply+1,x
+    sta tmp1
+    lda _ply,x
+    asl a
+    rol tmp1
+    asl a
+    rol tmp1
+    iny
+    lda tmp1
+    sta (ptr1),y
+    ldx tmp2
+    ; pose | miroir << 3 | côté << 4
+    txa
+    and #1
+    eor _sc_swap
+    asl a
+    asl a
+    asl a
+    asl a
+    sta tmp1
+    lda _flip_cache,x
+    asl a
+    asl a
+    asl a
+    ora tmp1
+    ora _pose_cache,x
+    iny
+    sta (ptr1),y
+    inx
+    cpx #4
+    bne @pl
+    ; avance la tête du tampon circulaire
+    ldx _rp_head
+    inx
+    cpx #RP_LEN
+    bne :+
+    ldx #0
+:   stx _rp_head
+    lda _rp_count
+    cmp #RP_LEN
+    bcs :+
+    inc _rp_count
+:   rts
+
 ; unsigned char rand8(void) : LFSR 16 bits (Galois)
 _rand8:
     ldx #8
@@ -502,8 +751,34 @@ _rand8:
     ldx #0
     rts
 
-.segment "VECTORS"
+.segment "STUB7"
+    sei
+    ldx #$FF
+    txs
+    stx $8000
+    jmp reset
     .word nmi, reset, irq
 
-.segment "CHARS"
+; Programmes de démarrage des banques commutables : si une de ces banques
+; occupe $C000 à la mise sous tension, elle réinitialise le MMC1 (ce qui fixe
+; la banque 7 en $C000) puis saute au vrai démarrage.
+.macro BANK_STUB seg
+.segment seg
+    sei
+    ldx #$FF
+    txs
+    stx $8000
+    jmp reset
+    .word $FFF0, $FFF0, $FFF0
+.endmacro
+BANK_STUB "STUB0"
+BANK_STUB "STUB1"
+BANK_STUB "STUB2"
+BANK_STUB "STUB3"
+BANK_STUB "STUB4"
+BANK_STUB "STUB5"
+BANK_STUB "STUB6"
+
+.segment "BANK2"
+_chr_data:
     .incbin "../assets/tiles.chr"

@@ -1,27 +1,38 @@
-/* Tests des codes de sauvegarde : aller-retour exhaustif + détection d'erreurs */
+/* Tests des codes de reprise : aller-retour + détection des erreurs de saisie */
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include "../src/password.h"
+
+static int same(const PwData *a, const PwData *b) { return memcmp(a, b, sizeof *a) == 0; }
+
 int main(void)
 {
-    char code[7] = {0}, bad[7];
-    int ok = 0, total = 0, rejected = 0, mutations = 0, i, k;
-    pu8 r, c, s, f, n, w, R, C, S, F, N, W;
-    for (R = 0; R < 3; ++R) for (C = 0; C < 6; ++C) for (S = 0; S < 4; ++S)
-    for (F = 0; F < 4; ++F) for (N = 0; N < 3; ++N) for (W = 0; W < 16; ++W) {
-        pw_encode(code, R, C, S, F, N, W);
+    PwData d, e;
+    char code[PW_LEN + 1] = {0}, bad[PW_LEN + 1];
+    long ok = 0, total = 0, rejected = 0, mutations = 0, i, k, j;
+    srand(1234);
+    for (i = 0; i < 200000; ++i) {
+        d.type = rand() % 5; d.stage = rand() % 16; d.seed = rand() & 255; d.chr = rand() % 10;
+        d.surf = rand() % 6; d.fmt = rand() % 4; d.cond = rand() % 3; d.env = rand() % 3;
+        d.lvl = rand() % 3; d.results = rand() & 255; d.opts = rand() % 8; d.trophies = rand() % 16;
+        pw_encode(code, &d);
         ++total;
-        if (pw_decode(code, &r, &c, &s, &f, &n, &w) && r == R && c == C && s == S && f == F && n == N && w == W) ++ok;
-        /* une lettre modifiée doit être refusée (ou décoder vers autre chose) */
-        for (i = 0; i < 6; ++i) for (k = 0; k < 16; ++k) {
-            for (int j = 0; j < 7; ++j) bad[j] = code[j];
-            if (PW_ALPHA[k] == code[i]) continue;
-            bad[i] = PW_ALPHA[k];
-            ++mutations;
-            if (!pw_decode(bad, &r, &c, &s, &f, &n, &w)) ++rejected;
+        if (pw_decode(code, &e) && same(&d, &e)) ++ok;
+        if (i < 20000) {
+            /* une lettre modifiée doit être refusée */
+            for (k = 0; k < PW_LEN; ++k) for (j = 0; j < 32; ++j) {
+                memcpy(bad, code, sizeof bad);
+                if (PW_ALPHA[j] == code[k]) continue;
+                bad[k] = PW_ALPHA[j];
+                ++mutations;
+                if (!pw_decode(bad, &e) || same(&d, &e)) ++rejected;
+            }
         }
     }
-    printf("codes : %d/%d aller-retour corrects ; %d/%d codes altérés refusés (%.1f%%)\n",
+    printf("codes : %ld/%ld aller-retour corrects ; %ld/%ld codes altérés refusés (%.2f%%)\n",
            ok, total, rejected, mutations, rejected * 100.0 / mutations);
-    if (!pw_decode("ZZZZZZ", &r, &c, &s, &f, &n, &w)) printf("lettres invalides refusées\n"); else return 1;
-    return (ok == total && rejected * 100 >= mutations * 95) ? 0 : 1;
+    if (pw_decode("IIIIIIIIIIII", &e)) return 1;
+    printf("caractères invalides refusés\n");
+    return (ok == total && rejected * 1000 >= mutations * 998) ? 0 : 1;
 }

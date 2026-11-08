@@ -44,6 +44,12 @@ class Emu {
   releaseAll() { for (const p of [1, 2]) for (const b of [...this.held[p - 1]]) this.up(b, p); }
   run(n = 1, each) { for (let i = 0; i < n; i++) { this.nes.frame(); this.frames++; if (each) each(this); } }
   tap(btn, pad = 1, hold = 3, after = 6) { this.down(btn, pad); this.run(hold); this.up(btn, pad); this.run(after); }
+  // texte affiché à l'écran (table des noms $2000)
+  text(x, y, len) {
+    let t = '';
+    for (let i = 0; i < len; i++) t += String.fromCharCode(this.nes.ppu.vramMem[0x2000 + y * 32 + x + i]);
+    return t;
+  }
   screenshot(file) {
     const png = new PNG({ width: 256, height: 240 });
     for (let i = 0; i < 256 * 240; i++) {

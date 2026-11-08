@@ -8,20 +8,25 @@ function check(cond, msg) {
   if (cond) { passes++; console.log('  ok   ' + msg); }
   else { fails++; console.log('  ECHEC ' + msg); }
 }
-const AS = { TITLE: 0, MENU: 1, MATCH: 2, RESULTS: 3, TOURNEY: 4, CODE: 5 };
-const OPT = { MODE: 1, TYPE: 2, P1: 3, P2: 4, LEVEL: 5, SURF: 6, COND: 7, FMT: 8 };
+const AS = { SCREENS: 0, MATCH: 1, MANUAL: 2 };
+const SS = { TITLE: 0, MENU: 1, RESULTS: 2, PRESENT: 3, COMP: 4, CODE: 5, PALMARES: 6, TRAIN_RES: 7, COMP_END: 8 };
+const O = { MODE: 1, TYPE: 2, P1: 3, P2: 4, LEVEL: 5, SURF: 6, ENV: 7, COND: 8, FMT: 9, REPLAY: 10, COMP: 11,
+            CSIZE: 12, CPROG: 13, CVAR: 14, EX: 15, SIDE: 16, SPEED: 17, SPIN: 18, COUNT: 19 };
+const MODE = { P1: 0, P2: 1, TEAM: 2, COMP: 3, TRAIN: 4, DEMO: 5 };
+const CFG = { CTRL: 2, LEVEL: 10, GAMES: 17, REPLAYS: 19 };
 
 function boot() { const e = new Emu(rom); e.run(30); return e; }
+const scr = (e) => e.peek('scr_state');
+const app = (e) => e.peek('app_state');
 function toMenu(e) { e.tap('START'); e.run(10); }
+function setOpts(e, opts) { for (const [k, v] of Object.entries(opts)) e.poke('opt_val', v, O[k]); }
+// depuis le titre : configure et lance (présentation -> A si nécessaire)
 function startWith(e, opts) {
-  toMenu(e);
-  for (const [k, v] of Object.entries(opts)) e.poke('opt_val', v, OPT[k]);
-  e.tap('START'); e.run(5);
+  toMenu(e); setOpts(e, opts); e.tap('START'); e.run(10);
+  if (app(e) === AS.SCREENS && scr(e) === SS.PRESENT) { e.tap('A'); e.run(5); }
 }
-function allCpu(e) { const c = e.addr('cfg'); for (let i = 0; i < 4; i++) e.nes.cpu.mem[c + 2 + i] = 2; }
-function runUntil(e, pred, max) { let n = 0; while (!pred() && n < max) { e.run(1); n++; } return n < max; }
-// La pile C n'est vérifiée que lorsque le CPU attend la trame suivante
-// (ailleurs, une lecture peut tomber au milieu d'une mise à jour de 'sp').
+function allCpu(e) { const c = e.addr('cfg'); for (let i = 0; i < 4; i++) e.nes.cpu.mem[c + CFG.CTRL + i] = 2; }
+function runUntil(e, pred, max, each) { let n = 0; while (!pred() && n < max) { if (each) each(); e.run(1); n++; } return n < max; }
 let spChecks = 0;
 function spOk(e) {
   const wf = e.addr('wait_frame'), pc = e.nes.cpu.REG_PC + 1;
@@ -29,168 +34,285 @@ function spOk(e) {
   spChecks++;
   return e.peek16('sp') === 0x0800;
 }
+const P = (e, n, i = 0) => e.peekS16(n, i * 2) / 64;
+// joueur robot de l'équipe 1 (manette 1) : se place à côté de la balle et frappe
+function botStep(e, btns = ['A']) {
+  e.releaseAll();
+  const ms = e.peek('ms');
+  if (e.peek('sc_server') === 0 && e.peek('cfg', 0) === 0) {
+    // service du joueur : lancer puis frappe au sommet
+    if (ms === 0 && (e.frames % 16) === 0) { e.down('A'); return; }
+    if (ms === 1) { if (e.peekS16('bvz') <= 0) e.down('B'); return; }
+  }
+  if (ms !== 2 || e.peek('hitter') !== 1) return;
+  // en match, le robot laisse filer les échanges trop longs (sinon matchs interminables)
+  if (e.peek('cfg', 0) === 0 && e.peek('rally_hits') >= 9) return;
+  const px = P(e, 'plx'), py = P(e, 'ply'), b = e.peek('bounces');
+  const tx = b === 0 ? e.peekS16('land_x') + e.peekS16('bvx') * 12 / 64 : P(e, 'bx') + e.peekS16('bvx') * 6 / 64;
+  const ty = b === 0 ? e.peekS16('land_y') + e.peekS16('bvy') * 12 / 64 : P(e, 'by') + e.peekS16('bvy') * 6 / 64;
+  const gx = tx + (px < tx ? -10 : 10);
+  const near = Math.abs(P(e, 'by') - py) < 40;
+  if (!near) {
+    if (gx < px - 2) e.down('LEFT'); else if (gx > px + 2) e.down('RIGHT');
+    if (ty < py - 2) e.down('UP'); else if (ty > py + 2) e.down('DOWN');
+  }
+  if (near && (b >= 1 || e.peek('cfg', 21) === 4)) {
+    // bouton d'abord ; la direction seulement au dernier moment (sinon on s'éloigne)
+    e.down(btns[0]);
+    if (btns[1] && Math.abs(P(e, 'by') - py) < 14) e.down(btns[1]);
+  }
+}
 
-console.log('Démarrage');
+console.log('Démarrage et cartouche MMC1');
 {
   const e = boot();
-  check(e.peek('app_state') === AS.TITLE, 'écran titre affiché');
+  check(app(e) === AS.SCREENS && scr(e) === SS.TITLE, 'écran titre affiché');
   const r = e.peek16('region_cnt');
-  check(r > 1700 && r < 1970, `détection NTSC (compteur ${r})`);
-  check(e.peek('is_pal') === 0, 'mode 60 Hz sélectionné');
+  check(r > 1700 && r < 1970 && e.peek('is_pal') === 0, `détection NTSC (compteur ${r})`);
   const f = e.peek('frame_cnt'); e.run(10);
   check(((e.peek('frame_cnt') - f) & 255) === 10, 'NMI à chaque trame');
+  check(e.peek('cur_bank') === 1, 'banque des écrans active sur le titre');
+  // motifs copiés en CHR-RAM : la tuile 'A' de la police n'est pas vide
+  const v = e.nes.ppu.vramMem; let nz = 0; for (let i = 0; i < 16; i++) nz += v[0x41 * 16 + i];
+  check(nz > 0, 'police chargée en CHR-RAM depuis la banque 2');
+  check(e.text(10, 16, 5) === 'JOUER', 'menu du titre affiché');
 }
 
-console.log('Menu');
+console.log("Mode d'emploi");
+{
+  const e = boot();
+  e.tap('DOWN'); e.tap('A'); e.run(10);
+  check(app(e) === AS.MANUAL && e.peek('cur_bank') === 4, "le mode d'emploi s'ouvre (banque 4)");
+  check(e.text(2, 3, 17) === 'COMMANDES DE BASE', 'page 1 : commandes de base');
+  for (let i = 0; i < 7; i++) { e.tap('RIGHT'); e.run(5); }
+  check(e.peek('page') === 7 && e.text(2, 3, 8) === 'CONSEILS', '8 pages consultables');
+  e.tap('RIGHT'); e.run(5);
+  check(e.peek('page') === 0, 'navigation circulaire');
+  e.tap('B'); e.run(10);
+  check(app(e) === AS.SCREENS && scr(e) === SS.TITLE, 'B revient au titre');
+}
+
+console.log('Menu de configuration');
 {
   const e = boot(); toMenu(e);
-  check(e.peek('app_state') === AS.MENU, 'START ouvre la configuration');
-  e.tap('DOWN'); e.tap('RIGHT');
-  check(e.peek('opt_val', OPT.MODE) === 1, 'DROITE modifie le mode');
-  e.tap('LEFT'); e.tap('DOWN'); e.tap('RIGHT');
-  check(e.peek('opt_val', OPT.TYPE) === 1, 'choix SIMPLE/DOUBLE');
-  e.tap('B');
-  check(e.peek('app_state') === AS.TITLE, 'B revient au titre');
+  check(scr(e) === SS.MENU && e.peek('nvis') === 11, 'configuration match : 11 lignes');
+  e.tap('DOWN'); e.tap('RIGHT'); e.tap('RIGHT'); e.tap('RIGHT'); e.run(5);
+  check(e.peek('opt_val', O.MODE) === MODE.COMP && e.peek('nvis') === 10, 'mode compétition : lignes adaptées');
+  e.tap('RIGHT'); e.run(5);
+  check(e.peek('opt_val', O.MODE) === MODE.TRAIN && e.peek('nvis') === 7, 'mode entraînement : lignes adaptées');
+  e.tap('B'); e.run(5);
+  check(scr(e) === SS.TITLE, 'B revient au titre');
 }
 
-console.log('Service humain');
+console.log('Présentation et pause');
+{
+  const e = boot(); toMenu(e); e.tap('START'); e.run(10);
+  check(scr(e) === SS.PRESENT && e.text(4, 4, 12) === 'MATCH AMICAL', "présentation avant le match");
+  e.tap('A'); e.run(30);
+  check(app(e) === AS.MATCH && e.peek('cur_bank') === 0, 'A lance le match (banque 0)');
+  e.tap('START');
+  check(e.peek('paused') === 1, 'START ouvre le menu de pause');
+  const x = e.peek16('plx'); e.run(30);
+  check(e.peek16('plx') === x, 'le jeu est figé en pause');
+  e.tap('DOWN'); e.tap('A'); e.run(10);
+  check(app(e) === AS.SCREENS && scr(e) === SS.MENU, 'QUITTER ramène au menu');
+}
+
+console.log('Service : lancer visible pour le joueur du haut');
+{
+  const e = boot(); startWith(e, { MODE: MODE.P2 });
+  runUntil(e, () => e.peek('ms') === 0, 300);
+  e.poke('sc_server', 1); e.run(2);
+  e.tap('A', 2, 2, 1);
+  check(e.peek('ms') === 1, 'la manette 2 lance la balle (serveur du haut)');
+  const ys = []; for (let i = 0; i < 40 && e.peek('ms') === 1; i++) { e.run(1); ys.push(e.nes.cpu.mem[0x200]); }
+  const mn = Math.min(...ys), mx = Math.max(...ys);
+  check(mn > 9 && mx - mn >= 8, `la balle monte et descend à l'écran (y ${mn}..${mx})`);
+  runUntil(e, () => e.peekS16('bvz') <= 0, 40);
+  e.tap('A', 2, 2, 1);
+  check(e.peek('ms') === 2 || e.peek('ms') === 3, 'A (manette 2) frappe le service');
+  check(e.peek('hitter') === 1, 'le serveur du haut est bien le frappeur');
+}
+
+console.log('Filet effleuré au service (let)');
 {
   const e = boot(); startWith(e, {});
-  // forcer le service du joueur 1
-  runUntil(e, () => e.peek('ms') === 0, 200);
-  e.poke('sc_server', 0);
-  e.run(2);
-  e.tap('A', 1, 2, 1);
-  check(e.peek('ms') === 1, 'A lance la balle');
-  check(runUntil(e, () => e.peekS16('bvz') <= 0, 60), 'la balle monte puis redescend');
-  e.tap('A', 1, 2, 1);
-  check(e.peek('ms') === 2 || e.peek('ms') === 3, 'A frappe le service');
-  check(e.peek('rally_hits') === 1 && e.peek('hitter') === 0, 'frappeur et compteur de frappes corrects');
+  runUntil(e, () => e.peek('ms') === 0, 300);
+  e.poke('sc_server', 0); e.run(1);
+  // balle de service juste avant le filet, à hauteur de bande, vers le carré gauche
+  const set16 = (n, v) => { e.poke(n, v & 255); e.poke(n, (v >> 8) & 255, 1); };
+  e.poke('ms', 2); e.poke('b_vis', 1); e.poke('b_live', 1); e.poke('b_serve', 1); e.poke('hitter', 0);
+  e.poke('bounces', 0); e.poke('faults', 0); e.poke('bgrav', 6);
+  set16('bx', 110 * 64); set16('by', 134 * 64); set16('bz', 6 * 64);
+  set16('bvx', 0); set16('bvy', -3 * 64); set16('bvz', 0);
+  e.run(1);
+  check(e.peek('b_netcord') === 1, 'la balle touche la bande et passe');
+  runUntil(e, () => e.peek('ms') !== 2, 120);
+  check(e.peek('end_reason') === 3 && e.peek('faults') === 0, 'service à remettre (LET), pas de faute');
 }
 
-console.log('Pause et abandon');
-{
-  const e = boot(); startWith(e, {}); e.run(30);
-  e.tap('START');
-  check(e.peek('paused') === 1, 'START met en pause');
-  const bx = e.peek16('plx'); e.run(30);
-  check(e.peek16('plx') === bx, 'le jeu est figé en pause');
-  e.tap('SELECT'); e.run(5);
-  check(e.peek('app_state') === AS.MENU, 'SELECT en pause quitte vers le menu');
-}
-
-function fullMatch(label, opts, maxFrames) {
+function fullMatch(label, opts, maxFrames, extra) {
   const e = boot(); startWith(e, opts); allCpu(e);
-  let lastMs = -1, same = 0, worst = 0, spGood = true;
+  if (extra) extra(e);
+  let lastMs = '', prevMs = -1, same = 0, worst = 0, spGood = true, replays = 0;
   const ok = runUntil(e, () => {
     const m = e.peek('ms');
-    if (m === lastMs) { same++; worst = Math.max(worst, same); } else { same = 0; lastMs = m; }
+    if (m === 5 && prevMs !== 5) replays++;
+    prevMs = m;
+    // blocage = ni l'état du match, ni la balle, ni les joueurs ne changent
+    const sig = m + ',' + e.peek16('bx') + ',' + e.peek16('by') + ',' + e.peek16('plx') + ',' + e.peek16('plx', 2);
+    if (sig === lastMs) { same++; worst = Math.max(worst, same); } else { same = 0; lastMs = sig; }
     if ((e.frames & 255) === 0 && !spOk(e)) spGood = false;
-    return e.peek('app_state') === AS.RESULTS;
+    return app(e) === AS.SCREENS;
   }, maxFrames);
+  e.run(20);   // l'écran de résultats se construit sur quelques trames
   const pts = e.peek('st_points', 0) + e.peek('st_points', 1);
-  const w = e.peek('sc_winner');
-  check(ok, `${label} : match terminé en ${(e.frames / 3600).toFixed(1)} min de jeu (${pts} points)`);
-  check(e.peek('sc_over') === 1 && e.peek('sc_sets', w) >= 1, `${label} : vainqueur ${w} cohérent`);
+  check(ok && scr(e) === SS.RESULTS, `${label} : match terminé en ${(e.frames / 3600).toFixed(1)} min (${pts} points)`);
   const g = [e.peek('sc_hist', 0), e.peek('sc_hist', 1)];
-  check(Math.max(...g) >= e.peek('cfg', 17) && Math.abs(g[0] - g[1]) >= 1, `${label} : score du set valide (${g[0]}-${g[1]})`);
-  check(worst < 4000, `${label} : aucun état bloqué (max ${worst} trames)`);
-  check(spGood && spOk(e), `${label} : pile C intacte`);
-  return e;
+  check(e.peek('sc_over') === 1 && Math.max(...g) >= e.peek('cfg', CFG.GAMES) && Math.abs(g[0] - g[1]) >= 1,
+    `${label} : score final valide (${g[0]}-${g[1]})`);
+  check(worst < 600 && spGood && spOk(e), `${label} : ni blocage (immobilité max ${worst} trames) ni pile corrompue`);
+  return { e, replays };
 }
 
 console.log('Matchs complets CPU contre CPU (format rapide)');
-const surfaces = ['terre', 'gazon', 'dur', 'moquette'];
-for (let s = 0; s < 4; s++) fullMatch(`simple ${surfaces[s]}`, { FMT: 3, SURF: s, LEVEL: s % 3, COND: s % 3 }, 60 * 60 * 25);
-fullMatch('double dur', { FMT: 3, TYPE: 1, SURF: 2 }, 60 * 60 * 25);
-
-console.log('Revanche et longue session');
+const SURF = ['terre', 'gazon', 'dur', 'moquette', 'plage', 'glace'];
+const ENV = ['stade', 'club', 'salle'];
+const COND = ['jour', 'nuit', 'pluie'];
+let totalReplays = 0;
+for (let s = 0; s < 6; s++) {
+  const r = fullMatch(`simple ${SURF[s]}/${ENV[s % 3]}/${COND[(s + 1) % 3]}`,
+    { FMT: 3, SURF: s, ENV: s % 3, COND: (s + 1) % 3, LEVEL: s % 3, P2: (s + 4) % 10 }, 60 * 60 * 25);
+  totalReplays += r.replays;
+}
 {
-  const e = fullMatch('revanche 1', { FMT: 3, LEVEL: 2 }, 60 * 60 * 25);
-  e.tap('A'); e.run(5);
-  check(e.peek('app_state') === AS.MATCH, 'A sur les résultats relance un match');
+  const r = fullMatch('double dur/salle', { FMT: 3, TYPE: 1, SURF: 2, ENV: 2 }, 60 * 60 * 25);
+  totalReplays += r.replays;
+}
+check(totalReplays > 0, `ralentis déclenchés sur les beaux points (${totalReplays})`);
+
+console.log('Revanche et palmarès');
+{
+  const e = boot(); startWith(e, { FMT: 3 });
+  runUntil(e, () => app(e) === AS.SCREENS, 60 * 60 * 25, () => botStep(e));
+  e.releaseAll(); e.run(20);
+  check(scr(e) === SS.RESULTS, 'match humain (robot) terminé');
+  const pl = e.peek16('sv', 4);
+  check(pl === 1, 'palmarès : 1 match joué enregistré');
+  e.tap('A'); e.run(10);
+  check(app(e) === AS.MATCH, 'A : revanche immédiate');
   allCpu(e);
-  check(runUntil(e, () => e.peek('app_state') === AS.RESULTS, 60 * 60 * 25), 'second match enchaîné terminé');
-  check(spOk(e), 'pile intacte après deux matchs');
-  e.tap('B'); e.run(5);
-  check(e.peek('app_state') === AS.MENU, 'B sur les résultats revient au menu');
+  runUntil(e, () => app(e) === AS.SCREENS, 60 * 60 * 25); e.run(20);
+  check(scr(e) === SS.RESULTS && spOk(e), 'second match enchaîné terminé');
+  e.tap('B'); e.run(5); e.tap('B'); e.run(5);
+  e.tap('DOWN'); e.tap('DOWN'); e.tap('A'); e.run(10);
+  check(scr(e) === SS.PALMARES && e.text(3, 4, 5) === 'JOUES', 'écran palmarès');
+  e.tap('RIGHT'); e.run(5); e.tap('RIGHT'); e.run(5);
+  check(e.text(3, 3, 12) === "RECORDS D'EN", "page des records d'entraînement");
 }
 
-console.log('Entraînement');
-{
-  const e = boot(); startWith(e, { MODE: 4 });
-  check(e.peek('cfg', 0) === 1, 'mode lanceur de balles');
-  // joueur robot : se place et frappe
-  const P = (n, i = 0) => e.peekS16(n, i * 2) / 64;
-  runUntil(e, () => {
-    e.releaseAll();
-    if (e.peek('ms') === 2 && e.peek('hitter') === 1) {
-      const px = P('plx'), py = P('ply'), b = e.peek('bounces');
-      const tx = b === 0 ? e.peekS16('land_x') + e.peekS16('bvx') * 12 / 64 : P('bx') + e.peekS16('bvx') * 6 / 64;
-      const ty = b === 0 ? e.peekS16('land_y') + e.peekS16('bvy') * 12 / 64 : P('by') + e.peekS16('bvy') * 6 / 64;
-      const gx = tx - 10;
-      if (gx < px - 2) e.down('LEFT'); else if (gx > px + 2) e.down('RIGHT');
-      if (ty < py - 2) e.down('UP'); else if (ty > py + 2) e.down('DOWN');
-      if (Math.abs(P('by') - py) < 40 && b >= 1) e.down('A');
+console.log('Entraînement : 9 exercices');
+const EXN = ['frappes', 'déplacements', 'régularité', 'précision', 'volée', 'service', 'joueur fixe', 'personnalisé', 'tutoriel'];
+for (let ex = 0; ex < 9; ex++) {
+  const e = boot(); startWith(e, { MODE: MODE.TRAIN, EX: ex, COUNT: 0 });
+  let tut = [ ['A'], ['B', 'DOWN'], ['B', 'UP'], ['A', 'LEFT'] ];
+  const ok = runUntil(e, () => app(e) === AS.SCREENS, 60 * 60 * 8, () => {
+    const ms = e.peek('ms');
+    if ((ex === 5 || (ex === 8 && e.peek('tr_step') === 4)) && e.peek('sc_server') === 0 && (ms === 0 || ms === 1)) {
+      e.releaseAll();
+      if (ms === 0 && (e.frames % 20) === 0) e.down('A');
+      if (ms === 1 && e.peekS16('bvz') <= 0) e.down('B');
+      return;
     }
-    return e.peek('app_state') === AS.RESULTS;
-  }, 60 * 60 * 6);
-  e.releaseAll();
-  check(e.peek('app_state') === AS.RESULTS, 'exercice terminé après 20 balles');
-  check(e.peek('tr_score') >= 10, `balles renvoyées comptées (${e.peek('tr_score')} pts / ${e.peek('tr_total')})`);
-}
-{
-  const e = boot(); startWith(e, { MODE: 5 });
-  for (let i = 0; i < 6; i++) {
-    runUntil(e, () => e.peek('ms') === 0, 400);
-    e.tap('A', 1, 2, 1);
-    runUntil(e, () => e.peekS16('bvz') <= 0, 60);
-    e.tap('B', 1, 2, 1);
-    runUntil(e, () => e.peek('ms') === 3, 300);
-  }
-  check(e.peek('tr_total') >= 5, `services comptés (${e.peek('tr_score')}/${e.peek('tr_total')})`);
+    if (ex === 8) botStep(e, tut[Math.min(e.peek('tr_step'), 3)]);
+    else botStep(e);
+  });
+  e.releaseAll(); e.run(20);
+  check(ok && scr(e) === SS.TRAIN_RES && e.peek('tr_score') > 0,
+    `${EXN[ex]} : exercice terminé (${e.peek('tr_score')} pts / ${e.peek('tr_total')})`);
 }
 
-console.log('Tournoi et code de reprise');
+console.log('Compétitions');
+function playComp(type, opts, wins) {
+  const e = boot(); startWith(e, Object.assign({ MODE: MODE.COMP, COMP: type, FMT: 3 }, opts));
+  let matches = 0, code = '';
+  check(scr(e) === SS.COMP, `${['tournoi','poules','championnat','saison','personnalisé'][type]} : écran d'étape`);
+  while (scr(e) === SS.COMP && matches < 20) {
+    if (matches === 1) code = e.text(10, 21, 14).replace(/ /g, '');
+    e.tap('A'); e.run(5); e.tap('A'); e.run(30);
+    if (app(e) !== AS.MATCH) break;
+    // victoire forcée du joueur pour parcourir la compétition
+    e.poke('sc_winner', wins(matches) ? 0 : 1); e.poke('sc_over', 1); e.poke('ms', 4); e.poke('ms_timer', 2);
+    runUntil(e, () => app(e) === AS.SCREENS, 60); e.run(20);
+    matches++;
+    e.tap('A'); e.run(10);
+  }
+  return { e, matches, code };
+}
 {
-  const e = boot(); startWith(e, { MODE: 3, P1: 2, SURF: 1, COND: 2 });
-  check(e.peek('app_state') === AS.TOURNEY, 'écran du tournoi');
-  const v = e.nes.ppu.vramMem;
-  let code = ''; for (let i = 0; i < 6; i++) code += String.fromCharCode(v[0x2000 + 19 * 32 + 12 + i]);
-  check(/^[BCDFGHJKLMNPRSTV]{6}$/.test(code), `code affiché : ${code}`);
-  // victoire simulée au premier tour
-  e.tap('A'); e.run(5);
-  check(e.peek('app_state') === AS.MATCH, 'A lance le quart de finale');
-  allCpu(e);
-  runUntil(e, () => e.peek('app_state') === AS.RESULTS, 60 * 60 * 40);
-  e.poke('sc_winner', 0);
-  e.tap('A'); e.run(5);
-  check(e.peek('tour_round') === 1 && e.peek('app_state') === AS.TOURNEY, 'qualification pour la demi-finale');
-  let code2 = ''; for (let i = 0; i < 6; i++) code2 += String.fromCharCode(e.nes.ppu.vramMem[0x2000 + 19 * 32 + 12 + i]);
-  // nouvelle partie : saisie du code
-  const f = boot(); f.tap('SELECT'); f.run(10);
-  check(f.peek('app_state') === AS.CODE, 'SELECT ouvre la saisie du code');
-  const AL = 'BCDFGHJKLMNPRSTV';
-  for (let i = 0; i < 6; i++) {
-    const n = AL.indexOf(code2[i]);
-    for (let k = 0; k < n; k++) f.tap('UP', 1, 2, 2);
-    if (i < 5) f.tap('RIGHT', 1, 2, 2);
+  const { e, matches, code } = playComp(0, {}, () => true);
+  check(matches === 3 && scr(e) === SS.COMP_END && e.peek('c_rank') === 1, `tournoi gagné en 3 matchs`);
+  check(/^[A-Z2-9]{12}$/.test(code), `code de reprise affiché : ${code}`);
+  check(e.peek('sv', 0x14 + 0) >= 0, 'palmarès mis à jour');
+}
+{
+  const { e, matches } = playComp(0, {}, (m) => m < 1);
+  check(matches === 2 && e.peek('c_rank') === 3, 'tournoi : élimination en demi-finale');
+}
+{
+  const { e, matches } = playComp(1, {}, () => true);
+  check(matches === 5 && e.peek('c_rank') === 1, 'poules : 3 journées + demi + finale gagnées');
+}
+{
+  const { e, matches } = playComp(1, {}, () => false);
+  check(matches === 3 && e.peek('c_rank') === 5, 'poules : élimination en phase de groupes');
+}
+{
+  const { e, matches } = playComp(2, {}, () => true);
+  check(matches === 5 && e.peek('c_rank') === 1, 'championnat : 5 journées, champion');
+}
+{
+  const { e, matches } = playComp(3, {}, () => true);
+  check(matches === 12 && e.peek('c_rank') === 1, 'saison : 4 tournois sur 4 surfaces, n°1');
+}
+{
+  const { e, matches } = playComp(3, {}, (m) => m % 3 === 0);
+  check(matches === 6 && e.peek('c_over') === 2, `saison avec défaites : classement final ${e.peek('c_rank')}e`);
+}
+{
+  const { e, matches } = playComp(4, { CSIZE: 0, CPROG: 1, CVAR: 1 }, () => true);
+  check(matches === 2 && e.peek('c_rank') === 1, 'personnalisé (4 joueurs, progressif, surfaces variées)');
+}
+
+console.log('Code de reprise');
+{
+  const e = boot(); startWith(e, { MODE: MODE.COMP, COMP: 2, P1: 6, SURF: 4, ENV: 1, COND: 2 });
+  e.tap('A'); e.run(5); e.tap('A'); e.run(30);
+  e.poke('sc_winner', 0); e.poke('sc_over', 1); e.poke('ms', 4); e.poke('ms_timer', 2);
+  runUntil(e, () => app(e) === AS.SCREENS, 60); e.run(20); e.tap('A'); e.run(10);
+  const code = e.text(10, 21, 14).replace(/ /g, '');
+  const want = ['c_type', 'c_stage', 'c_seed', 'c_results', 'c_surf', 'c_env', 'c_cond'].map(n => e.peek(n));
+  const f = boot(); f.tap('UP'); f.tap('A'); f.run(10);
+  check(scr(f) === SS.CODE, 'saisie du code depuis le titre');
+  const AL = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  for (let i = 0; i < 12; i++) {
+    const n = AL.indexOf(code[i]);
+    for (let k = 0; k < n; k++) f.tap('UP', 1, 1, 1);
+    if (i < 11) f.tap('RIGHT', 1, 1, 1);
   }
   f.tap('START'); f.run(10);
-  check(f.peek('app_state') === AS.TOURNEY, `code ${code2} accepté`);
-  check(f.peek('tour_round') === 1 && f.peek('opt_val', OPT.P1) === 2 && f.peek('opt_val', OPT.SURF) === 1 && f.peek('opt_val', OPT.COND) === 2,
-    'progression restaurée (manche, joueur, surface, conditions)');
-  const g = boot(); g.tap('SELECT'); g.run(10); g.tap('START'); g.run(10);
-  check(g.peek('app_state') === AS.CODE, 'code invalide refusé');
+  const got = ['c_type', 'c_stage', 'c_seed', 'c_results', 'c_surf', 'c_env', 'c_cond'].map(n => f.peek(n));
+  check(scr(f) === SS.COMP && JSON.stringify(got) === JSON.stringify(want), `code ${code} : championnat restauré (journée 2)`);
+  check(f.text(15, 6, 4) === e.text(15, 6, 4), "même adversaire après reprise");
+  const g = boot(); g.tap('UP'); g.tap('A'); g.run(10); g.tap('START'); g.run(10);
+  check(scr(g) === SS.CODE, 'code invalide refusé');
 }
 
 console.log('Compensation 50 Hz (PAL)');
 {
   const e = boot(); e.poke('is_pal', 1); startWith(e, { FMT: 3 }); allCpu(e);
-  const l0 = e.frames; let ticks = 0, prev = e.peek('ms_timer');
-  check(runUntil(e, () => e.peek('app_state') === AS.RESULTS, 60 * 60 * 25), 'match complet en mode 50 Hz');
-  console.log(`    (${((e.frames - l0) / 3000).toFixed(1)} min à 50 Hz)`);
+  check(runUntil(e, () => app(e) === AS.SCREENS, 60 * 60 * 25), 'match complet en mode 50 Hz');
 }
 
-console.log(`\n${passes} vérifications réussies, ${fails} échec(s)`);
+console.log(`\n${passes} vérifications réussies, ${fails} échec(s) ; pile contrôlée ${spChecks} fois`);
 process.exit(fails ? 1 : 0);

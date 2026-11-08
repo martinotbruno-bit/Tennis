@@ -5,174 +5,197 @@
 | Élément | Choix |
 |---|---|
 | Plateforme | NES / Famicom, NTSC et PAL (Dendy traité comme PAL) |
-| Cartouche | NROM-256 (mapper 0) : 32 Ko PRG + 8 Ko CHR, sans extension |
-| Langages | C (cc65 2.19) pour la logique ; assembleur 6502 (ca65) pour le démarrage, la NMI et les routines critiques |
-| ROM | `dist/pixel_open.nes` (40 976 octets, iNES) |
-| Occupation | PRG environ 28,4 Ko / 32 Ko (87 %), RAM 622 / 768 octets, page zéro 45 / 240 octets |
+| Cartouche | **MMC1 (SNROM, mapper 1)** : 128 Ko de PRG en 8 banques de 16 Ko, 8 Ko de CHR-RAM, 8 Ko de PRG-RAM (avec pile facultative) |
+| Langages | C (cc65 2.19) pour la logique ; assembleur 6502 (ca65) pour le démarrage, la NMI, les sprites, les trampolines de banque et l'enregistrement des ralentis |
+| ROM | `dist/pixel_open.nes` (131 088 octets, iNES) |
 
-## 2. Choix du mapper
+## 2. Choix de la cartouche
+
+La version 1.0 tenait en NROM-256 (32 Ko, plein à 87 %). Il a fallu plus de place pour le contenu manquant du CDC :
+- mode d'emploi intégré ;
+- compétitions ;
+- trois environnements ;
+- ralentis ;
+- palmarès ;
+- exercices d'entraînement.
 
 | Option | Avantages | Inconvénients | Décision |
 |---|---|---|---|
-| **NROM-256 (mapper 0)** | Aucune logique de banques ; compatible avec toutes les consoles et cartouches de reproduction ; le plus simple à fabriquer | 32 Ko PRG, 8 Ko CHR fixes | **Retenu** pour la version 1.0 |
-| UNROM (mapper 2) | Jusqu'à 256 Ko PRG, CHR-RAM | CHR en RAM à remplir par logiciel | Option d'évolution n° 1 |
-| MMC1 (mapper 1) | PRG/CHR en banques, SRAM de sauvegarde possible | Écritures série plus lentes | Option si l'on veut une sauvegarde par pile |
-| MMC3 (mapper 4) | IRQ de scanline (bandeau de score fixe, effets), banques fines | Puce plus complexe et plus chère | Pour une future version « deluxe » |
-| Extensions audio (VRC6, MMC5, N163, FDS) | Canaux supplémentaires | Indisponibles sur NES occidentale, ou matériel spécifique | Non utilisées (CDC 11.4 : jamais indispensables) |
+| NROM-256 | Universelle, sans banques | 32 Ko, plein | Abandonnée |
+| UNROM | 256 Ko, simple | Pas de PRG-RAM : ni ralentis ni palmarès persistant | Écartée |
+| **MMC1 SNROM** | 128 à 256 Ko, banque fixe en $C000, **8 Ko de PRG-RAM** (ralentis, palmarès, sauvegarde par pile possible), CHR-RAM (public animé), très répandue (Zelda, Metroid…) | Écritures série (5 écritures par registre) | **Retenue** |
+| MMC3 | IRQ de ligne, banques fines | Plus complexe et plus chère | Évolution possible |
+| Extensions audio | Canaux supplémentaires | Absentes des consoles occidentales | Non utilisées (CDC 11.4) |
 
-Avec 13 % de PRG libre, tout le contenu actuel tient sans banques. Le passage à UNROM ou MMC1 est prévu dès que l'espace manquera (voir le rapport final). Le code est déjà découpé en modules indépendants pour faciliter ce passage.
+**Mise sous tension** : l'état initial du MMC1 n'est pas garanti. Chaque banque se termine donc par un petit programme (`STUBn`) qui réinitialise le mapper (ce qui fixe la banque 7 en $C000) puis saute au vrai démarrage.
 
 ## 3. Organisation mémoire
 
-```
-CPU
-$0000-$000F  libre (réservé)
-$0010-$00FF  page zéro : variables NMI, manettes, sprites, pile C (sp), registres cc65
-$0100-$01FF  pile matérielle 6502
-$0200-$02FF  tampon OAM (copié par DMA à chaque trame)
-$0300-$037F  tampon de mises à jour VRAM : [adresse hi, lo, longueur, données]... $FF
-$0400-$06FF  données C (DATA + BSS)
-$0700-$07FF  pile de paramètres C (cc65)
-$8000-$FFF9  code et données (PRG)
-$FFFA-$FFFF  vecteurs NMI / RESET / IRQ
+### Banques de PRG (octets utilisés / 16 368)
 
-PPU
-$0000-$0FFF  table de motifs du fond : police ASCII ($20-$5F), court, logo, balle géante
-$1000-$1FFF  table de motifs des sprites : balle, ombre, étoile, goutte, 4 x 7 poses de personnage
-$2000-$23FF  écran (le court est stocké compressé en RLE : 657 octets au lieu de 1 024)
+| Banque | Contenu | Occupation |
+|---|---|---|
+| 7 (fixe, $C000) | Démarrage, NMI, primitives (sprites, VRAM, manettes, trampolines `bank_call` / `far_call`, enregistrement des ralentis), boucle principale, règles, codes, palettes, son, bibliothèque cc65 | 8 816 |
+| 0 | Moteur de match : physique, frappes, service, arbitrage, IA | 16 314 |
+| 1 | Écrans : titre, configuration, présentation, résultats, compétitions, saisie de code, palmarès | 12 172 |
+| 2 | Motifs graphiques (8 Ko), copiés en CHR-RAM au démarrage | 8 192 |
+| 3 | Annexes du match : score, courts (3 lieux), public animé, pluie, ralentis, exercices, tutoriel | 6 996 |
+| 4 | Mode d'emploi | 3 470 |
+| 5 | Compétitions (tirages, simulations, classements) et palmarès | 7 324 |
+| 6 | Libre | 0 |
+
+### RAM
+
+```
+$0010-$00FF  page zéro : NMI, manettes, sprites, banque courante, pile C (sp), cc65
+$0100-$01FF  pile 6502
+$0200-$02FF  tampon OAM
+$0300-$037F  tampon VRAM (96 octets envoyés au plus par trame : budget VBlank)
+$0400-$06FF  variables du moteur (661 / 768 octets)
+$0700-$07FF  pile de paramètres C
+$6000-$77FF  RAM de cartouche : écrans, compétitions, tampon des ralentis (2 945 / 6 144)
+$7800-$7FFF  palmarès (sauvegardé si la cartouche a une pile ; signature + somme de contrôle)
 ```
 
-Les locaux C sont statiques (`--static-locals`) : la pile C ne sert qu'au passage d'arguments. Le test automatique vérifie qu'elle revient à `$0800` à chaque trame.
+### Règles de banque
+
+- La boucle principale (banque fixe) sélectionne la banque de l'écran courant : écrans, match ou mode d'emploi.
+- Les changements d'écran entre banques passent par `go_req`, traité par la boucle principale.
+- Une banque commutable n'appelle jamais directement une autre banque commutable. Elle passe par :
+  - `bank_call(banque, fn)` : fonction sans argument ;
+  - `far_call(banque, fn, arg)` : un argument et un résultat (registres A/X).
+  
+  Ces deux trampolines de la banque fixe restaurent ensuite la banque d'origine.
+- Dans chaque banque, le **code et les données constantes sont dans des segments distincts** (`BANKn` / `RODATAn`). Sinon, cc65 place les tableaux `static const` locaux à l'adresse même de la fonction. Ce défaut a été trouvé et corrigé pendant les tests.
 
 ## 4. Architecture logicielle
 
-| Module | Rôle |
-|---|---|
-| `src/crt0.s` | En-tête iNES, RESET, détection de région, NMI (DMA OAM, VRAM, palette), lecture des manettes, sprites rapides, RLE, générateur aléatoire |
-| `src/main.c` | Machine d'états : titre, configuration, match, résultats, tournoi, saisie de code. Boucle principale et compensation 50 Hz |
-| `src/game.c` | Moteur de match : joueurs (2 ou 4), physique de balle, frappes, service, arbitrage, IA, affichage du score, sprites |
-| `src/rules.c` | Règles et score du tennis (C portable, testé sur PC) |
-| `src/password.c` | Codes de sauvegarde (C portable, testé sur PC) |
-| `src/gfx.c` | Palettes (surfaces, conditions, personnages), texte, sprites de personnage |
-| `src/audio.c` | Bruitages, musiques et jingles |
-| `tools/gen_assets.py` | Génère toutes les ressources graphiques (police, court, logo, sprites) de manière déterministe |
+| Module | Banque | Rôle |
+|---|---|---|
+| `src/crt0.s` | fixe | En-tête iNES, démarrage MMC1, copie CHR-RAM, détection de région, NMI, sprites, RLE, trampolines, `rp_record` |
+| `src/main.c` | fixe | Boucle principale, transitions entre banques, compensation 50 Hz |
+| `src/rules.c` | fixe | Score du tennis (portable, testé sur PC) |
+| `src/password.c` | fixe | Codes de reprise sur 12 caractères (portable, testé sur PC) |
+| `src/gfx.c` | fixe | Personnages, styles, surfaces, lieux, palettes, texte |
+| `src/audio.c` | fixe | Bruitages, musiques, jingles |
+| `src/game.c` | 0 | Moteur de match |
+| `src/screens.c` | 1 | Écrans hors match |
+| `src/extras.c` | 3 | Score, courts, public, pluie, ralentis, exercices, tutoriel |
+| `src/manual.c` | 4 | Mode d'emploi (8 pages) |
+| `src/comp.c`, `src/stats.c` | 5 | Compétitions, palmarès |
+| `tools/gen_assets.py` | — | Génère tous les graphismes : police, logo, 3 courts, public assis et debout, 10 personnages × 8 poses |
 
-### Boucle de trame
+### Physique et arbitrage
 
-1. `wait_frame()` publie la trame. La NMI suivante envoie l'OAM, les mises à jour VRAM et la palette, puis rend la main.
-2. `pad_poll()` lit les deux manettes et calcule les fronts d'appui.
-3. `logic_tick()` met à jour l'audio puis l'écran courant. Pendant un match : `match_tick()` (entrées, IA, balle, arbitrage, score), puis `match_draw()` (OAM).
-
-La NMI n'envoie rien tant que le thread principal n'a pas fini sa trame. Un dépassement occasionnel retarde donc l'image d'une trame, sans jamais l'abîmer.
-
-### Physique de la balle
-
-- Positions et vitesses en virgule fixe 10.6 (1/64 de pixel) ; hauteur `z` séparée, dessinée comme un décalage vertical au-dessus de l'ombre.
-- Gravité par type de coup : plat 5, lifté 7, coupé 4, lob 6, amortie 9, smash 10 (en 1/64 px/trame²).
-- `launch(tx, ty, T, g)` calcule les vitesses pour atteindre la cible en T trames. La hauteur au filet est évaluée sans division, par la formule de la parabole `z(t) = z0·(1 - t/T) + g·t·(T - t)/2`. Si la balle ne passe pas, T est allongé.
-- Au rebond : coefficient de restitution et d'adhérence par surface, modifiés par l'effet (lifté +, coupé -) et par la pluie.
-- Le filet est détecté au franchissement de sa ligne avec `z < NET_H` : la balle repart faiblement vers le frappeur.
-
-### Arbitrage
-
-- 1er rebond : il doit avoir lieu dans la moitié adverse, dans les limites du simple ou du double (couloirs), ou dans le bon carré pour un service.
-- 2e rebond : point au frappeur (coup gagnant ; ace si le service n'a pas été touché).
-- Sortie de l'écran sans rebond : faute ; après un rebond valide : point au frappeur.
-- `rules.c` gère le score, le jeu décisif, l'alternance des services et les changements de côté. En double, le joueur au service alterne au sein de l'équipe chaque fois qu'elle récupère le service : cela vaut aussi pendant le jeu décisif.
+- Positions en virgule fixe 10.6 (1/64 de pixel), hauteur `z` séparée.
+- Gravité selon le coup ; restitution et adhérence selon la surface, l'effet et la pluie.
+- `launch()` atteint la cible en T trames et contrôle sans division le passage au-dessus du filet.
+- **Filet** :
+  - balle sous la bande : renvoyée vers le frappeur ;
+  - balle qui frôle la bande (2 unités sous son sommet) : elle passe, ralentie. Au service, si elle tombe ensuite dans le carré, c'est un **let**.
+- `rules.c` gère les points, jeux, sets, jeu décisif, services et changements de côté. En double, le serveur change au sein de l'équipe chaque fois qu'elle récupère le service.
 
 ### Intelligence artificielle
 
-| Paramètre | Facile | Normal | Expert |
-|---|---|---|---|
-| Vitesse (px/trame) | 1,22 | 1,53 | 1,81 |
-| Délai de réaction (trames) | 16 | 9 | 3 |
-| Dispersion de visée (px) | 30 | 18 | 11 |
-| Marge par rapport aux lignes (px) | 26 | 15 | 9 |
-| Puissance | faible | moyenne | forte |
+- **Trois niveaux** (vitesse, réaction, dispersion, marge par rapport aux lignes, puissance).
+- **Huit styles** (CDC 10.2), propres à chaque personnage. Ils modifient :
+  - la puissance, la marge et la dispersion ;
+  - la fréquence de montée au filet, de lobs, d'amorties et de coupés ;
+  - la profondeur du replacement.
+- **Adaptation** (CDC 10.4) : pendant le match, l'IA compte, pour chaque équipe humaine, les balles jouées à gauche ou à droite et les frappes au filet.
+  - Dès 6 frappes observées, aux niveaux normal et expert, elle décale son replacement vers le côté préféré du joueur (au plus 16 px).
+  - Si le joueur monte souvent au filet, elle lobe davantage.
+  
+  Les compteurs repartent de zéro à chaque match ; le comportement reste borné et déterministe.
+- **Double** : un responsable par balle (le partenaire le plus proche du point de frappe prévu). L'autre couvre sa moitié du court.
 
-Comportements de l'IA :
-- elle prédit le point de frappe : après le rebond annoncé, ou par interception de volée près du filet ;
-- elle se place à côté de la balle et vise loin de l'adversaire ;
-- elle varie ses coups : lob contre un volleyeur, amortie contre un joueur au fond (expert), coupé ;
-- elle monte au filet après une balle courte ;
-- au niveau facile, elle commet des fautes directes aléatoires.
+### Compétitions (`comp.c`)
 
-Les niveaux diffèrent par leurs décisions et leur précision, pas seulement par leur vitesse.
+- **Déterminisme** : une graine de 8 bits fixe le tirage des adversaires, leur niveau (0 à 2) et l'issue de tous les matchs entre joueurs CPU. La probabilité de victoire vaut 50 % ± 20 % par écart de niveau.
+- **Reprise** : le code n'a besoin que de la graine, de l'étape et des 8 bits de résultats du joueur. Tout le reste est recalculé à la reprise.
+- **Formats** :
+  - **tournoi** : tableau à 8 ;
+  - **poules** : calendriers 4 × 3 journées, puis demi-finales croisées ;
+  - **championnat** : méthode du cercle à 6 joueurs ;
+  - **saison** : 4 tableaux différents, un par surface, et barème de points.
 
-En double, chaque équipe désigne un **responsable** pour chaque balle : le partenaire le plus proche du point de frappe prévu. L'autre couvre sa moitié du court, ce qui évite que les deux partenaires jouent la même balle. Au service, le partenaire du serveur se place au filet.
+### Codes de reprise (`password.c`)
+
+45 bits de données + 3 bits de version + 12 bits de somme de contrôle = 60 bits, soit 12 symboles de 5 bits (alphabet sans I, O, 0, 1). Les symboles sont brouillés en chaîne pour qu'une erreur en modifie plusieurs.
+
+### Ralentis
+
+- **Enregistrement** : à chaque trame d'échange, `rp_record` (assembleur, ~450 cycles) enregistre la balle et les 4 joueurs (position et pose) dans un tampon circulaire de 160 trames en RAM de cartouche.
+- **Déclenchement** : après un ace, un coup gagnant ou un échange d'au moins 12 frappes, les 140 dernières trames sont rejouées à demi-vitesse. A, B ou START les passent.
+
+### Public animé
+
+Grâce à la CHR-RAM, les 6 motifs de spectateurs sont remplacés par leur version debout, bras levés, puis restaurés. Le remplacement se fait à raison d'une tuile (16 octets) par trame, pour rester dans le budget VBlank.
 
 ## 5. Graphismes
 
-- **Palettes de fond** : 0 = court (fond universel, surface, lignes, filet) ; 1 = score et texte ; 2 = public ; 3 = réserve. La surface et les conditions (nuit, pluie) ne changent que les palettes : un seul écran de court sert à toutes les combinaisons.
-- **Palettes de sprites** : 0 = équipe 1, 1 = équipe 2, 2 = balle et ombre, 3 = curseur, cible, gouttes.
-- **Personnages** : 16 x 24 pixels (2 x 3 tuiles), 7 poses (attente, 2 de course, armé, accompagnement, service, joie), vus de dos (bas du court) ou de face (haut), en version homme et femme. Le revers est un miroir horizontal du coup droit.
-- **Limite de 8 sprites par ligne** : au pire 2 joueurs côte à côte (4 sprites) + balle + ombre. Les gouttes de pluie s'affichent une trame sur deux, en alternance.
-- Le **score** occupe les coins supérieurs, au-dessus des tribunes. Les joueurs sont limités à x = 48..208, donc aucun sprite n'y passe ; la colonne 0, rognée par de nombreux téléviseurs, n'est pas utilisée.
+- **Fond** : 221 tuiles sur 256. Trois écrans de court compressés en RLE (stade 657 octets, club 648, salle 647). La surface et les conditions ne changent que les palettes.
+- **Sprites** : 208 tuiles sur 256.
+  - 2 vues (dos et face) × 2 silhouettes (homme et femme) × 8 poses : attente, course ×2, frappe ×2, service, joie, déception.
+  - 10 palettes de personnages.
+  - Partenaires de double : couleurs de leur équipe (limite de 4 palettes de sprites).
+- **Score** : dans les coins supérieurs. Les joueurs sont limités à x = 48..208 et la colonne 0 n'est pas utilisée (zone rognée par les téléviseurs).
+- **Service** : la hauteur du lancer est affichée à moitié, pour que la balle reste visible quand le serveur est en haut de l'écran.
 
 ## 6. Audio
 
-Le jeu utilise uniquement l'APU natif (2 canaux carrés, triangle, bruit) :
-- **carré 1 + bruit** : bruitages (impact selon la puissance, rebond, filet, faute, sifflet, public, menus, lancer de balle) ;
-- **carré 2 + triangle** : musique de titre en boucle et jingles (point, jeu, victoire, défaite).
+Le jeu n'utilise que l'APU natif :
+- **carré 1 + bruit** : bruitages ;
+- **carré 2 + triangle** : musiques et jingles.
 
-Aucune musique ne joue pendant les échanges (CDC 11.2). Toutes les mélodies sont originales.
+Aucune musique pendant les échanges. Toutes les mélodies sont originales.
 
 ## 7. NTSC / PAL
 
-- **Détection** : au démarrage, une boucle de 16 cycles est comptée entre deux VBlank (NTSC ≈ 1 861, PAL ≈ 2 078, Dendy ≈ 2 216). Au-delà de 1 970, la console est considérée comme 50 Hz.
-- **Compensation** : à 50 Hz, une trame logique supplémentaire est exécutée toutes les 5 trames. Le jeu, l'audio et les animations gardent ainsi la vitesse du 60 Hz, sans imposer 60 images/s à l'affichage PAL (CDC 2.4).
+- **Détection** : au démarrage, une boucle de 16 cycles est comptée entre deux VBlank (NTSC ≈ 1 861 ; PAL > 1 970).
+- **Compensation** : à 50 Hz, une trame logique supplémentaire est exécutée toutes les 5 trames, ce qui garde la vitesse du 60 Hz.
 
-## 8. Optimisations (mesurées)
+## 8. Performances (mesurées avec `tests/profile.mjs`)
 
-Le profileur `tests/profile.mjs` compte les cycles 6502 par fonction dans l'émulateur.
-
-| Mesure | Avant | Après |
+| Mesure (CPU contre CPU, ralentis activés) | Simple | Double |
 |---|---|---|
-| Double : trames d'échange en dépassement (> 27 000 cycles) | 11 % | 0,05 % (4 sur 8 000) |
-| Double : logique médiane par trame | 22 100 cycles | 16 300 cycles |
-| Simple : trames d'échange en dépassement | 1,2 % | 0 |
-| Simple : logique médiane par trame | 11 800 cycles | 12 000 cycles (avec plus de fonctions) |
+| Logique médiane par trame | 13 600 cycles | 12 400 cycles |
+| Trames d'échange en dépassement (> 27 000 cycles) | 1 / 5 975 | 11 / 5 944 (0,2 %) |
+
+Le budget est d'environ 27 000 cycles par trame NTSC, hors NMI. Une trame en dépassement retarde l'image d'une trame, sans corrompre l'affichage : la NMI n'envoie rien tant que la trame n'est pas prête.
+
+Les quelques dépassements restants ont lieu sur les trames de frappe, pendant les transitions entre points et au début des ralentis.
 
 Optimisations appliquées :
-- sprites (`spr1`, `spr_meta`, `spr_end`) en assembleur : environ 10 fois plus rapides qu'en C ;
-- suppression des calculs 32 bits (multiplications et divisions `long`) dans la physique et l'IA ;
-- hauteur au filet calculée sans division ;
-- prédictions de l'IA en cache (recalcul une trame sur quatre) ;
-- en double, chaque IA est mise à jour une trame sur deux, avec un pas doublé ;
-- sur une trame de frappe, les sprites de la trame précédente sont conservés et les IA restantes passent leur tour.
-
-Les seuls dépassements restants ont lieu pendant les transitions entre les points (balle morte : score, annonces). Ils n'ont aucune incidence sur les commandes.
-
-**Point d'attention cc65** : la division d'un `int` signé par un `unsigned char` est faite en non signé. Toutes les divisions de vitesse passent donc par un diviseur `int` explicite (`launch()`).
+- sprites, enregistrement des ralentis et trampolines en assembleur ;
+- calculs 16 bits uniquement ;
+- hauteur au filet sans division ;
+- prédictions de l'IA en cache ;
+- en double, IA mise à jour une trame sur deux (aussi pendant les balles mortes) ;
+- sur une trame de frappe, sprites non redessinés et IA restantes reportées.
 
 ## 9. Compilation
 
-Outils nécessaires : `cc65` (2.19 : ca65, cc65, ld65), `python3` (Pillow facultatif, pour les aperçus), `make`, et pour les tests `gcc` et `node` ≥ 18.
+Outils : `cc65` 2.19, `python3` (Pillow facultatif), `make` ; pour les tests, `gcc` et `node` ≥ 18.
 
 ```sh
-make            # génère les ressources, compile -> build/pixel_open.nes
-make test       # tests unitaires (règles, codes) + 62 vérifications sur émulateur
+make          # génère les graphismes, compile -> build/pixel_open.nes (+ occupation par banque)
+make test     # règles, codes, puis suite complète sur émulateur (~10 min)
 make clean
 ```
 
-La compilation est **reproductible** : deux compilations successives produisent le même fichier, empreinte SHA-256 `cbd42b12d22be7183dbba1b9bdc54565892bad8844aac1f2efc1306cc2479f11`.
+La compilation est reproductible : deux compilations propres donnent le même fichier (empreinte dans le rapport).
 
 Outils de mise au point :
-- `node tests/profile.mjs build/pixel_open.nes [double] [trames]` : profil CPU ;
-- `node tests/sim.mjs build/pixel_open.nes niveau surface double` : match CPU complet avec statistiques ;
-- `node tests/human.mjs build/pixel_open.nes trames niveau` : joueur robot utilisant uniquement la manette ;
-- `node tests/shots.mjs build/pixel_open.nes dossier` : captures d'écran.
+- `node tests/profile.mjs build/pixel_open.nes [double] [trames]` : cycles par fonction, banques comprises ;
+- `node tests/shots.mjs build/pixel_open.nes dossier` : captures d'écran de référence.
 
 ## 10. Tests
 
-Voir le [rapport final](RAPPORT.md) pour les résultats détaillés.
-
 | Suite | Contenu |
 |---|---|
-| `tests/rules_test.c` | 42 vérifications : points, égalité prolongée, sets, 7-5, jeu décisif (service, côtés, fin), matchs en 3 sets, format court |
-| `tests/password_test.c` | Aller-retour de tous les codes valides (13 824) ; 1 244 160 codes altérés d'une lettre, refusés à 99,98 % |
-| `tests/emu_test.mjs` | Démarrage, détection de région, NMI, menu, service humain, pause/abandon, 5 matchs complets (4 surfaces, 3 niveaux, jour/nuit/pluie, double), revanche enchaînée, pile C, entraînements, tournoi et code de reprise, compensation 50 Hz |
+| `tests/rules_test.c` | 42 vérifications des règles |
+| `tests/password_test.c` | 200 000 codes aléatoires en aller-retour ; 7,44 millions de codes altérés d'un signe, refusés à 99,99 % |
+| `tests/emu_test.mjs` | 86 vérifications : démarrage MMC1 et CHR-RAM, mode d'emploi, menus adaptatifs, présentation, menu de pause, lancer du serveur du haut, let, matchs complets (6 surfaces × 3 lieux × 3 conditions, double), ralentis, revanche, palmarès, 9 exercices (joueur robot via la manette), 5 compétitions (dont éliminations), reprise par code, 50 Hz |
 
-## 11. Limites connues
-
-Voir la section « Limitations » du [rapport final](RAPPORT.md).
+Les résultats détaillés sont dans le [rapport](RAPPORT.md).

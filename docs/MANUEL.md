@@ -1,35 +1,58 @@
 # Pixel Open — Manuel du joueur
 
-Pixel Open est un jeu de tennis 8 bits original pour NES et Famicom. Il se joue seul contre l'ordinateur ou à deux, en simple comme en double.
+Pixel Open est un jeu de tennis 8 bits original pour NES et Famicom. Il se joue seul contre l'ordinateur ou à deux, en simple comme en double, en match, en compétition ou à l'entraînement.
+
+Ce manuel est aussi intégré au jeu : à l'écran titre, choisissez **MODE D'EMPLOI** (8 pages ; GAUCHE/DROITE pour changer de page, B pour revenir).
 
 ![Aperçu](img/apercu.png)
 
-## 1. Démarrer
+## 1. Écran titre
 
-1. Lancez la ROM `dist/pixel_open.nes` sur une console (via une cartouche flash) ou dans un émulateur.
-2. À l'écran titre :
-   - **START** ouvre l'écran de configuration ;
-   - **SELECT** ouvre la saisie d'un code de tournoi.
+**HAUT/BAS** choisit une entrée et **A** la valide. **START** ouvre directement la configuration.
 
-Sans action pendant 20 secondes, une démonstration démarre (CPU contre CPU). Appuyez sur **START** ou **A** pour revenir au titre.
+| Entrée | Rôle |
+|---|---|
+| JOUER | Configuration de la partie |
+| MODE D'EMPLOI | Les commandes et les règles, dans le jeu |
+| PALMARÈS | Statistiques cumulées, titres, historique, records |
+| CODE DE REPRISE | Reprendre une compétition avec son code |
 
-## 2. Configuration de la partie
+Sans action pendant 20 secondes, une démonstration démarre (alternativement en simple et en double). **A** ou **START** rend la main.
 
-**HAUT/BAS** choisit une ligne, **GAUCHE/DROITE** modifie la valeur. **A** sur « COMMENCER », ou **START** n'importe où, lance la partie. **B** revient au titre.
+## 2. Configuration
 
-Tous les modes, personnages et terrains sont disponibles dès le départ. Les réglages sont conservés entre deux parties.
+**HAUT/BAS** choisit une ligne, **GAUCHE/DROITE** change la valeur. **START** lance la partie, **B** revient au titre. Les lignes affichées dépendent du mode. Tout le contenu est disponible dès le départ.
 
 | Ligne | Choix |
 |---|---|
-| MODE | 1 joueur contre CPU · 2 joueurs adversaires · 2 joueurs en équipe · Tournoi · Entraînement · Service · Démo |
+| MODE | 1 joueur contre CPU · 2 joueurs adversaires · 2 joueurs en équipe · Compétition · Entraînement · Démo |
 | JEU | Simple · Double |
-| JOUEUR 1 / JOUEUR 2 | Alex, Maya, Leon, Nina, Omar, Zoé (3 hommes, 3 femmes) |
+| JOUEUR 1 / JOUEUR 2 | 10 personnages (5 hommes, 5 femmes), chacun avec son style de jeu |
 | NIVEAU CPU | Facile · Normal · Expert |
-| SURFACE | Terre battue · Gazon · Dur · Moquette |
-| CONDITIONS | Jour · Nuit · Pluie |
-| FORMAT | 1 set · 3 sets (2 gagnants) · 5 sets (3 gagnants) · Rapide (1 set de 4 jeux) |
+| SURFACE | Terre battue · Gazon · Dur · Moquette · Plage · Glace (les deux dernières sont des terrains fantaisie) |
+| LIEU | Stade (tribunes pleines) · Club (extérieur, arbres) · Salle (intérieur) |
+| CONDITIONS | Jour · Nuit · Pluie. Il ne pleut pas en salle : la pluie y devient « jour » |
+| FORMAT | 1 set · 3 sets · 5 sets · Rapide (sets de 4 jeux) |
+| RALENTIS | Oui/Non : ralenti automatique après les plus beaux points |
 
-En double, les partenaires sont choisis automatiquement parmi les personnages restants. Ils portent la tenue de leur équipe.
+Selon le mode, d'autres lignes apparaissent :
+- **Compétition** : type de compétition et, pour le tournoi personnalisé, le nombre de joueurs, la progression des adversaires et la variété des surfaces ;
+- **Entraînement** : l'exercice et, pour l'exercice personnalisé, le côté, la vitesse, l'effet et le nombre de balles.
+
+La ligne **STYLE** indique le style de jeu de l'adversaire choisi.
+
+| Personnage | Style |
+|---|---|
+| Alex | Équilibré |
+| Maya | Fond de court |
+| Leon, Ivan | Puissance |
+| Nina, Lina | Filet (service-volée) |
+| Omar | Défensif |
+| Zoé | Offensif |
+| Hugo | Tactique (lobs, amorties) |
+| Emma | Placement (précision) |
+
+Avant chaque match, un **écran de présentation** rappelle l'épreuve, les joueurs, leur niveau et leur style, la surface, le lieu, les conditions et le format. **A** lance le match.
 
 ## 3. Commandes
 
@@ -38,16 +61,16 @@ En double, les partenaires sont choisis automatiquement parmi les personnages re
 | Commande | Action |
 |---|---|
 | Croix | Se déplacer sur toute sa moitié de court |
-| **A** (maintenir puis relâcher) | Frappe liftée. Plus vous maintenez **A** avant l'impact, plus la frappe est puissante (et risquée) |
+| **A** (maintenir puis relâcher) | Frappe liftée. Plus vous armez longtemps avant l'impact, plus la frappe est forte (et risquée) |
 | **B** | Coup coupé (slice) : balle basse et lente |
 | **A** + HAUT | Frappe à plat, longue et rapide |
 | **A** + BAS | Croisé court, lifté |
 | **B** + HAUT | Lob |
 | **B** + BAS | Amortie |
-| GAUCHE / DROITE au moment de la frappe | Viser le long de la ligne gauche ou droite (sans direction : croisé naturel) |
-| **START** | Pause. **SELECT** pendant la pause quitte la partie |
+| GAUCHE / DROITE à l'impact | Viser le long d'une ligne ; sans direction, le coup part croisé |
+| **START** | Pause : CONTINUER ou QUITTER (HAUT/BAS puis A). SELECT quitte directement |
 
-La frappe part automatiquement dès que la balle entre dans votre zone de frappe pendant que vous armez (bouton maintenu) ou pendant le geste (juste après le relâchement).
+La frappe part toute seule quand la balle entre dans votre zone de frappe pendant que vous armez, ou juste après avoir relâché le bouton.
 
 Le type de coup dépend aussi de la situation :
 - balle prise avant le rebond : **volée** ;
@@ -56,72 +79,118 @@ Le type de coup dépend aussi de la situation :
 
 ### Au service
 
-1. Déplacez-vous latéralement derrière la ligne de fond (GAUCHE/DROITE).
+1. Placez-vous derrière la ligne de fond avec GAUCHE/DROITE.
 2. **A** ou **B** lance la balle.
-3. **A** frappe un service puissant, **B** un service coupé plus sûr.
-   - Frappez au sommet du lancer pour être précis.
-   - GAUCHE/DROITE pendant la frappe vise l'extérieur ou le T du carré.
-   - Si vous ne frappez pas, la balle retombe et le lancer est rejoué sans pénalité.
+3. Au sommet du lancer, **A** frappe un service puissant, **B** un service coupé plus sûr.
+   - Plus la frappe est proche du sommet, plus le service est précis.
+   - GAUCHE/DROITE à l'impact vise l'extérieur ou le T.
+   - Si vous ne frappez pas, la balle retombe et le lancer est à refaire, sans pénalité.
+
+Le lancer reste visible quelle que soit votre position, y compris quand vous servez du haut de l'écran.
 
 ## 4. Règles
 
-Les règles modernes du tennis s'appliquent :
-- points 0, 15, 30, 40, égalité, avantage ;
-- jeux, sets avec deux jeux d'écart ;
-- **jeu décisif** à 6-6 (4-4 en format rapide), en 7 points avec deux points d'écart ;
-- service alterné à chaque jeu, du côté droit puis gauche ;
-- deux fautes de service = **double faute** ; une balle de service qui touche le filet et ne passe pas est une faute ;
-- **changement de côté** après chaque jeu impair, tous les 6 points du jeu décisif, et en fin de set si le total de jeux est impair ;
-- en double : les **couloirs** sont en jeu (sauf au service), l'ordre des serveurs alterne entre les partenaires, et le receveur dépend du côté (égalité ou avantage).
-
-Le jeu annonce à l'écran « ÉGALITÉ », « AVANTAGE », « BALLE DE SET », « BALLE DE MATCH », « JEU DÉCISIF », « CHANGEMENT DE CÔTÉ », « FAUTE », « DOUBLE FAUTE », « ACE », etc.
+- Points 0, 15, 30, 40, égalité, avantage ; il faut deux points d'écart pour gagner le jeu.
+- Sets de 6 jeux avec deux jeux d'écart ; **jeu décisif** en 7 points à 6-6 (à 4-4 en format rapide).
+- Le service alterne à chaque jeu, du côté droit puis gauche.
+- **Fautes** : deux fautes de service font une **double faute**. Un service qui touche la bande du filet puis tombe dans le bon carré est un **let** : il est à remettre, sans faute.
+- Une balle qui touche la bande pendant l'échange et passe reste en jeu.
+- **Changement de côté** après chaque jeu impair, tous les 6 points du jeu décisif, et en fin de set si le total de jeux est impair.
+- **En double** :
+  - les couloirs sont en jeu, sauf au service ;
+  - les partenaires servent à tour de rôle ;
+  - chacun reçoit de son côté (égalité ou avantage).
 
 ## 5. Affichage
 
-- **En haut à gauche** : l'équipe qui joue en bas de l'écran. **En haut à droite** : celle du haut.
-- Chaque panneau affiche le nom, les sets et jeux (« 1-3 ») puis les points. L'étoile `*` indique le serveur.
-- **Au centre du bandeau** : les annonces de l'arbitre.
+- Les deux **panneaux de score** occupent les coins supérieurs, au-dessus des tribunes ; les joueurs ne peuvent pas les masquer.
+  - Coin gauche : l'équipe qui joue en bas de l'écran ; coin droit : celle du haut.
+  - Chaque panneau affiche le nom, les sets et jeux (« 1-3 »), puis les points. `*` désigne le serveur.
+- Les **annonces** de l'arbitre s'affichent au centre du bandeau : faute, let, égalité, avantage, balle de set ou de match, jeu décisif, changement de côté, ace, coup gagnant…
+- Le **public** se lève et applaudit après les beaux points. Après un ace, un coup gagnant ou un long échange, un **ralenti** rejoue le point (A pour le passer).
+- **En fin de match** :
+  - le vainqueur célèbre et le perdant baisse la tête ;
+  - l'écran de résultats donne les statistiques : points gagnés, aces, doubles fautes, coups gagnants, fautes, pourcentage de premières balles, plus long échange ;
+  - **A** relance une revanche, **B** revient au menu.
 
-Les statistiques détaillées apparaissent à la fin du match : points gagnés, aces, doubles fautes, coups gagnants, fautes, pourcentage de premières balles et échange le plus long. Écran de fin : **A** = revanche immédiate, **B** = menu.
-
-## 6. Terrains et conditions
+## 6. Surfaces, lieux et conditions
 
 | Surface | Comportement |
 |---|---|
 | Terre battue | Rebond haut, balle ralentie : échanges longs |
-| Gazon | Rebond bas, balle qui fuse : jeu rapide, avantage au service-volée |
+| Gazon | Rebond bas, balle qui fuse : avantage au service-volée |
 | Dur | Compromis équilibré |
 | Moquette | Rapide et assez bas |
+| Plage (fantaisie) | Sable : balle très lente, rebond très haut |
+| Glace (fantaisie) | Balle qui file au ras du sol |
 
-L'effet de la balle modifie le rebond : le lifté rebondit plus haut, le coupé reste bas.
+L'effet modifie aussi le rebond : le lifté rebondit plus haut, le coupé reste bas.
 
-- **Nuit** : décor assombri, court éclairé.
+Conditions :
+- **Nuit** : décor assombri.
 - **Pluie** : gouttes à l'écran, rebonds plus bas et balle qui glisse.
 
 ## 7. Modes
 
-- **Match** : simple ou double, contre le CPU ou à deux.
-- **2 joueurs en équipe** : en double, les manettes 1 et 2 jouent ensemble contre deux joueurs CPU.
-- **Tournoi** : quart de finale, demi-finale puis finale contre des adversaires de plus en plus forts. Une défaite élimine.
-- **Entraînement (lanceur de balles)** : 20 balles. Une balle renvoyée dans le court rapporte 1 point ; une balle dans la zone cible (étoile, fond de court) en rapporte 2.
-- **Service** : 20 services pour travailler la précision ; les côtés alternent.
-- **Démo** : deux équipes CPU s'affrontent.
+- **Match** : simple ou double, contre l'ordinateur ou à deux.
+  - **2 joueurs en équipe** : en double, les manettes 1 et 2 jouent ensemble contre deux joueurs CPU.
+  - **2 joueurs adversaires** : en double, chacun a un partenaire CPU.
+- **Démo** : l'ordinateur joue seul.
 
-## 8. Codes de tournoi
+### Compétitions
 
-Avant chaque manche, l'écran du tournoi affiche un **code de 6 lettres**. Il contient la manche, le personnage, la surface, le format, les conditions et le nombre de trophées gagnés.
+| Compétition | Déroulement |
+|---|---|
+| Tournoi | 8 joueurs, élimination directe : quart, demi, finale |
+| Poules | 2 poules de 4 (3 journées). Les 2 premiers de chaque poule vont en demi-finales croisées, puis en finale |
+| Championnat | 6 joueurs, toutes rondes (5 journées). Classement aux victoires, départage par confrontation directe |
+| Saison | 4 tournois de 8 joueurs sur terre, gazon, dur puis moquette. Points : 45 (quart), 90 (demi), 150 (finale), 250 (victoire). Classement général à la fin |
+| Personnalisé | 4 ou 8 joueurs ; adversaires de niveau fixe ou progressif ; même surface ou surface différente à chaque tour |
+
+L'écran d'étape montre le prochain adversaire (niveau, surface), le tableau ou le classement, et le **code de reprise**. Les matchs entre joueurs CPU sont simulés selon leur niveau.
+
+### Entraînement
+
+| Exercice | Contenu |
+|---|---|
+| Frappes / cibles | 20 balles ; 1 point par balle dans le court, 2 dans la zone de l'étoile |
+| Déplacements | Balles alternées dans les deux coins |
+| Régularité | Série sans faute la plus longue (jusqu'à 50) |
+| Précision | Seule la zone désignée (fond ou court, gauche ou droite) rapporte des points |
+| Volée | Vous êtes au filet ; balles tendues à volleyer |
+| Service | 20 services ; bonus si le service tombe à l'extérieur ou au T |
+| Joueur fixe | Échanges contre un adversaire immobile qui renvoie les balles au centre |
+| Personnalisé | Côté (coup droit, revers, alterné, aléatoire), vitesse, effet (lifté, coupé, lob) et nombre de balles (10, 20, 30) |
+| Tutoriel | Leçon guidée : frapper, amortie, lob, viser, servir |
+
+Votre meilleur score de chaque exercice est conservé dans le palmarès.
+
+## 8. Codes de reprise
+
+Dans une compétition, l'écran d'étape affiche un **code de 12 signes** (lettres et chiffres). Il contient la compétition, l'étape, vos résultats, votre personnage, les réglages et le nombre de trophées.
 
 Pour reprendre plus tard :
-1. À l'écran titre, appuyez sur **SELECT**.
-2. HAUT/BAS change la lettre, GAUCHE/DROITE change de position.
+1. À l'écran titre, choisissez **CODE DE REPRISE** (ou appuyez sur **SELECT**).
+2. HAUT/BAS change le signe, GAUCHE/DROITE change de position.
 3. **START** valide.
 
-Un code mal saisi est refusé : une somme de contrôle détecte les erreurs de saisie.
+Une somme de contrôle de 12 bits détecte les erreurs de recopie.
 
-## 9. Conseils
+## 9. Palmarès
+
+Le palmarès comporte 3 pages (GAUCHE/DROITE) :
+- **Statistiques** : matchs joués, gagnés et perdus en simple et en double ; points, aces, doubles fautes, coups gagnants, fautes, pourcentage de premières balles ; titres et compétitions disputées ; records (plus long échange, aces en un match).
+- **Résultats** : meilleur résultat par type de compétition et historique des 8 dernières.
+- **Records d'entraînement** : meilleur score par exercice.
+
+Seuls les matchs où la manette 1 joue sont comptés. Pour tout effacer, appuyez deux fois sur **SELECT**.
+
+Le palmarès est conservé tant que la console reste allumée. Sur une cartouche équipée d'une pile, il est conservé même éteinte.
+
+## 10. Conseils
 
 - Placez-vous **à côté** de la trajectoire, pas dessus : la balle doit passer à portée de raquette.
-- Armez tôt (maintenez **A**) sur les balles lentes pour frapper fort ; sur les balles rapides, une frappe courte suffit.
+- Armez tôt sur les balles lentes ; sur les balles rapides, une frappe courte suffit.
 - Viser les lignes avec beaucoup de puissance augmente le risque de faute.
-- Contre un joueur au filet, le **lob** (B + HAUT) est redoutable. Contre un joueur au fond, essayez l'**amortie** (B + BAS).
-- Sur gazon, montez au filet ; sur terre battue, construisez le point depuis le fond.
+- Contre un volleyeur (Nina, Lina) : le **lob**. Contre un défenseur au fond (Omar, Maya) : l'**amortie**.
+- L'ordinateur s'adapte : s'il voit que vous visez toujours le même côté, il s'y place à l'avance. Si vous montez souvent au filet, il lobe davantage. Variez votre jeu.

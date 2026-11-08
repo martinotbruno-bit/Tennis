@@ -2,8 +2,9 @@
 #include "gfx.h"
 #include "assets.h"
 
-const char * const char_name[NCHARS] = { "ALEX", "MAYA", "LEON", "NINA", "OMAR", "ZOE " };
-const u8 char_female[NCHARS]         = { 0, 1, 0, 1, 0, 1 };
+const char * const char_name[NCHARS] = {
+    "ALEX", "MAYA", "LEON", "NINA", "OMAR", "ZOE ", "HUGO", "EMMA", "IVAN", "LINA" };
+const u8 char_female[NCHARS] = { 0, 1, 0, 1, 0, 1, 0, 1, 0, 1 };
 /* peau, tenue, sombre (cheveux/short/raquette) */
 static const u8 char_pal[NCHARS][3] = {
     { 0x27, 0x16, 0x07 },
@@ -12,17 +13,34 @@ static const u8 char_pal[NCHARS][3] = {
     { 0x27, 0x14, 0x08 },
     { 0x07, 0x21, 0x0F },
     { 0x36, 0x25, 0x18 },
+    { 0x37, 0x19, 0x07 },
+    { 0x27, 0x13, 0x0F },
+    { 0x36, 0x28, 0x0F },
+    { 0x17, 0x2C, 0x08 },
 };
+const char * const style_name[NSTYLES] = {
+    "EQUILIBRE", "FOND DE COURT", "PUISSANCE", "FILET",
+    "DEFENSIF", "OFFENSIF", "TACTIQUE", "PLACEMENT" };
+const u8 char_style[NCHARS] = { 0, 1, 2, 3, 4, 5, 6, 7, 2, 3 };
 
-const char * const surf_name[NSURF] = { "TERRE BATTUE", "GAZON       ", "DUR         ", "MOQUETTE    " };
-/* fond universel, surface, lignes, filet ; tribunes (3 couleurs) */
-static const u8 surf_pal[NSURF][7] = {
-    { 0x17, 0x27, 0x30, 0x0F, 0x0F, 0x16, 0x37 },
-    { 0x09, 0x1A, 0x30, 0x0F, 0x0F, 0x12, 0x37 },
-    { 0x0A, 0x12, 0x30, 0x0F, 0x0F, 0x16, 0x38 },
-    { 0x06, 0x15, 0x30, 0x0F, 0x0F, 0x11, 0x36 },
+const char * const surf_name[NSURF] = {
+    "TERRE BATTUE", "GAZON       ", "DUR         ", "MOQUETTE    ", "PLAGE       ", "GLACE       " };
+const char * const env_name[NENV] = { "STADE", "CLUB ", "SALLE" };
+/* fond universel, surface, lignes, filet */
+static const u8 surf_pal[NSURF][4] = {
+    { 0x17, 0x27, 0x30, 0x0F },
+    { 0x09, 0x1A, 0x30, 0x0F },
+    { 0x0A, 0x12, 0x30, 0x0F },
+    { 0x06, 0x15, 0x30, 0x0F },
+    { 0x21, 0x28, 0x16, 0x0F },   /* plage : sable jaune, distinct des teintes de peau */
+    { 0x0C, 0x31, 0x12, 0x0F },
 };
-
+/* palette 2 (bords du court) selon le lieu */
+static const u8 env_pal[NENV][3] = {
+    { 0x27, 0x16, 0x37 },     /* stade : public */
+    { 0x1A, 0x09, 0x07 },     /* club : haies, arbres, troncs */
+    { 0x00, 0x2A, 0x0F },     /* salle : murs, panneaux, projecteurs */
+};
 
 static u8 darken(u8 c)
 {
@@ -30,13 +48,14 @@ static u8 darken(u8 c)
     return (c >= 0x10) ? (u8)(c - 0x10) : 0x0F;
 }
 
-void pal_set_court(u8 s, u8 cond)
+void pal_set_court(u8 s, u8 cond, u8 env)
 {
     const u8 *p = surf_pal[s];
+    const u8 *e = env_pal[env];
     u8 i;
     pal_buf[0] = p[0]; pal_buf[1] = p[1]; pal_buf[2] = p[2]; pal_buf[3] = p[3];
     pal_buf[4] = p[0]; pal_buf[5] = 0x0F; pal_buf[6] = 0x00; pal_buf[7] = 0x30;  /* score */
-    pal_buf[8] = p[0]; pal_buf[9] = 0x27; pal_buf[10] = p[5]; pal_buf[11] = p[6]; /* public */
+    pal_buf[8] = p[0]; pal_buf[9] = e[0]; pal_buf[10] = e[1]; pal_buf[11] = e[2]; /* bords */
     pal_buf[12] = p[0]; pal_buf[13] = 0x0F; pal_buf[14] = 0x28; pal_buf[15] = 0x30;
     /* sprites : 0/1 joueurs (définis à part), 2 balle, 3 effets */
     pal_buf[16 + 8] = p[0]; pal_buf[16 + 9] = 0x38; pal_buf[16 + 10] = 0x0F; pal_buf[16 + 11] = 0x30;
@@ -114,7 +133,7 @@ void vbuf_text(u8 x, u8 y, const char *s, u8 len)
 {
     u8 i = vram_len;
     u16 a = NTADR(x, y);
-    if ((u16)i + len + 4 > 126) return;          /* tampon plein : ignoré */
+    if ((u16)i + len + 4 > VBUF_MAX) return;     /* budget VBlank atteint : ignoré */
     vram_buf[i++] = (u8)(a >> 8);
     vram_buf[i++] = (u8)a;
     vram_buf[i++] = len;
@@ -123,6 +142,26 @@ void vbuf_text(u8 x, u8 y, const char *s, u8 len)
     }
     vram_buf[i] = 0xFF;
     vram_len = i;
+}
+
+u8 vbuf_raw(u16 adr, const u8 *data, u8 len)
+{
+    u8 i = vram_len;
+    if ((u16)i + len + 4 > VBUF_MAX) return 0;
+    vram_buf[i++] = (u8)(adr >> 8);
+    vram_buf[i++] = (u8)adr;
+    vram_buf[i++] = len;
+    while (len--) vram_buf[i++] = *data++;
+    vram_buf[i] = 0xFF;
+    vram_len = i;
+    return 1;
+}
+
+void num3(char *out, u16 v)
+{
+    out[0] = (char)(v >= 100 ? '0' + (v / 100) % 10 : ' ');
+    out[1] = (char)(v >= 10 ? '0' + (v / 10) % 10 : ' ');
+    out[2] = (char)('0' + v % 10);
 }
 
 void num2(char *out, u8 v)

@@ -1,27 +1,33 @@
 # Pixel Open
 
-Jeu de tennis 8 bits original pour **NES / Famicom** (NTSC et PAL) : simple et double, 1 ou 2 joueurs, IA à trois niveaux, quatre surfaces, jour, nuit et pluie, tournoi avec codes de reprise, entraînement.
+Jeu de tennis 8 bits original pour **NES / Famicom** (NTSC et PAL), sur cartouche MMC1 :
+- simple et double, à 1 ou 2 joueurs ;
+- 10 personnages aux styles de jeu différents, IA à 3 niveaux qui s'adapte au joueur ;
+- 6 surfaces (dont plage et glace), 3 lieux (stade, club, salle), jour, nuit et pluie ;
+- compétitions (tournoi, poules, championnat, saison, personnalisé) avec codes de reprise ;
+- 9 exercices d'entraînement dont un tutoriel ;
+- ralentis, palmarès et mode d'emploi intégré.
 
 ![Aperçu](docs/img/apercu.png)
 
 ## Jouer
 
-ROM prête à lancer : [`dist/pixel_open.nes`](dist/pixel_open.nes) (iNES, mapper 0). Elle se lance dans un émulateur NES ou sur console via une cartouche flash.
+ROM prête à lancer : [`dist/pixel_open.nes`](dist/pixel_open.nes) (iNES, mapper 1 / MMC1, 128 Ko). Elle se lance dans un émulateur NES ou sur console via une cartouche flash compatible MMC1.
 
 Commandes de base :
 - **Croix** : se déplacer ;
-- **A** (maintenir puis relâcher) : frappe liftée, plus ou moins puissante ;
+- **A** (maintenir puis relâcher) : frappe liftée ;
 - **B** : coupé ;
-- **+ HAUT/BAS** : lob, amortie, frappe à plat, croisé court ;
+- **+ HAUT/BAS** : frappe à plat, croisé court, lob, amortie ;
 - **START** : pause.
 
-Le détail est dans le [manuel](docs/MANUEL.md).
+Tout est expliqué dans le **mode d'emploi** du jeu (écran titre) et dans le [manuel](docs/MANUEL.md).
 
 ## Documentation
 
 - [Cahier des charges](CAHIER_DES_CHARGES.md)
 - [Manuel du joueur](docs/MANUEL.md)
-- [Documentation technique](docs/TECHNIQUE.md) : architecture, mapper, mémoire, physique, IA, audio, NTSC/PAL, optimisations
+- [Documentation technique](docs/TECHNIQUE.md) : cartouche, banques, mémoire, physique, IA, compétitions, codes, optimisations
 - [Rapport de réalisation](docs/RAPPORT.md) : conformité au CDC, tests, limitations
 
 ## Compiler et tester
@@ -29,22 +35,22 @@ Le détail est dans le [manuel](docs/MANUEL.md).
 Outils : `cc65` 2.19, `python3`, `make` ; pour les tests, `gcc` et `node` ≥ 18.
 
 ```sh
-make          # build/pixel_open.nes
-make test     # règles + codes (natif) et 62 vérifications sur émulateur (jsnes)
+make          # build/pixel_open.nes (+ occupation de chaque banque)
+make test     # règles + codes (natif) et 86 vérifications sur émulateur (jsnes)
 ```
 
 ## Organisation
 
 ```
-src/        code du jeu (C cc65 + assembleur 6502)
+src/        code du jeu (C cc65 + assembleur 6502), un module par banque MMC1
 tools/      génération des graphismes, rapport d'occupation mémoire
 assets/     CHR généré et aperçus
-cfg/        carte mémoire ld65 (NROM-256)
-tests/      tests unitaires, tests et profileur sur émulateur
+cfg/        carte mémoire ld65 (MMC1 SNROM)
+tests/      tests unitaires, tests sur émulateur, profileur CPU, captures
 docs/       manuel, documentation technique, rapport, captures
 dist/       ROM finale
 ```
 
 ## État
 
-Version 1.0, jouable et testée **en émulation uniquement**. Les tests sur consoles réelles et plusieurs éléments du CDC (replays, formats championnat/saison, IA adaptative…) restent à faire : voir le [rapport](docs/RAPPORT.md).
+Version 2.0 : tout le contenu du cahier des charges est réalisé et testé **en émulation**. Les tests sur consoles réelles restent à faire ; voir le [rapport](docs/RAPPORT.md).

@@ -48,6 +48,11 @@ extern u8 oam_i, meta_x, meta_y, meta_tile, meta_attr;
 #pragma zpsym("meta_attr")
 void __fastcall__ spr1(u8 x, u8 y, u8 tile, u8 attr);
 void spr_meta(void);
+extern u8 cur_bank;
+#pragma zpsym("cur_bank")
+void __fastcall__ set_bank(u8 bank);
+void __fastcall__ bank_call(u8 bank, void (*fn)(void));
+u16 __fastcall__ far_call(u8 bank, void *fn, u16 arg);
 void spr_end(void);
 void wait_frame(void);
 void pad_poll(void);

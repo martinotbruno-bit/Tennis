@@ -77,6 +77,8 @@ FONT = {
  '(':["00010","00100","01000","01000","01000","00100","00010"],
  ')':["01000","00100","00010","00010","00010","00100","01000"],
  '#':["01010","11111","01010","01010","11111","01010","00000"],
+ ',':["00000","00000","00000","00000","01100","00100","01000"],
+ '%':["11001","11010","00010","00100","01000","01011","10011"],
 }
 
 def font_tile(ch):
@@ -168,7 +170,7 @@ def bitmap_to_nametable(bmp, attr_fn):
     return bytes(nt) + bytes(at)
 
 # ---------------------------- Court --------------------------------------
-def draw_court():
+def draw_court(env=0):
     W, H = 256, 240
     b = [[0]*W for _ in range(H)]
     def rect(x0, y0, x1, y1, c):
@@ -194,20 +196,56 @@ def draw_court():
     rect(DBL_L-6, NET_Y-6, DBL_R+6, NET_Y-6, 2)
     rect(DBL_L-8, NET_Y-9, DBL_L-6, NET_Y, 3)           # poteaux
     rect(DBL_R+6, NET_Y-9, DBL_R+8, NET_Y, 3)
-    # tribunes latérales (palette 2) : rangées de spectateurs
+    # bords du court (palette 2) selon l'environnement
     for side in (0, 1):
         x0 = 0 if side == 0 else 224
         for y in range(32, 240):
             for x in range(x0, x0+32):
                 b[y][x] = 0
-        for row in range(4, 30):
-            for col in range(4):
-                tx = x0 + col*8
-                ty = row*8
-                pat = random.choice(CROWD)
-                for yy in range(8):
-                    for xx in range(8):
-                        b[ty+yy][tx+xx] = pat[yy][xx]
+        if env == 0:
+            # STADE : tribunes pleines de spectateurs
+            for row in range(4, 30):
+                for col in range(4):
+                    pat = random.choice(CROWD)
+                    for yy in range(8):
+                        for xx in range(8):
+                            b[row*8+yy][x0+col*8+xx] = pat[yy][xx]
+        elif env == 1:
+            # CLUB : haies, arbres et quelques spectateurs sur des bancs
+            for y in range(32, 240):
+                for x in range(x0, x0+32):
+                    b[y][x] = 1 if (((x % 8)*7 + (y % 8)*3) % 11) else 2
+            for k in range(6):
+                cx = x0 + (8 if (k % 2) else 24)
+                cy = 56 + k*32
+                for y in range(cy-9, cy+10):
+                    for x in range(cx-9, cx+10):
+                        if 0 <= x < 256 and 32 <= y < 240 and (x-cx)**2 + (y-cy)**2 <= 72:
+                            b[y][x] = 2 if ((x % 8) + (y % 8)) % 3 else 3
+                for y in range(cy+7, cy+12):
+                    if y < 240:
+                        b[y][cx] = 3
+            for row in (12, 20):
+                for col in range(4):
+                    pat = CROWD[(row + col) % 6]
+                    for yy in range(8):
+                        for xx in range(8):
+                            b[row*8+yy][x0+col*8+xx] = pat[yy][xx]
+        else:
+            # SALLE : murs, panneaux publicitaires et projecteurs
+            for y in range(32, 240):
+                for x in range(x0, x0+32):
+                    b[y][x] = 3 if (y // 8) % 6 == 0 else 1
+            for k in range(5):
+                y0 = 40 + k*40
+                for y in range(y0, y0+20):
+                    for x in range(x0+4, x0+28):
+                        if 32 <= y < 240:
+                            b[y][x] = 2
+                for y in range(y0+6, y0+14, 2):
+                    for x in range(x0+8, x0+24, 3):
+                        if 32 <= y < 240:
+                            b[y][x] = 3
         # rambarde
         bx = 31 if side == 0 else 224
         for y in range(32, 240):
@@ -242,6 +280,29 @@ def crowd_tile(seed):
 
 CROWD = [crowd_tile(i) for i in range(6)]
 
+def cheer_tile(seed):
+    """Même spectateurs, debout et bras levés (animation du public)."""
+    r = random.Random(seed)
+    t = blank()
+    for hx in (1, 5):
+        c = r.choice((1, 2, 3))
+        hy = r.choice((0, 1))
+        hy = max(0, hy - 1) + 1
+        for yy in range(hy, hy+3):
+            for xx in range(hx, hx+2):
+                t[yy][xx] = 1
+        for yy in range(hy+3, 8):
+            for xx in range(hx-1, hx+3):
+                if 0 <= xx < 8:
+                    t[yy][xx] = 2 if c == 1 else c
+        for (ax, ay) in ((hx-1, hy-1), (hx-1, hy), (hx+2, hy-1), (hx+2, hy)):
+            if 0 <= ax < 8 and 0 <= ay < 8:
+                t[ay][ax] = 1
+    return t
+
+CHEER = [cheer_tile(i) for i in range(6)]
+crowd_idx = [bg_alloc(t) for t in CROWD]
+
 def court_attr(bx, by):
     if by < 2:
         return 1                      # bandeau score
@@ -249,7 +310,8 @@ def court_attr(bx, by):
         return 2                      # tribunes
     return 0
 
-court_nt = bitmap_to_nametable(draw_court(), court_attr)
+court_nts = [bitmap_to_nametable(draw_court(e), court_attr) for e in range(3)]
+court_nt = court_nts[0]
 
 # ---------------------------- Titre --------------------------------------
 LOGO = "PIXEL OPEN"
@@ -433,6 +495,12 @@ def draw_person(view, legs, arms, female):
     elif arms == 'follow':
         fill(c, 2, 8, 4, 8, 1); line(c, 11, 9, 13, 7, 1)
         racket(c, 13, 6, 'up')
+    elif arms == 'down':
+        # déception : bras ballants, raquette vers le sol, tête baissée
+        fill(c, 4, 9, 4, 14, 1); fill(c, 11, 9, 11, 14, 1)
+        racket(c, 11, 15, 'down')
+        if view == 'front':
+            put(c, 7, 3, 1); put(c, 9, 3, 1); put(c, 7, 4, 3); put(c, 9, 4, 3)
     elif arms == 'serve':
         line(c, 4, 8, 3, 3, 1)          # bras de lancer levé
         line(c, 11, 8, 12, 4, 1)
@@ -454,6 +522,7 @@ POSES = [  # (jambes, bras) — l'ordre est repris dans src/gfx.c
     ('wide', 'follow'),   # 4 frappe (accompagnement)
     ('stand', 'serve'),   # 5 service
     ('wide', 'ready'),    # 6 joie / fente
+    ('stand', 'down'),    # 7 déception
 ]
 NPOSE = len(POSES)
 next_spr = 0x10
@@ -509,10 +578,9 @@ def c_array(name, data):
         s += '  ' + ','.join('0x%02X' % b for b in data[i:i+16]) + ',\n'
     return s + '};\n'
 
-court_rle = rle(court_nt)
+court_rles = [rle(n) for n in court_nts]
 src = ['/* Fichier généré par tools/gen_assets.py — ne pas modifier. */',
        '#include "assets.h"', '']
-src.append(c_array('court_nt_rle', court_rle))
 logo = []
 for ch in LOGO:
     if ch == ' ':
@@ -526,9 +594,22 @@ src.append('const unsigned char person_base[4] = {0x%02X,0x%02X,0x%02X,0x%02X};\
 with open(os.path.join(ROOT, 'src', 'assets_data.c'), 'w') as f:
     f.write('\n'.join(src))
 
+# données du court et du public : banque du moteur de jeu
+src = ['/* Fichier généré par tools/gen_assets.py — ne pas modifier. */',
+       '#include "assets.h"', '']
+for e in range(3):
+    src.append(c_array('court_nt_rle%d' % e, court_rles[e]))
+src.append('const unsigned char * const court_nt_rle[3] = { court_nt_rle0, court_nt_rle1, court_nt_rle2 };\n')
+src.append(c_array('crowd_idx', bytes(crowd_idx)))
+src.append(c_array('crowd_norm', b''.join(encode_tile(t) for t in CROWD)))
+src.append(c_array('crowd_cheer', b''.join(encode_tile(t) for t in CHEER)))
+with open(os.path.join(ROOT, 'src', 'assets_court.c'), 'w') as f:
+    f.write('\n'.join(src))
+court_rle = court_rles[0]
+
 used_bg = sum(1 for t in bg_tiles if t is not None)
-print("tuiles BG utilisées : %d/256, sprites : %d/256, court RLE : %d octets" % (
-    used_bg, next_spr, len(court_rle)))
+print("tuiles BG utilisées : %d/256, sprites : %d/256, courts RLE : %s octets" % (
+    used_bg, next_spr, [len(r) for r in court_rles]))
 
 # aperçu facultatif
 try:
@@ -542,6 +623,15 @@ try:
                 for x in range(8):
                     img.putpixel((tx*8+x, ty*8+y), NESPAL[t[y][x]])
     img.save(os.path.join(ROOT, 'assets', 'preview_court.png'))
+    for e in (1, 2):
+        im2 = Image.new('RGB', (256, 240))
+        for ty in range(30):
+            for tx in range(32):
+                t = bg_tiles[court_nts[e][ty*32+tx]]
+                for y in range(8):
+                    for x in range(8):
+                        im2.putpixel((tx*8+x, ty*8+y), NESPAL[t[y][x]])
+        im2.save(os.path.join(ROOT, 'assets', 'preview_court%d.png' % e))
     pal = {0: (0, 120, 0), 1: (250, 190, 150), 2: (220, 40, 40), 3: (20, 20, 60)}
     sp = Image.new('RGB', (16*NPOSE*2+2*NPOSE*2, 24*2+2))
     for i, cv in enumerate(preview_people):
