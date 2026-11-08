@@ -42,6 +42,7 @@ static u8 pl_walk[4], pl_moving[4], pl_flip[4];
 static u8 ai_delay[4], ai_net[4];
 static u8 hit_margin;
 static s16 pcache_x[4], pcache_y[4];   /* prédictions IA en cache */
+static s8 ai_err[4];                   /* erreur d'anticipation tirée à chaque frappe */
 static s16 ai_gx[4], ai_gy[4];         /* destination courante de l'IA (FP) */
 static u8 ai_x2;                       /* 1 : pas de déplacement doublé */
 static u8 hit_now;                     /* une frappe a eu lieu dans cette trame */
@@ -72,23 +73,21 @@ static const u8 surf_rest[6] = { 196, 150, 176, 160, 214, 116 };
 static const u8 surf_fric[6] = { 200, 244, 226, 236, 170, 253 };
 /* IA : vitesse (FP/trame), délai de réaction, dispersion, marge visée */
 /* vitesses (FP/trame) ; ≤ 127 car doublées en double (ai_x2) */
-static const u8 ai_speed[3]  = { 90, 110, 126 };
-static const u8 ai_react[3]  = { 16, 9, 3 };
-static const u8 ai_spread[3] = { 30, 18, 11 };
-static const u8 ai_margin[3] = { 26, 15, 9 };
-static const u8 ai_power[3]  = { 4, 12, 20 };
+/* réglages v2.3 : Normal rendu plus abordable (retour de test joueur) */
+static const u8 ai_speed[3]  = { 84, 98, 118 };
+static const u8 ai_react[3]  = { 18, 12, 4 };
+static const u8 ai_spread[3] = { 30, 22, 15 };
+static const u8 ai_margin[3] = { 26, 18, 10 };
+static const u8 ai_power[3]  = { 2, 8, 16 };
+static const u8 ai_guess[3]  = { 14, 7, 3 };    /* imprécision d'anticipation (px) */
+static const u8 ai_fault[3]  = { 7, 15, 31 };   /* faute directe : 1 frappe sur 8 / 16 / 32 */
 #define HUMAN_SPEED 140
 
 /* styles de jeu (CDC 10.2), indexés par char_style[] :
    équilibré, fond de court, puissance, filet, défensif, offensif, tactique, placement */
-static const s8 sty_pow[8]    = { 0, -2, 10, 0, -4, 6, 0, -2 };
-static const s8 sty_margin[8] = { 0, 4, 0, 0, 8, -3, 0, -4 };
-static const s8 sty_spread[8] = { 0, -3, 4, 0, -4, 2, 0, -5 };
-static const u8 sty_net[8]    = { 40, 0, 30, 220, 0, 110, 60, 40 };   /* montée au filet /256 */
-static const u8 sty_lob[8]    = { 64, 48, 16, 32, 128, 32, 144, 48 }; /* lob contre volleyeur */
-static const u8 sty_drop[8]   = { 24, 16, 0, 16, 0, 40, 96, 40 };     /* amortie */
-static const u8 sty_slice[8]  = { 64, 48, 16, 64, 96, 16, 96, 64 };   /* coupé */
-static const u8 sty_deep[8]   = { 8, 14, 10, 8, 18, 4, 8, 8 };       /* recul au replacement */
+/* tables des styles : banque fixe (gfx.c), pour libérer la banque du moteur */
+extern const s8 sty_pow[8], sty_margin[8], sty_spread[8];
+extern const u8 sty_net[8], sty_lob[8], sty_drop[8], sty_slice[8], sty_deep[8];
 
 
 #define side_of(t) ((u8)(((t) & 1) ^ sc_swap))   /* 0 = bas, 1 = haut */
@@ -690,6 +689,10 @@ static void predict(u8 p)
         pred_x = PX(bx + bvx * 6);
         pred_y = PX(by + bvy * 6);
     }
+    /* l'IA n'anticipe pas parfaitement : une erreur tirée à chaque frappe
+       adverse peut lui faire rater une balle bien croisée */
+    if (pcache_y[p] == 0x7FFF) ai_err[p] = rnd_spread(ai_guess[cfg.level[p]]);
+    pred_x += ai_err[p];
     pcache_x[p] = pred_x; pcache_y[p] = pred_y;
 }
 
@@ -790,7 +793,7 @@ static void ai_update(u8 p)
             } else if (sty_pow[sty] > 4 && (rand8() & 3) == 0) {
                 pad |= PAD_UP;                                  /* frappe à plat */
             }
-            if (lv == 0 && (rand8() & 7) == 0) spread += 20;    /* faute directe */
+            if ((rand8() & ai_fault[lv]) == 0) spread += 20;   /* faute directe */
             hit_margin = (u8)(ai_margin[lv] + sty_margin[sty]);
             do_hit(p, pad, btn, (u8)(ai_power[lv] + sty_pow[sty]), spread);
             pl_state[p] = ST_SWING;

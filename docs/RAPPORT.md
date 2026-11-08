@@ -18,6 +18,7 @@ Comme l'exige le CDC (§ 17.5), ce rapport distingue ce qui est **réalisé**, *
 | Balle ratée bloquée en haut ou en bas de l'écran | La balle ratée poursuit sa trajectoire et disparaît une fois sortie de l'écran ; une balle très haute n'est plus collée au bord supérieur (seule son ombre reste visible). Arbitrage inchangé |
 | Serveur du haut trop loin de la ligne de fond | Pieds 2 px derrière la ligne (au lieu de 8) : le sprite se dessine au-dessus des pieds, le recul paraissait plus grand en haut. Le serveur du bas est inchangé |
 | Affichage des jeux confus (« 0-3 » lu comme un score entre les deux joueurs) | Panneau repensé : « J 3 » pour les jeux du set, un rond plein par set gagné à côté des points, `*` pour le serveur |
+| Normal un peu trop difficile | Difficulté recalibrée avec un robot « humain » (`tests/calib.mjs`) : Normal plus lent, plus tardif, moins puissant et plus fautif ; IA moins parfaite dans son anticipation ; écart Normal → Expert adouci (le robot passe de 0 % à ~30 % des points contre Expert) |
 
 ### Version 2.1
 
@@ -49,7 +50,7 @@ Pour loger ce contenu, la cartouche passe de NROM (32 Ko) à **MMC1** : 128 Ko d
 | Émulateur (`emu_test`) | 109/109 vérifications (environ 12 min) |
 | Profil CPU, simple, 6 000 trames | 1 trame d'échange en dépassement |
 | Profil CPU, double, 6 000 trames | 11 trames d'échange en dépassement (0,2 %), sans défaut d'image |
-| Compilation | Reproductible : SHA-256 `6c66957c65dfac53e878a0bccd98b381238339a698f2169ed9d6e25d781a3604` sur deux compilations propres |
+| Compilation | Reproductible : SHA-256 `5f27bc630108f1c09b532a24175b9ff9fbad3262000277baccf94569fec15358` sur deux compilations propres |
 
 ## 3. Conformité par section du CDC
 
@@ -104,6 +105,6 @@ Légende : ✅ réalisé et testé en émulation · 🟡 partiel · 🔧 nécess
 
    Il faut aussi passer la ROM dans Mesen et Nestopia : seul jsnes a été utilisé.
 2. **Dépassements CPU** : 0,2 % des trames d'échange en double (frappes, début de ralenti) et quelques trames de transition entre les points. Pas d'impact sur les commandes.
-3. **Équilibrage** : un joueur robot parfait bat le niveau expert ; l'expert pourrait être plus agressif.
+3. **Équilibrage** : calibré avec un robot, pas avec un panel de joueurs ; à confirmer en jouant.
 4. **Tenues en double** : les partenaires portent la palette de leur équipe (4 palettes de sprites).
 5. **Espace** : la banque du moteur (0) est presque pleine (16 314 / 16 368 octets). Toute évolution du moteur passera par la banque des annexes (3) ou par la banque libre (6).

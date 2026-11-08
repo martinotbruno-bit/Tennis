@@ -98,6 +98,19 @@ $7800-$7FFF  palmarès (sauvegardé si la cartouche a une pile ; signature + som
 ### Intelligence artificielle
 
 - **Trois niveaux** (vitesse, réaction, dispersion, marge par rapport aux lignes, puissance).
+
+  | Paramètre | Facile | Normal | Expert |
+  |---|---|---|---|
+  | Vitesse (px/trame) | 1,31 | 1,53 | 1,84 |
+  | Délai de réaction (trames) | 18 | 12 | 4 |
+  | Dispersion de visée (px) | 30 | 22 | 15 |
+  | Marge par rapport aux lignes (px) | 26 | 18 | 10 |
+  | Puissance | très faible | faible | forte |
+  | Imprécision d'anticipation (px, tirée à chaque frappe adverse) | ±14 | ±7 | ±3 |
+  | Faute directe | 1 frappe sur 8 | 1 sur 16 | 1 sur 32 |
+
+  **Calibrage** (version 2.3, après un retour de test : « Normal un peu trop difficile ») : `tests/calib.mjs` fait jouer un robot « humain » contre l'IA. Ce robot réagit en 9 à 16 trames, se place avec une erreur qui se corrige à l'approche de la balle et frappe dans des directions variées. Sur 4 parties par niveau, il gagne environ 99 % des points contre Facile, la grande majorité contre Normal et environ 30 % contre Expert (0 % avant le calibrage). Le robot étant plus régulier qu'un humain, Normal doit paraître équilibré et Expert exigeant.
+
 - **Huit styles** (CDC 10.2), propres à chaque personnage. Ils modifient :
   - la puissance, la marge et la dispersion ;
   - la fréquence de montée au filet, de lobs, d'amorties et de coupés ;

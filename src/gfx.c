@@ -233,3 +233,15 @@ void spr_ball(u8 x, s16 sy, u8 shy, u8 zpx)
     if (sy >= 0) spr1((u8)(x - 3), (u8)sy, t, 2);
     spr1((u8)(x - 3), (u8)(shy - 3), 2, 2);
 }
+
+/* Styles de jeu de l'IA (CDC 10.2), indexés par char_style[] : équilibré,
+ * fond de court, puissance, filet, défensif, offensif, tactique, placement.
+ * Utilisés par le moteur de match (banque 0). */
+const s8 sty_pow[8]    = { 0, -2, 10, 0, -4, 6, 0, -2 };
+const s8 sty_margin[8] = { 0, 4, 0, 0, 8, -3, 0, -4 };
+const s8 sty_spread[8] = { 0, -3, 4, 0, -4, 2, 0, -5 };
+const u8 sty_net[8]    = { 40, 0, 30, 220, 0, 110, 60, 40 };   /* montée au filet /256 */
+const u8 sty_lob[8]    = { 64, 48, 16, 32, 128, 32, 144, 48 }; /* lob contre volleyeur */
+const u8 sty_drop[8]   = { 24, 16, 0, 16, 0, 40, 96, 40 };     /* amortie */
+const u8 sty_slice[8]  = { 64, 48, 16, 64, 96, 16, 96, 64 };   /* coupé */
+const u8 sty_deep[8]   = { 8, 14, 10, 8, 18, 4, 8, 8 };       /* recul au replacement */
