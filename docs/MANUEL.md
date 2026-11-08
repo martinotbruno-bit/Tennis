@@ -25,7 +25,7 @@ Sans action pendant 20 secondes, une démonstration démarre (alternativement en
 
 | Ligne | Choix |
 |---|---|
-| MODE | 1 joueur contre CPU · 2 joueurs adversaires · 2 joueurs en équipe · Compétition · Entraînement · Démo |
+| MODE | 1 joueur contre CPU · 2 joueurs adversaires · En équipe · Compétition · Entraînement · Démo |
 | JEU | Simple · Double |
 | JOUEUR 1 / JOUEUR 2 | 16 personnages (8 hommes, 8 femmes), chacun avec son style de jeu. En compétition de double, JOUEUR 2 devient PARTENAIRE |
 | NIVEAU CPU | Facile · Normal · Expert |
@@ -138,7 +138,7 @@ Conditions :
 ## 7. Modes
 
 - **Match** : simple ou double, contre l'ordinateur ou à deux.
-  - **2 joueurs en équipe** : toujours en double (la ligne JEU n'est pas proposée). Les manettes 1 et 2 jouent ensemble contre deux joueurs CPU ; JOUEUR 2 choisit le personnage de la manette 2.
+  - **En équipe** : toujours en double (la ligne JEU n'est pas proposée), contre deux joueurs CPU. PARTENAIRE choisit le personnage de votre coéquipier, et JOUE PAR décide qui le contrôle : l'ordinateur ou la manette 2.
   - **2 joueurs adversaires** : en double, chacun a un partenaire CPU.
 - **Démo** : l'ordinateur joue seul.
 

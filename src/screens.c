@@ -64,7 +64,7 @@ static const char * const opt_label[NOPT] = {
     "CONDITIONS", "FORMAT", "RALENTIS", "COMPETITION", "JOUEURS", "ADVERSAIRES", "SURFACES",
     "EXERCICE", "COTE", "VITESSE", "EFFET", "BALLES", "JOUE PAR" };
 static const char * const mode_name[NMODES] = {
-    "1 JOUEUR VS CPU", "2 J. ADVERSAIRES", "2 J. EQUIPE", "COMPETITION", "ENTRAINEMENT", "DEMO CPU" };
+    "1 JOUEUR VS CPU", "2 J. ADVERSAIRES", "EN EQUIPE", "COMPETITION", "ENTRAINEMENT", "DEMO CPU" };
 static const char * const cond_name[3] = { "JOUR", "NUIT", "PLUIE" };
 static const char * const level_name[3] = { "FACILE", "NORMAL", "EXPERT" };
 static const char * const fmt_name[4] = { "1 SET", "3 SETS", "5 SETS", "RAPIDE 4 JEUX" };
@@ -112,6 +112,7 @@ static void build_visible(void)
         if (m != MODE_2P_TEAM) vis[nvis++] = O_TYPE;
         vis[nvis++] = O_P1;
         vis[nvis++] = O_P2;
+        if (m == MODE_2P_TEAM) vis[nvis++] = O_CPART;   /* partenaire : CPU ou manette 2 */
         vis[nvis++] = O_LEVEL;
         vis[nvis++] = O_SURF;
         vis[nvis++] = O_ENV;
@@ -223,7 +224,7 @@ static void menu_draw_row(u8 i, u8 direct)
 {
     pad_text(opt_text(vis[i]), 15);
     if (direct) {
-        if (vis[i] == O_P2 && opt_val[O_MODE] == MODE_COMP) txt_at(3, (u8)(4 + i), "PARTENAIRE");
+        if (vis[i] == O_P2 && (opt_val[O_MODE] == MODE_COMP || opt_val[O_MODE] == MODE_2P_TEAM)) txt_at(3, (u8)(4 + i), "PARTENAIRE");
         else txt_at(3, (u8)(4 + i), opt_label[vis[i]]);
         txt_at(16, (u8)(4 + i), line);
     }
@@ -306,7 +307,8 @@ static void setup_cfg(u8 mode)
         /* deux joueurs dans la même équipe : toujours un double ; JOUEUR 2 est
            le personnage de la manette 2, les adversaires CPU sont tirés à part */
         cfg.doubles = 1;
-        cfg.ctrl[2] = CTRL_PAD2;
+        /* partenaire joué par la manette 2 ou par l'ordinateur */
+        cfg.ctrl[2] = opt_val[O_CPART] ? CTRL_PAD2 : CTRL_CPU;
         cfg.chr[2] = opt_val[O_P2] == cfg.chr[0] ? unused_char(cfg.chr[0], 255, 255) : opt_val[O_P2];
         cfg.chr[1] = unused_char(cfg.chr[0], cfg.chr[2], 255);
         cfg.chr[3] = unused_char(cfg.chr[0], cfg.chr[1], cfg.chr[2]);

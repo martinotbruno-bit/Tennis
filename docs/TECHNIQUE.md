@@ -233,6 +233,6 @@ Outils de mise au point :
 |---|---|
 | `tests/rules_test.c` | 42 vérifications des règles |
 | `tests/password_test.c` | 200 000 codes aléatoires en aller-retour ; 8,06 millions de codes altérés d'un signe, refusés à 99,99 % |
-| `tests/emu_test.mjs` | 113 vérifications : démarrage MMC1 et CHR-RAM, mode d'emploi, menus adaptatifs, mode 2 joueurs en équipe (toujours en double), présentation, menu de pause, lancer du serveur du haut, balle ratée qui sort de l'écran, let, matchs complets (6 surfaces × 3 lieux × 3 conditions, double), ralentis, revanche, palmarès, 9 exercices (joueur robot via la manette), 5 compétitions (dont éliminations), double en compétition (dont à 2 joueurs humains), levée de coupe, déblocage et club nudiste (tenues échangées en CHR-RAM puis restaurées), reprise par code, 50 Hz |
+| `tests/emu_test.mjs` | 114 vérifications : démarrage MMC1 et CHR-RAM, mode d'emploi, menus adaptatifs, mode en équipe (toujours en double, partenaire CPU ou manette 2), présentation, menu de pause, lancer du serveur du haut, balle ratée qui sort de l'écran, let, matchs complets (6 surfaces × 3 lieux × 3 conditions, double), ralentis, revanche, palmarès, 9 exercices (joueur robot via la manette), 5 compétitions (dont éliminations), double en compétition (dont à 2 joueurs humains), levée de coupe, déblocage et club nudiste (tenues échangées en CHR-RAM puis restaurées), reprise par code, 50 Hz |
 
 Les résultats détaillés sont dans le [rapport](RAPPORT.md).

@@ -20,6 +20,7 @@ Comme l'exige le CDC (§ 17.5), ce rapport distingue ce qui est **réalisé**, *
 | Affichage des jeux confus (« 0-3 » lu comme un score entre les deux joueurs) | Panneau repensé : « J 3 » pour les jeux du set, un rond plein par set gagné à côté des points, `*` pour le serveur |
 | Normal un peu trop difficile | Difficulté recalibrée avec un robot « humain » (`tests/calib.mjs`) : Normal plus lent, plus tardif, moins puissant et plus fautif ; IA moins parfaite dans son anticipation ; écart Normal → Expert adouci (le robot passe de 0 % à ~30 % des points contre Expert) |
 | Mode « 2 J. équipe » proposé en simple | Incohérence corrigée : ce mode est toujours un double (ligne JEU masquée), et JOUEUR 2 désigne le personnage de la manette 2 (et non plus l'adversaire) |
+| En équipe : partenaire au choix | Mode renommé « En équipe » ; ligne « JOUE PAR : CPU / MANETTE 2 » pour le partenaire |
 
 ### Version 2.1
 
@@ -48,10 +49,10 @@ Pour loger ce contenu, la cartouche passe de NROM (32 Ko) à **MMC1** : 128 Ko d
 |---|---|
 | Règles (`rules_test`) | 42/42 |
 | Codes (`password_test`) | 200 000/200 000 aller-retour ; 99,99 % des codes altérés d'un signe refusés |
-| Émulateur (`emu_test`) | 113/113 vérifications (environ 13 min) |
+| Émulateur (`emu_test`) | 114/114 vérifications (environ 13 min) |
 | Profil CPU, simple, 6 000 trames | 1 trame d'échange en dépassement |
 | Profil CPU, double, 6 000 trames | 11 trames d'échange en dépassement (0,2 %), sans défaut d'image |
-| Compilation | Reproductible : SHA-256 `bd1f475a68c689616396c312827531536d24aca1060f22ab65da67d0bd8629cd` sur deux compilations propres |
+| Compilation | Reproductible : SHA-256 `160654e73d769a7110bb999f8e1040b994f877cb6e15beb7c7b94f1634453b63` sur deux compilations propres |
 
 ## 3. Conformité par section du CDC
 
