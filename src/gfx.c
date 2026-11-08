@@ -12,13 +12,13 @@ const u8 char_female[NCHARS] = { 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1 
 static const u8 char_pal[NCHARS][3] = {
     /* tenues choisies pour ressortir sur toutes les surfaces et se distinguer
        de la peau ; cheveux / short / raquette en noir ou brun foncé */
-    { 0x27, 0x25, 0x0F },   /* ALEX : rose */
+    { 0x27, 0x30, 0x0F },   /* ALEX : blanc (tenue classique) */
     { 0x37, 0x1C, 0x0F },   /* MAYA : bleu canard */
     { 0x17, 0x3B, 0x0F },   /* LEON : vert menthe */
     { 0x27, 0x24, 0x0F },   /* NINA : magenta */
     { 0x07, 0x3C, 0x0F },   /* OMAR : cyan clair */
     { 0x36, 0x0C, 0x0F },   /* ZOE  : canard foncé */
-    { 0x37, 0x15, 0x07 },   /* HUGO : framboise */
+    { 0x37, 0x1C, 0x07 },   /* HUGO : bleu canard */
     { 0x27, 0x2C, 0x0F },   /* EMMA : cyan */
     { 0x36, 0x34, 0x0F },   /* IVAN : lilas */
     { 0x17, 0x3A, 0x0F },   /* LINA : vert pâle */
@@ -26,7 +26,7 @@ static const u8 char_pal[NCHARS][3] = {
     { 0x36, 0x2B, 0x0F },   /* JADE : vert */
     { 0x37, 0x39, 0x0F },   /* LUCA : vert anis */
     { 0x17, 0x31, 0x0F },   /* SARA : bleu clair */
-    { 0x07, 0x23, 0x0F },   /* NOAH : violet */
+    { 0x07, 0x2C, 0x0F },   /* NOAH : cyan */
     { 0x27, 0x32, 0x0F },   /* INES : pervenche */
 };
 const char * const style_name[NSTYLES] = {
@@ -36,9 +36,9 @@ const u8 char_style[NCHARS] = { 0, 1, 2, 3, 4, 5, 6, 7, 2, 3, 5, 4, 1, 7, 6, 0 }
 
 const char * const surf_name[NSURF] = {
     "TERRE BATTUE", "GAZON       ", "DUR         ", "MOQUETTE    ", "PLAGE       ", "GLACE       " };
-const char * const env_name[NENV] = { "STADE", "CLUB ", "SALLE", "CLUB NUDISTE" };
+const char * const env_name[NENV] = { "STADE", "CLUB ", "SALLE", "CLUB NUDISTE", "COURT MARGAUX" };
 /* fond universel, surface, lignes, filet */
-static const u8 surf_pal[NSURF][4] = {
+static const u8 surf_pal[NSURF + 1][4] = {
     /* couleurs choisies pour se distinguer des 5 teintes de peau, des tenues
        et des cheveux, de jour, de nuit et sous la pluie (tools/contrast.py) */
     { 0x05, 0x26, 0x30, 0x0F },   /* terre battue : brique clair, abords lie-de-vin */
@@ -47,6 +47,7 @@ static const u8 surf_pal[NSURF][4] = {
     { 0x03, 0x13, 0x30, 0x0F },   /* moquette : violet, abords violet sombre */
     { 0x22, 0x28, 0x16, 0x0F },   /* plage : sable jaune, mer */
     { 0x12, 0x21, 0x30, 0x0F },   /* glace : bleu ciel, abords bleu */
+    { 0x14, 0x25, 0x30, 0x0F },   /* court Margaux : rose bonbon, abords prune */
 };
 /* palette 2 (bords du court) selon le lieu */
 static const u8 env_pal[NENV][3] = {
@@ -54,6 +55,7 @@ static const u8 env_pal[NENV][3] = {
     { 0x1A, 0x09, 0x07 },     /* club : haies, arbres, troncs */
     { 0x00, 0x2A, 0x0F },     /* salle : murs, panneaux, projecteurs */
     { 0x1A, 0x27, 0x07 },     /* club nudiste : herbe, peau, cheveux/chapeaux/serviettes */
+    { 0x35, 0x24, 0x30 },     /* court Margaux : rose pâle, coeurs, fleurs et étoiles */
 };
 
 static u8 darken(u8 c)
@@ -66,7 +68,9 @@ static u8 darken(u8 c)
 
 void pal_set_court(u8 s, u8 cond, u8 env)
 {
-    const u8 *p = surf_pal[s];
+    /* court Margaux : toujours rose, quelle que soit la surface (qui garde
+       son rebond) */
+    const u8 *p = surf_pal[env == ENV_MARGAUX ? NSURF : s];
     const u8 *e = env_pal[env];
     u8 i;
     pal_buf[0] = p[0]; pal_buf[1] = p[1]; pal_buf[2] = p[2]; pal_buf[3] = p[3];

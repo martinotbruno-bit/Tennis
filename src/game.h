@@ -34,6 +34,7 @@
 #define ENV_CLUB    1
 #define ENV_HALL    2
 #define ENV_NUDE    3   /* club nudiste (débloqué par une victoire en compétition) */
+#define ENV_MARGAUX 4   /* court Margaux : rose, décor coeurs, fleurs, étoiles */
 
 /* joueurs : index 0..3 ; équipe = index & 1 ; 2 et 3 = partenaires en double */
 typedef struct {

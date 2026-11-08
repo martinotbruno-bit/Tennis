@@ -3,7 +3,7 @@
 Jeu de tennis 8 bits original pour **NES / Famicom** (NTSC et PAL), sur cartouche MMC1 :
 - simple et double, à 1 ou 2 joueurs ;
 - 16 personnages aux styles de jeu différents, IA à 3 niveaux qui s'adapte au joueur ;
-- 6 surfaces (dont plage et glace), 3 lieux (stade, club, salle), jour, nuit et pluie ;
+- 6 surfaces (dont plage et glace), 4 lieux (stade, club, salle, court rose « Margaux »), jour, nuit et pluie ;
 - compétitions en simple ou en double (tournoi, poules, championnat, saison, personnalisé) avec codes de reprise et levée de coupe ;
 - un lieu bonus à débloquer : le club nudiste « Les Bronzés » ;
 - 9 exercices d'entraînement dont un tutoriel ;

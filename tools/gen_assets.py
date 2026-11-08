@@ -232,6 +232,21 @@ def draw_court(env=0):
                     for yy in range(8):
                         for xx in range(8):
                             b[row*8+yy][x0+col*8+xx] = pat[yy][xx]
+        elif env == 4:
+            # COURT MARGAUX : fond rose pâle (1) parsemé de coeurs (2),
+            # de fleurs et d'étoiles (3)
+            for y in range(32, 240):
+                for x in range(x0, x0+32):
+                    b[y][x] = 1
+            cols = (0, 1, 2) if side == 0 else (1, 2, 3)
+            for row in range(4, 30):
+                for col in cols:
+                    k = (row + col * 3 + side * 3) % 6     # coeurs, fleurs et étoiles en alternance
+                    pat = GIRLY[k // 2] if k % 2 == 0 else None
+                    if pat:
+                        for yy in range(8):
+                            for xx in range(8):
+                                b[row*8+yy][x0+col*8+xx] = pat[yy][xx]
         elif env == 3:
             # CLUB NUDISTE : pas de gradins, spectateurs (au naturel) sur des
             # serviettes dans l'herbe. Couleurs : 1 herbe, 2 peau, 3 serviette
@@ -362,6 +377,38 @@ def nude_fan(kind, cheer=False):
 def split6(t):
     return [[r[tx*8:tx*8+8] for r in t[ty*8:ty*8+8]] for ty in range(3) for tx in range(2)]
 
+def girly_tile(kind, sparkle=False):
+    """Décor du court Margaux : coeur (2), fleur (3, coeur 2), étoile (3) ;
+    version « scintillante » pour l'animation après les beaux points."""
+    t = [[1]*8 for _ in range(8)]
+    if kind == 0:
+        rows = ["........", ".##.##..", "#######.", "#######.", ".#####..", "..###...", "...#....", "........"]
+        if sparkle:
+            rows = [".##.##..", "#######.", "########", "########", ".######.", "..####..", "...##...", "........"]
+        for y, r in enumerate(rows):
+            for x, ch in enumerate(r):
+                if ch == '#': t[y][x] = 2
+    elif kind == 1:
+        pts = [(3, 1), (1, 3), (5, 3), (3, 5)] if not sparkle else [(1, 1), (5, 1), (1, 5), (5, 5)]
+        for (x, y) in pts:
+            for dy in (0, 1):
+                for dx in (0, 1):
+                    t[y + dy][x + dx] = 3
+        t[3][3] = t[3][4] = t[4][3] = t[4][4] = 2
+    else:
+        if sparkle:
+            for k in range(8):
+                t[k][3] = 3; t[3][k] = 3
+            t[1][1] = t[5][5] = t[1][5] = t[5][1] = 3
+        else:
+            for (x, y) in ((3, 1), (2, 2), (3, 2), (4, 2), (1, 3), (2, 3), (3, 3), (4, 3), (5, 3), (2, 4), (3, 4), (4, 4), (2, 5), (4, 5)):
+                t[y][x] = 3
+    return t
+
+GIRLY = [girly_tile(k) for k in range(3)]
+GIRLY_SPARKLE = [girly_tile(k, True) for k in range(3)]
+crowd_idx4 = [bg_alloc(t) for t in GIRLY]
+
 NUDE_FANS = [split6(nude_fan(k)) for k in range(3)]
 NUDE_FANS_CHEER = [split6(nude_fan(k, True)) for k in range(3)]
 NUDE_CROWD = [tile for fan in NUDE_FANS for tile in fan]          # 18 tuiles
@@ -375,12 +422,16 @@ def court_attr(bx, by):
         return 2                      # tribunes
     return 0
 
-court_nts = [bitmap_to_nametable(draw_court(e), court_attr) for e in range(4)]
+court_nts = [bitmap_to_nametable(draw_court(e), court_attr) for e in range(5)]
 # panneau du club nudiste, ligne 3 du bandeau (police ASCII = n° de tuile)
 _nt3 = bytearray(court_nts[3])
 for i, ch in enumerate("CLUB NUDISTE"):
     _nt3[3 * 32 + 10 + i] = ord(ch)
 court_nts[3] = bytes(_nt3)
+_nt4 = bytearray(court_nts[4])
+for i, ch in enumerate("COURT MARGAUX"):
+    _nt4[3 * 32 + 10 + i] = ord(ch)
+court_nts[4] = bytes(_nt4)
 court_nt = court_nts[0]
 
 # ---------------------------- Titre --------------------------------------
@@ -806,9 +857,12 @@ with open(os.path.join(ROOT, 'src', 'assets_nude.c'), 'w') as f:
 # données du court et du public : banque du moteur de jeu
 src = ['/* Fichier généré par tools/gen_assets.py — ne pas modifier. */',
        '#include "assets.h"', '']
-for e in range(4):
+for e in range(5):
     src.append(c_array('court_nt_rle%d' % e, court_rles[e]))
-src.append('const unsigned char * const court_nt_rle[4] = { court_nt_rle0, court_nt_rle1, court_nt_rle2, court_nt_rle3 };\n')
+src.append('const unsigned char * const court_nt_rle[5] = { court_nt_rle0, court_nt_rle1, court_nt_rle2, court_nt_rle3, court_nt_rle4 };\n')
+src.append(c_array('crowd_idx4', bytes(crowd_idx4)))
+src.append(c_array('crowd_norm4', b''.join(encode_tile(t) for t in GIRLY)))
+src.append(c_array('crowd_cheer4', b''.join(encode_tile(t) for t in GIRLY_SPARKLE)))
 src.append(c_array('crowd_idx3', bytes(crowd_idx3)))
 src.append(c_array('crowd_norm3', b''.join(encode_tile(t) for t in NUDE_CROWD)))  # 12 tuiles
 src.append(c_array('crowd_cheer3', b''.join(encode_tile(t) for t in NUDE_CHEER)))
@@ -835,7 +889,7 @@ try:
                 for x in range(8):
                     img.putpixel((tx*8+x, ty*8+y), NESPAL[t[y][x]])
     img.save(os.path.join(ROOT, 'assets', 'preview_court.png'))
-    for e in (1, 2, 3):
+    for e in (1, 2, 3, 4):
         im2 = Image.new('RGB', (256, 240))
         for ty in range(30):
             for tx in range(32):

@@ -25,6 +25,7 @@ Comme l'exige le CDC (§ 17.5), ce rapport distingue ce qui est **réalisé**, *
 | Joueurs de profil en déplacement | Nouvelle course vue de côté (2 images, hommes/femmes, aussi au club nudiste), orientée selon le sens du déplacement |
 | Jeu « encore très difficile » | IA Facile et Normal nettement assouplies (plus lentes, plus tardives, plus fautives, anticipation moins précise) ; Expert un peu adouci ; zone de frappe plus généreuse pour tous |
 | Personnages qui se confondent avec le court (sans liseré) | Couleurs des 6 surfaces, des 16 tenues et assombrissement de nuit/pluie recalculés avec `tools/contrast.py` : plus aucune paire personnage/court sous ΔE 25 (plusieurs étaient identiques, ΔE 0) |
+| Court rose « Margaux » au décor girly | Nouveau lieu « Court Margaux » disponible d'emblée : court rose, abords prune, cœurs, fleurs et étoiles qui scintillent, panneau au nom de Margaux. Couleurs contrôlées (aucune paire sous ΔE 25) |
 
 ### Version 2.1
 
@@ -52,11 +53,11 @@ Pour loger ce contenu, la cartouche passe de NROM (32 Ko) à **MMC1** : 128 Ko d
 | Suite | Résultat |
 |---|---|
 | Règles (`rules_test`) | 42/42 |
-| Codes (`password_test`) | 200 000/200 000 aller-retour ; 99,99 % des codes altérés d'un signe refusés |
-| Émulateur (`emu_test`) | 114/114 vérifications (113 au passage complet ; l'échec restant, un réglage du robot de test du tutoriel, a été corrigé et sa section repassée) |
+| Codes (`password_test`) | 200 000/200 000 aller-retour ; 99,98 % des codes altérés d'un signe refusés |
+| Émulateur (`emu_test`) | 118/118 vérifications (117 au passage complet ; l'échec restant, une attente de test qui comptait 3 lieux au lieu de 4, a été corrigé et sa section repassée) |
 | Profil CPU, simple, 6 000 trames | 1 trame d'échange en dépassement |
 | Profil CPU, double, 6 000 trames | 11 trames d'échange en dépassement (0,2 %), sans défaut d'image |
-| Compilation | Reproductible : SHA-256 `2adbba7217aacb947882cb7a36cc6025de5c4285db140f29c9cf2bb4026d36f9` sur deux compilations propres |
+| Compilation | Reproductible : SHA-256 `3dc4f4f79da2bacc390b88d4dea86ce7d76f2a27d7548da3f229cea7e54a483b` sur deux compilations propres |
 
 ## 3. Conformité par section du CDC
 

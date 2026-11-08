@@ -379,6 +379,10 @@ static void present_screen(void)
         txt_at(4, 24, "CLUB NUDISTE LES BRONZES");
         txt_at(4, 25, "TENUE EXIGEE : AUCUNE");
     }
+    if (cfg.env == ENV_MARGAUX) {
+        txt_at(4, 24, "BIENVENUE SUR LE COURT");
+        txt_at(4, 25, "DE MARGAUX ! @ @ @");
+    }
     txt_at(8, 2, "PIXEL OPEN 2026");
     if (last_mode == MODE_COMP) {
         txt_at(4, 4, comp_name[c_type]);
@@ -800,11 +804,12 @@ void screens_tick(void)
         o = vis[cursor];
         if (o != O_START && (pad1_new & (PAD_LEFT | PAD_RIGHT))) {
             v = opt_val[o];
-            /* le club nudiste n'apparaît qu'une fois débloqué */
-            i = (u8)(o == O_ENV ? (nude_unlocked ? NENV : NENV - 1) : opt_max[o]);
-            if (v >= i) v = 0;
+            i = opt_max[o];
             if (pad1_new & PAD_RIGHT) v = (u8)(v + 1 == i ? 0 : v + 1);
             else v = (u8)(v ? v - 1 : i - 1);
+            /* le club nudiste n'apparaît qu'une fois débloqué */
+            if (o == O_ENV && v == ENV_NUDE && !nude_unlocked)
+                v = (u8)((pad1_new & PAD_RIGHT) ? ENV_NUDE + 1 : ENV_NUDE - 1);
             opt_val[o] = v;
             sfx_menu_move();
             if (o == O_MODE || o == O_COMP || o == O_EX || (o == O_TYPE && opt_val[O_MODE] == MODE_COMP)) { menu_screen(); break; }

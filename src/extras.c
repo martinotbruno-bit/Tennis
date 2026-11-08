@@ -137,12 +137,16 @@ void load_court(void)
  * budget VBlank. */
 void crowd_tick(void)
 {
-    u8 nude = (u8)(cfg.env == ENV_NUDE);
-    u8 n = (u8)(nude ? 18 : 6);
+    u8 nude = (u8)(cfg.env == ENV_NUDE), girly = (u8)(cfg.env == ENV_MARGAUX);
+    u8 n = (u8)(nude ? 18 : girly ? 3 : 6);
     u8 k = (u8)(crowd_timer % n);
     u8 cheer = (u8)(crowd_timer >= n && ((crowd_timer >> 3) & 1));
-    const u8 *src = nude ? (cheer ? crowd_cheer3 : crowd_norm3) : (cheer ? crowd_cheer : crowd_norm);
-    if (vbuf_raw((u16)(nude ? crowd_idx3[k] : crowd_idx[k]) << 4, src + (k << 4), 16))
+    const u8 *src, *idx;
+    /* court Margaux : les coeurs, fleurs et étoiles scintillent */
+    if (girly) { src = cheer ? crowd_cheer4 : crowd_norm4; idx = crowd_idx4; }
+    else if (nude) { src = cheer ? crowd_cheer3 : crowd_norm3; idx = crowd_idx3; }
+    else { src = cheer ? crowd_cheer : crowd_norm; idx = crowd_idx; }
+    if (vbuf_raw((u16)idx[k] << 4, src + (k << 4), 16))
         --crowd_timer;
 }
 

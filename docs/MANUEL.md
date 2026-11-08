@@ -30,7 +30,7 @@ Sans action pendant 20 secondes, une démonstration démarre (alternativement en
 | JOUEUR 1 / JOUEUR 2 | 16 personnages (8 hommes, 8 femmes), chacun avec son style de jeu. En compétition de double, JOUEUR 2 devient PARTENAIRE |
 | NIVEAU CPU | Facile · Normal · Expert |
 | SURFACE | Terre battue · Gazon · Dur · Moquette · Plage · Glace (les deux dernières sont des terrains fantaisie) |
-| LIEU | Stade (tribunes pleines) · Club (extérieur, arbres) · Salle (intérieur) · Club nudiste (bonus à débloquer, voir § 9 bis) |
+| LIEU | Stade (tribunes pleines) · Club (extérieur, arbres) · Salle (intérieur) · Club nudiste (bonus à débloquer, voir § 9 bis) · Court Margaux (court rose, décor de cœurs, fleurs et étoiles) |
 | CONDITIONS | Jour · Nuit · Pluie. Il ne pleut pas en salle : la pluie y devient « jour » |
 | FORMAT | 1 set · 3 sets · 5 sets · Rapide (sets de 4 jeux) |
 | RALENTIS | Oui/Non : ralenti automatique après les plus beaux points |
@@ -199,6 +199,13 @@ Le palmarès comporte 3 pages (GAUCHE/DROITE) :
 Seuls les matchs où la manette 1 joue sont comptés ; en double, ce sont les statistiques de son équipe (donc aussi celles de la manette 2 si elle joue le partenaire). Pour tout effacer, appuyez deux fois sur **SELECT**.
 
 Le palmarès est conservé tant que la console reste allumée. Sur une cartouche équipée d'une pile, il est conservé même éteinte.
+
+## 9 ter. Le court Margaux
+
+Un court rose bonbon, dédié à Margaux, disponible dès le départ (ligne LIEU : COURT MARGAUX). ![Court Margaux](img/court_margaux.png)
+- Le court est toujours rose ; la ligne SURFACE choisit seulement le comportement de la balle (rebond de la terre, du gazon…).
+- Pas de tribunes : des cœurs, des fleurs et des étoiles sur fond rose pâle, qui scintillent après les beaux points.
+- Un panneau « COURT MARGAUX » au-dessus du terrain et un mot d'accueil sur l'écran de présentation.
 
 ## 9 bis. Bonus : le club nudiste
 

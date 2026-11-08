@@ -136,7 +136,7 @@ $7800-$7FFF  palmarès (sauvegardé si la cartouche a une pile ; signature + som
 
 ### Codes de reprise (`password.c`)
 
-51 bits de données (dont double, partenaire et « partenaire joué par la manette 2 ») + 2 bits de version + 12 bits de somme de contrôle = 65 bits, écrits en 13 symboles de 5 bits (alphabet sans I, O, 0, 1). Les symboles sont brouillés en chaîne pour qu'une erreur en modifie plusieurs.
+52 bits de données (dont double, partenaire, « partenaire joué par la manette 2 » et lieu sur 3 bits) + 2 bits de version + 11 bits de somme de contrôle = 65 bits, écrits en 13 symboles de 5 bits (alphabet sans I, O, 0, 1). Les symboles sont brouillés en chaîne pour qu'une erreur en modifie plusieurs.
 
 ### Compétitions en double
 
@@ -151,6 +151,13 @@ $7800-$7FFF  palmarès (sauvegardé si la cartouche a une pile ; signature + som
 - le joueur (et son partenaire) en pose bras levés ;
 - la coupe (2 × 2 tuiles) monte des mains au-dessus de la tête puis oscille ;
 - 10 confettis tombent, multiplexés sur les 4 palettes.
+
+### Court Margaux
+
+- **Lieu** : 5ᵉ lieu (`ENV_MARGAUX`), disponible d'emblée. Sa palette remplace celle de la surface (rose $25, abords prune $14), mais la surface garde son comportement physique.
+- **Décor** : écran de court dédié, avec 3 motifs (cœur, fleur, étoile) sur fond rose pâle et le panneau « COURT MARGAUX » en ligne 3. Leurs versions scintillantes sont échangées en CHR-RAM après les beaux points, avec le même mécanisme que le public.
+- **Contrôle** : le rose est vérifié par `tools/contrast.py` comme les autres surfaces. Pour lui, trois tenues ont changé : Alex en blanc, Hugo en bleu canard, Noah en cyan.
+- **Code de reprise** : le lieu y est codé sur 3 bits, et la somme de contrôle passe à 11 bits.
 
 ### Club nudiste (bonus)
 
@@ -171,7 +178,7 @@ Grâce à la CHR-RAM, les 6 motifs de spectateurs sont remplacés par leur versi
 
 ## 5. Graphismes
 
-- **Fond** : 242 tuiles sur 256. Quatre écrans de court compressés en RLE (stade 657 octets, club 648, salle 647, club nudiste 648). La surface et les conditions ne changent que les palettes.
+- **Fond** : 247 tuiles sur 256. Cinq écrans de court compressés en RLE (stade 657 octets, club 648, salle 647, club nudiste 648, court Margaux 675). La surface et les conditions ne changent que les palettes.
 - **Sprites** : 215 tuiles sur 256 (dont la coupe, les confettis et 3 tailles de balle).
   - Course : de profil (2 images de foulée, miroir selon le sens) dès que le déplacement est surtout latéral, de face ou de dos sinon ; la direction est mémorisée par personnage dans `spr_person` (banque fixe) pour ne pas clignoter.
   - Raquettes : tamis ovale de 5 × 7 px (5 × 5 au-dessus de la tête), cadre sombre et cordage en damier, manche de 2 à 3 px.
@@ -245,7 +252,7 @@ Outils de mise au point :
 | Suite | Contenu |
 |---|---|
 | `tests/rules_test.c` | 42 vérifications des règles |
-| `tests/password_test.c` | 200 000 codes aléatoires en aller-retour ; 8,06 millions de codes altérés d'un signe, refusés à 99,99 % |
-| `tests/emu_test.mjs` | 114 vérifications : démarrage MMC1 et CHR-RAM, mode d'emploi, menus adaptatifs, mode en équipe (toujours en double, partenaire CPU ou manette 2), présentation, menu de pause, lancer du serveur du haut, balle ratée qui sort de l'écran, let, matchs complets (6 surfaces × 3 lieux × 3 conditions, double), ralentis, revanche, palmarès, 9 exercices (joueur robot via la manette), 5 compétitions (dont éliminations), double en compétition (dont à 2 joueurs humains), levée de coupe, déblocage et club nudiste (tenues échangées en CHR-RAM puis restaurées), reprise par code, 50 Hz |
+| `tests/password_test.c` | 200 000 codes aléatoires en aller-retour ; 8,06 millions de codes altérés d'un signe, refusés à 99,98 % |
+| `tests/emu_test.mjs` | 118 vérifications : démarrage MMC1 et CHR-RAM, mode d'emploi, menus adaptatifs, mode en équipe (toujours en double, partenaire CPU ou manette 2), présentation, menu de pause, lancer du serveur du haut, balle ratée qui sort de l'écran, let, matchs complets (6 surfaces × 3 lieux × 3 conditions, double), ralentis, revanche, palmarès, 9 exercices (joueur robot via la manette), 5 compétitions (dont éliminations), double en compétition (dont à 2 joueurs humains), levée de coupe, court Margaux, déblocage et club nudiste (tenues échangées en CHR-RAM puis restaurées), reprise par code, 50 Hz |
 
 Les résultats détaillés sont dans le [rapport](RAPPORT.md).

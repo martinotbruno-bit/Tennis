@@ -6,7 +6,10 @@ extern const unsigned char bigball_tiles[16];
 extern const unsigned char person_base[4];
 extern const unsigned char trophy_tile, confetti_tile, ball_mid_tile, ball_big_tile, profile_base;
 /* banque du moteur de jeu (BANK0) */
-extern const unsigned char * const court_nt_rle[4];
+extern const unsigned char * const court_nt_rle[5];
+extern const unsigned char crowd_idx4[3];
+extern const unsigned char crowd_norm4[48];
+extern const unsigned char crowd_cheer4[48];
 extern const unsigned char crowd_idx3[18];
 extern const unsigned char crowd_norm3[288];
 extern const unsigned char crowd_cheer3[288];

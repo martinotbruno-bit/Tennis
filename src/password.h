@@ -1,7 +1,7 @@
 #ifndef PASSWORD_H
 #define PASSWORD_H
 /* Codes de reprise des compétitions : 13 caractères (65 bits).
- * 51 bits de données, 2 bits de version, 12 bits de contrôle. */
+ * 52 bits de données, 2 bits de version, 11 bits de contrôle. */
 typedef unsigned char pu8;
 #define PW_LEN 13
 #define PW_ALPHA "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
@@ -13,7 +13,7 @@ typedef struct {
     pu8 surf;      /* 0..7 */
     pu8 fmt;       /* 0..3 */
     pu8 cond;      /* 0..3 */
-    pu8 env;       /* 0..3 */
+    pu8 env;       /* 0..4 */
     pu8 lvl;       /* 0..3 */
     pu8 results;   /* 8 bits de résultats du joueur */
     pu8 opts;      /* 0..7 options (personnalisé) */

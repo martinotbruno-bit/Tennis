@@ -34,7 +34,7 @@ src = open(os.path.join(ROOT, 'src', 'gfx.c')).read()
 names = re.findall(r'"(\w+) ?"', src[src.index('char_name'):src.index('char_female')])
 cp = [tuple(int(x, 16) for x in m) for m in re.findall(r'\{ 0x(\w\w), 0x(\w\w), 0x(\w\w) \}', src[src.index('char_pal'):src.index('style_name')])]
 sp = [tuple(int(x, 16) for x in m) for m in re.findall(r'\{ 0x(\w\w), 0x(\w\w), 0x(\w\w), 0x(\w\w) \}', src[src.index('surf_pal'):src.index('env_pal')])]
-surf = ['TERRE', 'GAZON', 'DUR', 'MOQUETTE', 'PLAGE', 'GLACE']
+surf = ['TERRE', 'GAZON', 'DUR', 'MOQUETTE', 'PLAGE', 'GLACE', 'MARGAUX']
 SEUIL = float(sys.argv[1]) if len(sys.argv) > 1 else 20.0
 worst = []
 for si, (univ, court, lines, net) in enumerate(sp):

@@ -126,6 +126,20 @@ console.log('Mode en équipe (double)');
     'partenaire joué par l\'ordinateur (JOUE PAR : CPU)');
 }
 
+console.log('Court Margaux');
+{
+  const e = boot(); toMenu(e);
+  for (let k = 0; k < 7; k++) e.tap('DOWN');
+  const seen = new Set(); for (let i = 0; i < 6; i++) { e.tap('RIGHT'); seen.add(e.peek('opt_val', O.ENV)); }
+  check(seen.has(4) && !seen.has(3), 'court Margaux proposé d\'emblée (club nudiste toujours verrouillé)');
+  setOpts(e, { ENV: 4 }); e.tap('START'); e.run(15);
+  check(e.text(4, 24, 22) === 'BIENVENUE SUR LE COURT', 'présentation du court Margaux');
+  e.tap('A'); e.run(30);
+  check(e.text(10, 3, 13) === 'COURT MARGAUX' && e.nes.cpu.mem[e.addr('pal_buf') + 1] === 0x25, 'court rose avec le panneau COURT MARGAUX');
+  allCpu(e); e.poke('crowd_timer', 60); e.run(70);
+  check(e.peek('crowd_timer') === 0, 'coeurs, fleurs et étoiles scintillent puis se reposent');
+}
+
 console.log('Présentation et pause');
 {
   const e = boot(); toMenu(e); e.tap('START'); e.run(10);
@@ -356,7 +370,7 @@ console.log('Compétition en double, levée de coupe et club nudiste');
   let envs = new Set();
   for (let k = 0; k < 7; k++) e.tap('DOWN');
   for (let i = 0; i < 6; i++) { e.tap('RIGHT'); envs.add(e.peek('opt_val', O.ENV)); }
-  check(!envs.has(3) && envs.size === 3, 'lieu « club nudiste » absent avant déblocage');
+  check(!envs.has(3) && envs.size === 4, 'lieu « club nudiste » absent avant déblocage (4 lieux proposés)');
 }
 {
   const { e, matches, code } = playComp(0, { TYPE: 1, P2: 5 }, () => true);
