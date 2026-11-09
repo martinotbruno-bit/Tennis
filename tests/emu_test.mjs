@@ -421,6 +421,17 @@ console.log('Compétition en double, levée de coupe et club nudiste');
   const tt = e.peek('trophy_tile'), ct = e.peek('confetti_tile'); let cup = 0, conf = 0;
   for (let i = 0; i < 64; i++) { const t = e.nes.cpu.mem[0x201 + i * 4], y = e.nes.cpu.mem[0x200 + i * 4]; if (y < 0xEF) { if (t >= tt && t < tt + 4) cup++; if (t === ct) conf++; } }
   check(cup === 4 && conf >= 8, `levée de coupe affichée (coupe ${cup} tuiles, ${conf} confettis)`);
+  // feux d'artifice pendant la levée de coupe : 5 gerbes, puis plus rien
+  e.poke('cup_t', 0);                       // on rejoue la levée de coupe depuis le début
+  let bursts = 0, prev = 0, late = 0;
+  for (let n = 0; n < 260; n++) {
+    e.run(1);
+    let st = 0; for (let i = 0; i < 64; i++) if (e.nes.cpu.mem[0x200 + i * 4] < 0xEF && e.nes.cpu.mem[0x201 + i * 4] === 3) st++;
+    if (st >= 4 && prev < 4) bursts++;
+    if (n > 230 && st) late++;
+    prev = st;
+  }
+  check(bursts === 5 && late === 0, `levée de coupe : ${bursts} feux d'artifice, puis le calme`);
   check(e.peek('nude_unlocked') === 1 && e.text(3, 23, 21) === 'MODE NUDISTE DEBLOQUE', 'victoire : club nudiste débloqué');
   check(/^[A-Z2-9]{13}$/.test(code), `code de reprise en double : ${code}`);
   // le lieu « club nudiste » est maintenant proposé

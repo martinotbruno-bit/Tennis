@@ -518,7 +518,7 @@ static void comp_screen(void)
 }
 
 static const char * const rank_txt[6] = { "", "VAINQUEUR !", "FINALISTE", "DEMI-FINALISTE", "4E", "ELIMINE" };
-static u8 cup_t, was_unlocked;
+static u8 cup_t, was_unlocked, fw_c;
 static void comp_end_screen(void)
 {
     char b[6];
@@ -584,6 +584,14 @@ static void comp_end_sprites(void)
     spr1(x, (u8)(cy + 8), (u8)(trophy_tile + 3), 2);
     spr_person(x, y, c_pl[0], 1, pose, 0, 0);
     if (c_dbl) spr_person((u8)(x + 22), y, c_pl2[0], 1, (u8)((frame_cnt >> 4) & 1 ? POSE_JOY : POSE_SERVE), 0, 1);
+    /* feux d'artifice pendant que la coupe est brandie (5 fusées, ~4 s),
+       plus bas que sur le court pour laisser lire « VAINQUEUR ! » */
+    if (cup_t == 24) fw_c = 131;
+    if (cup_t >= 24 && cup_t < 233) {             /* arrêt après la 5e gerbe, avant une 6e fusée */
+        if (--fw_c == 0) fw_c = 130;
+        fw_sound(fw_c);
+        fw_draw(fw_c, 64);
+    }
     if (cup_t >= 24)
         for (i = 0; i < 10; ++i)
             spr1(conf_x[i], (u8)(((u16)cup_t * conf_v[i] + i * 23) % 200 + 16), confetti_tile, (u8)(i & 3));

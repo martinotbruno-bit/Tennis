@@ -1059,7 +1059,7 @@ u8 match_tick(void)
         }
     } else if (ms == MS_OVER) {
         if (--ms_timer == 0) return 1;
-        if (win_party()) fw_sound();
+        if (win_party()) fw_sound(ms_timer);
     }
 
     /* enregistrement pour les ralentis (match uniquement) */
@@ -1157,7 +1157,7 @@ void match_draw(void)
         spr_person((u8)(((u16)plx[p] << 2) >> 8), (s16)(ys[p] - j), cfg.chr[p], side_of(p), k, flip_cache[p], (u8)(p & 1));
     }
     match_fx();     /* ombres, poussière, arbitre, repère (banque fixe) */
-    if (party) { win_fx(); fw_draw(); }
+    if (party) { win_fx(); fw_draw(ms_timer, 0); }
     if (cfg.cond == COND_RAIN) bank_call(BANK_EXTRAS, rain_draw);
     spr_end();
 }

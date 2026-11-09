@@ -291,29 +291,31 @@ void score_recap(void)
     recap_pend = 0;
 }
 
-/* Fête de victoire : 3 feux d'artifice. Chaque fusée siffle en montant, puis
-   éclate 15 trames plus tard (« pop ») en 4 étoiles qui s'écartent pendant
-   14 trames, au-dessus du court. Sons déclenchés par la logique (fw_sound),
-   gerbes dessinées avec le reste (fw_draw). */
-static const u8 fw_pop_t[3] = { 115, 75, 35 };     /* valeurs de ms_timer */
+/* Feux d'artifice (fête de victoire sur le court, levée de coupe). t est un
+   compte à rebours (ms_timer sur le court) : chaque fusée siffle en montant
+   à t = éclatement + 15, puis éclate (« pop ») à t = 115, 75 ou 35 en 4
+   étoiles qui s'écartent pendant 14 trames ; dy décale les gerbes vers le
+   bas. Sons déclenchés par la logique (fw_sound), gerbes dessinées avec le
+   reste (fw_draw). */
+static const u8 fw_pop_t[3] = { 115, 75, 35 };
 static const u8 fw_px[3] = { 72, 176, 124 };
 static const u8 fw_py[3] = { 64, 80, 52 };
-void fw_sound(void)
+void fw_sound(u8 t)
 {
     u8 k;
     for (k = 0; k < 3; ++k) {
-        if (ms_timer == (u8)(fw_pop_t[k] + 15)) sfx_fw_launch();
-        else if (ms_timer == fw_pop_t[k]) sfx_fw_pop();
+        if (t == (u8)(fw_pop_t[k] + 15)) sfx_fw_launch();
+        else if (t == fw_pop_t[k]) sfx_fw_pop();
     }
 }
-void fw_draw(void)
+void fw_draw(u8 t, u8 dy)
 {
-    u8 k, d, x, y, t = ms_timer;
+    u8 k, d, x, y;
     if (t > 115) return;                         /* rien avant le 1er éclatement */
     k = (u8)(t > 75 ? 0 : (t > 35 ? 1 : 2));     /* dernier feu éclaté */
     d = (u8)(fw_pop_t[k] - t);                   /* trames depuis l'éclatement */
     if (d >= 14) return;
-    x = fw_px[k]; y = fw_py[k];
+    x = fw_px[k]; y = (u8)(fw_py[k] + dy);
     spr1((u8)(x - d), y, 3, 3);
     spr1((u8)(x + d), y, 3, 3);
     spr1(x, (u8)(y - d), 3, 2);

@@ -12,6 +12,7 @@ Comme l'exige le CDC (§ 17.5), ce rapport distingue ce qui est **réalisé**, *
 |---|---|
 | Fanfare de victoire plus longue et plus joyeuse | Nouvelle fanfare de 160 trames, exactement la durée de la fête : arpèges qui montent sur do puis fa, montée finale et accord de do ; elle s'achève sur l'écran des résultats. Utilisée aussi à la fin du tutoriel et pour une compétition gagnée |
 | Feux d'artifice pendant la pluie d'étoiles | Trois fusées : sifflement qui monte, « pop », puis gerbe de 4 étoiles qui s'écartent au-dessus du court. En double, la fête coûte au plus une image sur 120 (invisible) |
+| Feux d'artifice aussi pour la victoire finale d'une compétition | Pendant la levée de coupe, 5 feux d'artifice (au lieu de 3 sur le court), plus bas pour laisser lire « VAINQUEUR ! », avec la nouvelle fanfare ; puis le calme jusqu'à A |
 
 ### Version 2.15
 
@@ -176,7 +177,7 @@ Pour loger ce contenu, la cartouche passe de NROM (32 Ko) à **MMC1** : 128 Ko d
 | Relecture des textes (`check_texts.py`) | 0 problème |
 | Contraste (`contrast.py 25`) | 0 paire sous ΔE 25 (personnages, courts, balle, tenues) |
 | Profil CPU, double, 6 000 trames | 27 trames d'échange en dépassement (0,45 %), sans défaut d'image |
-| Compilation | Reproductible : SHA-256 `49518fdd7c826ce48902dc1ff014ea3932be90777f8bb164abde10856f14b6a7` sur deux compilations propres |
+| Compilation | Reproductible : SHA-256 `708f85e1623c1a85c8c28033c4bee5304a7ba55eedddb4969df395f2094ade8b` sur deux compilations propres |
 
 ## 3. Conformité par section du CDC
 
