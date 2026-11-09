@@ -140,7 +140,7 @@ console.log('Court Margaux');
   const nt = (x, y) => e.nes.ppu.vramMem[0x2000 + y * 32 + x];
   // données en banque 3 : lues directement dans la ROM (16 Ko par banque)
   const rb = (sym, off) => e.nes.rom.rom[3][e.addr(sym) - 0x8000 + off];
-  const idx = [...Array(8).keys()].map((k) => rb('crowd_idx3', k));
+  const idx = [...Array(8).keys()].map((k) => rb('sign_idx', k));
   const placed = idx.every((t, k) => nt(5 + (k % 4), 2 + (k >> 2)) === t);
   let same = true; for (let b = 0; b < 128; b++) if (e.nes.ppu.vramMem[idx[b >> 4] * 16 + (b & 15)] !== rb('sign_chr', b)) same = false;
   check(placed && same && !/[A-Z]/.test(e.text(9, 3, 14)) && e.nes.cpu.mem[e.addr('pal_buf') + 1] === 0x25,
@@ -405,7 +405,14 @@ console.log('Compétition en double, levée de coupe et club nudiste');
   check(e.text(4, 24, 24) === 'CLUB NUDISTE LES BRONZES', 'présentation du club nudiste');
   e.tap('A'); e.run(70); allCpu(e);
   const v = e.nes.ppu.vramMem;
-  check(e.peek('cur_bank') === 0 && e.text(10, 3, 12) === 'CLUB NUDISTE', 'match au club nudiste (panneau du club)');
+  {
+    // panneau « BRONZES » à côté du score : tuiles du panneau en CHR-RAM et placées (rangées 2-3, col. 5-8)
+    const rb = (sym, off) => e.nes.rom.rom[3][e.addr(sym) - 0x8000 + off];
+    const idx = [...Array(8).keys()].map((k) => rb('sign2_idx', k));
+    const placed = idx.every((t, k) => e.nes.ppu.vramMem[0x2000 + (2 + (k >> 2)) * 32 + 5 + (k % 4)] === t);
+    let same = true; for (let b = 0; b < 128; b++) if (e.nes.ppu.vramMem[idx[b >> 4] * 16 + (b & 15)] !== rb('sign2_chr', b)) same = false;
+    check(e.peek('cur_bank') === 0 && placed && same, 'match au club nudiste (panneau BRONZES à côté du score)');
+  }
   // tuiles des personnages remplacées en CHR-RAM, puis restaurées au retour aux menus
   const nudeTile = [...v.slice(0x1100 + 2 * 16, 0x1100 + 3 * 16)].join(',');   // torse
   runUntil(e, () => app(e) === AS.SCREENS, 60 * 60 * 25); e.run(80);
@@ -827,6 +834,22 @@ console.log('Bandeau devant le joueur du haut');
     return false;
   }, 60 * 60 * 3);
   check(ok && !bad, 'joueur du haut au service : sa tête passe derrière le texte du bandeau, le reste du sprite devant le court');
+}
+
+console.log('Panneaux : tuiles empruntées rétablies');
+{
+  // club nudiste, puis stade dans la même partie : les tuiles du panneau retrouvent leur dessin
+  const e = boot(); e.poke('nude_unlocked', 1);
+  startWith(e, { FMT: 3, ENV: 3 }); allCpu(e); e.run(60);
+  const rb = (sym, off) => e.nes.rom.rom[3][e.addr(sym) - 0x8000 + off];
+  const idx = [...Array(8).keys()].map((k) => rb('sign2_idx', k));
+  const chr = (src) => { for (let b = 0; b < 128; b++) if (e.nes.ppu.vramMem[idx[b >> 4] * 16 + (b & 15)] !== rb(src, b)) return false; return true; };
+  const atNude = chr('sign2_chr');
+  e.tap('START', 1, 1, 2); e.tap('SELECT', 1, 1, 2);
+  runUntil(e, () => app(e) === AS.SCREENS, 120); e.run(30);
+  setOpts(e, { ENV: 0 }); e.tap('START'); e.run(40);
+  if (scr(e) === SS.PRESENT) { e.tap('A'); e.run(70); }
+  check(atNude && app(e) === AS.MATCH && chr('sign2_orig'), 'club nudiste puis stade : décor d\'origine rétabli');
 }
 
 console.log('Filet qui tremble');

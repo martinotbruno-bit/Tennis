@@ -12,6 +12,7 @@ Comme l'exige le CDC (§ 17.5), ce rapport distingue ce qui est **réalisé**, *
 |---|---|
 | Passer à la cartouche de 256 Ko | MMC1 (SNROM) à 16 banques de 16 Ko, la dernière fixe. Les codes de reprise quittent la banque fixe pour la banque 5 : 2,5 Ko libérés dans la banque fixe, et 8 banques (128 Ko) entièrement libres pour la suite. Toujours compatible avec les cartouches flash MMC1 |
 | Panneau Margaux plus petit, coloré, avec du volume, le plus haut possible, à côté du score | Petit panneau de 32 × 16 px dans le bandeau, juste à droite du score de gauche : face magenta, lettres blanches, liseré rose clair, rebord et pieds. Il remplace la grande planche blanche |
+| Panneau du club nudiste | Même traitement : petit panneau « BRONZES » (club « Les Bronzés ») jaune soleil à lettres noires, à côté du score, à la place du texte « CLUB NUDISTE » du bandeau |
 | Filet : les 5 améliorations | Bande blanche de 2 px, mailles aérées, ombre portée sur le court, poteaux avec reflet et tête claire, sangle centrale ; le filet tremble quand la balle le touche |
 | « CHANGEMENT DE CÔTÉ » centré | Toutes les annonces du bandeau sont centrées |
 
@@ -131,12 +132,12 @@ Pour loger ce contenu, la cartouche passe de NROM (32 Ko) à **MMC1** : 128 Ko d
 |---|---|
 | Règles (`rules_test`) | 42/42 |
 | Codes (`password_test`) | 200 000/200 000 aller-retour (format v3), ancien code v2 accepté, Margaux codée, Margaux au club nudiste refusée ; 99,98 % des codes altérés d'un signe refusés |
-| Émulateur (`emu_test`) | 174/174 vérifications (environ 20 min) |
+| Émulateur (`emu_test`) | 175/175 vérifications (environ 20 min) |
 | Profil CPU, simple, 6 000 trames | 0 trame d'échange en dépassement |
 | Relecture des textes (`check_texts.py`) | 0 problème |
 | Contraste (`contrast.py 25`) | 0 paire sous ΔE 25 (personnages, courts, balle, tenues) |
 | Profil CPU, double, 6 000 trames | 27 trames d'échange en dépassement (0,45 %), sans défaut d'image |
-| Compilation | Reproductible : SHA-256 `a16a45001f5febb365c59a05d43617fe1eb19702c194b43453b736eede9b8e54` sur deux compilations propres |
+| Compilation | Reproductible : SHA-256 `a2857066dc8cc0c782712b0bae8e7333e541977e1c6ff0886f719d7e1951a961` sur deux compilations propres |
 
 ## 3. Conformité par section du CDC
 

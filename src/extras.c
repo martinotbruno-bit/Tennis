@@ -99,7 +99,9 @@ void hud_update(void)
         vbuf_text(9, 2, sc_tiebreak ? " JEU DECISIF" : "", 14);
     }
     /* panneau du club (masqué pendant la pause par la crème solaire) */
-    if (cfg.env == ENV_NUDE && !paused) vbuf_text(9, 3, " CLUB NUDISTE", 14);
+    /* (le nom du club est sur le panneau à côté du score) ; ligne 3 libérée
+       après la pause */
+    if (cfg.env == ENV_NUDE && !paused) vbuf_text(9, 3, "", 14);
     hud_dirty = 0;
 }
 
@@ -124,24 +126,27 @@ void rain_draw(void)
 
 /* ---------------------------------------------------------------------- */
 extern u8 net_state;
-void load_court(void)
+/* copie n tuiles (16 octets chacune) en CHR-RAM, écran coupé */
+static void tiles_load(const u8 *idx, u8 n, const u8 *src)
 {
     u8 i, j;
-    const u8 *src = cfg.env == ENV_MARGAUX ? sign_chr : crowd_norm3;
+    for (i = 0; i < n; ++i) {
+        vram_adr((u16)idx[i] << 4);
+        for (j = 0; j < 16; ++j) vram_put(*src++);
+    }
+}
+void load_court(void)
+{
+    u8 nude = (u8)(cfg.env == ENV_NUDE);
     vram_unrle(court_nt_rle[cfg.env]);
-    people_tiles((u8)(cfg.env == ENV_NUDE));
-    /* court Margaux : panneau de fond de court dans les 8 premières tuiles du
-       public du club nudiste (inutilisées ici) ; ailleurs, on les rétablit */
-    for (i = 0; i < 8; ++i) {
-        vram_adr((u16)crowd_idx3[i] << 4);
-        for (j = 0; j < 16; ++j) vram_put(*src++);
-    }
+    people_tiles(nude);
+    /* panneaux à côté du score, dans 8 tuiles distinctes inutilisées sur leur
+       court (choisies par l'outil de génération : public d'un autre lieu) ;
+       ailleurs, on rétablit leur dessin d'origine */
+    tiles_load(sign_idx, 8, cfg.env == ENV_MARGAUX ? sign_chr : sign_orig);
+    tiles_load(sign2_idx, 8, nude ? sign2_chr : sign2_orig);
     /* filet au repos (au cas où on aurait quitté un match pendant qu'il tremblait) */
-    src = net_norm;
-    for (i = 0; i < 2; ++i) {
-        vram_adr((u16)net_idx[i] << 4);
-        for (j = 0; j < 16; ++j) vram_put(*src++);
-    }
+    tiles_load(net_idx, 2, net_norm);
     net_state = 0;
     net_shake = 0;
 }

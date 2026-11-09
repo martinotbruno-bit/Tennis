@@ -445,10 +445,6 @@ def court_attr(bx, by):
 
 court_nts = [bitmap_to_nametable(draw_court(e), court_attr) for e in range(5)]
 # panneau du club nudiste, ligne 3 du bandeau (police ASCII = n° de tuile)
-_nt3 = bytearray(court_nts[3])
-for i, ch in enumerate("CLUB NUDISTE"):
-    _nt3[3 * 32 + 10 + i] = ord(ch)
-court_nts[3] = bytes(_nt3)
 # court Margaux : petit panneau (32 x 16) dans le bandeau du haut, juste à
 # droite du score de gauche (colonnes 5 à 8, rangées 2 et 3). Palette des
 # abords du court (2) : 1 rose clair, 2 magenta, 3 blanc ; 0 = fond du bandeau.
@@ -483,12 +479,57 @@ def set_attr(nt, col, row, pal):
     nt[i] = (nt[i] & ~(3 << (q * 2))) | (pal << (q * 2))
 # indices : les 8 premières tuiles du public du club nudiste (inutilisées sur
 # le court Margaux) ; load_court y copie le panneau, et les rétablit ailleurs
+SIGN_IDX = [i for i in dict.fromkeys(crowd_idx3) if i not in set(court_nts[4][:960])][:8]
+assert len(SIGN_IDX) == 8
 _nt4 = bytearray(court_nts[4])
 for k in range(8):
-    _nt4[(SIGN_Y + k // 4) * 32 + SIGN_X + k % 4] = crowd_idx3[k]
+    _nt4[(SIGN_Y + k // 4) * 32 + SIGN_X + k % 4] = SIGN_IDX[k]
 for col in (4, 6, 8):                     # blocs 16 x 16 : palette des abords
     set_attr(_nt4, col, SIGN_Y, 2)
 court_nts[4] = bytes(_nt4)
+
+# club nudiste : même petit panneau à côté du score, « BRONZES » (club « Les
+# Bronzés »), jaune soleil. Palette 3 du décor : 1 noir, 2 jaune, 3 blanc ;
+# les ombres du score voisin y restent noires. Tuiles : celles du public du
+# stade (6) et du court Margaux (2), inutilisées au club nudiste.
+MINI.update({
+ 'B': ["110", "101", "110", "101", "110"], 'O': ["010", "101", "101", "101", "010"],
+ 'N': ["110", "101", "101", "101", "101"], 'Z': ["111", "001", "010", "100", "111"],
+ 'E': ["111", "100", "110", "100", "111"], 'S': ["011", "100", "010", "001", "110"],
+})
+def nude_sign():
+    c = [[0] * 32 for _ in range(16)]
+    def put(x, y, v):
+        if 0 <= x < 32 and 0 <= y < 16:
+            c[y][x] = v
+    for x in range(2, 30): put(x, 1, 3)                      # dessus (liseré blanc)
+    for y in range(2, 11):
+        for x in range(1, 31): put(x, y, 2)                  # face jaune soleil
+    for x in range(1, 31): put(x, 11, 1)                     # rebord sombre
+    for x, ch in enumerate("BRONZES"):
+        for y, row in enumerate(MINI[ch]):
+            for k, v in enumerate(row):
+                if v == '1': put(3 + x * 4 + k, 4 + y, 1)    # lettres noires
+    for y in range(12, 15):                                  # pieds
+        put(5, y, 1); put(6, y, 1); put(25, y, 1); put(26, y, 1)
+    return [[c[ty * 8 + y][tx * 8:tx * 8 + 8] for y in range(8)] for ty in range(2) for tx in range(4)]
+SIGN2_TILES = nude_sign()
+def pick_free(env, pool, n=8):
+    """n tuiles distinctes du réservoir, absentes du décor du court env."""
+    used = set(court_nts[env][:960])
+    out = [i for i in dict.fromkeys(pool) if i not in used]
+    assert len(out) >= n, "pas assez de tuiles libres pour le panneau"
+    return out[:n]
+# réservoir : tuiles de décor des autres courts (public, arbres, murs...),
+# hors police, hors décor du club nudiste et hors panneau Margaux
+_pool = [i for e in (0, 1, 2) for i in court_nts[e][:960] if i >= 0x60 and i not in SIGN_IDX] + list(crowd_idx) + list(crowd_idx4)
+SIGN2_IDX = pick_free(3, _pool)
+_nt3 = bytearray(court_nts[3])
+for k in range(8):
+    _nt3[(SIGN_Y + k // 4) * 32 + SIGN_X + k % 4] = SIGN2_IDX[k]
+for col in (4, 6, 8):
+    set_attr(_nt3, col, SIGN_Y, 3)
+court_nts[3] = bytes(_nt3)
 
 # filet secoué : tuiles de mailles « au repos » et « secouées » (rangées 15
 # et 16, colonne 12, sans ligne du court) ; l'animation remplace leur dessin
@@ -1068,6 +1109,11 @@ src.append(c_array('crowd_idx3', bytes(crowd_idx3)))
 src.append(c_array('crowd_norm3', b''.join(encode_tile(t) for t in NUDE_CROWD)))  # 12 tuiles
 src.append(c_array('crowd_cheer3', b''.join(encode_tile(t) for t in NUDE_CHEER)))
 src.append(c_array('sign_chr', b''.join(encode_tile(t) for t in SIGN_TILES)))   # panneau du court Margaux
+src.append(c_array('sign2_chr', b''.join(encode_tile(t) for t in SIGN2_TILES)))   # panneau du club nudiste
+src.append(c_array('sign_idx', bytes(SIGN_IDX)))
+src.append(c_array('sign_orig', b''.join(encode_tile(bg_tiles[i]) for i in SIGN_IDX)))
+src.append(c_array('sign2_idx', bytes(SIGN2_IDX)))
+src.append(c_array('sign2_orig', b''.join(encode_tile(bg_tiles[i]) for i in SIGN2_IDX)))
 src.append(c_array('net_idx', bytes(NET_IDX)))
 src.append(c_array('net_norm', b''.join(encode_tile(t) for t in net_tiles(False))))
 src.append(c_array('net_shk', b''.join(encode_tile(t) for t in net_tiles(True))))
