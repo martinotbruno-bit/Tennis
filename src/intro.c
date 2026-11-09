@@ -115,7 +115,7 @@ static void logo_anim(void)
     }
     if (t == 238) { vbuf_text(4, 18, "LIMITED EDITION : 1 COPY", 24); sfx_menu_ok(); }
     if (t == 258) vbuf_text(6, 21, "ALL RIGHTS RESERVED", 19);
-    if (t == 270) vbuf_text(5, 22, "(MOSTLY BY AUGUSTIN)", 20);
+    if (t == 270) vbuf_text(6, 22, "(MOSTLY BY AUGUSTIN)", 20);   /* centré */
     /* or qui scintille : la couleur claire du logo change toutes les 6 trames */
     if ((t % 6) == 0) {
         pal_buf[11] = shimmer[(t / 6) & 3];
@@ -144,7 +144,7 @@ static void stars_anim(void)
     /* critique : cinq étoiles, une toutes les 12 trames */
     if (t >= 12 && t <= 60 && (t % 12) == 0) {
         vbuf_reset();
-        vbuf_text((u8)(12 + t / 12 - 1), 5, "*", 1);
+        vbuf_text((u8)(13 + t / 12 - 1), 5, "*", 1);    /* « ***** » centré, colonnes 13 à 17 */
         sfx_menu_ok();
     }
 }
