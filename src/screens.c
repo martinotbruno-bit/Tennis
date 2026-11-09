@@ -693,6 +693,7 @@ static void results_screen(void)
     num2(b, st_longest); b[2] = 0;
     txt_at(2, 17, "ECHANGE LE PLUS LONG"); txt_at(26, 17, b);
     stat_row(18, "SERVICES CANON", st_canon[0], st_canon[1]);
+    stat_row(19, "COUPS PARFAITS", st_perf[0], st_perf[1]);
     if (last_mode == MODE_COMP) txt_at(4, 25, "A : CONTINUER");
     else txt_at(4, 25, "A : REVANCHE   B : MENU");
     ppu_on();
@@ -767,9 +768,12 @@ static void palmares_screen(void)
         txt_at(3, 17, "COMPETITIONS"); u16_at(22, 17, sv.comps);
         txt_at(3, 18, "RECORD ECHANGE"); u16_at(22, 18, sv.best_rally);
         txt_at(3, 19, "RECORD ACES/MATCH"); u16_at(22, 19, sv.best_aces);
-        txt_at(3, 21, "SERVICES CANON"); u16_at(22, 21, sx.ok);
-        t = sx.tried ? (u16)(((unsigned long)sx.ok * 100) / sx.tried) : 0;
-        txt_at(3, 22, "% DES SERVICES A"); u16_at(22, 22, t);
+        /* nombre et pourcentage de réussite */
+        txt_at(20, 20, "NB     %");
+        txt_at(3, 21, "SERVICES CANON"); u16_at(17, 21, sx.ok);
+        u16_at(23, 21, sx.tried ? (u16)(((unsigned long)sx.ok * 100) / sx.tried) : 0);
+        txt_at(3, 22, "COUPS PARFAITS"); u16_at(17, 22, sx.pok);
+        u16_at(23, 22, sx.ptry ? (u16)(((unsigned long)sx.pok * 100) / sx.ptry) : 0);
     } else if (pal_page == 1) {
         txt_at(3, 3, "MEILLEURS RESULTATS");
         for (i = 0; i < NCT; ++i) {

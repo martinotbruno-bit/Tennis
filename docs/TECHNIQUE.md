@@ -35,13 +35,13 @@ La version 1.0 tenait en NROM-256 (32 Ko, plein à 87 %). Il a fallu plus de pla
 
 | Banque | Contenu | Occupation |
 |---|---|---|
-| 7 (fixe, $C000) | Démarrage, NMI, primitives (sprites, VRAM, manettes, trampolines `bank_call` / `far_call`, enregistrement des ralentis), boucle principale, règles, codes, palettes, 17 personnages, noms des compétitions, échange des tuiles de personnages, son, bibliothèque cc65 | 14 125 |
-| 0 | Moteur de match : physique, frappes, service, arbitrage, IA | 16 193 |
-| 1 | Écrans : titre, configuration, présentation, résultats, compétitions, levée de coupe, saisie de code, palmarès | 14 617 |
+| 7 (fixe, $C000) | Démarrage, NMI, primitives (sprites, VRAM, manettes, trampolines `bank_call` / `far_call`, enregistrement des ralentis), boucle principale, règles, codes, palettes, 17 personnages, noms des compétitions, échange des tuiles de personnages, son, bibliothèque cc65 | 15 048 |
+| 0 | Moteur de match : physique, frappes, service, arbitrage, IA | 15 886 |
+| 1 | Écrans : titre, configuration, présentation, résultats, compétitions, levée de coupe, saisie de code, palmarès | 14 746 |
 | 2 | Motifs graphiques (8 Ko), copiés en CHR-RAM au démarrage | 8 192 |
 | 3 | Annexes du match : score et annonces du club nudiste, courts (4 lieux), public animé, pluie, ralentis, exercices, tutoriel | 9 899 |
-| 4 | Mode d'emploi | 3 608 |
-| 5 | Compétitions (tirages, simulations, classements, équipes de double) et palmarès | 7 581 |
+| 4 | Mode d'emploi | 3 628 |
+| 5 | Compétitions (tirages, simulations, classements, équipes de double) et palmarès | 7 652 |
 | 6 | Tuiles des personnages « au naturel » (club nudiste), copiées en CHR-RAM à la demande | 3 456 |
 
 ### RAM
@@ -129,6 +129,17 @@ Le lancer part toujours avec `bvz = 172` et une gravité de 6 : la vitesse verti
 Le CPU Expert le réussit une fois sur deux quand son tirage le fait frapper au sommet (environ 12 % de ses premières balles) ; Facile et Normal jamais. Compteurs : `st_canon` (réussis) et `st_ctry` (services A des humains) par match. Au palmarès, ils sont cumulés dans un bloc séparé de la RAM de cartouche (`sx`, signature « PC ») : la disposition du palmarès ne change pas, et SELECT × 2 les efface aussi.
 
 Taux de réussite attendu pour un adulte (estimation, pas une mesure), avec une régularité de geste de 40 à 60 ms en début de pratique et d'environ 25 ms entraîné : 25 à 30 % au début, 35 à 40 % après une heure ou deux, environ 50 % pour un joueur assidu.
+
+### Frappe parfaite (`perfect_hit`, banque fixe)
+
+Pour les coups lifté, à plat et coupé joués après le rebond :
+- **Placement** : écart latéral entre la balle et le joueur de 5 à 14 px. La frappe part dès que la balle entre dans la zone ; la profondeur n'est donc pas un critère, car la balle est toujours prise au bord avant de la zone.
+- **Timing (humain)** : la frappe doit tomber dans les 3 premières trames du geste (`pl_timer` ≥ 12), c'est-à-dire bouton relâché 0 à 2 trames avant l'entrée de la balle dans la zone (`swing_early`). Si le bouton est encore enfoncé à l'arrivée, la frappe part pendant l'armement : frappe normale.
+- **CPU** : tirage 40/256 en Expert et 10/256 en Normal, sous la même condition de placement ; jamais en Facile.
+- **Effet** : vitesse +25 %, dispersion 1, puissance d'armement ignorée ; `sfx_perfect` ; éclat (étoile blanche, palette 2) près de la raquette pendant 8 trames ; « COUP PARFAIT ! » si le coup est gagnant.
+- **Compteurs** : `st_perf` et `st_ptry` (coups lifté, à plat, coupé des humains) par match ; au palmarès, `sx.pok` et `sx.ptry` (bloc `sx`, signature « PD » ; les compteurs du service canon ont été remis à zéro une fois lors de ce changement).
+
+`can_hit` a été déplacée du moteur (banque 0) vers la banque fixe pour faire la place (606 octets libérés).
 
 ### Smash sauté
 
@@ -331,7 +342,7 @@ Outils de mise au point :
 |---|---|
 | `tests/rules_test.c` | 42 vérifications des règles |
 | `tests/password_test.c` | 200 000 codes aléatoires en aller-retour ; 8,06 millions de codes altérés d'un signe, refusés à 99,98 % |
-| `tests/emu_test.mjs` | 158 vérifications : démarrage MMC1 et CHR-RAM, mode d'emploi, menus adaptatifs, mode en équipe (toujours en double, partenaire CPU ou manette 2), présentation, menu de pause, lancer du serveur du haut, balle ratée qui sort de l'écran, let, matchs complets (6 surfaces × 3 lieux × 3 conditions, double), ralentis, revanche, palmarès, 9 exercices (joueur robot via la manette), 5 compétitions (dont éliminations), double en compétition (dont à 2 joueurs humains), levée de coupe, court Margaux, déblocage et club nudiste (tenues échangées en CHR-RAM puis restaurées), reprise par code, vitesse du jeu (lent/normal/rapide, aucun appui perdu), coups gagnants nommés, smash sauté (réservé aux humains et au CPU Expert), musiques hors match (Margaux, finale) et silence en match, smash sauté du CPU Expert et dans les ralentis, ombres, poussière, arbitre, repère d'atterrissage, réglage SON, réglages mémorisés après « rallumage », Margaux (menu, présentation, abréviation MX, code de reprise, chevelure propre, jamais au club nudiste), service canon (fenêtre de 2 trames mesurée en frappant à chaque trame du lancer, vitesse, compteurs, jamais pour le CPU Normal), fatigue avec et sans l'option, 50 Hz |
+| `tests/emu_test.mjs` | 161 vérifications : démarrage MMC1 et CHR-RAM, mode d'emploi, menus adaptatifs, mode en équipe (toujours en double, partenaire CPU ou manette 2), présentation, menu de pause, lancer du serveur du haut, balle ratée qui sort de l'écran, let, matchs complets (6 surfaces × 3 lieux × 3 conditions, double), ralentis, revanche, palmarès, 9 exercices (joueur robot via la manette), 5 compétitions (dont éliminations), double en compétition (dont à 2 joueurs humains), levée de coupe, court Margaux, déblocage et club nudiste (tenues échangées en CHR-RAM puis restaurées), reprise par code, vitesse du jeu (lent/normal/rapide, aucun appui perdu), coups gagnants nommés, smash sauté (réservé aux humains et au CPU Expert), musiques hors match (Margaux, finale) et silence en match, smash sauté du CPU Expert et dans les ralentis, ombres, poussière, arbitre, repère d'atterrissage, réglage SON, réglages mémorisés après « rallumage », Margaux (menu, présentation, abréviation MX, code de reprise, chevelure propre, jamais au club nudiste), service canon (fenêtre de 2 trames mesurée en frappant à chaque trame du lancer, vitesse, compteurs, jamais pour le CPU Normal), frappe parfaite (fenêtre de 3 trames mesurée en relâchant à chaque trame, placement, compteurs), fatigue avec et sans l'option, 50 Hz |
 | `tools/contrast.py 25` | Contraste (ΔE ≥ 25) de chaque personnage avec chaque court, de jour, de nuit et sous la pluie ; balle ; tenue de Margaux face à toutes les autres tenues. Lancé par `make test` |
 | `tools/check_texts.py` | Relecture des textes : caractères présents dans la police, colonnes, lignes du mode d'emploi, annonces de 14 caractères au plus |
 

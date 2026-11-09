@@ -331,26 +331,9 @@ static void ball_update(void)
 /* ====================================================================== */
 /* Frappes                                                                 */
 /* ====================================================================== */
-static u8 can_hit(u8 p)
-{
-    s16 dx, dy;
-    u8 t = (u8)(p & 1);
-    if (ms != MS_RALLY || !b_live || hitter == t) return 0;
-    if (bounces > 1) return 0;
-    if ((PX(by) < NET_Y ? 1 : 0) != side_of(t)) return 0;
-    if (b_serve && bounces == 0) return 0;      /* le retour se joue après rebond */
-    dx = PX(bx) - PX(plx[p]);
-    dy = PX(by) - PX(ply[p]);
-    /* zone de frappe généreuse : les balles un peu loin partent quand même */
-    if (dx < -24 || dx > 24 || dy < -15 || dy > 10) return 0;
-    if (bz > 40 * FP) {
-        /* balle très haute : smash sauté (joueurs humains et CPU expert),
-           avant le rebond et hors du fond du court */
-        if (bz > 62 * FP || bounces || iabs(PX(ply[p]) - NET_Y) > 70) return 0;
-        if (cfg.ctrl[p] == CTRL_CPU && cfg.level[p] != 2) return 0;
-    }
-    return 1;
-}
+/* can_hit : banque fixe (gamefix.c) */
+u8 can_hit(u8 p);
+u8 perfect_hit(u8 p, s16 dx);
 
 /* pad : directions maintenues ; btn : PAD_A ou PAD_B ; power 0..32 */
 static void do_hit(u8 p, u8 pad, u8 btn, u8 power, u8 spread)
@@ -397,6 +380,10 @@ static void do_hit(u8 p, u8 pad, u8 btn, u8 power, u8 spread)
         if (speed > 42) speed = 42;
         if (last_shot == SH_DRIVE || last_shot == SH_FLAT) last_shot = SH_VOLLEY;
     }
+    /* frappe parfaite (lifté, à plat, coupé ; banque fixe) : +25 % de vitesse,
+       presque sans écart */
+    hit_perf = perfect_hit(p, dx);
+    if (hit_perf) { speed = (u8)(speed + (speed >> 2)); spread = 1; power = 0; }
     last_aim = (u8)(pad & (PAD_LEFT | PAD_RIGHT));
 
     /* direction : croix gauche/droite, sinon croisé naturel */
@@ -425,7 +412,7 @@ static void do_hit(u8 p, u8 pad, u8 btn, u8 power, u8 spread)
     pl_hit[p] = 1;
     pl_flip[p] = (u8)(dx < 0);
     launch(tx, ty, T, grav);
-    sfx_hit((u8)(power >> 3));
+    if (hit_perf) sfx_perfect(); else sfx_hit((u8)(power >> 3));
     /* IA adaptative : on note les habitudes des joueurs humains */
     if (cfg.ctrl[p] != CTRL_CPU && ad_n[t] < 250) {
         ++ad_n[t];
@@ -647,6 +634,9 @@ static void human_update(u8 p, u8 pad, u8 pressed)
         sp = HUMAN_SPEED / 2;
     }
     if ((st == ST_CHARGE || (st == ST_SWING && pl_timer[p] > 4)) && !pl_hit[p] && can_hit(p)) {
+        /* frappe partie dans les 3 premières trames du geste : bouton relâché
+           juste avant l'arrivée de la balle (condition de la frappe parfaite) */
+        swing_early = (u8)(st == ST_SWING && pl_timer[p] >= 12);
         do_hit(p, pad, pl_btn[p], pl_charge[p], 3);
         pl_state[p] = ST_SWING;
         pl_timer[p] = 10;
@@ -873,7 +863,7 @@ void match_start(void)
     rules_init(cfg.sets_to_win, cfg.games_per_set, (u8)(cfg.mode == GM_MATCH ? (rand8() & 1) : 1));
     for (i = 0; i < 2; ++i) {
         st_points[i] = st_aces[i] = st_dfaults[i] = st_winners[i] = st_errors[i] = 0;
-        st_canon[i] = st_ctry[i] = 0;
+        st_canon[i] = st_ctry[i] = st_perf[i] = st_ptry[i] = 0;
         st_first_in[i] = st_first_tot[i] = 0;
         srv_slot[i] = 0;
         ad_l[i] = ad_r[i] = ad_net[i] = ad_n[i] = 0;

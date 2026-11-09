@@ -65,6 +65,7 @@ void launch(s16 tx, s16 ty, u8 T, u8 grav)
 /* Nom du coup gagnant affiché au centre du bandeau (15 caractères au plus) */
 const char *win_label(u8 shot, u8 pass, u8 jump)
 {
+    if (hit_perf) return "COUP PARFAIT !";
     if (shot == SH_SMASH) return jump ? "SMASH SAUTE !" : "SMASH !";
     if (shot == SH_DROP) return "AMORTIE !";
     if (shot == SH_LOB) return "LOB GAGNANT !";
@@ -82,7 +83,9 @@ const char *win_label(u8 shot, u8 pass, u8 jump)
 #include "gfx.h"
 #define PXU(v) ((u8)(((u16)(v) << 2) >> 8))      /* pixels, valeur positive */
 extern u8 pl_jump[4], tired;
+u8 st_perf[2], st_ptry[2], hit_perf, swing_early;
 static u8 fx_t, fx_x, fx_y, fx_kind, fx_bounces, fx_hits, mk_t;
+static u8 perf_t, perf_x, perf_y;
 
 void match_fx(void)
 {
@@ -130,6 +133,8 @@ void match_fx(void)
             spr1((u8)(PXU(plx[i]) + 6), (u8)(PXU(ply[i]) - 30), 14, 3);
         }
     }
+    /* frappe parfaite : petit éclat près de la raquette */
+    if (perf_t) { --perf_t; spr1(perf_x, perf_y, 3, 2); }   /* blanc : visible sur tous les courts */
     /* service canon : traînée de deux points derrière la balle */
     if (srv_canon && b_serve && b_live && bounces == 0) {
         for (j = 2; j < 6; j += 3) {
@@ -158,4 +163,56 @@ void team_name(u8 t, char *out)
         team_label(cfg.chr[t], 255, b);
         out[0] = b[0]; out[1] = b[1]; out[2] = b[2]; out[3] = b[3];
     }
+}
+
+/* le joueur p peut-il frapper la balle ? (déplacé du moteur, banque 0) */
+u8 can_hit(u8 p)
+{
+    s16 dx, dy;
+    u8 t = (u8)(p & 1);
+    if (ms != MS_RALLY || !b_live || hitter == t) return 0;
+    if (bounces > 1) return 0;
+    if ((PX(by) < NET_Y ? 1 : 0) != (u8)((t & 1) ^ sc_swap)) return 0;
+    if (b_serve && bounces == 0) return 0;      /* le retour se joue après rebond */
+    dx = PX(bx) - PX(plx[p]);
+    dy = PX(by) - PX(ply[p]);
+    /* zone de frappe généreuse : les balles un peu loin partent quand même */
+    if (dx < -24 || dx > 24 || dy < -15 || dy > 10) return 0;
+    if (bz > 40 * FP) {
+        /* balle très haute : smash sauté (joueurs humains et CPU expert),
+           avant le rebond et hors du fond du court */
+        if (bz > 62 * FP || bounces || iabs(PX(ply[p]) - NET_Y) > 70) return 0;
+        if (cfg.ctrl[p] == CTRL_CPU && cfg.level[p] != 2) return 0;
+    }
+    return 1;
+}
+
+/* ---------------------------------------------------------------------- */
+/* Frappe parfaite : coup lifté, à plat ou coupé après le rebond, balle à  */
+/* côté du corps (ni collée, ni en extension) et, pour un humain, bouton   */
+/* relâché juste avant l'arrivée de la balle (3 premières trames du geste) */
+/* ---------------------------------------------------------------------- */
+
+u8 perfect_hit(u8 p, s16 dx)
+{
+    u8 t = (u8)(p & 1), r = 0;
+    if (bounces == 0 || (last_shot != SH_DRIVE && last_shot != SH_FLAT && last_shot != SH_SLICE)) return 0;
+    if (cfg.ctrl[p] != CTRL_CPU) ++st_ptry[t];
+    /* balle à côté du corps : ni collée (< 5 px), ni en extension (> 14 px) ;
+       la frappe part dès que la balle entre dans la zone, sa position en
+       profondeur n'est donc pas un critère */
+    if (dx < 0) dx = -dx;
+    if (dx < 5 || dx > 14) return 0;
+    if (cfg.ctrl[p] == CTRL_CPU) {
+        /* CPU : Expert de temps en temps, Normal rarement, Facile jamais */
+        if (cfg.level[p] == 2) r = (u8)(rand8() < 40);
+        else if (cfg.level[p] == 1) r = (u8)(rand8() < 10);
+    } else r = swing_early;
+    if (r) {
+        ++st_perf[t];
+        perf_t = 8;                                         /* éclat sur la raquette */
+        perf_x = (u8)(PXU(plx[p]) + (PX(bx) < PX(plx[p]) ? -12 : 4));
+        perf_y = (u8)(PXU(ply[p]) - 18);
+    }
+    return r;
 }

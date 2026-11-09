@@ -222,3 +222,5 @@ void snd_set(u8 m)
 }
 /* service canon : « boum » sourd et bref, puis un claquement qui descend */
 void sfx_canon(void)      { noise(0x05, 0x0F); pulse1(0x84, 0x93, 140); }
+/* frappe parfaite : impact plus sec et plus aigu que la frappe normale */
+void sfx_perfect(void)    { pulse1(0x83, 0x8B, 70); noise(0x02, 0x03); }

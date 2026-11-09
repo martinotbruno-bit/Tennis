@@ -35,7 +35,8 @@ extern SaveOpts so;
    change pas et les sauvegardes existantes restent valables */
 typedef struct {
     u8 sig[2];
-    u16 ok, tried;
+    u16 ok, tried;      /* services canon réussis / services A */
+    u16 pok, ptry;      /* frappes parfaites / coups lifté, à plat, coupé */
     u8 sum;
 } SaveCanon;
 extern SaveCanon sx;

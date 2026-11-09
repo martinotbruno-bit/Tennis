@@ -14,6 +14,7 @@ void sfx_menu_move(void);
 void sfx_menu_ok(void);
 void sfx_toss(void);
 void sfx_step(void);               /* bruit de pas discret */
+void sfx_perfect(void);            /* « tchak » sec de la frappe parfaite */
 void sfx_canon(void);              /* « boum » du service canon */
 void sfx_winner(void);             /* carillon bref d'un coup gagnant */
 #define MUS_NONE    0

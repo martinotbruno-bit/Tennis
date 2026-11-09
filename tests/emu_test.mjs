@@ -697,6 +697,32 @@ console.log('Service canon');
   check(serves >= 20 && cpu === 0, `CPU Normal : aucun service canon sur ${serves} services`);
 }
 
+console.log('Frappe parfaite');
+{
+  // balle qui arrive sur le joueur du bas après rebond ; A maintenu puis relâché k trames avant
+  // son entrée dans la zone de frappe : seules 3 trames consécutives donnent une frappe parfaite
+  const trial = (k, x = 138) => {
+    const e = boot(); startWith(e, { FMT: 3 });
+    runUntil(e, () => e.peek('ms') === 0, 300);
+    const s16 = (n, v, o = 0) => { e.poke(n, v & 255, o); e.poke(n, (v >> 8) & 255, o + 1); };
+    e.poke('ms', 2); e.poke('b_live', 1); e.poke('b_vis', 1); e.poke('b_serve', 0); e.poke('bounces', 1);
+    e.poke('hitter', 1); e.poke('rally_hits', 3); e.poke('bgrav', 0);
+    s16('plx', 128 * 64, 0); s16('ply', 200 * 64, 0);
+    s16('bx', x * 64); s16('by', 155 * 64); s16('bz', 6 * 64); s16('bvx', 0); s16('bvy', 128); s16('bvz', 0);
+    // la balle entre dans la zone (dy >= -15) quand by >= 185 : 15 trames
+    e.down('A'); e.run(Math.max(1, 15 - k)); e.up('A');
+    for (let i = 0; i < 40 && e.peek('hitter') !== 0; i++) e.run(1);
+    return { hit: e.peek('hitter') === 0, perf: e.peek('hit_perf'), vy: Math.abs(e.peekS16('bvy')), n: e.peek('st_perf', 0), tries: e.peek('st_ptry', 0) };
+  };
+  const res = []; for (let k = 0; k <= 8; k++) res.push([k, trial(k)]);
+  const ks = res.filter(([, r]) => r.perf).map(([k]) => k);
+  check(ks.length === 3 && ks[2] === ks[0] + 2 && res.every(([, r]) => r.hit), `fenêtre de la frappe parfaite : 3 trames consécutives (relâché ${ks.join(', ')} trames avant)`);
+  const p = res.find(([, r]) => r.perf)[1];
+  check(p.n === 1 && p.tries === 1, 'frappe parfaite comptée');
+  const collee = trial(ks[1], 130), ext = trial(ks[1], 148);
+  check(!collee.perf && !ext.perf && collee.hit && ext.hit, 'balle collée au corps ou en extension : frappe normale');
+}
+
 console.log('Compensation 50 Hz (PAL)');
 {
   const e = boot(); e.poke('is_pal', 1); startWith(e, { FMT: 3 }); allCpu(e);

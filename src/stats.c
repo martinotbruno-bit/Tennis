@@ -10,12 +10,16 @@ SaveOpts so;
 SaveCanon sx;
 #pragma bss-name(pop)
 
-static u8 sx_sum(void) { return (u8)(0x3C ^ (u8)sx.ok ^ (u8)(sx.ok >> 8) ^ (u8)(sx.tried << 1) ^ (u8)(sx.tried >> 8)); }
+static u8 sx_sum(void)
+{
+    return (u8)(0x3C ^ (u8)sx.ok ^ (u8)(sx.ok >> 8) ^ (u8)(sx.tried << 1) ^ (u8)(sx.tried >> 8)
+                ^ (u8)(sx.pok << 2) ^ (u8)(sx.pok >> 8) ^ (u8)(sx.ptry << 3) ^ (u8)(sx.ptry >> 8));
+}
 
 void sx_check(void)
 {
-    if (sx.sig[0] != 'P' || sx.sig[1] != 'C' || sx.sum != sx_sum()) {
-        sx.sig[0] = 'P'; sx.sig[1] = 'C'; sx.ok = sx.tried = 0; sx.sum = sx_sum();
+    if (sx.sig[0] != 'P' || sx.sig[1] != 'D' || sx.sum != sx_sum()) {
+        sx.sig[0] = 'P'; sx.sig[1] = 'D'; sx.ok = sx.tried = sx.pok = sx.ptry = 0; sx.sum = sx_sum();
     }
 }
 
@@ -98,6 +102,8 @@ u8 __fastcall__ sv_after_match(u8 unused)
     sx_check();
     add16(&sx.ok, st_canon[0]);
     add16(&sx.tried, st_ctry[0]);
+    add16(&sx.pok, st_perf[0]);
+    add16(&sx.ptry, st_ptry[0]);
     sx.sum = sx_sum();
     return 0;
 }
