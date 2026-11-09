@@ -11,11 +11,13 @@
 #define BANK_MANUAL  4   /* mode d'emploi */
 #define BANK_COMP    5   /* compétitions et palmarès */
 #define BANK_NUDE    6   /* tuiles des personnages au naturel */
+#define BANK_INTRO   7   /* générique de lancement */
 
 /* état de l'application (lu par la boucle principale, banque fixe) */
 #define AS_SCREENS 0
 #define AS_MATCH   1
 #define AS_MANUAL  2
+#define AS_INTRO   3
 extern u8 app_state;
 
 /* requêtes de transition entre banques, traitées par la boucle principale */
@@ -24,6 +26,7 @@ extern u8 app_state;
 #define GO_SCREEN 2      /* entrer dans l'écran go_arg (banque des écrans) */
 #define GO_MANUAL 3
 #define GO_RESUME 4      /* reprendre le match après l'écran de fin de set */
+#define GO_INTRO  5      /* générique de lancement */
 extern u8 go_req, go_arg;
 extern u8 is_pal;
 
@@ -42,4 +45,6 @@ void screens_enter(u8 scr);        /* BANK_SCREENS */
 void screens_tick(void);
 void manual_begin(void);           /* BANK_MANUAL */
 void manual_tick(void);
+void intro_begin(void);            /* BANK_INTRO */
+void intro_tick(void);
 #endif

@@ -5,7 +5,7 @@ import { Emu } from './emu.mjs';
 const rom = process.argv[2], lv = +process.argv[3], seed0 = +(process.argv[4] ?? 1), N = +(process.argv[5] ?? 60 * 60 * 12);
 let rs = seed0 * 7919 + 13;
 const rnd = () => { rs = (rs * 1103515245 + 12345) & 0x7fffffff; return rs / 0x7fffffff; };
-const e = new Emu(rom); e.run(30 + seed0 * 7);
+const e = new Emu(rom); e.run(10); e.tap('START', 1, 1, 0); e.run(30 + seed0 * 7);   // générique passé
 e.tap('START'); e.run(10); e.poke('opt_val', lv, 5); e.poke('opt_val', 0, 10); e.tap('START'); e.run(20); e.tap('A'); e.run(5);
 const P = (n, i = 0) => e.peekS16(n, i * 2) / 64;
 let lastRh = -1, wait = 0, errX = 0, errY = 0, aim = [], charge = 0, holding = false;

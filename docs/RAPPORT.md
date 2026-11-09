@@ -6,6 +6,12 @@ Comme l'exige le CDC (§ 17.5), ce rapport distingue ce qui est **réalisé**, *
 
 ## 1. Évolutions
 
+### Version 2.12
+
+| Demande | Réalisation |
+|---|---|
+| Animation de lancement très prétentieuse, avec musique et plein de choses superficielles | Générique de 20 secondes sur une fanfare composée pour l'occasion : « BRUNO MARTINOT PRESENTS », « IN ASSOCIATION WITH AUGUSTIN MARTINOT, CHIEF EXECUTIVE SON », « A ROYAL MARTINOT PRODUCTION, FILMED IN GLORIOUS 8-BIT TECHNICOLOR », critiques cinq étoiles signées par la famille, prix « BEST GAME 2026 (CATEGORY: OUR LIVING ROOM) », puis révélation du logo lettre par lettre avec « boum », or scintillant, étoiles, confettis, ovation et « LIMITED EDITION : 1 COPY ». N'importe quel bouton le passe |
+
 ### Version 2.11
 
 | Demande | Réalisation |
@@ -139,12 +145,12 @@ Pour loger ce contenu, la cartouche passe de NROM (32 Ko) à **MMC1** : 128 Ko d
 |---|---|
 | Règles (`rules_test`) | 42/42 |
 | Codes (`password_test`) | 200 000/200 000 aller-retour (format v3), ancien code v2 accepté, Margaux codée, Margaux au club nudiste refusée ; 99,98 % des codes altérés d'un signe refusés |
-| Émulateur (`emu_test`) | 175/175 vérifications (environ 20 min) |
+| Émulateur (`emu_test`) | 178/178 vérifications (environ 21 min) |
 | Profil CPU, simple, 6 000 trames | 0 trame d'échange en dépassement |
 | Relecture des textes (`check_texts.py`) | 0 problème |
 | Contraste (`contrast.py 25`) | 0 paire sous ΔE 25 (personnages, courts, balle, tenues) |
 | Profil CPU, double, 6 000 trames | 27 trames d'échange en dépassement (0,45 %), sans défaut d'image |
-| Compilation | Reproductible : SHA-256 `0c12efd10e5755cc8e973ff6ab2faf67f613d3efe35972b0258e8ed03f6acbd4` sur deux compilations propres |
+| Compilation | Reproductible : SHA-256 `a1c44528ce76161338271d24da485b414c697ad4f6c2cbdacb893cc1efc9fbf7` sur deux compilations propres |
 
 ## 3. Conformité par section du CDC
 

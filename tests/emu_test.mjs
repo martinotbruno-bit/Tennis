@@ -15,7 +15,8 @@ const O = { MODE: 1, TYPE: 2, P1: 3, P2: 4, LEVEL: 5, SURF: 6, ENV: 7, COND: 8, 
 const MODE = { P1: 0, P2: 1, TEAM: 2, COMP: 3, TRAIN: 4, DEMO: 5 };
 const CFG = { CTRL: 2, LEVEL: 10, GAMES: 17, REPLAYS: 19 };
 
-function boot() { const e = new Emu(rom); e.run(30); return e; }
+// démarrage : le générique de lancement est passé avec START, puis écran titre
+function boot() { const e = new Emu(rom); e.run(40); e.tap('START', 1, 1, 0); e.run(30); return e; }
 const scr = (e) => e.peek('scr_state');
 const app = (e) => e.peek('app_state');
 function toMenu(e) { e.tap('START'); e.run(10); }
@@ -64,6 +65,25 @@ function botStep(e, btns = ['A']) {
     e.down(btns[0]);
     if (btns[1] && Math.abs(P(e, 'by') - py) < 22) e.down(btns[1]);
   }
+}
+
+console.log('Générique de lancement');
+{
+  const e = new Emu(rom); e.run(100);
+  const tx = (x, y, n) => e.text(x, y, n).replace(/\0/g, ' ');
+  check(e.peek('app_state') === 3 && e.peek('music_cur') === 9 && tx(9, 11, 14) === 'BRUNO MARTINOT', 'générique : BRUNO MARTINOT PRESENTS, fanfare');
+  let seen = new Set(), booms = 0, prevT = 0;
+  const ok = runUntil(e, () => {
+    if (tx(7, 12, 17) === 'AUGUSTIN MARTINOT') seen.add('augustin');
+    if (tx(10, 7, 11) === 'MAGNIFIQUE.') seen.add('critique');
+    if (tx(4, 18, 24) === 'LIMITED EDITION : 1 COPY') seen.add('edition');
+    return e.peek('app_state') === 0;
+  }, 1600);
+  e.run(30);
+  check(ok && seen.size === 3 && e.peek('scr_state') === 0 && e.text(10, 16, 5) === 'JOUER', `générique complet (${[...seen].join(', ')}) puis écran titre`);
+  const f = new Emu(rom); f.run(60); f.tap('B', 1, 1, 0);
+  let n = 0; while (f.peek('app_state') !== 0 && n < 30) { f.run(1); n++; }
+  check(f.peek('app_state') === 0 && n < 15, `un bouton passe le générique (${n + 1} trames)`);
 }
 
 console.log('Démarrage et cartouche MMC1');
@@ -636,9 +656,11 @@ const msgText = (e) => { let t = ''; for (let i = 0; i < 14; i++) t += String.fr
   // « rallumage » : une console neuve qui garde la RAM de cartouche
   const f = new Emu(rom);
   for (let a = 0x6000; a < 0x8000; a++) f.nes.cpu.mem[a] = e.nes.cpu.mem[a];
-  f.run(30);
+  f.run(40);
+  const sndIntro = f.peek('snd_mode');               // réglage SON appliqué dès le générique
+  f.tap('START', 1, 1, 0); f.run(30);
   check(f.peek('opt_val', O.P1) === 5 && f.peek('opt_val', O.SURF) === 3 && f.peek('opt_val', O.GSPEED) === 2
-    && f.peek('opt_val', O.ENV) === 4 && f.peek('snd_mode') === 1, 'derniers réglages retrouvés au démarrage (cartouche à pile)');
+    && f.peek('opt_val', O.ENV) === 4 && f.peek('snd_mode') === 1 && sndIntro === 1, 'derniers réglages retrouvés au démarrage (cartouche à pile), SON dès le générique');
   check(f.peek16('sv', 4) === e.peek16('sv', 4), 'palmarès conservé à côté des réglages');
 }
 
@@ -681,8 +703,10 @@ console.log('Margaux jouable et fatigue');
     const s16 = (n, v, o = 0) => { e.poke(n, v & 255, o); e.poke(n, (v >> 8) & 255, o + 1); };
     e.poke('ms', 2); e.poke('b_live', 1); e.poke('b_vis', 0); e.poke('hitter', 0); e.poke('rally_hits', hits);
     s16('plx', 80 * 64, 0); s16('ply', 200 * 64, 0);
-    const x0 = e.peekS16('plx', 0); e.down('RIGHT'); e.run(20); e.up('RIGHT');
-    const t = oamTiles(e).has(14);
+    // la goutte clignote (16 trames allumée, 16 éteinte) : on la cherche sur toute la course
+    const x0 = e.peekS16('plx', 0); let t = false;
+    e.down('RIGHT'); for (let f = 0; f < 20; f++) { e.run(1); t = t || oamTiles(e).has(14); } e.up('RIGHT');
+    for (let f = 0; f < 16 && !t; f++) { e.run(1); t = oamTiles(e).has(14); }
     return [e.peekS16('plx', 0) - x0, t];
   };
   const [d0] = dist(1, 2), [d1, sweat] = dist(1, 20), [d2] = dist(0, 20);

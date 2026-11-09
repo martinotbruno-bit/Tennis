@@ -19,7 +19,8 @@ Le jeu a été testé uniquement sur émulateur. Cette liste sert à le vérifie
 
 | # | Vérification | Attendu | OK ? |
 |---|---|---|---|
-| 1.1 | Allumer la console | L'écran titre « ROYAL MARTINOT » apparaît en moins de 2 s, sans écran noir prolongé ni image brouillée | ☐ |
+| 1.1 | Allumer la console | Le générique démarre (« BRUNO MARTINOT PRESENTS », fanfare), puis l'écran titre « ROYAL MARTINOT » après une vingtaine de secondes ; sans image brouillée | ☐ |
+| 1.1 b | Allumer, puis appuyer sur un bouton | Le générique s'arrête et l'écran titre apparaît aussitôt | ☐ |
 | 1.2 | Musique du titre | Mélodie jouée en boucle, sans grésillement ni note bloquée | ☐ |
 | 1.3 | HAUT/BAS dans le titre | L'étoile passe d'une ligne à l'autre avec un petit « bip » | ☐ |
 | 1.4 | Attendre sans toucher | La démo CPU contre CPU démarre au bout d'environ **20 secondes**. Chronométrez-la : c'est un bon test de vitesse, voir § 8 | ☐ |

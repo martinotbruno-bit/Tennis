@@ -34,6 +34,11 @@ static void handle_go(void)
             match_resume();
             app_state = AS_MATCH;
             break;
+        case GO_INTRO:
+            set_bank(BANK_INTRO);
+            app_state = AS_INTRO;
+            intro_begin();
+            break;
         case GO_MANUAL:
             set_bank(BANK_MANUAL);
             app_state = AS_MANUAL;
@@ -56,6 +61,10 @@ static void logic_tick(void)
         if (r) { go_req = GO_SCREEN; go_arg = (u8)(r == 2 ? SCR_SETBREAK : SCR_AFTER_MATCH); }
         else if (!no_draw) match_draw();   /* trame logique ajoutée : pas de dessin */
         break;
+    case AS_INTRO:
+        set_bank(BANK_INTRO);
+        intro_tick();
+        break;
     case AS_MANUAL:
         set_bank(BANK_MANUAL);
         manual_tick();
@@ -72,8 +81,7 @@ void main(void)
 {
     /* NTSC ~1860 boucles entre deux VBlank, PAL/Dendy > 2050 */
     is_pal = (u8)(region_cnt > 1970);
-    go_req = GO_SCREEN;
-    go_arg = SCR_TITLE;
+    go_req = GO_INTRO;                 /* générique, puis écran titre */
     handle_go();
     for (;;) {
         wait_frame();

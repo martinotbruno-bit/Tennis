@@ -83,6 +83,20 @@ static const u8 mus_margaux_bass[] = {
  C3,24, G3,12, F3,24, A3,12, G3,24, B3,12, C3,24, R,12,
  END,0 };
 
+/* Fanfare du générique : majestueuse et pompeuse, 16 mesures de 60 trames */
+static const u8 mus_intro_mel[] = {
+ C4,30, G4,15, C5,15,  E5,45, D5,15,  C5,15, D5,15, E5,15, G5,15,  A5,60,
+ G5,30, E5,15, C5,15,  F5,45, E5,15,  D5,15, E5,15, F5,15, A5,15,  G5,60,
+ G4,15, G4,8, G4,7, C5,30,  E5,15, E5,8, E5,7, G5,30,  A5,20, G5,20, F5,20,  E5,30, D5,30,
+ C5,15, E5,15, G5,15, A5,15,  G5,30, F5,15, D5,15,  C5,60,  C5,15, G4,15, C5,30,
+ END,0 };
+static const u8 mus_intro_bass[] = {
+ C3,60,  C3,30, G3,30,  C3,60,  F3,60,
+ C3,60,  F3,30, C3,30,  D3,30, F3,30,  G3,60,
+ C3,60,  C3,30, E3,30,  F3,60,  G3,60,
+ A3,30, E3,30,  F3,30, G3,30,  C3,60,  G3,30, C3,30,
+ END,0 };
+
 /* Interlude de fin de set : air calme et léger, 8 mesures de 48 trames */
 static const u8 mus_break_mel[] = {
  E5,12, G5,12, A5,12, G5,12,  E5,24, C5,24,  D5,12, E5,12, F5,12, A5,12,  G5,36, R,12,
@@ -135,6 +149,7 @@ void music_play(u8 id)
     case MUS_VICTORY: mel_ptr = mus_vict_mel; bass_ptr = mus_vict_bass; break;
     case MUS_DEFEAT:  mel_ptr = mus_def_mel; break;
     case MUS_FINAL:   mel_ptr = mus_final_mel; bass_ptr = mus_final_bass; music_loop = 1; break;
+    case MUS_INTRO:   mel_ptr = mus_intro_mel; bass_ptr = mus_intro_bass; break;
     case MUS_BREAK:   mel_ptr = mus_break_mel; bass_ptr = mus_break_bass; music_loop = 1; mel_duty = 0x44; break;
     case MUS_MARGAUX: mel_ptr = mus_margaux_mel; bass_ptr = mus_margaux_bass; music_loop = 1; mel_duty = 0x44; break;
     default: break;

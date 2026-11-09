@@ -2,7 +2,7 @@
 import { Emu } from './emu.mjs';
 const rom = process.argv[2], out = process.argv[3] ?? 'shots';
 const O = { MODE: 1, TYPE: 2, P1: 3, P2: 4, LEVEL: 5, SURF: 6, ENV: 7, COND: 8, FMT: 9, COMP: 11, EX: 15 };
-function boot() { const e = new Emu(rom); e.run(30); return e; }
+function boot() { const e = new Emu(rom); e.run(40); e.tap('START', 1, 1, 0); e.run(30); return e; }   // générique passé
 function menu(e, opts) { e.tap('START'); e.run(10); for (const [k, v] of Object.entries(opts)) e.poke('opt_val', v, O[k]); }
 function allCpu(e) { const c = e.addr('cfg'); for (let i = 0; i < 4; i++) e.nes.cpu.mem[c + 2 + i] = 2; }
 function match(opts, frames, name) {

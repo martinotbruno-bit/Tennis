@@ -6,6 +6,17 @@ Ce manuel est aussi intégré au jeu : à l'écran titre, choisissez **MODE D'EM
 
 ![Aperçu](img/apercu.png)
 
+## 0. Générique de lancement
+
+À l'allumage, un générique d'une vingtaine de secondes, sur une fanfare, rappelle à tous l'importance de l'événement :
+1. « BRUNO MARTINOT PRESENTS » ;
+2. « IN ASSOCIATION WITH AUGUSTIN MARTINOT — CHIEF EXECUTIVE SON » ;
+3. « A ROYAL MARTINOT PRODUCTION — FILMED IN GLORIOUS 8-BIT TECHNICOLOR » ;
+4. la critique : cinq étoiles, « MAGNIFIQUE. » (Bruno Martinot), « THE GREATEST TENNIS GAME EVER MADE IN THIS HOUSE. » (Augustin Martinot), « WINNER - BEST GAME 2026 (CATEGORY: OUR LIVING ROOM) » ;
+5. la révélation du logo : chaque lettre géante tombe avec un « boum », l'or scintille, des étoiles brillent, les confettis tombent sous les applaudissements, puis « LIMITED EDITION : 1 COPY » et « ALL RIGHTS RESERVED (MOSTLY BY AUGUSTIN) ».
+
+**N'importe quel bouton** passe directement à l'écran titre. Le réglage SON mémorisé s'applique dès le générique.
+
 ## 1. Écran titre
 
 **HAUT/BAS** choisit une entrée et **A** la valide. **START** ouvre directement la configuration.
