@@ -78,5 +78,7 @@ void rain_tick(void);
 void rain_draw(void);
 void win_fx(void);              /* étoiles et confettis de victoire (sprp.s, banque fixe) */
 u8 win_party(void);
+void fw_sound(void);            /* feux d'artifice de la victoire (banque fixe) */
+void fw_draw(void);
 extern u8 pause_cur;
 #endif

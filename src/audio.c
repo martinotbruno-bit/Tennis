@@ -69,8 +69,14 @@ static const u8 mus_title_bass[] = {
 
 static const u8 mus_point_mel[] = { G4,5, C5,10, END,0 };
 static const u8 mus_game_mel[]  = { C5,5, E5,5, G5,5, C5,4, G5,14, END,0 };
-static const u8 mus_vict_mel[]  = { C5,6, E5,6, G5,6, C5,6, E5,6, G5,12, R,4, A5,6, G5,6, A5,6, G5,24, END,0 };
-static const u8 mus_vict_bass[] = { C3,24, E3,24, F3,16, G3,16, C3,24, END,0 };
+/* Victoire : fanfare joyeuse de 160 trames, exactement la durée de la fête
+ * (« JEU, SET ET MATCH ! ») ; elle s'achève sur l'écran des résultats. */
+static const u8 mus_vict_mel[]  = {
+ G4,6, C5,6, E5,6, G5,12, E5,6, G5,18, A4,6, D5,6, F5,6, A5,12, F5,6, A5,18,
+ G5,6, A5,6, B5,6, G5,6, E5,6, D5,6, C5,16, END,0 };
+static const u8 mus_vict_bass[] = {
+ C3,12, G3,12, E3,12, G3,12, C3,6, F3,12, C4,12, A3,12, C4,12, F3,6,
+ G3,12, B3,12, G3,12, C3,16, END,0 };
 static const u8 mus_def_mel[]   = { G4,10, F4,10, E4,10, D4,10, C4,30, END,0 };
 
 /* Thème de la finale (écrans d'avant-match) : marche solennelle, 8 mesures de 80 trames */
@@ -290,3 +296,6 @@ void sfx_canon(void)      { noise(0x05, 0x0F); pulse1(0x84, 0x93, 140); }
 void sfx_perfect(void)    { pulse1(0x83, 0x8B, 70); noise(0x02, 0x03); }
 /* un seul applaudissement timide (générique) */
 void sfx_clap(void)       { noise(0x01, 0x05); }
+/* feu d'artifice : sifflement de la fusée qui monte, puis « pop » */
+void sfx_fw_launch(void)  { pulse1(0x4A, 0xBB, 700); }
+void sfx_fw_pop(void)     { noise(0x04, 0x0C); pulse1(0x82, 0x00, 1600); }

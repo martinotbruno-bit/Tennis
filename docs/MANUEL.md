@@ -140,7 +140,7 @@ Le lancer reste visible quelle que soit votre position, y compris quand vous ser
   - après chaque jeu, le bandeau affiche pendant 2 secondes le score set par set, une ligne par équipe : « ALEX 6 3 » / « MAYA 4 1 » (sets terminés, puis jeux du set en cours) ;
   - à la fin de chaque set, un écran fait le point : tableau des sets, vainqueur du set, statistiques du match jusque-là, joueur au service pour la suite, sur une petite musique d'interlude. **N'importe quel bouton** (manette 1 ou 2) ferme l'écran aussitôt et reprend le match, sans fondu ; sinon, reprise automatique au bout de 10 secondes. La musique s'arrête dès la reprise ;
   - en fin de match, l'écran des résultats commence par le tableau complet des sets.
-- **Victoire** : quand vous gagnez le match, pendant « JEU, SET ET MATCH ! », votre joueur (et votre partenaire en double) **sautille de joie**, raquette levée, sous une **pluie d'étoiles et de confettis**. Pas de fête quand c'est le CPU qui vous bat.
+- **Victoire** : quand vous gagnez le match, pendant « JEU, SET ET MATCH ! », votre joueur (et votre partenaire en double) **sautille de joie**, raquette levée, sous une **pluie d'étoiles et de confettis**, sur une **fanfare de victoire** qui dure toute la fête. Trois **feux d'artifice** partent : la fusée siffle en montant, fait « pop » et éclate en étoiles. Pas de fête quand c'est le CPU qui vous bat (petite mélodie triste à la place).
 - Le **public** se lève et applaudit après les beaux points. Après un ace, un coup gagnant, une frappe parfaite gagnante ou un long échange, un **ralenti** rejoue le point (A pour le passer).
 - **En fin de match** :
   - le vainqueur célèbre et le perdant baisse la tête ;

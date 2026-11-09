@@ -4,6 +4,8 @@
 #include "game_int.h"
 #include "rules.h"
 #include "court.h"
+#include "gfx.h"
+#include "audio.h"
 
 #pragma static-locals(on)
 
@@ -287,4 +289,33 @@ void score_recap(void)
     score_line(1, b);
     set_msg(a, b, 120);
     recap_pend = 0;
+}
+
+/* Fête de victoire : 3 feux d'artifice. Chaque fusée siffle en montant, puis
+   éclate 15 trames plus tard (« pop ») en 4 étoiles qui s'écartent pendant
+   14 trames, au-dessus du court. Sons déclenchés par la logique (fw_sound),
+   gerbes dessinées avec le reste (fw_draw). */
+static const u8 fw_pop_t[3] = { 115, 75, 35 };     /* valeurs de ms_timer */
+static const u8 fw_px[3] = { 72, 176, 124 };
+static const u8 fw_py[3] = { 64, 80, 52 };
+void fw_sound(void)
+{
+    u8 k;
+    for (k = 0; k < 3; ++k) {
+        if (ms_timer == (u8)(fw_pop_t[k] + 15)) sfx_fw_launch();
+        else if (ms_timer == fw_pop_t[k]) sfx_fw_pop();
+    }
+}
+void fw_draw(void)
+{
+    u8 k, d, x, y, t = ms_timer;
+    if (t > 115) return;                         /* rien avant le 1er éclatement */
+    k = (u8)(t > 75 ? 0 : (t > 35 ? 1 : 2));     /* dernier feu éclaté */
+    d = (u8)(fw_pop_t[k] - t);                   /* trames depuis l'éclatement */
+    if (d >= 14) return;
+    x = fw_px[k]; y = fw_py[k];
+    spr1((u8)(x - d), y, 3, 3);
+    spr1((u8)(x + d), y, 3, 3);
+    spr1(x, (u8)(y - d), 3, 2);
+    spr1(x, (u8)(y + d), 3, 2);
 }

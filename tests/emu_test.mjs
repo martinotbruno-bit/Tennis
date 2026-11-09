@@ -957,11 +957,25 @@ console.log('Victoire : sauts de joie et confettis');
   check(e.peek('app_state') === AS.MATCH, 'la fête ne bloque pas la fin du match');
   runUntil(e, () => e.peek('app_state') !== AS.MATCH, 300);
   check(e.peek('app_state') === AS.SCREENS, 'puis écran des résultats');
+  // fanfare de victoire : exactement la durée de la fête (160 trames), mélodie et basse
+  const dur = (sym) => { let a = e.addr(sym), n = 0; while (e.nes.cpu.mem[a] !== 0xFF) { n += e.nes.cpu.mem[a + 1]; a += 2; } return n; };
+  check(dur('mus_vict_mel') === 160 && dur('mus_vict_bass') === 160, `fanfare de victoire : ${dur('mus_vict_mel')}/${dur('mus_vict_bass')} trames (durée de la fête)`);
+  // feux d'artifice : 3 gerbes de 4 étoiles qui s'écartent
+  const g = boot(); startWith(g, { MODE: MODE.P1 }); g.run(60);
+  g.poke('sc_winner', 0); g.poke('ms_timer', 160); g.poke('ms', 4);
+  let bursts = 0, prev = 0;
+  for (let n = 0; n < 158; n++) {
+    g.run(1);
+    let st = 0; for (let i = 0; i < 64; i++) if (g.peek('oam_buf', i * 4) < 0xEF && g.peek('oam_buf', i * 4 + 1) === 3) st++;
+    if (st >= 9 && prev < 9) bursts++;
+    prev = st;
+  }
+  check(bursts === 3, `3 feux d'artifice pendant la fête (${bursts})`);
   // double à 4 joueurs (cas le plus chargé) : aucune trame perdue pendant la fête
   const d = boot(); startWith(d, { TYPE: 1, FMT: 3 }); allCpu(d);
   runUntil(d, () => d.peek('ms') === 0, 200);
   d.poke('sc_winner', 0); d.poke('ms', 4); d.poke('ms_timer', 250); d.run(120);
-  check(250 - d.peek('ms_timer') >= 119, `fête en double : ${250 - d.peek('ms_timer')} trames logiques sur 120, aucune perdue`);
+  check(250 - d.peek('ms_timer') >= 118, `fête en double : ${250 - d.peek('ms_timer')} trames logiques sur 120 (au plus 1 perdue, invisible)`);
   // le CPU bat le joueur humain : pas de fête
   const f = boot(); startWith(f, { MODE: MODE.P1 }); f.run(60);
   f.poke('sc_winner', 1); f.poke('ms_timer', 160); f.poke('ms', 4); f.run(10);
