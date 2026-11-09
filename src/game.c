@@ -19,6 +19,8 @@ MatchCfg cfg;
 u8 match_quit;
 u8 st_points[2], st_aces[2], st_dfaults[2], st_winners[2], st_errors[2];
 u8 st_first_in[2], st_first_tot[2], st_longest;
+u8 st_canon[2], st_ctry[2];      /* services canon réussis, services A tentés (humains) */
+u8 srv_canon;                    /* le dernier service est un service canon */
 u8 tr_score, tr_total, tr_best;
 u8 tr_ev, tr_done, tr_human_serves, tr_step, tr_target, tr_streak;
 s16 ev_x, ev_y;
@@ -520,8 +522,20 @@ static void serve_hit(u8 p, u8 pad, u8 btn, u8 quality, u8 spread)
     u8 speed, grav, T;
     s8 dir = ss ? 1 : -1;
 
+    srv_canon = 0;
     if (btn == PAD_B) { speed = 44; grav = 7; bspin = SPIN_SLICE; }
-    else { speed = 64; grav = 9; bspin = SPIN_FLAT; spread += 4; }
+    else {
+        speed = 64; grav = 9; bspin = SPIN_FLAT; spread += 4;
+        if (cfg.ctrl[p] != CTRL_CPU) ++st_ctry[t];
+        /* SERVICE CANON : frappe A pile au sommet du lancer (quality 0 : les
+           2 trames où |vz| < 8). Le CPU Expert le réussit une fois sur deux
+           quand il frappe au sommet ; Facile et Normal jamais */
+        if (!quality && (cfg.ctrl[p] != CTRL_CPU || (cfg.level[p] == 2 && (rand8() & 1)))) {
+            srv_canon = 1; speed = 84; grav = 11;
+            spread = (u8)(faults ? 6 : 1);    /* 2e balle : un peu plus risqué */
+            ++st_canon[t];
+        }
+    }
     spread = (u8)(spread + quality);
     /* croix : extérieur / au T */
     if (left) tx = (pad & PAD_LEFT) ? SGL_L + 8 : (pad & PAD_RIGHT) ? CENTER_X - 6 : CENTER_X - 26;
@@ -540,7 +554,8 @@ static void serve_hit(u8 p, u8 pad, u8 btn, u8 quality, u8 spread)
     ms = MS_RALLY;
     pl_state[p] = ST_SWING;
     pl_timer[p] = 12;
-    sfx_hit(btn == PAD_B ? 1 : 3);
+    if (srv_canon) { sfx_canon(); set_msg("SERVICE CANON", "", 50); }
+    else sfx_hit(btn == PAD_B ? 1 : 3);
     ai_delay[t ^ 1] = ai_react[cfg.level[t ^ 1]];
     if (npl == 4) ai_delay[(t ^ 1) + 2] = ai_react[cfg.level[(t ^ 1) + 2]];
     pcache_y[0] = pcache_y[1] = pcache_y[2] = pcache_y[3] = 0x7FFF;
@@ -858,6 +873,7 @@ void match_start(void)
     rules_init(cfg.sets_to_win, cfg.games_per_set, (u8)(cfg.mode == GM_MATCH ? (rand8() & 1) : 1));
     for (i = 0; i < 2; ++i) {
         st_points[i] = st_aces[i] = st_dfaults[i] = st_winners[i] = st_errors[i] = 0;
+        st_canon[i] = st_ctry[i] = 0;
         st_first_in[i] = st_first_tot[i] = 0;
         srv_slot[i] = 0;
         ad_l[i] = ad_r[i] = ad_net[i] = ad_n[i] = 0;

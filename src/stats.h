@@ -30,6 +30,16 @@ typedef struct {
     u8 sum;
 } SaveOpts;
 extern SaveOpts so;
+
+/* services canon (palmarès), bloc à part : la disposition du palmarès ne
+   change pas et les sauvegardes existantes restent valables */
+typedef struct {
+    u8 sig[2];
+    u16 ok, tried;
+    u8 sum;
+} SaveCanon;
+extern SaveCanon sx;
+void sx_check(void);
 extern u8 opt_val[NOPT_SAVE];
 u8 __fastcall__ so_load(u8 unused);    /* 1 si des réglages valides ont été copiés dans opt_val */
 u8 __fastcall__ so_save(u8 unused);

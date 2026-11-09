@@ -45,6 +45,7 @@ Réglages : FORMAT RAPIDE, NIVEAU FACILE, VITESSE JEU NORMAL.
 |---|---|---|---|
 | 3.1 | Écran de présentation, puis A | Le court s'affiche d'un coup, sans lignes parasites. **Aucune musique pendant le match** | ☐ |
 | 3.2 | Service : A pour lancer, A au sommet | La balle monte et redescend ; le service part. Faites-le aussi en étant le joueur du haut (après un changement de côté) | ☐ |
+| 3.2 b | Service canon : A pile au sommet du lancer, environ une demi-seconde après | Bandeau « SERVICE CANON », « boum », traînée derrière la balle. Notez combien vous en réussissez sur 20 services A (palmarès : SERVICES CANON) | ☐ |
 | 3.3 | Échanges | La balle grossit en hauteur ; son ombre reste au sol ; les joueurs ont une ombre sous les pieds | ☐ |
 | 3.4 | Se déplacer latéralement | Le joueur court de profil, avec des bruits de pas discrets | ☐ |
 | 3.5 | Coup gagnant | Bandeau « COUP GAGNANT ! », « PASSING ! », « AMORTIE ! »… et un « ting » bref | ☐ |

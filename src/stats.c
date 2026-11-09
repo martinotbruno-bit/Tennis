@@ -7,7 +7,17 @@
 #pragma bss-name(push, "SAVEDATA")
 SaveData sv;
 SaveOpts so;
+SaveCanon sx;
 #pragma bss-name(pop)
+
+static u8 sx_sum(void) { return (u8)(0x3C ^ (u8)sx.ok ^ (u8)(sx.ok >> 8) ^ (u8)(sx.tried << 1) ^ (u8)(sx.tried >> 8)); }
+
+void sx_check(void)
+{
+    if (sx.sig[0] != 'P' || sx.sig[1] != 'C' || sx.sum != sx_sum()) {
+        sx.sig[0] = 'P'; sx.sig[1] = 'C'; sx.ok = sx.tried = 0; sx.sum = sx_sum();
+    }
+}
 
 static u8 so_sum(void)
 {
@@ -52,6 +62,7 @@ u8 __fastcall__ sv_clear(u8 unused)
     for (i = 0; i < sizeof(SaveData); ++i) p[i] = 0;
     sv.sig[0] = 'P'; sv.sig[1] = 'X'; sv.sig[2] = 'O'; sv.sig[3] = '1';
     commit();
+    sx.sig[0] = 0; sx_check();             /* services canon remis à zéro */
     return unused;
 }
 
@@ -59,6 +70,7 @@ u8 __fastcall__ sv_check(u8 unused)
 {
     if (sv.sig[0] != 'P' || sv.sig[1] != 'X' || sv.sig[2] != 'O' || sv.sig[3] != '1' || sv.sum != compute_sum())
         sv_clear(unused);
+    sx_check();
     return 0;
 }
 
@@ -83,6 +95,10 @@ u8 __fastcall__ sv_after_match(u8 unused)
     if (st_longest > sv.best_rally) sv.best_rally = st_longest;
     if (st_aces[0] > sv.best_aces) sv.best_aces = st_aces[0];
     commit();
+    sx_check();
+    add16(&sx.ok, st_canon[0]);
+    add16(&sx.tried, st_ctry[0]);
+    sx.sum = sx_sum();
     return 0;
 }
 

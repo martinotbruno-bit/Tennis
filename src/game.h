@@ -64,6 +64,7 @@ extern MatchCfg cfg;
 /* statistiques du dernier match, par équipe */
 extern u8 st_points[2], st_aces[2], st_dfaults[2], st_winners[2], st_errors[2];
 extern u8 st_first_in[2], st_first_tot[2], st_longest;
+extern u8 st_canon[2], st_ctry[2], srv_canon;
 /* entraînement */
 extern u8 tr_score, tr_total, tr_best;
 extern u8 match_quit;

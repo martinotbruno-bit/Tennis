@@ -220,3 +220,5 @@ void snd_set(u8 m)
     APU(0x4015) = (u8)(m == 2 ? 0x00 : 0x0F);
     if (m) { mel_ptr = bass_ptr = 0; APU(0x4004) = 0x30; APU(0x4008) = 0x80; }
 }
+/* service canon : « boum » sourd et bref, puis un claquement qui descend */
+void sfx_canon(void)      { noise(0x05, 0x0F); pulse1(0x84, 0x93, 140); }

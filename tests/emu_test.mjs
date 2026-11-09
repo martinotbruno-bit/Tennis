@@ -673,6 +673,30 @@ console.log('Margaux jouable et fatigue');
   check(sweat, 'goutte de sueur au-dessus des joueurs fatigués');
 }
 
+console.log('Service canon');
+{
+  // frappe A k trames après le lancer : seules 2 trames consécutives (le sommet) donnent un service canon
+  const trial = (k, lv = 1) => {
+    const e = boot(); startWith(e, { FMT: 3, LEVEL: lv });
+    runUntil(e, () => e.peek('ms') === 0 && e.peek('sc_server') === 0, 600);
+    e.poke('ms_timer', 200);
+    e.tap('A', 1, 1, 0);
+    runUntil(e, () => e.peek('ms') === 1, 30);
+    e.run(k - 1); e.tap('A', 1, 1, 0); e.run(3);
+    return { canon: e.peek('srv_canon'), vy: Math.abs(e.peekS16('bvy')), msg: msgText(e), ok: e.peek('st_canon', 0), tried: e.peek('st_ctry', 0) };
+  };
+  const res = []; for (let k = 22; k <= 34; k++) res.push([k, trial(k)]);
+  const hits = res.filter(([, r]) => r.canon).map(([k]) => k);
+  check(hits.length === 2 && hits[1] === hits[0] + 1, `fenêtre du service canon : 2 trames consécutives (${hits.join(', ')})`);
+  const c = res.find(([, r]) => r.canon)[1], n = res.find(([k, r]) => !r.canon && k === hits[0] - 3)[1];
+  check(c.vy > n.vy * 1.2 && c.msg === 'SERVICE CANON' && c.ok === 1 && c.tried === 1, `service canon plus rapide (${c.vy} contre ${n.vy}), annoncé et compté`);
+  // le CPU Normal ne le réussit jamais
+  const f = boot(); startWith(f, { FMT: 3, LEVEL: 1 }); allCpu(f);
+  let cpu = 0, serves = 0, prev = 0;
+  runUntil(f, () => { const m = f.peek('ms'); if (m === 2 && prev === 1) { serves++; cpu += f.peek('srv_canon'); } prev = m; return serves >= 40 || app(f) !== AS.MATCH; }, 60 * 60 * 10);
+  check(serves >= 20 && cpu === 0, `CPU Normal : aucun service canon sur ${serves} services`);
+}
+
 console.log('Compensation 50 Hz (PAL)');
 {
   const e = boot(); e.poke('is_pal', 1); startWith(e, { FMT: 3 }); allCpu(e);

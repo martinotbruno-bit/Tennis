@@ -130,6 +130,14 @@ void match_fx(void)
             spr1((u8)(PXU(plx[i]) + 6), (u8)(PXU(ply[i]) - 30), 14, 3);
         }
     }
+    /* service canon : traînée de deux points derrière la balle */
+    if (srv_canon && b_serve && b_live && bounces == 0) {
+        for (j = 2; j < 6; j += 3) {
+            s16 z = bz - bvz * j;
+            if (z < 0) z = 0;
+            spr1((u8)(PXU(bx - bvx * j) - 2), (u8)(PXU(by - bvy * j) - PXU(z) - 2), 1, 3);
+        }
+    }
     /* arbitre de chaise (stade) : il regarde le côté où se trouve la balle */
     if (cfg.env == ENV_STADIUM) {
         spr1(20, NET_Y - 22, (u8)(by < NET_Y * FP ? 12 : 11), 2);

@@ -692,6 +692,7 @@ static void results_screen(void)
     stat_row(16, "1ERES BALLES %", pct(st_first_in[0], st_first_tot[0]), pct(st_first_in[1], st_first_tot[1]));
     num2(b, st_longest); b[2] = 0;
     txt_at(2, 17, "ECHANGE LE PLUS LONG"); txt_at(26, 17, b);
+    stat_row(18, "SERVICES CANON", st_canon[0], st_canon[1]);
     if (last_mode == MODE_COMP) txt_at(4, 25, "A : CONTINUER");
     else txt_at(4, 25, "A : REVANCHE   B : MENU");
     ppu_on();
@@ -766,6 +767,9 @@ static void palmares_screen(void)
         txt_at(3, 17, "COMPETITIONS"); u16_at(22, 17, sv.comps);
         txt_at(3, 18, "RECORD ECHANGE"); u16_at(22, 18, sv.best_rally);
         txt_at(3, 19, "RECORD ACES/MATCH"); u16_at(22, 19, sv.best_aces);
+        txt_at(3, 21, "SERVICES CANON"); u16_at(22, 21, sx.ok);
+        t = sx.tried ? (u16)(((unsigned long)sx.ok * 100) / sx.tried) : 0;
+        txt_at(3, 22, "% DES SERVICES A"); u16_at(22, 22, t);
     } else if (pal_page == 1) {
         txt_at(3, 3, "MEILLEURS RESULTATS");
         for (i = 0; i < NCT; ++i) {

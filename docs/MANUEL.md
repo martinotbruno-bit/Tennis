@@ -92,6 +92,9 @@ Le type de coup dépend aussi de la situation :
    - Plus la frappe est proche du sommet, plus le service est précis.
    - GAUCHE/DROITE à l'impact vise l'extérieur ou le T.
    - Si vous ne frappez pas, la balle retombe et le lancer est à refaire, sans pénalité.
+4. **Service canon** : **A** frappé **pile au sommet** du lancer, dans une fenêtre de 2 images (1/30 de seconde). La balle part environ 30 % plus vite et presque sans écart, avec le bandeau « SERVICE CANON », un « boum » et une petite traînée. Près du sommet, la balle ne bouge presque plus à l'écran : le canon se trouve au **rythme**, environ une demi-seconde après le lancer. En deuxième balle, il est un peu moins précis. Le CPU Expert en réussit parfois ; Facile et Normal jamais.
+   - Ordre de grandeur pour un adulte : environ un service canon sur quatre au début, un sur trois à un sur deux avec l'entraînement.
+   - Le palmarès compte vos services canon et leur pourcentage parmi vos services frappés avec A ; l'écran de résultats donne le nombre par match.
 
 Le lancer reste visible quelle que soit votre position, y compris quand vous servez du haut de l'écran.
 
