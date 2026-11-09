@@ -138,7 +138,7 @@ Pour les coups lifté, à plat et coupé joués après le rebond :
 - **Placement** : écart latéral entre la balle et le joueur de 5 à 14 px. La frappe part dès que la balle entre dans la zone ; la profondeur n'est donc pas un critère, car la balle est toujours prise au bord avant de la zone.
 - **Timing (humain)** : la frappe doit tomber dans les 3 premières trames du geste (`pl_timer` ≥ 12), c'est-à-dire bouton relâché 0 à 2 trames avant l'entrée de la balle dans la zone (`swing_early`). Si le bouton est encore enfoncé à l'arrivée, la frappe part pendant l'armement : frappe normale.
 - **CPU** : tirage 40/256 en Expert et 10/256 en Normal, sous la même condition de placement ; jamais en Facile.
-- **Effet** : vitesse +25 %, dispersion 1, puissance d'armement ignorée ; `sfx_perfect` ; éclat (étoile blanche, palette 2) près de la raquette pendant 8 trames ; « COUP PARFAIT ! » si le coup est gagnant.
+- **Effet** : vitesse +25 %, dispersion 1, puissance d'armement ignorée ; `sfx_perfect` ; éclat (étoile blanche, palette 2) au bout de la raquette pendant 12 trames, placé hors du sprite du joueur (sinon il passe derrière lui), à droite ou à gauche selon le côté de la balle ; « COUP PARFAIT ! » si le coup est gagnant.
 - **Compteurs** : `st_perf` et `st_ptry` (coups lifté, à plat, coupé des humains) par match ; au palmarès, `sx.pok` et `sx.ptry` (bloc `sx`, signature « PD » ; les compteurs du service canon ont été remis à zéro une fois lors de ce changement).
 
 `can_hit` a été déplacée du moteur (banque 0) vers la banque fixe pour faire la place (606 octets libérés).

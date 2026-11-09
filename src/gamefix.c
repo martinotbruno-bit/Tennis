@@ -253,9 +253,11 @@ u8 perfect_hit(u8 p, s16 dx)
     }
     if (r) {
         ++st_perf[t];
-        perf_t = 8;                                         /* éclat sur la raquette */
-        perf_x = (u8)(PXU(plx[p]) + (PX(bx) < PX(plx[p]) ? -12 : 4));
-        perf_y = (u8)(PXU(ply[p]) - 18);
+        /* éclat au bout de la raquette, hors du sprite du joueur (sinon il
+           passe derrière lui) : à droite ou à gauche selon le côté de la balle */
+        perf_t = 12;
+        perf_x = (u8)(PXU(plx[p]) + (PX(bx) < PX(plx[p]) ? -16 : 8));
+        perf_y = (u8)(PXU(ply[p]) - 22);
     }
     return r;
 }
