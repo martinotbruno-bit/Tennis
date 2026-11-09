@@ -800,6 +800,26 @@ console.log('Récapitulatif du score');
   check(after !== '', `après un jeu : « ${after} »`);
 }
 
+console.log('Bandeau devant le joueur du haut');
+{
+  const e = boot(); startWith(e, { FMT: 3 }); allCpu(e);
+  let ok = false, bad = false;
+  runUntil(e, () => {
+    if (e.peek('ms') === 0 && e.peekS16('ply', 2) / 64 < 50) {
+      e.run(2);
+      for (let i = 0; i < 64; i++) {
+        const y = e.peek('oam_buf', i * 4) + 1, a = e.peek('oam_buf', i * 4 + 2);
+        if (y >= 0xF0) continue;
+        if (y + 7 <= 31 && (e.peek('oam_buf', i * 4 + 1) >= 0x10) && (a & 0x20)) ok = true;   // tête dans le bandeau : derrière le texte
+        if (y >= 32 && (a & 0x20)) bad = true;                                               // jamais derrière le court
+      }
+      return ok;
+    }
+    return false;
+  }, 60 * 60 * 3);
+  check(ok && !bad, 'joueur du haut au service : sa tête passe derrière le texte du bandeau, le reste du sprite devant le court');
+}
+
 console.log('Rotation des sprites (double)');
 {
   // 4 joueurs près du filet : jusqu'à 12 sprites sur une ligne. Avec la rotation, chaque

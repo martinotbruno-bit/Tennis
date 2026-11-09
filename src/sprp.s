@@ -322,4 +322,26 @@ _spr_person:
     lda tmp2
     sta _oam_buf+1,x
 @done:
+    ; tête entièrement dans le bandeau du haut (lignes 0 à 31 : score et
+    ; annonces) : ses 2 sprites passent derrière le texte du bandeau, qui
+    ; reste lisible ; la tête reste visible entre les lettres (fond du
+    ; bandeau transparent). Cas du joueur du haut au service.
+    lda _meta_y
+    cmp #25
+    bcs @end
+    lda _oam_i
+    sec
+    sbc #24
+    tax
+    lda _oam_buf+2,x
+    ora #$20
+    sta _oam_buf+2,x
+    inx
+    inx
+    inx
+    inx
+    lda _oam_buf+2,x
+    ora #$20
+    sta _oam_buf+2,x
+@end:
     jmp incsp8              ; 8 octets d'arguments sur la pile (x, y : 2 octets chacun ; c, front, pose, flip : 1)

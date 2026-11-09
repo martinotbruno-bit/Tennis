@@ -1,10 +1,16 @@
-# Pixel Open — Rapport de réalisation (version 2.8)
+# Pixel Open — Rapport de réalisation (version 2.9)
 
 Comme l'exige le CDC (§ 17.5), ce rapport distingue ce qui est **réalisé**, **testé**, **validé sur matériel réel**, **validé uniquement en émulation**, **dépendant d'une extension**, et les **limitations restantes**.
 
 > **Validation matérielle : aucune.** Aucun test n'a été fait sur console réelle (NES, Famicom, PAL, cartouche MMC1). Toutes les validations ont eu lieu en émulation (jsnes) et par des tests unitaires sur PC. Les critères « vérifié sur console physique » (CDC § 2.1, 15.4, 16.A) **ne sont pas remplis**. Ce point ne peut pas être traité dans l'environnement de développement utilisé.
 
 ## 1. Évolutions
+
+### Version 2.9
+
+| Demande | Réalisation |
+|---|---|
+| Joueur du haut qui chevauche le bandeau des annonces au service | Quand sa tête est entièrement dans le bandeau, elle passe derrière le texte : les annonces restent lisibles, la tête reste visible entre les lettres. Terrain et position de service inchangés |
 
 ### Version 2.8
 
@@ -116,12 +122,12 @@ Pour loger ce contenu, la cartouche passe de NROM (32 Ko) à **MMC1** : 128 Ko d
 |---|---|
 | Règles (`rules_test`) | 42/42 |
 | Codes (`password_test`) | 200 000/200 000 aller-retour (format v3), ancien code v2 accepté, Margaux codée, Margaux au club nudiste refusée ; 99,98 % des codes altérés d'un signe refusés |
-| Émulateur (`emu_test`) | 172/172 vérifications (environ 20 min) |
+| Émulateur (`emu_test`) | 173/173 vérifications (environ 20 min) |
 | Profil CPU, simple, 6 000 trames | 0 trame d'échange en dépassement |
 | Relecture des textes (`check_texts.py`) | 0 problème |
 | Contraste (`contrast.py 25`) | 0 paire sous ΔE 25 (personnages, courts, balle, tenues) |
 | Profil CPU, double, 6 000 trames | 27 trames d'échange en dépassement (0,45 %), sans défaut d'image |
-| Compilation | Reproductible : SHA-256 `bd89c543d60ec9b00193f90b89ed6731bdb7a9f00fc44aac29b315946da5a723` sur deux compilations propres |
+| Compilation | Reproductible : SHA-256 `3646a0953cb32be4bc023605efec4bc6fa016f2f444729e33226ffc635af30b8` sur deux compilations propres |
 
 ## 3. Conformité par section du CDC
 

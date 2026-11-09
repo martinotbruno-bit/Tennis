@@ -58,4 +58,4 @@ dist/       ROM finale
 
 ## État
 
-Version 2.8 : tout le contenu du cahier des charges est réalisé et testé **en émulation**. Les tests sur consoles réelles restent à faire : suivez la [liste de vérification](docs/VERIFICATION_CONSOLE.md).
+Version 2.9 : tout le contenu du cahier des charges est réalisé et testé **en émulation**. Les tests sur consoles réelles restent à faire : suivez la [liste de vérification](docs/VERIFICATION_CONSOLE.md).
