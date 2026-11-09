@@ -35,14 +35,14 @@ La version 1.0 tenait en NROM-256 (32 Ko, plein à 87 %). Il a fallu plus de pla
 
 | Banque | Contenu | Occupation |
 |---|---|---|
-| 7 (fixe, $C000) | Démarrage, NMI, primitives (sprites, VRAM, manettes, trampolines `bank_call` / `far_call`, enregistrement des ralentis), boucle principale, règles, codes, palettes, 16 personnages, noms des compétitions, échange des tuiles de personnages, son, bibliothèque cc65 | 9 634 |
-| 0 | Moteur de match : physique, frappes, service, arbitrage, IA | 16 314 |
-| 1 | Écrans : titre, configuration, présentation, résultats, compétitions, levée de coupe, saisie de code, palmarès | 13 548 |
+| 7 (fixe, $C000) | Démarrage, NMI, primitives (sprites, VRAM, manettes, trampolines `bank_call` / `far_call`, enregistrement des ralentis), boucle principale, règles, codes, palettes, 16 personnages, noms des compétitions, échange des tuiles de personnages, son, bibliothèque cc65 | 12 031 |
+| 0 | Moteur de match : physique, frappes, service, arbitrage, IA | 15 950 |
+| 1 | Écrans : titre, configuration, présentation, résultats, compétitions, levée de coupe, saisie de code, palmarès | 13 981 |
 | 2 | Motifs graphiques (8 Ko), copiés en CHR-RAM au démarrage | 8 192 |
-| 3 | Annexes du match : score et annonces du club nudiste, courts (4 lieux), public animé, pluie, ralentis, exercices, tutoriel | 9 186 |
-| 4 | Mode d'emploi | 3 528 |
+| 3 | Annexes du match : score et annonces du club nudiste, courts (4 lieux), public animé, pluie, ralentis, exercices, tutoriel | 10 190 |
+| 4 | Mode d'emploi | 3 549 |
 | 5 | Compétitions (tirages, simulations, classements, équipes de double) et palmarès | 7 218 |
-| 6 | Tuiles des personnages « au naturel » (club nudiste), copiées en CHR-RAM à la demande | 3 072 |
+| 6 | Tuiles des personnages « au naturel » (club nudiste), copiées en CHR-RAM à la demande | 3 456 |
 
 ### RAM
 
@@ -85,6 +85,10 @@ $7800-$7FFF  palmarès (sauvegardé si la cartouche a une pile ; signature + som
 | `src/manual.c` | 4 | Mode d'emploi (8 pages) |
 | `src/comp.c`, `src/stats.c` | 5 | Compétitions, palmarès |
 | `tools/gen_assets.py` | — | Génère tous les graphismes : police, logo, 3 courts, public assis et debout, 10 personnages × 8 poses |
+
+### Smash sauté
+
+Une balle entre 40 et 62 px de haut, avant le rebond, est jouable si le joueur est à moins de 70 px du filet. C'est réservé aux humains et au CPU Expert, pour ne pas enlever le lob aux joueurs moyens. La frappe est plus rapide (96 au lieu de 80) et plus tendue (gravité 12). Le sprite saute de 12 px (j²/16), au plus haut à l'impact, puis retombe en 14 trames (`pl_jump`).
 
 ### Physique et arbitrage
 
@@ -209,12 +213,28 @@ Le jeu n'utilise que l'APU natif :
 - **carré 1 + bruit** : bruitages, dont des bruits de pas très discrets à chaque foulée (bruit sourd au volume 1, jamais par-dessus un rebond, une frappe ou le public) ;
 - **carré 2 + triangle** : musiques et jingles.
 
-Aucune musique pendant les échanges. Toutes les mélodies sont originales.
+Aucune musique pendant les matchs. Toutes les mélodies sont originales :
+- **titre** (menus) ;
+- **valse du court Margaux** : boîte à musique en 3/4 (16 mesures, carré 25 %, enveloppe courte). Elle joue dans le menu dès que ce lieu est choisi, puis sur l'écran de présentation ;
+- **thème de la finale** : marche de 8 mesures, sur l'écran d'étape et la présentation de la finale d'une compétition (finale du tournoi, des poules, ou de chaque tournoi de la saison) ;
+- jingles de point, de jeu, de victoire et de défaite.
+
+`music_cur` mémorise le morceau en cours, pour ne pas relancer un thème déjà joué.
+
+Coup gagnant : un « ting » montant bref sur le carré 1 (`sfx_winner`), en plus de la réaction du public déjà présente. Le nom du coup (`win_label`, banque fixe) dépend du dernier coup du gagnant (`last_shot`), d'un adversaire au filet au moment de la frappe (`hit_pass`) et du saut (`hit_jump`).
 
 ## 7. NTSC / PAL
 
 - **Détection** : au démarrage, une boucle de 16 cycles est comptée entre deux VBlank (NTSC ≈ 1 861 ; PAL > 1 970).
 - **Compensation** : à 50 Hz, une trame logique supplémentaire est exécutée toutes les 5 trames, ce qui garde la vitesse du 60 Hz.
+
+### Vitesse du jeu (option VITESSE JEU)
+
+Elle s'applique pendant le match seulement (`cfg.gspeed`, boucle principale de `main.c`) :
+- **lent** : une trame logique sur 4 est sautée (75 %). Les appuis de cette trame sont gardés pour la suivante : un appui bref n'est jamais perdu. Le son continue normalement ;
+- **rapide** : une trame logique sans dessin est ajoutée toutes les 4 trames (125 %). Sans le dessin, le coût reste dans le budget : en simple, 2,2 % de trames en retard (contre 0,5 % en normal). En double, c'est 10 % contre 4 %, donc de légers à-coups possibles.
+
+Elle se combine avec la compensation 50 Hz.
 
 ## 8. Performances (mesurées avec `tests/profile.mjs`)
 
@@ -257,6 +277,6 @@ Outils de mise au point :
 |---|---|
 | `tests/rules_test.c` | 42 vérifications des règles |
 | `tests/password_test.c` | 200 000 codes aléatoires en aller-retour ; 8,06 millions de codes altérés d'un signe, refusés à 99,98 % |
-| `tests/emu_test.mjs` | 118 vérifications : démarrage MMC1 et CHR-RAM, mode d'emploi, menus adaptatifs, mode en équipe (toujours en double, partenaire CPU ou manette 2), présentation, menu de pause, lancer du serveur du haut, balle ratée qui sort de l'écran, let, matchs complets (6 surfaces × 3 lieux × 3 conditions, double), ralentis, revanche, palmarès, 9 exercices (joueur robot via la manette), 5 compétitions (dont éliminations), double en compétition (dont à 2 joueurs humains), levée de coupe, court Margaux, déblocage et club nudiste (tenues échangées en CHR-RAM puis restaurées), reprise par code, 50 Hz |
+| `tests/emu_test.mjs` | 134 vérifications : démarrage MMC1 et CHR-RAM, mode d'emploi, menus adaptatifs, mode en équipe (toujours en double, partenaire CPU ou manette 2), présentation, menu de pause, lancer du serveur du haut, balle ratée qui sort de l'écran, let, matchs complets (6 surfaces × 3 lieux × 3 conditions, double), ralentis, revanche, palmarès, 9 exercices (joueur robot via la manette), 5 compétitions (dont éliminations), double en compétition (dont à 2 joueurs humains), levée de coupe, court Margaux, déblocage et club nudiste (tenues échangées en CHR-RAM puis restaurées), reprise par code, vitesse du jeu (lent/normal/rapide, aucun appui perdu), coups gagnants nommés, smash sauté (réservé aux humains et au CPU Expert), musiques hors match (Margaux, finale) et silence en match, 50 Hz |
 
 Les résultats détaillés sont dans le [rapport](RAPPORT.md).

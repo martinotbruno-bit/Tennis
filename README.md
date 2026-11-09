@@ -7,6 +7,7 @@ Jeu de tennis 8 bits original pour **NES / Famicom** (NTSC et PAL), sur cartouch
 - compétitions en simple ou en double (tournoi, poules, championnat, saison, personnalisé) avec codes de reprise et levée de coupe ;
 - un lieu bonus à débloquer : le club nudiste « Les Bronzés » ;
 - 9 exercices d'entraînement dont un tutoriel ;
+- smash sauté, coups gagnants annoncés, vitesse du jeu réglable (lent, normal, rapide) ;
 - ralentis, palmarès et mode d'emploi intégré.
 
 ![Aperçu](docs/img/apercu.png)
@@ -54,4 +55,4 @@ dist/       ROM finale
 
 ## État
 
-Version 2.1 : tout le contenu du cahier des charges est réalisé et testé **en émulation**. Les tests sur consoles réelles restent à faire ; voir le [rapport](docs/RAPPORT.md).
+Version 2.3 : tout le contenu du cahier des charges est réalisé et testé **en émulation**. Les tests sur consoles réelles restent à faire ; voir le [rapport](docs/RAPPORT.md).

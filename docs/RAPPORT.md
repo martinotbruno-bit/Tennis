@@ -1,10 +1,19 @@
-# Pixel Open — Rapport de réalisation (version 2.1)
+# Pixel Open — Rapport de réalisation (version 2.3)
 
 Comme l'exige le CDC (§ 17.5), ce rapport distingue ce qui est **réalisé**, **testé**, **validé sur matériel réel**, **validé uniquement en émulation**, **dépendant d'une extension**, et les **limitations restantes**.
 
 > **Validation matérielle : aucune.** Aucun test n'a été fait sur console réelle (NES, Famicom, PAL, cartouche MMC1). Toutes les validations ont eu lieu en émulation (jsnes) et par des tests unitaires sur PC. Les critères « vérifié sur console physique » (CDC § 2.1, 15.4, 16.A) **ne sont pas remplis**. Ce point ne peut pas être traité dans l'environnement de développement utilisé.
 
 ## 1. Évolutions
+
+### Version 2.3
+
+| Demande | Réalisation |
+|---|---|
+| Coups gagnants signalés, sans surcharger l'image ni le son | Le message existant « COUP GAGNANT ! » nomme maintenant le coup : SMASH SAUTÉ, SMASH, AMORTIE, LOB GAGNANT, VOLÉE GAGNANTE, PASSING (adversaire au filet) ou COUP GAGNANT. Il s'y ajoute un « ting » bref sur le canal des bruitages. Rien de plus à l'écran (même bandeau, même durée), et le public réagit comme avant. Au club nudiste, l'arbitre ajoute une remarque pour chacun |
+| Smash sauté | Une balle très haute (40 à 62 px), avant le rebond et hors du fond du court, se smashe en sautant : le joueur s'élève de 12 px et retombe, la frappe est plus rapide et plus tendue. Réservé aux joueurs humains et au CPU Expert, pour que le lob reste efficace contre Facile et Normal |
+| Réglage de la vitesse du jeu | Ligne VITESSE JEU dans tous les modes : Lent (75 %), Normal, Rapide (125 %). En lent, aucun appui n'est perdu. En rapide, la trame ajoutée ne redessine pas : en simple, l'image reste fluide (2 % de trames en retard) ; en double, de légers à-coups (10 %) |
+| Nouvelles musiques, toujours sans musique en match | Valse « boîte à musique » du court Margaux (menu quand le lieu est choisi, puis présentation) ; marche solennelle avant chaque finale de compétition (écran d'étape et présentation). Silence dès le début du match, vérifié par les tests |
 
 ### Version 2.2
 
@@ -57,10 +66,10 @@ Pour loger ce contenu, la cartouche passe de NROM (32 Ko) à **MMC1** : 128 Ko d
 |---|---|
 | Règles (`rules_test`) | 42/42 |
 | Codes (`password_test`) | 200 000/200 000 aller-retour ; 99,98 % des codes altérés d'un signe refusés |
-| Émulateur (`emu_test`) | 118/118 vérifications (environ 13 min) |
+| Émulateur (`emu_test`) | 134/134 vérifications (environ 15 min) |
 | Profil CPU, simple, 6 000 trames | 1 trame d'échange en dépassement |
 | Profil CPU, double, 6 000 trames | 11 trames d'échange en dépassement (0,2 %), sans défaut d'image |
-| Compilation | Reproductible : SHA-256 `f315ef2df137fbcdaaeda9aa65c768f284d26a09693e3a34af44d682032d2bb7` sur deux compilations propres |
+| Compilation | Reproductible : SHA-256 `b318526f6cb630dd32ca70d299ccb43f836a67d8400b46329623a1abdcacfd86` sur deux compilations propres |
 
 ## 3. Conformité par section du CDC
 

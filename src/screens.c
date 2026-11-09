@@ -47,7 +47,8 @@ u8 scr_state;
 #define O_SPIN   18
 #define O_COUNT  19
 #define O_CPART  20
-#define NOPT     21
+#define O_GSPEED 21   /* vitesse du jeu : lent, normal, rapide */
+#define NOPT     22
 
 #define MODE_1P      0
 #define MODE_2P      1
@@ -57,12 +58,12 @@ u8 scr_state;
 #define MODE_DEMO    5
 #define NMODES       6
 
-u8 opt_val[NOPT] = { 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 2, 1, 0, 1, 0 };
-static const u8 opt_max[NOPT] = { 1, NMODES, 2, NCHARS, NCHARS, 3, NSURF, NENV, 3, 4, 2, NCT, 2, 2, 2, NEX, 4, 3, 3, 3, 2 };
+u8 opt_val[NOPT] = { 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 2, 1, 0, 1, 0, 1 };
+static const u8 opt_max[NOPT] = { 1, NMODES, 2, NCHARS, NCHARS, 3, NSURF, NENV, 3, 4, 2, NCT, 2, 2, 2, NEX, 4, 3, 3, 3, 2, 3 };
 static const char * const opt_label[NOPT] = {
     "COMMENCER", "MODE", "JEU", "JOUEUR 1", "JOUEUR 2", "NIVEAU CPU", "SURFACE", "LIEU",
     "CONDITIONS", "FORMAT", "RALENTIS", "COMPETITION", "JOUEURS", "ADVERSAIRES", "SURFACES",
-    "EXERCICE", "COTE", "VITESSE", "EFFET", "BALLES", "JOUE PAR" };
+    "EXERCICE", "COTE", "VITESSE", "EFFET", "BALLES", "JOUE PAR", "VITESSE JEU" };
 static const char * const mode_name[NMODES] = {
     "1 JOUEUR VS CPU", "2 J. ADVERSAIRES", "EN EQUIPE", "COMPETITION", "ENTRAINEMENT", "DEMO CPU" };
 static const char * const cond_name[3] = { "JOUR", "NUIT", "PLUIE" };
@@ -73,6 +74,7 @@ static const char * const ex_name[NEX] = {
     "JOUEUR FIXE", "PERSONNALISE", "TUTORIEL" };
 static const char * const side_name[4] = { "COUP DROIT", "REVERS", "ALTERNE", "ALEATOIRE" };
 static const char * const speed_name[3] = { "LENTE", "MOYENNE", "RAPIDE" };
+static const char * const gspeed_name[3] = { "LENT", "NORMAL", "RAPIDE" };
 static const char * const spin_name[3] = { "LIFTE", "COUPE", "LOB" };
 static const u8 count_val[3] = { 10, 20, 30 };
 
@@ -100,6 +102,7 @@ static void build_visible(void)
         vis[nvis++] = O_COND;
         vis[nvis++] = O_FMT;
         vis[nvis++] = O_REPLAY;
+        vis[nvis++] = O_GSPEED;
     } else if (m == MODE_TRAIN) {
         vis[nvis++] = O_EX;
         if (opt_val[O_EX] == EX_CUSTOM) { vis[nvis++] = O_SIDE; vis[nvis++] = O_SPEED; vis[nvis++] = O_SPIN; vis[nvis++] = O_COUNT; }
@@ -107,6 +110,7 @@ static void build_visible(void)
         vis[nvis++] = O_SURF;
         vis[nvis++] = O_ENV;
         vis[nvis++] = O_COND;
+        vis[nvis++] = O_GSPEED;
     } else {
         /* « 2 J. EQUIPE » : deux joueurs dans la même équipe, donc toujours en double */
         if (m != MODE_2P_TEAM) vis[nvis++] = O_TYPE;
@@ -119,6 +123,7 @@ static void build_visible(void)
         vis[nvis++] = O_COND;
         vis[nvis++] = O_FMT;
         vis[nvis++] = O_REPLAY;
+        vis[nvis++] = O_GSPEED;
     }
     if (cursor >= nvis) cursor = 0;
 }
@@ -149,6 +154,7 @@ static const char *opt_text(u8 o)
     case O_SPIN:   return spin_name[v];
     case O_COUNT:  return v == 0 ? "10" : v == 1 ? "20" : "30";
     case O_CPART:  return v ? "MANETTE 2" : "CPU";
+    case O_GSPEED: return gspeed_name[v];
     }
     return "";
 }
@@ -161,6 +167,19 @@ static void pad_text(const char *s, u8 n)
 }
 
 /* ---------------------------------------------------------------------- */
+/* Musique des menus : thème du titre, ou valse du court Margaux quand ce
+   lieu est choisi ; finale d'une compétition : thème de la finale */
+static void menu_music(void)
+{
+    u8 m = opt_val[O_ENV] == ENV_MARGAUX ? MUS_MARGAUX : MUS_TITLE;
+    if (music_cur != m) music_play(m);
+}
+static u8 is_final(void)
+{
+    /* nom d'étape (comp_l1, ou comp_l2 en saison) exactement « FINALE » */
+    return (u8)((comp_l1[0] == 'F' && comp_l1[6] == 0) || (comp_l2[0] == 'F' && comp_l2[6] == 0));
+}
+
 static void screen_begin(void)
 {
     ppu_off();
@@ -254,7 +273,7 @@ static void menu_screen(void)
     pal_set_player(1, opt_val[O_P2]);
     ppu_on();
     scr_state = SS_MENU;
-    if (music_none()) music_play(MUS_TITLE);
+    menu_music();
 }
 
 static void menu_sprites(void)
@@ -285,6 +304,7 @@ static void base_cfg(void)
     cfg.sets_to_win = (u8)(f == 1 ? 2 : f == 2 ? 3 : 1);
     cfg.games_per_set = (u8)(f == 3 ? 4 : 6);
     cfg.replays = opt_val[O_REPLAY];
+    cfg.gspeed = opt_val[O_GSPEED];
     cfg.demo = 0;
     cfg.mode = GM_MATCH;
     cfg.doubles = 0;
@@ -326,6 +346,7 @@ static void setup_cfg(u8 mode)
     case MODE_DEMO:
         cfg.ctrl[0] = CTRL_CPU;
         cfg.demo = 1;
+        cfg.gspeed = 1;
         cfg.level[0] = cfg.level[2] = 2; cfg.level[1] = cfg.level[3] = 1;
         break;
     }
@@ -399,6 +420,8 @@ static void present_screen(void)
     txt_at(17, 22, fmt_name[opt_val[O_FMT]]);
     txt_at(4, 27, "A : JOUER   B : RETOUR");
     ppu_on();
+    if (last_mode == MODE_COMP && is_final()) music_play(MUS_FINAL);
+    else if (cfg.env == ENV_MARGAUX && music_cur != MUS_MARGAUX) music_play(MUS_MARGAUX);
     scr_state = SS_PRESENT;
 }
 
@@ -456,6 +479,8 @@ static void comp_screen(void)
     if (c_dbl) txt_at(3, 23, c_hum2 ? "DOUBLE A 2 JOUEURS" : "COMPETITION EN DOUBLE");
     txt_at(3, 25, "A : JOUER   B : MENU");
     ppu_on();
+    if (is_final()) { if (music_cur != MUS_FINAL) music_play(MUS_FINAL); }
+    else if (music_cur == MUS_FINAL) music_play(MUS_NONE);
     scr_state = SS_COMP;
 }
 
@@ -815,6 +840,7 @@ void screens_tick(void)
             if (o == O_MODE || o == O_COMP || o == O_EX || (o == O_TYPE && opt_val[O_MODE] == MODE_COMP)) { menu_screen(); break; }
             vbuf_reset();
             menu_draw_row(cursor, 0);
+            if (o == O_ENV) menu_music();
             if (o == O_ENV || o == O_COND) {
                 for (i = 0; i < nvis; ++i) if (vis[i] == O_COND) menu_draw_row(i, 0);
             }

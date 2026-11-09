@@ -4,11 +4,13 @@
  * banques passent par go_req, traité ici. */
 #include "app.h"
 #include "audio.h"
+#include "game.h"
 
 #pragma static-locals(on)
 
 u8 app_state, go_req, go_arg;
 u8 is_pal, pal_acc;
+static u8 spd_acc, keep1, keep2, no_draw;
 
 static void handle_go(void)
 {
@@ -43,7 +45,7 @@ static void logic_tick(void)
     case AS_MATCH:
         set_bank(BANK_GAME);
         if (match_tick()) { go_req = GO_SCREEN; go_arg = SCR_AFTER_MATCH; }
-        else match_draw();
+        else if (!no_draw) match_draw();   /* trame logique ajoutée : pas de dessin */
         break;
     case AS_MANUAL:
         set_bank(BANK_MANUAL);
@@ -67,6 +69,23 @@ void main(void)
     for (;;) {
         wait_frame();
         pad_poll();
+        /* vitesse du jeu (match) : « lent » saute une trame logique sur 4,
+           « rapide » en ajoute une toutes les 4 trames ; les appuis de la
+           trame sautée sont gardés pour la suivante */
+        if (app_state == AS_MATCH && cfg.gspeed != 1 && ++spd_acc >= 4) {
+            spd_acc = 0;
+            if (cfg.gspeed == 0) {
+                keep1 |= pad1_new; keep2 |= pad2_new;
+                audio_update();
+                continue;
+            }
+            no_draw = 1;
+            logic_tick();
+            no_draw = 0;
+            pad1_new = pad2_new = 0;
+        }
+        pad1_new |= keep1; pad2_new |= keep2;
+        keep1 = keep2 = 0;
         logic_tick();
         if (is_pal) {
             /* 50 Hz : une trame logique supplémentaire toutes les 5 trames

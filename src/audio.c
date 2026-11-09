@@ -35,6 +35,7 @@ static const u16 note_period[48] = {
 #define F5 41
 #define G5 43
 #define A5 45
+#define B5 47
 
 static const u8 mus_title_mel[] = {
  C5,8, E5,8, G5,8, E5,8, F5,8, A5,8, G5,16,
@@ -52,15 +53,45 @@ static const u8 mus_vict_mel[]  = { C5,6, E5,6, G5,6, C5,6, E5,6, G5,12, R,4, A5
 static const u8 mus_vict_bass[] = { C3,24, E3,24, F3,16, G3,16, C3,24, END,0 };
 static const u8 mus_def_mel[]   = { G4,10, F4,10, E4,10, D4,10, C4,30, END,0 };
 
+/* Thème de la finale (écrans d'avant-match) : marche solennelle, 8 mesures de 80 trames */
+static const u8 mus_final_mel[] = {
+ G4,10, G4,5, G4,5, C5,20, E5,20, G5,20,
+ A5,20, G5,10, F5,10, E5,10, D5,10, E5,20,
+ G4,10, G4,5, G4,5, D5,20, F5,20, A5,20,
+ G5,20, F5,10, D5,10, B4,10, D5,10, G4,20,
+ E5,20, E5,10, F5,10, G5,20, E5,20,
+ A5,20, F5,20, G5,20, E5,20,
+ F5,10, E5,10, D5,10, C5,10, D5,20, B4,20,
+ C5,60, R,20,
+ END,0 };
+static const u8 mus_final_bass[] = {
+ C3,40, G3,40, F3,40, C3,40, G3,40, D3,40, G3,40, B3,40,
+ C3,40, E3,40, F3,40, C3,40, G3,40, G3,40, C3,60, R,20,
+ END,0 };
+/* Thème du court Margaux : petite valse façon boîte à musique, 16 mesures de 36 trames */
+static const u8 mus_margaux_mel[] = {
+ C5,12, E5,12, G5,12,  A5,24, G5,12,  F5,12, A5,12, F5,12,  E5,24, C5,12,
+ D5,12, F5,12, A5,12,  G5,24, E5,12,  F5,12, E5,12, D5,12,  C5,24, R,12,
+ E5,12, E5,6, F5,6, G5,12,  A5,12, G5,12, E5,12,  F5,12, F5,6, G5,6, A5,12,  G5,36,
+ G5,12, E5,12, C5,12,  F5,12, A5,12, F5,12,  E5,12, D5,12, G4,12,  C5,24, R,12,
+ END,0 };
+static const u8 mus_margaux_bass[] = {
+ C3,24, G3,12, F3,24, C4,12, F3,24, A3,12, C3,24, G3,12,
+ D3,24, A3,12, C3,24, G3,12, G3,24, B3,12, C3,24, G3,12,
+ C3,24, G3,12, A3,24, E3,12, F3,24, C4,12, G3,24, D3,12,
+ C3,24, G3,12, F3,24, A3,12, G3,24, B3,12, C3,24, R,12,
+ END,0 };
+
 static const u8 *mel_ptr, *bass_ptr, *mel_start, *bass_start;
-static u8 mel_timer, bass_timer, music_loop;
+static u8 mel_timer, bass_timer, music_loop, mel_duty;
+u8 music_cur;      /* morceau en cours (MUS_*) */
 
 static void play_pulse2(u8 n)
 {
     u16 p;
     if (n == R) { APU(0x4004) = 0x30; return; }
     p = note_period[n];
-    APU(0x4004) = 0x86;            /* rapport cyclique 50 %, enveloppe */
+    APU(0x4004) = mel_duty;        /* rapport cyclique (50 % ou 25 %), enveloppe */
     APU(0x4005) = 0x00;
     APU(0x4006) = (u8)p;
     APU(0x4007) = (u8)(0x08 | (p >> 8));
@@ -80,6 +111,8 @@ void music_play(u8 id)
 {
     mel_ptr = bass_ptr = 0;
     music_loop = 0;
+    mel_duty = 0x86;
+    music_cur = id;
     APU(0x4004) = 0x30;
     APU(0x4008) = 0x80;
     switch (id) {
@@ -88,6 +121,8 @@ void music_play(u8 id)
     case MUS_GAME:    mel_ptr = mus_game_mel; break;
     case MUS_VICTORY: mel_ptr = mus_vict_mel; bass_ptr = mus_vict_bass; break;
     case MUS_DEFEAT:  mel_ptr = mus_def_mel; break;
+    case MUS_FINAL:   mel_ptr = mus_final_mel; bass_ptr = mus_final_bass; music_loop = 1; break;
+    case MUS_MARGAUX: mel_ptr = mus_margaux_mel; bass_ptr = mus_margaux_bass; music_loop = 1; mel_duty = 0x44; break;
     default: break;
     }
     mel_start = mel_ptr;
@@ -104,7 +139,7 @@ void audio_update(void)
         if (--mel_timer == 0) {
             if (mel_ptr[0] == END) {
                 if (music_loop) { mel_ptr = mel_start; }
-                else { mel_ptr = 0; APU(0x4004) = 0x30; }
+                else { mel_ptr = 0; music_cur = MUS_NONE; APU(0x4004) = 0x30; }
             }
             if (mel_ptr) {
                 play_pulse2(mel_ptr[0]);
@@ -167,3 +202,5 @@ void sfx_step(void)
     APU(0x400E) = 0x0D;
     APU(0x400F) = 0x18;     /* durée très courte */
 }
+/* coup gagnant : « ting » bref qui monte, sur le canal des bruitages (pas de musique) */
+void sfx_winner(void)     { pulse1(0x83, 0x9A, 360); }

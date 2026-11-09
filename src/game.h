@@ -55,6 +55,7 @@ typedef struct {
     u8 ex_speed;        /* 0 lente, 1 moyenne, 2 rapide */
     u8 ex_spin;         /* 0 lifté, 1 coupé, 2 lob */
     u8 ex_count;        /* nombre de balles */
+    u8 gspeed;          /* vitesse du jeu : 0 lent (75 %), 1 normal, 2 rapide (125 %) */
 } MatchCfg;
 
 extern MatchCfg cfg;

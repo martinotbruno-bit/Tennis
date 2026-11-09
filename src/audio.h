@@ -14,10 +14,14 @@ void sfx_menu_move(void);
 void sfx_menu_ok(void);
 void sfx_toss(void);
 void sfx_step(void);               /* bruit de pas discret */
+void sfx_winner(void);             /* carillon bref d'un coup gagnant */
 #define MUS_NONE    0
 #define MUS_TITLE   1
 #define MUS_POINT   2
 #define MUS_GAME    3
 #define MUS_VICTORY 4
 #define MUS_DEFEAT  5
+#define MUS_FINAL   6   /* avant la finale d'une compétition */
+#define MUS_MARGAUX 7   /* court Margaux (menus et présentation) */
+extern u8 music_cur;
 #endif

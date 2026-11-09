@@ -11,7 +11,7 @@ function check(cond, msg) {
 const AS = { SCREENS: 0, MATCH: 1, MANUAL: 2 };
 const SS = { TITLE: 0, MENU: 1, RESULTS: 2, PRESENT: 3, COMP: 4, CODE: 5, PALMARES: 6, TRAIN_RES: 7, COMP_END: 8 };
 const O = { MODE: 1, TYPE: 2, P1: 3, P2: 4, LEVEL: 5, SURF: 6, ENV: 7, COND: 8, FMT: 9, REPLAY: 10, COMP: 11,
-            CSIZE: 12, CPROG: 13, CVAR: 14, EX: 15, SIDE: 16, SPEED: 17, SPIN: 18, COUNT: 19, CPART: 20 };
+            CSIZE: 12, CPROG: 13, CVAR: 14, EX: 15, SIDE: 16, SPEED: 17, SPIN: 18, COUNT: 19, CPART: 20, GSPEED: 21 };
 const MODE = { P1: 0, P2: 1, TEAM: 2, COMP: 3, TRAIN: 4, DEMO: 5 };
 const CFG = { CTRL: 2, LEVEL: 10, GAMES: 17, REPLAYS: 19 };
 
@@ -98,11 +98,11 @@ console.log("Mode d'emploi");
 console.log('Menu de configuration');
 {
   const e = boot(); toMenu(e);
-  check(scr(e) === SS.MENU && e.peek('nvis') === 11, 'configuration match : 11 lignes');
+  check(scr(e) === SS.MENU && e.peek('nvis') === 12, 'configuration match : 12 lignes');
   e.tap('DOWN'); e.tap('RIGHT'); e.tap('RIGHT'); e.tap('RIGHT'); e.run(5);
-  check(e.peek('opt_val', O.MODE) === MODE.COMP && e.peek('nvis') === 11, 'mode compétition : lignes adaptées');
+  check(e.peek('opt_val', O.MODE) === MODE.COMP && e.peek('nvis') === 12, 'mode compétition : lignes adaptées');
   e.tap('RIGHT'); e.run(5);
-  check(e.peek('opt_val', O.MODE) === MODE.TRAIN && e.peek('nvis') === 7, 'mode entraînement : lignes adaptées');
+  check(e.peek('opt_val', O.MODE) === MODE.TRAIN && e.peek('nvis') === 8, 'mode entraînement : lignes adaptées');
   e.tap('B'); e.run(5);
   check(scr(e) === SS.TITLE, 'B revient au titre');
 }
@@ -110,7 +110,7 @@ console.log('Menu de configuration');
 console.log('Mode en équipe (double)');
 {
   const e = boot(); toMenu(e); setOpts(e, { MODE: MODE.TEAM, TYPE: 0, CPART: 1 }); e.tap('B'); e.run(5); toMenu(e);
-  check(e.peek('nvis') === 11 && e.text(3, 7, 10) === 'PARTENAIRE' && e.text(3, 8, 8) === 'JOUE PAR', 'pas de ligne JEU ; lignes PARTENAIRE et JOUE PAR');
+  check(e.peek('nvis') === 12 && e.text(3, 7, 10) === 'PARTENAIRE' && e.text(3, 8, 8) === 'JOUE PAR', 'pas de ligne JEU ; lignes PARTENAIRE et JOUE PAR');
   e.tap('START'); e.run(15);
   check(e.text(4, 4, 15) === 'MATCH DE DOUBLE' && e.text(18, 11, 11) === '+ MANETTE 2', 'toujours un double, manette 2 partenaire');
   e.tap('A'); e.run(30);
@@ -448,6 +448,99 @@ console.log('Compétition en double à deux joueurs humains');
   f.tap('START'); f.run(40);
   check(scr(f) === SS.COMP && f.peek('c_hum2') === 1 && f.peek('c_dbl') === 1 && f.peek('c_pl2', 0) === 3,
     `code ${code} : double à 2 joueurs restauré`);
+}
+
+console.log('Vitesse du jeu, coups gagnants, smash sauté, musiques');
+{
+  // vitesse : nombre de trames logiques du match pour 120 trames affichées
+  const rate = (gs) => {
+    const e = boot(); startWith(e, { FMT: 3, GSPEED: gs }); allCpu(e);
+    runUntil(e, () => e.peek('ms') === 0, 200);
+    e.poke('ms', 4); e.poke('ms_timer', 250); e.run(120);    // fin de match : ms_timer décompte chaque trame logique
+    return 250 - e.peek('ms_timer');
+  };
+  const r0 = rate(0), r1 = rate(1), r2 = rate(2);
+  check(Math.abs(r0 - 90) <= 1 && Math.abs(r1 - 120) <= 1 && Math.abs(r2 - 150) <= 1, `vitesse du jeu : lent ${r0}, normal ${r1}, rapide ${r2} trames logiques / 120`);
+  const e = boot(); startWith(e, { FMT: 3, GSPEED: 0 });
+  check(e.peek('cfg', 26) === 0, 'option VITESSE JEU transmise au match');
+  runUntil(e, () => e.peek('ms') === 0, 200);
+  // un appui pendant une trame sautée n'est pas perdu (lent) : START ouvre la pause
+  // appui d'une seule trame, à chacune des 4 phases (dont la trame sautée)
+  let paused = 0;
+  for (let k = 0; k < 4; k++) {
+    e.run(k + 1); e.tap('START', 1, 1, 4); paused += e.peek('paused');
+    e.tap('B', 1, 1, 6);
+  }
+  check(paused === 4, `mode lent : un appui bref n'est jamais perdu (${paused}/4)`);
+}
+{
+  // coups gagnants nommés : on simule une balle gagnante qui sort après rebond
+  const name = (shot, pass, jump) => {
+    const e = boot(); startWith(e, { FMT: 3 }); allCpu(e);
+    runUntil(e, () => e.peek('ms') === 0, 200);
+    const set16 = (n, v) => { e.poke(n, v & 255); e.poke(n, (v >> 8) & 255, 1); };
+    e.poke('ms', 2); e.poke('b_live', 1); e.poke('b_vis', 1); e.poke('b_serve', 0); e.poke('bounces', 1);
+    e.poke('hitter', 0); e.poke('rally_hits', 4); e.poke('last_shot', shot); e.poke('hit_pass', pass); e.poke('hit_jump', jump);
+    set16('bx', 128 * 64); set16('by', 236 * 64); set16('bz', 4 * 64); set16('bvx', 0); set16('bvy', 3 * 64); set16('bvz', 0);
+    e.run(3);
+    let t = ''; for (let i = 0; i < 14; i++) t += String.fromCharCode(e.peek('msg1', i));
+    return t.trim();
+  };
+  const got = [name(7, 0, 1), name(7, 0, 0), name(3, 0, 0), name(2, 1, 0), name(6, 0, 0), name(0, 1, 0), name(0, 0, 0)];
+  check(got.join('|') === 'SMASH SAUTE !|SMASH !|AMORTIE !|LOB GAGNANT !|VOLEE GAGNANTE|PASSING !|COUP GAGNANT !',
+    `coups gagnants nommés : ${got.join(', ')}`);
+}
+{
+  // smash sauté : balle très haute (50 px) au-dessus d'un joueur humain près du filet
+  const e = boot(); startWith(e, { FMT: 3 });
+  runUntil(e, () => e.peek('ms') === 0, 200);
+  const set16 = (n, v, o = 0) => { e.poke(n, v & 255, o); e.poke(n, (v >> 8) & 255, o + 1); };
+  e.poke('ms', 2); e.poke('b_live', 1); e.poke('b_vis', 1); e.poke('b_serve', 0); e.poke('bounces', 0);
+  e.poke('hitter', 1); e.poke('rally_hits', 3); e.poke('bgrav', 6);
+  set16('plx', 128 * 64, 0); set16('ply', 168 * 64, 0);
+  set16('bx', 132 * 64); set16('by', 165 * 64); set16('bz', 52 * 64); set16('bvx', 0); set16('bvy', 0); set16('bvz', 0);
+  e.down('A'); e.run(3); e.up('A');
+  check(e.peek('hit_jump') === 1 && e.peek('last_shot') === 7 && e.peek('hitter') === 0 && e.peekS16('bvy') < 0,
+    'smash sauté sur une balle à 52 px de haut');
+  check(e.peek('pl_jump', 0) > 0, 'le joueur saute (sprite décalé vers le haut)');
+  e.run(40);
+  check(e.peek('pl_jump', 0) === 0, 'puis retombe');
+  // une balle à 52 px reste hors de portée d'un CPU de niveau normal
+  const f = boot(); startWith(f, { FMT: 3, LEVEL: 1 }); allCpu(f);
+  runUntil(f, () => f.peek('ms') === 0, 200);
+  const g16 = (n, v, o = 0) => { f.poke(n, v & 255, o); f.poke(n, (v >> 8) & 255, o + 1); };
+  f.poke('ms', 2); f.poke('b_live', 1); f.poke('b_vis', 1); f.poke('b_serve', 0); f.poke('bounces', 0);
+  f.poke('hitter', 1); f.poke('rally_hits', 3); f.poke('bgrav', 0); f.poke('ai_delay', 0, 0);
+  g16('plx', 128 * 64, 0); g16('ply', 168 * 64, 0);
+  g16('bx', 132 * 64); g16('by', 165 * 64); g16('bz', 52 * 64); g16('bvx', 0); g16('bvy', 0); g16('bvz', 0);
+  f.run(4);
+  check(f.peek('hitter') === 1, 'le smash sauté est réservé aux humains et au CPU expert');
+}
+{
+  // musiques hors match : valse Margaux au menu, thème de la finale avant la finale
+  const e = boot(); toMenu(e);
+  e.poke('cursor', 7); e.poke('opt_val', 3, O.ENV); e.tap('RIGHT'); e.run(5);
+  check(e.peek('opt_val', O.ENV) === 4 && e.peek('music_cur') === 7, 'menu : court Margaux choisi, sa musique démarre');
+  e.tap('LEFT'); e.run(5);
+  check(e.peek('music_cur') === 1, 'autre lieu : retour au thème du titre');
+  e.tap('RIGHT'); e.run(5); e.tap('START'); e.run(20);
+  check(scr(e) === SS.PRESENT && e.peek('music_cur') === 7, 'présentation au court Margaux : valse');
+  e.tap('A'); e.run(10);
+  check(app(e) === AS.MATCH && e.peek('music_cur') === 0, 'aucune musique pendant le match');
+}
+{
+  const e = boot(); startWith(e, { MODE: MODE.COMP, COMP: 0, FMT: 3 });
+  check(scr(e) === SS.COMP && e.peek('music_cur') !== 6, 'quart de finale : pas de thème de finale');
+  for (let m = 0; m < 2; m++) {   // tournoi à 8 : quart puis demi gagnés
+    e.tap('A'); e.run(5); e.tap('A'); e.run(30);
+    e.poke('sc_winner', 0); e.poke('sc_over', 1); e.poke('ms', 4); e.poke('ms_timer', 2);
+    runUntil(e, () => app(e) === AS.SCREENS, 60); e.run(20); e.tap('A'); e.run(40);
+  }
+  check(scr(e) === SS.COMP && e.text(3, 3, 6) === 'FINALE' && e.peek('music_cur') === 6, 'écran de la finale : thème de la finale');
+  e.tap('A'); e.run(10);
+  check(scr(e) === SS.PRESENT && e.peek('music_cur') === 6, 'présentation de la finale : le thème continue');
+  e.tap('A'); e.run(10);
+  check(app(e) === AS.MATCH && e.peek('music_cur') === 0, 'finale : silence pendant le match');
 }
 
 console.log('Compensation 50 Hz (PAL)');

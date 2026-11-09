@@ -48,6 +48,11 @@ static void nude_quip(void)
     else if (starts(msg1, "FAUTE")) set2("PAS DE POCHE !");
     else if (starts(msg1, "ACE")) set2("TOUT NU, TOUT ACE");
     else if (starts(msg1, "COUP GAGNANT")) set2("BRONZAGE TOTAL");
+    else if (starts(msg1, "SMASH")) set2("PLEIN SOLEIL !");
+    else if (starts(msg1, "AMORTIE")) set2("EN DOUCEUR...");
+    else if (starts(msg1, "LOB")) set2("VERS LE SOLEIL");
+    else if (starts(msg1, "PASSING")) set2("RIEN A CACHER");
+    else if (starts(msg1, "VOLEE")) set2("AIR FRAIS !");
     else if (starts(msg1, "EGALITE")) set2("NU A NU");
     else if (starts(msg1, "FILET")) set2("ATTENTION...");
     else if (starts(msg1, "DEHORS")) set2("COMME NOUS");

@@ -34,6 +34,7 @@ Sans action pendant 20 secondes, une démonstration démarre (alternativement en
 | CONDITIONS | Jour · Nuit · Pluie. Il ne pleut pas en salle : la pluie y devient « jour » |
 | FORMAT | 1 set · 3 sets · 5 sets · Rapide (sets de 4 jeux) |
 | RALENTIS | Oui/Non : ralenti automatique après les plus beaux points |
+| VITESSE JEU | Lent (75 %, idéal pour débuter ou pour les enfants) · Normal · Rapide (125 %). Aussi en compétition et à l'entraînement |
 
 Selon le mode, d'autres lignes apparaissent :
 - **Compétition** : type de compétition et, pour le tournoi personnalisé, le nombre de joueurs, la progression des adversaires et la variété des surfaces ;
@@ -75,6 +76,7 @@ La frappe part toute seule quand la balle entre dans votre zone de frappe pendan
 Le type de coup dépend aussi de la situation :
 - balle prise avant le rebond : **volée** ;
 - balle haute avant le rebond : **smash** ;
+- balle très haute (lob un peu court), si vous êtes dans les deux tiers avant de votre moitié de court : **smash sauté**, le joueur saute et frappe plus fort et plus à plat (le CPU Expert sait aussi le faire) ;
 - balle loin du corps : frappe en extension, moins précise.
 
 ### Au service
@@ -110,6 +112,7 @@ Le lancer reste visible quelle que soit votre position, y compris quand vous ser
     - ligne 2 : les jeux gagnés dans le set en cours (« J 3 »), suivis de `*` si ce joueur sert ;
     - ligne 3 : les points du jeu en cours (0, 15, 30, 40, AV), suivis d'un rond plein par set gagné.
 - Les **annonces** de l'arbitre s'affichent au centre du bandeau : faute, let, égalité, avantage, balle de set ou de match, jeu décisif, changement de côté, ace, coup gagnant…
+- Les **coups gagnants** sont nommés : SMASH SAUTÉ, SMASH, AMORTIE, LOB GAGNANT, VOLÉE GAGNANTE, PASSING (adversaire au filet) ou COUP GAGNANT, avec un bref « ting » ; sans autre son ajouté et toujours sans musique pendant le match.
 - Le **public** se lève et applaudit après les beaux points. Après un ace, un coup gagnant ou un long échange, un **ralenti** rejoue le point (A pour le passer).
 - **En fin de match** :
   - le vainqueur célèbre et le perdant baisse la tête ;

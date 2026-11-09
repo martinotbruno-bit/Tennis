@@ -39,7 +39,8 @@ u8 npl;                         /* 2 en simple, 4 en double */
 s16 plx[4], ply[4];
 static u8 pl_state[4], pl_timer[4], pl_charge[4], pl_btn[4], pl_hit[4];
 static u8 pl_walk[4], pl_moving[4], pl_flip[4];
-static u8 ai_delay[4], ai_net[4];
+u8 ai_delay[4];                  /* lu par les tests */
+static u8 ai_net[4];
 /* Fonctions utilitaires et calcul de trajectoire : banque fixe (gamefix.c),
    pour libérer la banque du moteur */
 s16 mulfrac(s16 v, u8 k);
@@ -47,12 +48,15 @@ s16 iabs(s16 v);
 s8 rnd_spread(u8 spread);
 void set_msg(const char *a, const char *b, u8 t);
 void launch(s16 tx, s16 ty, u8 T, u8 grav);
+const char *win_label(u8 shot, u8 pass, u8 jump);
 static u8 hit_margin;
 static s16 pcache_x[4], pcache_y[4];   /* prédictions IA en cache */
 static s8 ai_err[4];                   /* erreur d'anticipation tirée à chaque frappe */
 static s16 ai_gx[4], ai_gy[4];         /* destination courante de l'IA (FP) */
 static u8 ai_x2;                       /* 1 : pas de déplacement doublé */
 static u8 hit_now;                     /* une frappe a eu lieu dans cette trame */
+u8 pl_jump[4];                         /* smash sauté : trames de saut restantes */
+u8 hit_pass, hit_jump;                 /* dernière frappe : adversaire au filet, smash sauté */
 u8 srv_slot[2];                 /* double : quel partenaire sert pour l'équipe */
 #define ST_IDLE   0
 #define ST_CHARGE 1
@@ -143,7 +147,8 @@ static void point_over(u8 winner, u8 reason)
     if (reason == 2) {
         ++st_winners[winner];
         if (rally_hits == 1) { ++st_aces[winner]; set_msg("ACE !", "", 70); }
-        else set_msg("COUP GAGNANT !", "", 70);
+        else set_msg(win_label(last_shot, hit_pass, hit_jump), "", 70);
+        sfx_winner();   /* carillon bref (canal des bruitages) */
         sfx_crowd(7);
         crowd_timer = 64;
         if (rally_hits >= 3 || rally_hits == 1) rp_pending = 1;
@@ -334,7 +339,12 @@ static u8 can_hit(u8 p)
     dy = PX(by) - PX(ply[p]);
     /* zone de frappe généreuse : les balles un peu loin partent quand même */
     if (dx < -24 || dx > 24 || dy < -15 || dy > 10) return 0;
-    if (bz > 40 * FP) return 0;
+    if (bz > 40 * FP) {
+        /* balle très haute : smash sauté (joueurs humains et CPU expert),
+           avant le rebond et hors du fond du court */
+        if (bz > 62 * FP || bounces || iabs(PX(ply[p]) - NET_Y) > 70) return 0;
+        if (cfg.ctrl[p] == CTRL_CPU && cfg.level[p] != 2) return 0;
+    }
     return 1;
 }
 
@@ -354,8 +364,11 @@ static void do_hit(u8 p, u8 pad, u8 btn, u8 power, u8 spread)
     if (dx > 14 || dx < -14) spread += 8;          /* frappe en extension */
 
     bspin = SPIN_FLAT;
+    hit_jump = (u8)(bz > 40 * FP);
+    if (hit_jump) pl_jump[p] = 14;          /* le joueur saute, frappe en l'air et retombe */
     if (smash) {
         depth = 62; speed = 80; grav = 10; spread += 4; last_shot = SH_SMASH;
+        if (hit_jump) { depth = 56; speed = 96; grav = 12; spread += 4; }
         sfx_crowd(5);
     } else if (btn == PAD_B && (pad & PAD_UP)) {        /* lob */
         depth = 74; speed = 24; grav = 6; bspin = SPIN_TOP; last_shot = SH_LOB;
@@ -398,6 +411,8 @@ static void do_hit(u8 p, u8 pad, u8 btn, u8 power, u8 spread)
     T = (u8)dist;
     if (T < 14) T = 14;
 
+    /* passing : un adversaire est au filet au moment de la frappe */
+    hit_pass = (u8)(iabs(PX(ply[t ^ 1]) - NET_Y) < 40 || (npl == 4 && iabs(PX(ply[(t ^ 1) + 2]) - NET_Y) < 40));
     hitter = t;
     hitter_p = p;
     hit_now = 1;
@@ -453,6 +468,7 @@ static void place_for_serve(void)
         pl_state[i] = ST_IDLE;
         pl_charge[i] = 0;
         ai_net[i] = 0;
+        pl_jump[i] = 0;
     }
     if (npl == 4) { ai_net[sp ^ 2] = 1; }
     /* style « filet » : montée systématique derrière le service */
@@ -1031,7 +1047,7 @@ static u8 pose_of(u8 p)
 
 void match_draw(void)
 {
-    u8 ord[4], i, j, k, p;
+    u8 ord[4], i, j, k, p;   /* j sert aussi au saut */
     s16 sy;
     /* trame de frappe (calcul de trajectoire coûteux) : on garde les sprites
        de la trame précédente, ce qui évite tout ralentissement ; pendant un
@@ -1061,7 +1077,10 @@ void match_draw(void)
         pose_cache[p] = pose_of(p);
         flip_cache[p] = (u8)(pl_state[p] == ST_SWING ? pl_flip[p] : 0);
         if (cfg.mode == GM_TRAIN && p == 1 && cfg.ex != EX_STATIC) continue;   /* lanceur invisible */
-        spr_person(PX(plx[p]), PX(ply[p]), cfg.chr[p], side_of(p), pose_cache[p], flip_cache[p], (u8)(p & 1));
+        /* saut : hauteur (j²/16) au plus haut à l'impact, puis chute */
+        j = pl_jump[p];
+        if (j) --pl_jump[p];
+        spr_person(PX(plx[p]), PX(ply[p]) - ((j * j) >> 4), cfg.chr[p], side_of(p), pose_cache[p], flip_cache[p], (u8)(p & 1));
     }
     if (cfg.cond == COND_RAIN) bank_call(BANK_EXTRAS, rain_draw);
     spr_end();
