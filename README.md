@@ -1,4 +1,6 @@
-# Pixel Open
+# Royal Martinot
+
+*Grand Slam Prestige Platinum Diamond Edition* — par Bruno Martinot (anciennement « Pixel Open »).
 
 Jeu de tennis 8 bits original pour **NES / Famicom** (NTSC et PAL), sur cartouche MMC1 :
 - simple et double, à 1 ou 2 joueurs ;
@@ -16,7 +18,7 @@ Jeu de tennis 8 bits original pour **NES / Famicom** (NTSC et PAL), sur cartouch
 
 ## Jouer
 
-ROM prête à lancer : [`dist/pixel_open.nes`](dist/pixel_open.nes) (iNES, mapper 1 / MMC1, 256 Ko). Elle se lance dans un émulateur NES ou sur console via une cartouche flash compatible MMC1.
+ROM prête à lancer : [`dist/royal_martinot.nes`](dist/royal_martinot.nes) (iNES, mapper 1 / MMC1, 256 Ko). Elle se lance dans un émulateur NES ou sur console via une cartouche flash compatible MMC1.
 
 Commandes de base :
 - **Croix** : se déplacer ;
@@ -40,7 +42,7 @@ Tout est expliqué dans le **mode d'emploi** du jeu (écran titre) et dans le [m
 Outils : `cc65` 2.19, `python3`, `make` ; pour les tests, `gcc` et `node` ≥ 18.
 
 ```sh
-make          # build/pixel_open.nes (+ occupation de chaque banque)
+make          # build/royal_martinot.nes (+ occupation de chaque banque)
 make test     # règles + codes (natif) et la suite complète sur émulateur (jsnes)
 ```
 

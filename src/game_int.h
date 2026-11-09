@@ -1,4 +1,4 @@
-/* Pixel Open — état interne du match partagé entre le moteur (BANK_GAME)
+/* Royal Martinot — état interne du match partagé entre le moteur (BANK_GAME)
  * et les fonctions annexes (BANK_EXTRAS). Les fonctions annexes ne peuvent
  * appeler que la banque fixe : elles communiquent par ces variables. */
 #ifndef GAME_INT_H

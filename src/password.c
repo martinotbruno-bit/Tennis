@@ -1,4 +1,4 @@
-/* Pixel Open — codes de reprise (C portable, testé sur PC par
+/* Royal Martinot — codes de reprise (C portable, testé sur PC par
  * tests/password_test.c). Les 52 bits de données et 2 bits de version (2 :
  * ancien format à 16 personnages, 3 : format actuel à 17 personnages)
  * occupent les bits 0 à 53 ; une somme de contrôle de 11 bits suit (bits 54

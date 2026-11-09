@@ -1,10 +1,10 @@
-# Pixel Open — construction de la ROM NES (MMC1, 128 Ko) et des tests
+# Royal Martinot — construction de la ROM NES (MMC1, 128 Ko) et des tests
 CC65 ?= cc65
 CA65 ?= ca65
 LD65 ?= ld65
 CFLAGS = -t nes -Oirs --static-locals -g -I src
 BUILD = build
-ROM = $(BUILD)/pixel_open.nes
+ROM = $(BUILD)/royal_martinot.nes
 # banque fixe ($C000)
 FIXED = main rules gfx audio assets_data gamefix
 # banques commutables ($8000)
@@ -46,8 +46,8 @@ $(BUILD)/%.o: $(BUILD)/%.s
 	$(CA65) -t nes -g -o $@ $<
 
 $(ROM): $(OBJS) cfg/mmc1.cfg
-	$(LD65) -C cfg/mmc1.cfg -o $@ -m $(BUILD)/pixel_open.map -Ln $(BUILD)/pixel_open.lbl --dbgfile $(BUILD)/pixel_open.dbg $(OBJS) nes.lib
-	@python3 tools/rom_report.py $(BUILD)/pixel_open.map $@
+	$(LD65) -C cfg/mmc1.cfg -o $@ -m $(BUILD)/royal_martinot.map -Ln $(BUILD)/royal_martinot.lbl --dbgfile $(BUILD)/royal_martinot.dbg $(OBJS) nes.lib
+	@python3 tools/rom_report.py $(BUILD)/royal_martinot.map $@
 
 # tests unitaires natifs (règles, codes) + tests sur émulateur
 test: $(ROM)

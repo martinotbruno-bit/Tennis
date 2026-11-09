@@ -1,4 +1,4 @@
-/* Pixel Open — boucle principale (banque fixe).
+/* Royal Martinot — boucle principale (banque fixe).
  * Chaque trame : attente de la NMI, lecture des manettes, son, puis la
  * logique de l'écran courant dans sa banque. Les changements d'écran entre
  * banques passent par go_req, traité ici. */

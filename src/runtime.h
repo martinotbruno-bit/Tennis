@@ -1,4 +1,4 @@
-/* Pixel Open — interface C des primitives matérielles (crt0.s). */
+/* Royal Martinot — interface C des primitives matérielles (crt0.s). */
 #ifndef RUNTIME_H
 #define RUNTIME_H
 

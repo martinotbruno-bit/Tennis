@@ -1,6 +1,6 @@
-# Pixel Open — Manuel du joueur
+# Royal Martinot — Manuel du joueur
 
-Pixel Open est un jeu de tennis 8 bits original pour NES et Famicom. Il se joue seul contre l'ordinateur ou à deux, en simple comme en double, en match, en compétition ou à l'entraînement.
+Royal Martinot est un jeu de tennis 8 bits original pour NES et Famicom. Il se joue seul contre l'ordinateur ou à deux, en simple comme en double, en match, en compétition ou à l'entraînement.
 
 Ce manuel est aussi intégré au jeu : à l'écran titre, choisissez **MODE D'EMPLOI** (8 pages ; GAUCHE/DROITE pour changer de page, B pour revenir).
 

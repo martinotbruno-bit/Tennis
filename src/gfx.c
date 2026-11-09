@@ -1,4 +1,4 @@
-/* Pixel Open — affichage : palettes, sprites, texte. */
+/* Royal Martinot — affichage : palettes, sprites, texte. */
 #include "gfx.h"
 #include "assets.h"
 #include "app.h"

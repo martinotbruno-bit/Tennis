@@ -1,7 +1,7 @@
 #ifndef ASSETS_H
 #define ASSETS_H
 /* banque fixe */
-extern const unsigned char logo_tiles[40];
+extern const unsigned char logo_tiles[56];   /* « ROYAL MARTINOT » */
 extern const unsigned char bigball_tiles[16];
 extern const unsigned char person_base[4];
 extern const unsigned char marg_head, marg_prof_l, marg_prof_r;

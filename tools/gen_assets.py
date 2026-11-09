@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Génère toutes les ressources graphiques originales de Pixel Open.
+"""Génère toutes les ressources graphiques originales de Royal Martinot.
 
 Sorties :
   assets/tiles.chr      8 Ko de CHR (table 0 = décors/texte, table 1 = sprites)
@@ -547,7 +547,7 @@ assert tkey(bg_tiles[NET_IDX[0]]) == tkey(net_tiles(False)[0]) and tkey(bg_tiles
 court_nt = court_nts[0]
 
 # ---------------------------- Titre --------------------------------------
-LOGO = "PIXEL OPEN"
+LOGO = "ROYAL MARTINOT"   # ligne 1 : ROYAL, ligne 2 : MARTINOT
 def big_letter_tiles(ch):
     """Lettre géante 16x16 (police x2) avec contour."""
     g = FONT[ch]

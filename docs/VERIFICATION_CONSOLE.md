@@ -1,4 +1,4 @@
-# Pixel Open — Liste de vérification sur vraie console
+# Royal Martinot — Liste de vérification sur vraie console
 
 Le jeu a été testé uniquement sur émulateur. Cette liste sert à le vérifier pas à pas sur une vraie NES ou Famicom. Cochez chaque case et notez ce qui ne va pas, si possible avec une photo de l'écran. Comptez environ une heure pour l'ensemble.
 
@@ -9,7 +9,7 @@ Le jeu a été testé uniquement sur émulateur. Cette liste sert à le vérifie
   - **256 Ko** de programme (mapper 1, SNROM) ;
   - 8 Ko de **CHR-RAM** (pas de CHR-ROM) ;
   - 8 Ko de RAM de sauvegarde.
-- [ ] Le fichier `dist/pixel_open.nes`, copié sur la carte mémoire de la cartouche.
+- [ ] Le fichier `dist/royal_martinot.nes`, copié sur la carte mémoire de la cartouche.
 - [ ] Si possible, deux manettes (le mode à deux joueurs utilise la manette 2).
 - [ ] Notez le modèle de console, la cartouche et sa version de logiciel, et le type d'écran (télévision cathodique, écran plat, convertisseur HDMI).
 
@@ -19,7 +19,7 @@ Le jeu a été testé uniquement sur émulateur. Cette liste sert à le vérifie
 
 | # | Vérification | Attendu | OK ? |
 |---|---|---|---|
-| 1.1 | Allumer la console | L'écran titre « PIXEL OPEN » apparaît en moins de 2 s, sans écran noir prolongé ni image brouillée | ☐ |
+| 1.1 | Allumer la console | L'écran titre « ROYAL MARTINOT » apparaît en moins de 2 s, sans écran noir prolongé ni image brouillée | ☐ |
 | 1.2 | Musique du titre | Mélodie jouée en boucle, sans grésillement ni note bloquée | ☐ |
 | 1.3 | HAUT/BAS dans le titre | L'étoile passe d'une ligne à l'autre avec un petit « bip » | ☐ |
 | 1.4 | Attendre sans toucher | La démo CPU contre CPU démarre au bout d'environ **20 secondes**. Chronométrez-la : c'est un bon test de vitesse, voir § 8 | ☐ |

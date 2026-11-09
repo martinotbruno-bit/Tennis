@@ -1,10 +1,16 @@
-# Pixel Open — Rapport de réalisation (version 2.10)
+# Royal Martinot — Rapport de réalisation (version 2.10)
 
 Comme l'exige le CDC (§ 17.5), ce rapport distingue ce qui est **réalisé**, **testé**, **validé sur matériel réel**, **validé uniquement en émulation**, **dépendant d'une extension**, et les **limitations restantes**.
 
 > **Validation matérielle : aucune.** Aucun test n'a été fait sur console réelle (NES, Famicom, PAL, cartouche MMC1). Toutes les validations ont eu lieu en émulation (jsnes) et par des tests unitaires sur PC. Les critères « vérifié sur console physique » (CDC § 2.1, 15.4, 16.A) **ne sont pas remplis**. Ce point ne peut pas être traité dans l'environnement de développement utilisé.
 
 ## 1. Évolutions
+
+### Version 2.11
+
+| Demande | Réalisation |
+|---|---|
+| Nouveau nom : sympa, un peu drôle, excessivement prétentieux, style marque de luxe, faux anglais | **ROYAL MARTINOT** — *Grand Slam Prestige Platinum Diamond Edition*. Logo géant sur deux lignes à l'écran titre, sous-titres « GRAND SLAM PRESTIGE » et « PLATINUM DIAMOND EDITION », « (C) 2026 BRUNO MARTINOT ». Nom repris sur la présentation des matchs, les écrans de compétition, la ROM (`dist/royal_martinot.nes`) et toute la documentation. Les nouvelles lettres du logo occupent les dernières tuiles libres du décor |
 
 ### Version 2.10
 
@@ -138,7 +144,7 @@ Pour loger ce contenu, la cartouche passe de NROM (32 Ko) à **MMC1** : 128 Ko d
 | Relecture des textes (`check_texts.py`) | 0 problème |
 | Contraste (`contrast.py 25`) | 0 paire sous ΔE 25 (personnages, courts, balle, tenues) |
 | Profil CPU, double, 6 000 trames | 27 trames d'échange en dépassement (0,45 %), sans défaut d'image |
-| Compilation | Reproductible : SHA-256 `562d61397f7c4c5dc7f36cd445f2cac9b8290af6115345345d66c0464c4b5b15` sur deux compilations propres |
+| Compilation | Reproductible : SHA-256 `0c12efd10e5755cc8e973ff6ab2faf67f613d3efe35972b0258e8ed03f6acbd4` sur deux compilations propres |
 
 ## 3. Conformité par section du CDC
 
@@ -185,7 +191,7 @@ Légende : ✅ réalisé et testé en émulation · 🟡 partiel · 🔧 nécess
 
 ## 5. Limitations restantes
 
-1. **Tests sur matériel réel** (priorité 1 du CDC). Il faut flasher `dist/pixel_open.nes` sur une cartouche MMC1/SNROM (ou un linéaire EverDrive/PowerPak) et tester sur NES NTSC, NES PAL et Famicom. Points à surveiller :
+1. **Tests sur matériel réel** (priorité 1 du CDC). Il faut flasher `dist/royal_martinot.nes` sur une cartouche MMC1/SNROM (ou un linéaire EverDrive/PowerPak) et tester sur NES NTSC, NES PAL et Famicom. Points à surveiller :
    - l'état du MMC1 à la mise sous tension ;
    - le temps de la NMI ;
    - Dendy ;

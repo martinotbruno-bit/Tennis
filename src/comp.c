@@ -1,4 +1,4 @@
-/* Pixel Open — compétitions : tournoi, poules, championnat, saison et
+/* Royal Martinot — compétitions : tournoi, poules, championnat, saison et
  * tournoi personnalisé (CDC 4.2).
  *
  * Tout ce qui ne dépend pas du joueur est déterminé par une graine de 8 bits :

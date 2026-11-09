@@ -1,8 +1,8 @@
-// Pixel Open — tests de validation sur émulateur (jsnes).
-// Usage : node emu_test.mjs ../build/pixel_open.nes
+// Royal Martinot — tests de validation sur émulateur (jsnes).
+// Usage : node emu_test.mjs ../build/royal_martinot.nes
 import { Emu } from './emu.mjs';
 
-const rom = process.argv[2] ?? '../build/pixel_open.nes';
+const rom = process.argv[2] ?? '../build/royal_martinot.nes';
 let fails = 0, passes = 0;
 function check(cond, msg) {
   if (cond) { passes++; console.log('  ok   ' + msg); }
@@ -299,7 +299,7 @@ function playComp(type, opts, wins) {
   const e = boot(); startWith(e, Object.assign({ MODE: MODE.COMP, COMP: type, FMT: 3 }, opts));
   let matches = 0, code = '';
   const CN = ['TOURNOI', 'POULES', 'CHAMPIONNAT', 'SAISON', 'PERSONNALISE'][type];
-  check(scr(e) === SS.COMP && e.text(16, 1, CN.length) === CN, `${CN} : écran d'étape (titre lisible)`);
+  check(scr(e) === SS.COMP && e.text(18, 1, CN.length) === CN, `${CN} : écran d'étape (titre lisible)`);
   while (scr(e) === SS.COMP && matches < 20) {
     if (matches === 1) code = e.text(10, 21, 15).replace(/ /g, '');
     e.tap('A'); e.run(5); e.tap('A'); e.run(30);

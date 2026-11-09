@@ -1,4 +1,4 @@
-/* Pixel Open — règles et score du tennis (code portable, testé sur PC). */
+/* Royal Martinot — règles et score du tennis (code portable, testé sur PC). */
 #ifndef RULES_H
 #define RULES_H
 

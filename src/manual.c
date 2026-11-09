@@ -1,4 +1,4 @@
-/* Pixel Open — mode d'emploi intégré (banque BANK_MANUAL). */
+/* Royal Martinot — mode d'emploi intégré (banque BANK_MANUAL). */
 #include "app.h"
 #include "gfx.h"
 #include "audio.h"

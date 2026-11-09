@@ -1,4 +1,4 @@
-/* Pixel Open — son. Canal carré 1 + bruit : bruitages ; carré 2 + triangle :
+/* Royal Martinot — son. Canal carré 1 + bruit : bruitages ; carré 2 + triangle :
  * musiques et jingles (jamais pendant les échanges, cf. CDC 11.2).
  * Toutes les mélodies sont des compositions originales. */
 #include "audio.h"

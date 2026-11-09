@@ -1,5 +1,5 @@
 ; =========================================================================
-; Pixel Open — démarrage, interruption NMI et primitives matérielles.
+; Royal Martinot — démarrage, interruption NMI et primitives matérielles.
 ; Assembleur ca65. Les fonctions exportées en "_nom" sont appelables en C
 ; (convention fastcall cc65 : dernier argument dans A/X).
 ; =========================================================================

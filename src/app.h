@@ -1,4 +1,4 @@
-/* Pixel Open — organisation de l'application en banques MMC1. */
+/* Royal Martinot — organisation de l'application en banques MMC1. */
 #ifndef APP_H
 #define APP_H
 #include "runtime.h"

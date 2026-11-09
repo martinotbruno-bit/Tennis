@@ -1,4 +1,4 @@
-/* Pixel Open — palmarès (CDC 12.1-12.2) dans la RAM de cartouche ($7800). */
+/* Royal Martinot — palmarès (CDC 12.1-12.2) dans la RAM de cartouche ($7800). */
 #include "stats.h"
 #include "rules.h"
 #include "comp.h"

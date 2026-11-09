@@ -1,4 +1,4 @@
-/* Pixel Open — fonctions du moteur de match placées dans la banque fixe
+/* Royal Martinot — fonctions du moteur de match placées dans la banque fixe
  * (la banque du moteur est pleine) : utilitaires et calcul de trajectoire.
  * Elles ne lisent et n'écrivent que l'état partagé de game_int.h. */
 #include "game_int.h"

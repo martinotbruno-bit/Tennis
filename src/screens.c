@@ -1,4 +1,4 @@
-/* Pixel Open — écrans hors match (banque BANK_SCREENS) : titre,
+/* Royal Martinot — écrans hors match (banque BANK_SCREENS) : titre,
  * configuration, présentation, résultats, compétitions, codes, palmarès. */
 #include "app.h"
 #include "game.h"
@@ -207,13 +207,20 @@ static void set_attr_rows(u8 y0, u8 y1, u8 pal)
     }
 }
 
-static void draw_logo(u8 y)
+/* logo géant sur deux lignes : « ROYAL » (lettres 0 à 4) puis « MARTINOT »
+   (lettres 6 à 13), centrés ; chaque lettre fait 2 x 2 tuiles */
+static void logo_line(u8 x, u8 y, u8 first, u8 n)
 {
     u8 i;
-    vram_adr(NTADR(6, y));
-    for (i = 0; i < 10; ++i) { vram_put(logo_tiles[i * 4]); vram_put(logo_tiles[i * 4 + 1]); }
-    vram_adr(NTADR(6, y + 1));
-    for (i = 0; i < 10; ++i) { vram_put(logo_tiles[i * 4 + 2]); vram_put(logo_tiles[i * 4 + 3]); }
+    vram_adr(NTADR(x, y));
+    for (i = first; i < first + n; ++i) { vram_put(logo_tiles[i * 4]); vram_put(logo_tiles[i * 4 + 1]); }
+    vram_adr(NTADR(x, y + 1));
+    for (i = first; i < first + n; ++i) { vram_put(logo_tiles[i * 4 + 2]); vram_put(logo_tiles[i * 4 + 3]); }
+}
+static void draw_logo(u8 y)
+{
+    logo_line(11, y, 0, 5);
+    logo_line(8, (u8)(y + 2), 6, 8);
 }
 
 /* ---------------------------------------------------------------------- */
@@ -237,18 +244,19 @@ static void title_screen(void)
         snd_set(opt_val[O_SOUND]);
     }
     screen_begin();
-    set_attr_rows(4, 7, 2);
-    draw_logo(4);
+    set_attr_rows(0, 7, 2);
+    draw_logo(2);
+    txt_at(6, 7, "GRAND SLAM PRESTIGE");
     for (i = 0; i < 4; ++i) {
         vram_adr(NTADR(14, 8 + i));
         vram_put(bigball_tiles[i * 4]); vram_put(bigball_tiles[i * 4 + 1]);
         vram_put(bigball_tiles[i * 4 + 2]); vram_put(bigball_tiles[i * 4 + 3]);
     }
     set_attr_rows(8, 11, 2);
-    txt_at(9, 13, "TENNIS 8 BITS");
+    txt_at(4, 13, "PLATINUM DIAMOND EDITION");
     for (i = 0; i < 4; ++i) txt_at(10, (u8)(16 + i * 2), title_items[i]);
     txt_at(4, 25, "HAUT/BAS PUIS A - START");
-    txt_at(6, 27, "(C) 2026 PIXEL OPEN");
+    txt_at(4, 27, "(C) 2026 BRUNO MARTINOT");
     ppu_on();
     music_play(MUS_TITLE);
     scr_state = SS_TITLE;
@@ -426,7 +434,7 @@ static void present_screen(void)
         txt_at(4, 24, "BIENVENUE SUR LE COURT");
         txt_at(4, 25, "DE MARGAUX ! @ @ @");
     }
-    txt_at(8, 2, "PIXEL OPEN 2026");
+    txt_at(9, 2, "ROYAL MARTINOT");
     if (last_mode == MODE_COMP) {
         txt_at(4, 4, comp_name[c_type]);
         COMP(comp_stage_name, 0);
@@ -481,8 +489,8 @@ static void comp_screen(void)
 {
     u8 o;
     screen_begin();
-    txt_at(3, 1, "PIXEL OPEN -");
-    txt_at(16, 1, comp_name[c_type]);
+    txt_at(3, 1, "ROYAL MARTINOT");
+    txt_at(18, 1, comp_name[c_type]);
     COMP(comp_stage_name, 0);
     txt_at(3, 3, comp_l1);
     txt_at(3, 4, comp_l2);
@@ -516,8 +524,8 @@ static void comp_end_screen(void)
     char b[6];
     screen_begin();
     pal_set_player(0, c_pl[0]);
-    txt_at(3, 2, "PIXEL OPEN -");
-    txt_at(16, 2, comp_name[c_type]);
+    txt_at(3, 2, "ROYAL MARTINOT");
+    txt_at(18, 2, comp_name[c_type]);
     if (c_dbl) { team_label(c_pl[0], c_pl2[0], b); txt_at(3, 3, b); txt_at(9, 3, "(DOUBLE)"); }
     if (c_type == CT_LEAGUE || c_type == CT_SEASON) {
         txt_at(5, 6, "CLASSEMENT FINAL :");

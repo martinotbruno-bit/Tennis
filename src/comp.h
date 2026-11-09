@@ -1,4 +1,4 @@
-/* Pixel Open — compétitions (banque des écrans). */
+/* Royal Martinot — compétitions (banque des écrans). */
 #ifndef COMP_H
 #define COMP_H
 #include "runtime.h"

@@ -1,4 +1,4 @@
-/* Pixel Open — règles du tennis.
+/* Royal Martinot — règles du tennis.
  * Points 0/15/30/40/AV, égalité, jeu décisif à 7 points (2 d'écart) à
  * N jeux partout, sets de N jeux avec 2 jeux d'écart, alternance des services,
  * changements de côté après chaque jeu impair et tous les 6 points du jeu

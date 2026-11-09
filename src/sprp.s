@@ -1,4 +1,4 @@
-; Pixel Open — affichage d'un personnage 16 x 24 (banque fixe, assembleur).
+; Royal Martinot — affichage d'un personnage 16 x 24 (banque fixe, assembleur).
 ;
 ; Version assembleur de spr_person (ancienne version C dans gfx.c) : c'était
 ; la fonction la plus coûteuse de chaque trame (environ 570 cycles par

@@ -1,4 +1,4 @@
-/* Pixel Open — moteur de match : déplacements, frappes, service,
+/* Royal Martinot — moteur de match : déplacements, frappes, service,
  * physique de la balle, arbitrage et intelligence artificielle.
  * Gère le simple (joueurs 0 et 1) et le double (joueurs 0..3,
  * équipe = index & 1).

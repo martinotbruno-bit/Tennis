@@ -1,7 +1,7 @@
 # CAHIER DES CHARGES PROFESSIONNEL
 ## Création d'un jeu de tennis NES/Famicom de nouvelle génération
 
-**Nom du projet :** Pixel Open  
+**Nom du projet :** Royal Martinot  
 **Nature du projet :** Création autonome d'un jeu vidéo de tennis 8 bits pour Nintendo Entertainment System (NES) et Famicom.  
 **Destinataire :** IA de développement autonome.  
 **Objectif :** Concevoir, programmer, optimiser, tester et livrer un jeu de tennis 8 bits original et ambitieux, dans la tradition des jeux de tennis de la NES, avec un contenu considérablement enrichi et une finition maximale, tout en conservant une compatibilité réelle avec le matériel d'origine.
@@ -9,7 +9,7 @@
 | Version | Date | Statut |
 |---|---|---|
 | 1.0 | 2026-11-08 | Version initiale |
-| 1.1 | 2026-11-08 | Nom du projet : Pixel Open |
+| 1.1 | 2026-11-08 | Nom du projet : Royal Martinot |
 
 ## Sommaire
 

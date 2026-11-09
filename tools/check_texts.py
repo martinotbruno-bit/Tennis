@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Pixel Open — relecture automatique des textes affichés.
+"""Royal Martinot — relecture automatique des textes affichés.
 
 Vérifie dans les sources C :
 - que chaque caractère des chaînes existe dans la police (sinon il

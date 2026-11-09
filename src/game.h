@@ -1,4 +1,4 @@
-/* Pixel Open — configuration et état publics du moteur de match. */
+/* Royal Martinot — configuration et état publics du moteur de match. */
 #ifndef GAME_H
 #define GAME_H
 #include "runtime.h"

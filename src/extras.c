@@ -1,4 +1,4 @@
-/* Pixel Open — fonctions annexes du match (banque BANK_EXTRAS) :
+/* Royal Martinot — fonctions annexes du match (banque BANK_EXTRAS) :
  * chargement du court, public animé, ralentis, exercices d'entraînement
  * et tutoriel. Appelées par le moteur via bank_call() ; elles ne peuvent
  * appeler que la banque fixe et échangent leurs données par game_int.h. */

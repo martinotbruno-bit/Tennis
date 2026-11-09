@@ -1,4 +1,4 @@
-/* Pixel Open — palmarès et statistiques cumulées (RAM de cartouche).
+/* Royal Martinot — palmarès et statistiques cumulées (RAM de cartouche).
  * Conservés tant que la console est allumée ; sur une cartouche avec pile,
  * conservés aussi à l'extinction (signature + somme de contrôle). */
 #ifndef STATS_H

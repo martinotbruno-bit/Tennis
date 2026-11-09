@@ -1,4 +1,4 @@
-# Pixel Open — Documentation technique
+# Royal Martinot — Documentation technique
 
 ## 1. Vue d'ensemble
 
@@ -7,7 +7,7 @@
 | Plateforme | NES / Famicom, NTSC et PAL (Dendy traité comme PAL) |
 | Cartouche | **MMC1 (SNROM, mapper 1)** : 256 Ko de PRG en 16 banques de 16 Ko (128 Ko jusqu'à la version 2.9), 8 Ko de CHR-RAM, 8 Ko de PRG-RAM (avec pile facultative) |
 | Langages | C (cc65 2.19) pour la logique ; assembleur 6502 (ca65) pour le démarrage, la NMI, les sprites, les trampolines de banque et l'enregistrement des ralentis |
-| ROM | `dist/pixel_open.nes` (131 088 octets, iNES) |
+| ROM | `dist/royal_martinot.nes` (131 088 octets, iNES) |
 
 ## 2. Choix de la cartouche
 
@@ -35,9 +35,9 @@ La version 1.0 tenait en NROM-256 (32 Ko, plein à 87 %). Il a fallu plus de pla
 
 | Banque | Contenu | Occupation |
 |---|---|---|
-| 15 (fixe, $C000) | Démarrage, NMI, primitives (sprites, VRAM, manettes, trampolines `bank_call` / `far_call`, enregistrement des ralentis, affichage des personnages), boucle principale, règles, palettes, 17 personnages, noms des compétitions, échange des tuiles de personnages, effets du court, son, bibliothèque cc65 | 13 819 |
+| 15 (fixe, $C000) | Démarrage, NMI, primitives (sprites, VRAM, manettes, trampolines `bank_call` / `far_call`, enregistrement des ralentis, affichage des personnages), boucle principale, règles, palettes, 17 personnages, noms des compétitions, échange des tuiles de personnages, effets du court, son, bibliothèque cc65 | 13 835 |
 | 0 | Moteur de match : physique, frappes, service, arbitrage, IA | 16 054 |
-| 1 | Écrans : titre, configuration, présentation, résultats, fin de set, compétitions, levée de coupe, saisie de code, palmarès | 15 899 |
+| 1 | Écrans : titre, configuration, présentation, résultats, fin de set, compétitions, levée de coupe, saisie de code, palmarès | 16 054 |
 | 2 | Motifs graphiques (8 Ko), copiés en CHR-RAM au démarrage | 8 192 |
 | 3 | Annexes du match : score et annonces du club nudiste, courts (5 lieux), panneau du court Margaux, public animé, pluie, ralentis, exercices, tutoriel | 10 755 |
 | 4 | Mode d'emploi | 3 636 |
@@ -367,7 +367,7 @@ Optimisations appliquées :
 Outils : `cc65` 2.19, `python3` (Pillow facultatif), `make` ; pour les tests, `gcc` et `node` ≥ 18.
 
 ```sh
-make          # génère les graphismes, compile -> build/pixel_open.nes (+ occupation par banque)
+make          # génère les graphismes, compile -> build/royal_martinot.nes (+ occupation par banque)
 make test     # règles, codes, puis suite complète sur émulateur (~10 min)
 make clean
 ```
@@ -375,8 +375,8 @@ make clean
 La compilation est reproductible : deux compilations propres donnent le même fichier (empreinte dans le rapport).
 
 Outils de mise au point :
-- `node tests/profile.mjs build/pixel_open.nes [double] [trames]` : cycles par fonction, banques comprises ;
-- `node tests/shots.mjs build/pixel_open.nes dossier` : captures d'écran de référence.
+- `node tests/profile.mjs build/royal_martinot.nes [double] [trames]` : cycles par fonction, banques comprises ;
+- `node tests/shots.mjs build/royal_martinot.nes dossier` : captures d'écran de référence.
 
 ## 10. Tests
 
