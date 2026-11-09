@@ -6,6 +6,7 @@
  * entre joueurs contrôlés par l'ordinateur. Un code de reprise n'a donc besoin
  * que de la graine, de l'étape et des résultats du joueur. */
 #include "comp.h"
+#include "password.h"
 #include "gfx.h"
 #include "app.h"
 
@@ -431,3 +432,11 @@ u8 __fastcall__ comp_draw_table(u8 y)
     }
     return 0;
 }
+
+/* Codes de reprise : password.c est dans cette banque (banque 5) pour
+   libérer la banque fixe. Appels depuis les écrans par far_call, avec le
+   texte et les données désignés par pw_s et pw_p. */
+char *pw_s;
+void *pw_p;
+u8 __fastcall__ pw_enc_far(u8 unused) { pw_encode(pw_s, (const PwData *)pw_p); return unused; }
+u8 __fastcall__ pw_dec_far(u8 unused) { (void)unused; return pw_decode(pw_s, (PwData *)pw_p); }

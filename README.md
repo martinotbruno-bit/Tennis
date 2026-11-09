@@ -16,7 +16,7 @@ Jeu de tennis 8 bits original pour **NES / Famicom** (NTSC et PAL), sur cartouch
 
 ## Jouer
 
-ROM prête à lancer : [`dist/pixel_open.nes`](dist/pixel_open.nes) (iNES, mapper 1 / MMC1, 128 Ko). Elle se lance dans un émulateur NES ou sur console via une cartouche flash compatible MMC1.
+ROM prête à lancer : [`dist/pixel_open.nes`](dist/pixel_open.nes) (iNES, mapper 1 / MMC1, 256 Ko). Elle se lance dans un émulateur NES ou sur console via une cartouche flash compatible MMC1.
 
 Commandes de base :
 - **Croix** : se déplacer ;
@@ -58,4 +58,4 @@ dist/       ROM finale
 
 ## État
 
-Version 2.9 : tout le contenu du cahier des charges est réalisé et testé **en émulation**. Les tests sur consoles réelles restent à faire : suivez la [liste de vérification](docs/VERIFICATION_CONSOLE.md).
+Version 2.10 : tout le contenu du cahier des charges est réalisé et testé **en émulation**. Les tests sur consoles réelles restent à faire : suivez la [liste de vérification](docs/VERIFICATION_CONSOLE.md).

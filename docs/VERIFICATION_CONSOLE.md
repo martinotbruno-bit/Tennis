@@ -6,7 +6,7 @@ Le jeu a été testé uniquement sur émulateur. Cette liste sert à le vérifie
 
 - [ ] Une console : NES (Europe = PAL, États-Unis = NTSC), Famicom (Japon, NTSC), ou un clone Dendy (PAL).
 - [ ] Une cartouche flash compatible **MMC1** (mapper 1), par exemple de la gamme EverDrive N8 ou PowerPak. Elle doit gérer :
-  - 128 Ko de programme ;
+  - **256 Ko** de programme (mapper 1, SNROM) ;
   - 8 Ko de **CHR-RAM** (pas de CHR-ROM) ;
   - 8 Ko de RAM de sauvegarde.
 - [ ] Le fichier `dist/pixel_open.nes`, copié sur la carte mémoire de la cartouche.
@@ -70,7 +70,7 @@ Pour chaque ligne, lancez un match et regardez l'écran pendant une dizaine de s
 | 4.3 | Salle / dur / jour | Pas de pluie possible en salle | ☐ |
 | 4.4 | Club / plage / jour | Balle **blanche** sur le sable jaune ; poussière au rebond | ☐ |
 | 4.5 | Stade / glace / nuit | Court éclairé, décor assombri sans noir complet | ☐ |
-| 4.6 | Court Margaux (toutes surfaces) | Court rose, cœurs, fleurs et étoiles, panneau blanc « COURT MARGAUX » au fond du court. Margaux (tenue rose clair, cheveux blonds) reste bien visible sur le rose ; sur la plage, ses cheveux sont blond clair | ☐ |
+| 4.6 | Court Margaux (toutes surfaces) | Court rose, cœurs, fleurs et étoiles, petit panneau prune « MARGAUX » au fond du court, à gauche. Margaux (tenue rose clair, cheveux blonds) reste bien visible sur le rose ; sur la plage, ses cheveux sont blond clair | ☐ |
 | 4.7 | Personnages proches | MAYA et HUGO, EMMA et NOAH, TOM (crème) et MARGAUX (rose clair) se distinguent en match | ☐ |
 
 ## 5. Double et deux manettes

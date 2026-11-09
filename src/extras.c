@@ -125,8 +125,16 @@ void rain_draw(void)
 /* ---------------------------------------------------------------------- */
 void load_court(void)
 {
+    u8 i, j;
+    const u8 *src = cfg.env == ENV_MARGAUX ? sign_chr : crowd_norm3;
     vram_unrle(court_nt_rle[cfg.env]);
     people_tiles((u8)(cfg.env == ENV_NUDE));
+    /* court Margaux : panneau de fond de court dans les 8 premières tuiles du
+       public du club nudiste (inutilisées ici) ; ailleurs, on les rétablit */
+    for (i = 0; i < 8; ++i) {
+        vram_adr((u16)crowd_idx3[i] << 4);
+        for (j = 0; j < 16; ++j) vram_put(*src++);
+    }
 }
 
 /* ---------------------------------------------------------------------- */

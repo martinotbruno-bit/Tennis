@@ -1,4 +1,4 @@
-# Pixel Open — Rapport de réalisation (version 2.9)
+# Pixel Open — Rapport de réalisation (version 2.10)
 
 Comme l'exige le CDC (§ 17.5), ce rapport distingue ce qui est **réalisé**, **testé**, **validé sur matériel réel**, **validé uniquement en émulation**, **dépendant d'une extension**, et les **limitations restantes**.
 
@@ -6,12 +6,18 @@ Comme l'exige le CDC (§ 17.5), ce rapport distingue ce qui est **réalisé**, *
 
 ## 1. Évolutions
 
+### Version 2.10
+
+| Demande | Réalisation |
+|---|---|
+| Passer à la cartouche de 256 Ko | MMC1 (SNROM) à 16 banques de 16 Ko, la dernière fixe. Les codes de reprise quittent la banque fixe pour la banque 5 : 2,5 Ko libérés dans la banque fixe, et 8 banques (128 Ko) entièrement libres pour la suite. Toujours compatible avec les cartouches flash MMC1 |
+| Panneau Margaux plus petit, au fond du court, coloré, avec du volume | Petit panneau de 32 × 16 px au fond à gauche, hors du bandeau et loin du joueur au service : face prune, lettres blanches, liseré clair, rebord, pieds et ombre portée. Il remplace la grande planche blanche |
+| « CHANGEMENT DE CÔTÉ » centré | Toutes les annonces du bandeau sont centrées |
+
 ### Version 2.9
 
 | Demande | Réalisation |
 |---|---|
-| « COURT MARGAUX » comme un panneau de fond de court | Panneau blanc à lettres noires peint dans le décor, derrière la ligne de fond du haut, centré ; il n'est plus dans le bandeau du score |
-| « CHANGEMENT DE CÔTÉ » centré | Toutes les annonces du bandeau sont désormais centrées |
 | Joueur du haut qui chevauche le bandeau des annonces au service | Quand sa tête est entièrement dans le bandeau, elle passe derrière le texte : les annonces restent lisibles, la tête reste visible entre les lettres. Terrain et position de service inchangés |
 
 ### Version 2.8
@@ -129,7 +135,7 @@ Pour loger ce contenu, la cartouche passe de NROM (32 Ko) à **MMC1** : 128 Ko d
 | Relecture des textes (`check_texts.py`) | 0 problème |
 | Contraste (`contrast.py 25`) | 0 paire sous ΔE 25 (personnages, courts, balle, tenues) |
 | Profil CPU, double, 6 000 trames | 27 trames d'échange en dépassement (0,45 %), sans défaut d'image |
-| Compilation | Reproductible : SHA-256 `95b433a9f118c81d51f6473b1a09f832200962d7165ca05663b459c9b5d02242` sur deux compilations propres |
+| Compilation | Reproductible : SHA-256 `3a1057d72551392ad8b790fe0696b4a5d80182a4de7c5f0621239cbedbf62ce7` sur deux compilations propres |
 
 ## 3. Conformité par section du CDC
 

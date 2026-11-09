@@ -14,6 +14,7 @@ extern const unsigned char crowd_cheer4[48];
 extern const unsigned char crowd_idx3[18];
 extern const unsigned char crowd_norm3[288];
 extern const unsigned char crowd_cheer3[288];
+extern const unsigned char sign_chr[128];      /* panneau du court Margaux (8 tuiles) */
 /* banque 6 */
 extern const unsigned char nude_people[3072];
 extern const unsigned char nude_profile[384];

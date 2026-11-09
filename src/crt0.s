@@ -37,7 +37,7 @@ CTRL_VAL  = %10001000
 
 .segment "HEADER"
     .byte "NES", $1A
-    .byte 8             ; 8 x 16 Ko PRG (128 Ko)
+    .byte 16            ; 16 x 16 Ko PRG (256 Ko)
     .byte 0             ; 0 = CHR-RAM (8 Ko)
     .byte $12           ; mapper 1 (MMC1), PRG-RAM sauvegardée par pile
     .byte $00
@@ -816,7 +816,7 @@ _rand8:
     ldx #0
     rts
 
-.segment "STUB7"
+.segment "STUBF"
     sei
     ldx #$FF
     txs
@@ -826,7 +826,7 @@ _rand8:
 
 ; Programmes de démarrage des banques commutables : si une de ces banques
 ; occupe $C000 à la mise sous tension, elle réinitialise le MMC1 (ce qui fixe
-; la banque 7 en $C000) puis saute au vrai démarrage.
+; la dernière banque, la 15, en $C000) puis saute au vrai démarrage.
 .macro BANK_STUB seg
 .segment seg
     sei
@@ -843,6 +843,14 @@ BANK_STUB "STUB3"
 BANK_STUB "STUB4"
 BANK_STUB "STUB5"
 BANK_STUB "STUB6"
+BANK_STUB "STUB7"
+BANK_STUB "STUB8"
+BANK_STUB "STUB9"
+BANK_STUB "STUB10"
+BANK_STUB "STUB11"
+BANK_STUB "STUB12"
+BANK_STUB "STUB13"
+BANK_STUB "STUB14"
 
 .segment "BANK2"
 _chr_data:

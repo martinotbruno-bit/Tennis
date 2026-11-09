@@ -429,24 +429,45 @@ _nt3 = bytearray(court_nts[3])
 for i, ch in enumerate("CLUB NUDISTE"):
     _nt3[3 * 32 + 10 + i] = ord(ch)
 court_nts[3] = bytes(_nt3)
-# court Margaux : panneau de fond de court (planche blanche, lettres noires)
-# peint dans le décor derrière la ligne de fond du haut (rangée 4, entre le
-# bandeau et la ligne de fond), et non plus dans le bandeau du score.
-# Palette du court : 2 = blanc des lignes, 3 = noir du filet.
-def sign_tile(ch):
-    t = [[2] * 8 for _ in range(8)]
-    g = FONT.get(ch)
-    if g:
-        for y, row in enumerate(g):
-            for x, c in enumerate(row):
-                if c == '1':
-                    t[y + 1][x + 1] = 3
-    return t
+# court Margaux : petit panneau de fond de court (32 x 16), derrière la ligne
+# de fond du haut, côté gauche (colonnes 6 à 9, rangées 4 et 5), à l'écart
+# du bandeau et du joueur au service. Couleurs du court (palette 0) : 0 prune,
+# 1 rose (le sol autour : raccord invisible), 2 blanc, 3 noir. Effet de volume :
+# liseré clair sur le dessus, face prune, rebord sombre, deux pieds et une
+# ombre portée tramée. Lettres « MARGAUX » en petite police 3 x 5.
+MINI = {
+ 'M': ["101", "111", "111", "101", "101"], 'A': ["010", "101", "111", "101", "101"],
+ 'R': ["110", "101", "110", "101", "101"], 'G': ["011", "100", "101", "101", "011"],
+ 'U': ["101", "101", "101", "101", "111"], 'X': ["101", "101", "010", "101", "101"],
+}
+SIGN_X, SIGN_Y = 6, 4          # en tuiles
+def margaux_sign():
+    bmp = draw_court(4)
+    ox, oy = SIGN_X * 8, SIGN_Y * 8
+    c = [row[ox:ox + 32] for row in bmp[oy:oy + 16]]
+    def put(x, y, v):
+        if 0 <= x < 32 and 0 <= y < 16:
+            c[y][x] = v
+    for x in range(2, 30): put(x, 1, 2)                      # dessus (liseré clair)
+    for y in range(2, 10):
+        for x in range(1, 31): put(x, y, 0)                  # face prune
+    for x in range(1, 31): put(x, 10, 3)                     # rebord sombre
+    for x, ch in enumerate("MARGAUX"):
+        for y, row in enumerate(MINI[ch]):
+            for k, v in enumerate(row):
+                if v == '1': put(3 + x * 4 + k, 3 + y, 2)    # lettres blanches
+    for y in range(11, 14):                                  # pieds
+        put(5, y, 3); put(6, y, 3); put(25, y, 3); put(26, y, 3)
+    for y, x0 in ((11, 8), (12, 10)):                        # ombre portée tramée, légère
+        for x in range(x0, 32):
+            if (x + y) % 2 == 0 and (y == 11 or x % 4 < 2): put(x, y, 3)
+    return [[c[ty * 8 + y][tx * 8:tx * 8 + 8] for y in range(8)] for ty in range(2) for tx in range(4)]
+SIGN_TILES = margaux_sign()
+# indices : les 8 premières tuiles du public du club nudiste (inutilisées sur
+# le court Margaux) ; load_court y copie le panneau, et les rétablit ailleurs
 _nt4 = bytearray(court_nts[4])
-_sign = " COURT MARGAUX "
-_x0 = 16 - len(_sign) // 2
-for i, ch in enumerate(_sign):
-    _nt4[4 * 32 + _x0 + i] = 0x02 if ch == ' ' else bg_alloc(sign_tile(ch))
+for k in range(8):
+    _nt4[(SIGN_Y + k // 4) * 32 + SIGN_X + k % 4] = crowd_idx3[k]
 court_nts[4] = bytes(_nt4)
 court_nt = court_nts[0]
 
@@ -1012,6 +1033,7 @@ src.append(c_array('crowd_cheer4', b''.join(encode_tile(t) for t in GIRLY_SPARKL
 src.append(c_array('crowd_idx3', bytes(crowd_idx3)))
 src.append(c_array('crowd_norm3', b''.join(encode_tile(t) for t in NUDE_CROWD)))  # 12 tuiles
 src.append(c_array('crowd_cheer3', b''.join(encode_tile(t) for t in NUDE_CHEER)))
+src.append(c_array('sign_chr', b''.join(encode_tile(t) for t in SIGN_TILES)))   # panneau du court Margaux
 src.append(c_array('crowd_idx', bytes(crowd_idx)))
 src.append(c_array('crowd_norm', b''.join(encode_tile(t) for t in CROWD)))
 src.append(c_array('crowd_cheer', b''.join(encode_tile(t) for t in CHEER)))

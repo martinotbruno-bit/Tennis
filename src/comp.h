@@ -33,4 +33,9 @@ u8 __fastcall__ comp_record(u8 won);
 u8 __fastcall__ comp_stage_name(u8 unused); /* remplit comp_l1 / comp_l2 */
 u8 __fastcall__ comp_draw_table(u8 y);
 #define COMP(fn, arg) ((u8)far_call(BANK_COMP, (void *)(fn), (arg)))
+/* codes de reprise (banque 5) : renseigner pw_s (13 signes) et pw_p (PwData) */
+extern char *pw_s;
+extern void *pw_p;
+u8 __fastcall__ pw_enc_far(u8 unused);
+u8 __fastcall__ pw_dec_far(u8 unused);
 #endif

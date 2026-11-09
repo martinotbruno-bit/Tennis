@@ -472,7 +472,8 @@ static void make_code(void)
     pw.surf = c_surf; pw.fmt = c_fmt; pw.cond = c_cond; pw.env = c_env; pw.lvl = c_lvl;
     pw.results = c_results; pw.opts = c_opts; pw.trophies = c_trophies;
     pw.doubles = c_dbl; pw.partner = (u8)(c_dbl ? c_pl2[0] : 0); pw.hum2 = c_hum2;
-    pw_encode(code_buf, &pw);
+    pw_s = code_buf; pw_p = &pw;
+    (void)far_call(BANK_COMP, (void *)pw_enc_far, 0);
     code_buf[PW_LEN] = 0;
 }
 
@@ -634,7 +635,8 @@ static void code_tick(void)
     vbuf_text(9, 10, code_buf, PW_LEN);
     if (pad1_new & PAD_B) { title_screen(); return; }
     if (pad1_new & PAD_START) {
-        if (pw_decode(code_buf, &pw)) {
+        pw_s = code_buf; pw_p = &pw;
+        if ((u8)far_call(BANK_COMP, (void *)pw_dec_far, 0)) {
             c_type = pw.type; c_stage = pw.stage; c_seed = pw.seed; c_pl[0] = pw.chr;
             c_surf = pw.surf; c_fmt = pw.fmt; c_cond = pw.cond; c_env = pw.env; c_lvl = pw.lvl;
             c_results = pw.results; c_opts = pw.opts; c_trophies = pw.trophies;

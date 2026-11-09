@@ -135,12 +135,16 @@ console.log('Court Margaux');
   setOpts(e, { ENV: 4 }); e.tap('START'); e.run(15);
   check(e.text(4, 24, 22) === 'BIENVENUE SUR LE COURT', 'présentation du court Margaux');
   e.tap('A'); e.run(30);
-  // panneau de fond de court (rangée 4, colonnes 9 à 23) : planche blanche (tuile 2) et
-  // 13 lettres ; le bandeau du score (rangée 3) reste libre
-  const v4 = (i) => e.nes.ppu.vramMem[0x2000 + 4 * 32 + 9 + i];
-  const letters = [1, 2, 3, 4, 5, 7, 8, 9, 10, 11, 12, 13].every((i) => v4(i) !== 2 && v4(i) > 4);
-  check(v4(0) === 2 && v4(6) === 2 && v4(14) === 2 && letters && !/[A-Z]/.test(e.text(9, 3, 14)) && e.nes.cpu.mem[e.addr('pal_buf') + 1] === 0x25,
-    'court rose avec le panneau COURT MARGAUX au fond du court (hors du bandeau)');
+  // petit panneau de fond de court (rangées 4-5, colonnes 6 à 9) : ses 8 tuiles, chargées en
+  // CHR-RAM à la place du public du club nudiste ; le bandeau du score (rangée 3) reste libre
+  const nt = (x, y) => e.nes.ppu.vramMem[0x2000 + y * 32 + x];
+  // données en banque 3 : lues directement dans la ROM (16 Ko par banque)
+  const rb = (sym, off) => e.nes.rom.rom[3][e.addr(sym) - 0x8000 + off];
+  const idx = [...Array(8).keys()].map((k) => rb('crowd_idx3', k));
+  const placed = idx.every((t, k) => nt(6 + (k % 4), 4 + (k >> 2)) === t);
+  let same = true; for (let b = 0; b < 128; b++) if (e.nes.ppu.vramMem[idx[b >> 4] * 16 + (b & 15)] !== rb('sign_chr', b)) same = false;
+  check(placed && same && !/[A-Z]/.test(e.text(9, 3, 14)) && e.nes.cpu.mem[e.addr('pal_buf') + 1] === 0x25,
+    'court rose avec le petit panneau MARGAUX au fond du court (hors du bandeau)');
   allCpu(e); e.poke('crowd_timer', 60); e.run(70);
   check(e.peek('crowd_timer') === 0, 'coeurs, fleurs et étoiles scintillent puis se reposent');
 }

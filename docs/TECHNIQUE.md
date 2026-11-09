@@ -5,7 +5,7 @@
 | Élément | Choix |
 |---|---|
 | Plateforme | NES / Famicom, NTSC et PAL (Dendy traité comme PAL) |
-| Cartouche | **MMC1 (SNROM, mapper 1)** : 128 Ko de PRG en 8 banques de 16 Ko, 8 Ko de CHR-RAM, 8 Ko de PRG-RAM (avec pile facultative) |
+| Cartouche | **MMC1 (SNROM, mapper 1)** : 256 Ko de PRG en 16 banques de 16 Ko (128 Ko jusqu'à la version 2.9), 8 Ko de CHR-RAM, 8 Ko de PRG-RAM (avec pile facultative) |
 | Langages | C (cc65 2.19) pour la logique ; assembleur 6502 (ca65) pour le démarrage, la NMI, les sprites, les trampolines de banque et l'enregistrement des ralentis |
 | ROM | `dist/pixel_open.nes` (131 088 octets, iNES) |
 
@@ -27,7 +27,7 @@ La version 1.0 tenait en NROM-256 (32 Ko, plein à 87 %). Il a fallu plus de pla
 | MMC3 | IRQ de ligne, banques fines | Plus complexe et plus chère | Évolution possible |
 | Extensions audio | Canaux supplémentaires | Absentes des consoles occidentales | Non utilisées (CDC 11.4) |
 
-**Mise sous tension** : l'état initial du MMC1 n'est pas garanti. Chaque banque se termine donc par un petit programme (`STUBn`) qui réinitialise le mapper (ce qui fixe la banque 7 en $C000) puis saute au vrai démarrage.
+**Mise sous tension** : l'état initial du MMC1 n'est pas garanti. Chaque banque se termine donc par un petit programme (`STUBn`) qui réinitialise le mapper (ce qui fixe la dernière banque, la 15, en $C000) puis saute au vrai démarrage.
 
 ## 3. Organisation mémoire
 
@@ -35,14 +35,15 @@ La version 1.0 tenait en NROM-256 (32 Ko, plein à 87 %). Il a fallu plus de pla
 
 | Banque | Contenu | Occupation |
 |---|---|---|
-| 7 (fixe, $C000) | Démarrage, NMI, primitives (sprites, VRAM, manettes, trampolines `bank_call` / `far_call`, enregistrement des ralentis), boucle principale, règles, codes, palettes, 17 personnages, noms des compétitions, échange des tuiles de personnages, son, bibliothèque cc65 | 15 888 |
+| 15 (fixe, $C000) | Démarrage, NMI, primitives (sprites, VRAM, manettes, trampolines `bank_call` / `far_call`, enregistrement des ralentis, affichage des personnages), boucle principale, règles, palettes, 17 personnages, noms des compétitions, échange des tuiles de personnages, effets du court, son, bibliothèque cc65 | 13 819 |
 | 0 | Moteur de match : physique, frappes, service, arbitrage, IA | 16 054 |
-| 1 | Écrans : titre, configuration, présentation, résultats, compétitions, levée de coupe, saisie de code, palmarès | 15 835 |
+| 1 | Écrans : titre, configuration, présentation, résultats, fin de set, compétitions, levée de coupe, saisie de code, palmarès | 15 899 |
 | 2 | Motifs graphiques (8 Ko), copiés en CHR-RAM au démarrage | 8 192 |
-| 3 | Annexes du match : score et annonces du club nudiste, courts (4 lieux), public animé, pluie, ralentis, exercices, tutoriel | 9 790 |
+| 3 | Annexes du match : score et annonces du club nudiste, courts (5 lieux), panneau du court Margaux, public animé, pluie, ralentis, exercices, tutoriel | 10 012 |
 | 4 | Mode d'emploi | 3 636 |
-| 5 | Compétitions (tirages, simulations, classements, équipes de double) et palmarès | 7 652 |
+| 5 | Compétitions (tirages, simulations, classements, équipes de double), palmarès et codes de reprise (`password.c`, appelé par `far_call`) | 9 773 |
 | 6 | Tuiles des personnages « au naturel » (club nudiste), copiées en CHR-RAM à la demande | 3 456 |
+| 7 à 14 | Libres (environ 128 Ko) pour les évolutions futures | 0 |
 
 ### RAM
 
@@ -144,7 +145,7 @@ Pour les coups lifté, à plat et coupé joués après le rebond :
 
 ### Panneau de fond de court (court Margaux) et annonces centrées
 
-- « COURT MARGAUX » n'est plus écrit dans le bandeau du score : c'est un panneau peint dans le décor, rangée 4 (entre le bandeau et la ligne de fond du haut), colonnes 9 à 23. Planche blanche (couleur 2 de la palette du court, celle des lignes) et lettres noires (couleur 3, celle du filet), très lisibles. Les 9 lettres différentes occupent les 9 dernières tuiles libres du décor ; les espaces utilisent la tuile pleine n° 2.
+- **Panneau** : petit panneau de 32 × 16 px (4 × 2 tuiles) au fond du court, derrière la ligne de fond du haut, côté gauche (colonnes 6 à 9, rangées 4 et 5), à l'écart du bandeau et du joueur au service. Il utilise les couleurs du court : face prune, lettres « MARGAUX » blanches en petite police 3 × 5, liseré clair sur le dessus, rebord sombre, deux pieds et une ombre portée tramée, pour l'effet de volume. Le sol rose autour est la couleur du court, donc le raccord est invisible. La table des décors étant pleine, ses 8 tuiles sont chargées en CHR-RAM par `load_court` à la place des 8 premières tuiles du public du club nudiste, inutilisées sur ce court. Elles sont rétablies (`crowd_norm3`) au chargement de tout autre court.
 - Toutes les annonces du bandeau sont centrées sur leurs 14 caractères (`center14`, banque fixe), y compris celles de l'entraînement, du tutoriel et du club nudiste. Les deux lignes du récapitulatif du score ont la même longueur et restent alignées.
 
 ### Bandeau devant le joueur du haut
