@@ -26,17 +26,16 @@ static const char * const ex_short[NEX] = {
 /* Club nudiste : l'arbitre ajoute son grain de sel aux annonces. */
 static u8 starts(const char *a, const char *b)
 {
+    while (*a == ' ') ++a;          /* annonces centrées */
     while (*b) if (*a++ != *b++) return 0;
     return 1;
 }
-static void set2(const char *s)
-{
-    u8 i;
-    for (i = 0; i < 14; ++i) msg2[i] = *s ? *s++ : ' ';
-}
+static void set2(const char *s) { center14(msg2, s); }
 static void nude_quip(void)
 {
-    if (msg2[0] != ' ' && !starts(msg1, "JEU, SET") && !starts(msg1, "CHANGEMENT")) return;
+    u8 i, empty = 1;
+    for (i = 0; i < 14; ++i) if (msg2[i] != ' ') empty = 0;
+    if (!empty && !starts(msg1, "JEU, SET") && !starts(msg1, "CHANGEMENT")) return;
     if (starts(msg1, "CHANGEMENT")) set2("ET DE CREME !");
     if (starts(msg1, "JEU !")) set2("TENUE : AUCUNE");
     else if (starts(msg1, "FAUTE")) set2("PAS DE POCHE !");
@@ -204,8 +203,8 @@ static u8 tr_count, tr_alt, tr_got;
 
 static void tmsg(const char *a, const char *b, u8 t)
 {
-    u8 i;
-    for (i = 0; i < 14; ++i) { msg1[i] = *a ? *a++ : ' '; msg2[i] = *b ? *b++ : ' '; }
+    center14(msg1, a);
+    center14(msg2, b);
     msg_timer = t;
     hud_dirty = 1;
 }

@@ -35,11 +35,11 @@ La version 1.0 tenait en NROM-256 (32 Ko, plein à 87 %). Il a fallu plus de pla
 
 | Banque | Contenu | Occupation |
 |---|---|---|
-| 7 (fixe, $C000) | Démarrage, NMI, primitives (sprites, VRAM, manettes, trampolines `bank_call` / `far_call`, enregistrement des ralentis), boucle principale, règles, codes, palettes, 17 personnages, noms des compétitions, échange des tuiles de personnages, son, bibliothèque cc65 | 15 858 |
+| 7 (fixe, $C000) | Démarrage, NMI, primitives (sprites, VRAM, manettes, trampolines `bank_call` / `far_call`, enregistrement des ralentis), boucle principale, règles, codes, palettes, 17 personnages, noms des compétitions, échange des tuiles de personnages, son, bibliothèque cc65 | 15 888 |
 | 0 | Moteur de match : physique, frappes, service, arbitrage, IA | 16 054 |
 | 1 | Écrans : titre, configuration, présentation, résultats, compétitions, levée de coupe, saisie de code, palmarès | 15 835 |
 | 2 | Motifs graphiques (8 Ko), copiés en CHR-RAM au démarrage | 8 192 |
-| 3 | Annexes du match : score et annonces du club nudiste, courts (4 lieux), public animé, pluie, ralentis, exercices, tutoriel | 9 899 |
+| 3 | Annexes du match : score et annonces du club nudiste, courts (4 lieux), public animé, pluie, ralentis, exercices, tutoriel | 9 790 |
 | 4 | Mode d'emploi | 3 636 |
 | 5 | Compétitions (tirages, simulations, classements, équipes de double) et palmarès | 7 652 |
 | 6 | Tuiles des personnages « au naturel » (club nudiste), copiées en CHR-RAM à la demande | 3 456 |
@@ -141,6 +141,11 @@ Pour les coups lifté, à plat et coupé joués après le rebond :
 - **Compteurs** : `st_perf` et `st_ptry` (coups lifté, à plat, coupé des humains) par match ; au palmarès, `sx.pok` et `sx.ptry` (bloc `sx`, signature « PD » ; les compteurs du service canon ont été remis à zéro une fois lors de ce changement).
 
 `can_hit` a été déplacée du moteur (banque 0) vers la banque fixe pour faire la place (606 octets libérés).
+
+### Panneau de fond de court (court Margaux) et annonces centrées
+
+- « COURT MARGAUX » n'est plus écrit dans le bandeau du score : c'est un panneau peint dans le décor, rangée 4 (entre le bandeau et la ligne de fond du haut), colonnes 9 à 23. Planche blanche (couleur 2 de la palette du court, celle des lignes) et lettres noires (couleur 3, celle du filet), très lisibles. Les 9 lettres différentes occupent les 9 dernières tuiles libres du décor ; les espaces utilisent la tuile pleine n° 2.
+- Toutes les annonces du bandeau sont centrées sur leurs 14 caractères (`center14`, banque fixe), y compris celles de l'entraînement, du tutoriel et du club nudiste. Les deux lignes du récapitulatif du score ont la même longueur et restent alignées.
 
 ### Bandeau devant le joueur du haut
 

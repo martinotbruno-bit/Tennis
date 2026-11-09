@@ -135,7 +135,12 @@ console.log('Court Margaux');
   setOpts(e, { ENV: 4 }); e.tap('START'); e.run(15);
   check(e.text(4, 24, 22) === 'BIENVENUE SUR LE COURT', 'présentation du court Margaux');
   e.tap('A'); e.run(30);
-  check(e.text(10, 3, 13) === 'COURT MARGAUX' && e.nes.cpu.mem[e.addr('pal_buf') + 1] === 0x25, 'court rose avec le panneau COURT MARGAUX');
+  // panneau de fond de court (rangée 4, colonnes 9 à 23) : planche blanche (tuile 2) et
+  // 13 lettres ; le bandeau du score (rangée 3) reste libre
+  const v4 = (i) => e.nes.ppu.vramMem[0x2000 + 4 * 32 + 9 + i];
+  const letters = [1, 2, 3, 4, 5, 7, 8, 9, 10, 11, 12, 13].every((i) => v4(i) !== 2 && v4(i) > 4);
+  check(v4(0) === 2 && v4(6) === 2 && v4(14) === 2 && letters && !/[A-Z]/.test(e.text(9, 3, 14)) && e.nes.cpu.mem[e.addr('pal_buf') + 1] === 0x25,
+    'court rose avec le panneau COURT MARGAUX au fond du court (hors du bandeau)');
   allCpu(e); e.poke('crowd_timer', 60); e.run(70);
   check(e.peek('crowd_timer') === 0, 'coeurs, fleurs et étoiles scintillent puis se reposent');
 }

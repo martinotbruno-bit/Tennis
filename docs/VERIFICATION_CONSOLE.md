@@ -70,7 +70,7 @@ Pour chaque ligne, lancez un match et regardez l'écran pendant une dizaine de s
 | 4.3 | Salle / dur / jour | Pas de pluie possible en salle | ☐ |
 | 4.4 | Club / plage / jour | Balle **blanche** sur le sable jaune ; poussière au rebond | ☐ |
 | 4.5 | Stade / glace / nuit | Court éclairé, décor assombri sans noir complet | ☐ |
-| 4.6 | Court Margaux (toutes surfaces) | Court rose, cœurs, fleurs et étoiles. Margaux (tenue rose clair, cheveux blonds) reste bien visible sur le rose ; sur la plage, ses cheveux sont blond clair | ☐ |
+| 4.6 | Court Margaux (toutes surfaces) | Court rose, cœurs, fleurs et étoiles, panneau blanc « COURT MARGAUX » au fond du court. Margaux (tenue rose clair, cheveux blonds) reste bien visible sur le rose ; sur la plage, ses cheveux sont blond clair | ☐ |
 | 4.7 | Personnages proches | MAYA et HUGO, EMMA et NOAH, TOM (crème) et MARGAUX (rose clair) se distinguent en match | ☐ |
 
 ## 5. Double et deux manettes

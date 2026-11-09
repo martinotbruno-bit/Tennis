@@ -19,10 +19,19 @@ s8 rnd_spread(u8 spread)
     return (s8)((s16)(rand8() % (u8)(spread * 2 + 1)) - spread);
 }
 
+/* Ligne d'annonce de 14 caractères, texte centré */
+void center14(char *dst, const char *s)
+{
+    u8 i, n = 0, o;
+    while (s[n] && n < 14) ++n;
+    o = (u8)((14 - n) >> 1);
+    for (i = 0; i < 14; ++i) dst[i] = (char)((i >= o && i < o + n) ? s[i - o] : ' ');
+}
+
 void set_msg(const char *a, const char *b, u8 t)
 {
-    u8 i;
-    for (i = 0; i < 14; ++i) { msg1[i] = *a ? *a++ : ' '; msg2[i] = *b ? *b++ : ' '; }
+    center14(msg1, a);
+    center14(msg2, b);
     msg_timer = t;
     hud_dirty = 1;
 }
@@ -262,8 +271,7 @@ void score_line(u8 t, char *out)
     team_name(t, out);
     for (i = 0; i < sc_set_no && i < MAX_SETS; ++i) { out[k++] = ' '; out[k++] = (char)('0' + sc_hist[i][t]); }
     if (!sc_over && k < 14) { out[k++] = ' '; out[k++] = (char)('0' + sc_games[t]); }
-    while (k < 14) out[k++] = ' ';
-    out[14] = 0;
+    out[k] = 0;                     /* les deux lignes ont la même longueur : centrées ensemble */
 }
 
 /* bandeau : le score set par set pendant 2 secondes */

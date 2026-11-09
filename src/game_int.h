@@ -16,6 +16,7 @@ extern s16 land_x, land_y;
 extern u8 rally_hits, ms, ms_timer, faults, paused;
 extern u8 msg_timer, hud_dirty;
 extern char msg1[16], msg2[16];
+void center14(char *dst, const char *s);   /* annonce centrée (banque fixe) */
 extern u8 pose_cache[4], flip_cache[4];
 
 #define MS_SERVE  0     /* serveur en place, attend le lancer */

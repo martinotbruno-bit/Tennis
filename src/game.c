@@ -1050,7 +1050,7 @@ u8 match_tick(void)
         if (rp_pending && ms_timer == 50) {
             bank_call(BANK_EXTRAS, rp_start);
             ms = MS_REPLAY;
-            set_msg("   RALENTI", "  A : PASSER", 255);
+            set_msg("RALENTI", "A : PASSER", 255);
         } else if (--ms_timer == 0) {
             after_point();
             if (brk_pend) { brk_pend = 0; return 2; }      /* fin de set : écran récapitulatif */

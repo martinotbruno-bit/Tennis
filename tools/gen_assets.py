@@ -429,9 +429,24 @@ _nt3 = bytearray(court_nts[3])
 for i, ch in enumerate("CLUB NUDISTE"):
     _nt3[3 * 32 + 10 + i] = ord(ch)
 court_nts[3] = bytes(_nt3)
+# court Margaux : panneau de fond de court (planche blanche, lettres noires)
+# peint dans le décor derrière la ligne de fond du haut (rangée 4, entre le
+# bandeau et la ligne de fond), et non plus dans le bandeau du score.
+# Palette du court : 2 = blanc des lignes, 3 = noir du filet.
+def sign_tile(ch):
+    t = [[2] * 8 for _ in range(8)]
+    g = FONT.get(ch)
+    if g:
+        for y, row in enumerate(g):
+            for x, c in enumerate(row):
+                if c == '1':
+                    t[y + 1][x + 1] = 3
+    return t
 _nt4 = bytearray(court_nts[4])
-for i, ch in enumerate("COURT MARGAUX"):
-    _nt4[3 * 32 + 10 + i] = ord(ch)
+_sign = " COURT MARGAUX "
+_x0 = 16 - len(_sign) // 2
+for i, ch in enumerate(_sign):
+    _nt4[4 * 32 + _x0 + i] = 0x02 if ch == ' ' else bg_alloc(sign_tile(ch))
 court_nts[4] = bytes(_nt4)
 court_nt = court_nts[0]
 
