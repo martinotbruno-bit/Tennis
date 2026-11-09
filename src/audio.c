@@ -42,8 +42,8 @@ static const u16 note_period[48] = {
 #define B5 47
 
 /* Écran titre et menu : petite polka de cirque, ridicule mais propre et bien
- * carrée. Mélodie sautillante liée, sans aucun silence (carré 12,5 % « kazoo »,
- * enveloppe qui décroît et marque chaque note), broderies chromatiques comiques ; « oum-pa » du triangle qui saute
+ * carrée. Mélodie sautillante liée, sans aucun silence (carré 12,5 % « kazoo » à
+ * volume constant : aucune note ne s'éteint avant la suivante), broderies chromatiques comiques ; « oum-pa » du triangle qui saute
  * du grave à l'octave. 16 mesures à 2 temps de 48 trames (12,8 s) ; la
  * dernière mesure remonte vers le Do du début : la boucle est sans couture. */
 static const u8 mus_title_mel[] = {
@@ -181,7 +181,7 @@ void music_play(u8 id)
     APU(0x4008) = 0x80;
     if (snd_mode) return;          /* musique coupée (réglage SON) */
     switch (id) {
-    case MUS_TITLE:   mel_ptr = mus_title_mel; bass_ptr = mus_title_bass; music_loop = 1; mel_duty = 0x07; break;
+    case MUS_TITLE:   mel_ptr = mus_title_mel; bass_ptr = mus_title_bass; music_loop = 1; mel_duty = 0x36; break;
     case MUS_POINT:   mel_ptr = mus_point_mel; break;
     case MUS_GAME:    mel_ptr = mus_game_mel; break;
     case MUS_VICTORY: mel_ptr = mus_vict_mel; bass_ptr = mus_vict_bass; break;

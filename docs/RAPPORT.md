@@ -1,10 +1,17 @@
-# Royal Martinot — Rapport de réalisation (version 2.14)
+# Royal Martinot — Rapport de réalisation (version 2.15)
 
 Comme l'exige le CDC (§ 17.5), ce rapport distingue ce qui est **réalisé**, **testé**, **validé sur matériel réel**, **validé uniquement en émulation**, **dépendant d'une extension**, et les **limitations restantes**.
 
 > **Validation matérielle : aucune.** Aucun test n'a été fait sur console réelle (NES, Famicom, PAL, cartouche MMC1). Toutes les validations ont eu lieu en émulation (jsnes) et par des tests unitaires sur PC. Les critères « vérifié sur console physique » (CDC § 2.1, 15.4, 16.A) **ne sont pas remplis**. Ce point ne peut pas être traité dans l'environnement de développement utilisé.
 
 ## 1. Évolutions
+
+### Version 2.15
+
+| Demande | Réalisation |
+|---|---|
+| Trous dans la musique du titre et du menu | Le « kazoo » de la polka avait une enveloppe qui décroît : sur les notes longues, le son s'éteignait presque avant la note suivante. Il est maintenant à volume constant ; mesuré sur 29 s enregistrées, aucune baisse du niveau à aucune trame, y compris au passage du titre au menu |
+| Petite animation simple quand on gagne un match | Pendant « JEU, SET ET MATCH ! », le vainqueur (et son partenaire en double) sautille de joie, raquette levée, sous une pluie d'étoiles blanches et jaunes et de confettis. Rien quand le CPU bat un humain |
 
 ### Version 2.14
 
@@ -157,12 +164,12 @@ Pour loger ce contenu, la cartouche passe de NROM (32 Ko) à **MMC1** : 128 Ko d
 |---|---|
 | Règles (`rules_test`) | 42/42 |
 | Codes (`password_test`) | 200 000/200 000 aller-retour (format v3), ancien code v2 accepté, Margaux codée, Margaux au club nudiste refusée ; 99,98 % des codes altérés d'un signe refusés |
-| Émulateur (`emu_test`) | 182/182 vérifications (environ 21 min) |
+| Émulateur (`emu_test`) | 187/188 vérifications (environ 21 min) |
 | Profil CPU, simple, 6 000 trames | 0 trame d'échange en dépassement |
 | Relecture des textes (`check_texts.py`) | 0 problème |
 | Contraste (`contrast.py 25`) | 0 paire sous ΔE 25 (personnages, courts, balle, tenues) |
 | Profil CPU, double, 6 000 trames | 27 trames d'échange en dépassement (0,45 %), sans défaut d'image |
-| Compilation | Reproductible : SHA-256 `81b31db98916fa2b341cb97148a739d4d95ea20adaac8e52a6716e57b9cfeb53` sur deux compilations propres |
+| Compilation | Reproductible : SHA-256 `88b55cfa9a5d3c5c17ec6f1d61279935318a73ff1c3ebc3a2e62a1fc6ff25a1f` sur deux compilations propres |
 
 ## 3. Conformité par section du CDC
 

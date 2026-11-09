@@ -15,6 +15,8 @@
 .import _person_base, _profile_base, _char_female
 .import _marg_head, _marg_prof_l, _marg_prof_r
 .import _sfx_step
+.import _ms_timer, _confetti_tile
+.export _win_fx
 .import incsp8
 .importzp sp, tmp1, tmp2, tmp3
 
@@ -345,3 +347,79 @@ _spr_person:
     sta _oam_buf+2,x
 @end:
     jmp incsp8              ; 8 octets d'arguments sur la pile (x, y : 2 octets chacun ; c, front, pose, flip : 1)
+
+; ---------------------------------------------------------------------------
+; void win_fx(void) : fête de victoire. Pendant « JEU, SET ET MATCH ! »
+; (ms_timer de 160 à 0), 10 sprites tombent à 3 vitesses en se balançant :
+; 5 confettis et 5 étoiles (tuile de la frappe parfaite) blanches ou jaunes.
+; En assembleur : la version C débordait de la trame en double.
+.segment "WBSS"
+wf_y:   .res 10
+
+.segment "RODATA"
+wf_x:    .byte 24, 56, 88, 120, 152, 184, 216, 40, 136, 200
+wf_v:    .byte 2, 3, 2, 1, 3, 2, 1, 3, 2, 1
+wf_y0:   .byte 32, 55, 78, 101, 124, 147, 170, 193, 32, 55
+wf_tile: .byte 0, 3, 0, 3, 0, 3, 0, 3, 0, 3      ; 0 = tuile des confettis
+wf_pal:  .byte 0, 2, 2, 3, 0, 2, 2, 3, 0, 2      ; étoiles blanches (2) et jaunes (3)
+wf_sway: .byte 0, 1, 2, 3, 3, 2, 1, 0, 0, 1, 2, 3, 3, 2, 1, 0, 0   ; phase (0..7) + index (0..9)
+
+.segment "CODE"
+_win_fx:
+    lda #160
+    sec
+    sbc _ms_timer
+    lsr a
+    lsr a
+    lsr a
+    and #7
+    sta tmp1                ; phase du balancement
+    lda _ms_timer
+    cmp #159
+    bcc @run
+    ldy #9                  ; début de la fête : positions de départ
+@init:
+    lda wf_y0,y
+    sta wf_y,y
+    dey
+    bpl @init
+@run:
+    ldx _oam_i
+    ldy #9
+@loop:
+    lda wf_y,y              ; chute, puis retour en haut sous le bandeau
+    clc
+    adc wf_v,y
+    cmp #216
+    bcc @yok
+    sbc #184
+@yok:
+    sta wf_y,y
+    sec
+    sbc #1                  ; le PPU affiche les sprites une ligne plus bas
+    sta _oam_buf,x
+    lda wf_tile,y
+    bne @tile
+    lda _confetti_tile
+@tile:
+    sta _oam_buf+1,x
+    lda wf_pal,y
+    sta _oam_buf+2,x
+    sty tmp2
+    tya
+    clc
+    adc tmp1
+    tay
+    lda wf_sway,y
+    ldy tmp2
+    clc
+    adc wf_x,y
+    sta _oam_buf+3,x
+    inx                     ; l'index reboucle sur 256 (rotation des sprites)
+    inx
+    inx
+    inx
+    dey
+    bpl @loop
+    stx _oam_i
+    rts

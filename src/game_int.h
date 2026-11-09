@@ -76,5 +76,7 @@ extern u8 net_shake;
 void hud_update(void);
 void rain_tick(void);
 void rain_draw(void);
+void win_fx(void);              /* étoiles et confettis de victoire (sprp.s, banque fixe) */
+u8 win_party(void);
 extern u8 pause_cur;
 #endif

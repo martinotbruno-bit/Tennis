@@ -939,6 +939,34 @@ console.log('Rotation des sprites (double)');
   check(g.peek('spr_rot') === 0, 'simple : ordre des sprites fixe (pas de rotation inutile)');
 }
 
+console.log('Victoire : sauts de joie et confettis');
+{
+  const confetti = 0xD6;
+  // le joueur humain (équipe 0) gagne : confettis et bonds du vainqueur
+  const e = boot(); startWith(e, { MODE: MODE.P1 }); e.run(60);
+  e.poke('sc_winner', 0); e.poke('ms_timer', 160); e.poke('ms', 4); e.run(2);
+  let conf = 0, ys = new Set();
+  for (let n = 0; n < 40; n++) {
+    e.run(1);
+    const t = oamTiles(e); if (t.has(confetti) && t.has(3)) conf++;
+    let top = 255; for (let i = 0; i < 64; i++) { const y = e.peek('oam_buf', i * 4), tl = e.peek('oam_buf', i * 4 + 1); if (y < 0xEF && tl !== confetti && tl !== 3 && y > 120) top = Math.min(top, y); }
+    ys.add(top);
+  }
+  check(conf >= 38, `victoire d'un humain : pluie d'étoiles et de confettis (${conf}/40 trames)`);
+  check(ys.size >= 4, `le vainqueur (en bas) sautille de joie (${ys.size} hauteurs différentes)`);
+  check(e.peek('app_state') === AS.MATCH, 'la fête ne bloque pas la fin du match');
+  runUntil(e, () => e.peek('app_state') !== AS.MATCH, 300);
+  check(e.peek('app_state') === AS.SCREENS, 'puis écran des résultats');
+  // double à 4 joueurs (cas le plus chargé) : aucune trame perdue pendant la fête
+  const d = boot(); startWith(d, { TYPE: 1, FMT: 3 }); allCpu(d);
+  runUntil(d, () => d.peek('ms') === 0, 200);
+  d.poke('sc_winner', 0); d.poke('ms', 4); d.poke('ms_timer', 250); d.run(120);
+  check(250 - d.peek('ms_timer') >= 119, `fête en double : ${250 - d.peek('ms_timer')} trames logiques sur 120, aucune perdue`);
+  // le CPU bat le joueur humain : pas de fête
+  const f = boot(); startWith(f, { MODE: MODE.P1 }); f.run(60);
+  f.poke('sc_winner', 1); f.poke('ms_timer', 160); f.poke('ms', 4); f.run(10);
+  check(!oamTiles(f).has(confetti), 'défaite contre le CPU : pas de confettis');
+}
 console.log('Compensation 50 Hz (PAL)');
 {
   const e = boot(); e.poke('is_pal', 1); startWith(e, { FMT: 3 }); allCpu(e);

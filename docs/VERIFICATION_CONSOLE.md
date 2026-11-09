@@ -21,7 +21,7 @@ Le jeu a été testé uniquement sur émulateur. Cette liste sert à le vérifie
 |---|---|---|---|
 | 1.1 | Allumer la console | Le générique démarre (« BRUNO MARTINOT PRESENTS », fanfare), barre à 117 %, mentions légales, lettre N tombée puis remise par le stagiaire, puis l'écran titre « ROYAL MARTINOT » après une trentaine de secondes ; sans image brouillée | ☐ |
 | 1.1 b | Allumer, puis appuyer deux fois sur un bouton | Au 1er appui : « ARE YOU SURE? THIS IS VERY PRESTIGIOUS. » ; au 2e : « FINE. » puis l'écran titre | ☐ |
-| 1.2 | Musique du titre | Mélodie jouée en boucle, sans grésillement ni note bloquée | ☐ |
+| 1.2 | Musique du titre | Polka jouée en boucle, sans trou, grésillement ni note bloquée ; elle continue sans repartir au début en passant au menu | ☐ |
 | 1.3 | HAUT/BAS dans le titre | L'étoile passe d'une ligne à l'autre avec un petit « bip » | ☐ |
 | 1.4 | Attendre sans toucher | La démo CPU contre CPU démarre au bout d'environ **20 secondes**. Chronométrez-la : c'est un bon test de vitesse, voir § 8 | ☐ |
 | 1.5 | Bouton RESET pendant la démo | Retour propre à l'écran titre | ☐ |
@@ -58,7 +58,7 @@ Réglages : FORMAT RAPIDE, NIVEAU FACILE, VITESSE JEU NORMAL.
 | 3.9 | Panneaux de score | « J n » pour les jeux, `*` pour le serveur, un rond plein par set gagné | ☐ |
 | 3.9 b | Après chaque jeu | Le bandeau affiche le score set par set (« ALEX 6 3 / MAYA 4 1 ») | ☐ |
 | 3.9 c | Fin d'un set (format 3 sets) | Écran « FIN DU 1ER SET » : tableau, statistiques, joueur au service, petite musique ; un bouton reprend aussitôt le match sur le même court, musique coupée | ☐ |
-| 3.10 | Fin de match | Vainqueur en joie, perdant déçu, écran de statistiques | ☐ |
+| 3.10 | Fin de match (gagnée) | Le vainqueur sautille raquette levée sous une pluie d'étoiles et de confettis, perdant déçu, puis écran de statistiques ; pas de fête si le CPU gagne | ☐ |
 
 ## 4. Lieux, surfaces et conditions (couleurs)
 

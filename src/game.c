@@ -1079,6 +1079,16 @@ u8 match_tick(void)
     return 0;
 }
 
+/* fête de victoire : quand un humain gagne (ou en démonstration), comme
+   pour la musique de victoire */
+/* hauteur du bond de joie : t·(16−t)/8, en table (pas de multiplication) */
+static const u8 hop_h[16] = { 0, 1, 3, 5, 6, 7, 7, 7, 8, 7, 7, 7, 6, 5, 3, 1 };
+
+u8 win_party(void)
+{
+    return (u8)(ms == MS_OVER && !(cfg.ctrl[sc_winner] == CTRL_CPU && cfg.ctrl[sc_winner ^ 1] != CTRL_CPU));
+}
+
 static u8 pose_of(u8 p)
 {
     u8 st = pl_state[p], t = (u8)(p & 1);
@@ -1097,12 +1107,13 @@ static u8 pose_of(u8 p)
 
 void match_draw(void)
 {
-    u8 ord[4], ys[4], i, j, k, p;   /* j sert aussi au saut */
+    u8 ord[4], ys[4], i, j, k, p, party;   /* j sert aussi au saut */
     s16 sy;
     /* trame de frappe (calcul de trajectoire coûteux) : on garde les sprites
        de la trame précédente, ce qui évite tout ralentissement ; pendant un
        ralenti, c'est rp_play qui dessine */
     if (hit_now || ms == MS_REPLAY) return;
+    party = win_party();
     /* tri par profondeur : le joueur le plus bas à l'écran passe devant */
     /* clés sur 8 bits (y en pixels, toujours positif) : comparaisons rapides */
     for (i = 0; i < npl; ++i) { ord[i] = i; ys[i] = (u8)(((u16)ply[i] << 2) >> 8); }
@@ -1139,9 +1150,13 @@ void match_draw(void)
         pose_cache[p] = (u8)(k | ((j >> 1) << 5));
         flip_cache[p] = (u8)(pl_state[p] == ST_SWING ? pl_flip[p] : 0);
         if (cfg.mode == GM_TRAIN && p == 1 && cfg.ex != EX_STATIC) continue;   /* lanceur invisible */
-        spr_person((u8)(((u16)plx[p] << 2) >> 8), (s16)(ys[p] - (u8)((j * j) >> 4)), cfg.chr[p], side_of(p), k, flip_cache[p], (u8)(p & 1));
+        j = (u8)((j * j) >> 4);
+        /* victoire : le vainqueur sautille de joie (un bond toutes les 16 trames) */
+        if (party && (u8)(p & 1) == sc_winner) j = hop_h[ms_timer & 15];
+        spr_person((u8)(((u16)plx[p] << 2) >> 8), (s16)(ys[p] - j), cfg.chr[p], side_of(p), k, flip_cache[p], (u8)(p & 1));
     }
     match_fx();     /* ombres, poussière, arbitre, repère (banque fixe) */
+    if (party) win_fx();
     if (cfg.cond == COND_RAIN) bank_call(BANK_EXTRAS, rain_draw);
     spr_end();
 }
