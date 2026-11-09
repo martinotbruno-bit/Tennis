@@ -565,15 +565,16 @@ console.log('Vitesse du jeu, coups gagnants, smash sauté, musiques');
 {
   // musiques hors match : valse Margaux au menu, thème de la finale avant la finale
   const e = boot();
-  check(e.peek('music_cur') === 1, 'écran titre : thème du titre (élégant)');
+  check(e.peek('music_cur') === 1, 'écran titre : polka');
+  e.run(30);
   toMenu(e);
-  check(e.peek('music_cur') === 10, 'menu : ritournelle grave/aigu agaçante, en boucle');
-  e.run(260);
-  check(e.peek('music_cur') === 10, 'menu : la ritournelle reboucle');
+  check(e.peek('music_cur') === 1 && e.peek16('mel_ptr') !== e.peek16('mel_start'), 'menu : même polka, qui continue sans repartir du début');
+  e.run(800);
+  check(e.peek('music_cur') === 1, 'menu : la polka reboucle');
   e.poke('cursor', 7); e.poke('opt_val', 3, O.ENV); e.tap('RIGHT'); e.run(5);
   check(e.peek('opt_val', O.ENV) === 4 && e.peek('music_cur') === 7, 'menu : court Margaux choisi, sa musique démarre');
   e.tap('LEFT'); e.run(5);
-  check(e.peek('music_cur') === 10, 'autre lieu : retour à la ritournelle du menu');
+  check(e.peek('music_cur') === 1, 'autre lieu : retour à la polka');
   e.tap('RIGHT'); e.run(5); e.tap('START'); e.run(20);
   check(scr(e) === SS.PRESENT && e.peek('music_cur') === 7, 'présentation au court Margaux : valse');
   e.tap('A'); e.run(10);

@@ -175,11 +175,11 @@ static void pad_text(const char *s, u8 n)
 }
 
 /* ---------------------------------------------------------------------- */
-/* Musique des menus : ritournelle agaçante du menu, ou valse du court Margaux quand ce
+/* Musique des menus : polka du titre (sans reprise depuis le titre), ou valse du court Margaux quand ce
    lieu est choisi ; finale d'une compétition : thème de la finale */
 static void menu_music(void)
 {
-    u8 m = opt_val[O_ENV] == ENV_MARGAUX ? MUS_MARGAUX : MUS_MENU;
+    u8 m = opt_val[O_ENV] == ENV_MARGAUX ? MUS_MARGAUX : MUS_TITLE;
     if (music_cur != m) music_play(m);
 }
 static u8 is_final(void)
@@ -258,7 +258,7 @@ static void title_screen(void)
     txt_at(4, 25, "HAUT/BAS PUIS A - START");
     txt_at(4, 27, "(C) 2026 BRUNO MARTINOT");
     ppu_on();
-    music_play(MUS_TITLE);
+    if (music_cur != MUS_TITLE) music_play(MUS_TITLE);   /* même polka qu'au menu, sans reprise */
     scr_state = SS_TITLE;
     idle = 0;
 }

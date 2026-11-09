@@ -10,7 +10,7 @@ Comme l'exige le CDC (§ 17.5), ce rapport distingue ce qui est **réalisé**, *
 
 | Demande | Réalisation |
 |---|---|
-| Musique du menu très ridicule, très rythmée, alternant notes graves et aiguës très agaçantes | Nouvelle ritournelle `MUS_MENU` : carré nasillard (12,5 %) à volume fixe qui saute sans arrêt d'une note très grave à une note très aiguë toutes les 6 trames, « oum-pa » staccato au triangle, hoquets, bégaiement grave/aigu et « boing » final, en boucle de 4 secondes. L'écran titre garde son thème élégant ; jamais de musique en match |
+| Musique ridicule mais sans raté, qui tourne bien, la même à l'écran titre et au menu, un peu moins énergique mais très rythmée et amusante | Petite polka de cirque (`MUS_TITLE`) : mélodie « kazoo » sautillante et liée, broderies chromatiques comiques, « oum-pa » de la basse qui saute du grave à l'octave. Aucun silence ni bégaiement, boucle de 12,8 s sans couture, et la musique continue sans repartir du début entre l'écran titre et le menu. Elle remplace l'ancien thème du titre et la ritournelle agaçante d'un premier essai ; jamais de musique en match |
 
 ### Version 2.13
 
@@ -162,7 +162,7 @@ Pour loger ce contenu, la cartouche passe de NROM (32 Ko) à **MMC1** : 128 Ko d
 | Relecture des textes (`check_texts.py`) | 0 problème |
 | Contraste (`contrast.py 25`) | 0 paire sous ΔE 25 (personnages, courts, balle, tenues) |
 | Profil CPU, double, 6 000 trames | 27 trames d'échange en dépassement (0,45 %), sans défaut d'image |
-| Compilation | Reproductible : SHA-256 `e2010a39c362defecd1cb356702a9212c55207e874f006329aacc2f5dd504d32` sur deux compilations propres |
+| Compilation | Reproductible : SHA-256 `81b31db98916fa2b341cb97148a739d4d95ea20adaac8e52a6716e57b9cfeb53` sur deux compilations propres |
 
 ## 3. Conformité par section du CDC
 

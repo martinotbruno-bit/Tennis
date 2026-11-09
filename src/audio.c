@@ -16,6 +16,7 @@ static const u16 note_period[48] = {
  * Chaque entrée : note, durée en trames. */
 #define R 0xFE
 #define END 0xFF
+#define G2 7
 #define C3 12
 #define D3 14
 #define E3 16
@@ -32,22 +33,40 @@ static const u16 note_period[48] = {
 #define B4 35
 #define C5 36
 #define D5 38
+#define DS5 39
 #define E5 40
 #define F5 41
+#define FS5 42
 #define G5 43
 #define A5 45
 #define B5 47
 
+/* Écran titre et menu : petite polka de cirque, ridicule mais propre et bien
+ * carrée. Mélodie sautillante liée, sans aucun silence (carré 12,5 % « kazoo »,
+ * enveloppe qui décroît et marque chaque note), broderies chromatiques comiques ; « oum-pa » du triangle qui saute
+ * du grave à l'octave. 16 mesures à 2 temps de 48 trames (12,8 s) ; la
+ * dernière mesure remonte vers le Do du début : la boucle est sans couture. */
 static const u8 mus_title_mel[] = {
- C5,8, E5,8, G5,8, E5,8, F5,8, A5,8, G5,16,
- E5,8, D5,8, C5,8, D5,8, E5,16, G4,16,
- A4,8, C5,8, F5,8, E5,8, D5,8, C5,8, D5,8, E5,8,
- F5,8, E5,8, D5,8, B4,8, C5,24, R,8,
+ C5, 12, G4, 12, E5, 12, G4, 12, F5, 12, E5, 12, D5, 24, B4, 12,
+ G4, 12, D5, 12, G4, 12, F5, 12, D5, 12, E5, 24, C5, 12, G4, 12,
+ E5, 12, G4, 12, A5, 12, G5, 12, F5, 12, E5, 12, D5, 12, F5, 12,
+ B4, 12, D5, 12, C5, 24, C4, 24, E5, 12, DS5, 12, E5, 12, G5, 12,
+ F5, 12, E5, 12, F5, 12, A5, 12, G5, 12, FS5, 12, G5, 12, E5, 12,
+ D5, 24, G4, 24, E5, 12, DS5, 12, E5, 12, G5, 12, F5, 12, E5, 12,
+ F5, 12, A5, 12, G5, 12, E5, 12, D5, 12, B4, 12, C5, 12, G3, 12,
+ G4, 12, B4, 12,
  END,0 };
 static const u8 mus_title_bass[] = {
- C3,16, G3,16, F3,16, C3,16, A3,16, E3,16, D3,16, G3,16,
- F3,16, C3,16, D3,16, A3,16, G3,16, G3,16, C3,24, R,8,
+ C3, 12, C4, 12, G3, 12, C4, 12, G2, 12, G3, 12, D3, 12, G3, 12,
+ G2, 12, G3, 12, D3, 12, G3, 12, C3, 12, C4, 12, G3, 12, C4, 12,
+ C3, 12, C4, 12, G3, 12, C4, 12, F3, 12, F4, 12, C3, 12, F4, 12,
+ G2, 12, G3, 12, D3, 12, G3, 12, C3, 12, C4, 12, G3, 12, C4, 12,
+ C3, 12, C4, 12, G3, 12, C4, 12, F3, 12, F4, 12, C3, 12, F4, 12,
+ C3, 12, C4, 12, G3, 12, C4, 12, G2, 12, G3, 12, D3, 12, G3, 12,
+ C3, 12, C4, 12, G3, 12, C4, 12, F3, 12, F4, 12, C3, 12, F4, 12,
+ G2, 12, G3, 12, D3, 12, G3, 12, C3, 12, C4, 12, G3, 12, C4, 12,
  END,0 };
+
 static const u8 mus_point_mel[] = { G4,5, C5,10, END,0 };
 static const u8 mus_game_mel[]  = { C5,5, E5,5, G5,5, C5,4, G5,14, END,0 };
 static const u8 mus_vict_mel[]  = { C5,6, E5,6, G5,6, C5,6, E5,6, G5,12, R,4, A5,6, G5,6, A5,6, G5,24, END,0 };
@@ -126,24 +145,6 @@ static const u8 mus_break_bass[] = {
  F3,24, C3,24,  A3,24, E3,24,  D3,24, G3,24,  C3,36, R,12,
  END,0 };
 
-/* Menu : ritournelle ridicule, sautillante, qui alterne sans relâche une note
- * très grave et une note très aiguë (carré 12,5 % nasillard, volume fixe),
- * avec hoquets, bégaiements et un « boing » final avant de recommencer.
- * 5 mesures de 48 trames (2 s par mesure de 4 temps). */
-static const u8 mus_menu_mel[] = {
- C3,6, G5,6, C3,6, G5,6, E3,6, C5,6, G3,6, E5,6,
- F3,6, A5,6, F3,6, A5,6, D3,6, F5,6, G3,6, B5,3, R,3,
- C3,6, G5,6, C3,6, G5,6, E3,6, C5,6, G3,6, E5,6,
- G3,6, B5,6, F3,6, A5,6, E3,6, G5,6, C3,3, C5,3, C3,3, C5,3,
- B5,3, R,3, B5,3, R,3, C3,12, R,12, C3,6, C5,6,
- END,0 };
-static const u8 mus_menu_bass[] = {
- C3,6, R,6, G3,6, R,6, C3,6, R,6, G3,6, R,6,
- F3,6, R,6, C4,6, R,6, G3,6, R,6, D3,6, R,6,
- C3,6, R,6, G3,6, R,6, C3,6, R,6, G3,6, R,6,
- G3,6, R,6, F3,6, R,6, E3,6, R,6, C3,6, C3,6,
- R,24, C3,6, R,6, C3,6, R,6,
- END,0 };
 static const u8 *mel_ptr, *bass_ptr, *mel_start, *bass_start;
 static u8 mel_timer, bass_timer, music_loop, mel_duty;
 u8 music_cur;      /* morceau en cours (MUS_*) */
@@ -180,8 +181,7 @@ void music_play(u8 id)
     APU(0x4008) = 0x80;
     if (snd_mode) return;          /* musique coupée (réglage SON) */
     switch (id) {
-    case MUS_TITLE:   mel_ptr = mus_title_mel; bass_ptr = mus_title_bass; music_loop = 1; break;
-    case MUS_MENU:    mel_ptr = mus_menu_mel; bass_ptr = mus_menu_bass; music_loop = 1; mel_duty = 0x38; break;
+    case MUS_TITLE:   mel_ptr = mus_title_mel; bass_ptr = mus_title_bass; music_loop = 1; mel_duty = 0x07; break;
     case MUS_POINT:   mel_ptr = mus_point_mel; break;
     case MUS_GAME:    mel_ptr = mus_game_mel; break;
     case MUS_VICTORY: mel_ptr = mus_vict_mel; bass_ptr = mus_vict_bass; break;
