@@ -22,6 +22,7 @@
 #define SS_PALMARES  6
 #define SS_TRAIN_RES 7
 #define SS_COMP_END  8
+#define SS_SETBREAK  9
 u8 scr_state;
 
 /* ---------------------------------------------------------------------- */
@@ -666,9 +667,69 @@ static void stat_row(u8 y, const char *label, u8 a, u8 b)
 
 static u8 pct(u8 a, u8 b) { return b ? (u8)(((u16)a * 100) / b) : 0; }
 
+/* Tableau des sets terminés : en-tête puis une ligne par équipe (rangées
+   y à y+2), noms au format des panneaux (« ALEX », « MXAL » en double) */
+static u8 sets_done(void)
+{
+    u8 n = 0;
+    while (n < 5 && (sc_hist[n][0] | sc_hist[n][1])) ++n;
+    return n;
+}
+static void set_table(u8 y)
+{
+    u8 i, t, n = sets_done();
+    txt_at(8, y, "SETS");
+    for (i = 0; i < n; ++i) { line[0] = (char)('1' + i); line[1] = 0; txt_at((u8)(15 + i * 3), y, line); }
+    for (t = 0; t < 2; ++t) {
+        if (cfg.doubles) team_label(cfg.chr[t], cfg.chr[t + 2], line);
+        else team_label(cfg.chr[t], 255, line);
+        txt_at(8, (u8)(y + 1 + t), line);
+        for (i = 0; i < n; ++i) {
+            line[0] = (char)('0' + sc_hist[i][t]); line[1] = 0;
+            txt_at((u8)(15 + i * 3), (u8)(y + 1 + t), line);
+        }
+    }
+}
+
+/* Fin d'un set : récapitulatif, puis reprise du match (A, ou après 10 s) */
+static u16 brk_t;
+static void setbreak_screen(void)
+{
+    u8 n;
+    char b[5];
+    screen_begin();
+    n = sets_done();
+    b[0] = (char)('0' + n); b[1] = 0;
+    txt_at(8, 2, "FIN DU");
+    txt_at(15, 2, b);
+    txt_at(16, 2, n == 1 ? "ER SET" : "E SET");
+    /* vainqueur du set : celui qui a le plus de jeux dans le dernier set */
+    n = (u8)(sc_hist[n - 1][1] > sc_hist[n - 1][0]);
+    txt_at(8, 3, "POUR");
+    if (cfg.doubles) team_label(cfg.chr[n], cfg.chr[n + 2], line); else team_label(cfg.chr[n], 255, line);
+    txt_at(13, 3, line);
+    set_table(6);
+    team_label(cfg.chr[0], 255, b); txt_at(19, 11, b);
+    team_label(cfg.chr[1], 255, b); txt_at(25, 11, b);
+    stat_row(13, "POINTS GAGNES", st_points[0], st_points[1]);
+    stat_row(14, "ACES", st_aces[0], st_aces[1]);
+    stat_row(15, "DOUBLES FAUTES", st_dfaults[0], st_dfaults[1]);
+    stat_row(16, "COUPS GAGNANTS", st_winners[0], st_winners[1]);
+    stat_row(17, "FAUTES", st_errors[0], st_errors[1]);
+    stat_row(18, "SERVICES CANON", st_canon[0], st_canon[1]);
+    stat_row(19, "COUPS PARFAITS", st_perf[0], st_perf[1]);
+    txt_at(2, 21, "AU SERVICE :");
+    if (cfg.doubles) team_label(cfg.chr[sc_server], cfg.chr[sc_server + 2], line); else team_label(cfg.chr[sc_server], 255, line);
+    txt_at(15, 21, line);
+    txt_at(4, 25, "A : CONTINUER LE MATCH");
+    ppu_on();
+    brk_t = 0;
+    scr_state = SS_SETBREAK;
+}
+
 static void results_screen(void)
 {
-    u8 i, w = sc_winner;
+    u8 w = sc_winner;
     char b[5];
     screen_begin();
     people_tiles((u8)(cfg.env == ENV_NUDE));
@@ -676,11 +737,7 @@ static void results_screen(void)
     pal_set_player(1, cfg.chr[1]);
     txt_at(8, 1, "VICTOIRE DE");
     txt_at(20, 1, char_name[cfg.chr[w]]);
-    for (i = 0; i <= sc_set_no && i < 5; ++i) {
-        if (sc_hist[i][0] + sc_hist[i][1] == 0) break;
-        b[0] = (char)('0' + sc_hist[i][0]); b[1] = '-'; b[2] = (char)('0' + sc_hist[i][1]); b[3] = 0;
-        txt_at((u8)(8 + i * 4), 3, b);
-    }
+    set_table(2);
     /* colonnes de 4 lettres (MARGAUX : « MARG ») */
     team_label(cfg.chr[0], 255, b); txt_at(19, 9, b);
     team_label(cfg.chr[1], 255, b); txt_at(25, 9, b);
@@ -822,6 +879,7 @@ void screens_enter(u8 scr)
     switch (scr) {
     case SCR_MENU: menu_screen(); break;
     case SCR_AFTER_MATCH: after_match(); break;
+    case SCR_SETBREAK: setbreak_screen(); break;
     default: title_screen(); break;
     }
 }
@@ -873,7 +931,7 @@ void screens_tick(void)
                 v = (u8)((pad1_new & PAD_RIGHT) ? 0 : 15);
             opt_val[o] = v;
             sfx_menu_move();
-            if (o == O_MODE || o == O_COMP || o == O_EX || (o == O_TYPE && opt_val[O_MODE] == MODE_COMP)) { menu_screen(); break; }
+            if (o == O_MODE || o == O_COMP || o == O_EX || (o == O_TYPE && opt_val[O_MODE] == MODE_COMP)) { fade_skip = 1; menu_screen(); break; }
             vbuf_reset();
             menu_draw_row(cursor, 0);
             if (o == O_ENV) menu_music();
@@ -907,6 +965,9 @@ void screens_tick(void)
         if (pad1_new & (PAD_A | PAD_START)) { comp_cfg(); present_screen(); break; }
         if (pad1_new & PAD_B) menu_screen();
         break;
+    case SS_SETBREAK:
+        if ((pad1_new & (PAD_A | PAD_START)) || ++brk_t > 600) { sfx_menu_ok(); go_req = GO_RESUME; }
+        break;
     case SS_COMP_END:
         if (pad1_new & (PAD_A | PAD_START)) { title_screen(); break; }
         comp_end_sprites();
@@ -928,10 +989,10 @@ void screens_tick(void)
         code_tick();
         break;
     case SS_PALMARES:
-        if (pad1_new & PAD_RIGHT) { pal_page = (u8)(pal_page == 2 ? 0 : pal_page + 1); palmares_screen(); break; }
-        if (pad1_new & PAD_LEFT) { pal_page = (u8)(pal_page == 0 ? 2 : pal_page - 1); palmares_screen(); break; }
+        if (pad1_new & PAD_RIGHT) { pal_page = (u8)(pal_page == 2 ? 0 : pal_page + 1); fade_skip = 1; palmares_screen(); break; }
+        if (pad1_new & PAD_LEFT) { pal_page = (u8)(pal_page == 0 ? 2 : pal_page - 1); fade_skip = 1; palmares_screen(); break; }
         if (pad1_new & PAD_SELECT) {
-            if (++pal_confirm == 2) { SV(sv_clear); pal_confirm = 0; palmares_screen(); sfx_fault(); }
+            if (++pal_confirm == 2) { SV(sv_clear); pal_confirm = 0; fade_skip = 1; palmares_screen(); sfx_fault(); }
             else { vbuf_reset(); vbuf_text(2, 22, "SELECT ENCORE : EFFACER", 24); }
         }
         if (pad1_new & PAD_B) title_screen();

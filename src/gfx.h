@@ -24,7 +24,7 @@ void pal_set_player(u8 slot, u8 character);
 void spr_begin(void);
 void spr_end(void);
 void __fastcall__ spr1(u8 x, u8 y, u8 tile, u8 attr);
-void spr_person(s16 x, s16 y, u8 character, u8 front, u8 pose, u8 flip, u8 pal);
+void __fastcall__ spr_person(s16 x, s16 y, u8 character, u8 front, u8 pose, u8 flip, u8 pal);   /* sprp.s */
 void spr_ball(u8 x, s16 sy, u8 shy, u8 zpx);
 
 /* poses des personnages */
@@ -51,6 +51,7 @@ void clear_screen(void);
 void people_tiles(u8 nude);
 extern u8 nude_unlocked;
 void team_label(u8 a, u8 b, char *out);
+void score_line(u8 t, char *out);   /* « ALEX 6 3 2 » (gamefix.c, 15 octets) */
 extern const u8 chr_data[];
 #define VBUF_MAX 96     /* octets envoyés au PPU par trame (budget VBlank) */
 #endif

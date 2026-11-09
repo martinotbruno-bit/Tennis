@@ -30,6 +30,7 @@ Le jeu a été testé uniquement sur émulateur. Cette liste sert à le vérifie
 
 | # | Vérification | Attendu | OK ? |
 |---|---|---|---|
+| 2.0 | Changements d'écran | Fondu au noir puis retour progressif, sans image brouillée ; la musique ne s'interrompt pas | ☐ |
 | 2.1 | Ouvrir le mode d'emploi, parcourir les 8 pages | Aucune ligne coupée ; GAUCHE/DROITE change de page | ☐ |
 | 2.2 | JOUER > configuration | Lignes lisibles ; le personnage animé est à droite du titre et ne masque aucun texte | ☐ |
 | 2.3 | Mode COMPETITION, type PERSONNALISE, jeu DOUBLE | 19 lignes, puis STYLE et l'aide en bas, sans chevauchement | ☐ |
@@ -54,6 +55,8 @@ Réglages : FORMAT RAPIDE, NIVEAU FACILE, VITESSE JEU NORMAL.
 | 3.7 | Ralenti après un beau point | Le point est rejoué à mi-vitesse ; A le passe | ☐ |
 | 3.8 | START pendant le jeu | Menu CONTINUER / QUITTER ; le jeu reprend sans saut | ☐ |
 | 3.9 | Panneaux de score | « J n » pour les jeux, `*` pour le serveur, un rond plein par set gagné | ☐ |
+| 3.9 b | Après chaque jeu | Le bandeau affiche le score set par set (« ALEX 6 3 / MAYA 4 1 ») | ☐ |
+| 3.9 c | Fin d'un set (format 3 sets) | Écran « FIN DU 1ER SET » : tableau, statistiques, joueur au service ; A reprend le match sur le même court | ☐ |
 | 3.10 | Fin de match | Vainqueur en joie, perdant déçu, écran de statistiques | ☐ |
 
 ## 4. Lieux, surfaces et conditions (couleurs)
@@ -74,7 +77,7 @@ Pour chaque ligne, lancez un match et regardez l'écran pendant une dizaine de s
 
 | # | Vérification | Attendu | OK ? |
 |---|---|---|---|
-| 5.1 | Match de double, 4 CPU (mode DÉMO en double) | Aucun sprite qui **clignote** ou **disparaît** quand les 4 joueurs sont alignés. Notez-le s'il y en a | ☐ |
+| 5.1 | Match de double, 4 CPU (mode DÉMO en double) | Quand les 4 joueurs sont près du filet, un léger clignotement est normal ; aucun joueur, aucune ombre ni la balle ne doit **disparaître** durablement | ☐ |
 | 5.2 | Fluidité en double | Pas de ralentissement visible ; quelques à-coups très brefs restent possibles | ☐ |
 | 5.3 | Mode EN EQUIPE, JOUE PAR : MANETTE 2 | La manette 2 déplace le partenaire | ☐ |
 | 5.4 | Mode 2 J. ADVERSAIRES | La manette 2 contrôle l'adversaire, START (manette 1) met en pause | ☐ |

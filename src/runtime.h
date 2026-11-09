@@ -19,6 +19,12 @@ typedef signed int s16;
 
 #ifdef __CC65__
 extern u8 oam_buf[256];
+extern u8 fade_lvl;           /* fondu de la palette (0..64, par 16) */
+#pragma zpsym("fade_lvl")
+extern u8 fade_skip;          /* 1 : prochaine coupure de l'écran sans fondu */
+#pragma zpsym("fade_skip")
+extern u8 spr_rot;            /* rotation de l'ordre des sprites (0 : aucune) */
+#pragma zpsym("spr_rot")
 extern u8 vram_buf[128];
 extern u8 pal_buf[32];
 extern u16 region_cnt;

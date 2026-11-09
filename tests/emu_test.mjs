@@ -9,7 +9,7 @@ function check(cond, msg) {
   else { fails++; console.log('  ECHEC ' + msg); }
 }
 const AS = { SCREENS: 0, MATCH: 1, MANUAL: 2 };
-const SS = { TITLE: 0, MENU: 1, RESULTS: 2, PRESENT: 3, COMP: 4, CODE: 5, PALMARES: 6, TRAIN_RES: 7, COMP_END: 8 };
+const SS = { TITLE: 0, MENU: 1, RESULTS: 2, PRESENT: 3, COMP: 4, CODE: 5, PALMARES: 6, TRAIN_RES: 7, COMP_END: 8, SETBREAK: 9 };
 const O = { MODE: 1, TYPE: 2, P1: 3, P2: 4, LEVEL: 5, SURF: 6, ENV: 7, COND: 8, FMT: 9, REPLAY: 10, COMP: 11,
             CSIZE: 12, CPROG: 13, CVAR: 14, EX: 15, SIDE: 16, SPEED: 17, SPIN: 18, COUNT: 19, CPART: 20, GSPEED: 21, SOUND: 22, FATIG: 23 };
 const MODE = { P1: 0, P2: 1, TEAM: 2, COMP: 3, TRAIN: 4, DEMO: 5 };
@@ -391,9 +391,10 @@ console.log('Compétition en double, levée de coupe et club nudiste');
   for (let k = 0; k < 7; k++) e.tap('DOWN');
   let seen = false; for (let i = 0; i < 4; i++) { e.tap('RIGHT'); if (e.peek('opt_val', O.ENV) === 3) seen = true; }
   check(seen, 'lieu « club nudiste » proposé après déblocage');
-  setOpts(e, { ENV: 3 }); e.tap('START'); e.run(15);
+  // (chargement des tuiles au naturel + fondu : écran construit en ~25 trames)
+  setOpts(e, { ENV: 3 }); e.tap('START'); e.run(40);
   check(e.text(4, 24, 24) === 'CLUB NUDISTE LES BRONZES', 'présentation du club nudiste');
-  e.tap('A'); e.run(40); allCpu(e);
+  e.tap('A'); e.run(70); allCpu(e);
   const v = e.nes.ppu.vramMem;
   check(e.peek('cur_bank') === 0 && e.text(10, 3, 12) === 'CLUB NUDISTE', 'match au club nudiste (panneau du club)');
   // tuiles des personnages remplacées en CHR-RAM, puis restaurées au retour aux menus
@@ -721,6 +722,102 @@ console.log('Frappe parfaite');
   check(p.n === 1 && p.tries === 1, 'frappe parfaite comptée');
   const collee = trial(ks[1], 130), ext = trial(ks[1], 148);
   check(!collee.perf && !ext.perf && collee.hit && ext.hit, 'balle collée au corps ou en extension : frappe normale');
+}
+
+console.log('Entraînement : retour sur le timing');
+{
+  const msg2 = (e) => { let t = ''; for (let i = 0; i < 14; i++) t += String.fromCharCode(e.peek('msg2', i)); return t.replace(/\0/g, ' ').trim(); };
+  // service (exercice SERVICE) : frappe A k trames après le lancer
+  const serve = (k) => {
+    const e = boot(); startWith(e, { MODE: MODE.TRAIN, EX: 5 });
+    runUntil(e, () => e.peek('ms') === 0 && e.peek('sc_server') === 0, 600);
+    e.tap('A', 1, 1, 0); runUntil(e, () => e.peek('ms') === 1, 30);
+    e.run(k - 1); e.tap('A', 1, 1, 0); e.run(2);
+    return msgText(e) + ' / ' + msg2(e);
+  };
+  const s1 = serve(25), s2 = serve(31), s3 = serve(28);
+  check(s1 === 'TROP TOT DE / 3 IMAGES' && s2 === 'TROP TARD DE / 2 IMAGES' && s3.startsWith('SERVICE CANON'), `service : « ${s1} », « ${s2} », « ${s3} »`);
+  // coup droit : relâché 5 trames avant l'arrivée, ou bouton gardé enfoncé, ou balle collée
+  const stroke = (k, x = 138) => {
+    const e = boot(); startWith(e, { MODE: MODE.TRAIN, EX: 6 });
+    runUntil(e, () => e.peek('ms') === 2 || e.peek('ms') === 0, 300);
+    const s16 = (n, v, o = 0) => { e.poke(n, v & 255, o); e.poke(n, (v >> 8) & 255, o + 1); };
+    e.poke('ms', 2); e.poke('b_live', 1); e.poke('b_vis', 1); e.poke('b_serve', 0); e.poke('bounces', 1);
+    e.poke('hitter', 1); e.poke('rally_hits', 3); e.poke('bgrav', 0);
+    s16('plx', 128 * 64, 0); s16('ply', 200 * 64, 0);
+    s16('bx', x * 64); s16('by', 155 * 64); s16('bz', 6 * 64); s16('bvx', 0); s16('bvy', 128); s16('bvz', 0);
+    e.down('A'); e.run(Math.max(1, 15 - k)); if (k >= 0) e.up('A');
+    for (let i = 0; i < 40 && e.peek('hitter') !== 0; i++) e.run(1);
+    e.releaseAll(); e.run(1);
+    return msgText(e) + ' / ' + msg2(e);
+  };
+  const a = stroke(5), b = stroke(-1), c = stroke(1, 131), d = stroke(1);
+  check(a === 'TROP TOT DE / 3 IMAGES' && b === 'RELACHEZ LE / BOUTON AVANT' && c === 'BALLE TROP / PRES DU CORPS' && d.startsWith('COUP PARFAIT'),
+    `coup droit : « ${a} », « ${b} », « ${c} », « ${d} »`);
+}
+
+console.log('Fondus entre les écrans');
+{
+  const e = boot(); e.run(20);
+  const seen = [];
+  e.down('START'); e.run(1); e.up('START');
+  for (let i = 0; i < 30; i++) { e.run(1); seen.push(e.peek('fade_lvl')); }
+  const max = Math.max(...seen), last = seen[seen.length - 1];
+  const down = seen.indexOf(max), steps = new Set(seen.slice(down));
+  check(max === 64 && last === 0 && steps.size >= 4 && scr(e) === SS.MENU, `fondu au noir puis retour progressif (${[...new Set(seen)].join(' > ')})`);
+}
+
+console.log('Récapitulatif du score');
+{
+  // match en 3 sets ; on avance le score à 5-0 pour atteindre vite la fin du 1er set
+  const e = boot(); startWith(e, { FMT: 1 }); allCpu(e);
+  runUntil(e, () => e.peek('ms') === 0, 300);
+  // balle de set (5-0, 40-0) remise à chaque service jusqu'à la fin du 1er set
+  runUntil(e, () => {
+    if (app(e) === AS.MATCH && e.peek('ms') === 0 && e.peek('sc_set_no') === 0) {
+      e.poke('sc_games', 5, 0); e.poke('sc_games', 0, 1); e.poke('sc_points', 3, 0); e.poke('sc_points', 0, 1);
+    }
+    return scr(e) === SS.SETBREAK && app(e) === AS.SCREENS;
+  }, 60 * 60 * 4);
+  e.run(30);
+  const tx = (x, y, n) => e.text(x, y, n).replace(/\0/g, ' ');
+  check(scr(e) === SS.SETBREAK && tx(8, 2, 14) === 'FIN DU 1ER SET' && tx(8, 6, 4) === 'SETS', 'fin du 1er set : écran récapitulatif (tableau des sets, statistiques)');
+  const l0 = tx(8, 7, 9), l1 = tx(8, 8, 9);
+  check(/^[A-Z]{4}\s+\d/.test(l0) && /^[A-Z]{4}\s+\d/.test(l1), `tableau des sets : « ${l0.trim()} » / « ${l1.trim()} »`);
+  e.tap('A'); e.run(40);
+  check(app(e) === AS.MATCH && /^[A-Z]{4} \d \d/.test(msgText(e)), `reprise du match, score des sets dans le bandeau : « ${msgText(e)} »`);
+  // un jeu plus tard : récapitulatif après le jeu
+  let after = '';
+  runUntil(e, () => {
+    if (e.peek('ms') === 0 && e.peek('sc_games', 0) + e.peek('sc_games', 1) === 0) { e.poke('sc_points', 3, 0); e.poke('sc_points', 0, 1); }
+    const t = msgText(e); if (/^[A-Z]{4} \d \d/.test(t) && e.peek('sc_games', 0) + e.peek('sc_games', 1) > 0) after = t; return after !== '';
+  }, 60 * 60 * 3);
+  check(after !== '', `après un jeu : « ${after} »`);
+}
+
+console.log('Rotation des sprites (double)');
+{
+  // 4 joueurs près du filet : jusqu'à 12 sprites sur une ligne. Avec la rotation, chaque
+  // sprite est parmi les 8 premiers de ses lignes au moins une trame sur deux
+  const e = boot(); startWith(e, { FMT: 3, TYPE: 1 }); allCpu(e);
+  runUntil(e, () => e.peek('ms') === 0, 300);
+  e.tap('START', 1, 1, 2);
+  const s16 = (n, v, o = 0) => { e.poke(n, v & 255, o); e.poke(n, (v >> 8) & 255, o + 1); };
+  [[96, 146], [104, 124], [150, 144], [158, 126]].forEach(([x, y], i) => { s16('plx', x * 64, i * 2); s16('ply', y * 64, i * 2); });
+  const seen = new Map(); let rot = new Set(), maxLine = 0, frames = 0;
+  for (let f = 0; f < 8; f++) {
+    e.run(1); frames++;
+    rot.add(e.peek('spr_rot'));
+    const spr = []; for (let i = 0; i < 64; i++) { const y = e.peek('oam_buf', i * 4); if (y < 0xEF) spr.push({ y: y + 1, key: e.peek('oam_buf', i * 4 + 1) + ',' + e.peek('oam_buf', i * 4 + 3) }); }
+    const count = new Array(256).fill(0), vis = new Set();
+    for (const sp of spr) { let ok = true; for (let l = sp.y; l < sp.y + 8 && l < 256; l++) { if (count[l] >= 8) ok = false; count[l]++; } if (ok) vis.add(sp.key); seen.set(sp.key, (seen.get(sp.key) || 0) + (ok ? 1 : 0)); }
+    maxLine = Math.max(maxLine, ...count);
+  }
+  const never = [...seen].filter(([, n]) => n === 0).length;
+  check(rot.size > 4 && maxLine > 8 && never === 0, `rotation active (${rot.size} départs différents), jusqu'à ${maxLine} sprites par ligne, aucun sprite masqué en permanence`);
+  // en simple : pas de rotation
+  const g = boot(); startWith(g, { FMT: 3 }); allCpu(g); g.run(200);
+  check(g.peek('spr_rot') === 0, 'simple : ordre des sprites fixe (pas de rotation inutile)');
 }
 
 console.log('Compensation 50 Hz (PAL)');

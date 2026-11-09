@@ -29,6 +29,11 @@ static void handle_go(void)
             app_state = AS_SCREENS;
             screens_enter(go_arg);
             break;
+        case GO_RESUME:
+            set_bank(BANK_GAME);
+            match_resume();
+            app_state = AS_MATCH;
+            break;
         case GO_MANUAL:
             set_bank(BANK_MANUAL);
             app_state = AS_MANUAL;
@@ -40,11 +45,15 @@ static void handle_go(void)
 
 static void logic_tick(void)
 {
+    u8 r;
+    /* fondu d'ouverture : un cran plus clair toutes les 2 trames */
+    if (fade_lvl && ppu_mask && !(frame_cnt & 1)) { fade_lvl = (u8)(fade_lvl - 16); pal_dirty = 1; }
     audio_update();
     switch (app_state) {
     case AS_MATCH:
         set_bank(BANK_GAME);
-        if (match_tick()) { go_req = GO_SCREEN; go_arg = SCR_AFTER_MATCH; }
+        r = match_tick();
+        if (r) { go_req = GO_SCREEN; go_arg = (u8)(r == 2 ? SCR_SETBREAK : SCR_AFTER_MATCH); }
         else if (!no_draw) match_draw();   /* trame logique ajoutée : pas de dessin */
         break;
     case AS_MANUAL:

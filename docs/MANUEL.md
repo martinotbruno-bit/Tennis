@@ -123,7 +123,11 @@ Le lancer reste visible quelle que soit votre position, y compris quand vous ser
 - Les **annonces** de l'arbitre s'affichent au centre du bandeau : faute, let, égalité, avantage, balle de set ou de match, jeu décisif, changement de côté, ace, coup gagnant…
 - Les **coups gagnants** sont nommés : SMASH SAUTÉ, SMASH, AMORTIE, LOB GAGNANT, VOLÉE GAGNANTE, PASSING (adversaire au filet) ou COUP GAGNANT, avec un bref « ting » ; sans autre son ajouté et toujours sans musique pendant le match.
 - Sur le court : chaque joueur a une **ombre** (en double, seulement pendant un saut, car la NES n'affiche que 8 sprites par ligne). La balle soulève un peu de **poussière** en rebondissant sur la terre battue et le sable, et fait une **éclaboussure** sous la pluie. Au stade, l'**arbitre de chaise** tourne la tête vers le côté où se trouve la balle. Le bruit du rebond change selon la surface : sourd sur la terre, sec sur le dur, feutré sur le sable…
-- Le **public** se lève et applaudit après les beaux points. Après un ace, un coup gagnant ou un long échange, un **ralenti** rejoue le point (A pour le passer).
+- **Récapitulatif du score** :
+  - après chaque jeu, le bandeau affiche pendant 2 secondes le score set par set, une ligne par équipe : « ALEX 6 3 » / « MAYA 4 1 » (sets terminés, puis jeux du set en cours) ;
+  - à la fin de chaque set, un écran fait le point : tableau des sets, vainqueur du set, statistiques du match jusque-là, joueur au service pour la suite. **A** reprend le match (reprise automatique au bout de 10 secondes) ;
+  - en fin de match, l'écran des résultats commence par le tableau complet des sets.
+- Le **public** se lève et applaudit après les beaux points. Après un ace, un coup gagnant, une frappe parfaite gagnante ou un long échange, un **ralenti** rejoue le point (A pour le passer).
 - **En fin de match** :
   - le vainqueur célèbre et le perdant baisse la tête ;
   - l'écran de résultats donne les statistiques : points gagnés, aces, doubles fautes, coups gagnants, fautes, pourcentage de premières balles, plus long échange ;
@@ -190,6 +194,10 @@ L'écran d'étape montre le prochain adversaire (niveau, surface), le tableau ou
 | Tutoriel | Leçon guidée : frapper, amortie, lob, viser, servir |
 
 Votre meilleur score de chaque exercice est conservé dans le palmarès.
+
+À l'entraînement, chaque coup donne un **retour sur le timing**, pour apprendre le service canon et la frappe parfaite :
+- au service frappé avec A : « SERVICE CANON », ou « TROP TÔT DE 3 IMAGES », « TROP TARD DE 1 IMAGE »… ;
+- sur les coups lifté, à plat et coupé : « COUP PARFAIT ! », « TROP TÔT DE 2 IMAGES » (bouton relâché trop tôt), « RELÂCHEZ LE BOUTON AVANT » (bouton gardé jusqu'à l'impact), ou « BALLE TROP PRÈS / LOIN DU CORPS » (placement).
 
 ## 8. Codes de reprise
 

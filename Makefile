@@ -15,7 +15,7 @@ BANK3 = extras assets_court
 BANK4 = manual
 BANK6 = assets_nude
 CSRC = $(FIXED) $(BANK0) $(BANK1) $(BANK3) $(BANK4) $(BANK5) $(BANK6)
-OBJS = $(BUILD)/crt0.o $(addprefix $(BUILD)/,$(addsuffix .o,$(CSRC)))
+OBJS = $(BUILD)/crt0.o $(BUILD)/sprp.o $(addprefix $(BUILD)/,$(addsuffix .o,$(CSRC)))
 
 all: $(ROM)
 
@@ -35,6 +35,9 @@ $(addprefix $(BUILD)/,$(addsuffix .s,$(BANK6))): SEGS = --code-name BANK6 --roda
 
 $(BUILD)/crt0.o: src/crt0.s assets/tiles.chr | $(BUILD)
 	$(CA65) -t nes -g -o $@ src/crt0.s
+
+$(BUILD)/sprp.o: src/sprp.s | $(BUILD)
+	$(CA65) -t nes -g -o $@ src/sprp.s
 
 $(BUILD)/%.s: src/%.c src/*.h src/assets_data.c src/assets_court.c src/assets_nude.c | $(BUILD)
 	$(CC65) $(CFLAGS) $(SEGS) -o $@ $<

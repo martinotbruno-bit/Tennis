@@ -101,7 +101,7 @@ void manual_begin(void)
 
 void manual_tick(void)
 {
-    if (pad1_new & PAD_RIGHT) { page = (u8)(page + 1 == NPAGES ? 0 : page + 1); sfx_menu_move(); draw_page(); }
-    else if (pad1_new & PAD_LEFT) { page = (u8)(page ? page - 1 : NPAGES - 1); sfx_menu_move(); draw_page(); }
+    if (pad1_new & PAD_RIGHT) { page = (u8)(page + 1 == NPAGES ? 0 : page + 1); sfx_menu_move(); fade_skip = 1; draw_page(); }
+    else if (pad1_new & PAD_LEFT) { page = (u8)(page ? page - 1 : NPAGES - 1); sfx_menu_move(); fade_skip = 1; draw_page(); }
     else if (pad1_new & (PAD_B | PAD_START)) { sfx_menu_ok(); go_req = GO_SCREEN; go_arg = SCR_TITLE; }
 }

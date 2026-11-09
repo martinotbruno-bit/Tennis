@@ -9,6 +9,7 @@ Jeu de tennis 8 bits original pour **NES / Famicom** (NTSC et PAL), sur cartouch
 - 9 exercices d'entraînement dont un tutoriel ;
 - service canon, frappe parfaite, smash sauté, coups gagnants annoncés, vitesse du jeu réglable (lent, normal, rapide), réglage du son ;
 - ombres, poussière et éclaboussures, arbitre de chaise, réglages mémorisés ;
+- récapitulatif du score après chaque jeu et chaque set, fondus entre les écrans ;
 - ralentis, palmarès et mode d'emploi intégré.
 
 ![Aperçu](docs/img/apercu.png)
@@ -57,4 +58,4 @@ dist/       ROM finale
 
 ## État
 
-Version 2.7 : tout le contenu du cahier des charges est réalisé et testé **en émulation**. Les tests sur consoles réelles restent à faire : suivez la [liste de vérification](docs/VERIFICATION_CONSOLE.md).
+Version 2.8 : tout le contenu du cahier des charges est réalisé et testé **en émulation**. Les tests sur consoles réelles restent à faire : suivez la [liste de vérification](docs/VERIFICATION_CONSOLE.md).

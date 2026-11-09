@@ -6,12 +6,13 @@
 
 .export __STARTUP__ : absolute = 1
 .export _oam_buf, _vram_buf, _vram_len
-.export _frame_cnt, _nmi_ready, _pal_buf, _pal_dirty, _ppu_mask
+.export _frame_cnt, _nmi_ready, _pal_buf, _pal_dirty, _ppu_mask, _fade_lvl, _fade_skip
+.import _audio_update
 .export _pad1, _pad2, _pad1_new, _pad2_new, _region_cnt
 .export _wait_frame, _pad_poll, _ppu_off, _ppu_on, _vram_adr, _vram_put
 .export _vram_fill, _vram_unrle, _rand8, _rand_seed
 .export _chr_data
-.export _spr1, _spr_meta, _spr_end, _oam_i, _set_bank, _cur_bank, _bank_call, _far_call, _rp_record
+.export _spr1, _spr_meta, _spr_end, _oam_i, _spr_rot, _set_bank, _cur_bank, _bank_call, _far_call, _rp_record
 .import _bx, _by, _bz, _b_vis, _plx, _ply, _pose_cache, _flip_cache, _sc_swap
 .import _rp_buf, _rp_head, _rp_count
 .import __WBSS_RUN__, __WBSS_SIZE__
@@ -67,6 +68,8 @@ _vram_buf:  .res 128
 _frame_cnt: .res 1
 _nmi_ready: .res 1      ; 1 = le thread principal a fini la trame
 _pal_dirty: .res 1
+_fade_lvl:  .res 1      ; fondu de la palette : 0 (normal) à 64 (noir)
+_fade_skip: .res 1      ; 1 : prochaine coupure sans fondu
 _ppu_mask:  .res 1
 _pad1:      .res 1
 _pad2:      .res 1
@@ -76,6 +79,7 @@ _vram_len:  .res 1
 _rand_seed: .res 2
 pad_tmp:    .res 1
 _oam_i:     .res 1      ; prochain emplacement libre dans _oam_buf
+_spr_rot:   .res 1      ; premier emplacement utilisé (rotation anti-disparition)
 _meta_x:    .res 1      ; paramètres de _spr_meta (personnage 2x3 tuiles)
 _meta_y:    .res 1
 _meta_tile: .res 1
@@ -265,6 +269,11 @@ nmi:
     ldx #0
 @pal:
     lda _pal_buf,x
+    sec
+    sbc _fade_lvl       ; fondu : 0, 16, 32, 48 ou 64 (un cran plus sombre par 16)
+    bcs @pok
+    lda #$0F            ; en dessous du plus sombre : noir
+@pok:
     sta PPUDATA
     inx
     cpx #32
@@ -306,7 +315,36 @@ _wait_frame:
     rts
 
 ; void ppu_off(void) : coupe le rendu (attend un VBlank)
+; Écran allumé : fondu au noir en 3 crans de 2 trames (la musique continue),
+; puis coupure. Le nouvel écran s'allume noir (fondu à 64) et main.c le
+; rallume progressivement.
 _ppu_off:
+    lda _fade_skip      ; même écran reconstruit (menu, pages) : pas de fondu
+    beq @nfs
+    lda #0
+    sta _fade_skip
+    beq @cut
+@nfs:
+    lda _ppu_mask
+    beq @cut
+    lda _fade_lvl
+    bne @cut            ; déjà en fondu
+    lda #16
+@step:
+    sta _fade_lvl
+    lda #1
+    sta _pal_dirty
+    jsr _wait_frame
+    jsr _audio_update
+    jsr _wait_frame
+    jsr _audio_update
+    lda _fade_lvl
+    clc
+    adc #16
+    cmp #64
+    bcc @step
+    sta _fade_lvl
+@cut:
     lda #0
     sta _ppu_mask
     jsr _wait_frame
@@ -328,6 +366,11 @@ _ppu_on:
     ldx #0
 @pal:
     lda _pal_buf,x
+    sec
+    sbc _fade_lvl       ; fondu : 0, 16, 32, 48 ou 64 (un cran plus sombre par 16)
+    bcs @pok
+    lda #$0F            ; en dessous du plus sombre : noir
+@pok:
     sta PPUDATA
     inx
     cpx #32
@@ -495,6 +538,8 @@ _spr1:
 ; void spr_meta(void) : personnage 16x24 (2 colonnes x 3 rangées de tuiles
 ; consécutives) en (_meta_x, _meta_y), tuile de base _meta_tile.
 _spr_meta:
+    ; deux sprites par rangée, écrits l'un après l'autre : l'index X reboucle
+    ; naturellement sur 256 octets (nécessaire avec la rotation des sprites)
     ldx _oam_i
     ldy _meta_y
     dey                 ; le PPU affiche les sprites une ligne plus bas
@@ -503,48 +548,66 @@ _spr_meta:
     lda _meta_tile
     sta tmp2
 @row:
+    ; sprite de gauche (tuile + 1 en miroir)
     tya
     sta _oam_buf,x
-    sta _oam_buf+4,x
     lda _meta_attr
     sta _oam_buf+2,x
-    sta _oam_buf+6,x
     and #$40
-    bne @flip
+    beq @l_n
     lda tmp2
-    sta _oam_buf+1,x
     clc
     adc #1
-    sta _oam_buf+5,x
-    jmp @pos
-@flip:
+    jmp @l_t
+@l_n:
     lda tmp2
-    sta _oam_buf+5,x
-    clc
-    adc #1
+@l_t:
     sta _oam_buf+1,x
-@pos:
     lda _meta_x
     sta _oam_buf+3,x
+    inx
+    inx
+    inx
+    inx
+    ; sprite de droite (tuile en miroir, tuile + 1 sinon)
+    tya
+    sta _oam_buf,x
+    lda _meta_attr
+    sta _oam_buf+2,x
+    and #$40
+    bne @r_m
+    lda tmp2
+    clc
+    adc #1
+    jmp @r_t
+@r_m:
+    lda tmp2
+@r_t:
+    sta _oam_buf+1,x
+    lda _meta_x
     clc
     adc #8
-    sta _oam_buf+7,x
+    sta _oam_buf+3,x
+    inx
+    inx
+    inx
+    inx
     inc tmp2
     inc tmp2
     tya
     clc
     adc #8
     tay
-    txa
-    clc
-    adc #8
-    tax
     dec tmp1
     bne @row
     stx _oam_i
     rts
 
-; void spr_end(void) : cache les sprites inutilisés
+; Les sprites sont écrits à partir de _spr_rot (0 en temps normal). Quand
+; trop de sprites partagent les mêmes lignes, le moteur fait tourner ce point
+; de départ à chaque trame : le PPU, qui n'affiche que les 8 premiers sprites
+; d'une ligne, en écarte alors un différent à chaque trame (léger clignotement
+; au lieu d'un sprite qui disparaît). On masque tout jusqu'au point de départ.
 _spr_end:
     ldx _oam_i
     lda #$FF
@@ -553,6 +616,7 @@ _spr_end:
     inx
     inx
     inx
+    cpx _spr_rot
     bne @h
     rts
 

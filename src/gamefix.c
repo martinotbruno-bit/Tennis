@@ -104,11 +104,10 @@ void match_fx(void)
         --fx_t;
         spr1((u8)(fx_x - 4), (u8)(fx_y - 6), (u8)(fx_kind + (fx_t < 6)), (u8)(fx_kind == 8 ? 3 : 2));
     }
-    /* ombres : toujours en simple ; en double, seulement pendant un saut
-       (au plus 8 sprites par ligne sur NES) */
+    /* ombres de tous les joueurs ; en double, quand trop de sprites
+       partagent une ligne, la rotation de l'ordre des sprites (match_draw)
+       évite qu'un sprite disparaisse */
     for (i = 0; i < npl; ++i) {
-        j = pl_jump[i];
-        if (npl == 4 && !j) continue;
         if (cfg.mode == GM_TRAIN && i == 1 && cfg.ex != EX_STATIC) continue;   /* lanceur invisible */
         spr1((u8)(PXU(plx[i]) - 3), PXU(ply[i]), 5, 2);   /* sous les pieds, décalée vers la droite */
     }
@@ -193,6 +192,28 @@ u8 can_hit(u8 p)
 /* relâché juste avant l'arrivée de la balle (3 premières trames du geste) */
 /* ---------------------------------------------------------------------- */
 
+/* Entraînement : écart au bon moment, en images (trames) */
+#pragma bss-name(push, "WBSS")
+static char timing_b[12];
+#pragma bss-name(pop)
+void timing_msg(u8 early, u8 n)
+{
+    char *b = timing_b;
+    if (n > 9) n = 9;
+    b[0] = (char)('0' + n);
+    b[1] = ' '; b[2] = 'I'; b[3] = 'M'; b[4] = 'A'; b[5] = 'G'; b[6] = 'E';
+    b[7] = (char)(n > 1 ? 'S' : 0); b[8] = 0;
+    set_msg(early ? "TROP TOT DE" : "TROP TARD DE", b, 45);
+}
+
+/* Entraînement, service frappé avec A : écart au sommet du lancer (vz = 4
+   ou -2 au sommet ; la vitesse verticale perd 6 par trame) */
+void serve_fb(s16 vz)
+{
+    if (vz > 4) timing_msg(1, (u8)((u8)(vz - 4) / 6));
+    else if (vz < -2) timing_msg(0, (u8)((u8)(-2 - vz) / 6));
+}
+
 u8 perfect_hit(u8 p, s16 dx)
 {
     u8 t = (u8)(p & 1), r = 0;
@@ -202,12 +223,25 @@ u8 perfect_hit(u8 p, s16 dx)
        la frappe part dès que la balle entre dans la zone, sa position en
        profondeur n'est donc pas un critère */
     if (dx < 0) dx = -dx;
-    if (dx < 5 || dx > 14) return 0;
+    if (dx < 5 || dx > 14) {
+        if (cfg.mode == GM_TRAIN && cfg.ctrl[p] != CTRL_CPU)
+            set_msg("BALLE TROP", dx < 5 ? "PRES DU CORPS" : "LOIN DU CORPS", 45);
+        return 0;
+    }
     if (cfg.ctrl[p] == CTRL_CPU) {
         /* CPU : Expert de temps en temps, Normal rarement, Facile jamais */
         if (cfg.level[p] == 2) r = (u8)(rand8() < 40);
         else if (cfg.level[p] == 1) r = (u8)(rand8() < 10);
-    } else r = swing_early;
+    } else {
+        /* bouton relâché 0 à 2 trames avant l'arrivée : 3 premières trames du
+           geste (pl_timer 14, 13, 12) */
+        r = (u8)(swing_early >= 12);
+        if (cfg.mode == GM_TRAIN) {
+            if (r) set_msg("COUP PARFAIT !", "", 45);
+            else if (!swing_early) set_msg("RELACHEZ LE", "BOUTON AVANT", 45);
+            else timing_msg(1, (u8)(12 - swing_early));
+        }
+    }
     if (r) {
         ++st_perf[t];
         perf_t = 8;                                         /* éclat sur la raquette */
@@ -215,4 +249,32 @@ u8 perfect_hit(u8 p, s16 dx)
         perf_y = (u8)(PXU(ply[p]) - 18);
     }
     return r;
+}
+
+/* ---------------------------------------------------------------------- */
+/* Récapitulatif du score : une ligne par équipe, « ALEX 6 3 2 », sets    */
+/* terminés puis jeux du set en cours (14 caractères pour 5 sets).        */
+/* ---------------------------------------------------------------------- */
+extern u8 recap_pend;
+void score_line(u8 t, char *out)
+{
+    u8 i, k = 4;
+    team_name(t, out);
+    for (i = 0; i < sc_set_no && i < MAX_SETS; ++i) { out[k++] = ' '; out[k++] = (char)('0' + sc_hist[i][t]); }
+    if (!sc_over && k < 14) { out[k++] = ' '; out[k++] = (char)('0' + sc_games[t]); }
+    while (k < 14) out[k++] = ' ';
+    out[14] = 0;
+}
+
+/* bandeau : le score set par set pendant 2 secondes */
+#pragma bss-name(push, "WBSS")
+static char recap_a[16], recap_b[16];
+#pragma bss-name(pop)
+void score_recap(void)
+{
+    char *a = recap_a, *b = recap_b;
+    score_line(0, a);
+    score_line(1, b);
+    set_msg(a, b, 120);
+    recap_pend = 0;
 }

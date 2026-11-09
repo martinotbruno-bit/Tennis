@@ -23,6 +23,7 @@ extern u8 app_state;
 #define GO_MATCH  1      /* lancer le match décrit par cfg */
 #define GO_SCREEN 2      /* entrer dans l'écran go_arg (banque des écrans) */
 #define GO_MANUAL 3
+#define GO_RESUME 4      /* reprendre le match après l'écran de fin de set */
 extern u8 go_req, go_arg;
 extern u8 is_pal;
 
@@ -30,10 +31,12 @@ extern u8 is_pal;
 #define SCR_TITLE       0
 #define SCR_MENU        1
 #define SCR_AFTER_MATCH 2
+#define SCR_SETBREAK    3   /* récapitulatif de fin de set */
 
 /* points d'entrée des banques */
 void match_begin(void);            /* BANK_GAME */
-u8 match_tick(void);
+u8 match_tick(void);               /* 1 : fin du match ; 2 : fin d'un set */
+void match_resume(void);
 void match_draw(void);
 void screens_enter(u8 scr);        /* BANK_SCREENS */
 void screens_tick(void);

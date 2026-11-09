@@ -1,10 +1,21 @@
-# Pixel Open — Rapport de réalisation (version 2.7)
+# Pixel Open — Rapport de réalisation (version 2.8)
 
 Comme l'exige le CDC (§ 17.5), ce rapport distingue ce qui est **réalisé**, **testé**, **validé sur matériel réel**, **validé uniquement en émulation**, **dépendant d'une extension**, et les **limitations restantes**.
 
 > **Validation matérielle : aucune.** Aucun test n'a été fait sur console réelle (NES, Famicom, PAL, cartouche MMC1). Toutes les validations ont eu lieu en émulation (jsnes) et par des tests unitaires sur PC. Les critères « vérifié sur console physique » (CDC § 2.1, 15.4, 16.A) **ne sont pas remplis**. Ce point ne peut pas être traité dans l'environnement de développement utilisé.
 
 ## 1. Évolutions
+
+### Version 2.8
+
+| Demande | Réalisation |
+|---|---|
+| 1. Rotation des sprites, seulement quand nécessaire | Activée uniquement en double quand au moins 3 joueurs partagent une bande de 24 px : un sprite en trop clignote au lieu de disparaître. Les ombres sont maintenant affichées aussi en double. Le test a révélé un débordement de la table des sprites (blocage), corrigé |
+| 2. Affichage des personnages en assembleur | Images d'échange en retard en double : 27 sur 6 000 (0,45 %), contre 90 avant ; aucune en simple. Rendu identique |
+| 4. Retour sur le timing à l'entraînement | « TROP TOT DE 3 IMAGES », « TROP TARD DE 1 IMAGE », « RELACHEZ LE BOUTON AVANT », « BALLE TROP PRES DU CORPS », « COUP PARFAIT ! », « SERVICE CANON » |
+| 5. Ralentis des coups parfaits | Une frappe parfaite gagnante est rejouée, même en retour de service (les services canon gagnants le sont déjà, comme aces) |
+| 6. Fondus entre les écrans | Fondu au noir (3 crans) et retour progressif (4 crans) à chaque changement d'écran, musique continue. Pas de fondu quand le même écran est reconstruit (menu, pages), pour garder une navigation instantanée |
+| Récapitulatif du score entre chaque jeu, chaque set et à la fin du match | Après chaque jeu : score set par set dans le bandeau (« ALEX 6 3 / MAYA 4 1 »). Après chaque set : écran récapitulatif (tableau des sets, vainqueur du set, statistiques, joueur au service), A pour reprendre. En fin de match : tableau complet des sets en tête des résultats |
 
 ### Version 2.7
 
@@ -104,12 +115,12 @@ Pour loger ce contenu, la cartouche passe de NROM (32 Ko) à **MMC1** : 128 Ko d
 |---|---|
 | Règles (`rules_test`) | 42/42 |
 | Codes (`password_test`) | 200 000/200 000 aller-retour (format v3), ancien code v2 accepté, Margaux codée, Margaux au club nudiste refusée ; 99,98 % des codes altérés d'un signe refusés |
-| Émulateur (`emu_test`) | 161/161 vérifications (environ 19 min) |
-| Profil CPU, simple, 6 000 trames | 1 trame d'échange en dépassement |
+| Émulateur (`emu_test`) | 170/170 vérifications (environ 20 min) |
+| Profil CPU, simple, 6 000 trames | 0 trame d'échange en dépassement |
 | Relecture des textes (`check_texts.py`) | 0 problème |
 | Contraste (`contrast.py 25`) | 0 paire sous ΔE 25 (personnages, courts, balle, tenues) |
-| Profil CPU, double, 6 000 trames | 90 trames d'échange en dépassement (1,5 %), sans défaut d'image |
-| Compilation | Reproductible : SHA-256 `1f432e453338a0b6bf1384cc22711ce9cacb9fa55010085821984edeafdb22fd` sur deux compilations propres |
+| Profil CPU, double, 6 000 trames | 27 trames d'échange en dépassement (0,45 %), sans défaut d'image |
+| Compilation | Reproductible : SHA-256 `f6bedd4e6260a603f0815a480105cc9d95bb1fc5a86072ba8f06f29a1b54140c` sur deux compilations propres |
 
 ## 3. Conformité par section du CDC
 

@@ -125,65 +125,16 @@ void pal_set_player(u8 slot, u8 c)
     pal_dirty = 1;
 }
 
-void spr_begin(void) { oam_i = 0; }
+void spr_begin(void) { oam_i = spr_rot; }
 
 /* (x, y) = position des pieds ; sprite 16x24 dessiné par spr_meta (asm) */
 /* Direction de course mémorisée par personnage (16 personnages distincts
  * dans un match) : 0 face/dos, 1 profil vers la droite, 2 profil vers la
  * gauche. Elle n'est mise à jour que si le joueur s'est déplacé, pour éviter
  * le clignotement quand l'IA ne bouge qu'une trame sur deux. */
-#pragma bss-name(push, "WBSS")   /* RAM de cartouche : la RAM interne est pleine */
-static s16 run_x[NCHARS], run_y[NCHARS];
-static u8 run_dir[NCHARS], run_pose[NCHARS];
-#pragma bss-name(pop)
-
-/* variante de bras de la tête de Margaux par pose : attente, frappe armée,
-   accompagnement, service */
-static const u8 marg_var[8] = { 0, 0, 0, 1, 2, 3, 0, 0 };
-
-void spr_person(s16 x, s16 y, u8 c, u8 front, u8 pose, u8 flip, u8 pal)
-{
-    s16 l = x - 8, top = y - 24, dx, dy;
-    u8 tile;
-    if (l < 0) l = 0;
-    if (l > 240) l = 240;
-    if (top < 0) top = 0;
-    if (top > 216) top = 216;
-    meta_x = (u8)l;
-    meta_y = (u8)top;
-    tile = (u8)(person_base[(char_female[c] << 1) | front] + pose * 6);
-    if (pose == POSE_RUN1 || pose == POSE_RUN2) {
-        dx = x - run_x[c];
-        dy = y - run_y[c];
-        if (dx || dy) {
-            if (dx < 0) dx = -dx;
-            if (dy < 0) dy = -dy;
-            /* déplacement surtout latéral : course de profil */
-            run_dir[c] = (u8)(dx >= dy ? (x > run_x[c] ? 1 : 2) : 0);
-        }
-        if (run_dir[c]) {
-            tile = (u8)(profile_base + (char_female[c] ? 12 : 0) + (pose == POSE_RUN2 ? 6 : 0));
-            flip = (u8)(run_dir[c] == 2);
-        }
-        /* bruit de pas discret à chaque foulée */
-        if (pose == POSE_RUN1 && run_pose[c] == POSE_RUN2) sfx_step();
-    } else run_dir[c] = 0;
-    run_x[c] = x;
-    run_y[c] = y;
-    run_pose[c] = pose;
-    meta_tile = tile;
-    meta_attr = (u8)(flip ? (pal | 0x40) : pal);
-    spr_meta();
-    if (c == 16) {
-        /* Margaux : rangée de la tête remplacée par ses cheveux longs, blonds
-           et bouclés (tuiles propres) ; le corps reste celui des joueuses */
-        u8 o = (u8)(oam_i - 24), l, r;
-        if (run_dir[c] && (pose == POSE_RUN1 || pose == POSE_RUN2)) { l = marg_prof_l; r = marg_prof_r; }
-        else { l = (u8)(marg_head + (front << 3) + (marg_var[pose] << 1)); r = (u8)(l + 1); }
-        if (flip) { oam_buf[o + 1] = r; oam_buf[o + 5] = l; }
-        else { oam_buf[o + 1] = l; oam_buf[o + 5] = r; }
-    }
-}
+/* spr_person : en assembleur (src/sprp.s), c'était la fonction la plus
+   coûteuse de chaque trame. Les tableaux de course y sont définis. */
+extern u8 run_dir[NCHARS];
 
 void txt_at(u8 x, u8 y, const char *s)
 {
