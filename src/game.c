@@ -298,6 +298,7 @@ static void ball_update(void)
         bvz = 40;
         b_netcord = 1;
         sfx_net();
+        net_shake = 14;                 /* le filet tremble */
     } else if (((oldy < NET_Y * FP) != (by < NET_Y * FP)) && bz < NET_H * FP
         && bx > (DBL_L - 6) * FP && bx < (DBL_R + 6) * FP) {
         by = oldy;
@@ -305,6 +306,7 @@ static void ball_update(void)
         bvx >>= 1;
         if (bvz > 0) bvz = 0;
         sfx_net();
+        net_shake = 14;                 /* le filet tremble */
         if (b_live && !b_serve) set_msg("FILET", "", 40);
     }
     if (bz <= 0 && bvz < 0) {
@@ -1072,6 +1074,8 @@ u8 match_tick(void)
     if (hud_dirty) bank_call(BANK_EXTRAS, hud_update);
     /* public animé (après le score : le tampon VRAM est partagé) */
     if (crowd_timer && cfg.env != ENV_HALL) bank_call(BANK_EXTRAS, crowd_tick);
+    /* filet qui tremble (après le score : le tampon VRAM est partagé) */
+    if (net_shake) bank_call(BANK_EXTRAS, net_tick);
     return 0;
 }
 

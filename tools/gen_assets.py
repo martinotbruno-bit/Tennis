@@ -172,6 +172,32 @@ def bitmap_to_nametable(bmp, attr_fn):
     return bytes(nt) + bytes(at)
 
 # ---------------------------- Court --------------------------------------
+def draw_net(b, rect, shake=False):
+    """Filet : bande blanche de 2 px (couleur 2), mailles aérées (couleur 3,
+    on voit le court à travers), câble du bas, sangle centrale, ombre portée
+    tramée sur le court, poteaux avec reflet et tête claire. shake : mailles
+    décalées et bande affaissée d'un pixel (animation quand la balle touche)."""
+    x0n, x1n = DBL_L - 6, DBL_R + 6
+    vs = 2 if shake else 0
+    hs = 1 if shake else 0
+    for y in range(NET_Y - 5, NET_Y):
+        for x in range(x0n, x1n + 1):
+            strand = (x % 4 == vs) or ((y - NET_Y + hs) % 2 == 0)
+            b[y][x] = 3 if strand else 1
+    rect(x0n, NET_Y, x1n, NET_Y, 3)                         # câble du bas
+    rect(x0n, NET_Y - 7 + hs, x1n, NET_Y - 6 + hs, 2)       # bande blanche
+    if hs:
+        rect(x0n, NET_Y - 7, x1n, NET_Y - 7, 1)              # (affaissée)
+    rect(CENTER_X - 1, NET_Y - 5, CENTER_X, NET_Y, 2)        # sangle centrale
+    for y in (NET_Y + 1, NET_Y + 2):                         # ombre portée
+        for x in range(x0n + 2, x1n + 3):
+            if (x + y) % 2 == 0 and (y == NET_Y + 1 or x % 4 < 2):
+                b[y][x] = 3
+    for px in (DBL_L - 8, DBL_R + 6):                        # poteaux
+        rect(px, NET_Y - 11, px + 2, NET_Y + 1, 3)
+        rect(px, NET_Y - 10, px, NET_Y, 2)                   # reflet
+        rect(px, NET_Y - 11, px + 2, NET_Y - 11, 2)          # tête
+
 def draw_court(env=0):
     W, H = 256, 240
     b = [[0]*W for _ in range(H)]
@@ -191,13 +217,7 @@ def draw_court(env=0):
     rect(CENTER_X, TOP_SERV, CENTER_X, BOT_SERV, 2)    # ligne médiane de service
     rect(CENTER_X, TOP_BASE+1, CENTER_X, TOP_BASE+3, 2)  # marques centrales
     rect(CENTER_X, BOT_BASE-3, CENTER_X, BOT_BASE-1, 2)
-    # filet : bande blanche + mailles sombres (couleur 3)
-    for y in range(NET_Y-5, NET_Y+1):
-        for x in range(DBL_L-6, DBL_R+7):
-            b[y][x] = 3 if ((x + y) % 2 == 0 or y == NET_Y) else 1
-    rect(DBL_L-6, NET_Y-6, DBL_R+6, NET_Y-6, 2)
-    rect(DBL_L-8, NET_Y-9, DBL_L-6, NET_Y, 3)           # poteaux
-    rect(DBL_R+6, NET_Y-9, DBL_R+8, NET_Y, 3)
+    draw_net(b, rect)
     # bords du court (palette 2) selon l'environnement
     for side in (0, 1):
         x0 = 0 if side == 0 else 224
@@ -429,46 +449,60 @@ _nt3 = bytearray(court_nts[3])
 for i, ch in enumerate("CLUB NUDISTE"):
     _nt3[3 * 32 + 10 + i] = ord(ch)
 court_nts[3] = bytes(_nt3)
-# court Margaux : petit panneau de fond de court (32 x 16), derrière la ligne
-# de fond du haut, côté gauche (colonnes 6 à 9, rangées 4 et 5), à l'écart
-# du bandeau et du joueur au service. Couleurs du court (palette 0) : 0 prune,
-# 1 rose (le sol autour : raccord invisible), 2 blanc, 3 noir. Effet de volume :
-# liseré clair sur le dessus, face prune, rebord sombre, deux pieds et une
-# ombre portée tramée. Lettres « MARGAUX » en petite police 3 x 5.
+# court Margaux : petit panneau (32 x 16) dans le bandeau du haut, juste à
+# droite du score de gauche (colonnes 5 à 8, rangées 2 et 3). Palette des
+# abords du court (2) : 1 rose clair, 2 magenta, 3 blanc ; 0 = fond du bandeau.
+# Volume : liseré clair sur le dessus, face magenta, rebord clair, deux pieds.
+# Lettres « MARGAUX » en petite police 3 x 5.
 MINI = {
  'M': ["101", "111", "111", "101", "101"], 'A': ["010", "101", "111", "101", "101"],
  'R': ["110", "101", "110", "101", "101"], 'G': ["011", "100", "101", "101", "011"],
  'U': ["101", "101", "101", "101", "111"], 'X': ["101", "101", "010", "101", "101"],
 }
-SIGN_X, SIGN_Y = 6, 4          # en tuiles
+SIGN_X, SIGN_Y = 5, 2          # en tuiles
 def margaux_sign():
-    bmp = draw_court(4)
-    ox, oy = SIGN_X * 8, SIGN_Y * 8
-    c = [row[ox:ox + 32] for row in bmp[oy:oy + 16]]
+    c = [[0] * 32 for _ in range(16)]
     def put(x, y, v):
         if 0 <= x < 32 and 0 <= y < 16:
             c[y][x] = v
-    for x in range(2, 30): put(x, 1, 2)                      # dessus (liseré clair)
-    for y in range(2, 10):
-        for x in range(1, 31): put(x, y, 0)                  # face prune
-    for x in range(1, 31): put(x, 10, 3)                     # rebord sombre
+    for x in range(2, 30): put(x, 1, 1)                      # dessus (liseré clair)
+    for y in range(2, 11):
+        for x in range(1, 31): put(x, y, 2)                  # face magenta
+    for x in range(1, 31): put(x, 11, 1)                     # rebord
     for x, ch in enumerate("MARGAUX"):
         for y, row in enumerate(MINI[ch]):
             for k, v in enumerate(row):
-                if v == '1': put(3 + x * 4 + k, 3 + y, 2)    # lettres blanches
-    for y in range(11, 14):                                  # pieds
-        put(5, y, 3); put(6, y, 3); put(25, y, 3); put(26, y, 3)
-    for y, x0 in ((11, 8), (12, 10)):                        # ombre portée tramée, légère
-        for x in range(x0, 32):
-            if (x + y) % 2 == 0 and (y == 11 or x % 4 < 2): put(x, y, 3)
+                if v == '1': put(3 + x * 4 + k, 4 + y, 3)    # lettres blanches
+    for y in range(12, 15):                                  # pieds
+        put(5, y, 1); put(6, y, 1); put(25, y, 1); put(26, y, 1)
     return [[c[ty * 8 + y][tx * 8:tx * 8 + 8] for y in range(8)] for ty in range(2) for tx in range(4)]
 SIGN_TILES = margaux_sign()
+def set_attr(nt, col, row, pal):
+    i = 960 + (row // 4) * 8 + (col // 4)
+    q = ((row // 2) & 1) * 2 + ((col // 2) & 1)
+    nt[i] = (nt[i] & ~(3 << (q * 2))) | (pal << (q * 2))
 # indices : les 8 premières tuiles du public du club nudiste (inutilisées sur
 # le court Margaux) ; load_court y copie le panneau, et les rétablit ailleurs
 _nt4 = bytearray(court_nts[4])
 for k in range(8):
     _nt4[(SIGN_Y + k // 4) * 32 + SIGN_X + k % 4] = crowd_idx3[k]
+for col in (4, 6, 8):                     # blocs 16 x 16 : palette des abords
+    set_attr(_nt4, col, SIGN_Y, 2)
 court_nts[4] = bytes(_nt4)
+
+# filet secoué : tuiles de mailles « au repos » et « secouées » (rangées 15
+# et 16, colonne 12, sans ligne du court) ; l'animation remplace leur dessin
+# en CHR-RAM pendant quelques trames quand la balle touche le filet
+def net_tiles(shake):
+    bm = [[1] * 256 for _ in range(240)]
+    def rect(x0, y0, x1, y1, cc):
+        for y in range(max(0, y0), min(240, y1 + 1)):
+            for x in range(max(0, x0), min(256, x1 + 1)):
+                bm[y][x] = cc
+    draw_net(bm, rect, shake)
+    return [[bm[r * 8 + y][96:104] for y in range(8)] for r in (15, 16)]
+NET_IDX = [court_nts[0][15 * 32 + 12], court_nts[0][16 * 32 + 12]]
+assert tkey(bg_tiles[NET_IDX[0]]) == tkey(net_tiles(False)[0]) and tkey(bg_tiles[NET_IDX[1]]) == tkey(net_tiles(False)[1])
 court_nt = court_nts[0]
 
 # ---------------------------- Titre --------------------------------------
@@ -1034,6 +1068,9 @@ src.append(c_array('crowd_idx3', bytes(crowd_idx3)))
 src.append(c_array('crowd_norm3', b''.join(encode_tile(t) for t in NUDE_CROWD)))  # 12 tuiles
 src.append(c_array('crowd_cheer3', b''.join(encode_tile(t) for t in NUDE_CHEER)))
 src.append(c_array('sign_chr', b''.join(encode_tile(t) for t in SIGN_TILES)))   # panneau du court Margaux
+src.append(c_array('net_idx', bytes(NET_IDX)))
+src.append(c_array('net_norm', b''.join(encode_tile(t) for t in net_tiles(False))))
+src.append(c_array('net_shk', b''.join(encode_tile(t) for t in net_tiles(True))))
 src.append(c_array('crowd_idx', bytes(crowd_idx)))
 src.append(c_array('crowd_norm', b''.join(encode_tile(t) for t in CROWD)))
 src.append(c_array('crowd_cheer', b''.join(encode_tile(t) for t in CHEER)))

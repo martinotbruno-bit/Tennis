@@ -71,6 +71,8 @@ void rp_start(void);
 void rp_play(void);
 void crowd_tick(void);
 void load_court(void);
+void net_tick(void);            /* filet qui tremble (banque 3) */
+extern u8 net_shake;
 void hud_update(void);
 void rain_tick(void);
 void rain_draw(void);

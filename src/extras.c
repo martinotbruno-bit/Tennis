@@ -123,6 +123,7 @@ void rain_draw(void)
 }
 
 /* ---------------------------------------------------------------------- */
+extern u8 net_state;
 void load_court(void)
 {
     u8 i, j;
@@ -135,6 +136,29 @@ void load_court(void)
         vram_adr((u16)crowd_idx3[i] << 4);
         for (j = 0; j < 16; ++j) vram_put(*src++);
     }
+    /* filet au repos (au cas où on aurait quitté un match pendant qu'il tremblait) */
+    src = net_norm;
+    for (i = 0; i < 2; ++i) {
+        vram_adr((u16)net_idx[i] << 4);
+        for (j = 0; j < 16; ++j) vram_put(*src++);
+    }
+    net_state = 0;
+    net_shake = 0;
+}
+
+/* Filet qui tremble quand la balle le touche : les tuiles des mailles
+   alternent entre dessin « secoué » et « au repos » (net_shake : 14 -> 0) */
+u8 net_shake, net_state;
+void net_tick(void)
+{
+    u8 want = (u8)(net_shake > 1 && ((net_shake >> 2) & 1));
+    if (want != net_state) {
+        const u8 *s = want ? net_shk : net_norm;
+        if (!vbuf_raw((u16)net_idx[0] << 4, s, 16)) return;      /* budget VBlank : trame suivante */
+        if (!vbuf_raw((u16)net_idx[1] << 4, s + 16, 16)) return;
+        net_state = want;
+    }
+    --net_shake;
 }
 
 /* ---------------------------------------------------------------------- */

@@ -135,16 +135,16 @@ console.log('Court Margaux');
   setOpts(e, { ENV: 4 }); e.tap('START'); e.run(15);
   check(e.text(4, 24, 22) === 'BIENVENUE SUR LE COURT', 'présentation du court Margaux');
   e.tap('A'); e.run(30);
-  // petit panneau de fond de court (rangées 4-5, colonnes 6 à 9) : ses 8 tuiles, chargées en
-  // CHR-RAM à la place du public du club nudiste ; le bandeau du score (rangée 3) reste libre
+  // petit panneau dans le bandeau, à droite du score de gauche (rangées 2-3, colonnes 5 à 8) :
+  // ses 8 tuiles, chargées en CHR-RAM à la place du public du club nudiste ; zone des annonces libre
   const nt = (x, y) => e.nes.ppu.vramMem[0x2000 + y * 32 + x];
   // données en banque 3 : lues directement dans la ROM (16 Ko par banque)
   const rb = (sym, off) => e.nes.rom.rom[3][e.addr(sym) - 0x8000 + off];
   const idx = [...Array(8).keys()].map((k) => rb('crowd_idx3', k));
-  const placed = idx.every((t, k) => nt(6 + (k % 4), 4 + (k >> 2)) === t);
+  const placed = idx.every((t, k) => nt(5 + (k % 4), 2 + (k >> 2)) === t);
   let same = true; for (let b = 0; b < 128; b++) if (e.nes.ppu.vramMem[idx[b >> 4] * 16 + (b & 15)] !== rb('sign_chr', b)) same = false;
   check(placed && same && !/[A-Z]/.test(e.text(9, 3, 14)) && e.nes.cpu.mem[e.addr('pal_buf') + 1] === 0x25,
-    'court rose avec le petit panneau MARGAUX au fond du court (hors du bandeau)');
+    'court rose avec le petit panneau MARGAUX à côté du score');
   allCpu(e); e.poke('crowd_timer', 60); e.run(70);
   check(e.peek('crowd_timer') === 0, 'coeurs, fleurs et étoiles scintillent puis se reposent');
 }
@@ -827,6 +827,29 @@ console.log('Bandeau devant le joueur du haut');
     return false;
   }, 60 * 60 * 3);
   check(ok && !bad, 'joueur du haut au service : sa tête passe derrière le texte du bandeau, le reste du sprite devant le court');
+}
+
+console.log('Filet qui tremble');
+{
+  const e = boot(); startWith(e, { FMT: 3 }); allCpu(e);
+  runUntil(e, () => e.peek('ms') === 0, 300);
+  const s16 = (n, v, o = 0) => { e.poke(n, v & 255, o); e.poke(n, (v >> 8) & 255, o + 1); };
+  // balle basse qui arrive dans le filet
+  e.poke('ms', 2); e.poke('b_live', 1); e.poke('b_vis', 1); e.poke('b_serve', 0); e.poke('bounces', 0);
+  e.poke('hitter', 0); e.poke('rally_hits', 3); e.poke('bgrav', 0);
+  s16('bx', 100 * 64); s16('by', 140 * 64); s16('bz', 2 * 64); s16('bvx', 0); s16('bvy', -128); s16('bvz', 0);
+  runUntil(e, () => e.peek('net_shake') > 0, 30);
+  const rb = (sym, off) => e.nes.rom.rom[3][e.addr(sym) - 0x8000 + off];
+  const ni = rb('net_idx', 0);
+  let shaken = false;
+  for (let f = 0; f < 16; f++) {
+    e.run(1);
+    let same = true; for (let b = 0; b < 16; b++) if (e.nes.ppu.vramMem[ni * 16 + b] !== rb('net_shk', b)) same = false;
+    if (same) shaken = true;
+  }
+  e.run(10);
+  let rest = true; for (let b = 0; b < 16; b++) if (e.nes.ppu.vramMem[ni * 16 + b] !== rb('net_norm', b)) rest = false;
+  check(shaken && rest && e.peek('net_shake') === 0, 'balle dans le filet : les mailles tremblent puis reviennent au repos');
 }
 
 console.log('Rotation des sprites (double)');
