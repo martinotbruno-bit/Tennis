@@ -6,7 +6,7 @@ CFLAGS = -t nes -Oirs --static-locals -g -I src
 BUILD = build
 ROM = $(BUILD)/pixel_open.nes
 # banque fixe ($C000)
-FIXED = main rules gfx audio password assets_data
+FIXED = main rules gfx audio password assets_data gamefix
 # banques commutables ($8000)
 BANK0 = game
 BANK1 = screens

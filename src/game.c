@@ -40,6 +40,13 @@ s16 plx[4], ply[4];
 static u8 pl_state[4], pl_timer[4], pl_charge[4], pl_btn[4], pl_hit[4];
 static u8 pl_walk[4], pl_moving[4], pl_flip[4];
 static u8 ai_delay[4], ai_net[4];
+/* Fonctions utilitaires et calcul de trajectoire : banque fixe (gamefix.c),
+   pour libérer la banque du moteur */
+s16 mulfrac(s16 v, u8 k);
+s16 iabs(s16 v);
+s8 rnd_spread(u8 spread);
+void set_msg(const char *a, const char *b, u8 t);
+void launch(s16 tx, s16 ty, u8 T, u8 grav);
 static u8 hit_margin;
 static s16 pcache_x[4], pcache_y[4];   /* prédictions IA en cache */
 static s8 ai_err[4];                   /* erreur d'anticipation tirée à chaque frappe */
@@ -93,22 +100,8 @@ extern const u8 sty_net[8], sty_lob[8], sty_drop[8], sty_slice[8], sty_deep[8];
 #define side_of(t) ((u8)(((t) & 1) ^ sc_swap))   /* 0 = bas, 1 = haut */
 
 /* v * k / 256 en 16 bits (|v| < 2600) : évite la multiplication 32 bits */
-static s16 mulfrac(s16 v, u8 k) { return (s16)(((v >> 3) * (s16)k) >> 5); }
-static s16 iabs(s16 v) { return v < 0 ? -v : v; }
 
-static s8 rnd_spread(u8 spread)
-{
-    if (!spread) return 0;
-    return (s8)((s16)(rand8() % (u8)(spread * 2 + 1)) - spread);
-}
 
-static void set_msg(const char *a, const char *b, u8 t)
-{
-    u8 i;
-    for (i = 0; i < 14; ++i) { msg1[i] = *a ? *a++ : ' '; msg2[i] = *b ? *b++ : ' '; }
-    msg_timer = t;
-    hud_dirty = 1;
-}
 
 /* joueur au service et receveur (simple : index = équipe) */
 static u8 server_p(void)
@@ -126,40 +119,6 @@ static u8 receiver_p(void)
 /* ====================================================================== */
 /* Lancement de la balle : atteindre (tx, ty) en T trames                  */
 /* ====================================================================== */
-static void launch(s16 tx, s16 ty, u8 T, u8 grav)
-{
-    s16 tt, dy, zn, n, d;
-    u16 frac = 0, tn;
-    u8 tries;
-    /* fraction du trajet (sur 256) à laquelle la balle passe le filet :
-       une seule division 16 bits, hors de la boucle (optimisation CPU) */
-    dy = ty * FP - by;
-    n = NET_Y - PX(by);
-    d = ty - PX(by);
-    if ((n < 0) == (d < 0) && d != 0) {
-        if (n < 0) { n = -n; d = -d; }
-        frac = ((u16)n << 8) / (u16)d;
-    }
-    /* hauteur au filet sans division : la parabole passant par z(0) = bz et
-       z(T) = 0 vaut z(t) = bz.(1 - t/T) + g.t.(T - t)/2 (calcul en FP/4) */
-    for (tries = 0; tries < 5 && frac && frac < 256; ++tries) {
-        tn = (frac * T) >> 8;
-        zn = (s16)((((u16)bz >> 4) * (256 - frac)) >> 6)
-           + (s16)((((u16)grav * tn) >> 3) * (u16)(T - tn));
-        if (zn >= ((NET_H + 3) * FP) >> 2) break;
-        T = (u8)(T + (T >> 3) + 3);
-    }
-    tt = (s16)T;      /* division signée explicite (cc65 : s16 / u8 = non signé) */
-    bvz = (s16)(((u16)grav * T) >> 1) - bz / tt;
-    bvx = (tx * FP - bx) / tt;
-    bvy = dy / tt;
-    bgrav = grav;
-    land_x = tx;
-    land_y = ty;
-    bounces = 0;
-    b_live = 1;
-    b_netcord = 0;
-}
 
 /* ====================================================================== */
 /* Fin d'échange                                                           */
@@ -247,7 +206,7 @@ static void ball_bounce(void)
 
     if (bspin == SPIN_TOP)   { rest = (u8)(rest + 24); if (fric < 240) fric += 12; }
     if (bspin == SPIN_SLICE) { rest = (u8)(rest - 46); }
-    if (bspin == SPIN_DROP) { rest >>= 1; fric >>= 2; }   /* amortie : rebond bas, balle freinée */
+    if (bspin == SPIN_DROP) { rest >>= 1; fric >>= 1; }   /* amortie : rebond bas, balle freinée */
     if (cfg.cond == COND_RAIN) { rest = (u8)(rest - 20); if (fric < 248) fric += 6; }  /* court glissant */
     bvz = mulfrac(-bvz, rest);
     bvx = mulfrac(bvx, fric);
@@ -403,7 +362,10 @@ static void do_hit(u8 p, u8 pad, u8 btn, u8 power, u8 spread)
     } else if (btn == PAD_B && (pad & PAD_DOWN)) {      /* amortie */
         /* amortie : trajectoire basse et vive juste au-dessus du filet, puis la
            balle « meurt » au rebond (effet SPIN_DROP) */
-        depth = 18; speed = 40; grav = 5; bspin = SPIN_DROP; spread += 3; last_shot = SH_DROP;
+        /* plus elle est jouée loin du filet, plus elle est imprécise et risque
+           de rester trop courte (filet) : jamais un point garanti */
+        T = (u8)(iabs(PX(by) - NET_Y) >> 3);
+        depth = (s16)(22 - T); speed = 40; grav = 5; bspin = SPIN_DROP; spread += T; last_shot = SH_DROP;
     } else if (btn == PAD_B) {                          /* coupé */
         depth = 66; speed = 36; grav = 4; bspin = SPIN_SLICE; last_shot = SH_SLICE;
     } else if (pad & PAD_UP) {                          /* frappe à plat appuyée */
