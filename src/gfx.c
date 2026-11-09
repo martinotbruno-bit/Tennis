@@ -6,8 +6,8 @@
 
 const char * const char_name[NCHARS] = {
     "ALEX", "MAYA", "LEON", "NINA", "OMAR", "ZOE ", "HUGO", "EMMA",
-    "IVAN", "LINA", "TOM ", "JADE", "LUCA", "SARA", "NOAH", "INES" };
-const u8 char_female[NCHARS] = { 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1 };
+    "IVAN", "LINA", "TOM ", "JADE", "LUCA", "SARA", "NOAH", "INES", "MARGAUX" };
+const u8 char_female[NCHARS] = { 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 1 };
 /* peau, tenue, sombre (cheveux/short/raquette) */
 static const u8 char_pal[NCHARS][3] = {
     /* tenues choisies pour ressortir sur toutes les surfaces et se distinguer
@@ -20,19 +20,20 @@ static const u8 char_pal[NCHARS][3] = {
     { 0x36, 0x0C, 0x0F },   /* ZOE  : canard foncé */
     { 0x37, 0x1C, 0x07 },   /* HUGO : bleu canard */
     { 0x27, 0x2C, 0x0F },   /* EMMA : cyan */
-    { 0x36, 0x34, 0x0F },   /* IVAN : lilas */
+    { 0x36, 0x10, 0x0F },   /* IVAN : gris (le lilas était trop proche du rose de Margaux) */
     { 0x17, 0x3A, 0x0F },   /* LINA : vert pâle */
-    { 0x27, 0x33, 0x0F },   /* TOM  : lavande */
+    { 0x27, 0x37, 0x0F },   /* TOM  : crème (le lavande était trop proche du rose de Margaux) */
     { 0x36, 0x2B, 0x0F },   /* JADE : vert */
     { 0x37, 0x39, 0x0F },   /* LUCA : vert anis */
     { 0x17, 0x31, 0x0F },   /* SARA : bleu clair */
     { 0x07, 0x2C, 0x0F },   /* NOAH : cyan */
-    { 0x27, 0x32, 0x0F },   /* INES : pervenche */
+    { 0x27, 0x07, 0x0F },   /* INES : chocolat (idem) */
+    { 0x27, 0x35, 0x07 },   /* MARGAUX : rose clair, cheveux châtains */
 };
 const char * const style_name[NSTYLES] = {
     "EQUILIBRE", "FOND DE COURT", "PUISSANCE", "FILET",
-    "DEFENSIF", "OFFENSIF", "TACTIQUE", "PLACEMENT" };
-const u8 char_style[NCHARS] = { 0, 1, 2, 3, 4, 5, 6, 7, 2, 3, 5, 4, 1, 7, 6, 0 };
+    "DEFENSIF", "OFFENSIF", "TACTIQUE", "PLACEMENT", "FANTAISIE" };
+const u8 char_style[NCHARS] = { 0, 1, 2, 3, 4, 5, 6, 7, 2, 3, 5, 4, 1, 7, 6, 0, 8 };
 
 const char * const surf_name[NSURF] = {
     "TERRE BATTUE", "GAZON       ", "DUR         ", "MOQUETTE    ", "PLAGE       ", "GLACE       " };
@@ -261,9 +262,11 @@ void team_label(u8 a, u8 b, char *out)
 {
     const char *n = char_name[a];
     if (b == 255) { out[0] = n[0]; out[1] = n[1]; out[2] = n[2]; out[3] = n[3]; out[4] = 0; return; }
-    out[0] = n[0]; out[1] = n[1]; out[2] = '/';
+    /* 2 lettres par joueur ; nom long (MARGAUX) : première et dernière
+       lettres (« MX »), pour ne pas se confondre avec MAYA (« MA ») */
+    out[0] = n[0]; out[1] = n[4] > ' ' ? n[6] : n[1]; out[2] = '/';
     n = char_name[b];
-    out[3] = n[0]; out[4] = n[1]; out[5] = 0;
+    out[3] = n[0]; out[4] = n[4] > ' ' ? n[6] : n[1]; out[5] = 0;
 }
 
 /* Noms des compétitions (banque fixe : lus par les écrans et le palmarès) */
@@ -285,11 +288,13 @@ void spr_ball(u8 x, s16 sy, u8 shy, u8 zpx)
 /* Styles de jeu de l'IA (CDC 10.2), indexés par char_style[] : équilibré,
  * fond de court, puissance, filet, défensif, offensif, tactique, placement.
  * Utilisés par le moteur de match (banque 0). */
-const s8 sty_pow[8]    = { 0, -2, 10, 0, -4, 6, 0, -2 };
-const s8 sty_margin[8] = { 0, 4, 0, 0, 8, -3, 0, -4 };
-const s8 sty_spread[8] = { 0, -3, 4, 0, -4, 2, 0, -5 };
-const u8 sty_net[8]    = { 40, 0, 30, 220, 0, 110, 60, 40 };   /* montée au filet /256 */
-const u8 sty_lob[8]    = { 64, 48, 16, 32, 128, 32, 144, 48 }; /* lob contre volleyeur */
-const u8 sty_drop[8]   = { 24, 16, 0, 16, 0, 40, 96, 40 };     /* amortie */
-const u8 sty_slice[8]  = { 64, 48, 16, 64, 96, 16, 96, 64 };   /* coupé */
-const u8 sty_deep[8]   = { 8, 14, 10, 8, 18, 4, 8, 8 };       /* recul au replacement */
+/* 9e style, FANTAISIE (Margaux) : varie tout, adore l'amortie et le lob,
+   monte volontiers au filet */
+const s8 sty_pow[9]    = { 0, -2, 10, 0, -4, 6, 0, -2, 2 };
+const s8 sty_margin[9] = { 0, 4, 0, 0, 8, -3, 0, -4, 0 };
+const s8 sty_spread[9] = { 0, -3, 4, 0, -4, 2, 0, -5, 0 };
+const u8 sty_net[9]    = { 40, 0, 30, 220, 0, 110, 60, 40, 120 };   /* montée au filet /256 */
+const u8 sty_lob[9]    = { 64, 48, 16, 32, 128, 32, 144, 48, 160 }; /* lob contre volleyeur */
+const u8 sty_drop[9]   = { 24, 16, 0, 16, 0, 40, 96, 40, 128 };     /* amortie */
+const u8 sty_slice[9]  = { 64, 48, 16, 64, 96, 16, 96, 64, 112 };   /* coupé */
+const u8 sty_deep[9]   = { 8, 14, 10, 8, 18, 4, 8, 8, 6 };          /* recul au replacement */

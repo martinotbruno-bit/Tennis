@@ -2,13 +2,13 @@
 #define GFX_H
 #include "runtime.h"
 
-#define NCHARS 16
+#define NCHARS 17     /* 16 + Margaux (index 16) */
 extern const char * const char_name[NCHARS];
 extern const u8 char_female[NCHARS];
 extern const u8 char_style[NCHARS];
 
 /* styles de jeu des personnages contrôlés par l'IA (CDC 10.2) */
-#define NSTYLES 8
+#define NSTYLES 9
 extern const char * const style_name[NSTYLES];
 
 #define NSURF 6         /* 4 surfaces réelles + 2 fantaisie */

@@ -1,10 +1,19 @@
-# Pixel Open — Rapport de réalisation (version 2.4)
+# Pixel Open — Rapport de réalisation (version 2.5)
 
 Comme l'exige le CDC (§ 17.5), ce rapport distingue ce qui est **réalisé**, **testé**, **validé sur matériel réel**, **validé uniquement en émulation**, **dépendant d'une extension**, et les **limitations restantes**.
 
 > **Validation matérielle : aucune.** Aucun test n'a été fait sur console réelle (NES, Famicom, PAL, cartouche MMC1). Toutes les validations ont eu lieu en émulation (jsnes) et par des tests unitaires sur PC. Les critères « vérifié sur console physique » (CDC § 2.1, 15.4, 16.A) **ne sont pas remplis**. Ce point ne peut pas être traité dans l'environnement de développement utilisé.
 
 ## 1. Évolutions
+
+### Version 2.5
+
+| Demande | Réalisation |
+|---|---|
+| Joueuse « Margaux » | 17e personnage, style FANTAISIE (amorties, lobs, montées au filet), tenue rose clair, cheveux châtains. Disponible partout : matchs, double, compétitions (aussi en partenaire) et codes de reprise. Les codes passent à un format qui accepte 17 personnages, sur 13 signes comme avant ; les anciens codes restent valables |
+| Vigilance sur les couleurs | Le rose clair est contrôlé contre tous les courts (ΔE ≥ 42, y compris le court rose) et contre toutes les tenues. Trois tenues trop proches ont changé : IVAN gris (au lieu de lilas, ΔE 12,6), TOM crème (au lieu de lavande, ΔE 15,2), INES chocolat (au lieu de pervenche, ΔE 23). `tools/contrast.py` vérifie aussi les tenues entre elles et fait désormais partie de `make test` (0 paire sous ΔE 25). Abréviation « MX » pour Margaux, pour ne pas la confondre avec MAYA (« MA ») dans les panneaux de score |
+| Fatigue légère, désactivable | Ligne FATIGUE (OUI par défaut). Au-delà de 10 frappes dans un échange, tous les joueurs, humains et CPU, ralentissent peu à peu jusqu'à environ 20 % ; une goutte de sueur clignote au-dessus d'eux. Tout repart à zéro au point suivant. Mesure : 2 800 → 2 200 unités de déplacement en 20 trames après 20 frappes |
+| Liste de vérification pour la vraie console | `docs/VERIFICATION_CONSOLE.md` : matériel, puis environ 60 points à cocher (démarrage, menus, match, couleurs par lieu, double et manette 2, options, codes et sauvegarde, PAL/NTSC, endurance) et ce qu'il faut renvoyer en cas de problème |
 
 ### Version 2.4 (finitions)
 
@@ -82,12 +91,13 @@ Pour loger ce contenu, la cartouche passe de NROM (32 Ko) à **MMC1** : 128 Ko d
 | Suite | Résultat |
 |---|---|
 | Règles (`rules_test`) | 42/42 |
-| Codes (`password_test`) | 200 000/200 000 aller-retour ; 99,98 % des codes altérés d'un signe refusés |
-| Émulateur (`emu_test`) | 146/146 vérifications (environ 17 min) |
+| Codes (`password_test`) | 200 000/200 000 aller-retour (format v3), ancien code v2 accepté, Margaux codée ; 99,98 % des codes altérés d'un signe refusés |
+| Émulateur (`emu_test`) | 153/153 vérifications (environ 18 min) |
 | Profil CPU, simple, 6 000 trames | 1 trame d'échange en dépassement |
 | Relecture des textes (`check_texts.py`) | 0 problème |
+| Contraste (`contrast.py 25`) | 0 paire sous ΔE 25 (personnages, courts, balle, tenues) |
 | Profil CPU, double, 6 000 trames | 90 trames d'échange en dépassement (1,5 %), sans défaut d'image |
-| Compilation | Reproductible : SHA-256 `a2e168a302f2701c95a492c3a4ba616e20f3463ca9227e6dbb9b550d44598925` sur deux compilations propres |
+| Compilation | Reproductible : SHA-256 `d70e57e18530e6fdd73a0db3f9bac4bea0c785a85f9be7f48e699c74b22f3374` sur deux compilations propres |
 
 ## 3. Conformité par section du CDC
 

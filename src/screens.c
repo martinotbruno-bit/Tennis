@@ -49,7 +49,8 @@ u8 scr_state;
 #define O_CPART  20
 #define O_GSPEED 21   /* vitesse du jeu : lent, normal, rapide */
 #define O_SOUND  22   /* son : tout, bruitages seuls, aucun */
-#define NOPT     23
+#define O_FATIG  23   /* fatigue dans les très longs échanges */
+#define NOPT     24
 
 #define MODE_1P      0
 #define MODE_2P      1
@@ -59,12 +60,12 @@ u8 scr_state;
 #define MODE_DEMO    5
 #define NMODES       6
 
-u8 opt_val[NOPT] = { 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 2, 1, 0, 1, 0, 1, 0 };
-static const u8 opt_max[NOPT] = { 1, NMODES, 2, NCHARS, NCHARS, 3, NSURF, NENV, 3, 4, 2, NCT, 2, 2, 2, NEX, 4, 3, 3, 3, 2, 3, 3 };
+u8 opt_val[NOPT] = { 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 2, 1, 0, 1, 0, 1, 0, 1 };
+static const u8 opt_max[NOPT] = { 1, NMODES, 2, NCHARS, NCHARS, 3, NSURF, NENV, 3, 4, 2, NCT, 2, 2, 2, NEX, 4, 3, 3, 3, 2, 3, 3, 2 };
 static const char * const opt_label[NOPT] = {
     "COMMENCER", "MODE", "JEU", "JOUEUR 1", "JOUEUR 2", "NIVEAU CPU", "SURFACE", "LIEU",
     "CONDITIONS", "FORMAT", "RALENTIS", "COMPETITION", "JOUEURS", "ADVERSAIRES", "SURFACES",
-    "EXERCICE", "COTE", "VITESSE", "EFFET", "BALLES", "JOUE PAR", "VITESSE JEU", "SON" };
+    "EXERCICE", "COTE", "VITESSE", "EFFET", "BALLES", "JOUE PAR", "VITESSE JEU", "SON", "FATIGUE" };
 static const char * const mode_name[NMODES] = {
     "1 JOUEUR VS CPU", "2 J. ADVERSAIRES", "EN EQUIPE", "COMPETITION", "ENTRAINEMENT", "DEMO CPU" };
 static const char * const cond_name[3] = { "JOUR", "NUIT", "PLUIE" };
@@ -127,6 +128,7 @@ static void build_visible(void)
         vis[nvis++] = O_REPLAY;
         vis[nvis++] = O_GSPEED;
     }
+    if (m != MODE_TRAIN) vis[nvis++] = O_FATIG;
     vis[nvis++] = O_SOUND;
     if (cursor >= nvis) cursor = 0;
 }
@@ -159,6 +161,7 @@ static const char *opt_text(u8 o)
     case O_CPART:  return v ? "MANETTE 2" : "CPU";
     case O_GSPEED: return gspeed_name[v];
     case O_SOUND:  return sound_name[v];
+    case O_FATIG:  return v ? "OUI" : "NON";
     }
     return "";
 }
@@ -268,8 +271,8 @@ static void menu_style_line(u8 direct)
 {
     u8 c = opt_val[O_MODE] == MODE_COMP || opt_val[O_MODE] == MODE_TRAIN ? opt_val[O_P1] : opt_val[O_P2];
     pad_text(style_name[char_style[c]], 14);
-    if (direct) { txt_at(3, 22, "STYLE"); txt_at(9, 22, line); }
-    else vbuf_text(9, 22, line, 14);
+    if (direct) { txt_at(3, 23, "STYLE"); txt_at(9, 23, line); }
+    else vbuf_text(9, 23, line, 14);
 }
 
 static void menu_screen(void)
@@ -280,9 +283,9 @@ static void menu_screen(void)
     txt_at(9, 1, "CONFIGURATION");
     for (i = 0; i < nvis; ++i) menu_draw_row(i, 1);
     menu_style_line(1);
-    txt_at(2, 24, "HAUT/BAS : CHOISIR");
-    txt_at(2, 25, "GAUCHE/DROITE : MODIFIER");
-    txt_at(2, 26, "START : JOUER   B : RETOUR");
+    txt_at(2, 25, "HAUT/BAS : CHOISIR");
+    txt_at(2, 26, "GAUCHE/DROITE : MODIFIER");
+    txt_at(2, 27, "START : JOUER   B : RETOUR");
     pal_set_player(0, opt_val[O_P1]);
     pal_set_player(1, opt_val[O_P2]);
     ppu_on();
@@ -319,6 +322,7 @@ static void base_cfg(void)
     cfg.games_per_set = (u8)(f == 3 ? 4 : 6);
     cfg.replays = opt_val[O_REPLAY];
     cfg.gspeed = opt_val[O_GSPEED];
+    cfg.fatigue = opt_val[O_FATIG];
     cfg.demo = 0;
     cfg.mode = GM_MATCH;
     cfg.doubles = 0;
@@ -350,6 +354,7 @@ static void setup_cfg(u8 mode)
     case MODE_TRAIN:
         cfg.mode = GM_TRAIN;
         cfg.doubles = 0;
+        cfg.fatigue = 0;               /* pas de fatigue à l'entraînement */
         cfg.ex = opt_val[O_EX];
         cfg.ex_side = opt_val[O_SIDE];
         cfg.ex_speed = opt_val[O_SPEED];
@@ -396,8 +401,10 @@ static void comp_cfg(void)
 /* Présentation avant le match (CDC 7.5)                                   */
 static void team_line(u8 t, u8 y)
 {
+    /* nom complet (jusqu'à 7 lettres : MARGAUX) ; en double, le partenaire
+       sur la ligne suivante */
     txt_at(6, y, char_name[cfg.chr[t]]);
-    if (cfg.doubles) { txt_at(11, y, "+"); txt_at(13, y, char_name[cfg.chr[t + 2]]); }
+    if (cfg.doubles) { txt_at(6, (u8)(y + 1), "+"); txt_at(8, (u8)(y + 1), char_name[cfg.chr[t + 2]]); }
     if (cfg.ctrl[t] == CTRL_CPU) txt_at(18, y, level_name[cfg.level[t]]);
     else txt_at(18, y, cfg.ctrl[t] == CTRL_PAD1 ? "MANETTE 1" : "MANETTE 2");
     if (cfg.doubles && cfg.ctrl[t + 2] == CTRL_PAD2) txt_at(18, (u8)(y + 1), "+ MANETTE 2");
@@ -441,12 +448,14 @@ static void present_screen(void)
 
 static void present_sprites(void)
 {
+    /* double : les partenaires à côté, sans recouvrir les noms (colonne 6) */
+    u8 x = (u8)(cfg.doubles ? 22 : 30);
     spr_begin();
-    spr_person(30, 98, cfg.chr[0], 1, POSE_JOY, 0, 0);
-    spr_person(30, 146, cfg.chr[1], 1, POSE_JOY, 1, 1);
+    spr_person(x, 98, cfg.chr[0], 1, POSE_JOY, 0, 0);
+    spr_person(x, 146, cfg.chr[1], 1, POSE_JOY, 1, 1);
     if (cfg.doubles) {
-        spr_person(48, 98, cfg.chr[2], 1, POSE_IDLE, 0, 0);
-        spr_person(48, 146, cfg.chr[3], 1, POSE_IDLE, 1, 1);
+        spr_person(39, 98, cfg.chr[2], 1, POSE_IDLE, 0, 0);
+        spr_person(39, 146, cfg.chr[3], 1, POSE_IDLE, 1, 1);
     }
     spr_end();
 }
@@ -672,8 +681,9 @@ static void results_screen(void)
         b[0] = (char)('0' + sc_hist[i][0]); b[1] = '-'; b[2] = (char)('0' + sc_hist[i][1]); b[3] = 0;
         txt_at((u8)(8 + i * 4), 3, b);
     }
-    txt_at(19, 9, char_name[cfg.chr[0]]);
-    txt_at(25, 9, char_name[cfg.chr[1]]);
+    /* colonnes de 4 lettres (MARGAUX : « MARG ») */
+    team_label(cfg.chr[0], 255, b); txt_at(19, 9, b);
+    team_label(cfg.chr[1], 255, b); txt_at(25, 9, b);
     stat_row(11, "POINTS GAGNES", st_points[0], st_points[1]);
     stat_row(12, "ACES", st_aces[0], st_aces[1]);
     stat_row(13, "DOUBLES FAUTES", st_dfaults[0], st_dfaults[1]);
@@ -766,7 +776,7 @@ static void palmares_screen(void)
         txt_at(3, 11, "HISTORIQUE");
         for (i = 0; i < sv.hist_n && i < 8; ++i) {
             txt_at(3, (u8)(13 + i), comp_name[sv.hist[i][0]]);
-            txt_at(16, (u8)(13 + i), char_name[sv.hist[i][2]]);
+            team_label(sv.hist[i][2], 255, line); txt_at(16, (u8)(13 + i), line);
             line[0] = (char)('0' + sv.hist[i][1]); line[1] = 'E'; line[2] = 0;
             txt_at(22, (u8)(13 + i), sv.hist[i][1] == 1 ? "1ER" : line);
         }

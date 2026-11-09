@@ -23,7 +23,7 @@ extern SaveData sv;
 
 /* derniers réglages du menu, dans un bloc à part (le palmarès garde sa
    disposition et n'est pas effacé) */
-#define NOPT_SAVE 23
+#define NOPT_SAVE 24
 typedef struct {
     u8 sig[2];
     u8 opt[NOPT_SAVE];

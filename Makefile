@@ -49,6 +49,7 @@ $(ROM): $(OBJS) cfg/mmc1.cfg
 # tests unitaires natifs (règles, codes) + tests sur émulateur
 test: $(ROM)
 	python3 tools/check_texts.py
+	python3 tools/contrast.py 25
 	gcc -Wall -Wextra -o $(BUILD)/rules_test tests/rules_test.c src/rules.c && $(BUILD)/rules_test
 	gcc -Wall -Wextra -O2 -o $(BUILD)/password_test tests/password_test.c src/password.c && $(BUILD)/password_test
 	cd tests && npm install --silent --no-audit --no-fund && node emu_test.mjs ../$(ROM)

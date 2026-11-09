@@ -11,7 +11,7 @@ function check(cond, msg) {
 const AS = { SCREENS: 0, MATCH: 1, MANUAL: 2 };
 const SS = { TITLE: 0, MENU: 1, RESULTS: 2, PRESENT: 3, COMP: 4, CODE: 5, PALMARES: 6, TRAIN_RES: 7, COMP_END: 8 };
 const O = { MODE: 1, TYPE: 2, P1: 3, P2: 4, LEVEL: 5, SURF: 6, ENV: 7, COND: 8, FMT: 9, REPLAY: 10, COMP: 11,
-            CSIZE: 12, CPROG: 13, CVAR: 14, EX: 15, SIDE: 16, SPEED: 17, SPIN: 18, COUNT: 19, CPART: 20, GSPEED: 21, SOUND: 22 };
+            CSIZE: 12, CPROG: 13, CVAR: 14, EX: 15, SIDE: 16, SPEED: 17, SPIN: 18, COUNT: 19, CPART: 20, GSPEED: 21, SOUND: 22, FATIG: 23 };
 const MODE = { P1: 0, P2: 1, TEAM: 2, COMP: 3, TRAIN: 4, DEMO: 5 };
 const CFG = { CTRL: 2, LEVEL: 10, GAMES: 17, REPLAYS: 19 };
 
@@ -98,9 +98,9 @@ console.log("Mode d'emploi");
 console.log('Menu de configuration');
 {
   const e = boot(); toMenu(e);
-  check(scr(e) === SS.MENU && e.peek('nvis') === 13, 'configuration match : 13 lignes');
+  check(scr(e) === SS.MENU && e.peek('nvis') === 14, 'configuration match : 14 lignes');
   e.tap('DOWN'); e.tap('RIGHT'); e.tap('RIGHT'); e.tap('RIGHT'); e.run(5);
-  check(e.peek('opt_val', O.MODE) === MODE.COMP && e.peek('nvis') === 13, 'mode compétition : lignes adaptées');
+  check(e.peek('opt_val', O.MODE) === MODE.COMP && e.peek('nvis') === 14, 'mode compétition : lignes adaptées');
   e.tap('RIGHT'); e.run(5);
   check(e.peek('opt_val', O.MODE) === MODE.TRAIN && e.peek('nvis') === 9, 'mode entraînement : lignes adaptées');
   e.tap('B'); e.run(5);
@@ -110,7 +110,7 @@ console.log('Menu de configuration');
 console.log('Mode en équipe (double)');
 {
   const e = boot(); toMenu(e); setOpts(e, { MODE: MODE.TEAM, TYPE: 0, CPART: 1 }); e.tap('B'); e.run(5); toMenu(e);
-  check(e.peek('nvis') === 13 && e.text(3, 7, 10) === 'PARTENAIRE' && e.text(3, 8, 8) === 'JOUE PAR', 'pas de ligne JEU ; lignes PARTENAIRE et JOUE PAR');
+  check(e.peek('nvis') === 14 && e.text(3, 7, 10) === 'PARTENAIRE' && e.text(3, 8, 8) === 'JOUE PAR', 'pas de ligne JEU ; lignes PARTENAIRE et JOUE PAR');
   e.tap('START'); e.run(15);
   check(e.text(4, 4, 15) === 'MATCH DE DOUBLE' && e.text(18, 11, 11) === '+ MANETTE 2', 'toujours un double, manette 2 partenaire');
   e.tap('A'); e.run(30);
@@ -623,6 +623,43 @@ const msgText = (e) => { let t = ''; for (let i = 0; i < 14; i++) t += String.fr
   check(f.peek('opt_val', O.P1) === 5 && f.peek('opt_val', O.SURF) === 3 && f.peek('opt_val', O.GSPEED) === 2
     && f.peek('opt_val', O.ENV) === 4 && f.peek('snd_mode') === 1, 'derniers réglages retrouvés au démarrage (cartouche à pile)');
   check(f.peek16('sv', 4) === e.peek16('sv', 4), 'palmarès conservé à côté des réglages');
+}
+
+console.log('Margaux jouable et fatigue');
+{
+  // Margaux (personnage 16) : menu, présentation, code de reprise
+  const e = boot(); toMenu(e);
+  e.poke('cursor', 3); e.poke('opt_val', 15, O.P1); e.tap('RIGHT'); e.run(5);
+  check(e.peek('opt_val', O.P1) === 16 && e.text(16, 7, 7) === 'MARGAUX', 'MARGAUX sélectionnable (17e personnage)');
+  e.tap('RIGHT'); e.run(5);
+  check(e.peek('opt_val', O.P1) === 0, 'retour au premier personnage après Margaux');
+  const g = boot(); toMenu(g); setOpts(g, { P1: 16, TYPE: 1, P2: 3 }); g.tap('START'); g.run(30);
+  check(scr(g) === SS.PRESENT && g.text(6, 10, 7) === 'MARGAUX' && g.text(6, 11, 1) === '+' && g.text(8, 11, 3) !== '   ',
+    `présentation en double : MARGAUX, partenaire sur la ligne suivante (${g.text(6, 11, 6).replace(/\0/g, " ")})`);
+  const c = boot(); startWith(c, { MODE: MODE.COMP, COMP: 0, FMT: 3, P1: 16, TYPE: 1, P2: 7 });
+  const code = c.text(10, 21, 15).replace(/ /g, '');
+  check(scr(c) === SS.COMP && c.text(3, 6, 5) === 'MX/EM', `équipe abrégée « MX/EM » (pas de confusion avec MAYA « MA ») ; code ${code}`);
+  const h = boot(); h.tap('UP'); h.tap('A'); h.run(10);
+  const AL = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  for (let i = 0; i < 13; i++) { const n = AL.indexOf(code[i]); for (let k = 0; k < n; k++) h.tap('UP', 1, 1, 1); if (i < 12) h.tap('RIGHT', 1, 1, 1); }
+  h.tap('START'); h.run(40);
+  check(scr(h) === SS.COMP && h.peek('c_pl', 0) === 16 && h.peek('c_pl2', 0) === 7, 'code de reprise avec Margaux relu');
+}
+{
+  // fatigue : déplacement d'un joueur humain en début d'échange et après 20 frappes
+  const dist = (fat, hits) => {
+    const e = boot(); startWith(e, { FMT: 3, FATIG: fat });
+    runUntil(e, () => e.peek('ms') === 0, 300);
+    const s16 = (n, v, o = 0) => { e.poke(n, v & 255, o); e.poke(n, (v >> 8) & 255, o + 1); };
+    e.poke('ms', 2); e.poke('b_live', 1); e.poke('b_vis', 0); e.poke('hitter', 0); e.poke('rally_hits', hits);
+    s16('plx', 80 * 64, 0); s16('ply', 200 * 64, 0);
+    const x0 = e.peekS16('plx', 0); e.down('RIGHT'); e.run(20); e.up('RIGHT');
+    const t = oamTiles(e).has(14);
+    return [e.peekS16('plx', 0) - x0, t];
+  };
+  const [d0] = dist(1, 2), [d1, sweat] = dist(1, 20), [d2] = dist(0, 20);
+  check(d1 < d0 && d1 > d0 * 0.7 && d2 === d0, `fatigue : ${d0} -> ${d1} (option activée), ${d2} (désactivée)`);
+  check(sweat, 'goutte de sueur au-dessus des joueurs fatigués');
 }
 
 console.log('Compensation 50 Hz (PAL)');

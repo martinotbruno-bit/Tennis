@@ -27,7 +27,7 @@ Sans action pendant 20 secondes, une démonstration démarre (alternativement en
 |---|---|
 | MODE | 1 joueur contre CPU · 2 joueurs adversaires · En équipe · Compétition · Entraînement · Démo |
 | JEU | Simple · Double |
-| JOUEUR 1 / JOUEUR 2 | 16 personnages (8 hommes, 8 femmes), chacun avec son style de jeu. En compétition de double, JOUEUR 2 devient PARTENAIRE |
+| JOUEUR 1 / JOUEUR 2 | 17 personnages (8 hommes, 9 femmes, dont **Margaux**), chacun avec son style de jeu. En compétition de double, JOUEUR 2 devient PARTENAIRE |
 | NIVEAU CPU | Facile · Normal · Expert |
 | SURFACE | Terre battue · Gazon · Dur · Moquette · Plage · Glace (les deux dernières sont des terrains fantaisie) |
 | LIEU | Stade (tribunes pleines) · Club (extérieur, arbres) · Salle (intérieur) · Club nudiste (bonus à débloquer, voir § 9 bis) · Court Margaux (court rose, décor de cœurs, fleurs et étoiles) |
@@ -35,6 +35,7 @@ Sans action pendant 20 secondes, une démonstration démarre (alternativement en
 | FORMAT | 1 set · 3 sets · 5 sets · Rapide (sets de 4 jeux) |
 | RALENTIS | Oui/Non : ralenti automatique après les plus beaux points |
 | VITESSE JEU | Lent (75 %, idéal pour débuter ou pour les enfants) · Normal · Rapide (125 %). Aussi en compétition et à l'entraînement. En Lent, une petite croix montre une demi-seconde où va tomber la balle adverse |
+| FATIGUE | Oui/Non. Au-delà de 10 frappes dans un échange, tous les joueurs (humains et CPU) ralentissent peu à peu, jusqu'à environ 20 % ; une goutte de sueur clignote au-dessus d'eux. Tout redevient normal au point suivant. Pas de fatigue à l'entraînement |
 | SON | Musique + sons · Bruitages seuls · Aucun |
 
 Les réglages du menu sont **mémorisés** au lancement de chaque partie. Sur une cartouche à pile, ils sont retrouvés au prochain allumage ; le palmarès n'est pas touché.
@@ -55,6 +56,7 @@ La ligne **STYLE** indique le style de jeu de l'adversaire choisi.
 | Zoé, Tom | Offensif |
 | Hugo, Noah | Tactique (lobs, amorties) |
 | Emma, Sara | Placement (précision) |
+| **Margaux** | Fantaisie : varie tout, adore l'amortie et le lob, monte volontiers au filet. Tenue rose clair, la seule de cette couleur, choisie pour rester visible sur tous les courts, y compris le sien |
 
 Avant chaque match, un **écran de présentation** rappelle l'épreuve, les joueurs, leur niveau et leur style, la surface, le lieu, les conditions et le format. **A** lance le match.
 
@@ -163,7 +165,7 @@ Conditions :
 
 Toutes les compétitions se jouent **en simple ou en double** (ligne JEU) :
 - en double, vous choisissez votre partenaire (ligne PARTENAIRE), puis qui le joue (ligne JOUE PAR) : l'ordinateur ou la **manette 2**. À deux joueurs humains, vous formez une seule équipe contre les équipes CPU ;
-- les autres équipes sont tirées au sort parmi les 16 personnages, qui sont tous différents.
+- les autres équipes sont tirées au sort parmi les 17 personnages, qui sont tous différents.
 
 Quand vous gagnez une compétition, votre joueur (et votre partenaire) **brandit la coupe** sous une pluie de confettis.
 

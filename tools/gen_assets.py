@@ -582,6 +582,12 @@ ump_body[0][3] = ump_body[0][4] = 2          # noeud
 for y in range(2, 6):
     ump_body[y][0] = 1; ump_body[y][7] = 1   # bras
 spr_tile(13, ump_body)
+# goutte de sueur (fatigue), couleur 2 de la palette des effets (bleu)
+sweat = blank()
+for (x, y) in ((3, 1), (3, 2), (2, 3), (3, 3), (4, 3), (2, 4), (3, 4), (4, 4), (3, 5)):
+    sweat[y][x] = 2
+sweat[3][2] = 1
+spr_tile(14, sweat)
 
 # Personnages 16x24 : 0 transparent, 1 peau, 2 tenue, 3 sombre
 def new_canvas():

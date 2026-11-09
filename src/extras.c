@@ -17,14 +17,8 @@
 /* ---------------------------------------------------------------------- */
 /* Score : deux panneaux dans les coins supérieurs, au-dessus des tribunes
  * (les joueurs n'y vont jamais) ; annonces au centre du bandeau. */
-static void team_name(u8 t, char *out)
-{
-    const char *a = char_name[cfg.chr[t]];
-    if (cfg.doubles) {
-        const char *b = char_name[cfg.chr[t + 2]];
-        out[0] = a[0]; out[1] = a[1]; out[2] = b[0]; out[3] = b[1];
-    } else { out[0] = a[0]; out[1] = a[1]; out[2] = a[2]; out[3] = a[3]; }
-}
+/* nom d'équipe sur 4 lettres : banque fixe (gamefix.c) */
+void team_name(u8 t, char *out);
 
 static const char * const ex_short[NEX] = {
     "FRAP", "DEPL", "SERI", "PREC", "VOLE", "SERV", "ECHG", "PERS", "TUTO" };

@@ -35,12 +35,12 @@ La version 1.0 tenait en NROM-256 (32 Ko, plein à 87 %). Il a fallu plus de pla
 
 | Banque | Contenu | Occupation |
 |---|---|---|
-| 7 (fixe, $C000) | Démarrage, NMI, primitives (sprites, VRAM, manettes, trampolines `bank_call` / `far_call`, enregistrement des ralentis), boucle principale, règles, codes, palettes, 16 personnages, noms des compétitions, échange des tuiles de personnages, son, bibliothèque cc65 | 12 661 |
-| 0 | Moteur de match : physique, frappes, service, arbitrage, IA | 16 171 |
-| 1 | Écrans : titre, configuration, présentation, résultats, compétitions, levée de coupe, saisie de code, palmarès | 14 247 |
+| 7 (fixe, $C000) | Démarrage, NMI, primitives (sprites, VRAM, manettes, trampolines `bank_call` / `far_call`, enregistrement des ralentis), boucle principale, règles, codes, palettes, 17 personnages, noms des compétitions, échange des tuiles de personnages, son, bibliothèque cc65 | 13 552 |
+| 0 | Moteur de match : physique, frappes, service, arbitrage, IA | 15 973 |
+| 1 | Écrans : titre, configuration, présentation, résultats, compétitions, levée de coupe, saisie de code, palmarès | 14 353 |
 | 2 | Motifs graphiques (8 Ko), copiés en CHR-RAM au démarrage | 8 192 |
-| 3 | Annexes du match : score et annonces du club nudiste, courts (4 lieux), public animé, pluie, ralentis, exercices, tutoriel | 10 167 |
-| 4 | Mode d'emploi | 3 564 |
+| 3 | Annexes du match : score et annonces du club nudiste, courts (4 lieux), public animé, pluie, ralentis, exercices, tutoriel | 9 899 |
+| 4 | Mode d'emploi | 3 581 |
 | 5 | Compétitions (tirages, simulations, classements, équipes de double) et palmarès | 7 451 |
 | 6 | Tuiles des personnages « au naturel » (club nudiste), copiées en CHR-RAM à la demande | 3 456 |
 
@@ -99,6 +99,20 @@ Appelé à la fin de `match_draw`, après les joueurs (les effets passent donc d
 - **repère d'atterrissage** (vitesse Lent) : une croix sur `land_x/land_y` pendant 30 trames après chaque frappe destinée à une équipe où joue un humain.
 
 Les tuiles de sprites 5 à 13 (auparavant libres) contiennent l'ombre, la poussière, les éclaboussures, la croix et l'arbitre.
+
+### Margaux (17e personnage) et codes de reprise
+
+Margaux occupe l'index 16 : tuiles féminines communes, palette propre (peau $27, tenue rose clair $35, cheveux châtains $07), style FANTAISIE (9e style : amorties, lobs, montées au filet). Son nom fait 7 lettres :
+- les écrans à colonnes étroites passent par `team_label` (« MARG » sur 4 lettres, « MX » sur 2 lettres pour ne pas se confondre avec MAYA « MA ») ;
+- en double, la présentation met le partenaire sur la ligne suivante.
+
+Couleurs : trois tenues ont changé pour que le rose clair soit unique. IVAN passe du lilas au gris ($10), TOM du lavande au crème ($37), INES du pervenche au chocolat ($07). `tools/contrast.py` vérifie que la tenue de Margaux reste à ΔE ≥ 25 de toutes les autres.
+
+**Codes, version 3** : personnage et partenaire passent sur 5 bits. Pour tenir dans les 52 bits de données, le type de compétition et les conditions sont regroupés (type × 3 + conditions, 15 valeurs sur 4 bits), de même que la surface et le lieu (surface × 5 + lieu, 30 valeurs sur 5 bits). Les codes restent à 13 signes. Les anciens codes (version 2) sont toujours lus. Vérifié par `password_test` : 200 000 allers-retours, plus un ancien code et Margaux en joueuse et en partenaire.
+
+### Fatigue (option FATIGUE)
+
+`tired` (0 à 10) vaut `rally_hits - 10` au-delà de 10 frappes dans l'échange, plafonné à 10 ; il est recalculé à chaque trame. La vitesse humaine perd `3 × tired` (140 → 110 FP par trame, -21 %), celle de l'IA `2 × tired` (-18 à -27 % selon le niveau) : la fatigue est la même pour tous. Une goutte de sueur (tuile 14) clignote au-dessus des joueurs dès le niveau 4 ; en double, seulement au-dessus des humains, pour la limite de sprites. L'option est désactivée à l'entraînement.
 
 ### Smash sauté
 
@@ -162,7 +176,7 @@ Le CPU Expert sait l'utiliser. Sur un lob adverse peu profond, il vise le point 
 
 ### Compétitions en double
 
-- **Tirage** : avec 16 personnages, les 8 équipes d'un tableau sont toutes différentes. Le joueur et le partenaire choisi forment l'équipe 1 ; les 14 autres personnages sont mélangés par la graine et appariés deux à deux.
+- **Tirage** : avec 17 personnages, les 8 équipes d'un tableau sont toutes différentes. Le joueur et le partenaire choisi forment l'équipe 1 ; 14 des 15 autres personnages sont mélangés par la graine et appariés deux à deux.
 - **Simulation** : les mêmes formules qu'en simple, avec le niveau de l'équipe.
 - **Deux joueurs** : option « JOUE PAR : CPU / MANETTE 2 ». Avec la manette 2, `cfg.ctrl[2]` passe à la manette 2 pour tous les matchs de la compétition ; le réglage est mémorisé dans le code de reprise.
 - **Affichage** : les noms sont abrégés en « AL/MA ».
@@ -301,7 +315,8 @@ Outils de mise au point :
 |---|---|
 | `tests/rules_test.c` | 42 vérifications des règles |
 | `tests/password_test.c` | 200 000 codes aléatoires en aller-retour ; 8,06 millions de codes altérés d'un signe, refusés à 99,98 % |
-| `tests/emu_test.mjs` | 146 vérifications : démarrage MMC1 et CHR-RAM, mode d'emploi, menus adaptatifs, mode en équipe (toujours en double, partenaire CPU ou manette 2), présentation, menu de pause, lancer du serveur du haut, balle ratée qui sort de l'écran, let, matchs complets (6 surfaces × 3 lieux × 3 conditions, double), ralentis, revanche, palmarès, 9 exercices (joueur robot via la manette), 5 compétitions (dont éliminations), double en compétition (dont à 2 joueurs humains), levée de coupe, court Margaux, déblocage et club nudiste (tenues échangées en CHR-RAM puis restaurées), reprise par code, vitesse du jeu (lent/normal/rapide, aucun appui perdu), coups gagnants nommés, smash sauté (réservé aux humains et au CPU Expert), musiques hors match (Margaux, finale) et silence en match, smash sauté du CPU Expert et dans les ralentis, ombres, poussière, arbitre, repère d'atterrissage, réglage SON, réglages mémorisés après « rallumage », 50 Hz |
+| `tests/emu_test.mjs` | 153 vérifications : démarrage MMC1 et CHR-RAM, mode d'emploi, menus adaptatifs, mode en équipe (toujours en double, partenaire CPU ou manette 2), présentation, menu de pause, lancer du serveur du haut, balle ratée qui sort de l'écran, let, matchs complets (6 surfaces × 3 lieux × 3 conditions, double), ralentis, revanche, palmarès, 9 exercices (joueur robot via la manette), 5 compétitions (dont éliminations), double en compétition (dont à 2 joueurs humains), levée de coupe, court Margaux, déblocage et club nudiste (tenues échangées en CHR-RAM puis restaurées), reprise par code, vitesse du jeu (lent/normal/rapide, aucun appui perdu), coups gagnants nommés, smash sauté (réservé aux humains et au CPU Expert), musiques hors match (Margaux, finale) et silence en match, smash sauté du CPU Expert et dans les ralentis, ombres, poussière, arbitre, repère d'atterrissage, réglage SON, réglages mémorisés après « rallumage », Margaux (menu, présentation, abréviation MX, code de reprise), fatigue avec et sans l'option, 50 Hz |
+| `tools/contrast.py 25` | Contraste (ΔE ≥ 25) de chaque personnage avec chaque court, de jour, de nuit et sous la pluie ; balle ; tenue de Margaux face à toutes les autres tenues. Lancé par `make test` |
 | `tools/check_texts.py` | Relecture des textes : caractères présents dans la police, colonnes, lignes du mode d'emploi, annonces de 14 caractères au plus |
 
 Les résultats détaillés sont dans le [rapport](RAPPORT.md).

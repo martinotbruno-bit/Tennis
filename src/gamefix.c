@@ -81,7 +81,7 @@ const char *win_label(u8 shot, u8 pass, u8 jump)
 /* ---------------------------------------------------------------------- */
 #include "gfx.h"
 #define PXU(v) ((u8)(((u16)(v) << 2) >> 8))      /* pixels, valeur positive */
-extern u8 pl_jump[4];
+extern u8 pl_jump[4], tired;
 static u8 fx_t, fx_x, fx_y, fx_kind, fx_bounces, fx_hits, mk_t;
 
 void match_fx(void)
@@ -122,9 +122,32 @@ void match_fx(void)
         --mk_t;
         if (b_live && bounces == 0) spr1((u8)(land_x - 4), (u8)(land_y - 4), 10, 3);
     }
+    /* fatigue : goutte de sueur au-dessus des joueurs (clignote) ; en double,
+       seulement pour les joueurs humains (limite de sprites par ligne) */
+    if (tired >= 4 && (frame_cnt & 16)) {
+        for (i = 0; i < npl; ++i) {
+            if (npl == 4 && cfg.ctrl[i] == CTRL_CPU) continue;
+            spr1((u8)(PXU(plx[i]) + 6), (u8)(PXU(ply[i]) - 30), 14, 3);
+        }
+    }
     /* arbitre de chaise (stade) : il regarde le côté où se trouve la balle */
     if (cfg.env == ENV_STADIUM) {
         spr1(20, NET_Y - 22, (u8)(by < NET_Y * FP ? 12 : 11), 2);
         spr1(20, NET_Y - 14, 13, 2);
+    }
+}
+
+/* Nom d'équipe sur 4 lettres (panneaux de score, annonces) : « ALEX » en
+   simple, « MXAL » en double. Abréviations de team_label : MARGAUX donne
+   « MX », pour ne pas se confondre avec MAYA (« MA »). */
+void team_name(u8 t, char *out)
+{
+    char b[6];
+    if (cfg.doubles) {
+        team_label(cfg.chr[t], cfg.chr[t + 2], b);
+        out[0] = b[0]; out[1] = b[1]; out[2] = b[3]; out[3] = b[4];
+    } else {
+        team_label(cfg.chr[t], 255, b);
+        out[0] = b[0]; out[1] = b[1]; out[2] = b[2]; out[3] = b[3];
     }
 }

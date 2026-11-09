@@ -1,5 +1,6 @@
 /* Pixel Open — codes de reprise (C portable, testé sur PC par
- * tests/password_test.c). Les 52 bits de données et 2 bits de version
+ * tests/password_test.c). Les 52 bits de données et 2 bits de version (2 :
+ * ancien format à 16 personnages, 3 : format actuel à 17 personnages)
  * occupent les bits 0 à 53 ; une somme de contrôle de 11 bits suit (bits 54
  * à 64), puis les 65 bits sont écrits en 13 symboles de 5 bits, brouillés en
  * chaîne pour qu'une lettre modifiée en change plusieurs. */
@@ -46,12 +47,24 @@ static void pack(const PwData *d)
     pu8 i;
     for (i = 0; i < 9; ++i) buf[i] = 0;
     bitpos = 0;
-    put_bits(d->type, 3); put_bits(d->stage, 4); put_bits(d->seed, 8);
-    put_bits(d->chr, 4); put_bits(d->surf, 3); put_bits(d->fmt, 2);
-    put_bits(d->cond, 2); put_bits(d->env, 3); put_bits(d->lvl, 2);
+    /* version 3 (17 personnages) : personnage et partenaire sur 5 bits ;
+       la place vient du regroupement type x conditions (15 valeurs, 4 bits)
+       et surface x lieu (30 valeurs, 5 bits) */
+    put_bits((pu8)(d->type * 3 + d->cond), 4); put_bits(d->stage, 4); put_bits(d->seed, 8);
+    put_bits(d->chr, 5); put_bits((pu8)(d->surf * 5 + d->env), 5); put_bits(d->fmt, 2);
+    put_bits(d->lvl, 2);
     put_bits(d->results, 8); put_bits(d->opts, 3); put_bits(d->trophies, 4);
-    put_bits(d->doubles, 1); put_bits(d->partner, 4); put_bits(d->hum2, 1);
-    put_bits(2, 2);                     /* version */
+    put_bits(d->doubles, 1); put_bits(d->partner, 5); put_bits(d->hum2, 1);
+    put_bits(3, 2);                     /* version */
+}
+
+/* v / k et v % k pour de petites valeurs, sans division */
+static pu8 divk(pu8 v, pu8 k, pu8 *rem)
+{
+    pu8 q = 0;
+    while (v >= k) { v = (pu8)(v - k); ++q; }
+    *rem = v;
+    return q;
 }
 
 void pw_encode(char *out, const PwData *d)
@@ -88,14 +101,31 @@ pu8 pw_decode(const char *in, PwData *d)
     c = get_bits(8);
     c |= (unsigned int)get_bits(3) << 8;
     if (c != (check12() & 0x7FF)) return 0;
+    bitpos = 52;
+    n = get_bits(2);                    /* version */
     bitpos = 0;
-    d->type = get_bits(3); d->stage = get_bits(4); d->seed = get_bits(8);
-    d->chr = get_bits(4); d->surf = get_bits(3); d->fmt = get_bits(2);
-    d->cond = get_bits(2); d->env = get_bits(3); d->lvl = get_bits(2);
-    d->results = get_bits(8); d->opts = get_bits(3); d->trophies = get_bits(4);
-    d->doubles = get_bits(1); d->partner = get_bits(4); d->hum2 = get_bits(1);
-    if (get_bits(2) != 2) return 0;
-    if (bitpos != 54) return 0;
+    if (n == 2) {
+        /* ancien format (16 personnages) : toujours accepté */
+        d->type = get_bits(3); d->stage = get_bits(4); d->seed = get_bits(8);
+        d->chr = get_bits(4); d->surf = get_bits(3); d->fmt = get_bits(2);
+        d->cond = get_bits(2); d->env = get_bits(3); d->lvl = get_bits(2);
+        d->results = get_bits(8); d->opts = get_bits(3); d->trophies = get_bits(4);
+        d->doubles = get_bits(1); d->partner = get_bits(4); d->hum2 = get_bits(1);
+    } else if (n == 3) {
+        n = get_bits(4);
+        if (n >= 15) return 0;
+        d->type = divk(n, 3, &d->cond);
+        d->stage = get_bits(4); d->seed = get_bits(8);
+        d->chr = get_bits(5);
+        n = get_bits(5);
+        if (n >= 30) return 0;
+        d->surf = divk(n, 5, &d->env);
+        d->fmt = get_bits(2); d->lvl = get_bits(2);
+        d->results = get_bits(8); d->opts = get_bits(3); d->trophies = get_bits(4);
+        d->doubles = get_bits(1); d->partner = get_bits(5); d->hum2 = get_bits(1);
+    } else return 0;
+    if (bitpos != 52) return 0;
+    if (d->chr >= PW_NCHARS || d->partner >= PW_NCHARS) return 0;
     if (d->env > 4) return 0;
     if (d->hum2 && !d->doubles) return 0;
     if (d->type > 4 || d->surf > 5 || d->cond > 2 || d->lvl > 2) return 0;

@@ -58,6 +58,7 @@ static u8 ai_x2;                       /* 1 : pas de déplacement doublé */
 static u8 hit_now;                     /* une frappe a eu lieu dans cette trame */
 u8 pl_jump[4];                         /* smash sauté : trames de saut restantes */
 u8 hit_pass, hit_jump;                 /* dernière frappe : adversaire au filet, smash sauté */
+u8 tired;                              /* fatigue de l'échange en cours, 0..10 */
 u8 srv_slot[2];                 /* double : quel partenaire sert pour l'équipe */
 #define ST_IDLE   0
 #define ST_CHARGE 1
@@ -98,8 +99,8 @@ static const u8 ai_fault[3]  = { 3, 7, 15 };   /* faute directe : 1 frappe sur 4
 /* styles de jeu (CDC 10.2), indexés par char_style[] :
    équilibré, fond de court, puissance, filet, défensif, offensif, tactique, placement */
 /* tables des styles : banque fixe (gfx.c), pour libérer la banque du moteur */
-extern const s8 sty_pow[8], sty_margin[8], sty_spread[8];
-extern const u8 sty_net[8], sty_lob[8], sty_drop[8], sty_slice[8], sty_deep[8];
+extern const s8 sty_pow[9], sty_margin[9], sty_spread[9];
+extern const u8 sty_net[9], sty_lob[9], sty_drop[9], sty_slice[9], sty_deep[9];
 
 
 #define side_of(t) ((u8)(((t) & 1) ^ sc_swap))   /* 0 = bas, 1 = haut */
@@ -584,7 +585,7 @@ static void clamp_player(u8 p)
 /* ====================================================================== */
 static void human_update(u8 p, u8 pad, u8 pressed)
 {
-    s16 sp = HUMAN_SPEED;
+    s16 sp = HUMAN_SPEED - (s16)((tired << 1) + tired);   /* fatigue : jusqu'à -21 % */
     s16 nx = plx[p], ny = ply[p];
     u8 st = pl_state[p];
 
@@ -815,7 +816,7 @@ static void ai_update(u8 p)
             if (side == 1 && ty > NET_Y - 8) ty = NET_Y - 8;
             ai_gx[p] = tx * FP; ai_gy[p] = ty * FP;
         }
-        move_toward(p, ai_gx[p], ai_gy[p], (u8)(ai_speed[lv] << ai_x2));
+        move_toward(p, ai_gx[p], ai_gy[p], (u8)((ai_speed[lv] - (tired << 1)) << ai_x2));
         clamp_player(p);
 
     } else {
@@ -846,14 +847,8 @@ static void ai_update(u8 p)
 /* Score : deux panneaux dans les coins supérieurs, au-dessus des tribunes */
 /* (les joueurs n'y vont jamais) ; messages au centre du bandeau.          */
 /* ====================================================================== */
-static void team_name(u8 t, char *out)
-{
-    const char *a = char_name[cfg.chr[t]];
-    if (cfg.doubles) {
-        const char *b = char_name[cfg.chr[t + 2]];
-        out[0] = a[0]; out[1] = a[1]; out[2] = b[0]; out[3] = b[1];
-    } else { out[0] = a[0]; out[1] = a[1]; out[2] = a[2]; out[3] = a[3]; }
-}
+/* nom d'équipe sur 4 lettres : banque fixe (gamefix.c) */
+void team_name(u8 t, char *out);
 
 /* ====================================================================== */
 void match_start(void)
@@ -982,6 +977,10 @@ u8 match_tick(void)
     }
 
     hit_now = 0;
+    /* fatigue (option) : au-delà de 10 frappes dans l'échange, tous les
+       joueurs ralentissent peu à peu (niveau 0..10), puis récupèrent au point suivant */
+    tired = 0;
+    if (cfg.fatigue && rally_hits > 10) tired = (u8)(rally_hits > 20 ? 10 : rally_hits - 10);
     for (p = 0; p < npl; ++p) {
         ctrl = cfg.ctrl[p];
         if (ctrl == CTRL_CPU) {

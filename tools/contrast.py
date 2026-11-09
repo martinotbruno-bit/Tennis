@@ -56,7 +56,17 @@ for si, (univ, court, lines, net) in enumerate(sp):
         d = dE(ball, c)
         if d < SEUIL:
             worst.append((d, surf[si], cond, 'balle', '-', '%02X' % ball, 'court', '%02X' % c))
+# tenues entre elles : la tenue de Margaux (la seule rose) doit se distinguer
+# de toutes les autres ; les autres paires proches sont signalées pour
+# information (elles diffèrent aussi par la peau, les cheveux ou le sexe)
+mi = names.index('MARGAUX') if 'MARGAUX' in names else -1
+for ci, (skin, outfit, dark) in enumerate(cp):
+    for cj in range(ci + 1, len(cp)):
+        d = dE(outfit, cp[cj][1])
+        if (ci == mi or cj == mi) and d < SEUIL:
+            worst.append((d, '-', '-', names[ci], 'tenue', '%02X' % outfit, names[cj], '%02X' % cp[cj][1]))
 worst.sort()
 for w in worst:
     print('ΔE %5.1f  %-8s %-5s %-4s %-6s $%s sur %-6s $%s' % w)
 print('%d paires sous le seuil ΔE %.0f' % (len(worst), SEUIL))
+sys.exit(1 if worst else 0)

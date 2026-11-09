@@ -2,7 +2,7 @@
 
 Jeu de tennis 8 bits original pour **NES / Famicom** (NTSC et PAL), sur cartouche MMC1 :
 - simple et double, à 1 ou 2 joueurs ;
-- 16 personnages aux styles de jeu différents, IA à 3 niveaux qui s'adapte au joueur ;
+- 17 personnages aux styles de jeu différents, dont Margaux, IA à 3 niveaux qui s'adapte au joueur ;
 - 6 surfaces (dont plage et glace), 4 lieux (stade, club, salle, court rose « Margaux »), jour, nuit et pluie ;
 - compétitions en simple ou en double (tournoi, poules, championnat, saison, personnalisé) avec codes de reprise et levée de coupe ;
 - un lieu bonus à débloquer : le club nudiste « Les Bronzés » ;
@@ -32,6 +32,7 @@ Tout est expliqué dans le **mode d'emploi** du jeu (écran titre) et dans le [m
 - [Manuel du joueur](docs/MANUEL.md)
 - [Documentation technique](docs/TECHNIQUE.md) : cartouche, banques, mémoire, physique, IA, compétitions, codes, optimisations
 - [Rapport de réalisation](docs/RAPPORT.md) : conformité au CDC, tests, limitations
+- [Vérification sur vraie console](docs/VERIFICATION_CONSOLE.md) : liste à cocher, pas à pas
 
 ## Compiler et tester
 
@@ -56,4 +57,4 @@ dist/       ROM finale
 
 ## État
 
-Version 2.4 : tout le contenu du cahier des charges est réalisé et testé **en émulation**. Les tests sur consoles réelles restent à faire ; voir le [rapport](docs/RAPPORT.md).
+Version 2.5 : tout le contenu du cahier des charges est réalisé et testé **en émulation**. Les tests sur consoles réelles restent à faire : suivez la [liste de vérification](docs/VERIFICATION_CONSOLE.md).
