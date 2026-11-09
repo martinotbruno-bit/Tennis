@@ -15,6 +15,7 @@ Comme l'exige le CDC (§ 17.5), ce rapport distingue ce qui est **réalisé**, *
 | 4. Retour sur le timing à l'entraînement | « TROP TOT DE 3 IMAGES », « TROP TARD DE 1 IMAGE », « RELACHEZ LE BOUTON AVANT », « BALLE TROP PRES DU CORPS », « COUP PARFAIT ! », « SERVICE CANON » |
 | 5. Ralentis des coups parfaits | Une frappe parfaite gagnante est rejouée, même en retour de service (les services canon gagnants le sont déjà, comme aces) |
 | 6. Fondus entre les écrans | Fondu au noir (3 crans) et retour progressif (4 crans) à chaque changement d'écran, musique continue. Pas de fondu quand le même écran est reconstruit (menu, pages), pour garder une navigation instantanée |
+| Petite musique sur l'écran de fin de set, et le fermer rapidement | Interlude calme (8 mesures en boucle, coupé à la reprise, jamais de musique en match). N'importe quel bouton des deux manettes ferme l'écran sans fondu : retour au court en 4 images |
 | Récapitulatif du score entre chaque jeu, chaque set et à la fin du match | Après chaque jeu : score set par set dans le bandeau (« ALEX 6 3 / MAYA 4 1 »). Après chaque set : écran récapitulatif (tableau des sets, vainqueur du set, statistiques, joueur au service), A pour reprendre. En fin de match : tableau complet des sets en tête des résultats |
 
 ### Version 2.7
@@ -115,12 +116,12 @@ Pour loger ce contenu, la cartouche passe de NROM (32 Ko) à **MMC1** : 128 Ko d
 |---|---|
 | Règles (`rules_test`) | 42/42 |
 | Codes (`password_test`) | 200 000/200 000 aller-retour (format v3), ancien code v2 accepté, Margaux codée, Margaux au club nudiste refusée ; 99,98 % des codes altérés d'un signe refusés |
-| Émulateur (`emu_test`) | 170/170 vérifications (environ 20 min) |
+| Émulateur (`emu_test`) | 172/172 vérifications (environ 20 min) |
 | Profil CPU, simple, 6 000 trames | 0 trame d'échange en dépassement |
 | Relecture des textes (`check_texts.py`) | 0 problème |
 | Contraste (`contrast.py 25`) | 0 paire sous ΔE 25 (personnages, courts, balle, tenues) |
 | Profil CPU, double, 6 000 trames | 27 trames d'échange en dépassement (0,45 %), sans défaut d'image |
-| Compilation | Reproductible : SHA-256 `f6bedd4e6260a603f0815a480105cc9d95bb1fc5a86072ba8f06f29a1b54140c` sur deux compilations propres |
+| Compilation | Reproductible : SHA-256 `bd89c543d60ec9b00193f90b89ed6731bdb7a9f00fc44aac29b315946da5a723` sur deux compilations propres |
 
 ## 3. Conformité par section du CDC
 

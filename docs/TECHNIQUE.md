@@ -35,9 +35,9 @@ La version 1.0 tenait en NROM-256 (32 Ko, plein à 87 %). Il a fallu plus de pla
 
 | Banque | Contenu | Occupation |
 |---|---|---|
-| 7 (fixe, $C000) | Démarrage, NMI, primitives (sprites, VRAM, manettes, trampolines `bank_call` / `far_call`, enregistrement des ralentis), boucle principale, règles, codes, palettes, 17 personnages, noms des compétitions, échange des tuiles de personnages, son, bibliothèque cc65 | 15 715 |
-| 0 | Moteur de match : physique, frappes, service, arbitrage, IA | 16 049 |
-| 1 | Écrans : titre, configuration, présentation, résultats, compétitions, levée de coupe, saisie de code, palmarès | 15 822 |
+| 7 (fixe, $C000) | Démarrage, NMI, primitives (sprites, VRAM, manettes, trampolines `bank_call` / `far_call`, enregistrement des ralentis), boucle principale, règles, codes, palettes, 17 personnages, noms des compétitions, échange des tuiles de personnages, son, bibliothèque cc65 | 15 826 |
+| 0 | Moteur de match : physique, frappes, service, arbitrage, IA | 16 054 |
+| 1 | Écrans : titre, configuration, présentation, résultats, compétitions, levée de coupe, saisie de code, palmarès | 15 835 |
 | 2 | Motifs graphiques (8 Ko), copiés en CHR-RAM au démarrage | 8 192 |
 | 3 | Annexes du match : score et annonces du club nudiste, courts (4 lieux), public animé, pluie, ralentis, exercices, tutoriel | 9 899 |
 | 4 | Mode d'emploi | 3 636 |
@@ -145,7 +145,7 @@ Pour les coups lifté, à plat et coupé joués après le rebond :
 ### Récapitulatif du score
 
 - **Après chaque jeu** (et au début d'un jeu décisif) : `recap_pend` est armé dans `after_point`. Quand l'annonce « JEU » s'efface, `score_recap` (banque fixe) écrit une ligne par équipe dans le bandeau pendant 120 trames : nom sur 4 lettres, jeux de chaque set terminé, puis jeux du set en cours (`score_line`, 14 caractères pour 5 sets).
-- **Après chaque set** (hors démonstration) : `match_tick` renvoie 2, et la boucle principale ouvre l'écran `SCR_SETBREAK` (banque des écrans). Il affiche le tableau des sets, le vainqueur du set, les statistiques et le joueur au service. A, ou 600 trames, demande `GO_RESUME` : `match_resume` recharge le court, les palettes et les tuiles (y compris au naturel), puis affiche le récapitulatif dans le bandeau. L'état du match n'est pas touché.
+- **Après chaque set** (hors démonstration) : `match_tick` renvoie 2, et la boucle principale ouvre l'écran `SCR_SETBREAK` (banque des écrans). Il affiche le tableau des sets, le vainqueur du set, les statistiques et le joueur au service, sur l'interlude `MUS_BREAK` (8 mesures en boucle, carré 25 %). N'importe quel bouton des deux manettes, ou 600 trames, demande `GO_RESUME` sans fondu (`fade_skip`) : retour au court en 4 trames. `match_resume` coupe la musique, recharge le court, les palettes et les tuiles (y compris au naturel), puis affiche le récapitulatif dans le bandeau. L'état du match n'est pas touché.
 - **En fin de match** : le même tableau des sets (`set_table`) ouvre l'écran des résultats.
 
 ### Fondus entre les écrans
@@ -296,6 +296,7 @@ Le jeu n'utilise que l'APU natif :
 Aucune musique pendant les matchs. Toutes les mélodies sont originales :
 - **titre** (menus) ;
 - **valse du court Margaux** : boîte à musique en 3/4 (16 mesures, carré 25 %, enveloppe courte). Elle joue dans le menu dès que ce lieu est choisi, puis sur l'écran de présentation ;
+- **interlude de fin de set** : air calme de 8 mesures, en boucle sur l'écran récapitulatif, coupé dès la reprise ;
 - **thème de la finale** : marche de 8 mesures, sur l'écran d'étape et la présentation de la finale d'une compétition (finale du tournoi, des poules, ou de chaque tournoi de la saison) ;
 - jingles de point, de jeu, de victoire et de défaite.
 
@@ -366,7 +367,7 @@ Outils de mise au point :
 |---|---|
 | `tests/rules_test.c` | 42 vérifications des règles |
 | `tests/password_test.c` | 200 000 codes aléatoires en aller-retour ; 8,06 millions de codes altérés d'un signe, refusés à 99,98 % |
-| `tests/emu_test.mjs` | 170 vérifications : démarrage MMC1 et CHR-RAM, mode d'emploi, menus adaptatifs, mode en équipe (toujours en double, partenaire CPU ou manette 2), présentation, menu de pause, lancer du serveur du haut, balle ratée qui sort de l'écran, let, matchs complets (6 surfaces × 3 lieux × 3 conditions, double), ralentis, revanche, palmarès, 9 exercices (joueur robot via la manette), 5 compétitions (dont éliminations), double en compétition (dont à 2 joueurs humains), levée de coupe, court Margaux, déblocage et club nudiste (tenues échangées en CHR-RAM puis restaurées), reprise par code, vitesse du jeu (lent/normal/rapide, aucun appui perdu), coups gagnants nommés, smash sauté (réservé aux humains et au CPU Expert), musiques hors match (Margaux, finale) et silence en match, smash sauté du CPU Expert et dans les ralentis, ombres, poussière, arbitre, repère d'atterrissage, réglage SON, réglages mémorisés après « rallumage », Margaux (menu, présentation, abréviation MX, code de reprise, chevelure propre, jamais au club nudiste), service canon (fenêtre de 2 trames mesurée en frappant à chaque trame du lancer, vitesse, compteurs, jamais pour le CPU Normal), frappe parfaite (fenêtre de 3 trames mesurée en relâchant à chaque trame, placement, compteurs), retour sur le timing à l'entraînement, rotation des sprites en double (aucun sprite masqué en permanence), fondus, récapitulatif du score (bandeau, écran de fin de set, reprise), fatigue avec et sans l'option, 50 Hz |
+| `tests/emu_test.mjs` | 172 vérifications : démarrage MMC1 et CHR-RAM, mode d'emploi, menus adaptatifs, mode en équipe (toujours en double, partenaire CPU ou manette 2), présentation, menu de pause, lancer du serveur du haut, balle ratée qui sort de l'écran, let, matchs complets (6 surfaces × 3 lieux × 3 conditions, double), ralentis, revanche, palmarès, 9 exercices (joueur robot via la manette), 5 compétitions (dont éliminations), double en compétition (dont à 2 joueurs humains), levée de coupe, court Margaux, déblocage et club nudiste (tenues échangées en CHR-RAM puis restaurées), reprise par code, vitesse du jeu (lent/normal/rapide, aucun appui perdu), coups gagnants nommés, smash sauté (réservé aux humains et au CPU Expert), musiques hors match (Margaux, finale) et silence en match, smash sauté du CPU Expert et dans les ralentis, ombres, poussière, arbitre, repère d'atterrissage, réglage SON, réglages mémorisés après « rallumage », Margaux (menu, présentation, abréviation MX, code de reprise, chevelure propre, jamais au club nudiste), service canon (fenêtre de 2 trames mesurée en frappant à chaque trame du lancer, vitesse, compteurs, jamais pour le CPU Normal), frappe parfaite (fenêtre de 3 trames mesurée en relâchant à chaque trame, placement, compteurs), retour sur le timing à l'entraînement, rotation des sprites en double (aucun sprite masqué en permanence), fondus, récapitulatif du score (bandeau, écran de fin de set avec interlude, fermeture par n'importe quel bouton, reprise), fatigue avec et sans l'option, 50 Hz |
 | `tools/contrast.py 25` | Contraste (ΔE ≥ 25) de chaque personnage avec chaque court, de jour, de nuit et sous la pluie ; balle ; tenue de Margaux face à toutes les autres tenues. Lancé par `make test` |
 | `tools/check_texts.py` | Relecture des textes : caractères présents dans la police, colonnes, lignes du mode d'emploi, annonces de 14 caractères au plus |
 

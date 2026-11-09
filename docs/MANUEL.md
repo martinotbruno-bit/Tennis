@@ -125,7 +125,7 @@ Le lancer reste visible quelle que soit votre position, y compris quand vous ser
 - Sur le court : chaque joueur a une **ombre** (en double, seulement pendant un saut, car la NES n'affiche que 8 sprites par ligne). La balle soulève un peu de **poussière** en rebondissant sur la terre battue et le sable, et fait une **éclaboussure** sous la pluie. Au stade, l'**arbitre de chaise** tourne la tête vers le côté où se trouve la balle. Le bruit du rebond change selon la surface : sourd sur la terre, sec sur le dur, feutré sur le sable…
 - **Récapitulatif du score** :
   - après chaque jeu, le bandeau affiche pendant 2 secondes le score set par set, une ligne par équipe : « ALEX 6 3 » / « MAYA 4 1 » (sets terminés, puis jeux du set en cours) ;
-  - à la fin de chaque set, un écran fait le point : tableau des sets, vainqueur du set, statistiques du match jusque-là, joueur au service pour la suite. **A** reprend le match (reprise automatique au bout de 10 secondes) ;
+  - à la fin de chaque set, un écran fait le point : tableau des sets, vainqueur du set, statistiques du match jusque-là, joueur au service pour la suite, sur une petite musique d'interlude. **N'importe quel bouton** (manette 1 ou 2) ferme l'écran aussitôt et reprend le match, sans fondu ; sinon, reprise automatique au bout de 10 secondes. La musique s'arrête dès la reprise ;
   - en fin de match, l'écran des résultats commence par le tableau complet des sets.
 - Le **public** se lève et applaudit après les beaux points. Après un ace, un coup gagnant, une frappe parfaite gagnante ou un long échange, un **ralenti** rejoue le point (A pour le passer).
 - **En fin de match** :

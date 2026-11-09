@@ -25,6 +25,7 @@ void sfx_winner(void);             /* carillon bref d'un coup gagnant */
 #define MUS_DEFEAT  5
 #define MUS_FINAL   6   /* avant la finale d'une compétition */
 #define MUS_MARGAUX 7   /* court Margaux (menus et présentation) */
+#define MUS_BREAK   8   /* interlude de l'écran de fin de set */
 extern u8 music_cur;
 extern u8 snd_mode;
 void snd_set(u8 m);                /* 0 tout, 1 bruitages seuls, 2 aucun son */

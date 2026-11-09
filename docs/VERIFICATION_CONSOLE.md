@@ -56,7 +56,7 @@ Réglages : FORMAT RAPIDE, NIVEAU FACILE, VITESSE JEU NORMAL.
 | 3.8 | START pendant le jeu | Menu CONTINUER / QUITTER ; le jeu reprend sans saut | ☐ |
 | 3.9 | Panneaux de score | « J n » pour les jeux, `*` pour le serveur, un rond plein par set gagné | ☐ |
 | 3.9 b | Après chaque jeu | Le bandeau affiche le score set par set (« ALEX 6 3 / MAYA 4 1 ») | ☐ |
-| 3.9 c | Fin d'un set (format 3 sets) | Écran « FIN DU 1ER SET » : tableau, statistiques, joueur au service ; A reprend le match sur le même court | ☐ |
+| 3.9 c | Fin d'un set (format 3 sets) | Écran « FIN DU 1ER SET » : tableau, statistiques, joueur au service, petite musique ; un bouton reprend aussitôt le match sur le même court, musique coupée | ☐ |
 | 3.10 | Fin de match | Vainqueur en joie, perdant déçu, écran de statistiques | ☐ |
 
 ## 4. Lieux, surfaces et conditions (couleurs)

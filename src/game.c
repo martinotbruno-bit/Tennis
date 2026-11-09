@@ -911,6 +911,7 @@ static void court_load(void)
 /* Reprise après l'écran de fin de set : le score des sets dans le bandeau */
 void match_resume(void)
 {
+    music_play(MUS_NONE);              /* jamais de musique pendant le match */
     court_load();
     score_recap();
     match_draw();

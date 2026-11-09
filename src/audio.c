@@ -83,6 +83,16 @@ static const u8 mus_margaux_bass[] = {
  C3,24, G3,12, F3,24, A3,12, G3,24, B3,12, C3,24, R,12,
  END,0 };
 
+/* Interlude de fin de set : air calme et léger, 8 mesures de 48 trames */
+static const u8 mus_break_mel[] = {
+ E5,12, G5,12, A5,12, G5,12,  E5,24, C5,24,  D5,12, E5,12, F5,12, A5,12,  G5,36, R,12,
+ A5,12, G5,12, E5,12, D5,12,  C5,24, E5,24,  D5,12, F5,12, E5,12, D5,12,  C5,36, R,12,
+ END,0 };
+static const u8 mus_break_bass[] = {
+ C3,24, G3,24,  A3,24, E3,24,  D3,24, F3,24,  G3,24, D3,24,
+ F3,24, C3,24,  A3,24, E3,24,  D3,24, G3,24,  C3,36, R,12,
+ END,0 };
+
 static const u8 *mel_ptr, *bass_ptr, *mel_start, *bass_start;
 static u8 mel_timer, bass_timer, music_loop, mel_duty;
 u8 music_cur;      /* morceau en cours (MUS_*) */
@@ -125,6 +135,7 @@ void music_play(u8 id)
     case MUS_VICTORY: mel_ptr = mus_vict_mel; bass_ptr = mus_vict_bass; break;
     case MUS_DEFEAT:  mel_ptr = mus_def_mel; break;
     case MUS_FINAL:   mel_ptr = mus_final_mel; bass_ptr = mus_final_bass; music_loop = 1; break;
+    case MUS_BREAK:   mel_ptr = mus_break_mel; bass_ptr = mus_break_bass; music_loop = 1; mel_duty = 0x44; break;
     case MUS_MARGAUX: mel_ptr = mus_margaux_mel; bass_ptr = mus_margaux_bass; music_loop = 1; mel_duty = 0x44; break;
     default: break;
     }

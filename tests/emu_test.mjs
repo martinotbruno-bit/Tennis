@@ -784,7 +784,12 @@ console.log('Récapitulatif du score');
   check(scr(e) === SS.SETBREAK && tx(8, 2, 14) === 'FIN DU 1ER SET' && tx(8, 6, 4) === 'SETS', 'fin du 1er set : écran récapitulatif (tableau des sets, statistiques)');
   const l0 = tx(8, 7, 9), l1 = tx(8, 8, 9);
   check(/^[A-Z]{4}\s+\d/.test(l0) && /^[A-Z]{4}\s+\d/.test(l1), `tableau des sets : « ${l0.trim()} » / « ${l1.trim()} »`);
-  e.tap('A'); e.run(40);
+  check(e.peek('music_cur') === 8, 'petite musique sur l\'écran de fin de set');
+  // n'importe quel bouton (ici B) ferme l'écran aussitôt, sans fondu
+  e.tap('B', 1, 1, 0); let n = 0;
+  while (app(e) !== AS.MATCH && n < 30) { e.run(1); n++; }
+  check(app(e) === AS.MATCH && n <= 12 && e.peek('music_cur') === 0, `B : retour au court en ${n + 1} trames, musique coupée`);
+  e.run(30);
   check(app(e) === AS.MATCH && /^[A-Z]{4} \d \d/.test(msgText(e)), `reprise du match, score des sets dans le bandeau : « ${msgText(e)} »`);
   // un jeu plus tard : récapitulatif après le jeu
   let after = '';

@@ -721,8 +721,9 @@ static void setbreak_screen(void)
     txt_at(2, 21, "AU SERVICE :");
     if (cfg.doubles) team_label(cfg.chr[sc_server], cfg.chr[sc_server + 2], line); else team_label(cfg.chr[sc_server], 255, line);
     txt_at(15, 21, line);
-    txt_at(4, 25, "A : CONTINUER LE MATCH");
+    txt_at(4, 25, "UN BOUTON : REPRENDRE");
     ppu_on();
+    music_play(MUS_BREAK);              /* petit interlude, coupé à la reprise */
     brk_t = 0;
     scr_state = SS_SETBREAK;
 }
@@ -966,7 +967,11 @@ void screens_tick(void)
         if (pad1_new & PAD_B) menu_screen();
         break;
     case SS_SETBREAK:
-        if ((pad1_new & (PAD_A | PAD_START)) || ++brk_t > 600) { sfx_menu_ok(); go_req = GO_RESUME; }
+        /* n'importe quel bouton (manette 1 ou 2) ferme l'écran aussitôt,
+           sans fondu ; sinon reprise automatique au bout de 10 s */
+        if (((pad1_new | pad2_new) & (PAD_A | PAD_B | PAD_START | PAD_SELECT)) || ++brk_t > 600) {
+            music_play(MUS_NONE); sfx_menu_ok(); fade_skip = 1; go_req = GO_RESUME;
+        }
         break;
     case SS_COMP_END:
         if (pad1_new & (PAD_A | PAD_START)) { title_screen(); break; }
