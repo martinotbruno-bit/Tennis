@@ -175,11 +175,11 @@ static void pad_text(const char *s, u8 n)
 }
 
 /* ---------------------------------------------------------------------- */
-/* Musique des menus : thème du titre, ou valse du court Margaux quand ce
+/* Musique des menus : ritournelle agaçante du menu, ou valse du court Margaux quand ce
    lieu est choisi ; finale d'une compétition : thème de la finale */
 static void menu_music(void)
 {
-    u8 m = opt_val[O_ENV] == ENV_MARGAUX ? MUS_MARGAUX : MUS_TITLE;
+    u8 m = opt_val[O_ENV] == ENV_MARGAUX ? MUS_MARGAUX : MUS_MENU;
     if (music_cur != m) music_play(m);
 }
 static u8 is_final(void)

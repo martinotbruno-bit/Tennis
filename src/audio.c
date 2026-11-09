@@ -126,6 +126,24 @@ static const u8 mus_break_bass[] = {
  F3,24, C3,24,  A3,24, E3,24,  D3,24, G3,24,  C3,36, R,12,
  END,0 };
 
+/* Menu : ritournelle ridicule, sautillante, qui alterne sans relâche une note
+ * très grave et une note très aiguë (carré 12,5 % nasillard, volume fixe),
+ * avec hoquets, bégaiements et un « boing » final avant de recommencer.
+ * 5 mesures de 48 trames (2 s par mesure de 4 temps). */
+static const u8 mus_menu_mel[] = {
+ C3,6, G5,6, C3,6, G5,6, E3,6, C5,6, G3,6, E5,6,
+ F3,6, A5,6, F3,6, A5,6, D3,6, F5,6, G3,6, B5,3, R,3,
+ C3,6, G5,6, C3,6, G5,6, E3,6, C5,6, G3,6, E5,6,
+ G3,6, B5,6, F3,6, A5,6, E3,6, G5,6, C3,3, C5,3, C3,3, C5,3,
+ B5,3, R,3, B5,3, R,3, C3,12, R,12, C3,6, C5,6,
+ END,0 };
+static const u8 mus_menu_bass[] = {
+ C3,6, R,6, G3,6, R,6, C3,6, R,6, G3,6, R,6,
+ F3,6, R,6, C4,6, R,6, G3,6, R,6, D3,6, R,6,
+ C3,6, R,6, G3,6, R,6, C3,6, R,6, G3,6, R,6,
+ G3,6, R,6, F3,6, R,6, E3,6, R,6, C3,6, C3,6,
+ R,24, C3,6, R,6, C3,6, R,6,
+ END,0 };
 static const u8 *mel_ptr, *bass_ptr, *mel_start, *bass_start;
 static u8 mel_timer, bass_timer, music_loop, mel_duty;
 u8 music_cur;      /* morceau en cours (MUS_*) */
@@ -163,6 +181,7 @@ void music_play(u8 id)
     if (snd_mode) return;          /* musique coupée (réglage SON) */
     switch (id) {
     case MUS_TITLE:   mel_ptr = mus_title_mel; bass_ptr = mus_title_bass; music_loop = 1; break;
+    case MUS_MENU:    mel_ptr = mus_menu_mel; bass_ptr = mus_menu_bass; music_loop = 1; mel_duty = 0x38; break;
     case MUS_POINT:   mel_ptr = mus_point_mel; break;
     case MUS_GAME:    mel_ptr = mus_game_mel; break;
     case MUS_VICTORY: mel_ptr = mus_vict_mel; bass_ptr = mus_vict_bass; break;
