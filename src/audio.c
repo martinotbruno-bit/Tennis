@@ -2,6 +2,7 @@
  * musiques et jingles (jamais pendant les échanges, cf. CDC 11.2).
  * Toutes les mélodies sont des compositions originales. */
 #include "audio.h"
+#include "game.h"
 
 static u8 noise_hold;   /* le canal de bruit sert à un bruitage : pas de pas */
 
@@ -85,6 +86,7 @@ static const u8 mus_margaux_bass[] = {
 static const u8 *mel_ptr, *bass_ptr, *mel_start, *bass_start;
 static u8 mel_timer, bass_timer, music_loop, mel_duty;
 u8 music_cur;      /* morceau en cours (MUS_*) */
+u8 snd_mode;       /* 0 musique + bruitages, 1 bruitages seuls, 2 aucun son */
 
 static void play_pulse2(u8 n)
 {
@@ -115,6 +117,7 @@ void music_play(u8 id)
     music_cur = id;
     APU(0x4004) = 0x30;
     APU(0x4008) = 0x80;
+    if (snd_mode) return;          /* musique coupée (réglage SON) */
     switch (id) {
     case MUS_TITLE:   mel_ptr = mus_title_mel; bass_ptr = mus_title_bass; music_loop = 1; break;
     case MUS_POINT:   mel_ptr = mus_point_mel; break;
@@ -185,7 +188,12 @@ void sfx_hit(u8 power)
     pulse1(0x81, 0x8A, (u16)(120 + power * 30));
     noise(0x01, (u8)(0x04 + power));
 }
-void sfx_bounce(void)     { noise(0x01, 0x0C); }
+/* rebond : son propre à chaque surface (période du bruit, durée de
+   l'enveloppe) : terre sourde, gazon doux, dur sec, moquette mate, sable
+   feutré, glace claquante */
+static const u8 bnc_per[6] = { 0x0E, 0x0D, 0x0A, 0x0C, 0x0F, 0x07 };
+static const u8 bnc_env[6] = { 0x02, 0x01, 0x00, 0x01, 0x03, 0x00 };
+void sfx_bounce(void)     { u8 s = cfg.surface < 6 ? cfg.surface : 2; noise(bnc_env[s], bnc_per[s]); }
 void sfx_net(void)        { noise(0x03, 0x0E); pulse1(0x83, 0x00, 900); }
 void sfx_fault(void)      { pulse1(0x84, 0x00, 1140); }
 void sfx_whistle(void)    { pulse1(0x45, 0xB1, 100); }
@@ -204,3 +212,11 @@ void sfx_step(void)
 }
 /* coup gagnant : « ting » bref qui monte, sur le canal des bruitages (pas de musique) */
 void sfx_winner(void)     { pulse1(0x83, 0x9A, 360); }
+
+/* réglage SON : 2 = APU muet, 1 = musique arrêtée, 0 = tout */
+void snd_set(u8 m)
+{
+    snd_mode = m;
+    APU(0x4015) = (u8)(m == 2 ? 0x00 : 0x0F);
+    if (m) { mel_ptr = bass_ptr = 0; APU(0x4004) = 0x30; APU(0x4008) = 0x80; }
+}

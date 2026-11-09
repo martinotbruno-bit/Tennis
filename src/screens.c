@@ -48,7 +48,8 @@ u8 scr_state;
 #define O_COUNT  19
 #define O_CPART  20
 #define O_GSPEED 21   /* vitesse du jeu : lent, normal, rapide */
-#define NOPT     22
+#define O_SOUND  22   /* son : tout, bruitages seuls, aucun */
+#define NOPT     23
 
 #define MODE_1P      0
 #define MODE_2P      1
@@ -58,12 +59,12 @@ u8 scr_state;
 #define MODE_DEMO    5
 #define NMODES       6
 
-u8 opt_val[NOPT] = { 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 2, 1, 0, 1, 0, 1 };
-static const u8 opt_max[NOPT] = { 1, NMODES, 2, NCHARS, NCHARS, 3, NSURF, NENV, 3, 4, 2, NCT, 2, 2, 2, NEX, 4, 3, 3, 3, 2, 3 };
+u8 opt_val[NOPT] = { 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 2, 1, 0, 1, 0, 1, 0 };
+static const u8 opt_max[NOPT] = { 1, NMODES, 2, NCHARS, NCHARS, 3, NSURF, NENV, 3, 4, 2, NCT, 2, 2, 2, NEX, 4, 3, 3, 3, 2, 3, 3 };
 static const char * const opt_label[NOPT] = {
     "COMMENCER", "MODE", "JEU", "JOUEUR 1", "JOUEUR 2", "NIVEAU CPU", "SURFACE", "LIEU",
     "CONDITIONS", "FORMAT", "RALENTIS", "COMPETITION", "JOUEURS", "ADVERSAIRES", "SURFACES",
-    "EXERCICE", "COTE", "VITESSE", "EFFET", "BALLES", "JOUE PAR", "VITESSE JEU" };
+    "EXERCICE", "COTE", "VITESSE", "EFFET", "BALLES", "JOUE PAR", "VITESSE JEU", "SON" };
 static const char * const mode_name[NMODES] = {
     "1 JOUEUR VS CPU", "2 J. ADVERSAIRES", "EN EQUIPE", "COMPETITION", "ENTRAINEMENT", "DEMO CPU" };
 static const char * const cond_name[3] = { "JOUR", "NUIT", "PLUIE" };
@@ -75,6 +76,7 @@ static const char * const ex_name[NEX] = {
 static const char * const side_name[4] = { "COUP DROIT", "REVERS", "ALTERNE", "ALEATOIRE" };
 static const char * const speed_name[3] = { "LENTE", "MOYENNE", "RAPIDE" };
 static const char * const gspeed_name[3] = { "LENT", "NORMAL", "RAPIDE" };
+static const char * const sound_name[3] = { "MUSIQUE + SONS", "BRUITAGES SEULS", "AUCUN" };
 static const char * const spin_name[3] = { "LIFTE", "COUPE", "LOB" };
 static const u8 count_val[3] = { 10, 20, 30 };
 
@@ -125,6 +127,7 @@ static void build_visible(void)
         vis[nvis++] = O_REPLAY;
         vis[nvis++] = O_GSPEED;
     }
+    vis[nvis++] = O_SOUND;
     if (cursor >= nvis) cursor = 0;
 }
 
@@ -155,6 +158,7 @@ static const char *opt_text(u8 o)
     case O_COUNT:  return v == 0 ? "10" : v == 1 ? "20" : "30";
     case O_CPART:  return v ? "MANETTE 2" : "CPU";
     case O_GSPEED: return gspeed_name[v];
+    case O_SOUND:  return sound_name[v];
     }
     return "";
 }
@@ -213,11 +217,21 @@ static void draw_logo(u8 y)
 u8 title_cur;
 static const char * const title_items[4] = { "JOUER", "MODE D'EMPLOI", "PALMARES", "CODE DE REPRISE" };
 
+static u8 opts_loaded;
 static void title_screen(void)
 {
     u8 i;
     SV(sv_check);
     if (sv.nude) nude_unlocked = 1;
+    if (!opts_loaded) {
+        /* derniers réglages du menu (cartouche à pile), bornés par sécurité */
+        opts_loaded = 1;
+        if (far_call(BANK_COMP, (void *)so_load, 0)) {
+            for (i = 0; i < NOPT; ++i) if (opt_val[i] >= opt_max[i]) opt_val[i] = 0;
+            if (opt_val[O_ENV] == ENV_NUDE && !nude_unlocked) opt_val[O_ENV] = 0;
+        }
+        snd_set(opt_val[O_SOUND]);
+    }
     screen_begin();
     set_attr_rows(4, 7, 2);
     draw_logo(4);
@@ -254,8 +268,8 @@ static void menu_style_line(u8 direct)
 {
     u8 c = opt_val[O_MODE] == MODE_COMP || opt_val[O_MODE] == MODE_TRAIN ? opt_val[O_P1] : opt_val[O_P2];
     pad_text(style_name[char_style[c]], 14);
-    if (direct) { txt_at(3, 21, "STYLE"); txt_at(9, 21, line); }
-    else vbuf_text(9, 21, line, 14);
+    if (direct) { txt_at(3, 22, "STYLE"); txt_at(9, 22, line); }
+    else vbuf_text(9, 22, line, 14);
 }
 
 static void menu_screen(void)
@@ -280,9 +294,9 @@ static void menu_sprites(void)
 {
     spr_begin();
     spr1(8, (u8)(4 * 8 + cursor * 8), 3, 3);
-    spr_person(212, 180, opt_val[O_P1], 1, (u8)((frame_cnt >> 5) & 1 ? POSE_IDLE : POSE_JOY), 0, 0);
+    spr_person(212, 31, opt_val[O_P1], 1, (u8)((frame_cnt >> 5) & 1 ? POSE_IDLE : POSE_JOY), 0, 0);
     if (opt_val[O_MODE] <= MODE_2P_TEAM || opt_val[O_MODE] == MODE_DEMO)
-        spr_person(236, 180, opt_val[O_P2], 1, (u8)((frame_cnt >> 5) & 1 ? POSE_JOY : POSE_IDLE), 1, 1);
+        spr_person(236, 31, opt_val[O_P2], 1, (u8)((frame_cnt >> 5) & 1 ? POSE_JOY : POSE_IDLE), 1, 1);
     spr_end();
 }
 
@@ -841,6 +855,7 @@ void screens_tick(void)
             vbuf_reset();
             menu_draw_row(cursor, 0);
             if (o == O_ENV) menu_music();
+            if (o == O_SOUND) { snd_set(v); if (!v) { music_cur = 0xFF; menu_music(); } }
             if (o == O_ENV || o == O_COND) {
                 for (i = 0; i < nvis; ++i) if (vis[i] == O_COND) menu_draw_row(i, 0);
             }
@@ -851,6 +866,7 @@ void screens_tick(void)
         if (pad1_new & PAD_B) { title_screen(); break; }
         if ((pad1_new & PAD_START) || ((pad1_new & PAD_A) && o == O_START)) {
             sfx_menu_ok();
+            (void)far_call(BANK_COMP, (void *)so_save, 0);   /* mémorise les réglages */
             v = opt_val[O_MODE];
             if (v == MODE_COMP) { start_comp(); break; }
             setup_cfg(v);

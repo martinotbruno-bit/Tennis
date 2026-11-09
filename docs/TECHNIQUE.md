@@ -35,13 +35,13 @@ La version 1.0 tenait en NROM-256 (32 Ko, plein à 87 %). Il a fallu plus de pla
 
 | Banque | Contenu | Occupation |
 |---|---|---|
-| 7 (fixe, $C000) | Démarrage, NMI, primitives (sprites, VRAM, manettes, trampolines `bank_call` / `far_call`, enregistrement des ralentis), boucle principale, règles, codes, palettes, 16 personnages, noms des compétitions, échange des tuiles de personnages, son, bibliothèque cc65 | 12 031 |
-| 0 | Moteur de match : physique, frappes, service, arbitrage, IA | 15 950 |
-| 1 | Écrans : titre, configuration, présentation, résultats, compétitions, levée de coupe, saisie de code, palmarès | 13 981 |
+| 7 (fixe, $C000) | Démarrage, NMI, primitives (sprites, VRAM, manettes, trampolines `bank_call` / `far_call`, enregistrement des ralentis), boucle principale, règles, codes, palettes, 16 personnages, noms des compétitions, échange des tuiles de personnages, son, bibliothèque cc65 | 12 661 |
+| 0 | Moteur de match : physique, frappes, service, arbitrage, IA | 16 171 |
+| 1 | Écrans : titre, configuration, présentation, résultats, compétitions, levée de coupe, saisie de code, palmarès | 14 247 |
 | 2 | Motifs graphiques (8 Ko), copiés en CHR-RAM au démarrage | 8 192 |
-| 3 | Annexes du match : score et annonces du club nudiste, courts (4 lieux), public animé, pluie, ralentis, exercices, tutoriel | 10 190 |
-| 4 | Mode d'emploi | 3 549 |
-| 5 | Compétitions (tirages, simulations, classements, équipes de double) et palmarès | 7 218 |
+| 3 | Annexes du match : score et annonces du club nudiste, courts (4 lieux), public animé, pluie, ralentis, exercices, tutoriel | 10 167 |
+| 4 | Mode d'emploi | 3 564 |
+| 5 | Compétitions (tirages, simulations, classements, équipes de double) et palmarès | 7 451 |
 | 6 | Tuiles des personnages « au naturel » (club nudiste), copiées en CHR-RAM à la demande | 3 456 |
 
 ### RAM
@@ -56,6 +56,10 @@ $0700-$07FF  pile de paramètres C
 $6000-$77FF  RAM de cartouche : écrans, compétitions, tampon des ralentis (2 945 / 6 144)
 $7800-$7FFF  palmarès (sauvegardé si la cartouche a une pile ; signature + somme de contrôle)
 ```
+
+### Réglages mémorisés
+
+Le bloc `so` (signature « PO », 23 octets d'options, somme de contrôle) suit le palmarès `sv` en RAM de cartouche. Il est écrit à chaque lancement de partie et relu une seule fois, au premier écran titre. Les valeurs sont bornées, et le club nudiste n'est restauré que s'il a été débloqué. Le palmarès garde sa disposition, donc les sauvegardes existantes restent valides.
 
 ### Règles de banque
 
@@ -86,9 +90,21 @@ $7800-$7FFF  palmarès (sauvegardé si la cartouche a une pile ; signature + som
 | `src/comp.c`, `src/stats.c` | 5 | Compétitions, palmarès |
 | `tools/gen_assets.py` | — | Génère tous les graphismes : police, logo, 3 courts, public assis et debout, 10 personnages × 8 poses |
 
+### Effets du court (`match_fx`, banque fixe)
+
+Appelé à la fin de `match_draw`, après les joueurs (les effets passent donc derrière eux) :
+- **ombres** : une tuile ellipse sous les pieds. Toujours en simple ; en double, seulement pendant un saut, pour rester sous 8 sprites par ligne quand quatre joueurs sont alignés ;
+- **poussière** (terre, plage) et **éclaboussure** (pluie) : 12 trames au point de rebond, en deux tailles. Le premier et le deuxième rebond sont détectés par le changement de `bounces` ;
+- **arbitre de chaise** (stade) : deux sprites sur la chaise du décor. La tête change selon la moitié du court où se trouve la balle ;
+- **repère d'atterrissage** (vitesse Lent) : une croix sur `land_x/land_y` pendant 30 trames après chaque frappe destinée à une équipe où joue un humain.
+
+Les tuiles de sprites 5 à 13 (auparavant libres) contiennent l'ombre, la poussière, les éclaboussures, la croix et l'arbitre.
+
 ### Smash sauté
 
-Une balle entre 40 et 62 px de haut, avant le rebond, est jouable si le joueur est à moins de 70 px du filet. C'est réservé aux humains et au CPU Expert, pour ne pas enlever le lob aux joueurs moyens. La frappe est plus rapide (96 au lieu de 80) et plus tendue (gravité 12). Le sprite saute de 12 px (j²/16), au plus haut à l'impact, puis retombe en 14 trames (`pl_jump`).
+Une balle entre 40 et 62 px de haut, avant le rebond, est jouable si le joueur est à moins de 70 px du filet. C'est réservé aux humains et au CPU Expert, pour ne pas enlever le lob aux joueurs moyens. La frappe est plus rapide (96 au lieu de 80) et plus tendue (gravité 12). Le sprite saute de 12 px (j²/16), au plus haut à l'impact, puis retombe en 14 trames (`pl_jump`). j/2 est rangé dans les bits 5 à 7 de `pose_cache`, que `rp_record` enregistre déjà : le saut apparaît dans les ralentis sans agrandir le tampon (16 octets par trame).
+
+Le CPU Expert sait l'utiliser. Sur un lob adverse peu profond, il vise le point situé environ 11 trames avant la chute, où la balle passe vers 50 px de haut. Il ne le fait pas toujours : la décision suit l'erreur d'anticipation tirée à chaque frappe, soit environ 7 fois sur 10. Mesure : 17 lobs sur 30 sont smashés en sautant ; contre Normal, aucun.
 
 ### Physique et arbitrage
 
@@ -221,6 +237,10 @@ Aucune musique pendant les matchs. Toutes les mélodies sont originales :
 
 `music_cur` mémorise le morceau en cours, pour ne pas relancer un thème déjà joué.
 
+**Réglage SON** (`snd_set`) : 0 = musique et bruitages ; 1 = bruitages seuls (`music_play` ne fait que noter le morceau demandé) ; 2 = aucun son (canaux de l'APU coupés par $4015).
+
+**Rebond selon la surface** : la période du bruit et la durée de l'enveloppe dépendent de `cfg.surface` (terre sourde, gazon doux, dur sec, moquette mate, sable feutré, glace claquante).
+
 Coup gagnant : un « ting » montant bref sur le carré 1 (`sfx_winner`), en plus de la réaction du public déjà présente. Le nom du coup (`win_label`, banque fixe) dépend du dernier coup du gagnant (`last_shot`), d'un adversaire au filet au moment de la frappe (`hit_pass`) et du saut (`hit_jump`).
 
 ## 7. NTSC / PAL
@@ -240,8 +260,11 @@ Elle se combine avec la compensation 50 Hz.
 
 | Mesure (CPU contre CPU, ralentis activés) | Simple | Double |
 |---|---|---|
-| Logique médiane par trame | 13 600 cycles | 12 400 cycles |
-| Trames d'échange en dépassement (> 27 000 cycles) | 1 / 5 975 | 11 / 5 944 (0,2 %) |
+| Logique médiane par trame | 14 300 cycles | 19 700 cycles |
+| Trames d'échange en dépassement (> 27 000 cycles) | 1 / 5 957 | 90 / 5 926 (1,5 %) |
+| Toutes trames en dépassement | 45 / 5 957 | 151 / 5 926 (2,5 %) |
+
+En double, avant l'optimisation de la version 2.4, 664 trames sur 5 749 (11 %) dépassaient : les deux IA d'une même équipe décidaient dans la même trame.
 
 Le budget est d'environ 27 000 cycles par trame NTSC, hors NMI. Une trame en dépassement retarde l'image d'une trame, sans corrompre l'affichage : la NMI n'envoie rien tant que la trame n'est pas prête.
 
@@ -252,7 +275,8 @@ Optimisations appliquées :
 - calculs 16 bits uniquement ;
 - hauteur au filet sans division ;
 - prédictions de l'IA en cache ;
-- en double, IA mise à jour une trame sur deux (aussi pendant les balles mortes) ;
+- en double, IA mise à jour une trame sur deux (aussi pendant les balles mortes). Les deux IA d'une équipe décident en alternance (une seule décision par trame), et le partenaire réagit 2 trames plus tard ;
+- tri des sprites sur des clés 8 bits ; multiplications par constantes remplacées par des décalages ;
 - sur une trame de frappe, sprites non redessinés et IA restantes reportées.
 
 ## 9. Compilation
@@ -277,6 +301,7 @@ Outils de mise au point :
 |---|---|
 | `tests/rules_test.c` | 42 vérifications des règles |
 | `tests/password_test.c` | 200 000 codes aléatoires en aller-retour ; 8,06 millions de codes altérés d'un signe, refusés à 99,98 % |
-| `tests/emu_test.mjs` | 134 vérifications : démarrage MMC1 et CHR-RAM, mode d'emploi, menus adaptatifs, mode en équipe (toujours en double, partenaire CPU ou manette 2), présentation, menu de pause, lancer du serveur du haut, balle ratée qui sort de l'écran, let, matchs complets (6 surfaces × 3 lieux × 3 conditions, double), ralentis, revanche, palmarès, 9 exercices (joueur robot via la manette), 5 compétitions (dont éliminations), double en compétition (dont à 2 joueurs humains), levée de coupe, court Margaux, déblocage et club nudiste (tenues échangées en CHR-RAM puis restaurées), reprise par code, vitesse du jeu (lent/normal/rapide, aucun appui perdu), coups gagnants nommés, smash sauté (réservé aux humains et au CPU Expert), musiques hors match (Margaux, finale) et silence en match, 50 Hz |
+| `tests/emu_test.mjs` | 146 vérifications : démarrage MMC1 et CHR-RAM, mode d'emploi, menus adaptatifs, mode en équipe (toujours en double, partenaire CPU ou manette 2), présentation, menu de pause, lancer du serveur du haut, balle ratée qui sort de l'écran, let, matchs complets (6 surfaces × 3 lieux × 3 conditions, double), ralentis, revanche, palmarès, 9 exercices (joueur robot via la manette), 5 compétitions (dont éliminations), double en compétition (dont à 2 joueurs humains), levée de coupe, court Margaux, déblocage et club nudiste (tenues échangées en CHR-RAM puis restaurées), reprise par code, vitesse du jeu (lent/normal/rapide, aucun appui perdu), coups gagnants nommés, smash sauté (réservé aux humains et au CPU Expert), musiques hors match (Margaux, finale) et silence en match, smash sauté du CPU Expert et dans les ralentis, ombres, poussière, arbitre, repère d'atterrissage, réglage SON, réglages mémorisés après « rallumage », 50 Hz |
+| `tools/check_texts.py` | Relecture des textes : caractères présents dans la police, colonnes, lignes du mode d'emploi, annonces de 14 caractères au plus |
 
 Les résultats détaillés sont dans le [rapport](RAPPORT.md).

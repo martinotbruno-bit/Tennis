@@ -46,7 +46,7 @@ static void nude_quip(void)
     if (starts(msg1, "CHANGEMENT")) set2("ET DE CREME !");
     if (starts(msg1, "JEU !")) set2("TENUE : AUCUNE");
     else if (starts(msg1, "FAUTE")) set2("PAS DE POCHE !");
-    else if (starts(msg1, "ACE")) set2("TOUT NU, TOUT ACE");
+    else if (starts(msg1, "ACE")) set2("ACE AU NATUREL");
     else if (starts(msg1, "COUP GAGNANT")) set2("BRONZAGE TOTAL");
     else if (starts(msg1, "SMASH")) set2("PLEIN SOLEIL !");
     else if (starts(msg1, "AMORTIE")) set2("EN DOUCEUR...");
@@ -56,7 +56,7 @@ static void nude_quip(void)
     else if (starts(msg1, "EGALITE")) set2("NU A NU");
     else if (starts(msg1, "FILET")) set2("ATTENTION...");
     else if (starts(msg1, "DEHORS")) set2("COMME NOUS");
-    else if (starts(msg1, "QUEL ECHANGE")) set2("EN TOUTE NUDITE");
+    else if (starts(msg1, "QUEL ECHANGE")) set2("TOUT EN NUDITE");
     else if (starts(msg1, "JEU, SET")) set2("ET SERVIETTE !");
     else if (starts(msg1, "BALLE DE MATCH")) set2("SANS FILET");
     else if (starts(msg1, "LET")) set2("CHATOUILLE");
@@ -192,7 +192,8 @@ void rp_play(void)
     for (i = 0; i < npl; ++i) {
         p = ord[i];
         a = e[6 + p * 3];
-        spr_person(e[4 + p * 3], e[5 + p * 3], cfg.chr[p], (u8)((a >> 4) & 1), (u8)(a & 7), (u8)((a >> 3) & 1), (u8)(p & 1));
+        k = (u8)(a >> 5);           /* saut enregistré (j/2) : hauteur j²/16 */
+        spr_person(e[4 + p * 3], (s16)e[5 + p * 3] - ((k * k) >> 2), cfg.chr[p], (u8)((a >> 4) & 1), (u8)(a & 7), (u8)((a >> 3) & 1), (u8)(p & 1));
     }
     spr_end();
     /* demi-vitesse : chaque trame enregistrée est montrée deux fois */
@@ -219,15 +220,14 @@ static s8 rnd(u8 spread) { return (s8)((s16)(rand8() % (u8)(spread * 2 + 1)) - s
 
 /* tutoriel : consignes et nombre de réussites demandées par étape */
 static const char * const tut_l1[6] = {
-    "FRAPPEZ : A", "AMORTIE :", "LOB :", "VISEZ :", "SERVICE :", "BRAVO !" };
+    "FRAPPEZ AVEC A", "AMORTIE :", "LOB :", "VISEZ :", "SERVICE : A", "BRAVO !" };
 static const char * const tut_l2[6] = {
-    "BALLE DANS LE", "B + BAS", "B + HAUT", "GAUCHE/DROITE+A", "A LANCE, A FRAPPE", "TUTORIEL FINI" };
+    "DANS LE COURT", "B + BAS", "B + HAUT", "CROIX + A", "LANCER+FRAPPER", "TUTORIEL FINI" };
 static const u8 tut_need[5] = { 3, 2, 2, 2, 2 };
 
 static void tut_show(void)
 {
     tmsg(tut_l1[tr_step], tut_l2[tr_step], 250);
-    if (tr_step == 0) { msg2[0] = 'C'; msg2[1] = 'O'; msg2[2] = 'U'; msg2[3] = 'R'; msg2[4] = 'T'; msg2[5] = ' '; }
 }
 
 void train_start(void)
@@ -243,12 +243,12 @@ void train_start(void)
         feed_py = (NET_Y + 30) * FP;
     }
     switch (cfg.ex) {
-    case EX_TARGETS:   tmsg("VISEZ L'ETOILE", "+2 DANS LA ZONE", 120); break;
+    case EX_TARGETS:   tmsg("VISEZ L'ETOILE", "ZONE : +2 PTS", 120); break;
     case EX_MOVE:      tmsg("DEPLACEMENTS", "COIN A COIN", 120); break;
-    case EX_STREAK:    tmsg("REGULARITE :", "SERIE SANS FAUTE", 120); break;
+    case EX_STREAK:    tmsg("REGULARITE :", "SANS FAUTE !", 120); break;
     case EX_PRECISION: tmsg("PRECISION :", "SEULE LA ZONE", 120); break;
-    case EX_VOLLEY:    tmsg("VOLEE : FRAPPEZ", "AVANT LE REBOND", 120); break;
-    case EX_SERVE:     tmsg("SERVICE : VISEZ", "L'ETOILE", 120); break;
+    case EX_VOLLEY:    tmsg("VOLEE : JOUEZ", "AVANT REBOND", 120); break;
+    case EX_SERVE:     tmsg("SERVICE :", "VISEZ L'ETOILE", 120); break;
     case EX_STATIC:    tmsg("ECHANGEZ AVEC", "LE JOUEUR FIXE", 120); break;
     case EX_CUSTOM:    tmsg("EXERCICE", "PERSONNALISE", 120); break;
     case EX_TUTORIAL:  tut_show(); break;

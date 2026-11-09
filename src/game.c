@@ -49,9 +49,10 @@ s8 rnd_spread(u8 spread);
 void set_msg(const char *a, const char *b, u8 t);
 void launch(s16 tx, s16 ty, u8 T, u8 grav);
 const char *win_label(u8 shot, u8 pass, u8 jump);
+void match_fx(void);
 static u8 hit_margin;
 static s16 pcache_x[4], pcache_y[4];   /* prédictions IA en cache */
-static s8 ai_err[4];                   /* erreur d'anticipation tirée à chaque frappe */
+s8 ai_err[4];                          /* erreur d'anticipation tirée à chaque frappe */
 static s16 ai_gx[4], ai_gy[4];         /* destination courante de l'IA (FP) */
 static u8 ai_x2;                       /* 1 : pas de déplacement doublé */
 static u8 hit_now;                     /* une frappe a eu lieu dans cette trame */
@@ -431,7 +432,9 @@ static void do_hit(u8 p, u8 pad, u8 btn, u8 power, u8 spread)
     }
     /* les adversaires IA réagissent après un délai */
     ai_delay[t ^ 1] = ai_react[cfg.level[t ^ 1]];
-    if (npl == 4) ai_delay[(t ^ 1) + 2] = ai_react[cfg.level[(t ^ 1) + 2]];
+    /* partenaire : 2 trames de plus, pour que les deux IA ne calculent pas
+       leur trajectoire dans la même trame */
+    if (npl == 4) ai_delay[(t ^ 1) + 2] = (u8)(ai_react[cfg.level[(t ^ 1) + 2]] + 2);
     pcache_y[0] = pcache_y[1] = pcache_y[2] = pcache_y[3] = 0x7FFF;
     ai_gy[0] = ai_gy[1] = ai_gy[2] = ai_gy[3] = 0x7FFF;
 }
@@ -551,7 +554,7 @@ static void move_toward(u8 p, s16 tx, s16 ty, u8 speed)
     s16 dx = tx - plx[p], dy = ty - ply[p];
     s16 sx = speed, sy = speed;
     pl_moving[p] = 0;
-    if (iabs(dx) > 2 * FP && iabs(dy) > 2 * FP) { sx = (s16)((speed * 3) >> 2); sy = sx; }
+    if (iabs(dx) > 2 * FP && iabs(dy) > 2 * FP) { sx = (s16)(((u16)speed + ((u16)speed << 1)) >> 2);   /* x 3/4 sans multiplication */ sy = sx; }
     if (dx > sx) { plx[p] += sx; pl_moving[p] = 1; }
     else if (dx < -sx) { plx[p] -= sx; pl_moving[p] = 1; }
     else plx[p] = tx;
@@ -659,21 +662,30 @@ static void predict(u8 p)
         pred_x = pcache_x[p]; pred_y = pcache_y[p];
         return;
     }
+    /* erreur tirée une fois par frappe adverse */
+    if (pcache_y[p] == 0x7FFF) ai_err[p] = rnd_spread(ai_guess[cfg.level[p]]);
     if (bounces == 0) {
-        pred_x = land_x + PX(bvx * 12);
-        pred_y = land_y + PX(bvy * 12);
+        /* x 12 = x 8 + x 4 : décalages au lieu de multiplications */
+        pred_x = land_x + PX((bvx << 3) + (bvx << 2));
+        pred_y = land_y + PX((bvy << 3) + (bvy << 2));
         /* joueur au filet : interception de volée */
         if (iabs(PX(ply[p]) - NET_Y) < 46 && !b_serve) {
             pred_y = PX(ply[p]);
             if ((bvy >> 2) != 0) pred_x = PX(bx) + ((pred_y - PX(by)) * (bvx >> 2)) / (bvy >> 2);
         }
+        /* CPU expert contre un lob pas trop profond : il recule et se place
+           ~11 trames avant le point de chute, là où la balle passe vers 50 px
+           de haut, pour la smasher en sautant */
+        if (last_shot == SH_LOB && cfg.level[p] == 2 && (ai_err[p] & 3) && iabs(land_y - NET_Y) < 76) {
+            pred_x = land_x - PX(bvx * 11);
+            pred_y = land_y - PX(bvy * 11);
+        }
     } else {
-        pred_x = PX(bx + bvx * 6);
-        pred_y = PX(by + bvy * 6);
+        pred_x = PX(bx + (bvx << 2) + (bvx << 1));
+        pred_y = PX(by + (bvy << 2) + (bvy << 1));
     }
     /* l'IA n'anticipe pas parfaitement : une erreur tirée à chaque frappe
        adverse peut lui faire rater une balle bien croisée */
-    if (pcache_y[p] == 0x7FFF) ai_err[p] = rnd_spread(ai_guess[cfg.level[p]]);
     pred_x += ai_err[p];
     pcache_x[p] = pred_x; pcache_y[p] = pred_y;
 }
@@ -786,7 +798,9 @@ static void ai_update(u8 p)
         }
         /* en simple, la décision (coûteuse) est prise une trame sur deux ;
            le déplacement vers la dernière destination a lieu à chaque trame */
-        if (ai_x2 || ((u8)(frame_cnt ^ p) & 1) == 0 || ai_gy[p] == 0x7FFF) {
+        /* double (ai_x2) : les deux IA d'une équipe sont mises à jour la même
+           trame ; elles décident en alternance (une décision par trame) */
+        if (((u8)((ai_x2 ? (frame_cnt >> 1) ^ (p >> 1) : frame_cnt ^ p)) & 1) == 0 || ai_gy[p] == 0x7FFF) {
             predict(p);
             if (responsible(p)) {
                 tx = pred_x; ty = pred_y;
@@ -1047,7 +1061,7 @@ static u8 pose_of(u8 p)
 
 void match_draw(void)
 {
-    u8 ord[4], i, j, k, p;   /* j sert aussi au saut */
+    u8 ord[4], ys[4], i, j, k, p;   /* j sert aussi au saut */
     s16 sy;
     /* trame de frappe (calcul de trajectoire coûteux) : on garde les sprites
        de la trame précédente, ce qui évite tout ralentissement ; pendant un
@@ -1066,22 +1080,26 @@ void match_draw(void)
     }
     if (tgt_x) spr1(tgt_x, tgt_y, 3, 3);   /* cible d'entraînement */
     /* tri par profondeur : le joueur le plus bas à l'écran passe devant */
-    for (i = 0; i < npl; ++i) ord[i] = i;
+    /* clés sur 8 bits (y en pixels, toujours positif) : comparaisons rapides */
+    for (i = 0; i < npl; ++i) { ord[i] = i; ys[i] = (u8)(((u16)ply[i] << 2) >> 8); }
     for (i = 1; i < npl; ++i) {
         k = ord[i];
-        for (j = i; j > 0 && ply[ord[j - 1]] < ply[k]; --j) ord[j] = ord[j - 1];
+        for (j = i; j > 0 && ys[ord[j - 1]] < ys[k]; --j) ord[j] = ord[j - 1];
         ord[j] = k;
     }
     for (i = 0; i < npl; ++i) {
         p = ord[i];
-        pose_cache[p] = pose_of(p);
-        flip_cache[p] = (u8)(pl_state[p] == ST_SWING ? pl_flip[p] : 0);
-        if (cfg.mode == GM_TRAIN && p == 1 && cfg.ex != EX_STATIC) continue;   /* lanceur invisible */
-        /* saut : hauteur (j²/16) au plus haut à l'impact, puis chute */
+        /* saut : hauteur (j²/16) au plus haut à l'impact, puis chute ;
+           j/2 est gardé dans les bits 5-7 de pose_cache pour les ralentis */
         j = pl_jump[p];
         if (j) --pl_jump[p];
-        spr_person(PX(plx[p]), PX(ply[p]) - ((j * j) >> 4), cfg.chr[p], side_of(p), pose_cache[p], flip_cache[p], (u8)(p & 1));
+        k = pose_of(p);
+        pose_cache[p] = (u8)(k | ((j >> 1) << 5));
+        flip_cache[p] = (u8)(pl_state[p] == ST_SWING ? pl_flip[p] : 0);
+        if (cfg.mode == GM_TRAIN && p == 1 && cfg.ex != EX_STATIC) continue;   /* lanceur invisible */
+        spr_person((u8)(((u16)plx[p] << 2) >> 8), (s16)(ys[p] - (u8)((j * j) >> 4)), cfg.chr[p], side_of(p), k, flip_cache[p], (u8)(p & 1));
     }
+    match_fx();     /* ombres, poussière, arbitre, repère (banque fixe) */
     if (cfg.cond == COND_RAIN) bank_call(BANK_EXTRAS, rain_draw);
     spr_end();
 }

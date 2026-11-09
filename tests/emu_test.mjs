@@ -11,7 +11,7 @@ function check(cond, msg) {
 const AS = { SCREENS: 0, MATCH: 1, MANUAL: 2 };
 const SS = { TITLE: 0, MENU: 1, RESULTS: 2, PRESENT: 3, COMP: 4, CODE: 5, PALMARES: 6, TRAIN_RES: 7, COMP_END: 8 };
 const O = { MODE: 1, TYPE: 2, P1: 3, P2: 4, LEVEL: 5, SURF: 6, ENV: 7, COND: 8, FMT: 9, REPLAY: 10, COMP: 11,
-            CSIZE: 12, CPROG: 13, CVAR: 14, EX: 15, SIDE: 16, SPEED: 17, SPIN: 18, COUNT: 19, CPART: 20, GSPEED: 21 };
+            CSIZE: 12, CPROG: 13, CVAR: 14, EX: 15, SIDE: 16, SPEED: 17, SPIN: 18, COUNT: 19, CPART: 20, GSPEED: 21, SOUND: 22 };
 const MODE = { P1: 0, P2: 1, TEAM: 2, COMP: 3, TRAIN: 4, DEMO: 5 };
 const CFG = { CTRL: 2, LEVEL: 10, GAMES: 17, REPLAYS: 19 };
 
@@ -98,11 +98,11 @@ console.log("Mode d'emploi");
 console.log('Menu de configuration');
 {
   const e = boot(); toMenu(e);
-  check(scr(e) === SS.MENU && e.peek('nvis') === 12, 'configuration match : 12 lignes');
+  check(scr(e) === SS.MENU && e.peek('nvis') === 13, 'configuration match : 13 lignes');
   e.tap('DOWN'); e.tap('RIGHT'); e.tap('RIGHT'); e.tap('RIGHT'); e.run(5);
-  check(e.peek('opt_val', O.MODE) === MODE.COMP && e.peek('nvis') === 12, 'mode compétition : lignes adaptées');
+  check(e.peek('opt_val', O.MODE) === MODE.COMP && e.peek('nvis') === 13, 'mode compétition : lignes adaptées');
   e.tap('RIGHT'); e.run(5);
-  check(e.peek('opt_val', O.MODE) === MODE.TRAIN && e.peek('nvis') === 8, 'mode entraînement : lignes adaptées');
+  check(e.peek('opt_val', O.MODE) === MODE.TRAIN && e.peek('nvis') === 9, 'mode entraînement : lignes adaptées');
   e.tap('B'); e.run(5);
   check(scr(e) === SS.TITLE, 'B revient au titre');
 }
@@ -110,7 +110,7 @@ console.log('Menu de configuration');
 console.log('Mode en équipe (double)');
 {
   const e = boot(); toMenu(e); setOpts(e, { MODE: MODE.TEAM, TYPE: 0, CPART: 1 }); e.tap('B'); e.run(5); toMenu(e);
-  check(e.peek('nvis') === 12 && e.text(3, 7, 10) === 'PARTENAIRE' && e.text(3, 8, 8) === 'JOUE PAR', 'pas de ligne JEU ; lignes PARTENAIRE et JOUE PAR');
+  check(e.peek('nvis') === 13 && e.text(3, 7, 10) === 'PARTENAIRE' && e.text(3, 8, 8) === 'JOUE PAR', 'pas de ligne JEU ; lignes PARTENAIRE et JOUE PAR');
   e.tap('START'); e.run(15);
   check(e.text(4, 4, 15) === 'MATCH DE DOUBLE' && e.text(18, 11, 11) === '+ MANETTE 2', 'toujours un double, manette 2 partenaire');
   e.tap('A'); e.run(30);
@@ -541,6 +541,88 @@ console.log('Vitesse du jeu, coups gagnants, smash sauté, musiques');
   check(scr(e) === SS.PRESENT && e.peek('music_cur') === 6, 'présentation de la finale : le thème continue');
   e.tap('A'); e.run(10);
   check(app(e) === AS.MATCH && e.peek('music_cur') === 0, 'finale : silence pendant le match');
+}
+
+console.log('Finitions : ralentis, IA, effets, son, réglages mémorisés');
+const oamTiles = (e) => { const t = new Set(); for (let i = 0; i < 64; i++) { const y = e.peek('oam_buf', i * 4); if (y < 0xEF) t.add(e.peek('oam_buf', i * 4 + 1)); } return t; };
+const msgText = (e) => { let t = ''; for (let i = 0; i < 14; i++) t += String.fromCharCode(e.peek('msg1', i)); return t.trim(); };
+{
+  // annonces du club nudiste : jamais plus de 14 caractères (bandeau)
+  const fs = await import('fs');
+  const rd = (f) => fs.readFileSync(new URL('../src/' + f, import.meta.url), 'utf8');
+  const src = rd('extras.c') + rd('game.c') + rd('gamefix.c');
+  const lits = [...src.matchAll(/(?:set2|set_msg|return)\s*\(?\s*(?:[a-z]+\s*\?\s*)?"([^"]*)"/g)].map((m) => m[1]);
+  const lits2 = [...src.matchAll(/:\s*"([^"]*)";/g)].map((m) => m[1]);
+  const long = [...lits, ...lits2].filter((t) => t.length > 14);
+  check(long.length === 0, `annonces du bandeau ≤ 14 caractères${long.length ? ' : ' + long.join(', ') : ''}`);
+}
+{
+  // CPU expert : smash sauté sur un lob pas trop profond (graines aléatoires variées)
+  const lobTrial = (lv, seed, t) => {
+    const e = boot(); startWith(e, { FMT: 3, LEVEL: lv });
+    runUntil(e, () => e.peek('ms') === 0, 300);
+    const s16 = (n, v, o = 0) => { e.poke(n, v & 255, o); e.poke(n, (v >> 8) & 255, o + 1); };
+    e.poke('ms', 2); e.poke('b_live', 1); e.poke('b_vis', 1); e.poke('b_serve', 0); e.poke('bounces', 1);
+    e.poke('hitter', 1); e.poke('rally_hits', 3); e.poke('bgrav', 6);
+    s16('plx', (100 + t * 5) * 64, 0); s16('ply', 200 * 64, 0); s16('plx', (110 + t * 3) * 64, 2); s16('ply', 104 * 64, 2);
+    s16('bx', (104 + t * 5) * 64); s16('by', 197 * 64); s16('bz', 10 * 64); s16('bvx', 0); s16('bvy', 0); s16('bvz', 0);
+    e.poke('rand_seed', seed); e.down('B'); e.down('UP'); e.run(3); e.releaseAll();
+    for (let i = 0; i < 200; i++) { e.run(1); if (e.peek('hitter') === 1) return e.peek('hit_jump'); if (e.peek('ms') !== 2) return 0; }
+    return 0;
+  };
+  let j2 = 0, j1 = 0;
+  for (let t = 0; t < 8; t++) { j2 += lobTrial(2, t * 37 + 11, t); j1 += lobTrial(1, t * 37 + 11, t); }
+  check(j2 >= 2 && j2 <= 7 && j1 === 0, `lob contre un CPU au filet : smash sauté ${j2}/8 en Expert, ${j1}/8 en Normal`);
+}
+{
+  // le saut est enregistré pour les ralentis (bits 5-7 de pose_cache)
+  const e = boot(); startWith(e, { FMT: 3 });
+  runUntil(e, () => e.peek('ms') === 0, 200);
+  const s16 = (n, v, o = 0) => { e.poke(n, v & 255, o); e.poke(n, (v >> 8) & 255, o + 1); };
+  e.poke('ms', 2); e.poke('b_live', 1); e.poke('b_vis', 1); e.poke('b_serve', 0); e.poke('bounces', 0);
+  e.poke('hitter', 1); e.poke('rally_hits', 3); e.poke('bgrav', 6);
+  s16('plx', 128 * 64, 0); s16('ply', 168 * 64, 0);
+  s16('bx', 132 * 64); s16('by', 165 * 64); s16('bz', 52 * 64); s16('bvx', 0); s16('bvy', 0); s16('bvz', 0);
+  e.down('A'); e.run(4); e.up('A');
+  check((e.peek('pose_cache', 0) >> 5) > 0, 'saut enregistré pour le ralenti');
+}
+{
+  // effets : ombres (simple), arbitre (stade), poussière (terre), repère (lent)
+  const e = boot(); startWith(e, { FMT: 3, SURF: 0, ENV: 0, GSPEED: 0 }); allCpu(e);
+  e.run(60);
+  let t = oamTiles(e);
+  check(t.has(5) && t.has(13) && (t.has(11) || t.has(12)), 'ombres des joueurs et arbitre de chaise au stade');
+  let dust = false, pb = 0;
+  runUntil(e, () => { const b = e.peek('bounces'); if (b === 1 && pb === 0) { e.run(2); dust = dust || [...oamTiles(e)].some((x) => x === 6 || x === 7); } pb = b; return dust; }, 3000);
+  check(dust, 'poussière au rebond sur la terre battue');
+  const f = boot(); startWith(f, { FMT: 3, ENV: 1, GSPEED: 0 });
+  let mark = false;   // joueur humain (robot) contre le CPU
+  runUntil(f, () => { if (f.peek('hitter') === 1 && f.peek('ms') === 2 && f.peek('bounces') === 0) mark = mark || oamTiles(f).has(10); return mark; }, 6000, () => botStep(f));
+  f.releaseAll();
+  check(mark, 'mode lent : repère d\'atterrissage des balles adverses');
+  const g = boot(); startWith(g, { FMT: 3, ENV: 1, GSPEED: 1 });
+  let mark2 = false;
+  runUntil(g, () => { mark2 = mark2 || oamTiles(g).has(10); return false; }, 1500);
+  check(!mark2 && !oamTiles(g).has(13), 'vitesse normale : pas de repère ; pas d\'arbitre hors du stade');
+}
+{
+  // réglage SON et réglages mémorisés dans la cartouche
+  const e = boot(); toMenu(e);
+  const row = (o) => { for (let i = 0; i < e.peek('nvis'); i++) if (e.peek('vis', i) === o) return i; return -1; };
+  e.poke('cursor', row(O.SOUND)); e.tap('RIGHT'); e.run(5);
+  check(e.peek('snd_mode') === 1 && e.peek16('mel_ptr') === 0, 'SON : bruitages seuls, musique arrêtée');
+  e.tap('RIGHT'); e.run(5);
+  check(e.peek('snd_mode') === 2 && e.text(16, 4 + row(O.SOUND), 5) === 'AUCUN', 'SON : aucun');
+  e.tap('LEFT'); e.tap('LEFT'); e.run(5);
+  check(e.peek('snd_mode') === 0 && e.peek16('mel_ptr') !== 0, 'SON : musique relancée');
+  setOpts(e, { P1: 5, SURF: 3, GSPEED: 2, SOUND: 1, ENV: 4 }); e.tap('START'); e.run(30);
+  // « rallumage » : une console neuve qui garde la RAM de cartouche
+  const f = new Emu(rom);
+  for (let a = 0x6000; a < 0x8000; a++) f.nes.cpu.mem[a] = e.nes.cpu.mem[a];
+  f.run(30);
+  check(f.peek('opt_val', O.P1) === 5 && f.peek('opt_val', O.SURF) === 3 && f.peek('opt_val', O.GSPEED) === 2
+    && f.peek('opt_val', O.ENV) === 4 && f.peek('snd_mode') === 1, 'derniers réglages retrouvés au démarrage (cartouche à pile)');
+  check(f.peek16('sv', 4) === e.peek16('sv', 4), 'palmarès conservé à côté des réglages');
 }
 
 console.log('Compensation 50 Hz (PAL)');

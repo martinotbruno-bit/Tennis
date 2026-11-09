@@ -26,6 +26,7 @@ CENTER_X = 128
 # Police 5x7 (majuscules sans accents, chiffres, ponctuation)
 # --------------------------------------------------------------------------
 FONT = {
+ "'":["00100","00100","01000","00000","00000","00000","00000"],
  'A':["01110","10001","10001","11111","10001","10001","10001"],
  'B':["11110","10001","10001","11110","10001","10001","11110"],
  'C':["01110","10001","10000","10000","10000","10001","01110"],
@@ -527,6 +528,60 @@ rain = blank()
 for y in range(1, 6):
     rain[y][4 - y//3] = 3
 spr_tile(4, rain)
+# ombre d'un joueur (couleur 2, noir) : ellipse 8 x 3, lignes 0 à 2
+pshadow = blank()
+for (y, x0, x1) in ((0, 2, 5), (1, 0, 7), (2, 2, 5)):
+    for x in range(x0, x1 + 1):
+        pshadow[y][x] = 2
+spr_tile(5, pshadow)
+# poussière au rebond (terre, plage) : petit nuage puis nuage plus large (couleur 1)
+dust1 = blank()
+for (x, y) in ((3, 5), (4, 5), (2, 6), (5, 6), (3, 4)):
+    dust1[y][x] = 1
+spr_tile(6, dust1)
+dust2 = blank()
+for (x, y) in ((1, 4), (2, 3), (5, 3), (6, 4), (0, 6), (7, 6), (3, 2), (4, 6)):
+    dust2[y][x] = 1
+spr_tile(7, dust2)
+# éclaboussures sous la pluie (couleur 1 de la palette des effets)
+spl1 = blank()
+for (x, y) in ((3, 4), (4, 4), (2, 5), (5, 5), (3, 6), (4, 6)):
+    spl1[y][x] = 1
+spr_tile(8, spl1)
+spl2 = blank()
+for (x, y) in ((1, 2), (6, 2), (0, 4), (7, 4), (2, 6), (5, 6), (3, 3), (4, 3)):
+    spl2[y][x] = 1
+spr_tile(9, spl2)
+# repère d'atterrissage (mode lent) : petite croix (couleur 3)
+cross = blank()
+for k in range(1, 6):
+    cross[k][k + 1] = 1
+    cross[k][7 - k] = 1
+spr_tile(10, cross)
+# arbitre de chaise (palette 2 : 1 peau, 2 noir, 3 blanc), vu de dessus :
+# tête de face (balle en bas), tête de dos (balle en haut), buste
+ump_face = blank()
+for y in range(2, 8):
+    for x in range(2, 6):
+        ump_face[y][x] = 1
+for x in range(2, 6):
+    ump_face[2][x] = 2                       # cheveux
+ump_face[4][3] = ump_face[4][4] = 2          # yeux
+spr_tile(11, ump_face)
+ump_back = blank()
+for y in range(2, 8):
+    for x in range(2, 6):
+        ump_back[y][x] = 2 if y < 7 else 1   # cheveux, nuque
+ump_back[2][2] = ump_back[2][5] = 0
+spr_tile(12, ump_back)
+ump_body = blank()
+for y in range(0, 7):
+    for x in range(1, 7):
+        ump_body[y][x] = 3                   # chemise blanche
+ump_body[0][3] = ump_body[0][4] = 2          # noeud
+for y in range(2, 6):
+    ump_body[y][0] = 1; ump_body[y][7] = 1   # bras
+spr_tile(13, ump_body)
 
 # Personnages 16x24 : 0 transparent, 1 peau, 2 tenue, 3 sombre
 def new_canvas():

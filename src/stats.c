@@ -6,7 +6,33 @@
 #pragma static-locals(on)
 #pragma bss-name(push, "SAVEDATA")
 SaveData sv;
+SaveOpts so;
 #pragma bss-name(pop)
+
+static u8 so_sum(void)
+{
+    u8 i, s = 0x5A;
+    for (i = 0; i < NOPT_SAVE; ++i) s = (u8)(((s << 1) | (s >> 7)) ^ so.opt[i]);
+    return s;
+}
+
+u8 __fastcall__ so_save(u8 unused)
+{
+    u8 i;
+    for (i = 0; i < NOPT_SAVE; ++i) so.opt[i] = opt_val[i];
+    so.sig[0] = 'P'; so.sig[1] = 'O';
+    so.sum = so_sum();
+    return unused;
+}
+
+u8 __fastcall__ so_load(u8 unused)
+{
+    u8 i;
+    (void)unused;
+    if (so.sig[0] != 'P' || so.sig[1] != 'O' || so.sum != so_sum()) return 0;
+    for (i = 0; i < NOPT_SAVE; ++i) opt_val[i] = so.opt[i];
+    return 1;
+}
 
 static u8 compute_sum(void)
 {

@@ -34,7 +34,10 @@ Sans action pendant 20 secondes, une démonstration démarre (alternativement en
 | CONDITIONS | Jour · Nuit · Pluie. Il ne pleut pas en salle : la pluie y devient « jour » |
 | FORMAT | 1 set · 3 sets · 5 sets · Rapide (sets de 4 jeux) |
 | RALENTIS | Oui/Non : ralenti automatique après les plus beaux points |
-| VITESSE JEU | Lent (75 %, idéal pour débuter ou pour les enfants) · Normal · Rapide (125 %). Aussi en compétition et à l'entraînement |
+| VITESSE JEU | Lent (75 %, idéal pour débuter ou pour les enfants) · Normal · Rapide (125 %). Aussi en compétition et à l'entraînement. En Lent, une petite croix montre une demi-seconde où va tomber la balle adverse |
+| SON | Musique + sons · Bruitages seuls · Aucun |
+
+Les réglages du menu sont **mémorisés** au lancement de chaque partie. Sur une cartouche à pile, ils sont retrouvés au prochain allumage ; le palmarès n'est pas touché.
 
 Selon le mode, d'autres lignes apparaissent :
 - **Compétition** : type de compétition et, pour le tournoi personnalisé, le nombre de joueurs, la progression des adversaires et la variété des surfaces ;
@@ -113,6 +116,7 @@ Le lancer reste visible quelle que soit votre position, y compris quand vous ser
     - ligne 3 : les points du jeu en cours (0, 15, 30, 40, AV), suivis d'un rond plein par set gagné.
 - Les **annonces** de l'arbitre s'affichent au centre du bandeau : faute, let, égalité, avantage, balle de set ou de match, jeu décisif, changement de côté, ace, coup gagnant…
 - Les **coups gagnants** sont nommés : SMASH SAUTÉ, SMASH, AMORTIE, LOB GAGNANT, VOLÉE GAGNANTE, PASSING (adversaire au filet) ou COUP GAGNANT, avec un bref « ting » ; sans autre son ajouté et toujours sans musique pendant le match.
+- Sur le court : chaque joueur a une **ombre** (en double, seulement pendant un saut, car la NES n'affiche que 8 sprites par ligne). La balle soulève un peu de **poussière** en rebondissant sur la terre battue et le sable, et fait une **éclaboussure** sous la pluie. Au stade, l'**arbitre de chaise** tourne la tête vers le côté où se trouve la balle. Le bruit du rebond change selon la surface : sourd sur la terre, sec sur le dur, feutré sur le sable…
 - Le **public** se lève et applaudit après les beaux points. Après un ace, un coup gagnant ou un long échange, un **ralenti** rejoue le point (A pour le passer).
 - **En fin de match** :
   - le vainqueur célèbre et le perdant baisse la tête ;

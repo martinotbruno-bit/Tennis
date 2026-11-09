@@ -72,3 +72,59 @@ const char *win_label(u8 shot, u8 pass, u8 jump)
     if (pass) return "PASSING !";
     return "COUP GAGNANT !";
 }
+
+/* ---------------------------------------------------------------------- */
+/* Petits effets du court (banque fixe, appelés à la fin de match_draw) :  */
+/* ombres des joueurs, poussière ou éclaboussures au rebond, arbitre de    */
+/* chaise animé au stade et repère d'atterrissage en vitesse « lent ».     */
+/* Les sprites sont ajoutés après les joueurs : ils passent derrière eux.  */
+/* ---------------------------------------------------------------------- */
+#include "gfx.h"
+#define PXU(v) ((u8)(((u16)(v) << 2) >> 8))      /* pixels, valeur positive */
+extern u8 pl_jump[4];
+static u8 fx_t, fx_x, fx_y, fx_kind, fx_bounces, fx_hits, mk_t;
+
+void match_fx(void)
+{
+    u8 i, j;
+    /* rebond : poussière sur terre et sable, éclaboussure sous la pluie */
+    if (bounces != fx_bounces) {
+        fx_bounces = bounces;
+        if (bounces && bounces < 3 && b_vis) {
+            fx_kind = 0;
+            if (cfg.cond == COND_RAIN) fx_kind = 8;
+            else if ((cfg.surface == 0 || cfg.surface == 4) && cfg.env != ENV_MARGAUX) fx_kind = 6;
+            if (fx_kind) { fx_t = 12; fx_x = PXU(bx); fx_y = PXU(by); }
+        }
+    }
+    if (fx_t) {
+        --fx_t;
+        spr1((u8)(fx_x - 4), (u8)(fx_y - 6), (u8)(fx_kind + (fx_t < 6)), (u8)(fx_kind == 8 ? 3 : 2));
+    }
+    /* ombres : toujours en simple ; en double, seulement pendant un saut
+       (au plus 8 sprites par ligne sur NES) */
+    for (i = 0; i < npl; ++i) {
+        j = pl_jump[i];
+        if (npl == 4 && !j) continue;
+        if (cfg.mode == GM_TRAIN && i == 1 && cfg.ex != EX_STATIC) continue;   /* lanceur invisible */
+        spr1((u8)(PXU(plx[i]) - 3), PXU(ply[i]), 5, 2);   /* sous les pieds, décalée vers la droite */
+    }
+    /* repère d'atterrissage (lent) : 30 trames après chaque frappe vers un
+       joueur humain */
+    if (rally_hits != fx_hits) {
+        fx_hits = rally_hits;
+        j = (u8)(hitter ^ 1);
+        mk_t = 0;
+        if (cfg.gspeed == 0 && rally_hits &&
+            (cfg.ctrl[j] != CTRL_CPU || (npl == 4 && cfg.ctrl[j + 2] != CTRL_CPU))) mk_t = 30;
+    }
+    if (mk_t) {
+        --mk_t;
+        if (b_live && bounces == 0) spr1((u8)(land_x - 4), (u8)(land_y - 4), 10, 3);
+    }
+    /* arbitre de chaise (stade) : il regarde le côté où se trouve la balle */
+    if (cfg.env == ENV_STADIUM) {
+        spr1(20, NET_Y - 22, (u8)(by < NET_Y * FP ? 12 : 11), 2);
+        spr1(20, NET_Y - 14, 13, 2);
+    }
+}

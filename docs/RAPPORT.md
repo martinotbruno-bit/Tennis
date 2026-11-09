@@ -1,10 +1,27 @@
-# Pixel Open — Rapport de réalisation (version 2.3)
+# Pixel Open — Rapport de réalisation (version 2.4)
 
 Comme l'exige le CDC (§ 17.5), ce rapport distingue ce qui est **réalisé**, **testé**, **validé sur matériel réel**, **validé uniquement en émulation**, **dépendant d'une extension**, et les **limitations restantes**.
 
 > **Validation matérielle : aucune.** Aucun test n'a été fait sur console réelle (NES, Famicom, PAL, cartouche MMC1). Toutes les validations ont eu lieu en émulation (jsnes) et par des tests unitaires sur PC. Les critères « vérifié sur console physique » (CDC § 2.1, 15.4, 16.A) **ne sont pas remplis**. Ce point ne peut pas être traité dans l'environnement de développement utilisé.
 
 ## 1. Évolutions
+
+### Version 2.4 (finitions)
+
+| Demande | Réalisation |
+|---|---|
+| 1. Annonce tronquée au club nudiste | « TOUT NU, TOUT ACE » (17 caractères) devient « ACE AU NATUREL », et « EN TOUTE NUDITE » devient « TOUT EN NUDITE ». La relecture automatique (point 12) a trouvé 7 autres messages trop longs, tous corrigés |
+| 2. Smash sauté absent des ralentis | Le saut est enregistré dans les bits libres de la pose (tampon inchangé, 16 octets par trame) et rejoué à l'identique |
+| 3. Le CPU Expert ne sautait jamais | Sur un lob peu profond, il recule sous la trajectoire et smashe en sautant environ une fois sur deux (17 lobs sur 30 en mesure) ; jamais en Facile ni en Normal |
+| 4. À-coups en double | Les deux IA d'une équipe décident en alternance, le tri des sprites est plus rapide, des multiplications sont remplacées par des décalages. Images en retard pendant les échanges : de 11 % à 1,5 % |
+| 5. Ombres des joueurs | Ombre sous les pieds, qui reste au sol pendant le saut. Toujours en simple ; en double, seulement pendant un saut (limite de 8 sprites par ligne) |
+| 6. Poussière et éclaboussures | Petit nuage au rebond sur la terre battue et le sable, éclaboussure sous la pluie (12 trames, deux tailles) |
+| 7. Arbitre de chaise (stade) | Assis sur sa chaise, il tourne la tête vers la moitié du court où se trouve la balle |
+| 8. Réglage du son | Ligne SON : musique + sons, bruitages seuls, aucun |
+| 9. Rebond selon la surface | Bruit propre à chaque surface : terre sourde, gazon doux, dur sec, moquette mate, sable feutré, glace claquante |
+| 10. Repère d'atterrissage | En vitesse Lent : petite croix au point de chute pendant une demi-seconde, pour les balles destinées à un joueur humain |
+| 11. Réglages mémorisés | Les réglages du menu sont enregistrés à chaque partie et retrouvés à l'allumage (cartouche à pile). Ils sont dans un bloc séparé : le palmarès existant est conservé |
+| 12. Relecture des textes et captures | Nouvel outil `tools/check_texts.py`, lancé par `make test` : caractères absents de la police, lignes trop longues, annonces de plus de 14 caractères. Il a trouvé l'**apostrophe absente de la police** (« MODE D'EMPLOI » s'affichait « MODE D EMPLOI »), désormais dessinée, et 7 messages tronqués (entraînement, tutoriel). Captures de 23 écrans relues : personnage du menu qui masquait la ligne SON (déplacé), lieu « Court Margaux » ajouté au mode d'emploi |
 
 ### Version 2.3
 
@@ -66,10 +83,11 @@ Pour loger ce contenu, la cartouche passe de NROM (32 Ko) à **MMC1** : 128 Ko d
 |---|---|
 | Règles (`rules_test`) | 42/42 |
 | Codes (`password_test`) | 200 000/200 000 aller-retour ; 99,98 % des codes altérés d'un signe refusés |
-| Émulateur (`emu_test`) | 134/134 vérifications (environ 15 min) |
+| Émulateur (`emu_test`) | 146/146 vérifications (environ 17 min) |
 | Profil CPU, simple, 6 000 trames | 1 trame d'échange en dépassement |
-| Profil CPU, double, 6 000 trames | 11 trames d'échange en dépassement (0,2 %), sans défaut d'image |
-| Compilation | Reproductible : SHA-256 `b318526f6cb630dd32ca70d299ccb43f836a67d8400b46329623a1abdcacfd86` sur deux compilations propres |
+| Relecture des textes (`check_texts.py`) | 0 problème |
+| Profil CPU, double, 6 000 trames | 90 trames d'échange en dépassement (1,5 %), sans défaut d'image |
+| Compilation | Reproductible : SHA-256 `a2e168a302f2701c95a492c3a4ba616e20f3463ca9227e6dbb9b550d44598925` sur deux compilations propres |
 
 ## 3. Conformité par section du CDC
 

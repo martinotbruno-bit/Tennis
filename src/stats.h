@@ -20,6 +20,19 @@ typedef struct {
 } SaveData;
 
 extern SaveData sv;
+
+/* derniers réglages du menu, dans un bloc à part (le palmarès garde sa
+   disposition et n'est pas effacé) */
+#define NOPT_SAVE 23
+typedef struct {
+    u8 sig[2];
+    u8 opt[NOPT_SAVE];
+    u8 sum;
+} SaveOpts;
+extern SaveOpts so;
+extern u8 opt_val[NOPT_SAVE];
+u8 __fastcall__ so_load(u8 unused);    /* 1 si des réglages valides ont été copiés dans opt_val */
+u8 __fastcall__ so_save(u8 unused);
 /* Banque BANK_COMP : appel par far_call() */
 u8 __fastcall__ sv_check(u8 unused);
 u8 __fastcall__ sv_after_match(u8 unused);
