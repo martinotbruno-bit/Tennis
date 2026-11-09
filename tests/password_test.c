@@ -17,6 +17,7 @@ int main(void)
         d.surf = rand() % 6; d.fmt = rand() % 4; d.cond = rand() % 3; d.env = rand() % 5;
         d.lvl = rand() % 3; d.results = rand() & 255; d.opts = rand() % 8; d.trophies = rand() % 16;
         d.doubles = rand() & 1; d.partner = (d.chr + 1 + rand() % 16) % 17; d.hum2 = d.doubles ? (rand() & 1) : 0;
+        if (d.env == 3 && (d.chr == 16 || d.partner == 16)) d.env = 4;   /* jamais Margaux au club nudiste */
         pw_encode(code, &d);
         ++total;
         if (pw_decode(code, &e) && same(&d, &e)) ++ok;
@@ -44,6 +45,9 @@ int main(void)
     d.chr = 3; d.partner = 16; pw_encode(code, &d);
     if (!pw_decode(code, &e) || !same(&d, &e)) return 1;
     printf("personnage 16 (Margaux) codé et relu\n");
+    d.env = 3; pw_encode(code, &d);
+    if (pw_decode(code, &e)) return 1;
+    printf("Margaux au club nudiste : code refusé\n");
     printf("caractères invalides refusés\n");
     return (ok == total && rejected * 1000 >= mutations * 997) ? 0 : 1;
 }

@@ -852,6 +852,75 @@ for female in (0, 1):
             nude_profile += encode_tile(t)
 assert next_spr <= 256, "trop de tuiles de sprites"
 
+# --- Margaux : cheveux longs, blonds et bouclés (couleur 3 de sa palette).
+# Seule la rangée du haut (tête, 2 tuiles) lui est propre ; le corps reste
+# celui des joueuses. 4 variantes de bras par vue (attente, frappe armée,
+# accompagnement, service) + 1 tête de profil pour la course.
+def margaux_hair(c, view):
+    hair = set()
+    for x in range(5, 11): hair.add((x, 0))
+    for x in range(4, 12): hair.add((x, 1))
+    if view == 'back':
+        for y in range(0, 8):
+            for x in range(4, 12):
+                hair.add((x, y))
+    else:
+        hair |= {(6, 2), (9, 2)}                          # frange bouclée
+        for y in range(2, 8):
+            hair |= {(4, y), (11, y)}                     # mèches qui tombent sur les épaules
+        hair |= {(5, 5), (10, 5), (5, 6), (10, 6), (5, 7), (10, 7)}
+    # boucles : petites bosses alternées sur le contour
+    for y in (2, 4, 6):
+        hair.add((3, y))
+    for y in (3, 5, 7):
+        hair.add((12, y))
+    if view == 'back':
+        for y in (3, 5, 7):
+            hair.add((3, y))
+        for y in (2, 4, 6):
+            hair.add((12, y))
+    for (x, y) in hair:
+        # les bras et la raquette passent devant les cheveux ; de dos, la
+        # chevelure couvre toute la tête et le haut du dos
+        if c[y][x] in (0, 3) or (view == 'back' and (c[y][x] == 2 or (c[y][x] == 1 and 4 <= x <= 11))):
+            c[y][x] = 3
+        elif c[y][x] == 2 and y == 7 and x in (5, 10):
+            c[y][x] = 3                                   # mèches sur le haut des épaules
+    if view == 'back':
+        # pointes bouclées : le haut du dos apparaît entre les boucles
+        for x in range(4, 12, 2):
+            if c[7][x] == 3:
+                c[7][x] = 2 if 5 <= x <= 10 else 0
+        c[6][4] = 0 if c[6][4] == 3 and c[6][3] == 3 else c[6][4]
+    return c
+
+def margaux_profile_hair(c):
+    for x in range(5, 11): c[0][x] = 3
+    for y in range(1, 8):
+        for x in range(4, 7):
+            if c[y][x] in (0, 3, 2):
+                c[y][x] = 3
+    c[1][9] = 3; c[1][10] = 3                             # frange
+    for y in (2, 4, 6):
+        c[y][3] = 3
+    return c
+
+MARG_ARMS = ['ready', 'swing', 'follow', 'serve']
+MARG_HEAD = next_spr
+marg_previews = []
+for view in ('back', 'front'):
+    for arms in MARG_ARMS:
+        cv = margaux_hair(draw_person(view, 'stand', arms, 1), view)
+        marg_previews.append(cv)
+        t = canvas_tiles(cv)
+        spr_tile(next_spr, t[0]); spr_tile(next_spr + 1, t[1]); next_spr += 2
+pv = margaux_profile_hair(draw_profile(0, 1))
+marg_previews.append(pv)
+tp = canvas_tiles(pv)
+MARG_PROF_L, MARG_PROF_R = 0x0F, next_spr
+spr_tile(MARG_PROF_L, tp[0]); spr_tile(MARG_PROF_R, tp[1]); next_spr += 1
+assert next_spr <= 256, "trop de tuiles de sprites (Margaux)"
+
 # --------------------------------------------------------------------------
 # Sorties
 # --------------------------------------------------------------------------
@@ -903,6 +972,7 @@ src.append(c_array('logo_tiles', bytes(logo)))
 src.append(c_array('bigball_tiles', bytes(ball_tiles)))
 src.append('const unsigned char person_base[4] = {0x%02X,0x%02X,0x%02X,0x%02X};\n' % (
     person_base[(0,'back')], person_base[(0,'front')], person_base[(1,'back')], person_base[(1,'front')]))
+src.append('const unsigned char marg_head = 0x%02X;\nconst unsigned char marg_prof_l = 0x%02X;\nconst unsigned char marg_prof_r = 0x%02X;\n' % (MARG_HEAD, MARG_PROF_L, MARG_PROF_R))
 src.append('const unsigned char trophy_tile = 0x%02X;\nconst unsigned char confetti_tile = 0x%02X;\nconst unsigned char ball_mid_tile = 0x%02X;\nconst unsigned char ball_big_tile = 0x%02X;\nconst unsigned char profile_base = 0x%02X;\n' % (TROPHY_TILE, CONFETTI_TILE, BALL_MID_TILE, BALL_BIG_TILE, PROFILE_BASE))
 with open(os.path.join(ROOT, 'src', 'assets_data.c'), 'w') as f:
     f.write('\n'.join(src))

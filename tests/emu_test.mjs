@@ -644,6 +644,17 @@ console.log('Margaux jouable et fatigue');
   for (let i = 0; i < 13; i++) { const n = AL.indexOf(code[i]); for (let k = 0; k < n; k++) h.tap('UP', 1, 1, 1); if (i < 12) h.tap('RIGHT', 1, 1, 1); }
   h.tap('START'); h.run(40);
   check(scr(h) === SS.COMP && h.peek('c_pl', 0) === 16 && h.peek('c_pl2', 0) === 7, 'code de reprise avec Margaux relu');
+  // tête propre à Margaux (cheveux longs, blonds, bouclés) en match
+  const m = boot(); startWith(m, { FMT: 3, P1: 16 }); allCpu(m); m.run(60);
+  const mh = m.peek('marg_head'), ml = m.peek('marg_prof_l');
+  const tl = oamTiles(m);
+  check([...tl].some((x) => (x >= mh && x < mh + 16) || x === ml || x === 0xFF), 'Margaux affichée avec sa propre chevelure');
+  // jamais au club nudiste : lieu sauté au menu
+  const n = boot(); n.poke('nude_unlocked', 1); toMenu(n);
+  n.poke('opt_val', 16, O.P1); n.poke('opt_val', 2, O.ENV);
+  const er = (() => { for (let i = 0; i < n.peek('nvis'); i++) if (n.peek('vis', i) === O.ENV) return i; return -1; })();
+  n.poke('cursor', er); n.tap('RIGHT'); n.run(5);
+  check(n.peek('opt_val', O.ENV) === 4, 'avec Margaux, le club nudiste est sauté (lieu suivant : court Margaux)');
 }
 {
   // fatigue : déplacement d'un joueur humain en début d'échange et après 20 frappes

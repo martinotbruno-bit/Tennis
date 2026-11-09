@@ -35,9 +35,9 @@ La version 1.0 tenait en NROM-256 (32 Ko, plein à 87 %). Il a fallu plus de pla
 
 | Banque | Contenu | Occupation |
 |---|---|---|
-| 7 (fixe, $C000) | Démarrage, NMI, primitives (sprites, VRAM, manettes, trampolines `bank_call` / `far_call`, enregistrement des ralentis), boucle principale, règles, codes, palettes, 17 personnages, noms des compétitions, échange des tuiles de personnages, son, bibliothèque cc65 | 13 552 |
+| 7 (fixe, $C000) | Démarrage, NMI, primitives (sprites, VRAM, manettes, trampolines `bank_call` / `far_call`, enregistrement des ralentis), boucle principale, règles, codes, palettes, 17 personnages, noms des compétitions, échange des tuiles de personnages, son, bibliothèque cc65 | 13 892 |
 | 0 | Moteur de match : physique, frappes, service, arbitrage, IA | 15 973 |
-| 1 | Écrans : titre, configuration, présentation, résultats, compétitions, levée de coupe, saisie de code, palmarès | 14 353 |
+| 1 | Écrans : titre, configuration, présentation, résultats, compétitions, levée de coupe, saisie de code, palmarès | 14 424 |
 | 2 | Motifs graphiques (8 Ko), copiés en CHR-RAM au démarrage | 8 192 |
 | 3 | Annexes du match : score et annonces du club nudiste, courts (4 lieux), public animé, pluie, ralentis, exercices, tutoriel | 9 899 |
 | 4 | Mode d'emploi | 3 581 |
@@ -102,7 +102,11 @@ Les tuiles de sprites 5 à 13 (auparavant libres) contiennent l'ombre, la poussi
 
 ### Margaux (17e personnage) et codes de reprise
 
-Margaux occupe l'index 16 : tuiles féminines communes, palette propre (peau $27, tenue rose clair $35, cheveux châtains $07), style FANTAISIE (9e style : amorties, lobs, montées au filet). Son nom fait 7 lettres :
+Margaux occupe l'index 16, avec le style FANTAISIE (9e style : amorties, lobs, montées au filet). Elle a les cheveux longs, blonds et bouclés :
+- **Tuiles** : la table de sprites n'avait que 18 tuiles libres ($0F, $EF à $FF). Seule la rangée de la tête (2 tuiles) lui est propre : 4 variantes de bras (attente, frappe armée, accompagnement, service) × 2 vues, plus 1 tête de profil commune aux deux images de course, soit 18 tuiles. Le corps reste celui des joueuses. `spr_person` remplace les deux premières entrées OAM après `spr_meta`, en échangeant gauche et droite en miroir. Les ralentis et tous les écrans en profitent.
+- **Couleurs** : peau $27, tenue rose clair $35, cheveux blonds $28 (ΔE ≥ 42 sur tous les courts). Sur le sable jaune ($28, $18 sous la pluie), `pal_set_player` passe les cheveux en blond clair $38 (ΔE 30). Comme la raquette, les chaussures et le liseré de jupe utilisent la même couleur, ils sont dorés. En double, la palette est celle de l'équipe : en partenaire, Margaux garde sa coiffure mais prend les couleurs du joueur 1 de l'équipe.
+- **Club nudiste** : Margaux n'y apparaît jamais. Le lieu est sauté au menu quand elle est choisie (et inversement), il est ignoré dans les réglages mémorisés, et un code qui l'associerait au club est refusé.
+- **Adversaires tirés au sort** : uniquement parmi les 16 personnages d'origine. Les anciens codes redonnent donc les mêmes tableaux. Son nom fait 7 lettres :
 - les écrans à colonnes étroites passent par `team_label` (« MARG » sur 4 lettres, « MX » sur 2 lettres pour ne pas se confondre avec MAYA « MA ») ;
 - en double, la présentation met le partenaire sur la ligne suivante.
 
@@ -315,7 +319,7 @@ Outils de mise au point :
 |---|---|
 | `tests/rules_test.c` | 42 vérifications des règles |
 | `tests/password_test.c` | 200 000 codes aléatoires en aller-retour ; 8,06 millions de codes altérés d'un signe, refusés à 99,98 % |
-| `tests/emu_test.mjs` | 153 vérifications : démarrage MMC1 et CHR-RAM, mode d'emploi, menus adaptatifs, mode en équipe (toujours en double, partenaire CPU ou manette 2), présentation, menu de pause, lancer du serveur du haut, balle ratée qui sort de l'écran, let, matchs complets (6 surfaces × 3 lieux × 3 conditions, double), ralentis, revanche, palmarès, 9 exercices (joueur robot via la manette), 5 compétitions (dont éliminations), double en compétition (dont à 2 joueurs humains), levée de coupe, court Margaux, déblocage et club nudiste (tenues échangées en CHR-RAM puis restaurées), reprise par code, vitesse du jeu (lent/normal/rapide, aucun appui perdu), coups gagnants nommés, smash sauté (réservé aux humains et au CPU Expert), musiques hors match (Margaux, finale) et silence en match, smash sauté du CPU Expert et dans les ralentis, ombres, poussière, arbitre, repère d'atterrissage, réglage SON, réglages mémorisés après « rallumage », Margaux (menu, présentation, abréviation MX, code de reprise), fatigue avec et sans l'option, 50 Hz |
+| `tests/emu_test.mjs` | 155 vérifications : démarrage MMC1 et CHR-RAM, mode d'emploi, menus adaptatifs, mode en équipe (toujours en double, partenaire CPU ou manette 2), présentation, menu de pause, lancer du serveur du haut, balle ratée qui sort de l'écran, let, matchs complets (6 surfaces × 3 lieux × 3 conditions, double), ralentis, revanche, palmarès, 9 exercices (joueur robot via la manette), 5 compétitions (dont éliminations), double en compétition (dont à 2 joueurs humains), levée de coupe, court Margaux, déblocage et club nudiste (tenues échangées en CHR-RAM puis restaurées), reprise par code, vitesse du jeu (lent/normal/rapide, aucun appui perdu), coups gagnants nommés, smash sauté (réservé aux humains et au CPU Expert), musiques hors match (Margaux, finale) et silence en match, smash sauté du CPU Expert et dans les ralentis, ombres, poussière, arbitre, repère d'atterrissage, réglage SON, réglages mémorisés après « rallumage », Margaux (menu, présentation, abréviation MX, code de reprise, chevelure propre, jamais au club nudiste), fatigue avec et sans l'option, 50 Hz |
 | `tools/contrast.py 25` | Contraste (ΔE ≥ 25) de chaque personnage avec chaque court, de jour, de nuit et sous la pluie ; balle ; tenue de Margaux face à toutes les autres tenues. Lancé par `make test` |
 | `tools/check_texts.py` | Relecture des textes : caractères présents dans la police, colonnes, lignes du mode d'emploi, annonces de 14 caractères au plus |
 

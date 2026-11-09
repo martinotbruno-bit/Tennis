@@ -49,7 +49,10 @@ u8 __fastcall__ comp_build(u8 unused)
     c_n = 8;
     if (c_type == CT_LEAGUE) c_n = 6;
     if (c_type == CT_CUSTOM && !(c_opts & CO_SIZE8)) c_n = 4;
-    for (i = 0; i < NCHARS; ++i) if (i != c_pl[0] && (!c_dbl || i != c_pl2[0])) pool[np++] = i;
+    /* adversaires tirés parmi les 16 personnages d'origine : Margaux (16) est
+       la joueuse que l'on choisit, jamais une adversaire tirée au sort ; les
+       anciens codes redonnent ainsi exactement les mêmes tableaux */
+    for (i = 0; i < 16; ++i) if (i != c_pl[0] && (!c_dbl || i != c_pl2[0])) pool[np++] = i;
     rs_seed(c_seed, 0x33);
     for (i = np - 1; i > 0; --i) { j = (u8)(rn() % (u8)(i + 1)); t = pool[i]; pool[i] = pool[j]; pool[j] = t; }
     c_rt[0] = 1;

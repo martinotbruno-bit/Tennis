@@ -4,6 +4,7 @@
 extern const unsigned char logo_tiles[40];
 extern const unsigned char bigball_tiles[16];
 extern const unsigned char person_base[4];
+extern const unsigned char marg_head, marg_prof_l, marg_prof_r;
 extern const unsigned char trophy_tile, confetti_tile, ball_mid_tile, ball_big_tile, profile_base;
 /* banque du moteur de jeu (BANK0) */
 extern const unsigned char * const court_nt_rle[5];

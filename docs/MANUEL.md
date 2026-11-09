@@ -56,7 +56,7 @@ La ligne **STYLE** indique le style de jeu de l'adversaire choisi.
 | Zoé, Tom | Offensif |
 | Hugo, Noah | Tactique (lobs, amorties) |
 | Emma, Sara | Placement (précision) |
-| **Margaux** | Fantaisie : varie tout, adore l'amortie et le lob, monte volontiers au filet. Tenue rose clair, la seule de cette couleur, choisie pour rester visible sur tous les courts, y compris le sien |
+| **Margaux** | Fantaisie : varie tout, adore l'amortie et le lob, monte volontiers au filet. Cheveux longs, blonds et bouclés ; tenue rose clair, la seule de cette couleur, choisie pour rester visible sur tous les courts, y compris le sien. Elle ne joue jamais au club nudiste, et c'est toujours vous qui la choisissez : elle n'est jamais tirée au sort comme adversaire |
 
 Avant chaque match, un **écran de présentation** rappelle l'épreuve, les joueurs, leur niveau et leur style, la surface, le lieu, les conditions et le format. **A** lance le match.
 

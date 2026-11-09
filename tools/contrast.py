@@ -43,6 +43,8 @@ for si, (univ, court, lines, net) in enumerate(sp):
         if cond == 'pluie': u, c = darken(univ), darken(court)
         if cond == 'nuit': u = darken(univ)
         for ci, (skin, outfit, dark) in enumerate(cp):
+            if names[ci] == 'MARGAUX' and surf[si] == 'PLAGE':
+                dark = 0x38     # cheveux blond clair sur le sable (gfx.c, pal_set_player)
             for part, col in (('peau', skin), ('tenue', outfit), ('sombre', dark)):
                 for bgn, bg in (('court', c), ('abords', u)):
                     d = dE(col, bg)

@@ -28,7 +28,7 @@ static const u8 char_pal[NCHARS][3] = {
     { 0x17, 0x31, 0x0F },   /* SARA : bleu clair */
     { 0x07, 0x2C, 0x0F },   /* NOAH : cyan */
     { 0x27, 0x07, 0x0F },   /* INES : chocolat (idem) */
-    { 0x27, 0x35, 0x07 },   /* MARGAUX : rose clair, cheveux châtains */
+    { 0x27, 0x35, 0x28 },   /* MARGAUX : rose clair, cheveux blonds (blond clair $38 sur la plage) */
 };
 const char * const style_name[NSTYLES] = {
     "EQUILIBRE", "FOND DE COURT", "PUISSANCE", "FILET",
@@ -120,6 +120,8 @@ void pal_set_player(u8 slot, u8 c)
     pal_buf[b + 1] = char_pal[c][0];
     pal_buf[b + 2] = char_pal[c][1];
     pal_buf[b + 3] = char_pal[c][2];
+    /* Margaux sur le sable jaune ($28, $18 sous la pluie) : cheveux blond clair */
+    if (c == 16 && (pal_buf[1] == 0x28 || pal_buf[1] == 0x18)) pal_buf[b + 3] = 0x38;
     pal_dirty = 1;
 }
 
@@ -134,6 +136,10 @@ void spr_begin(void) { oam_i = 0; }
 static s16 run_x[NCHARS], run_y[NCHARS];
 static u8 run_dir[NCHARS], run_pose[NCHARS];
 #pragma bss-name(pop)
+
+/* variante de bras de la tête de Margaux par pose : attente, frappe armée,
+   accompagnement, service */
+static const u8 marg_var[8] = { 0, 0, 0, 1, 2, 3, 0, 0 };
 
 void spr_person(s16 x, s16 y, u8 c, u8 front, u8 pose, u8 flip, u8 pal)
 {
@@ -168,6 +174,15 @@ void spr_person(s16 x, s16 y, u8 c, u8 front, u8 pose, u8 flip, u8 pal)
     meta_tile = tile;
     meta_attr = (u8)(flip ? (pal | 0x40) : pal);
     spr_meta();
+    if (c == 16) {
+        /* Margaux : rangée de la tête remplacée par ses cheveux longs, blonds
+           et bouclés (tuiles propres) ; le corps reste celui des joueuses */
+        u8 o = (u8)(oam_i - 24), l, r;
+        if (run_dir[c] && (pose == POSE_RUN1 || pose == POSE_RUN2)) { l = marg_prof_l; r = marg_prof_r; }
+        else { l = (u8)(marg_head + (front << 3) + (marg_var[pose] << 1)); r = (u8)(l + 1); }
+        if (flip) { oam_buf[o + 1] = r; oam_buf[o + 5] = l; }
+        else { oam_buf[o + 1] = l; oam_buf[o + 5] = r; }
+    }
 }
 
 void txt_at(u8 x, u8 y, const char *s)

@@ -231,7 +231,7 @@ static void title_screen(void)
         opts_loaded = 1;
         if (far_call(BANK_COMP, (void *)so_load, 0)) {
             for (i = 0; i < NOPT; ++i) if (opt_val[i] >= opt_max[i]) opt_val[i] = 0;
-            if (opt_val[O_ENV] == ENV_NUDE && !nude_unlocked) opt_val[O_ENV] = 0;
+            if (opt_val[O_ENV] == ENV_NUDE && (!nude_unlocked || opt_val[O_P1] == 16 || opt_val[O_P2] == 16)) opt_val[O_ENV] = 0;
         }
         snd_set(opt_val[O_SOUND]);
     }
@@ -857,8 +857,12 @@ void screens_tick(void)
             if (pad1_new & PAD_RIGHT) v = (u8)(v + 1 == i ? 0 : v + 1);
             else v = (u8)(v ? v - 1 : i - 1);
             /* le club nudiste n'apparaît qu'une fois débloqué */
-            if (o == O_ENV && v == ENV_NUDE && !nude_unlocked)
+            /* Margaux ne va jamais au club nudiste : ni ce lieu avec elle, ni
+               elle dans ce lieu */
+            if (o == O_ENV && v == ENV_NUDE && (!nude_unlocked || opt_val[O_P1] == 16 || opt_val[O_P2] == 16))
                 v = (u8)((pad1_new & PAD_RIGHT) ? ENV_NUDE + 1 : ENV_NUDE - 1);
+            if ((o == O_P1 || o == O_P2) && v == 16 && opt_val[O_ENV] == ENV_NUDE)
+                v = (u8)((pad1_new & PAD_RIGHT) ? 0 : 15);
             opt_val[o] = v;
             sfx_menu_move();
             if (o == O_MODE || o == O_COMP || o == O_EX || (o == O_TYPE && opt_val[O_MODE] == MODE_COMP)) { menu_screen(); break; }

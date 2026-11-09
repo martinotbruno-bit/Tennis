@@ -130,5 +130,7 @@ pu8 pw_decode(const char *in, PwData *d)
     if (d->hum2 && !d->doubles) return 0;
     if (d->type > 4 || d->surf > 5 || d->cond > 2 || d->lvl > 2) return 0;
     if (d->doubles && d->partner == d->chr) return 0;
+    /* Margaux ne joue jamais au club nudiste */
+    if (d->env == 3 && (d->chr == 16 || (d->doubles && d->partner == 16))) return 0;
     return 1;
 }

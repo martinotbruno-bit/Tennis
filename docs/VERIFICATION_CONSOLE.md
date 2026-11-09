@@ -33,7 +33,7 @@ Le jeu a été testé uniquement sur émulateur. Cette liste sert à le vérifie
 | 2.1 | Ouvrir le mode d'emploi, parcourir les 8 pages | Aucune ligne coupée ; GAUCHE/DROITE change de page | ☐ |
 | 2.2 | JOUER > configuration | Lignes lisibles ; le personnage animé est à droite du titre et ne masque aucun texte | ☐ |
 | 2.3 | Mode COMPETITION, type PERSONNALISE, jeu DOUBLE | 19 lignes, puis STYLE et l'aide en bas, sans chevauchement | ☐ |
-| 2.4 | JOUEUR 1 : faire défiler jusqu'à MARGAUX | MARGAUX apparaît après INES, en tenue rose clair | ☐ |
+| 2.4 | JOUEUR 1 : faire défiler jusqu'à MARGAUX | MARGAUX apparaît après INES : cheveux longs, blonds et bouclés, tenue rose clair | ☐ |
 | 2.5 | LIEU : COURT MARGAUX | La valse « boîte à musique » remplace le thème du titre | ☐ |
 | 2.6 | SON : BRUITAGES SEULS, puis AUCUN, puis MUSIQUE + SONS | La musique s'arrête, puis tout se tait, puis la musique repart | ☐ |
 
@@ -65,7 +65,7 @@ Pour chaque ligne, lancez un match et regardez l'écran pendant une dizaine de s
 | 4.3 | Salle / dur / jour | Pas de pluie possible en salle | ☐ |
 | 4.4 | Club / plage / jour | Balle **blanche** sur le sable jaune ; poussière au rebond | ☐ |
 | 4.5 | Stade / glace / nuit | Court éclairé, décor assombri sans noir complet | ☐ |
-| 4.6 | Court Margaux (toutes surfaces) | Court rose, cœurs, fleurs et étoiles. Margaux (tenue rose clair) reste bien visible sur le rose | ☐ |
+| 4.6 | Court Margaux (toutes surfaces) | Court rose, cœurs, fleurs et étoiles. Margaux (tenue rose clair, cheveux blonds) reste bien visible sur le rose ; sur la plage, ses cheveux sont blond clair | ☐ |
 | 4.7 | Personnages proches | MAYA et HUGO, EMMA et NOAH, TOM (crème) et MARGAUX (rose clair) se distinguent en match | ☐ |
 
 ## 5. Double et deux manettes
