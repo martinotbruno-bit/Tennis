@@ -8,14 +8,16 @@ Ce manuel est aussi intégré au jeu : à l'écran titre, choisissez **MODE D'EM
 
 ## 0. Générique de lancement
 
-À l'allumage, un générique d'une vingtaine de secondes, sur une fanfare, rappelle à tous l'importance de l'événement :
+À l'allumage, un générique d'une trentaine de secondes rappelle à tous l'importance de l'événement… et tourne un peu mal. La fanfare commence majestueuse, puis déraille : fausses notes, accélération, arpèges affolés, glissade jusqu'au grave, silence gêné et « pouet » final.
 1. « BRUNO MARTINOT PRESENTS » ;
 2. « IN ASSOCIATION WITH AUGUSTIN MARTINOT — CHIEF EXECUTIVE SON » ;
 3. « A ROYAL MARTINOT PRODUCTION — FILMED IN GLORIOUS 8-BIT TECHNICOLOR » ;
-4. la critique : cinq étoiles, « MAGNIFIQUE. » (Bruno Martinot), « THE GREATEST TENNIS GAME EVER MADE IN THIS HOUSE. » (Augustin Martinot), « WINNER - BEST GAME 2026 (CATEGORY: OUR LIVING ROOM) » ;
-5. la révélation du logo : chaque lettre géante tombe avec un « boum », l'or scintille, des étoiles brillent, les confettis tombent sous les applaudissements, puis « LIMITED EDITION : 1 COPY » et « ALL RIGHTS RESERVED (MOSTLY BY AUGUSTIN) ».
+4. « LOADING PRESTIGE… » : la barre de chargement monte à 99 %, hésite, puis grimpe à **117 %** et déborde de son cadre (« OVERLOAD ! ») ;
+5. la critique : cinq étoiles, « MAGNIFIQUE. » (Bruno Martinot), « THE GREATEST TENNIS GAME EVER MADE IN THIS HOUSE. » (Augustin Martinot), « WINNER - BEST GAME 2026 (CATEGORY: OUR LIVING ROOM) » ;
+6. les mentions légales : « NO TENNIS BALLS WERE HARMED DURING PRODUCTION », « RATED A FOR AUGUSTIN », « POWERED BY 1.79 MHZ OF PURE LUXURY », « OFFICIAL SPONSOR : THE FAMILY FRIDGE », « 0 % CALORIES » ;
+7. la révélation du logo : chaque lettre géante tombe avec un « boum », l'or scintille, confettis… et l'ovation se réduit à un seul « *CLAP* ». Puis une balle de tennis fait tomber le N de MARTINOT ; le stagiaire arrive, s'excuse (« OOPS. SORRY. ») et le remet en place : « (PRESTIGE RESTORED) ».
 
-**N'importe quel bouton** passe directement à l'écran titre. Le réglage SON mémorisé s'applique dès le générique.
+**Passer le générique** : au premier bouton, le jeu se vexe (« ARE YOU SURE? THIS IS VERY PRESTIGIOUS. ») ; au second, il cède (« FINE. ») et l'écran titre apparaît. Le réglage SON mémorisé s'applique dès le générique.
 
 ## 1. Écran titre
 

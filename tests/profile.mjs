@@ -30,7 +30,7 @@ function sym(pc, bank) {
   return r < 0 ? '?' : t[r][1];
 }
 const e = new Emu(rom);
-e.run(40); e.tap('START', 1, 1, 0); e.run(30);   // générique passé
+e.run(40); e.tap('START', 1, 1, 0); e.run(4); e.tap('START', 1, 1, 0); e.run(40);   // générique passé
 e.tap('START'); e.run(10); e.poke('opt_val', dbl, 2); e.poke('opt_val', 3, 9); e.tap('START'); e.run(10); e.tap('A'); e.run(10);
 const c = e.addr('cfg'); for (let i = 0; i < 4; i++) e.nes.cpu.mem[c + 2 + i] = 2;
 if (process.env.NOREPLAY) e.nes.cpu.mem[c + 19] = 0;

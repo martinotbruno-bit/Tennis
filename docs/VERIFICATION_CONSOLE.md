@@ -19,8 +19,8 @@ Le jeu a été testé uniquement sur émulateur. Cette liste sert à le vérifie
 
 | # | Vérification | Attendu | OK ? |
 |---|---|---|---|
-| 1.1 | Allumer la console | Le générique démarre (« BRUNO MARTINOT PRESENTS », fanfare), puis l'écran titre « ROYAL MARTINOT » après une vingtaine de secondes ; sans image brouillée | ☐ |
-| 1.1 b | Allumer, puis appuyer sur un bouton | Le générique s'arrête et l'écran titre apparaît aussitôt | ☐ |
+| 1.1 | Allumer la console | Le générique démarre (« BRUNO MARTINOT PRESENTS », fanfare), barre à 117 %, mentions légales, lettre N tombée puis remise par le stagiaire, puis l'écran titre « ROYAL MARTINOT » après une trentaine de secondes ; sans image brouillée | ☐ |
+| 1.1 b | Allumer, puis appuyer deux fois sur un bouton | Au 1er appui : « ARE YOU SURE? THIS IS VERY PRESTIGIOUS. » ; au 2e : « FINE. » puis l'écran titre | ☐ |
 | 1.2 | Musique du titre | Mélodie jouée en boucle, sans grésillement ni note bloquée | ☐ |
 | 1.3 | HAUT/BAS dans le titre | L'étoile passe d'une ligne à l'autre avec un petit « bip » | ☐ |
 | 1.4 | Attendre sans toucher | La démo CPU contre CPU démarre au bout d'environ **20 secondes**. Chronométrez-la : c'est un bon test de vitesse, voir § 8 | ☐ |

@@ -11,7 +11,7 @@ Jeu de tennis 8 bits original pour **NES / Famicom** (NTSC et PAL), sur cartouch
 - 9 exercices d'entraînement dont un tutoriel ;
 - service canon, frappe parfaite, smash sauté, coups gagnants annoncés, vitesse du jeu réglable (lent, normal, rapide), réglage du son ;
 - ombres, poussière et éclaboussures, arbitre de chaise, réglages mémorisés ;
-- générique de lancement d'une modestie exemplaire ;
+- générique de lancement d'une modestie exemplaire (fanfare qui déraille, prestige chargé à 117 %) ;
 - récapitulatif du score après chaque jeu et chaque set, fondus entre les écrans ;
 - ralentis, palmarès et mode d'emploi intégré.
 

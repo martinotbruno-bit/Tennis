@@ -16,7 +16,7 @@ const MODE = { P1: 0, P2: 1, TEAM: 2, COMP: 3, TRAIN: 4, DEMO: 5 };
 const CFG = { CTRL: 2, LEVEL: 10, GAMES: 17, REPLAYS: 19 };
 
 // démarrage : le générique de lancement est passé avec START, puis écran titre
-function boot() { const e = new Emu(rom); e.run(40); e.tap('START', 1, 1, 0); e.run(30); return e; }
+function boot() { const e = new Emu(rom); e.run(40); e.tap('START', 1, 1, 0); e.run(4); e.tap('START', 1, 1, 0); e.run(40); return e; }
 const scr = (e) => e.peek('scr_state');
 const app = (e) => e.peek('app_state');
 function toMenu(e) { e.tap('START'); e.run(10); }
@@ -72,18 +72,27 @@ console.log('Générique de lancement');
   const e = new Emu(rom); e.run(100);
   const tx = (x, y, n) => e.text(x, y, n).replace(/\0/g, ' ');
   check(e.peek('app_state') === 3 && e.peek('music_cur') === 9 && tx(9, 11, 14) === 'BRUNO MARTINOT', 'générique : BRUNO MARTINOT PRESENTS, fanfare');
-  let seen = new Set(), booms = 0, prevT = 0;
+  let seen = new Set();
   const ok = runUntil(e, () => {
     if (tx(7, 12, 17) === 'AUGUSTIN MARTINOT') seen.add('augustin');
+    if (tx(13, 14, 3) === '117') seen.add('117 %');
     if (tx(10, 7, 11) === 'MAGNIFIQUE.') seen.add('critique');
-    if (tx(4, 18, 24) === 'LIMITED EDITION : 1 COPY') seen.add('edition');
+    if (tx(6, 10, 20) === 'RATED A FOR AUGUSTIN') seen.add('mentions');
+    if (tx(13, 16, 6) === '*CLAP*') seen.add('clap');
+    if (tx(10, 26, 12) === 'OOPS. SORRY.') seen.add('stagiaire');
+    if (tx(6, 26, 19) === '(PRESTIGE RESTORED)') seen.add('restauré');
     return e.peek('app_state') === 0;
-  }, 1600);
+  }, 2400);
   e.run(30);
-  check(ok && seen.size === 3 && e.peek('scr_state') === 0 && e.text(10, 16, 5) === 'JOUER', `générique complet (${[...seen].join(', ')}) puis écran titre`);
-  const f = new Emu(rom); f.run(60); f.tap('B', 1, 1, 0);
-  let n = 0; while (f.peek('app_state') !== 0 && n < 30) { f.run(1); n++; }
-  check(f.peek('app_state') === 0 && n < 15, `un bouton passe le générique (${n + 1} trames)`);
+  check(ok && seen.size === 7 && e.peek('scr_state') === 0 && e.text(10, 16, 5) === 'JOUER', `générique complet (${[...seen].join(', ')}) puis écran titre`);
+  // le N de MARTINOT revient bien à sa place (colonne 18) : même tuile que dans le logo de l'écran titre
+  check(e.nes.ppu.vramMem[0x2000 + 4 * 32 + 18] === e.peek('logo_tiles', 11 * 4), 'logo complet après le générique');
+  // bouton « passer » vexé : demande de confirmation, puis « FINE. » au second appui
+  const f = new Emu(rom); f.run(60); f.tap('B', 1, 1, 2);
+  const asked = f.text(5, 26, 21) === 'ARE YOU SURE? THIS IS' && f.peek('app_state') === 3;
+  f.tap('A', 1, 1, 0);
+  let n = 0; while (f.peek('app_state') !== 0 && n < 40) { f.run(1); n++; }
+  check(asked && f.peek('app_state') === 0 && n < 25, `passer : « ARE YOU SURE? » puis « FINE. » (${n + 1} trames)`);
 }
 
 console.log('Démarrage et cartouche MMC1');
@@ -658,7 +667,7 @@ const msgText = (e) => { let t = ''; for (let i = 0; i < 14; i++) t += String.fr
   for (let a = 0x6000; a < 0x8000; a++) f.nes.cpu.mem[a] = e.nes.cpu.mem[a];
   f.run(40);
   const sndIntro = f.peek('snd_mode');               // réglage SON appliqué dès le générique
-  f.tap('START', 1, 1, 0); f.run(30);
+  f.tap('START', 1, 1, 0); f.run(4); f.tap('START', 1, 1, 0); f.run(40);
   check(f.peek('opt_val', O.P1) === 5 && f.peek('opt_val', O.SURF) === 3 && f.peek('opt_val', O.GSPEED) === 2
     && f.peek('opt_val', O.ENV) === 4 && f.peek('snd_mode') === 1 && sndIntro === 1, 'derniers réglages retrouvés au démarrage (cartouche à pile), SON dès le générique');
   check(f.peek16('sv', 4) === e.peek16('sv', 4), 'palmarès conservé à côté des réglages');
