@@ -373,10 +373,10 @@ static void do_hit(u8 p, u8 pad, u8 btn, u8 power, u8 spread)
         depth = (s16)(22 - T); speed = 40; grav = 5; bspin = SPIN_DROP; spread += T; last_shot = SH_DROP;
     } else if (btn == PAD_B) {                          /* coupé */
         depth = 66; speed = 36; grav = 4; bspin = SPIN_SLICE; last_shot = SH_SLICE;
-    } else if (pad & PAD_UP) {                          /* frappe à plat appuyée */
-        depth = 78; speed = (u8)(46 + power); grav = 5; spread += 4; last_shot = SH_FLAT;
-    } else if (pad & PAD_DOWN) {                        /* croisé court */
-        depth = 46; speed = (u8)(36 + (power >> 1)); grav = 8; bspin = SPIN_TOP; last_shot = SH_SHORT;
+    } else if (pad & PAD_UP) {                          /* à plat : tendue, rapide, risquée */
+        depth = 78; speed = (u8)(54 + power); grav = 4; spread += 7; last_shot = SH_FLAT;
+    } else if (pad & PAD_DOWN) {                        /* croisé court : en angle, carré de service */
+        depth = 30; speed = (u8)(34 + (power >> 1)); grav = 9; bspin = SPIN_TOP; spread += 3; last_shot = SH_SHORT;
     } else {                                            /* lifté */
         depth = 70; speed = (u8)(40 + power); grav = 7; bspin = SPIN_TOP; last_shot = SH_DRIVE;
     }
@@ -396,6 +396,9 @@ static void do_hit(u8 p, u8 pad, u8 btn, u8 power, u8 spread)
     else if (pad & PAD_RIGHT) tx = r - hit_margin;
     else tx = CENTER_X + ((CENTER_X - PX(plx[p])) >> 1);
     if (depth < 30 && !(pad & (PAD_LEFT | PAD_RIGHT))) tx = PX(plx[p]);
+    /* croisé court : près de la ligne de côté (croisé, sauf direction) */
+    if (last_shot == SH_SHORT)
+        tx = ((pad & PAD_LEFT) || (!(pad & PAD_RIGHT) && PX(plx[p]) > CENTER_X)) ? l + 6 : r - 6;
     spread = (u8)(spread + (power >> 2));
     if (spread > 100) spread = 100;
     tx += rnd_spread(spread);

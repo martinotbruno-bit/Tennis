@@ -1,10 +1,17 @@
-# Royal Martinot — Rapport de réalisation (version 2.21)
+# Royal Martinot — Rapport de réalisation (version 2.22)
 
 Comme l'exige le CDC (§ 17.5), ce rapport distingue ce qui est **réalisé**, **testé**, **validé sur matériel réel**, **validé uniquement en émulation**, **dépendant d'une extension**, et les **limitations restantes**.
 
 > **Validation matérielle : aucune.** Aucun test n'a été fait sur console réelle (NES, Famicom, PAL, cartouche MMC1). Toutes les validations ont eu lieu en émulation (jsnes) et par des tests unitaires sur PC. Les critères « vérifié sur console physique » (CDC § 2.1, 15.4, 16.A) **ne sont pas remplis**. Ce point ne peut pas être traité dans l'environnement de développement utilisé.
 
 ## 1. Évolutions
+
+### Version 2.22
+
+| Demande | Réalisation |
+|---|---|
+| Vrai croisé court (A + BAS) | Le coup part en angle et tombe dans le carré de service près de la ligne de côté (profondeur 30 au lieu de 46, lift plus marqué). Il sert à sortir l'adversaire du court ou à passer un joueur au filet, avec un risque de sortie sur le côté. Mesuré avec le joueur robot : toutes les balles qui rebondissent tombent en angle dans le carré (14 sur 14), contre aucune avant. Il compte aussi pour la frappe parfaite |
+| Frappe à plat (A + HAUT) plus tranchée | Plus rapide (54 au lieu de 46 en vitesse de base) et plus tendue (gravité 4 au lieu de 5), mais moins précise (écart + 7 au lieu de + 4). Vitesse mesurée : 121 contre 97 pour le lifté (105 avant). L'équilibre des matchs CPU contre CPU est inchangé (0,88 faute et 0,12 coup gagnant par point, avant comme après) |
 
 ### Version 2.21
 
@@ -205,12 +212,12 @@ Pour loger ce contenu, la cartouche passe de NROM (32 Ko) à **MMC1** : 128 Ko d
 |---|---|
 | Règles (`rules_test`) | 42/42 |
 | Codes (`password_test`) | 200 000/200 000 aller-retour (format v3), ancien code v2 accepté, Margaux codée, Margaux au club nudiste refusée ; 99,98 % des codes altérés d'un signe refusés |
-| Émulateur (`emu_test`) | 213/213 vérifications (environ 21 min) |
+| Émulateur (`emu_test`) | 215/215 vérifications (environ 21 min) |
 | Profil CPU, simple, 6 000 trames | 0 trame d'échange en dépassement |
 | Relecture des textes (`check_texts.py`) | 0 problème |
 | Contraste (`contrast.py 25`) | 0 paire sous ΔE 25 (personnages, courts, balle, tenues) |
 | Profil CPU, double, 6 000 trames | 27 trames d'échange en dépassement (0,45 %), sans défaut d'image |
-| Compilation | Reproductible : SHA-256 `8758f2ccc3d7f1674edadd288123d53bb5e413dbe7801e613774fa0a4ba0cc95` sur deux compilations propres |
+| Compilation | Reproductible : SHA-256 `e896ed8f9b89b55b25d52a5fedccafd3cca942c05a72326632784b57780c2ce8` sur deux compilations propres |
 
 ## 3. Conformité par section du CDC
 

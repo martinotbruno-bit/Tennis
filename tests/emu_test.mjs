@@ -867,6 +867,29 @@ console.log('Margaux jouable et fatigue');
   check(sweat, 'goutte de sueur au-dessus des joueurs fatigués');
 }
 
+{
+  // A + HAUT : à plat nettement plus rapide que le lifté ; A + BAS : croisé
+  // court en angle, dans le carré de service près de la ligne de côté
+  const play = (dir) => {
+    const e = boot(); startWith(e, { MODE: MODE.TRAIN, EX: 2, COUNT: 0 });
+    const shots = []; let cur = null, pr = 0, pb = 0;
+    for (let n = 0; n < 60 * 90 && shots.length < 16; n++) {
+      botStep(e, dir ? ['A', dir] : ['A']); e.run(1);
+      const r = e.peek('rally_hits'), h = e.peek('hitter'), b = e.peek('bounces');
+      if (r !== pr && h === 0) { if (cur) shots.push(cur); cur = { v: Math.hypot(e.peekS16('bvx'), e.peekS16('bvy')), x: null, y: null }; }
+      if (cur && b === 1 && pb === 0 && h === 0 && cur.x === null) { cur.x = e.peekS16('bx') >> 6; cur.y = e.peekS16('by') >> 6; }
+      pr = r; pb = b;
+    }
+    e.releaseAll();
+    return shots;
+  };
+  const avg = (s) => s.reduce((a, x) => a + x.v, 0) / (s.length || 1);
+  const lift = play(''), flat = play('UP'), short = play('DOWN');
+  const landed = short.filter((s) => s.x !== null), angle = landed.filter((s) => s.y >= 87 && s.y <= 132 && (s.x < 92 || s.x > 164));
+  check(avg(flat) > avg(lift) * 1.15, `à plat nettement plus rapide que le lifté (${avg(flat).toFixed(0)} contre ${avg(lift).toFixed(0)})`);
+  check(landed.length >= 5 && angle.length >= landed.length * 0.7, `croisé court : ${angle.length}/${landed.length} balles en angle dans le carré de service`);
+}
+
 console.log('Service canon');
 {
   // frappe A k trames après le lancer : seules 2 trames consécutives (le sommet) donnent un service canon

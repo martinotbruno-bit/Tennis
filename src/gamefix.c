@@ -233,7 +233,7 @@ void serve_fb(s16 vz)
 u8 perfect_hit(u8 p, s16 dx)
 {
     u8 t = (u8)(p & 1), r = 0;
-    if (bounces == 0 || (last_shot != SH_DRIVE && last_shot != SH_FLAT && last_shot != SH_SLICE)) return 0;
+    if (bounces == 0 || (last_shot != SH_DRIVE && last_shot != SH_FLAT && last_shot != SH_SLICE && last_shot != SH_SHORT)) return 0;
     if (cfg.ctrl[p] != CTRL_CPU) ++st_ptry[t];
     /* balle à côté du corps : ni collée (< 5 px), ni en extension (> 14 px) ;
        la frappe part dès que la balle entre dans la zone, sa position en
