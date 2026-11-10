@@ -114,6 +114,23 @@ console.log('Générique de lancement');
   check(cnt === 0 && worst === 0, `générique : les ${score('mus_intro_mel').length} notes de la mélodie et ${score('mus_intro_bass').length} de la basse tombent à la trame près (écart max ${worst})`);
 }
 
+{
+  // aucune écriture de palette pendant que l'image se dessine (rendu coupé,
+  // la NES afficherait la couleur écrite : traits de couleur aux transitions)
+  const e = new Emu(rom), ppu = e.nes.ppu, mm = e.nes.mmap, w = mm.regWrite.bind(mm), ld = mm.load.bind(mm);
+  let latch = 0, hi = 0, adr = 0, bad = 0;
+  mm.load = (a) => { if (a === 0x2002) latch = 0; return ld(a); };
+  mm.regWrite = (a, v) => {
+    if (a === 0x2006) { if (!latch) { hi = v; latch = 1; } else { adr = ((hi & 0x3F) << 8) | v; latch = 0; } }
+    if (a === 0x2007) { if (adr >= 0x3F00 && ppu.scanline >= 21 && ppu.scanline <= 260) bad++; adr = (adr + 1) & 0x3FFF; }
+    return w(a, v);
+  };
+  e.run(1300); e.tap('START'); e.run(40); e.tap('DOWN'); e.run(3);
+  for (let i = 0; i < 6; i++) { e.tap('RIGHT'); e.run(12); }
+  e.tap('UP'); e.run(3); e.tap('START'); e.run(100); e.tap('A'); e.run(200);
+  check(bad === 0, `générique, menus, transitions : palette toujours écrite hors de l'affichage (${bad} écriture(s) fautive(s))`);
+}
+
 console.log('Démarrage et cartouche MMC1');
 {
   const e = boot();
@@ -314,10 +331,13 @@ console.log('Revanche et palmarès');
   allCpu(e);
   runUntil(e, () => app(e) === AS.SCREENS, 60 * 60 * 25); e.run(20);
   check(scr(e) === SS.RESULTS && spOk(e), 'second match enchaîné terminé');
-  e.tap('B'); e.run(5); e.tap('B'); e.run(5);
-  e.tap('DOWN'); e.tap('DOWN'); e.tap('A'); e.run(10);
+  // chaque écran : attendre qu'il soit allumé avant d'appuyer (pendant un
+  // fondu, la boucle principale ne lit pas les manettes)
+  const lit = (st) => runUntil(e, () => scr(e) === st && e.peek('ppu_mask') !== 0 && e.peek('fade_lvl') === 0, 120);
+  e.tap('B'); lit(SS.MENU); e.tap('B'); lit(SS.TITLE);
+  e.tap('DOWN'); e.tap('DOWN'); e.tap('A'); lit(SS.PALMARES); e.run(2);
   check(scr(e) === SS.PALMARES && e.text(3, 4, 5) === 'JOUES', 'écran palmarès');
-  e.tap('RIGHT'); e.run(5); e.tap('RIGHT'); e.run(5);
+  e.tap('RIGHT'); e.run(8); e.tap('RIGHT'); e.run(8);
   check(e.text(3, 3, 12) === "RECORDS D'EN", "page des records d'entraînement");
 }
 

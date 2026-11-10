@@ -389,11 +389,19 @@ _ppu_off:
 
 ; void ppu_on(void) : active fond + sprites (y compris colonne de gauche)
 _ppu_on:
-    lda #%00011110
-    sta _ppu_mask
+    ; La palette s'écrit dans le VBlank : rendu coupé, la NES affiche la
+    ; couleur pointée par l'adresse VRAM quand elle est dans la palette ;
+    ; l'écrire pendant que l'image se dessine faisait des traits de couleur
+    ; à chaque allumage d'écran (générique, transitions).
+    lda _ppu_mask
+    beq @off
+    lda #1              ; écran déjà allumé : la NMI enverra la palette
+    sta _pal_dirty
+    rts
+@off:
+    jsr _wait_frame     ; début du VBlank (rendu coupé : la NMI ne fait que le son)
     lda #CTRL_VAL
     sta PPUCTRL
-    ; la palette sera envoyée par la NMI ; on force aussi l'envoi maintenant
     lda #$3F
     sta PPUADDR
     lda #$00
@@ -415,6 +423,9 @@ _ppu_on:
     sta PPUADDR
     sta PPUSCROLL
     sta PPUSCROLL
+    sta _pal_dirty      ; palette déjà envoyée
+    lda #%00011110      ; la NMI suivante active le rendu
+    sta _ppu_mask
     jmp _wait_frame
 
 ; void vram_adr(unsigned int adr) — rendu coupé uniquement
