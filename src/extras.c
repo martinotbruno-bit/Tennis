@@ -232,6 +232,7 @@ void rp_play(void)
         k = (u8)(a >> 5);           /* saut enregistré (j/2) : hauteur j²/16 */
         spr_person(e[4 + p * 3], (s16)e[5 + p * 3] - ((k * k) >> 2), cfg.chr[p], (u8)((a >> 4) & 1), (u8)(a & 7), (u8)((a >> 3) & 1), (u8)(p & 1));
     }
+    ump_draw();                      /* l'arbitre reste sur sa chaise pendant le ralenti */
     spr_end();
     /* demi-vitesse : chaque trame enregistrée est montrée deux fois */
     rp_slow ^= 1;

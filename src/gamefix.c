@@ -10,7 +10,6 @@
 
 #pragma static-locals(on)
 
-#define CHAIR_SY 112     /* haut de la chaise d'arbitre (tools/gen_assets.py)  */
 u8 ump_arm;              /* 1 : faute ou balle dehors, l'arbitre tend le bras */
 
 extern u8 b_netcord;

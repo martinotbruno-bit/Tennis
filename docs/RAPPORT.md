@@ -1,10 +1,18 @@
-# Royal Martinot — Rapport de réalisation (version 2.22)
+# Royal Martinot — Rapport de réalisation (version 2.23)
 
 Comme l'exige le CDC (§ 17.5), ce rapport distingue ce qui est **réalisé**, **testé**, **validé sur matériel réel**, **validé uniquement en émulation**, **dépendant d'une extension**, et les **limitations restantes**.
 
 > **Validation matérielle : aucune.** Aucun test n'a été fait sur console réelle (NES, Famicom, PAL, cartouche MMC1). Toutes les validations ont eu lieu en émulation (jsnes) et par des tests unitaires sur PC. Les critères « vérifié sur console physique » (CDC § 2.1, 15.4, 16.A) **ne sont pas remplis**. Ce point ne peut pas être traité dans l'environnement de développement utilisé.
 
 ## 1. Évolutions
+
+### Version 2.23
+
+| Demande | Réalisation |
+|---|---|
+| Arbitre et chaise trop grands, perspective à revoir (proposition 3 : profil réduit) | Chaise et arbitre redessinés de profil à environ 60 % de la taille (28 px de haut au lieu de 47). La zone de couleur propre à la chaise passe de 48 à 32 px de haut |
+| L'arbitre disparaît pendant les ralentis | Il est maintenant dessiné aussi pendant les ralentis |
+| Il ne fait pas de gestes | En plus des gestes existants (bras tendu sur une faute ou une balle dehors, bras levé sur un let et à la fin du match, désormais raccordé à l'épaule), il suit la balle du regard, vers le haut ou vers le bas du court, à chaque échange |
 
 ### Version 2.22
 
@@ -212,12 +220,12 @@ Pour loger ce contenu, la cartouche passe de NROM (32 Ko) à **MMC1** : 128 Ko d
 |---|---|
 | Règles (`rules_test`) | 42/42 |
 | Codes (`password_test`) | 200 000/200 000 aller-retour (format v3), ancien code v2 accepté, Margaux codée, Margaux au club nudiste refusée ; 99,98 % des codes altérés d'un signe refusés |
-| Émulateur (`emu_test`) | 215/215 vérifications (environ 21 min) |
+| Émulateur (`emu_test`) | 216/216 vérifications (environ 21 min) |
 | Profil CPU, simple, 6 000 trames | 0 trame d'échange en dépassement |
 | Relecture des textes (`check_texts.py`) | 0 problème |
 | Contraste (`contrast.py 25`) | 0 paire sous ΔE 25 (personnages, courts, balle, tenues) |
 | Profil CPU, double, 6 000 trames | 27 trames d'échange en dépassement (0,45 %), sans défaut d'image |
-| Compilation | Reproductible : SHA-256 `e896ed8f9b89b55b25d52a5fedccafd3cca942c05a72326632784b57780c2ce8` sur deux compilations propres |
+| Compilation | Reproductible : SHA-256 `85a3003cfa36db90bd8c0715259d796ce799bf5c6b3083ff97ff03550bd6acca` sur deux compilations propres |
 
 ## 3. Conformité par section du CDC
 

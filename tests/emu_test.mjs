@@ -743,7 +743,7 @@ const msgText = (e) => { let t = ''; for (let i = 0; i < 14; i++) t += String.fr
   const e = boot(); startWith(e, { FMT: 3, SURF: 0, ENV: 0, GSPEED: 0 }); allCpu(e);
   e.run(60);
   let t = oamTiles(e);
-  check(t.has(5) && t.has(11) && (t.has(12) || t.has(13)), 'ombres des joueurs et arbitre de chaise (tête, buste)');
+  check(t.has(5) && t.has(13) && (t.has(11) || t.has(12)), 'ombres des joueurs et arbitre de chaise (tête, buste)');
   let dust = false, pb = 0;
   runUntil(e, () => { const b = e.peek('bounces'); if (b === 1 && pb === 0) { e.run(2); dust = dust || [...oamTiles(e)].some((x) => x === 6 || x === 7); } pb = b; return dust; }, 3000);
   check(dust, 'poussière au rebond sur la terre battue');
@@ -755,7 +755,7 @@ const msgText = (e) => { let t = ''; for (let i = 0; i < 14; i++) t += String.fr
   const g = boot(); startWith(g, { FMT: 3, ENV: 1, GSPEED: 1 });
   let mark2 = false;
   runUntil(g, () => { mark2 = mark2 || oamTiles(g).has(10); return false; }, 1500);
-  check(!mark2 && oamTiles(g).has(11), 'vitesse normale : pas de repère ; arbitre aussi au club');
+  check(!mark2 && oamTiles(g).has(13), 'vitesse normale : pas de repère ; arbitre aussi au club');
 }
 {
   // chaise d'arbitre de profil, dans le décor de chaque lieu (palette 3 :
@@ -765,24 +765,34 @@ const msgText = (e) => { let t = ''; for (let i = 0; i < 14; i++) t += String.fr
   let tiles = null, okall = true;
   for (const env of [0, 1, 2, 4]) for (const cond of [0, 1, 2]) {
     const e = boot(); startWith(e, { ENV: env, COND: cond, SURF: 0 }); e.run(30);
-    const t = []; for (let r = 14; r < 20; r++) t.push(nt(e, 2, r), nt(e, 3, r));
+    const t = []; for (let r = 16; r < 20; r++) t.push(nt(e, 2, r), nt(e, 3, r));
     if (!tiles) tiles = t.join(); else if (tiles !== t.join()) okall = false;
-    if ((at(e, 0x23D8) >> 6) !== 3 || ((at(e, 0x23E0) >> 2) & 3) !== 3 || (at(e, 0x23E0) >> 6) !== 3) okall = false;
+    if ((at(e, 0x23D8) >> 6) !== 2 || ((at(e, 0x23E0) >> 2) & 3) !== 3 || (at(e, 0x23E0) >> 6) !== 3) okall = false;
     if (cond === 0 && env === 0) { const p = e.addr('pal_buf'); if (e.nes.cpu.mem[p + 13] !== 0x0F || e.nes.cpu.mem[p + 15] !== 0x30) okall = false; }
   }
   check(okall, 'chaise d\'arbitre identique dans les 4 lieux, de jour, de nuit et sous la pluie (palette 3 noir/blanc)');
   const g = boot(); startWith(g, { ENV: 0, SURF: 0 }); g.run(100);
   const tt = g.peek('trophy_tile');
   g.poke('ump_arm', 1); g.poke('end_reason', 1); g.poke('ms', 3); g.poke('ms_timer', 60); g.run(2);
-  const out = oamTiles(g).has(13) && oamTiles(g).has(tt);
+  const out = oamTiles(g).has(tt) && oamTiles(g).has(tt + 1);
   g.poke('end_reason', 3); g.poke('ms_timer', 60); g.run(2);
-  const let_ = oamTiles(g).has(tt + 1) && oamTiles(g).has(tt + 2);
+  const let_ = oamTiles(g).has(13) && oamTiles(g).has(tt + 2);
   g.poke('ms', 2); g.poke('ump_arm', 0); g.run(2);
-  const rest = oamTiles(g).has(12) && !oamTiles(g).has(tt + 1);
-  check(out && let_ && rest, 'arbitre : bras tendu sur une faute, bras levé sur un let, au repos sinon');
+  const rest = oamTiles(g).has(13) && !oamTiles(g).has(tt) && !oamTiles(g).has(tt + 2);
+  // la tête suit la balle : vers le haut ou vers le bas du court
+  const by = g.addr('by'); g.nes.cpu.mem[by] = 0; g.nes.cpu.mem[by + 1] = 0x10; g.run(1); const up = oamTiles(g).has(12);
+  g.nes.cpu.mem[by + 1] = 0x30; g.run(1); const dn = oamTiles(g).has(11);
+  check(out && let_ && rest && up && dn, 'arbitre : tête qui suit la balle, bras tendu sur une faute, bras levé sur un let, au repos sinon');
   g.tap('START'); g.run(5); g.tap('DOWN'); g.tap('A'); runUntil(g, () => scr(g) === SS.RESULTS || scr(g) === SS.MENU || scr(g) === SS.TITLE, 200); g.run(30);
   const rom2 = g.nes.rom.rom[2]; let diff = 0; for (let i = 0; i < 48; i++) if (g.nes.ppu.vramMem[0x1000 + tt * 16 + i] !== rom2[0x1000 + tt * 16 + i]) diff++;
   check(app(g) === AS.SCREENS && diff === 0, `hors du match : tuiles de la coupe rétablies (${diff} octet(s) différent(s))`);
+}
+{
+  // l'arbitre reste sur sa chaise pendant les ralentis
+  const e = boot(); startWith(e, { FMT: 3 }); allCpu(e);
+  let seen = false, rep = 0;
+  runUntil(e, () => { if (e.peek('ms') === 5 && ++rep === 6) seen = oamTiles(e).has(13); return rep >= 6; }, 60 * 60 * 6);
+  check(rep && seen, 'ralenti : l\'arbitre reste visible');
 }
 {
   // réglage SON et réglages mémorisés dans la cartouche
@@ -1086,7 +1096,7 @@ console.log('Rotation des sprites (double)');
   runUntil(e, () => e.peek('ms') === 0, 300);
   e.tap('START', 1, 1, 2);
   const s16 = (n, v, o = 0) => { e.poke(n, v & 255, o); e.poke(n, (v >> 8) & 255, o + 1); };
-  [[96, 146], [104, 124], [150, 144], [158, 126]].forEach(([x, y], i) => { s16('plx', x * 64, i * 2); s16('ply', y * 64, i * 2); });
+  [[96, 146], [104, 136], [150, 144], [158, 138]].forEach(([x, y], i) => { s16('plx', x * 64, i * 2); s16('ply', y * 64, i * 2); });
   const seen = new Map(); let rot = new Set(), maxLine = 0, frames = 0;
   for (let f = 0; f < 8; f++) {
     e.run(1); frames++;

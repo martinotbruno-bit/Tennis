@@ -565,97 +565,74 @@ _audio_tick:
     rts
 
 ; ---------------------------------------------------------------------------
-; void ump_draw(void) : arbitre de chaise, assis de profil sur la chaise du
-; décor (x 16-31, y 112-159), tourné vers le court. Tête (11) et buste (12 au
-; repos, 13 bras tendu, coupe + 2 bras levé), plus un 3e sprite pour la main
-; (coupe + 0) ou le bras levé (coupe + 1). En assembleur : la version C, à
-; chaque trame dans tous les lieux, faisait déborder des trames chargées.
+; void ump_draw(void) : petit arbitre de chaise, assis de profil sur la
+; chaise du décor (x 16-31, y 128-159), tourné vers le court. Tête 11 (regard
+; vers le bas du court) ou 12 (vers le haut), selon la balle ; buste 13 au
+; repos ou coupe + 0 bras tendu, avec la main (coupe + 1) ; bras levé (coupe
+; + 2) sur un let (il s'agite) et à la fin du match (il salue). Appelé aussi
+; pendant les ralentis. En assembleur : peu coûteux à chaque trame.
 .export _ump_draw
-.import _ms, _end_reason, _ump_arm, _trophy_tile
+.import _ms, _end_reason, _ump_arm, _trophy_tile, _by
 .importzp _frame_cnt
 .importzp tmp4
-CHAIR_SY = 112
+UMP_X = 18
+UMP_Y = 132
 
 .segment "CODE"
 _ump_draw:
+    lda #11                 ; tête : regard vers le bas du court
+    ldy _by+1
+    cpy #$21                ; by < NET_Y * FP (132 * 64 = $2100) : moitié du haut
+    bcs @hd
     lda #12
+@hd:
+    sta tmp4
+    lda #13
     sta tmp1                ; buste
     lda #0
-    sta tmp2                ; 3e sprite (0 : aucun)
-    lda #27
-    sta tmp3                ; x du 3e sprite
-    lda #CHAIR_SY + 11
-    sta tmp4                ; y du 3e sprite
+    sta tmp2                ; 3e sprite : 0 aucun, 1 main, 2 bras levé
     lda _ms
     cmp #4                  ; MS_OVER : bras levé qui salue
-    bne @dead
-    lda _frame_cnt
-    lsr a
-    lsr a
-    lsr a
-    and #1
-    eor #$FF
-    sec
-    adc #CHAIR_SY - 1       ; CHAIR_SY - 1 - ((frame_cnt >> 3) & 1)
-    sta tmp4
-    lda #25
-    sta tmp3
-    jmp @up
-@dead:
+    beq @up
     cmp #3                  ; MS_DEAD
     bne @draw
     lda _end_reason
     cmp #3                  ; END_LET : bras levé qui s'agite
-    bne @arm
-    lda _frame_cnt
-    lsr a
-    lsr a
-    and #1
-    clc
-    adc #25
-    sta tmp3
-    lda #CHAIR_SY - 1
-    sta tmp4
-@up:
-    lda _trophy_tile
-    clc
-    adc #2
-    sta tmp1
-    sec
-    sbc #1
-    sta tmp2
-    jmp @draw
-@arm:
+    beq @up
     lda _ump_arm            ; faute, balle dehors : bras tendu
     beq @draw
     lda _ms_timer
     cmp #16
     bcc @draw
-    lda #13
-    sta tmp1
     lda _trophy_tile
+    sta tmp1
+    lda #1
+    sta tmp2
+    bne @draw
+@up:
+    lda #2
     sta tmp2
 @draw:
     ldx _oam_i
-    lda #CHAIR_SY + 3 - 1   ; tête (le PPU affiche une ligne plus bas)
+    lda #UMP_Y - 1          ; tête (le PPU affiche une ligne plus bas)
     sta _oam_buf,x
-    lda #11
+    lda tmp4
     sta _oam_buf+1,x
     lda #2
     sta _oam_buf+2,x
-    lda #19
+    lda #UMP_X
     sta _oam_buf+3,x
     inx
     inx
     inx
     inx
-    lda #CHAIR_SY + 11 - 1  ; buste
+    lda #UMP_Y + 8 - 1      ; buste
     sta _oam_buf,x
     lda tmp1
     sta _oam_buf+1,x
     lda #2
     sta _oam_buf+2,x
-    lda #19
+    lda #UMP_X
     sta _oam_buf+3,x
     inx
     inx
@@ -663,15 +640,36 @@ _ump_draw:
     inx
     lda tmp2
     beq @end
-    sta _oam_buf+1,x
-    ldy tmp4
-    dey
-    tya
+    cmp #1
+    bne @raise
+    lda #UMP_Y + 8 - 1      ; main du bras tendu
     sta _oam_buf,x
+    lda _trophy_tile
+    clc
+    adc #1
+    sta _oam_buf+1,x
+    lda #UMP_X + 8
+    sta _oam_buf+3,x
+    jmp @attr
+@raise:
+    lda _frame_cnt          ; s'agite / salue : monte et descend d'un pixel
+    lsr a
+    lsr a
+    lsr a
+    and #1
+    eor #$FF
+    sec
+    adc #UMP_Y - 2          ; UMP_Y - 1 - 1 - bob
+    sta _oam_buf,x
+    lda _trophy_tile
+    clc
+    adc #2
+    sta _oam_buf+1,x
+    lda #UMP_X + 2          ; contre l'épaule, devant le visage
+    sta _oam_buf+3,x
+@attr:
     lda #2
     sta _oam_buf+2,x
-    lda tmp3
-    sta _oam_buf+3,x
     inx
     inx
     inx

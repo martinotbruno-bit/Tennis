@@ -202,24 +202,21 @@ def draw_net(b, rect, shake=False):
 # niveau du filet : 16 x 48 px, x 16-31, y 112-159 (3 blocs d'attributs en
 # palette 3, inutilisée ailleurs sur le court : 1 noir, 2 jaune, 3 blanc ;
 # mêmes couleurs de jour, de nuit et sous la pluie).
-CHAIR = [[0]*16 for _ in range(48)]
+CHAIR = [[0]*16 for _ in range(32)]
 def cset(x0, y0, x1, y1, c):
     for y in range(y0, y1 + 1):
         for x in range(x0, x1 + 1):
             CHAIR[y][x] = c
-# vue de profil, l'arbitre regarde vers la droite (le court) ; il est assis
-# contre le dossier, cuisses à plat sur le siège, jambes qui pendent devant
-cset(1, 2, 4, 21, 1); cset(2, 3, 3, 21, 3)            # dossier haut (côté tribune)
-cset(5, 18, 12, 19, 1)                                 # cuisses, jusqu'aux genoux
-cset(1, 20, 11, 22, 1); cset(2, 21, 10, 21, 3)         # siège
-cset(5, 21, 7, 21, 2)                                  # plaque jaune
-cset(11, 20, 12, 29, 1); cset(11, 30, 14, 30, 1)       # jambes qui pendent, chaussures
-cset(9, 31, 15, 33, 1); cset(10, 32, 14, 32, 3)        # repose-pieds
-cset(1, 23, 4, 45, 1); cset(2, 23, 3, 45, 3)           # pied arrière (sous le dossier)
-cset(10, 34, 13, 45, 1); cset(11, 34, 12, 45, 3)       # pied avant (sous le repose-pieds)
-cset(4, 38, 10, 40, 1); cset(4, 39, 10, 39, 3)         # traverse
-cset(0, 46, 5, 47, 1); cset(9, 46, 14, 47, 1)          # patins
-CHAIR_X, CHAIR_Y = 16, 112
+# petite chaise de profil (environ 60 % de l'ancienne), l'arbitre regarde à
+# droite (le court) ; ses jambes descendent du siège au repose-pieds
+cset(1, 6, 2, 30, 1); cset(2, 7, 2, 30, 3); cset(1, 6, 3, 6, 1)   # dossier et pied arrière
+cset(1, 17, 9, 17, 3); cset(1, 18, 9, 18, 1); cset(5, 17, 6, 17, 2)   # siège, plaque
+cset(8, 19, 9, 23, 1); cset(8, 24, 11, 24, 1)                       # jambes, chaussures
+cset(7, 25, 12, 25, 3); cset(7, 26, 12, 26, 1)                      # repose-pieds
+cset(10, 27, 11, 30, 1); cset(11, 27, 11, 30, 3)                    # pied avant
+cset(3, 23, 7, 23, 3); cset(3, 24, 7, 24, 1)                        # traverse
+cset(0, 31, 3, 31, 1); cset(9, 31, 12, 31, 1)                       # patins
+CHAIR_X, CHAIR_Y = 16, 128
 
 def draw_court(env=0):
     W, H = 256, 240
@@ -331,7 +328,7 @@ def draw_court(env=0):
         for y in range(32, 240):
             b[y][bx] = 3 if env != 3 else (3 if y % 4 < 2 else 1)
     # chaise d'arbitre (palette 3, voir court_attr)
-    for y in range(48):
+    for y in range(32):
         for x in range(16):
             b[CHAIR_Y + y][CHAIR_X + x] = CHAIR[y][x]
     # bandeau supérieur réservé au score (couleur 0)
@@ -460,7 +457,7 @@ crowd_idx3 = [bg_alloc(t) for t in NUDE_CROWD]
 def court_attr(bx, by):
     if by < 2:
         return 1                      # bandeau score
-    if bx == CHAIR_X // 16 and CHAIR_Y // 16 <= by < CHAIR_Y // 16 + 3:
+    if bx == CHAIR_X // 16 and CHAIR_Y // 16 <= by < CHAIR_Y // 16 + 2:
         return 3                      # chaise d'arbitre
     if bx < 2 or bx >= 14:
         return 2                      # tribunes
@@ -702,16 +699,18 @@ def tile_from(rows):
         for x, c in enumerate(r):
             t[y][x] = int(c)
     return t
-ump_head  = tile_from(["00222200", "02222220", "02221110", "02211211", "00211111", "00211110", "00011100", "00011000"])
-ump_rest  = tile_from(["00033300", "00333332", "00333332", "00313333", "00313333", "00313333", "00311133", "00333330"])
-ump_out   = tile_from(["00033300", "00333332", "00333111", "00333111", "00333333", "00333333", "00333333", "00333330"])
-ump_hand  = tile_from(["00000000", "00000000", "11110000", "11111000", "00000000", "00000000", "00000000", "00000000"])
-ump_armup = tile_from(["01100000", "11110000", "01100000", "01100000", "01100000", "01100000", "01100000", "01100000"])
-ump_upb   = tile_from(["00033311", "00333311", "00333332", "00333333", "00333333", "00333333", "00333333", "00333330"])
-spr_tile(11, ump_head)
-spr_tile(12, ump_rest)
-spr_tile(13, ump_out)
-UMP_EXTRA = [ump_hand, ump_armup, ump_upb]      # chargées à la place de la coupe pendant un match
+# petit arbitre (environ 60 % de l'ancien) : tête et épaules, puis buste et
+# cuisses ; la tête regarde vers le bas (11) ou vers le haut (12) du court
+ump_head_dn = tile_from(["00222000", "02222100", "02211100", "02211110", "00212110", "00011000", "00333300", "03333330"])
+ump_head_up = tile_from(["00222000", "02222100", "02212110", "02211100", "00211100", "00011000", "00333300", "03333330"])
+ump_body    = tile_from(["03333330", "03313330", "03313330", "03311110", "02222222", "00000022", "00000022", "00000022"])
+ump_body_out = tile_from(["03333330", "03333111", "03333111", "03333330", "02222222", "00000022", "00000022", "00000022"])
+ump_hand    = tile_from(["00000000", "11100000", "11100000", "00000000", "00000000", "00000000", "00000000", "00000000"])
+ump_armup   = tile_from(["00000111", "00000111", "00000110", "00000110", "00000110", "00000110", "00001110", "00011110"])   # raccord à l'épaule
+spr_tile(11, ump_head_dn)
+spr_tile(12, ump_head_up)
+spr_tile(13, ump_body)
+UMP_EXTRA = [ump_body_out, ump_hand, ump_armup]      # chargées à la place de la coupe pendant un match
 
 # goutte de sueur (fatigue), couleur 2 de la palette des effets (bleu)
 sweat = blank()

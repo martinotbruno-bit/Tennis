@@ -69,7 +69,7 @@ Pour chaque ligne, lancez un match et regardez l'écran pendant une dizaine de s
 
 | # | Lieu / surface / conditions | Points à regarder | OK ? |
 |---|---|---|---|
-| 4.1 | Stade / terre battue / jour | Poussière au rebond ; chaise d'arbitre blanche de profil à gauche du filet (aussi au club, en salle, au court Margaux, de nuit et sous la pluie) ; l'arbitre tend le bras sur une faute, agite le bras sur un let, lève le bras à la fin du match | ☐ |
+| 4.1 | Stade / terre battue / jour | Poussière au rebond ; petite chaise d'arbitre blanche de profil à gauche du filet (aussi au club, en salle, au court Margaux, de nuit et sous la pluie) ; l'arbitre suit la balle du regard, tend le bras sur une faute, agite le bras sur un let, lève le bras à la fin du match, et reste visible pendant les ralentis | ☐ |
 | 4.2 | Club / gazon / pluie | Gouttes de pluie, éclaboussures au rebond, couleurs assombries mais lisibles | ☐ |
 | 4.3 | Salle / dur / jour | Pas de pluie possible en salle | ☐ |
 | 4.4 | Club / plage / jour | Balle **blanche** sur le sable jaune ; poussière au rebond | ☐ |
