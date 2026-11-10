@@ -1001,6 +1001,8 @@ void screens_tick(void)
     case SS_COMP_END:
         if (pad1_new & (PAD_A | PAD_START)) {
             if (c_rank == 1) { ppu_off(); chr_reload(); }   /* tuiles du podium : motifs d'origine */
+            /* saison gagnée : générique de fin, puis l'écran titre */
+            if (c_rank == 1 && c_type == CT_SEASON) { go_req = GO_CREDITS; break; }
             title_screen();
             break;
         }

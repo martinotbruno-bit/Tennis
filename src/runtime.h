@@ -45,6 +45,10 @@ extern u8 pad2_new;
 #pragma zpsym("pad2_new")
 extern u8 vram_len;
 #pragma zpsym("vram_len")
+extern u8 scroll_y, scroll_nt;      /* défilement vertical (générique de fin) */
+#pragma zpsym("scroll_y")
+#pragma zpsym("scroll_nt")
+void __fastcall__ mirror_h(u8 h);   /* 1 : écrans empilés (MMC1 horizontal) ; rendu coupé */
 
 extern u8 oam_i, meta_x, meta_y, meta_tile, meta_attr;
 #pragma zpsym("oam_i")

@@ -13,12 +13,14 @@
 #define BANK_NUDE    6   /* tuiles des personnages au naturel */
 #define BANK_INTRO   7   /* générique de lancement */
 #define BANK_PODIUM  8   /* podium d'une compétition gagnée */
+#define BANK_CREDITS 9   /* générique de fin */
 
 /* état de l'application (lu par la boucle principale, banque fixe) */
 #define AS_SCREENS 0
 #define AS_MATCH   1
 #define AS_MANUAL  2
 #define AS_INTRO   3
+#define AS_CREDITS 4
 extern u8 app_state;
 
 /* requêtes de transition entre banques, traitées par la boucle principale */
@@ -28,6 +30,7 @@ extern u8 app_state;
 #define GO_MANUAL 3
 #define GO_RESUME 4      /* reprendre le match après l'écran de fin de set */
 #define GO_INTRO  5      /* générique de lancement */
+#define GO_CREDITS 6     /* générique de fin (saison gagnée) */
 extern u8 go_req, go_arg;
 extern u8 is_pal;
 
@@ -50,5 +53,7 @@ void intro_begin(void);            /* BANK_INTRO */
 void podium_build(void);           /* BANK_PODIUM : écran (rendu coupé) */
 void podium_sprites(void);         /* BANK_PODIUM : coupe, feux d'artifice, confettis */
 extern u8 pod_new;                 /* club nudiste débloqué à l'instant */
+void credits_begin(void);          /* BANK_CREDITS */
+void credits_tick(void);
 void intro_tick(void);
 #endif

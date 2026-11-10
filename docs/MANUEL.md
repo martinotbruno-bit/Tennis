@@ -213,6 +213,17 @@ Votre meilleur score de chaque exercice est conservé dans le palmarès.
 - au service frappé avec A : « SERVICE CANON », ou « TROP TÔT DE 3 IMAGES », « TROP TARD DE 1 IMAGE »… ;
 - sur les coups lifté, à plat et coupé : « COUP PARFAIT ! », « TROP TÔT DE 2 IMAGES » (bouton relâché trop tôt), « RELÂCHEZ LE BOUTON AVANT » (bouton gardé jusqu'à l'impact), ou « BALLE TROP PRÈS / LOIN DU CORPS » (placement).
 
+## 7 bis. Générique de fin
+
+Quand vous gagnez une **saison**, et seulement elle, l'écran du podium est suivi, sur A, d'un **générique de fin**. Il défile de bas en haut comme au cinéma, sur un hymne solennel joué au kazoo. On y trouve :
+- le champion de la saison, c'est-à-dire vous (votre équipe en double) ;
+- l'équipe de production : Bruno Martinot, Augustin Martinot (« CHIEF EXECUTIVE SON »), Margaux en invitée d'honneur ;
+- des postes très sérieux : le stagiaire (« toujours désolé pour le N »), le responsable de la physique de la balle, le service traiteur (le frigo familial) ;
+- les mentions légales ;
+- « THE END »… puis l'annonce d'une suite très improbable.
+
+**A ou START maintenu** accélère le défilement. À la fin, un applaudissement timide, puis **A** ramène à l'écran titre.
+
 ## 8. Codes de reprise
 
 Dans une compétition, l'écran d'étape affiche un **code de 13 signes** (lettres et chiffres). Il contient la compétition, l'étape, vos résultats, votre personnage (et, en double, votre partenaire et qui le joue), les réglages et le nombre de trophées.

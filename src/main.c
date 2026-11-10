@@ -39,6 +39,11 @@ static void handle_go(void)
             app_state = AS_INTRO;
             intro_begin();
             break;
+        case GO_CREDITS:
+            set_bank(BANK_CREDITS);
+            app_state = AS_CREDITS;
+            credits_begin();
+            break;
         case GO_MANUAL:
             set_bank(BANK_MANUAL);
             app_state = AS_MANUAL;
@@ -68,6 +73,10 @@ static void logic_tick(void)
     case AS_MANUAL:
         set_bank(BANK_MANUAL);
         manual_tick();
+        break;
+    case AS_CREDITS:
+        set_bank(BANK_CREDITS);
+        credits_tick();
         break;
     default:
         set_bank(BANK_SCREENS);

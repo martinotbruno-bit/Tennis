@@ -29,6 +29,7 @@ void sfx_winner(void);             /* carillon bref d'un coup gagnant */
 #define MUS_MARGAUX 7   /* court Margaux (menus et présentation) */
 #define MUS_BREAK   8   /* interlude de l'écran de fin de set */
 #define MUS_INTRO   9   /* fanfare du générique de lancement */
+#define MUS_CREDITS 10  /* générique de fin : hymne solennel au kazoo */
 extern u8 music_cur;
 extern u8 snd_mode;
 void snd_set(u8 m);                /* 0 tout, 1 bruitages seuls, 2 aucun son */

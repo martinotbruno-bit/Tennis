@@ -11,6 +11,7 @@
 .export _pad1, _pad2, _pad1_new, _pad2_new, _region_cnt
 .export _wait_frame, _pad_poll, _ppu_off, _ppu_on, _vram_adr, _vram_put
 .export _vram_fill, _vram_unrle, _rand8, _rand_seed
+.export _scroll_y, _scroll_nt, _mirror_h
 .export _chr_data
 .export _spr1, _spr_meta, _spr_end, _oam_i, _spr_rot, _set_bank, _cur_bank, _bank_call, _far_call, _rp_record
 .import _bx, _by, _bz, _b_vis, _plx, _ply, _pose_cache, _flip_cache, _sc_swap
@@ -78,6 +79,8 @@ _pad2_new:  .res 1
 _vram_len:  .res 1
 nmi_vlen:   .res 1      ; copie de vram_len pour la NMI
 nmi_pal:    .res 1      ; compteur 50 Hz du son
+_scroll_y:  .res 1      ; défilement vertical (0..239), générique de fin
+_scroll_nt: .res 1      ; écran de nametable (0 ou 2 : bit 1 de PPUCTRL)
 _rand_seed: .res 2
 pad_tmp:    .res 1
 _oam_i:     .res 1      ; prochain emplacement libre dans _oam_buf
@@ -309,8 +312,10 @@ nmi:
     sta PPUADDR
     sta PPUADDR
     sta PPUSCROLL
+    lda _scroll_y
     sta PPUSCROLL
     lda #CTRL_VAL
+    ora _scroll_nt
     sta PPUCTRL
     lda _ppu_mask
     sta PPUMASK
@@ -385,6 +390,15 @@ _ppu_off:
     jsr _wait_frame
     lda #0
     sta PPUMASK
+    rts
+
+; void __fastcall__ mirror_h(u8 h) : miroir MMC1 horizontal (1, écrans
+; empilés : défilement vertical du générique de fin) ou vertical (0, normal).
+; Rendu coupé uniquement.
+_mirror_h:
+    and #1
+    ora #$0E
+    MMC1_WRITE $8000
     rts
 
 ; void ppu_on(void) : active fond + sprites (y compris colonne de gauche)

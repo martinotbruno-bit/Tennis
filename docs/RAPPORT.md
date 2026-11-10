@@ -1,10 +1,16 @@
-# Royal Martinot — Rapport de réalisation (version 2.19)
+# Royal Martinot — Rapport de réalisation (version 2.20)
 
 Comme l'exige le CDC (§ 17.5), ce rapport distingue ce qui est **réalisé**, **testé**, **validé sur matériel réel**, **validé uniquement en émulation**, **dépendant d'une extension**, et les **limitations restantes**.
 
 > **Validation matérielle : aucune.** Aucun test n'a été fait sur console réelle (NES, Famicom, PAL, cartouche MMC1). Toutes les validations ont eu lieu en émulation (jsnes) et par des tests unitaires sur PC. Les critères « vérifié sur console physique » (CDC § 2.1, 15.4, 16.A) **ne sont pas remplis**. Ce point ne peut pas être traité dans l'environnement de développement utilisé.
 
 ## 1. Évolutions
+
+### Version 2.20
+
+| Demande | Réalisation |
+|---|---|
+| Générique de fin ridicule après une saison gagnée | Après le podium d'une saison gagnée, un générique défile comme au cinéma, sur un hymne solennel joué au kazoo : champion de la saison, Bruno, Augustin (« CHIEF EXECUTIVE SON »), Margaux en invitée d'honneur, postes absurdes (le stagiaire « toujours désolé pour le N », Isaac Newton bénévole, le frigo familial au traiteur), mentions légales, « THE END »… puis « ROYAL MARTINOT 2 — COMING SOON (PROBABLY NOT) » et un applaudissement timide. A accélère ; à la fin, A ramène au titre |
 
 ### Version 2.19
 
@@ -193,12 +199,12 @@ Pour loger ce contenu, la cartouche passe de NROM (32 Ko) à **MMC1** : 128 Ko d
 |---|---|
 | Règles (`rules_test`) | 42/42 |
 | Codes (`password_test`) | 200 000/200 000 aller-retour (format v3), ancien code v2 accepté, Margaux codée, Margaux au club nudiste refusée ; 99,98 % des codes altérés d'un signe refusés |
-| Émulateur (`emu_test`) | 208/208 vérifications (environ 21 min) |
+| Émulateur (`emu_test`) | 210/210 vérifications (environ 21 min) |
 | Profil CPU, simple, 6 000 trames | 0 trame d'échange en dépassement |
 | Relecture des textes (`check_texts.py`) | 0 problème |
 | Contraste (`contrast.py 25`) | 0 paire sous ΔE 25 (personnages, courts, balle, tenues) |
 | Profil CPU, double, 6 000 trames | 27 trames d'échange en dépassement (0,45 %), sans défaut d'image |
-| Compilation | Reproductible : SHA-256 `000b2fd44643cd507b3f561856a2812150a4ed89720c7956f1cc7b57393bf8fe` sur deux compilations propres |
+| Compilation | Reproductible : SHA-256 `6538c2cdfbf6ca60ec99189f6adb7966e28adece67431af73c18d7ae67a35a70` sur deux compilations propres |
 
 ## 3. Conformité par section du CDC
 

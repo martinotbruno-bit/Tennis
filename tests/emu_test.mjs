@@ -434,6 +434,18 @@ function playComp(type, opts, wins) {
 {
   const { e, matches } = playComp(3, {}, () => true);
   check(matches === 12 && e.peek('c_rank') === 1, 'saison : 4 tournois sur 4 surfaces, n°1');
+  // saison gagnée : après le podium, le générique de fin défile
+  e.run(60); e.tap('A');
+  runUntil(e, () => app(e) === 4 && e.peek('ppu_mask') !== 0, 200);
+  const both = () => { let t = ''; for (const b of [0x2000, 0x2800]) for (let i = 0; i < 960; i++) t += String.fromCharCode(e.nes.ppu.vramMem[b + i]); return t; };
+  let seen = new Set(), scr0 = new Set();
+  const want = ['SEASON CHAMPION', 'BRUNO MARTINOT', 'AUGUSTIN MARTINOT', 'THE INTERN', 'THE END', '(PROBABLY NOT)'];
+  runUntil(e, () => { if ((e.peek('frame_cnt') & 15) === 0) { const t = both(); for (const w of want) if (t.includes(w)) seen.add(w); scr0.add(e.peek('scroll_nt')); } return e.peek('halt') === 1; }, 4000);
+  check(app(e) === 4 && seen.size === want.length && scr0.has(0) && scr0.has(2),
+    `générique de fin : défilement sur 2 écrans empilés, ${seen.size}/${want.length} textes vus (${[...seen].join(', ')})`);
+  e.run(80); e.tap('A'); runUntil(e, () => scr(e) === SS.TITLE && app(e) === 0 && e.peek('ppu_mask') !== 0, 200); e.run(10);
+  check(scr(e) === SS.TITLE && e.peek('scroll_y') === 0 && e.peek('scroll_nt') === 0 && e.text(4, 13, 24) === 'PLATINUM DIAMOND EDITION',
+    'fin du générique : A ramène à l\'écran titre, défilement et miroir rétablis');
 }
 {
   const { e, matches } = playComp(3, {}, (m) => m % 3 === 0);

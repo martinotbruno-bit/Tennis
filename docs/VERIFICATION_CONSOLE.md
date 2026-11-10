@@ -61,6 +61,7 @@ Réglages : FORMAT RAPIDE, NIVEAU FACILE, VITESSE JEU NORMAL.
 | 3.9 c | Fin d'un set (format 3 sets) | Écran « FIN DU 1ER SET » : tableau, statistiques, joueur au service, petite musique ; un bouton reprend aussitôt le match sur le même court, musique coupée | ☐ |
 | 3.10 | Fin de match (gagnée) | Le vainqueur sautille raquette levée sous une pluie d'étoiles et de confettis, fanfare jusqu'à l'écran de statistiques, 3 feux d'artifice (sifflement, « pop », gerbe d'étoiles) ; perdant déçu ; pas de fête si le CPU gagne | ☐ |
 | 3.10 b | Compétition gagnée | Podium centré sur le court : les 3 premiers en grand, sans pixels parasites, coupe géante, confettis, fanfare, 5 feux d'artifice, puis le calme ; A : écran titre intact (logo et balle corrects) | ☐ |
+| 3.10 c | Saison gagnée, puis A sur le podium | Générique de fin : défilement régulier sans saut ni ligne qui apparaît d'un coup, noms en or, hymne au kazoo ; A maintenu accélère ; à la fin un « clap », puis A : écran titre normal (pas décalé) | ☐ |
 
 ## 4. Lieux, surfaces et conditions (couleurs)
 

@@ -141,6 +141,20 @@ static const u8 mus_intro_bass[] = {
  R,2,  R,92,  R,24,
  END,0 };
 
+/* Générique de fin : hymne solennel… joué au kazoo (carré 25 % à volume
+ * constant, notes liées), sur une basse en blanches. 8 mesures de 96 trames
+ * (4 temps de 24), en boucle ; la dernière mesure remonte vers le début. */
+static const u8 mus_cred_mel[] = {
+ E5,24, D5,24, C5,24, G4,24,   A4,24, C5,24, F5,48,
+ E5,24, D5,24, C5,24, A4,24,   G4,48, A4,24, B4,24,
+ C5,24, E5,24, G5,48,          A5,36, G5,12, F5,24, E5,24,
+ D5,24, F5,24, E5,24, D5,24,   C5,72, G4,24,
+ END,0 };
+static const u8 mus_cred_bass[] = {
+ C3,48, G3,48,  F3,48, C4,48,  A3,48, E3,48,  G3,48, D3,48,
+ C3,48, E3,48,  F3,48, C3,48,  G3,48, D3,48,  C3,48, G3,48,
+ END,0 };
+
 /* Interlude de fin de set : air calme et léger, 8 mesures de 48 trames */
 static const u8 mus_break_mel[] = {
  E5,12, G5,12, A5,12, G5,12,  E5,24, C5,24,  D5,12, E5,12, F5,12, A5,12,  G5,36, R,12,
@@ -178,6 +192,7 @@ void music_play(u8 id)
     case MUS_DEFEAT:  mel_ptr = mus_def_mel; break;
     case MUS_FINAL:   mel_ptr = mus_final_mel; bass_ptr = mus_final_bass; music_loop = 1; break;
     case MUS_INTRO:   mel_ptr = mus_intro_mel; bass_ptr = mus_intro_bass; break;
+    case MUS_CREDITS: mel_ptr = mus_cred_mel; bass_ptr = mus_cred_bass; music_loop = 1; mel_duty = 0x76; break;
     case MUS_BREAK:   mel_ptr = mus_break_mel; bass_ptr = mus_break_bass; music_loop = 1; mel_duty = 0x44; break;
     case MUS_MARGAUX: mel_ptr = mus_margaux_mel; bass_ptr = mus_margaux_bass; music_loop = 1; mel_duty = 0x44; break;
     default: break;

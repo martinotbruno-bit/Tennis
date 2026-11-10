@@ -16,7 +16,8 @@ BANK4 = manual
 BANK6 = assets_nude
 BANK7 = intro
 BANK8 = podium
-CSRC = $(FIXED) $(BANK0) $(BANK1) $(BANK3) $(BANK4) $(BANK5) $(BANK6) $(BANK7) $(BANK8)
+BANK9 = credits
+CSRC = $(FIXED) $(BANK0) $(BANK1) $(BANK3) $(BANK4) $(BANK5) $(BANK6) $(BANK7) $(BANK8) $(BANK9)
 OBJS = $(BUILD)/crt0.o $(BUILD)/sprp.o $(addprefix $(BUILD)/,$(addsuffix .o,$(CSRC)))
 
 all: $(ROM)
@@ -36,6 +37,7 @@ $(addprefix $(BUILD)/,$(addsuffix .s,$(BANK5))): SEGS = --code-name BANK5 --roda
 $(addprefix $(BUILD)/,$(addsuffix .s,$(BANK6))): SEGS = --code-name BANK6 --rodata-name RODATA6
 $(addprefix $(BUILD)/,$(addsuffix .s,$(BANK7))): SEGS = --code-name BANK7 --rodata-name RODATA7 --bss-name WBSS
 $(addprefix $(BUILD)/,$(addsuffix .s,$(BANK8))): SEGS = --code-name BANK8 --rodata-name RODATA8 --bss-name WBSS
+$(addprefix $(BUILD)/,$(addsuffix .s,$(BANK9))): SEGS = --code-name BANK9 --rodata-name RODATA9 --bss-name WBSS
 
 $(BUILD)/crt0.o: src/crt0.s assets/tiles.chr | $(BUILD)
 	$(CA65) -t nes -g -o $@ src/crt0.s
