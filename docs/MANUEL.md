@@ -189,7 +189,7 @@ Toutes les compétitions se jouent **en simple ou en double** (ligne JEU) :
 - en double, vous choisissez votre partenaire (ligne PARTENAIRE), puis qui le joue (ligne JOUE PAR) : l'ordinateur ou la **manette 2**. À deux joueurs humains, vous formez une seule équipe contre les équipes CPU ;
 - les autres équipes sont tirées au sort parmi les 17 personnages, qui sont tous différents.
 
-Quand vous gagnez une compétition, votre joueur (et votre partenaire) **brandit la coupe** sous une pluie de confettis, sur la fanfare de victoire, pendant que **5 feux d'artifice** éclatent (sifflement, « pop », gerbe d'étoiles). Ensuite, place au calme : l'écran reste affiché jusqu'à A.
+Quand vous gagnez une compétition, vous montez sur le **podium**, au centre de l'écran et sur le court de la compétition. Vous êtes sur la plus haute marche, le finaliste (ou le 2e du classement) à gauche, le 3e à droite, tous **en grand**. La coupe géante est brandie au-dessus de votre tête sous une pluie de confettis, sur la fanfare de victoire, pendant que **5 feux d'artifice** éclatent. Les noms sont écrits sous les marches. En double, vous montez à deux sur la plus haute marche ; pour les autres équipes, seul le capitaine monte, et le nom de l'équipe est écrit dessous. Ensuite, place au calme : l'écran reste affiché jusqu'à A.
 
 L'écran d'étape montre le prochain adversaire (niveau, surface), le tableau ou le classement, et le **code de reprise**. Les matchs entre joueurs CPU sont simulés selon leur niveau.
 

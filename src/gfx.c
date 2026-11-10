@@ -201,13 +201,21 @@ void clear_screen(void)
 u8 nude_unlocked;       /* mode nudiste débloqué (victoire en compétition) */
 static u8 chr_nude;
 
-static void chr_copy(u8 bank, const u8 *src, u16 dst, u16 len)
+void chr_copy(u8 bank, const u8 *src, u16 dst, u16 len)
 {
     u8 old = cur_bank;
     set_bank(bank);
     vram_adr(dst);
     while (len--) vram_put(*src++);
     set_bank(old);
+}
+
+/* motifs d'origine (banque 2) dans toute la CHR-RAM, rendu coupé : après le
+   podium, qui fabrique ses tuiles agrandies à la place d'autres */
+void chr_reload(void)
+{
+    chr_copy(BANK_CHR, chr_data, 0x0000, 8192);
+    chr_nude = 0;
 }
 
 void people_tiles(u8 nude)

@@ -346,6 +346,35 @@ function playComp(type, opts, wins) {
   check(matches === 3 && scr(e) === SS.COMP_END && e.peek('c_rank') === 1, `tournoi gagné en 3 matchs`);
   check(/^[A-Z2-9]{13}$/.test(code), `code de reprise affiché : ${code}`);
   check(e.peek('sv', 0x14 + 0) >= 0, 'palmarès mis à jour');
+  // podium : 3 joueurs agrandis dans le décor, marches, noms, textes centrés
+  const nt = (x, y) => e.nes.ppu.vramMem[0x2000 + y * 32 + x];
+  const pod = [0, 1, 2].map((k) => e.peek('c_pod', k));
+  check(pod[0] === 0 && pod[1] > 0 && pod[2] > 0 && pod[1] !== pod[2], `podium : 1er le joueur, 2e et 3e distincts (${pod})`);
+  check(nt(14, 12) === 0x60 && nt(17, 17) === 0x60 + 23 && nt(8, 14) === 0x60 + 24 && nt(20, 16) === 0x60 + 48,
+    'podium : 3 joueurs en taille double (24 tuiles chacun), 1er au centre, 2e à gauche, 3e à droite');
+  check(nt(13, 18) === 0xA8 && nt(7, 20) === 0xA8 && nt(19, 22) === 0xA8 && nt(15, 19) === 0xAA && nt(9, 21) === 0xAB && nt(21, 23) === 0xAC,
+    'podium : marches 1 (milieu, la plus haute), 2 (gauche) et 3 (droite), centrées');
+  const nm = (c) => { const p = e.peek16('char_name', c * 2); let t = ''; for (let k = 0; k < 4; k++) t += String.fromCharCode(e.nes.cpu.mem[p + k]); return t; };
+  const under = (x0) => e.text(x0, 26, 6).replace(/[\0 ]/g, '');   // nom sous une marche de 6 cases
+  check(under(13) === nm(e.peek('c_pl', 0)).trim() && under(7) === nm(e.peek('c_pl', pod[1])).trim() && under(19) === nm(e.peek('c_pl', pod[2])).trim(),
+    `podium : noms sous les marches (${e.text(7, 26, 18)})`);
+  check(e.text(10, 4, 11) === 'VAINQUEUR !' && e.text(4, 7, 23) === 'MODE NUDISTE DEBLOQUE !', 'podium : « VAINQUEUR ! » et déblocage centrés');
+  // big player : chaque tuile agrandie = tuile du personnage dont chaque pixel est doublé
+  const chr = e.nes.ppu.vramMem, f0 = e.nes.cpu.mem;
+  let okz = true;
+  { const c = e.peek('c_pl', 0), fem = e.peek('char_female', c), base = e.peek('person_base', (fem << 1) | 1) + 6 * 6;
+    for (let y = 0; y < 8; y++) { const s0 = chr[0x1000 + base * 16 + (y >> 1)], d0 = chr[0x60 * 16 + y];
+      let exp = 0; for (let b = 0; b < 4; b++) if (s0 & (0x80 >> b)) exp |= 0xC0 >> (b * 2);
+      if (d0 !== exp) okz = false; } }
+  check(okz, 'podium : agrandissement exact (pixel doublé, sans décalage de lecture)');
+  e.tap('A'); runUntil(e, () => scr(e) === SS.TITLE && e.peek('ppu_mask') !== 0, 200); e.run(10);
+  const rom2 = e.nes.rom.rom[2]; let diff = 0; for (let i = 0; i < 8192; i++) if (chr[i] !== rom2[i]) diff++;
+  check(scr(e) === SS.TITLE && diff === 0, `retour au titre : motifs d'origine rétablis (${diff} octet(s) différent(s))`);
+}
+{
+  // Margaux vainqueur : sa chevelure agrandie, son nom en entier
+  const { e } = playComp(0, { P1: 16 }, () => true);
+  check(e.text(13, 26, 7) === 'MARGAUX' && e.nes.ppu.vramMem[0x2000 + 12 * 32 + 14] === 0x60, 'podium : Margaux vainqueur, « MARGAUX » en entier sous la marche');
 }
 {
   const { e, matches } = playComp(0, {}, (m) => m < 1);
@@ -416,11 +445,15 @@ console.log('Compétition en double, levée de coupe et club nudiste');
   check(e.peek('c_pl2', 0) === 5, 'partenaire choisi (ZOE) conservé');
   const pl = new Set(); for (let i = 0; i < 8; i++) { pl.add(e.peek('c_pl', i)); pl.add(e.peek('c_pl2', i)); }
   check(pl.size === 16, '8 équipes de 2 : 16 personnages différents');
-  // levée de coupe : les tuiles du trophée sont à l'écran
+  // levée de coupe : la coupe agrandie (16 sprites) au-dessus des vainqueurs
   e.run(80);
-  const tt = e.peek('trophy_tile'), ct = e.peek('confetti_tile'); let cup = 0, conf = 0;
-  for (let i = 0; i < 64; i++) { const t = e.nes.cpu.mem[0x201 + i * 4], y = e.nes.cpu.mem[0x200 + i * 4]; if (y < 0xEF) { if (t >= tt && t < tt + 4) cup++; if (t === ct) conf++; } }
-  check(cup === 4 && conf >= 8, `levée de coupe affichée (coupe ${cup} tuiles, ${conf} confettis)`);
+  const ct = e.peek('confetti_tile'); let cup = 0, conf = 0, third = 0;
+  for (let i = 0; i < 64; i++) { const t = e.nes.cpu.mem[0x201 + i * 4], y = e.nes.cpu.mem[0x200 + i * 4]; if (y < 0xEF) { if (t >= 0x10 && t < 0x20) cup++; if (t >= 0x20 && t < 0x38) third++; if (t === ct) conf++; } }
+  check(third === 24, `double : le capitaine 3e en sprites agrandis (${third}/24)`);
+  const ntd = (x, y) => e.nes.ppu.vramMem[0x2000 + y * 32 + x];
+  check(ntd(12, 12) === 0x60 && ntd(16, 12) === 0x60 + 24 && ntd(6, 14) === 0x60 + 48 && e.text(11, 26, 10).replace(/[\0 ]/g, '') === 'AL/ZO',
+    'double : les 2 vainqueurs côte à côte au centre, finaliste à gauche, équipe « AL/ZO » sous la marche');
+  check(cup === 16 && conf >= 8, `levée de coupe affichée (coupe agrandie ${cup}/16 sprites, ${conf} confettis)`);
   // feux d'artifice pendant la levée de coupe : 5 gerbes, puis plus rien
   e.poke('cup_t', 0);                       // on rejoue la levée de coupe depuis le début
   let bursts = 0, prev = 0, late = 0;
@@ -432,10 +465,11 @@ console.log('Compétition en double, levée de coupe et club nudiste');
     prev = st;
   }
   check(bursts === 5 && late === 0, `levée de coupe : ${bursts} feux d'artifice, puis le calme`);
-  check(e.peek('nude_unlocked') === 1 && e.text(3, 23, 21) === 'MODE NUDISTE DEBLOQUE', 'victoire : club nudiste débloqué');
+  check(e.peek('nude_unlocked') === 1 && e.text(4, 7, 21) === 'MODE NUDISTE DEBLOQUE', 'victoire : club nudiste débloqué');
   check(/^[A-Z2-9]{13}$/.test(code), `code de reprise en double : ${code}`);
   // le lieu « club nudiste » est maintenant proposé
-  e.tap('A'); e.run(10); toMenu(e);
+  // retour au titre après le podium (CHR-RAM rechargée : ~47 trames)
+  e.tap('A'); runUntil(e, () => scr(e) === SS.TITLE && e.peek('ppu_mask') !== 0, 200); e.run(10); toMenu(e);
   setOpts(e, { MODE: MODE.P1, TYPE: 0 }); e.tap('B'); e.run(5); toMenu(e);
   for (let k = 0; k < 7; k++) e.tap('DOWN');
   let seen = false; for (let i = 0; i < 4; i++) { e.tap('RIGHT'); if (e.peek('opt_val', O.ENV) === 3) seen = true; }
@@ -464,7 +498,8 @@ console.log('Compétition en double, levée de coupe et club nudiste');
 {
   // un code portant un trophée débloque aussi le club nudiste sur une autre console
   const { e } = playComp(4, { CSIZE: 0 }, () => true);
-  e.tap('A'); e.run(10); toMenu(e); setOpts(e, { MODE: MODE.COMP, COMP: 0 }); e.tap('START'); e.run(40);
+  // retour au titre après le podium (CHR-RAM rechargée : ~47 trames)
+  e.tap('A'); runUntil(e, () => scr(e) === SS.TITLE && e.peek('ppu_mask') !== 0, 200); e.run(10); toMenu(e); setOpts(e, { MODE: MODE.COMP, COMP: 0 }); e.tap('START'); e.run(40);
   const code = e.text(10, 21, 15).replace(/ /g, '');
   check(e.peek('c_trophies') === 1, 'les trophées se cumulent d\'une compétition à l\'autre');
   const f = boot(); f.tap('UP'); f.tap('A'); f.run(10);

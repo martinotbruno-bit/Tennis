@@ -518,83 +518,51 @@ static void comp_screen(void)
 }
 
 static const char * const rank_txt[6] = { "", "VAINQUEUR !", "FINALISTE", "DEMI-FINALISTE", "4E", "ELIMINE" };
-static u8 cup_t, was_unlocked, fw_c;
+static u8 was_unlocked;
+/* Fin de compétition : victoire = podium (banque BANK_PODIUM) ; sinon,
+   classement et joueur déçu */
 static void comp_end_screen(void)
 {
     char b[6];
     screen_begin();
-    pal_set_player(0, c_pl[0]);
-    txt_at(3, 2, "ROYAL MARTINOT");
-    txt_at(18, 2, comp_name[c_type]);
-    if (c_dbl) { team_label(c_pl[0], c_pl2[0], b); txt_at(3, 3, b); txt_at(9, 3, "(DOUBLE)"); }
-    if (c_type == CT_LEAGUE || c_type == CT_SEASON) {
-        txt_at(5, 6, "CLASSEMENT FINAL :");
-        b[0] = (char)('0' + c_rank); b[1] = 'E'; b[2] = 0;
-        txt_at(24, 6, c_rank == 1 ? "1ER" : b);
-        if (c_rank == 1) txt_at(5, 8, "CHAMPION !");
-        c_stage = (u8)(c_type == CT_LEAGUE ? 5 : 12);
-        COMP(comp_draw_table, 11);
-    } else {
-        txt_at(5, 6, rank_txt[c_rank > 5 ? 5 : c_rank]);
-        if (c_type == CT_GROUPS && c_rank == 5) txt_at(5, 8, "EN PHASE DE POULES");
-    }
-    txt_at(5, 21, "TROPHEES :");
-    num2(b, c_trophies); b[2] = 0;
-    txt_at(16, 21, b);
     was_unlocked = nude_unlocked;
     if (c_rank == 1) {
         nude_unlocked = 1;
-        if (!was_unlocked) {
-            txt_at(3, 23, "MODE NUDISTE DEBLOQUE !");
-            txt_at(3, 24, "LIEU : CLUB NUDISTE");
+        pod_new = (u8)!was_unlocked;
+        bank_call(BANK_PODIUM, podium_build);
+    } else {
+        pal_set_player(0, c_pl[0]);
+        txt_at(3, 2, "ROYAL MARTINOT");
+        txt_at(18, 2, comp_name[c_type]);
+        if (c_dbl) { team_label(c_pl[0], c_pl2[0], b); txt_at(3, 3, b); txt_at(9, 3, "(DOUBLE)"); }
+        if (c_type == CT_LEAGUE || c_type == CT_SEASON) {
+            txt_at(5, 6, "CLASSEMENT FINAL :");
+            b[0] = (char)('0' + c_rank); b[1] = 'E'; b[2] = 0;
+            txt_at(24, 6, b);
+            c_stage = (u8)(c_type == CT_LEAGUE ? 5 : 12);
+            COMP(comp_draw_table, 11);
+        } else {
+            txt_at(5, 6, rank_txt[c_rank > 5 ? 5 : c_rank]);
+            if (c_type == CT_GROUPS && c_rank == 5) txt_at(5, 8, "EN PHASE DE POULES");
         }
+        txt_at(5, 21, "TROPHEES :");
+        num2(b, c_trophies); b[2] = 0;
+        txt_at(16, 21, b);
+        txt_at(5, 26, "A : RETOUR AU TITRE");
     }
-    txt_at(5, 26, "A : RETOUR AU TITRE");
-    if (c_dbl) pal_set_player(1, c_pl2[0]);
     ppu_on();
     SV(sv_comp_end);
     music_play(c_rank == 1 ? MUS_VICTORY : MUS_DEFEAT);
     if (c_rank == 1) sfx_crowd(7);
     c_active = 0;
-    cup_t = 0;
     scr_state = SS_COMP_END;
 }
 
-/* Levée de coupe : le vainqueur brandit le trophée, les confettis tombent */
-static const u8 conf_x[10] = { 20, 52, 84, 116, 148, 180, 212, 236, 36, 132 };
-static const u8 conf_v[10] = { 1, 2, 1, 3, 2, 1, 2, 3, 2, 1 };
 static void comp_end_sprites(void)
 {
-    u8 i, cy, pose, x = 200, y = 206;
-    if (c_rank != 1) {
-        spr_begin();
-        spr_person(x, y, c_pl[0], 1, POSE_SAD, 0, 0);
-        spr_end();
-        return;
-    }
-    if (cup_t < 255) ++cup_t;
-    /* la coupe monte des mains au-dessus de la tête, puis oscille */
-    if (cup_t < 24) { cy = (u8)(y - 30); pose = POSE_JOY; }
-    else if (cup_t < 54) { cy = (u8)(y - 30 - ((cup_t - 24) >> 1)); pose = POSE_SERVE; }
-    else { cy = (u8)(y - 45 + (((frame_cnt >> 3) & 1) ? 1 : 0)); pose = POSE_SERVE; }
+    if (c_rank == 1) { bank_call(BANK_PODIUM, podium_sprites); return; }
     spr_begin();
-    spr1((u8)(x - 8), cy, trophy_tile, 2);
-    spr1(x, cy, (u8)(trophy_tile + 1), 2);
-    spr1((u8)(x - 8), (u8)(cy + 8), (u8)(trophy_tile + 2), 2);
-    spr1(x, (u8)(cy + 8), (u8)(trophy_tile + 3), 2);
-    spr_person(x, y, c_pl[0], 1, pose, 0, 0);
-    if (c_dbl) spr_person((u8)(x + 22), y, c_pl2[0], 1, (u8)((frame_cnt >> 4) & 1 ? POSE_JOY : POSE_SERVE), 0, 1);
-    /* feux d'artifice pendant que la coupe est brandie (5 fusées, ~4 s),
-       plus bas que sur le court pour laisser lire « VAINQUEUR ! » */
-    if (cup_t == 24) fw_c = 131;
-    if (cup_t >= 24 && cup_t < 233) {             /* arrêt après la 5e gerbe, avant une 6e fusée */
-        if (--fw_c == 0) fw_c = 130;
-        fw_sound(fw_c);
-        fw_draw(fw_c, 64);
-    }
-    if (cup_t >= 24)
-        for (i = 0; i < 10; ++i)
-            spr1(conf_x[i], (u8)(((u16)cup_t * conf_v[i] + i * 23) % 200 + 16), confetti_tile, (u8)(i & 3));
+    spr_person(200, 206, c_pl[0], 1, POSE_SAD, 0, 0);
     spr_end();
 }
 
@@ -992,7 +960,11 @@ void screens_tick(void)
         }
         break;
     case SS_COMP_END:
-        if (pad1_new & (PAD_A | PAD_START)) { title_screen(); break; }
+        if (pad1_new & (PAD_A | PAD_START)) {
+            if (c_rank == 1) { ppu_off(); chr_reload(); }   /* tuiles du podium : motifs d'origine */
+            title_screen();
+            break;
+        }
         comp_end_sprites();
         break;
     case SS_RESULTS:

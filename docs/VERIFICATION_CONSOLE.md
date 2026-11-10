@@ -59,7 +59,7 @@ Réglages : FORMAT RAPIDE, NIVEAU FACILE, VITESSE JEU NORMAL.
 | 3.9 b | Après chaque jeu | Le bandeau affiche le score set par set (« ALEX 6 3 / MAYA 4 1 ») | ☐ |
 | 3.9 c | Fin d'un set (format 3 sets) | Écran « FIN DU 1ER SET » : tableau, statistiques, joueur au service, petite musique ; un bouton reprend aussitôt le match sur le même court, musique coupée | ☐ |
 | 3.10 | Fin de match (gagnée) | Le vainqueur sautille raquette levée sous une pluie d'étoiles et de confettis, fanfare jusqu'à l'écran de statistiques, 3 feux d'artifice (sifflement, « pop », gerbe d'étoiles) ; perdant déçu ; pas de fête si le CPU gagne | ☐ |
-| 3.10 b | Compétition gagnée | Levée de coupe : confettis, fanfare, 5 feux d'artifice sous « VAINQUEUR ! », puis le calme | ☐ |
+| 3.10 b | Compétition gagnée | Podium centré sur le court : les 3 premiers en grand, sans pixels parasites, coupe géante, confettis, fanfare, 5 feux d'artifice, puis le calme ; A : écran titre intact (logo et balle corrects) | ☐ |
 
 ## 4. Lieux, surfaces et conditions (couleurs)
 

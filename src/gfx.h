@@ -49,6 +49,8 @@ void num3(char *out, u16 v);
 void clear_screen(void);
 /* tuiles des personnages : 0 tenue normale, 1 au naturel (rendu coupé) */
 void people_tiles(u8 nude);
+void chr_copy(u8 bank, const u8 *src, u16 dst, u16 len);   /* rendu coupé */
+void chr_reload(void);             /* toute la CHR-RAM d'origine (rendu coupé) */
 extern u8 nude_unlocked;
 void team_label(u8 a, u8 b, char *out);
 void score_line(u8 t, char *out);   /* « ALEX 6 3 2 » (gamefix.c, 15 octets) */

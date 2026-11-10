@@ -52,7 +52,7 @@ static void letter_to_sprites(void)
     u8 i, j;
     for (i = 0; i < 4; ++i) {
         vram_adr((u16)(logo_tiles[N_SLOT * 4 + i] << 4));
-        (void)PPU_DATA;
+        tilebuf[0] = PPU_DATA;       /* lecture à vide (tampon du PPU) ; « (void) » serait supprimé par cc65 */
         for (j = 0; j < 16; ++j) tilebuf[j] = PPU_DATA;
         vram_adr((u16)(0x1000 + ((trophy_tile + i) << 4)));
         for (j = 0; j < 16; ++j) vram_put(tilebuf[j]);
@@ -301,7 +301,7 @@ void intro_begin(void)
     if ((u8)far_call(BANK_COMP, (void *)so_load, 0) && opt_val[22] < 3) snd_set(opt_val[22]);
     /* coupe d'origine sauvegardée (écran encore coupé au démarrage) */
     vram_adr((u16)(0x1000 + (trophy_tile << 4)));
-    (void)PPU_DATA;
+    cup_save[0] = PPU_DATA;          /* lecture à vide (tampon du PPU) */
     for (i = 0; i < 64; ++i) cup_save[i] = PPU_DATA;
     sc = 0;
     t = 0;

@@ -226,6 +226,42 @@ static void season_points(u8 events)
 }
 
 /* ---------------------------------------------------------------------- */
+/* Podium d'une compétition gagnée : inscrits classés 1er (le joueur), 2e et
+   3e. Tournoi : finaliste et demi-finaliste battu par le joueur ; poules :
+   vainqueur de l'autre demi-finale et adversaire de la demi-finale du
+   joueur ; championnat et saison : classement final. */
+u8 c_pod[3];
+u8 __fastcall__ comp_podium(u8 unused)
+{
+    u8 nr, k;
+    (void)unused;
+    c_pod[0] = 0;
+    switch (c_type) {
+    case CT_GROUPS:
+        groups_semis();
+        k = (u8)(sf_a[0] == 0 || sf_b[0] == 0 ? 1 : 0);      /* l'autre demi-finale */
+        c_pod[1] = sim_win(sf_a[k], sf_b[k], 0x70) ? sf_a[k] : sf_b[k];
+        k ^= 1;                                               /* celle du joueur */
+        c_pod[2] = sf_a[k] == 0 ? sf_b[k] : sf_a[k];
+        break;
+    case CT_LEAGUE:
+        league_wins(5); rank_by(0, 6, 0);
+        c_pod[1] = order[1]; c_pod[2] = order[2];
+        break;
+    case CT_SEASON:
+        season_points(4); rank_by(0, 8, 1);
+        c_pod[1] = order[1]; c_pod[2] = order[2];
+        break;
+    default:
+        nr = nrounds();
+        ko_run(0, 3, (u8)(nr - 1)); c_pod[1] = ko_cur[1];
+        ko_run(0, 3, (u8)(nr - 2)); c_pod[2] = ko_cur[1];
+        break;
+    }
+    return 0;
+}
+
+/* ---------------------------------------------------------------------- */
 u8 __fastcall__ comp_opponent(u8 unused)
 {
     u8 d, k, a, b;

@@ -12,6 +12,7 @@
 #define BANK_COMP    5   /* compétitions et palmarès */
 #define BANK_NUDE    6   /* tuiles des personnages au naturel */
 #define BANK_INTRO   7   /* générique de lancement */
+#define BANK_PODIUM  8   /* podium d'une compétition gagnée */
 
 /* état de l'application (lu par la boucle principale, banque fixe) */
 #define AS_SCREENS 0
@@ -46,5 +47,8 @@ void screens_tick(void);
 void manual_begin(void);           /* BANK_MANUAL */
 void manual_tick(void);
 void intro_begin(void);            /* BANK_INTRO */
+void podium_build(void);           /* BANK_PODIUM : écran (rendu coupé) */
+void podium_sprites(void);         /* BANK_PODIUM : coupe, feux d'artifice, confettis */
+extern u8 pod_new;                 /* club nudiste débloqué à l'instant */
 void intro_tick(void);
 #endif
