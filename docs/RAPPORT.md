@@ -12,6 +12,7 @@ Comme l'exige le CDC (§ 17.5), ce rapport distingue ce qui est **réalisé**, *
 |---|---|
 | Arbitre et chaise trop grands, perspective à revoir (proposition 3 : profil réduit) | Chaise et arbitre redessinés de profil à environ 60 % de la taille (28 px de haut au lieu de 47). La zone de couleur propre à la chaise passe de 48 à 32 px de haut |
 | L'arbitre disparaît pendant les ralentis | Il est maintenant dessiné aussi pendant les ralentis |
+| Arbitre centré par rapport au filet | Chaise et arbitre remontés de 16 px : leur milieu est à la hauteur du filet (à 1 px près, la couleur du décor se réglant par blocs de 16 px) |
 | Il ne fait pas de gestes | En plus des gestes existants (bras tendu sur une faute ou une balle dehors, bras levé sur un let et à la fin du match, désormais raccordé à l'épaule), il suit la balle du regard, vers le haut ou vers le bas du court, à chaque échange |
 
 ### Version 2.22
@@ -225,7 +226,7 @@ Pour loger ce contenu, la cartouche passe de NROM (32 Ko) à **MMC1** : 128 Ko d
 | Relecture des textes (`check_texts.py`) | 0 problème |
 | Contraste (`contrast.py 25`) | 0 paire sous ΔE 25 (personnages, courts, balle, tenues) |
 | Profil CPU, double, 6 000 trames | 27 trames d'échange en dépassement (0,45 %), sans défaut d'image |
-| Compilation | Reproductible : SHA-256 `85a3003cfa36db90bd8c0715259d796ce799bf5c6b3083ff97ff03550bd6acca` sur deux compilations propres |
+| Compilation | Reproductible : SHA-256 `5c9943807af27caded74e06844fe4b30b97d149e83b666986ce31702f0103f03` sur deux compilations propres |
 
 ## 3. Conformité par section du CDC
 

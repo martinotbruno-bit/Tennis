@@ -216,7 +216,7 @@ cset(7, 25, 12, 25, 3); cset(7, 26, 12, 26, 1)                      # repose-pie
 cset(10, 27, 11, 30, 1); cset(11, 27, 11, 30, 3)                    # pied avant
 cset(3, 23, 7, 23, 3); cset(3, 24, 7, 24, 1)                        # traverse
 cset(0, 31, 3, 31, 1); cset(9, 31, 12, 31, 1)                       # patins
-CHAIR_X, CHAIR_Y = 16, 128
+CHAIR_X, CHAIR_Y = 16, 112      # centrée sur le filet (bande du filet : y 125-132)
 
 def draw_court(env=0):
     W, H = 256, 240

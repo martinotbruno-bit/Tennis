@@ -765,9 +765,9 @@ const msgText = (e) => { let t = ''; for (let i = 0; i < 14; i++) t += String.fr
   let tiles = null, okall = true;
   for (const env of [0, 1, 2, 4]) for (const cond of [0, 1, 2]) {
     const e = boot(); startWith(e, { ENV: env, COND: cond, SURF: 0 }); e.run(30);
-    const t = []; for (let r = 16; r < 20; r++) t.push(nt(e, 2, r), nt(e, 3, r));
+    const t = []; for (let r = 14; r < 18; r++) t.push(nt(e, 2, r), nt(e, 3, r));
     if (!tiles) tiles = t.join(); else if (tiles !== t.join()) okall = false;
-    if ((at(e, 0x23D8) >> 6) !== 2 || ((at(e, 0x23E0) >> 2) & 3) !== 3 || (at(e, 0x23E0) >> 6) !== 3) okall = false;
+    if ((at(e, 0x23D8) >> 6) !== 3 || ((at(e, 0x23E0) >> 2) & 3) !== 3 || (at(e, 0x23E0) >> 6) !== 2) okall = false;
     if (cond === 0 && env === 0) { const p = e.addr('pal_buf'); if (e.nes.cpu.mem[p + 13] !== 0x0F || e.nes.cpu.mem[p + 15] !== 0x30) okall = false; }
   }
   check(okall, 'chaise d\'arbitre identique dans les 4 lieux, de jour, de nuit et sous la pluie (palette 3 noir/blanc)');
