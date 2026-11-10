@@ -147,6 +147,13 @@ void load_court(void)
     tiles_load(sign2_idx, 8, nude ? sign2_chr : sign2_orig);
     /* filet au repos (au cas où on aurait quitté un match pendant qu'il tremblait) */
     tiles_load(net_idx, 2, net_norm);
+    /* arbitre de chaise : 3 tuiles prises à la coupe (inutile pendant le
+       match), rétablies hors du match par chr_borrow_restore */
+    {
+        u8 j;
+        vram_adr((u16)(0x1000 + ((u16)trophy_tile << 4)));
+        for (j = 0; j < 48; ++j) vram_put(ump_chr[j]);
+    }
     net_state = 0;
     net_shake = 0;
 }

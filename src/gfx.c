@@ -210,6 +210,13 @@ void chr_copy(u8 bank, const u8 *src, u16 dst, u16 len)
     set_bank(old);
 }
 
+/* tuiles prêtées au match (arbitre : tuiles de la coupe) : dessin
+   d'origine, rendu coupé */
+void chr_borrow_restore(void)
+{
+    chr_copy(BANK_CHR, chr_data + 0x1000 + ((u16)trophy_tile << 4), 0x1000 + ((u16)trophy_tile << 4), 48);
+}
+
 /* motifs d'origine (banque 2) dans toute la CHR-RAM, rendu coupé : après le
    podium, qui fabrique ses tuiles agrandies à la place d'autres */
 void chr_reload(void)

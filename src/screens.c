@@ -195,6 +195,7 @@ static void screen_begin(void)
     ppu_off();
     vbuf_reset();
     people_tiles(0);
+    chr_borrow_restore();            /* arbitre du match : coupe d'origine */
     clear_screen();
     pal_set_menu();
     spr_begin(); spr_end();

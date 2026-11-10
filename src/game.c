@@ -79,9 +79,6 @@ u8 end_reason, pending_winner;
 u8 hud_dirty, msg_timer;
 char msg1[16], msg2[16];
 
-#define END_FAULT 1
-#define END_POINT 2
-#define END_LET   3
 
 /* surfaces : restitution et adhérence au rebond (sur 256) */
 static const u8 surf_rest[6] = { 196, 150, 176, 160, 214, 116 };
@@ -139,6 +136,7 @@ static void point_over(u8 winner, u8 reason)
     ms_timer = 80;
     b_live = 0;
     end_reason = END_POINT;
+    ump_arm = (u8)(reason == 1);     /* faute adverse (dehors, filet) : bras tendu */
     pending_winner = winner;
     ++st_points[winner];
     if (rally_hits > st_longest) st_longest = rally_hits;
@@ -171,6 +169,7 @@ static void serve_fault(const char *why)
     ms = MS_DEAD;
     ms_timer = 60;
     b_live = 0;
+    ump_arm = 1;
     sfx_fault();
     if (cfg.mode == GM_TRAIN) {
         end_reason = END_FAULT;

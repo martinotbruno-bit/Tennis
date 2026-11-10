@@ -198,6 +198,29 @@ def draw_net(b, rect, shake=False):
         rect(px, NET_Y - 10, px, NET_Y, 2)                   # reflet
         rect(px, NET_Y - 11, px + 2, NET_Y - 11, 2)          # tête
 
+# Chaise d'arbitre classique, dessinée dans le décor de chaque court, au
+# niveau du filet : 16 x 48 px, x 16-31, y 112-159 (3 blocs d'attributs en
+# palette 3, inutilisée ailleurs sur le court : 1 noir, 2 jaune, 3 blanc ;
+# mêmes couleurs de jour, de nuit et sous la pluie).
+CHAIR = [[0]*16 for _ in range(48)]
+def cset(x0, y0, x1, y1, c):
+    for y in range(y0, y1 + 1):
+        for x in range(x0, x1 + 1):
+            CHAIR[y][x] = c
+# vue de profil, l'arbitre regarde vers la droite (le court) ; il est assis
+# contre le dossier, cuisses à plat sur le siège, jambes qui pendent devant
+cset(1, 2, 4, 21, 1); cset(2, 3, 3, 21, 3)            # dossier haut (côté tribune)
+cset(5, 18, 12, 19, 1)                                 # cuisses, jusqu'aux genoux
+cset(1, 20, 11, 22, 1); cset(2, 21, 10, 21, 3)         # siège
+cset(5, 21, 7, 21, 2)                                  # plaque jaune
+cset(11, 20, 12, 29, 1); cset(11, 30, 14, 30, 1)       # jambes qui pendent, chaussures
+cset(9, 31, 15, 33, 1); cset(10, 32, 14, 32, 3)        # repose-pieds
+cset(1, 23, 4, 45, 1); cset(2, 23, 3, 45, 3)           # pied arrière (sous le dossier)
+cset(10, 34, 13, 45, 1); cset(11, 34, 12, 45, 3)       # pied avant (sous le repose-pieds)
+cset(4, 38, 10, 40, 1); cset(4, 39, 10, 39, 3)         # traverse
+cset(0, 46, 5, 47, 1); cset(9, 46, 14, 47, 1)          # patins
+CHAIR_X, CHAIR_Y = 16, 112
+
 def draw_court(env=0):
     W, H = 256, 240
     b = [[0]*W for _ in range(H)]
@@ -307,12 +330,10 @@ def draw_court(env=0):
         bx = 31 if side == 0 else 224
         for y in range(32, 240):
             b[y][bx] = 3 if env != 3 else (3 if y % 4 < 2 else 1)
-    # chaise d'arbitre dans la tribune gauche, au niveau du filet
-    rect(18, NET_Y-14, 29, NET_Y+2, 0)
-    rect(20, NET_Y-14, 27, NET_Y-9, 3)
-    rect(22, NET_Y-20, 25, NET_Y-15, 2)
-    rect(20, NET_Y-8, 21, NET_Y+2, 3)
-    rect(26, NET_Y-8, 27, NET_Y+2, 3)
+    # chaise d'arbitre (palette 3, voir court_attr)
+    for y in range(48):
+        for x in range(16):
+            b[CHAIR_Y + y][CHAIR_X + x] = CHAIR[y][x]
     # bandeau supérieur réservé au score (couleur 0)
     for y in range(0, 32):
         for x in range(W):
@@ -439,6 +460,8 @@ crowd_idx3 = [bg_alloc(t) for t in NUDE_CROWD]
 def court_attr(bx, by):
     if by < 2:
         return 1                      # bandeau score
+    if bx == CHAIR_X // 16 and CHAIR_Y // 16 <= by < CHAIR_Y // 16 + 3:
+        return 3                      # chaise d'arbitre
     if bx < 2 or bx >= 14:
         return 2                      # tribunes
     return 0
@@ -669,30 +692,27 @@ for k in range(1, 6):
     cross[k][k + 1] = 1
     cross[k][7 - k] = 1
 spr_tile(10, cross)
-# arbitre de chaise (palette 2 : 1 peau, 2 noir, 3 blanc), vu de dessus :
-# tête de face (balle en bas), tête de dos (balle en haut), buste
-ump_face = blank()
-for y in range(2, 8):
-    for x in range(2, 6):
-        ump_face[y][x] = 1
-for x in range(2, 6):
-    ump_face[2][x] = 2                       # cheveux
-ump_face[4][3] = ump_face[4][4] = 2          # yeux
-spr_tile(11, ump_face)
-ump_back = blank()
-for y in range(2, 8):
-    for x in range(2, 6):
-        ump_back[y][x] = 2 if y < 7 else 1   # cheveux, nuque
-ump_back[2][2] = ump_back[2][5] = 0
-spr_tile(12, ump_back)
-ump_body = blank()
-for y in range(0, 7):
-    for x in range(1, 7):
-        ump_body[y][x] = 3                   # chemise blanche
-ump_body[0][3] = ump_body[0][4] = 2          # noeud
-for y in range(2, 6):
-    ump_body[y][0] = 1; ump_body[y][7] = 1   # bras
-spr_tile(13, ump_body)
+# Arbitre de chaise, de profil, tourné vers le court (sprites, palette 2 :
+# 1 peau, 2 noir, 3 blanc). 11 tête, 12 buste au repos, 13 buste bras tendu
+# (épaule) ; 3 tuiles chargées à la place de la coupe pendant un match : main
+# du bras tendu, bras levé (au-dessus de l'épaule), buste bras levé.
+def tile_from(rows):
+    t = blank()
+    for y, r in enumerate(rows):
+        for x, c in enumerate(r):
+            t[y][x] = int(c)
+    return t
+ump_head  = tile_from(["00222200", "02222220", "02221110", "02211211", "00211111", "00211110", "00011100", "00011000"])
+ump_rest  = tile_from(["00033300", "00333332", "00333332", "00313333", "00313333", "00313333", "00311133", "00333330"])
+ump_out   = tile_from(["00033300", "00333332", "00333111", "00333111", "00333333", "00333333", "00333333", "00333330"])
+ump_hand  = tile_from(["00000000", "00000000", "11110000", "11111000", "00000000", "00000000", "00000000", "00000000"])
+ump_armup = tile_from(["01100000", "11110000", "01100000", "01100000", "01100000", "01100000", "01100000", "01100000"])
+ump_upb   = tile_from(["00033311", "00333311", "00333332", "00333333", "00333333", "00333333", "00333333", "00333330"])
+spr_tile(11, ump_head)
+spr_tile(12, ump_rest)
+spr_tile(13, ump_out)
+UMP_EXTRA = [ump_hand, ump_armup, ump_upb]      # chargées à la place de la coupe pendant un match
+
 # goutte de sueur (fatigue), couleur 2 de la palette des effets (bleu)
 sweat = blank()
 for (x, y) in ((3, 1), (3, 2), (2, 3), (3, 3), (4, 3), (2, 4), (3, 4), (4, 4), (3, 5)):
@@ -1071,6 +1091,7 @@ def c_array(name, data):
     return s + '};\n'
 
 court_rles = [rle(n) for n in court_nts]
+
 src = ['/* Fichier généré par tools/gen_assets.py — ne pas modifier. */',
        '#include "assets.h"', '']
 logo = []
@@ -1117,6 +1138,7 @@ src.append(c_array('sign2_orig', b''.join(encode_tile(bg_tiles[i]) for i in SIGN
 src.append(c_array('net_idx', bytes(NET_IDX)))
 src.append(c_array('net_norm', b''.join(encode_tile(t) for t in net_tiles(False))))
 src.append(c_array('net_shk', b''.join(encode_tile(t) for t in net_tiles(True))))
+src.append(c_array('ump_chr', b''.join(encode_tile(t) for t in UMP_EXTRA)))
 src.append(c_array('crowd_idx', bytes(crowd_idx)))
 src.append(c_array('crowd_norm', b''.join(encode_tile(t) for t in CROWD)))
 src.append(c_array('crowd_cheer', b''.join(encode_tile(t) for t in CHEER)))

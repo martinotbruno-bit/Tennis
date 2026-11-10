@@ -1,10 +1,16 @@
-# Royal Martinot — Rapport de réalisation (version 2.20)
+# Royal Martinot — Rapport de réalisation (version 2.21)
 
 Comme l'exige le CDC (§ 17.5), ce rapport distingue ce qui est **réalisé**, **testé**, **validé sur matériel réel**, **validé uniquement en émulation**, **dépendant d'une extension**, et les **limitations restantes**.
 
 > **Validation matérielle : aucune.** Aucun test n'a été fait sur console réelle (NES, Famicom, PAL, cartouche MMC1). Toutes les validations ont eu lieu en émulation (jsnes) et par des tests unitaires sur PC. Les critères « vérifié sur console physique » (CDC § 2.1, 15.4, 16.A) **ne sont pas remplis**. Ce point ne peut pas être traité dans l'environnement de développement utilisé.
 
 ## 1. Évolutions
+
+### Version 2.21
+
+| Demande | Réalisation |
+|---|---|
+| Chaise d'arbitre, version classique avec toutes les améliorations | Nouvelle chaise vue de profil, à gauche du filet, dans les 5 lieux : haut dossier, siège avec plaque, repose-pieds, deux pieds et une traverse. Elle est blanche à contours noirs (le vert était impossible avec les palettes de la NES), avec les mêmes couleurs de jour, de nuit et sous la pluie. L'arbitre, de profil, est tourné vers le court : bras tendu sur une faute ou une balle dehors, bras qui s'agite sur un let, bras levé qui salue à la fin du match |
 
 ### Version 2.20
 
@@ -199,12 +205,12 @@ Pour loger ce contenu, la cartouche passe de NROM (32 Ko) à **MMC1** : 128 Ko d
 |---|---|
 | Règles (`rules_test`) | 42/42 |
 | Codes (`password_test`) | 200 000/200 000 aller-retour (format v3), ancien code v2 accepté, Margaux codée, Margaux au club nudiste refusée ; 99,98 % des codes altérés d'un signe refusés |
-| Émulateur (`emu_test`) | 210/210 vérifications (environ 21 min) |
+| Émulateur (`emu_test`) | 213/213 vérifications (environ 21 min) |
 | Profil CPU, simple, 6 000 trames | 0 trame d'échange en dépassement |
 | Relecture des textes (`check_texts.py`) | 0 problème |
 | Contraste (`contrast.py 25`) | 0 paire sous ΔE 25 (personnages, courts, balle, tenues) |
 | Profil CPU, double, 6 000 trames | 27 trames d'échange en dépassement (0,45 %), sans défaut d'image |
-| Compilation | Reproductible : SHA-256 `6538c2cdfbf6ca60ec99189f6adb7966e28adece67431af73c18d7ae67a35a70` sur deux compilations propres |
+| Compilation | Reproductible : SHA-256 `8758f2ccc3d7f1674edadd288123d53bb5e413dbe7801e613774fa0a4ba0cc95` sur deux compilations propres |
 
 ## 3. Conformité par section du CDC
 

@@ -599,7 +599,10 @@ console.log('Vitesse du jeu, coups gagnants, smash sauté, musiques');
   const rate = (gs) => {
     const e = boot(); startWith(e, { FMT: 3, GSPEED: gs }); allCpu(e);
     runUntil(e, () => e.peek('ms') === 0, 200);
-    e.poke('ms', 4); e.poke('ms_timer', 250); e.run(120);    // fin de match : ms_timer décompte chaque trame logique
+    // fin de match : ms_timer décompte chaque trame logique ; le CPU (équipe 0)
+    // bat un humain (équipe 1) : pas de fête, qui fausserait la mesure
+    e.nes.cpu.mem[e.addr('cfg') + CFG.CTRL + 1] = 0; e.poke('sc_winner', 0);
+    e.poke('ms', 4); e.poke('ms_timer', 250); e.run(120);
     return 250 - e.peek('ms_timer');
   };
   const r0 = rate(0), r1 = rate(1), r2 = rate(2);
@@ -736,11 +739,11 @@ const msgText = (e) => { let t = ''; for (let i = 0; i < 14; i++) t += String.fr
   check((e.peek('pose_cache', 0) >> 5) > 0, 'saut enregistré pour le ralenti');
 }
 {
-  // effets : ombres (simple), arbitre (stade), poussière (terre), repère (lent)
+  // effets : ombres (simple), arbitre (tous les lieux), poussière (terre), repère (lent)
   const e = boot(); startWith(e, { FMT: 3, SURF: 0, ENV: 0, GSPEED: 0 }); allCpu(e);
   e.run(60);
   let t = oamTiles(e);
-  check(t.has(5) && t.has(13) && (t.has(11) || t.has(12)), 'ombres des joueurs et arbitre de chaise au stade');
+  check(t.has(5) && t.has(11) && (t.has(12) || t.has(13)), 'ombres des joueurs et arbitre de chaise (tête, buste)');
   let dust = false, pb = 0;
   runUntil(e, () => { const b = e.peek('bounces'); if (b === 1 && pb === 0) { e.run(2); dust = dust || [...oamTiles(e)].some((x) => x === 6 || x === 7); } pb = b; return dust; }, 3000);
   check(dust, 'poussière au rebond sur la terre battue');
@@ -752,7 +755,34 @@ const msgText = (e) => { let t = ''; for (let i = 0; i < 14; i++) t += String.fr
   const g = boot(); startWith(g, { FMT: 3, ENV: 1, GSPEED: 1 });
   let mark2 = false;
   runUntil(g, () => { mark2 = mark2 || oamTiles(g).has(10); return false; }, 1500);
-  check(!mark2 && !oamTiles(g).has(13), 'vitesse normale : pas de repère ; pas d\'arbitre hors du stade');
+  check(!mark2 && oamTiles(g).has(11), 'vitesse normale : pas de repère ; arbitre aussi au club');
+}
+{
+  // chaise d'arbitre de profil, dans le décor de chaque lieu (palette 3 :
+  // mêmes couleurs de jour, de nuit et sous la pluie) ; gestes de l'arbitre
+  const nt = (e, x, y) => e.nes.ppu.vramMem[0x2000 + y * 32 + x];
+  const at = (e, a) => e.nes.ppu.vramMem[a];
+  let tiles = null, okall = true;
+  for (const env of [0, 1, 2, 4]) for (const cond of [0, 1, 2]) {
+    const e = boot(); startWith(e, { ENV: env, COND: cond, SURF: 0 }); e.run(30);
+    const t = []; for (let r = 14; r < 20; r++) t.push(nt(e, 2, r), nt(e, 3, r));
+    if (!tiles) tiles = t.join(); else if (tiles !== t.join()) okall = false;
+    if ((at(e, 0x23D8) >> 6) !== 3 || ((at(e, 0x23E0) >> 2) & 3) !== 3 || (at(e, 0x23E0) >> 6) !== 3) okall = false;
+    if (cond === 0 && env === 0) { const p = e.addr('pal_buf'); if (e.nes.cpu.mem[p + 13] !== 0x0F || e.nes.cpu.mem[p + 15] !== 0x30) okall = false; }
+  }
+  check(okall, 'chaise d\'arbitre identique dans les 4 lieux, de jour, de nuit et sous la pluie (palette 3 noir/blanc)');
+  const g = boot(); startWith(g, { ENV: 0, SURF: 0 }); g.run(100);
+  const tt = g.peek('trophy_tile');
+  g.poke('ump_arm', 1); g.poke('end_reason', 1); g.poke('ms', 3); g.poke('ms_timer', 60); g.run(2);
+  const out = oamTiles(g).has(13) && oamTiles(g).has(tt);
+  g.poke('end_reason', 3); g.poke('ms_timer', 60); g.run(2);
+  const let_ = oamTiles(g).has(tt + 1) && oamTiles(g).has(tt + 2);
+  g.poke('ms', 2); g.poke('ump_arm', 0); g.run(2);
+  const rest = oamTiles(g).has(12) && !oamTiles(g).has(tt + 1);
+  check(out && let_ && rest, 'arbitre : bras tendu sur une faute, bras levé sur un let, au repos sinon');
+  g.tap('START'); g.run(5); g.tap('DOWN'); g.tap('A'); runUntil(g, () => scr(g) === SS.RESULTS || scr(g) === SS.MENU || scr(g) === SS.TITLE, 200); g.run(30);
+  const rom2 = g.nes.rom.rom[2]; let diff = 0; for (let i = 0; i < 48; i++) if (g.nes.ppu.vramMem[0x1000 + tt * 16 + i] !== rom2[0x1000 + tt * 16 + i]) diff++;
+  check(app(g) === AS.SCREENS && diff === 0, `hors du match : tuiles de la coupe rétablies (${diff} octet(s) différent(s))`);
 }
 {
   // réglage SON et réglages mémorisés dans la cartouche
@@ -843,6 +873,9 @@ console.log('Service canon');
   const trial = (k, lv = 1) => {
     const e = boot(); startWith(e, { FMT: 3, LEVEL: lv });
     runUntil(e, () => e.peek('ms') === 0 && e.peek('sc_server') === 0, 600);
+    // la première trame d'un point (mise en place du service) déborde : un
+    // appui d'une seule trame peut y être perdu ; un joueur appuie plus longtemps
+    e.run(6);
     e.poke('ms_timer', 200);
     e.tap('A', 1, 1, 0);
     runUntil(e, () => e.peek('ms') === 1, 30);
@@ -1057,7 +1090,7 @@ console.log('Victoire : sauts de joie et confettis');
   for (let n = 0; n < 40; n++) {
     e.run(1);
     const t = oamTiles(e); if (t.has(confetti) && t.has(3)) conf++;
-    let top = 255; for (let i = 0; i < 64; i++) { const y = e.peek('oam_buf', i * 4), tl = e.peek('oam_buf', i * 4 + 1); if (y < 0xEF && tl !== confetti && tl !== 3 && y > 120) top = Math.min(top, y); }
+    let top = 255; for (let i = 0; i < 64; i++) { const y = e.peek('oam_buf', i * 4), tl = e.peek('oam_buf', i * 4 + 1); if (y < 0xEF && tl !== confetti && tl !== 3 && y > 120 && e.peek('oam_buf', i * 4 + 3) >= 40) top = Math.min(top, y); /* hors arbitre (x < 40) */ }
     ys.add(top);
   }
   check(conf >= 38, `victoire d'un humain : pluie d'étoiles et de confettis (${conf}/40 trames)`);

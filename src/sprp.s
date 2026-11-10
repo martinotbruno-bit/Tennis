@@ -563,3 +563,119 @@ _audio_tick:
     sta _bass_ptr+1
 @done:
     rts
+
+; ---------------------------------------------------------------------------
+; void ump_draw(void) : arbitre de chaise, assis de profil sur la chaise du
+; décor (x 16-31, y 112-159), tourné vers le court. Tête (11) et buste (12 au
+; repos, 13 bras tendu, coupe + 2 bras levé), plus un 3e sprite pour la main
+; (coupe + 0) ou le bras levé (coupe + 1). En assembleur : la version C, à
+; chaque trame dans tous les lieux, faisait déborder des trames chargées.
+.export _ump_draw
+.import _ms, _end_reason, _ump_arm, _trophy_tile
+.importzp _frame_cnt
+.importzp tmp4
+CHAIR_SY = 112
+
+.segment "CODE"
+_ump_draw:
+    lda #12
+    sta tmp1                ; buste
+    lda #0
+    sta tmp2                ; 3e sprite (0 : aucun)
+    lda #27
+    sta tmp3                ; x du 3e sprite
+    lda #CHAIR_SY + 11
+    sta tmp4                ; y du 3e sprite
+    lda _ms
+    cmp #4                  ; MS_OVER : bras levé qui salue
+    bne @dead
+    lda _frame_cnt
+    lsr a
+    lsr a
+    lsr a
+    and #1
+    eor #$FF
+    sec
+    adc #CHAIR_SY - 1       ; CHAIR_SY - 1 - ((frame_cnt >> 3) & 1)
+    sta tmp4
+    lda #25
+    sta tmp3
+    jmp @up
+@dead:
+    cmp #3                  ; MS_DEAD
+    bne @draw
+    lda _end_reason
+    cmp #3                  ; END_LET : bras levé qui s'agite
+    bne @arm
+    lda _frame_cnt
+    lsr a
+    lsr a
+    and #1
+    clc
+    adc #25
+    sta tmp3
+    lda #CHAIR_SY - 1
+    sta tmp4
+@up:
+    lda _trophy_tile
+    clc
+    adc #2
+    sta tmp1
+    sec
+    sbc #1
+    sta tmp2
+    jmp @draw
+@arm:
+    lda _ump_arm            ; faute, balle dehors : bras tendu
+    beq @draw
+    lda _ms_timer
+    cmp #16
+    bcc @draw
+    lda #13
+    sta tmp1
+    lda _trophy_tile
+    sta tmp2
+@draw:
+    ldx _oam_i
+    lda #CHAIR_SY + 3 - 1   ; tête (le PPU affiche une ligne plus bas)
+    sta _oam_buf,x
+    lda #11
+    sta _oam_buf+1,x
+    lda #2
+    sta _oam_buf+2,x
+    lda #19
+    sta _oam_buf+3,x
+    inx
+    inx
+    inx
+    inx
+    lda #CHAIR_SY + 11 - 1  ; buste
+    sta _oam_buf,x
+    lda tmp1
+    sta _oam_buf+1,x
+    lda #2
+    sta _oam_buf+2,x
+    lda #19
+    sta _oam_buf+3,x
+    inx
+    inx
+    inx
+    inx
+    lda tmp2
+    beq @end
+    sta _oam_buf+1,x
+    ldy tmp4
+    dey
+    tya
+    sta _oam_buf,x
+    lda #2
+    sta _oam_buf+2,x
+    lda tmp3
+    sta _oam_buf+3,x
+    inx
+    inx
+    inx
+    inx
+@end:
+    stx _oam_i
+    rts

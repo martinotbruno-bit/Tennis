@@ -18,6 +18,9 @@ extern const unsigned char sign_chr[128];      /* panneau du court Margaux (8 tu
 extern const unsigned char sign2_chr[128];     /* panneau du club nudiste (8 tuiles) */
 extern const unsigned char sign_idx[8], sign2_idx[8];        /* tuiles qu'ils remplacent */
 extern const unsigned char sign_orig[128], sign2_orig[128];  /* dessin d'origine de ces tuiles */
+/* arbitre de chaise : 3 tuiles de sprites (tête de profil, bras tendu, bras
+   levé), à la place de la coupe pendant un match */
+extern const unsigned char ump_chr[48];
 extern const unsigned char net_idx[2];          /* tuiles des mailles du filet */
 extern const unsigned char net_norm[32], net_shk[32];   /* au repos / secouées */
 /* banque 6 */

@@ -6,8 +6,12 @@
 #include "court.h"
 #include "gfx.h"
 #include "audio.h"
+#include "assets.h"
 
 #pragma static-locals(on)
+
+#define CHAIR_SY 112     /* haut de la chaise d'arbitre (tools/gen_assets.py)  */
+u8 ump_arm;              /* 1 : faute ou balle dehors, l'arbitre tend le bras */
 
 extern u8 b_netcord;
 
@@ -153,11 +157,12 @@ void match_fx(void)
             spr1((u8)(PXU(bx - bvx * j) - 2), (u8)(PXU(by - bvy * j) - PXU(z) - 2), 1, 3);
         }
     }
-    /* arbitre de chaise (stade) : il regarde le côté où se trouve la balle */
-    if (cfg.env == ENV_STADIUM) {
-        spr1(20, NET_Y - 22, (u8)(by < NET_Y * FP ? 12 : 11), 2);
-        spr1(20, NET_Y - 14, 13, 2);
-    }
+    /* arbitre de chaise (tous les lieux), assis de profil sur sa chaise
+       (décor, x 16-31), tourné vers le court : bras tendu sur une faute ou
+       une balle dehors ; bras levé qui s'agite sur un let ; bras levé en
+       grand à la fin du match. Tuiles : 11 tête, 12 buste, 13 bras tendu ;
+       coupe + 0 main, + 1 bras levé, + 2 buste bras levé */
+    ump_draw();      /* assembleur (src/sprp.s) : 3 sprites au plus, sans appel coûteux */
 }
 
 /* Nom d'équipe sur 4 lettres (panneaux de score, annonces) : « ALEX » en
