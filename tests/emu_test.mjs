@@ -20,6 +20,8 @@ function boot() { const e = new Emu(rom); e.run(40); e.tap('START', 1, 1, 0); e.
 const scr = (e) => e.peek('scr_state');
 const app = (e) => e.peek('app_state');
 function toMenu(e) { e.tap('START'); e.run(10); }
+// ligne du menu où se trouve une option (la liste dépend du mode)
+function rowOf(e, o) { for (let i = 0; i < e.peek('nvis'); i++) if (e.peek('vis', i) === o) return i; return -1; }
 function setOpts(e, opts) { for (const [k, v] of Object.entries(opts)) e.poke('opt_val', v, O[k]); }
 // depuis le titre : configure et lance (présentation -> A si nécessaire)
 function startWith(e, opts) {
@@ -95,6 +97,23 @@ console.log('Générique de lancement');
   check(asked && f.peek('app_state') === 0 && n < 25, `passer : « ARE YOU SURE? » puis « FINE. » (${n + 1} trames)`);
 }
 
+{
+  // fanfare du générique : chaque note commence exactement à sa trame (la
+  // musique avance dans la NMI, même pendant la construction des scènes)
+  const e = new Emu(rom), m = e.nes.cpu.mem, mm = e.nes.mmap, w = mm.write.bind(mm);
+  let fr = 0; const on = { 0x4007: [], 0x400b: [] };
+  mm.write = (a, v) => { if (a === 0x4007 || a === 0x400b) on[a].push(fr); return w(a, v); };
+  for (; fr < 1300; fr++) e.run(1);
+  const score = (sym) => { let a = e.addr(sym), out = [], t = 0; while (m[a] !== 0xFF) { if (m[a] !== 0xFE) out.push(t); t += m[a + 1]; a += 2; } return out; };
+  let worst = 0, cnt = 0;
+  for (const [reg, sym] of [[0x4007, 'mus_intro_mel'], [0x400b, 'mus_intro_bass']]) {
+    const got = on[reg], exp = score(sym);
+    cnt += Math.min(got.length, exp.length) === exp.length ? 0 : 1;
+    for (let i = 0; i < exp.length && i < got.length; i++) worst = Math.max(worst, Math.abs(got[i] - got[0] - exp[i]));
+  }
+  check(cnt === 0 && worst === 0, `générique : les ${score('mus_intro_mel').length} notes de la mélodie et ${score('mus_intro_bass').length} de la basse tombent à la trame près (écart max ${worst})`);
+}
+
 console.log('Démarrage et cartouche MMC1');
 {
   const e = boot();
@@ -127,7 +146,7 @@ console.log("Mode d'emploi");
 console.log('Menu de configuration');
 {
   const e = boot(); toMenu(e);
-  check(scr(e) === SS.MENU && e.peek('nvis') === 14, 'configuration match : 14 lignes');
+  check(scr(e) === SS.MENU && e.peek('nvis') === 13, 'configuration match : 13 lignes (pas de ligne JEU contre le CPU)');
   e.tap('DOWN'); e.tap('RIGHT'); e.tap('RIGHT'); e.tap('RIGHT'); e.run(5);
   check(e.peek('opt_val', O.MODE) === MODE.COMP && e.peek('nvis') === 14, 'mode compétition : lignes adaptées');
   e.tap('RIGHT'); e.run(5);
@@ -158,7 +177,7 @@ console.log('Mode en équipe (double)');
 console.log('Court Margaux');
 {
   const e = boot(); toMenu(e);
-  for (let k = 0; k < 7; k++) e.tap('DOWN');
+  e.poke('cursor', rowOf(e, O.ENV));
   const seen = new Set(); for (let i = 0; i < 6; i++) { e.tap('RIGHT'); seen.add(e.peek('opt_val', O.ENV)); }
   check(seen.has(4) && !seen.has(3), 'court Margaux proposé d\'emblée (club nudiste toujours verrouillé)');
   setOpts(e, { ENV: 4 }); e.tap('START'); e.run(15);
@@ -277,7 +296,7 @@ for (let s = 0; s < 6; s++) {
   totalReplays += r.replays;
 }
 {
-  const r = fullMatch('double dur/salle', { FMT: 3, TYPE: 1, SURF: 2, ENV: 2 }, 60 * 60 * 25);
+  const r = fullMatch('double dur/salle', { MODE: MODE.P2, FMT: 3, TYPE: 1, SURF: 2, ENV: 2 }, 60 * 60 * 25);
   totalReplays += r.replays;
 }
 check(totalReplays > 0, `ralentis déclenchés sur les beaux points (${totalReplays})`);
@@ -435,7 +454,7 @@ console.log('Compétition en double, levée de coupe et club nudiste');
   check(e.peek('nude_unlocked') === 0, 'club nudiste verrouillé au départ');
   toMenu(e);
   let envs = new Set();
-  for (let k = 0; k < 7; k++) e.tap('DOWN');
+  e.poke('cursor', rowOf(e, O.ENV));
   for (let i = 0; i < 6; i++) { e.tap('RIGHT'); envs.add(e.peek('opt_val', O.ENV)); }
   check(!envs.has(3) && envs.size === 4, 'lieu « club nudiste » absent avant déblocage (4 lieux proposés)');
 }
@@ -471,7 +490,7 @@ console.log('Compétition en double, levée de coupe et club nudiste');
   // retour au titre après le podium (CHR-RAM rechargée : ~47 trames)
   e.tap('A'); runUntil(e, () => scr(e) === SS.TITLE && e.peek('ppu_mask') !== 0, 200); e.run(10); toMenu(e);
   setOpts(e, { MODE: MODE.P1, TYPE: 0 }); e.tap('B'); e.run(5); toMenu(e);
-  for (let k = 0; k < 7; k++) e.tap('DOWN');
+  e.poke('cursor', rowOf(e, O.ENV));
   let seen = false; for (let i = 0; i < 4; i++) { e.tap('RIGHT'); if (e.peek('opt_val', O.ENV) === 3) seen = true; }
   check(seen, 'lieu « club nudiste » proposé après déblocage');
   // (chargement des tuiles au naturel + fondu : écran construit en ~25 trames)
@@ -617,7 +636,7 @@ console.log('Vitesse du jeu, coups gagnants, smash sauté, musiques');
   check(e.peek('music_cur') === 1 && e.peek16('mel_ptr') !== e.peek16('mel_start'), 'menu : même polka, qui continue sans repartir du début');
   e.run(800);
   check(e.peek('music_cur') === 1, 'menu : la polka reboucle');
-  e.poke('cursor', 7); e.poke('opt_val', 3, O.ENV); e.tap('RIGHT'); e.run(5);
+  e.poke('cursor', rowOf(e, O.ENV)); e.poke('opt_val', 3, O.ENV); e.tap('RIGHT'); e.run(5);
   check(e.peek('opt_val', O.ENV) === 4 && e.peek('music_cur') === 7, 'menu : court Margaux choisi, sa musique démarre');
   e.tap('LEFT'); e.run(5);
   check(e.peek('music_cur') === 1, 'autre lieu : retour à la polka');
@@ -727,13 +746,24 @@ const msgText = (e) => { let t = ''; for (let i = 0; i < 14; i++) t += String.fr
 
 console.log('Margaux jouable et fatigue');
 {
+  // 1 joueur contre CPU : toujours en simple (le double avec partenaire CPU
+  // est le mode en équipe) ; la ligne JEU n'existe qu'à 2 joueurs adversaires
+  const t = boot(); toMenu(t);
+  check(t.peek('opt_val', O.MODE) === MODE.P1 && t.text(3, 6, 8) === 'JOUEUR 1', '1 joueur contre CPU : pas de ligne JEU (simple seulement)');
+  t.poke('cursor', 1); t.tap('RIGHT');
+  let dark = 0; for (let n = 0; n < 12; n++) { t.run(1); if (!t.nes.ppu.f_bgVisibility) dark++; }
+  check(t.peek('opt_val', O.MODE) === MODE.P2 && t.text(3, 6, 3) === 'JEU' && dark === 0, `2 joueurs adversaires : ligne JEU ; menu redessiné sans couper l'écran (${dark} trame(s) noire(s))`);
+  t.tap('LEFT'); t.run(12);
+  check(t.text(3, 6, 8) === 'JOUEUR 1' && t.text(3, 4 + t.peek('nvis'), 13).replace(/[\0 ]/g, '') === '', 'retour à 1 joueur : lignes réécrites, ancienne ligne en trop effacée');
+  const u = boot(); startWith(u, { MODE: MODE.P1, TYPE: 1 });
+  check(app(u) === AS.MATCH && u.peek('npl') === 2, `1 joueur contre CPU avec un ancien réglage « double » : match en simple (${u.peek('npl')} joueurs)`);
   // Margaux (personnage 16) : menu, présentation, code de reprise
   const e = boot(); toMenu(e);
-  e.poke('cursor', 3); e.poke('opt_val', 15, O.P1); e.tap('RIGHT'); e.run(5);
-  check(e.peek('opt_val', O.P1) === 16 && e.text(16, 7, 7) === 'MARGAUX', 'MARGAUX sélectionnable (17e personnage)');
+  e.poke('cursor', rowOf(e, O.P1)); e.poke('opt_val', 15, O.P1); e.tap('RIGHT'); e.run(5);
+  check(e.peek('opt_val', O.P1) === 16 && e.text(16, 4 + rowOf(e, O.P1), 7) === 'MARGAUX', 'MARGAUX sélectionnable (17e personnage)');
   e.tap('RIGHT'); e.run(5);
   check(e.peek('opt_val', O.P1) === 0, 'retour au premier personnage après Margaux');
-  const g = boot(); toMenu(g); setOpts(g, { P1: 16, TYPE: 1, P2: 3 }); g.tap('START'); g.run(30);
+  const g = boot(); toMenu(g); setOpts(g, { MODE: MODE.P2, P1: 16, TYPE: 1, P2: 3 }); g.tap('START'); g.run(30);
   check(scr(g) === SS.PRESENT && g.text(6, 10, 7) === 'MARGAUX' && g.text(6, 11, 1) === '+' && g.text(8, 11, 3) !== '   ',
     `présentation en double : MARGAUX, partenaire sur la ligne suivante (${g.text(6, 11, 6).replace(/\0/g, " ")})`);
   const c = boot(); startWith(c, { MODE: MODE.COMP, COMP: 0, FMT: 3, P1: 16, TYPE: 1, P2: 7 });
@@ -964,7 +994,7 @@ console.log('Rotation des sprites (double)');
 {
   // 4 joueurs près du filet : jusqu'à 12 sprites sur une ligne. Avec la rotation, chaque
   // sprite est parmi les 8 premiers de ses lignes au moins une trame sur deux
-  const e = boot(); startWith(e, { FMT: 3, TYPE: 1 }); allCpu(e);
+  const e = boot(); startWith(e, { MODE: MODE.P2, FMT: 3, TYPE: 1 }); allCpu(e);
   runUntil(e, () => e.peek('ms') === 0, 300);
   e.tap('START', 1, 1, 2);
   const s16 = (n, v, o = 0) => { e.poke(n, v & 255, o); e.poke(n, (v >> 8) & 255, o + 1); };
@@ -1018,7 +1048,7 @@ console.log('Victoire : sauts de joie et confettis');
   }
   check(bursts === 3, `3 feux d'artifice pendant la fête (${bursts})`);
   // double à 4 joueurs (cas le plus chargé) : aucune trame perdue pendant la fête
-  const d = boot(); startWith(d, { TYPE: 1, FMT: 3 }); allCpu(d);
+  const d = boot(); startWith(d, { MODE: MODE.P2, TYPE: 1, FMT: 3 }); allCpu(d);
   runUntil(d, () => d.peek('ms') === 0, 200);
   d.poke('sc_winner', 0); d.poke('ms', 4); d.poke('ms_timer', 250); d.run(120);
   check(250 - d.peek('ms_timer') >= 118, `fête en double : ${250 - d.peek('ms_timer')} trames logiques sur 120 (au plus 1 perdue, invisible)`);

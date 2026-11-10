@@ -423,3 +423,143 @@ _win_fx:
     bpl @loop
     stx _oam_i
     rts
+
+; ---------------------------------------------------------------------------
+; void audio_tick(void) : lecteur de musique, appelé par la NMI à chaque trame
+; (même pendant la construction d'un écran, rendu coupé : la musique ne prend
+; plus de retard). Mélodie sur le carré 2, basse sur le triangle ; données en
+; couples (note, durée), $FE silence, $FF fin (ou boucle). music_play (C)
+; positionne audio_lock pendant qu'il change l'état.
+.export _audio_tick
+.import _noise_hold, _mel_ptr, _bass_ptr, _mel_start, _bass_start
+.import _mel_timer, _bass_timer, _music_loop, _mel_duty, _music_cur
+.import _note_period, _audio_lock
+
+.segment "ZEROPAGE"
+aptr:   .res 2
+
+.segment "CODE"
+_audio_tick:
+    lda _noise_hold
+    beq @nh
+    dec _noise_hold
+@nh:
+    lda _audio_lock
+    beq @mel
+    rts
+@mel:
+    lda _mel_ptr+1          ; pointeur nul : pas de mélodie (données hors page 0)
+    beq @bass
+    dec _mel_timer
+    bne @bass
+    lda _mel_ptr
+    sta aptr
+    lda _mel_ptr+1
+    sta aptr+1
+    ldy #0
+    lda (aptr),y
+    cmp #$FF
+    bne @mplay
+    lda _music_loop
+    bne @mloop
+    lda #0                  ; fin du morceau
+    sta _mel_ptr
+    sta _mel_ptr+1
+    sta _music_cur
+    lda #$30
+    sta $4004
+    jmp @bass
+@mloop:
+    lda _mel_start
+    sta aptr
+    lda _mel_start+1
+    sta aptr+1
+    ldy #0
+    lda (aptr),y
+@mplay:
+    cmp #$FE
+    bne @mnote
+    lda #$30                ; silence
+    sta $4004
+    jmp @mdur
+@mnote:
+    asl a
+    tax
+    lda _mel_duty
+    sta $4004
+    lda #0
+    sta $4005
+    lda _note_period,x
+    sta $4006
+    lda _note_period+1,x
+    ora #$08
+    sta $4007
+@mdur:
+    ldy #1
+    lda (aptr),y
+    sta _mel_timer
+    clc
+    lda aptr
+    adc #2
+    sta _mel_ptr
+    lda aptr+1
+    adc #0
+    sta _mel_ptr+1
+
+@bass:
+    lda _bass_ptr+1
+    beq @done
+    dec _bass_timer
+    bne @done
+    lda _bass_ptr
+    sta aptr
+    lda _bass_ptr+1
+    sta aptr+1
+    ldy #0
+    lda (aptr),y
+    cmp #$FF
+    bne @bplay
+    lda _music_loop
+    bne @bloop
+    lda #0
+    sta _bass_ptr
+    sta _bass_ptr+1
+    lda #$80
+    sta $4008
+    rts
+@bloop:
+    lda _bass_start
+    sta aptr
+    lda _bass_start+1
+    sta aptr+1
+    ldy #0
+    lda (aptr),y
+@bplay:
+    cmp #$FE
+    bne @bnote
+    lda #$80
+    sta $4008
+    jmp @bdur
+@bnote:
+    asl a
+    tax
+    lda #$FF
+    sta $4008
+    lda _note_period,x
+    sta $400A
+    lda _note_period+1,x
+    ora #$08
+    sta $400B
+@bdur:
+    ldy #1
+    lda (aptr),y
+    sta _bass_timer
+    clc
+    lda aptr
+    adc #2
+    sta _bass_ptr
+    lda aptr+1
+    adc #0
+    sta _bass_ptr+1
+@done:
+    rts

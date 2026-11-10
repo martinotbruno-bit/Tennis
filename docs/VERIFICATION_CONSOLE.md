@@ -19,7 +19,7 @@ Le jeu a été testé uniquement sur émulateur. Cette liste sert à le vérifie
 
 | # | Vérification | Attendu | OK ? |
 |---|---|---|---|
-| 1.1 | Allumer la console | Le générique démarre (« BRUNO MARTINOT PRESENTS », fanfare), barre à 117 %, mentions légales, lettre N tombée puis remise par le stagiaire, puis l'écran titre « ROYAL MARTINOT » après une trentaine de secondes ; sans image brouillée | ☐ |
+| 1.1 | Allumer la console | Le générique démarre (« BRUNO MARTINOT PRESENTS », fanfare, sans raté aux changements de scène), barre à 117 %, mentions légales, lettre N tombée puis remise par le stagiaire, puis l'écran titre « ROYAL MARTINOT » après une trentaine de secondes ; sans image brouillée | ☐ |
 | 1.1 b | Allumer, puis appuyer deux fois sur un bouton | Au 1er appui : « ARE YOU SURE? THIS IS VERY PRESTIGIOUS. » ; au 2e : « FINE. » puis l'écran titre | ☐ |
 | 1.2 | Musique du titre | Polka jouée en boucle, sans trou, grésillement ni note bloquée ; elle continue sans repartir au début en passant au menu | ☐ |
 | 1.3 | HAUT/BAS dans le titre | L'étoile passe d'une ligne à l'autre avec un petit « bip » | ☐ |
@@ -31,7 +31,8 @@ Le jeu a été testé uniquement sur émulateur. Cette liste sert à le vérifie
 
 | # | Vérification | Attendu | OK ? |
 |---|---|---|---|
-| 2.0 | Changements d'écran | Fondu au noir puis retour progressif, sans image brouillée ; la musique ne s'interrompt pas | ☐ |
+| 2.0 | Changements d'écran | Fondu au noir puis retour progressif, sans image brouillée ni trait horizontal ; la musique ne s'interrompt pas et ne prend aucun retard | ☐ |
+| 2.0 b | Au menu, changer de MODE plusieurs fois, puis de personnage | Les lignes se réécrivent sans éclair noir ni trait horizontal ; en 1 JOUEUR CONTRE CPU, pas de ligne JEU ; en 2 JOUEURS ADVERSAIRES, ligne JEU (simple ou double) | ☐ |
 | 2.1 | Ouvrir le mode d'emploi, parcourir les 8 pages | Aucune ligne coupée ; GAUCHE/DROITE change de page | ☐ |
 | 2.2 | JOUER > configuration | Lignes lisibles ; le personnage animé est à droite du titre et ne masque aucun texte | ☐ |
 | 2.3 | Mode COMPETITION, type PERSONNALISE, jeu DOUBLE | 19 lignes, puis STYLE et l'aide en bas, sans chevauchement | ☐ |

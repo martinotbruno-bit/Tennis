@@ -1,7 +1,6 @@
 #ifndef AUDIO_H
 #define AUDIO_H
 #include "runtime.h"
-void audio_update(void);          /* à appeler une fois par trame logique */
 void music_play(u8 id);           /* 0 = arrêt */
 u8 music_none(void);              /* 1 si aucune musique */
 void sfx_hit(u8 power);           /* impact raquette, power 0..3 */

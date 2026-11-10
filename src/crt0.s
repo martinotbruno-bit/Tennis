@@ -7,7 +7,7 @@
 .export __STARTUP__ : absolute = 1
 .export _oam_buf, _vram_buf, _vram_len
 .export _frame_cnt, _nmi_ready, _pal_buf, _pal_dirty, _ppu_mask, _fade_lvl, _fade_skip
-.import _audio_update
+.import _audio_tick, _is_pal
 .export _pad1, _pad2, _pad1_new, _pad2_new, _region_cnt
 .export _wait_frame, _pad_poll, _ppu_off, _ppu_on, _vram_adr, _vram_put
 .export _vram_fill, _vram_unrle, _rand8, _rand_seed
@@ -76,6 +76,8 @@ _pad2:      .res 1
 _pad1_new:  .res 1
 _pad2_new:  .res 1
 _vram_len:  .res 1
+nmi_vlen:   .res 1      ; copie de vram_len pour la NMI
+nmi_pal:    .res 1      ; compteur 50 Hz du son
 _rand_seed: .res 2
 pad_tmp:    .res 1
 _oam_i:     .res 1      ; prochain emplacement libre dans _oam_buf
@@ -225,16 +227,21 @@ nmi:
     tya
     pha
     lda _nmi_ready
-    beq @skip
+    beq @skipj
     lda _ppu_mask
     and #$18
-    beq @skip           ; rendu coupé : la VRAM appartient au thread principal
+    bne @go             ; rendu coupé : la VRAM appartient au thread principal
+@skipj:
+    jmp @skip
+@go:
 
     lda #0
     sta OAMADDR
     lda #>_oam_buf
     sta OAMDMA          ; 513 cycles
 
+    lda _vram_len       ; taille du tampon de cette trame (remise à 0 plus bas)
+    sta nmi_vlen
     ldx #0
 @upd:
     lda _vram_buf,x
@@ -262,11 +269,27 @@ nmi:
 
     lda _pal_dirty
     beq @nopal
+    ; budget du VBlank (~2270 cycles en NTSC) : DMA 513, tampon jusqu'à
+    ; ~1450, palette ~750. Les deux ensemble débordaient sur le haut de
+    ; l'image (traits horizontaux pendant les fondus et le défilement des
+    ; menus) : avec un tampon chargé, la palette attend la trame suivante.
+    lda nmi_vlen
+    cmp #33
+    bcs @nopal          ; pal_dirty reste à 1
     lda #$3F
     sta PPUADDR
     lda #$00
     sta PPUADDR
     ldx #0
+    lda _fade_lvl
+    bne @pal
+@palf:                  ; sans fondu : copie directe (~480 cycles au lieu de ~740)
+    lda _pal_buf,x
+    sta PPUDATA
+    inx
+    cpx #32
+    bne @palf
+    beq @pald
 @pal:
     lda _pal_buf,x
     sec
@@ -278,6 +301,7 @@ nmi:
     inx
     cpx #32
     bne @pal
+@pald:
     lda #0
     sta _pal_dirty
 @nopal:
@@ -293,6 +317,19 @@ nmi:
     lda #0
     sta _nmi_ready
 @skip:
+    ; son : à chaque trame, rendu coupé compris (après le travail du VBlank) ;
+    ; en 50 Hz, une mise à jour de plus toutes les 5 trames (tempo du 60 Hz)
+    jsr _audio_tick
+    lda _is_pal
+    beq @nopal50
+    inc nmi_pal
+    lda nmi_pal
+    cmp #5
+    bcc @nopal50
+    lda #0
+    sta nmi_pal
+    jsr _audio_tick
+@nopal50:
     inc _frame_cnt
     pla
     tay
@@ -335,9 +372,7 @@ _ppu_off:
     lda #1
     sta _pal_dirty
     jsr _wait_frame
-    jsr _audio_update
     jsr _wait_frame
-    jsr _audio_update
     lda _fade_lvl
     clc
     adc #16

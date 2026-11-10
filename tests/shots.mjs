@@ -14,7 +14,7 @@ menu(e, {}); e.run(5); e.tap('START'); e.run(5); e.tap('B'); e.run(15); e.screen
 e.tap('START'); e.run(30); e.screenshot(`${out}/presentation.png`);
 e = boot(); e.tap('DOWN'); e.tap('A'); e.run(15); e.tap('RIGHT'); e.run(15); e.screenshot(`${out}/mode_emploi.png`);
 match({ SURF: 0, ENV: 0 }, 420, 'simple_terre_stade');
-match({ TYPE: 1, SURF: 2, ENV: 2 }, 520, 'double_dur_salle');
+match({ MODE: 1, TYPE: 1, SURF: 2, ENV: 2 }, 520, 'double_dur_salle');
 match({ SURF: 1, ENV: 1, COND: 2 }, 450, 'pluie_gazon_club');
 match({ SURF: 4, ENV: 1 }, 450, 'plage_club');
 match({ SURF: 5, ENV: 0, COND: 1 }, 450, 'glace_nuit');

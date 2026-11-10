@@ -4,9 +4,9 @@
 #include "audio.h"
 #include "game.h"
 
-static u8 noise_hold;   /* le canal de bruit sert à un bruitage : pas de pas */
+u8 noise_hold;          /* le canal de bruit sert à un bruitage : pas de pas */
 
-static const u16 note_period[48] = {
+const u16 note_period[48] = {
  1709,1613,1523,1437,1356,1280,1208,1140,1076,1016,959,905,
  854,806,761,718,678,640,604,570,538,507,479,452,
  427,403,380,359,338,319,301,284,268,253,239,225,
@@ -151,41 +151,25 @@ static const u8 mus_break_bass[] = {
  F3,24, C3,24,  A3,24, E3,24,  D3,24, G3,24,  C3,36, R,12,
  END,0 };
 
-static const u8 *mel_ptr, *bass_ptr, *mel_start, *bass_start;
-static u8 mel_timer, bass_timer, music_loop, mel_duty;
+/* état du lecteur, lu par audio_tick (src/sprp.s), appelé par la NMI à
+   chaque trame : la musique avance même pendant la construction d'un écran
+   (rendu coupé), sans à-coup */
+const u8 *mel_ptr, *bass_ptr, *mel_start, *bass_start;
+u8 mel_timer, bass_timer, music_loop, mel_duty;
+u8 audio_lock;     /* 1 : état en cours de modification, la NMI attend */
 u8 music_cur;      /* morceau en cours (MUS_*) */
 u8 snd_mode;       /* 0 musique + bruitages, 1 bruitages seuls, 2 aucun son */
 
-static void play_pulse2(u8 n)
-{
-    u16 p;
-    if (n == R) { APU(0x4004) = 0x30; return; }
-    p = note_period[n];
-    APU(0x4004) = mel_duty;        /* rapport cyclique (50 % ou 25 %), enveloppe */
-    APU(0x4005) = 0x00;
-    APU(0x4006) = (u8)p;
-    APU(0x4007) = (u8)(0x08 | (p >> 8));
-}
-
-static void play_tri(u8 n)
-{
-    u16 p;
-    if (n == R) { APU(0x4008) = 0x80; return; }
-    p = note_period[n];
-    APU(0x4008) = 0xFF;
-    APU(0x400A) = (u8)p;
-    APU(0x400B) = (u8)(0x08 | (p >> 8));
-}
-
 void music_play(u8 id)
 {
+    audio_lock = 1;
     mel_ptr = bass_ptr = 0;
     music_loop = 0;
     mel_duty = 0x86;
     music_cur = id;
     APU(0x4004) = 0x30;
     APU(0x4008) = 0x80;
-    if (snd_mode) return;          /* musique coupée (réglage SON) */
+    if (snd_mode) { audio_lock = 0; return; }   /* musique coupée (réglage SON) */
     switch (id) {
     case MUS_TITLE:   mel_ptr = mus_title_mel; bass_ptr = mus_title_bass; music_loop = 1; mel_duty = 0x36; break;
     case MUS_POINT:   mel_ptr = mus_point_mel; break;
@@ -201,40 +185,11 @@ void music_play(u8 id)
     mel_start = mel_ptr;
     bass_start = bass_ptr;
     mel_timer = bass_timer = 1;
+    audio_lock = 0;
 }
 
 u8 music_none(void) { return (u8)(mel_ptr == 0); }
 
-void audio_update(void)
-{
-    if (noise_hold) --noise_hold;
-    if (mel_ptr) {
-        if (--mel_timer == 0) {
-            if (mel_ptr[0] == END) {
-                if (music_loop) { mel_ptr = mel_start; }
-                else { mel_ptr = 0; music_cur = MUS_NONE; APU(0x4004) = 0x30; }
-            }
-            if (mel_ptr) {
-                play_pulse2(mel_ptr[0]);
-                mel_timer = mel_ptr[1];
-                mel_ptr += 2;
-            }
-        }
-    }
-    if (bass_ptr) {
-        if (--bass_timer == 0) {
-            if (bass_ptr[0] == END) {
-                if (music_loop) { bass_ptr = bass_start; }
-                else { bass_ptr = 0; APU(0x4008) = 0x80; }
-            }
-            if (bass_ptr) {
-                play_tri(bass_ptr[0]);
-                bass_timer = bass_ptr[1];
-                bass_ptr += 2;
-            }
-        }
-    }
-}
 
 static void pulse1(u8 env, u8 sweep, u16 period)
 {
@@ -288,7 +243,7 @@ void snd_set(u8 m)
 {
     snd_mode = m;
     APU(0x4015) = (u8)(m == 2 ? 0x00 : 0x0F);
-    if (m) { mel_ptr = bass_ptr = 0; APU(0x4004) = 0x30; APU(0x4008) = 0x80; }
+    if (m) { audio_lock = 1; mel_ptr = bass_ptr = 0; APU(0x4004) = 0x30; APU(0x4008) = 0x80; audio_lock = 0; }
 }
 /* service canon : « boum » sourd et bref, puis un claquement qui descend */
 void sfx_canon(void)      { noise(0x05, 0x0F); pulse1(0x84, 0x93, 140); }

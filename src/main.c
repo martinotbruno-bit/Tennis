@@ -53,7 +53,7 @@ static void logic_tick(void)
     u8 r;
     /* fondu d'ouverture : un cran plus clair toutes les 2 trames */
     if (fade_lvl && ppu_mask && !(frame_cnt & 1)) { fade_lvl = (u8)(fade_lvl - 16); pal_dirty = 1; }
-    audio_update();
+    /* le son avance dans la NMI (audio_tick), à chaque trame */
     switch (app_state) {
     case AS_MATCH:
         set_bank(BANK_GAME);
@@ -93,7 +93,6 @@ void main(void)
             spd_acc = 0;
             if (cfg.gspeed == 0) {
                 keep1 |= pad1_new; keep2 |= pad2_new;
-                audio_update();
                 continue;
             }
             no_draw = 1;

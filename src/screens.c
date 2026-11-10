@@ -116,8 +116,10 @@ static void build_visible(void)
         vis[nvis++] = O_COND;
         vis[nvis++] = O_GSPEED;
     } else {
-        /* « 2 J. EQUIPE » : deux joueurs dans la même équipe, donc toujours en double */
-        if (m != MODE_2P_TEAM) vis[nvis++] = O_TYPE;
+        /* simple ou double : seulement à 2 joueurs adversaires. « 2 J. EQUIPE »
+           est toujours en double ; « 1 joueur contre CPU » toujours en simple
+           (son double, avec un partenaire CPU, est le mode en équipe) */
+        if (m == MODE_2P) vis[nvis++] = O_TYPE;
         vis[nvis++] = O_P1;
         vis[nvis++] = O_P2;
         if (m == MODE_2P_TEAM) vis[nvis++] = O_CPART;   /* partenaire : CPU ou manette 2 */
@@ -276,6 +278,35 @@ static void menu_draw_row(u8 i, u8 direct)
     else vbuf_text(16, (u8)(4 + i), line, 15);
 }
 
+/* Changement de mode (ou de compétition, d'exercice) : la liste des lignes
+   change. Au lieu de couper l'écran pour tout reconstruire (éclair noir), on
+   réécrit les lignes par le tampon VRAM, deux par trame environ. */
+static u8 rd_row, rd_n;
+static void menu_soft(void)
+{
+    u8 old = nvis;
+    build_visible();
+    rd_n = old > nvis ? old : nvis;
+    rd_row = 0;
+}
+static void menu_soft_tick(void)
+{
+    u8 i;
+    while (rd_row < rd_n && vram_len + 40 <= VBUF_MAX) {
+        i = rd_row++;
+        if (i < nvis) {
+            pad_text(vis[i] == O_P2 && (opt_val[O_MODE] == MODE_COMP || opt_val[O_MODE] == MODE_2P_TEAM) ? (const char *)"PARTENAIRE" : (const char *)opt_label[vis[i]], 13);
+            vbuf_text(3, (u8)(4 + i), line, 13);
+            pad_text(opt_text(vis[i]), 15);
+        } else {
+            pad_text("", 13);
+            vbuf_text(3, (u8)(4 + i), line, 13);
+            pad_text("", 15);
+        }
+        vbuf_text(16, (u8)(4 + i), line, 15);
+    }
+}
+
 static void menu_style_line(u8 direct)
 {
     u8 c = opt_val[O_MODE] == MODE_COMP || opt_val[O_MODE] == MODE_TRAIN ? opt_val[O_P1] : opt_val[O_P2];
@@ -288,6 +319,7 @@ static void menu_screen(void)
 {
     u8 i;
     build_visible();
+    rd_row = rd_n = 0;
     screen_begin();
     txt_at(9, 1, "CONFIGURATION");
     for (i = 0; i < nvis; ++i) menu_draw_row(i, 1);
@@ -349,6 +381,7 @@ static void setup_cfg(u8 mode)
     cfg.chr[2] = unused_char(cfg.chr[0], cfg.chr[1], 255);
     cfg.chr[3] = unused_char(cfg.chr[0], cfg.chr[1], cfg.chr[2]);
     switch (mode) {
+    case MODE_1P: cfg.doubles = 0; break;     /* le double avec partenaire CPU : mode en équipe */
     case MODE_2P: cfg.ctrl[1] = CTRL_PAD2; break;
     case MODE_2P_TEAM:
         /* deux joueurs dans la même équipe : toujours un double ; JOUEUR 2 est
@@ -918,7 +951,12 @@ void screens_tick(void)
                 v = (u8)((pad1_new & PAD_RIGHT) ? 0 : 15);
             opt_val[o] = v;
             sfx_menu_move();
-            if (o == O_MODE || o == O_COMP || o == O_EX || (o == O_TYPE && opt_val[O_MODE] == MODE_COMP)) { fade_skip = 1; menu_screen(); break; }
+            if (o == O_MODE || o == O_COMP || o == O_EX || (o == O_TYPE && opt_val[O_MODE] == MODE_COMP)) {
+                vbuf_reset();
+                menu_soft();
+                menu_style_line(0);
+                break;
+            }
             vbuf_reset();
             menu_draw_row(cursor, 0);
             if (o == O_ENV) menu_music();
@@ -941,6 +979,7 @@ void screens_tick(void)
             else present_screen();
             break;
         }
+        menu_soft_tick();
         menu_sprites();
         break;
     case SS_PRESENT:

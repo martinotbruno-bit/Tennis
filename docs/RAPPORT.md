@@ -1,10 +1,18 @@
-# Royal Martinot — Rapport de réalisation (version 2.17)
+# Royal Martinot — Rapport de réalisation (version 2.18)
 
 Comme l'exige le CDC (§ 17.5), ce rapport distingue ce qui est **réalisé**, **testé**, **validé sur matériel réel**, **validé uniquement en émulation**, **dépendant d'une extension**, et les **limitations restantes**.
 
 > **Validation matérielle : aucune.** Aucun test n'a été fait sur console réelle (NES, Famicom, PAL, cartouche MMC1). Toutes les validations ont eu lieu en émulation (jsnes) et par des tests unitaires sur PC. Les critères « vérifié sur console physique » (CDC § 2.1, 15.4, 16.A) **ne sont pas remplis**. Ce point ne peut pas être traité dans l'environnement de développement utilisé.
 
 ## 1. Évolutions
+
+### Version 2.18
+
+| Demande | Réalisation |
+|---|---|
+| Traits horizontaux pendant les transitions et en faisant défiler les modes | Cause : la console envoyait, dans la même image, la palette (fondus, changement de personnage) et le texte à réécrire. Cela dépassait le court moment où l'écriture à l'écran est permise, et le haut de l'image était abîmé. Maintenant, la palette attend l'image suivante (1/60 s) quand il y a beaucoup de texte, et elle est envoyée plus vite hors fondu. Marge mesurée : au moins 600 cycles partout. Le changement de mode au menu ne coupe plus l'écran (plus d'éclair noir) : les lignes sont redessinées en 1/10 s |
+| Raté dans les premières notes du générique | La musique prenait 2 à 3 images de retard à chaque changement de scène (12 au total, le premier vers 2,8 s), car elle n'avançait pas pendant la construction de l'écran. Elle avance maintenant dans l'interruption d'image, à chaque image : toutes les notes tombent à l'image près. Tous les changements d'écran du jeu en profitent |
+| 1 joueur contre CPU en double = mode En équipe | Le choix simple/double est retiré du mode 1 joueur contre CPU (toujours en simple). Il reste en mode 2 joueurs adversaires. Le double avec un partenaire CPU se joue en mode En équipe |
 
 ### Version 2.17
 
@@ -184,7 +192,7 @@ Pour loger ce contenu, la cartouche passe de NROM (32 Ko) à **MMC1** : 128 Ko d
 | Relecture des textes (`check_texts.py`) | 0 problème |
 | Contraste (`contrast.py 25`) | 0 paire sous ΔE 25 (personnages, courts, balle, tenues) |
 | Profil CPU, double, 6 000 trames | 27 trames d'échange en dépassement (0,45 %), sans défaut d'image |
-| Compilation | Reproductible : SHA-256 `bf6dfb92197887b9f3dc950ab38986d4cf93db76e2d85461a6c660366fef8efd` sur deux compilations propres |
+| Compilation | Reproductible : SHA-256 `80c2aa1c23e39dbdb61e0c35c04c5d8f95a9062824cd2639b437deea7ee57b45` sur deux compilations propres |
 
 ## 3. Conformité par section du CDC
 

@@ -39,7 +39,7 @@ Sans action pendant 20 secondes, une démonstration démarre (alternativement en
 | Ligne | Choix |
 |---|---|
 | MODE | 1 joueur contre CPU · 2 joueurs adversaires · En équipe · Compétition · Entraînement · Démo |
-| JEU | Simple · Double |
+| JEU | Simple · Double (en mode 2 joueurs adversaires seulement : contre le CPU, le simple est la règle, et le double avec un partenaire CPU est le mode En équipe) |
 | JOUEUR 1 / JOUEUR 2 | 17 personnages (8 hommes, 9 femmes, dont **Margaux**), chacun avec son style de jeu. En compétition de double, JOUEUR 2 devient PARTENAIRE |
 | NIVEAU CPU | Facile · Normal · Expert |
 | SURFACE | Terre battue · Gazon · Dur · Moquette · Plage · Glace (les deux dernières sont des terrains fantaisie) |
