@@ -797,6 +797,23 @@ const msgText = (e) => { let t = ''; for (let i = 0; i < 14; i++) t += String.fr
   check(app(g) === AS.SCREENS && diff === 0, `hors du match : tuiles de la coupe rétablies (${diff} octet(s) différent(s))`);
 }
 {
+  // court Margaux : l'arbitre est une princesse (couronne, robe rose, baguette à étoile)
+  const g = boot(); startWith(g, { ENV: 4 }); g.run(60);
+  const rom2 = g.nes.rom.rom[2], v = g.nes.ppu.vramMem, tt = g.peek('trophy_tile');
+  const tileIs = (t, src) => { for (let i = 0; i < 16; i++) if (v[0x1000 + t * 16 + i] !== src[i]) return false; return true; };
+  const rb = (sym, off) => g.nes.rom.rom[3][g.addr(sym) - 0x8000 + off];
+  const prin = [...Array(112).keys()].map((k) => rb('ump_chr', 112 + k));
+  const loaded = tileIs(11, prin.slice(0, 16)) && tileIs(13, prin.slice(32, 48)) && tileIs(tt + 3, prin.slice(96, 112));
+  g.poke('ms', 2); g.poke('ump_arm', 0); g.run(2);
+  const wand = oamTiles(g).has(tt + 3) && oamTiles(g).has(13);
+  const pink = g.peek('pal_buf', 16 + 11) === 0x34;
+  // ailleurs : l'arbitre habituel, sans baguette
+  const n = boot(); startWith(n, { ENV: 0 }); n.run(60); n.poke('ms', 2); n.poke('ump_arm', 0); n.run(2);
+  let same = true; for (let i = 0; i < 48; i++) if (n.nes.ppu.vramMem[0x1000 + 11 * 16 + i] !== rom2[0x1000 + 11 * 16 + i]) same = false;
+  const nowand = !oamTiles(n).has(n.peek('trophy_tile') + 3) && n.peek('pal_buf', 16 + 11) === 0x30;
+  check(loaded && wand && pink && same && nowand, `court Margaux : arbitre princesse (couronne, robe rose, baguette) ; ailleurs l'arbitre habituel`);
+}
+{
   // l'arbitre reste sur sa chaise pendant les ralentis
   const e = boot(); startWith(e, { FMT: 3 }); allCpu(e);
   let seen = false, rep = 0;

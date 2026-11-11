@@ -1,10 +1,16 @@
-# Royal Martinot — Rapport de réalisation (version 2.32)
+# Royal Martinot — Rapport de réalisation (version 2.33)
 
 Comme l'exige le CDC (§ 17.5), ce rapport distingue ce qui est **réalisé**, **testé**, **validé sur matériel réel**, **validé uniquement en émulation**, **dépendant d'une extension**, et les **limitations restantes**.
 
 > **Validation matérielle : aucune.** Aucun test n'a été fait sur console réelle (NES, Famicom, PAL, cartouche MMC1). Toutes les validations ont eu lieu en émulation (jsnes) et par des tests unitaires sur PC. Les critères « vérifié sur console physique » (CDC § 2.1, 15.4, 16.A) **ne sont pas remplis**. Ce point ne peut pas être traité dans l'environnement de développement utilisé.
 
 ## 1. Évolutions
+
+### Version 2.33
+
+| Demande | Réalisation |
+|---|---|
+| Sur le court Margaux, l'arbitre est une princesse : couronne, baguette à étoile à la main, habits roses | Princesse assise sur la chaise : couronne dorée, longs cheveux noirs, robe rose, baguette dorée avec une étoile au bout. Au repos, elle tient sa baguette levée devant elle. Sur une faute ou une balle dehors, elle tend le bras, baguette pointée. Sur un let et en fin de match, elle lève sa baguette. Elle suit la balle du regard comme l'arbitre habituel, et reste visible pendant les ralentis. Sur les autres courts, rien ne change. Le rose remplace le blanc de la palette de l'arbitre sur ce court : le reflet de la balle y devient rose pâle |
 
 ### Version 2.32
 
@@ -281,7 +287,7 @@ Pour loger ce contenu, la cartouche passe de NROM (32 Ko) à **MMC1** : 128 Ko d
 |---|---|
 | Règles (`rules_test`) | 42/42 |
 | Codes (`password_test`) | 200 000/200 000 aller-retour (format v3), ancien code v2 accepté, Margaux codée, Margaux au club nudiste refusée ; 99,98 % des codes altérés d'un signe refusés |
-| Émulateur (`emu_test`) | 234/234 vérifications (environ 22 min) |
+| Émulateur (`emu_test`) | 235/235 vérifications (environ 22 min) |
 | Profil CPU, simple, 6 000 trames | 0 trame d'échange en dépassement |
 | Relecture des textes (`check_texts.py`) | 0 problème |
 | Contraste (`contrast.py 25`) | 0 paire sous ΔE 25 (personnages, courts, balle, tenues) |

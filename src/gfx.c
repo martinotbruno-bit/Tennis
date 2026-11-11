@@ -83,6 +83,7 @@ void pal_set_court(u8 s, u8 cond, u8 env)
     /* balle jaune pâle, sauf sur le sable jaune de la plage : blanche */
     pal_buf[16 + 9] = (u8)(p == surf_pal[4] ? 0x30 : 0x38); pal_buf[16 + 10] = 0x0F; pal_buf[16 + 11] = 0x30;
     pal_buf[16 + 12] = p[0]; pal_buf[16 + 13] = 0x30; pal_buf[16 + 14] = 0x21; pal_buf[16 + 15] = 0x28;
+    if (env == ENV_MARGAUX) pal_buf[16 + 11] = 0x34;   /* robe rose de la princesse arbitre (et reflet de la balle) */
     if (cond == 2) {
         /* pluie : ciel couvert, couleurs ternies */
         pal_buf[0] = darken(pal_buf[0]);
@@ -214,7 +215,8 @@ void chr_copy(u8 bank, const u8 *src, u16 dst, u16 len)
    d'origine, rendu coupé */
 void chr_borrow_restore(void)
 {
-    chr_copy(BANK_CHR, chr_data + 0x1000 + ((u16)trophy_tile << 4), 0x1000 + ((u16)trophy_tile << 4), 48);
+    chr_copy(BANK_CHR, chr_data + 0x1000 + ((u16)trophy_tile << 4), 0x1000 + ((u16)trophy_tile << 4), 64);
+    chr_copy(BANK_CHR, chr_data + 0x1000 + (11 << 4), 0x1000 + (11 << 4), 48);   /* arbitre (princesse au court Margaux) */
 }
 
 /* motifs d'origine (banque 2) dans toute la CHR-RAM, rendu coupé : après le

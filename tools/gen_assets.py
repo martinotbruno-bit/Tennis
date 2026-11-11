@@ -731,7 +731,21 @@ ump_armup   = tile_from(["00000111", "00000111", "00000110", "00000110", "000001
 spr_tile(11, ump_head_dn)
 spr_tile(12, ump_head_up)
 spr_tile(13, ump_body)
-UMP_EXTRA = [ump_body_out, ump_hand, ump_armup]      # chargées à la place de la coupe pendant un match
+UMP_EXTRA = [ump_body_out, ump_hand, ump_armup, blank()]   # chargées à la place de la coupe pendant un match
+# court Margaux : l'arbitre est une princesse (couronne, cheveux longs, robe
+# blanche, baguette magique à étoile). Mêmes couleurs que l'arbitre (palette 2 :
+# 1 jaune pâle = peau, couronne, baguette dorée et étoile ; 2 noir =
+# cheveux ; 3 = robe, rose au court Margaux : pal_set_court y remplace le
+# blanc de la palette 2 par du rose). 4e tuile : la baguette tenue au repos.
+prin_head_dn = tile_from(["01010100", "01111100", "22222100", "22211110", "22211210", "22211100", "22333300", "23333330"])
+prin_head_up = tile_from(["01010100", "01111100", "22222100", "22211210", "22211110", "22211100", "22333300", "23333330"])
+prin_body    = tile_from(["03333330", "03333311", "03333311", "33333333", "33333333", "00000033", "00000033", "00000022"])
+prin_body_out = tile_from(["03333330", "03333111", "03333111", "33333333", "33333333", "00000033", "00000033", "00000022"])
+prin_hand    = tile_from(["00000100", "11111111", "11001110", "00001010", "00000000", "00000000", "00000000", "00000000"])
+prin_armup   = tile_from(["00000010", "00000111", "00000010", "00000010", "00000010", "00000110", "00001110", "00011110"])
+prin_wand    = tile_from(["00010000", "00111000", "00010000", "00100000", "00100000", "00100000", "01100000", "01100000"])
+UMP_SETS = [[ump_head_dn, ump_head_up, ump_body] + UMP_EXTRA,
+            [prin_head_dn, prin_head_up, prin_body, prin_body_out, prin_hand, prin_armup, prin_wand]]
 
 # goutte de sueur (fatigue), couleur 2 de la palette des effets (bleu)
 sweat = blank()
@@ -1203,7 +1217,7 @@ src.append(c_array('sign2_orig', b''.join(encode_tile(bg_tiles[i]) for i in SIGN
 src.append(c_array('net_idx', bytes(NET_IDX)))
 src.append(c_array('net_norm', b''.join(encode_tile(t) for t in net_tiles(False))))
 src.append(c_array('net_shk', b''.join(encode_tile(t) for t in net_tiles(True))))
-src.append(c_array('ump_chr', b''.join(encode_tile(t) for t in UMP_EXTRA)))
+src.append(c_array('ump_chr', b''.join(encode_tile(t) for st in UMP_SETS for t in st)))
 src.append(c_array('crowd_idx', bytes(crowd_idx)))
 src.append(c_array('cheer_idx', bytes(cheer_idx)))
 src.append(c_array('crowdb_idx', bytes(crowdb_idx)))

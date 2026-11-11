@@ -38,6 +38,7 @@ Le jeu a été testé uniquement sur émulateur. Cette liste sert à le vérifie
 | 2.3 | Mode COMPETITION, type PERSONNALISE, jeu DOUBLE | 19 lignes, puis STYLE et l'aide en bas, sans chevauchement | ☐ |
 | 2.4 | JOUEUR 1 : faire défiler jusqu'à MARGAUX | MARGAUX apparaît après INES : cheveux longs, blonds et bouclés, tenue rose clair | ☐ |
 | 2.5 | LIEU : COURT MARGAUX | La valse « boîte à musique » remplace le thème du titre, sans notes hachées | ☐ |
+| 2.5 b | Match au court Margaux | L'arbitre est une princesse : couronne, robe rose, baguette dorée à étoile ; elle tend sa baguette sur une faute et la lève sur un let | ☐ |
 | 2.6 | SON : BRUITAGES SEULS, puis AUCUN, puis MUSIQUE + SONS | La musique s'arrête, puis tout se tait, puis la musique repart | ☐ |
 
 ## 3. Match en simple (1 joueur contre le CPU)

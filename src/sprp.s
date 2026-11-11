@@ -595,7 +595,7 @@ _audio_tick:
 ; + 2) sur un let (il s'agite) et à la fin du match (il salue). Appelé aussi
 ; pendant les ralentis. En assembleur : peu coûteux à chaque trame.
 .export _ump_draw
-.import _ms, _end_reason, _ump_arm, _trophy_tile, _by
+.import _ms, _end_reason, _ump_arm, _trophy_tile, _by, _ump_princess
 .importzp _frame_cnt
 .importzp tmp4
 UMP_X = 18
@@ -698,6 +698,26 @@ _ump_draw:
     inx
     inx
 @end:
+    ; princesse au repos : baguette magique tenue devant elle (4e tuile)
+    lda _ump_princess
+    beq @fin
+    lda tmp2
+    bne @fin
+    lda #UMP_Y + 3 - 1
+    sta _oam_buf,x
+    lda _trophy_tile
+    clc
+    adc #3
+    sta _oam_buf+1,x
+    lda #2
+    sta _oam_buf+2,x
+    lda #UMP_X + 6
+    sta _oam_buf+3,x
+    inx
+    inx
+    inx
+    inx
+@fin:
     stx _oam_i
     rts
 

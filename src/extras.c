@@ -136,6 +136,8 @@ static void tiles_load(const u8 *idx, u8 n, const u8 *src)
     }
 }
 static void crowd_load(void);
+u8 ump_princess;                 /* 1 : arbitre princesse (court Margaux), lu par ump_draw */
+
 void load_court(void)
 {
     u8 nude = (u8)(cfg.env == ENV_NUDE);
@@ -148,12 +150,17 @@ void load_court(void)
     tiles_load(sign2_idx, 8, nude ? sign2_chr : sign2_orig);
     /* filet au repos (au cas où on aurait quitté un match pendant qu'il tremblait) */
     tiles_load(net_idx, 2, net_norm);
-    /* arbitre de chaise : 3 tuiles prises à la coupe (inutile pendant le
+    /* arbitre de chaise (une princesse au court Margaux) : têtes et buste
+       en tuiles 11 à 13, et 4 tuiles prises à la coupe (inutile pendant le
        match), rétablies hors du match par chr_borrow_restore */
     {
         u8 j;
+        const u8 *u = ump_chr + (cfg.env == ENV_MARGAUX ? 112 : 0);
+        ump_princess = (u8)(cfg.env == ENV_MARGAUX);
+        vram_adr(0x1000 + (11 << 4));
+        for (j = 0; j < 48; ++j) vram_put(u[j]);
         vram_adr((u16)(0x1000 + ((u16)trophy_tile << 4)));
-        for (j = 0; j < 48; ++j) vram_put(ump_chr[j]);
+        for (j = 48; j < 112; ++j) vram_put(u[j]);
     }
     net_state = 0;
     net_shake = 0;
