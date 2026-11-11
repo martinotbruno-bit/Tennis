@@ -1061,9 +1061,12 @@ def ball_mask(size):
         return {(x, y) for (x, y) in ((2,1),(3,1),(1,2),(2,2),(3,2),(4,2),(1,3),(2,3),(3,3),(4,3),(2,4),(3,4))}
     if size == 1:
         return {(x + 1, y + 1) for y in range(5) for x in range(5) if (x - 2) ** 2 + (y - 2) ** 2 <= 5}
+    if size == 3:      # 6 x 6, entre la moyenne et la grande
+        return {(x + 1, y + 1) for y in range(6) for x in range(6) if (x - 2.5) ** 2 + (y - 2.5) ** 2 <= 7.5}
     return {(x, y) for y in range(7) for x in range(7) if (x - 3) ** 2 + (y - 3) ** 2 <= 10}
 BALL_BASE = next_spr
-for size in range(3):
+def ball_rot_tiles(size):
+    global next_spr
     m = ball_mask(size)
     ys = sorted({y for _, y in m}); xs = sorted({x for x, _ in m})
     top, h = ys[0], len(ys); x0, w = xs[0], len(xs)
@@ -1077,6 +1080,8 @@ for size in range(3):
             if (y == r and mid) or (y == r - 1 and not mid and h > 4):
                 t[y][x] = 3
         spr_tile(next_spr, t); next_spr += 1
+for size in range(3):
+    ball_rot_tiles(size)
 sq = blank()
 for (y, a0, a1) in ((4, 2, 5), (5, 1, 6), (6, 2, 5)):
     for x in range(a0, a1 + 1): sq[y][x] = 1
@@ -1092,6 +1097,7 @@ spr_tile(next_spr, shm); next_spr += 1                   # base + 15 : ombre moy
 shs = blank()
 for (x, y) in ((2, 4), (3, 4)): shs[y][x] = 2
 spr_tile(next_spr, shs); next_spr += 1                   # base + 16 : petite ombre
+ball_rot_tiles(3)                                       # base + 17 à 20 : balle de 6 x 6
 
 assert next_spr <= 256, "trop de tuiles de sprites"
 

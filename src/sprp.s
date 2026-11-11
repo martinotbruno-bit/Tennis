@@ -937,8 +937,9 @@ _pose_of:
 ; ---------------------------------------------------------------------------
 ; void __fastcall__ spr_ball(u8 x, s16 sy, u8 shy, u8 zpx) : balle et ombre.
 ; (x, sy) = position affichée de la balle, shy = ombre au sol, zpx = hauteur.
-;  - la balle grossit avec la hauteur (petite, moyenne dès 12 px, grande dès
-;    30 px) et son ombre rétrécit (grande, moyenne, petite) ;
+;  - la balle grossit avec la hauteur : 4 px, 5 px dès 12 px de haut, 6 px
+;    dès 20 px, 7 px dès 40 px (vrais lobs) ; son ombre rétrécit (grande sous
+;    12 px, moyenne, petite dès 40 px) ;
 ;  - la couture blanche tourne selon l'effet : lifté vers l'avant, coupé et
 ;    amortie vers l'arrière (plus vite pour l'amortie), à plat immobile ;
 ;  - au rebond, la balle est écrasée pendant 3 trames ;
@@ -1039,20 +1040,23 @@ _spr_ball:
     sta btile
     jmp @put
 @size:
-    ldx #0                  ; taille : 0 petite, 4 moyenne, 8 grande
-    lda bz_px
+    ldx #0                  ; taille : 0 petite (4 px), 4 moyenne (5 px),
+    lda bz_px               ; 17 balle de 6 px, 8 grande (7 px)
     cmp #12
     bcc @sz
     ldx #4
-    cmp #30
+    cmp #20
+    bcc @sz
+    ldx #17
+    cmp #40
     bcc @sz
     ldx #8
 @sz:
     stx tmp1
     ; derrière le filet : camp du haut, centre de la balle dans la bande du
     ; filet (y 124 à 134), entre les poteaux (x 48 à 208)
-    cpx #8
-    beq @rot
+    cpx #5
+    bcs @rot
     lda bshy
     cmp #NET_Y
     bcs @rot
@@ -1112,7 +1116,7 @@ _spr_ball:
     lda _ball_base
     clc
     adc #15
-    cpx #30
+    cpx #40
     bcc @sh
     adc #0                  ; retenue à 1 : + 1, petite ombre
 @sh:

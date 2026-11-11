@@ -1337,15 +1337,20 @@ console.log('Balle : couleur, ombre, rebond, effet, filet');
   const base = e.peek('ball_base');
   const sh = []; let pal3 = true;
   for (const z of [4, 20, 45]) { setBall(e, 150, 190, z, 0, 0, 0); e.run(3); const sp = ballSpr(e);
-    const b = sp.find((q) => q.t >= base && q.t < base + 12); if (!b || b.a !== 3) pal3 = false;
+    const b = sp.find((q) => q.a === 3); if (!b || b.a !== 3) pal3 = false;
     sh.push(sp.some((q) => q.t === 2 && q.a === 2) ? 'G' : sp.some((q) => q.t === base + 15) ? 'M' : sp.some((q) => q.t === base + 16) ? 'P' : '?'); }
   check(sh.join('') === 'GMP' && pal3, `ombre qui rétrécit quand la balle monte (${sh.join(' ')}), balle sur la palette des effets`);
+  // 4 tailles : 4, 5, 6 et 7 px (grossit en douceur ; la grande pour les vrais lobs)
+  const sz = [];
+  for (const z of [4, 15, 25, 45]) { setBall(e, 150, 190, z, 0, 0, 0); e.run(3); const b = ballSpr(e).find((q) => q.a === 3);
+    const t = b ? b.t - base : -1; sz.push(t < 4 ? 4 : t < 8 ? 5 : t >= 17 && t < 21 ? 6 : t < 12 ? 7 : 0); }
+  check(sz.join() === '4,5,6,7', `balle de ${sz.join(', ')} px selon la hauteur (4, 15, 25, 45 px)`);
   // rebond : balle écrasée
   setBall(e, 150, 190, 8, -40, 0, 0); e.poke('bgrav', 4);
   let sq = 0; for (let f = 0; f < 20; f++) { e.run(1); if (ballSpr(e).some((q) => q.t === base + 12)) sq++; }
   check(sq >= 2 && sq <= 4, `balle écrasée au rebond (${sq} trames)`);
   // effet : la couture tourne avec le lifté, pas avec la balle à plat
-  const turn = (spin) => { setBall(e, 150, 190, 20, 0, -64, spin); const seen = new Set();
+  const turn = (spin) => { setBall(e, 150, 190, 15, 0, -64, spin); const seen = new Set();
     for (let f = 0; f < 16; f++) { e.run(1); for (const q of ballSpr(e)) if (q.t >= base + 4 && q.t < base + 8) seen.add(q.t); } return seen.size; };
   const top = turn(1), flat = turn(0);
   check(top === 4 && flat === 1, `couture qui tourne selon l'effet (lifté : ${top} positions, à plat : ${flat})`);
