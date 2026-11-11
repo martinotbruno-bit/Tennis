@@ -21,7 +21,7 @@ BANK10 = music_data
 BANK11 = assets_persp
 BANK12 = assets_courts12
 CSRC = $(FIXED) $(BANK0) $(BANK1) $(BANK3) $(BANK4) $(BANK5) $(BANK6) $(BANK7) $(BANK8) $(BANK9) $(BANK10) $(BANK11) $(BANK12)
-OBJS = $(BUILD)/crt0.o $(BUILD)/sprp.o $(BUILD)/poses.o $(BUILD)/dpcm.o $(addprefix $(BUILD)/,$(addsuffix .o,$(CSRC)))
+OBJS = $(BUILD)/crt0.o $(BUILD)/sprp.o $(BUILD)/poses.o $(BUILD)/slip.o $(BUILD)/dpcm.o $(addprefix $(BUILD)/,$(addsuffix .o,$(CSRC)))
 
 all: $(ROM)
 
@@ -56,6 +56,8 @@ $(BUILD)/sprp.o: src/sprp.s | $(BUILD)
 
 $(BUILD)/poses.o: src/poses.s | $(BUILD)
 	$(CA65) -t nes -g -o $@ src/poses.s
+$(BUILD)/slip.o: src/slip.s | $(BUILD)
+	$(CA65) -t nes -g -o $@ src/slip.s
 
 $(BUILD)/dpcm.o: src/dpcm.s | $(BUILD)
 	$(CA65) -t nes -g -o $@ src/dpcm.s

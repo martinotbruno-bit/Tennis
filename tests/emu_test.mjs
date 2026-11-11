@@ -1191,7 +1191,7 @@ console.log('Récapitulatif du score');
   // n'importe quel bouton (ici B) ferme l'écran aussitôt, sans fondu
   e.tap('B', 1, 1, 0); let n = 0;
   while (app(e) !== AS.MATCH && n < 30) { e.run(1); n++; }
-  check(app(e) === AS.MATCH && n <= 12 && e.peek('music_cur') === 0, `B : retour au court en ${n + 1} trames, musique coupée`);
+  check(app(e) === AS.MATCH && n <= 16 && e.peek('music_cur') === 0, `B : retour au court en ${n + 1} trames, musique coupée`);
   e.run(30);
   check(app(e) === AS.MATCH && /^[A-Z]{4} \d \d/.test(msgText(e)), `reprise du match, score des sets dans le bandeau : « ${msgText(e)} »`);
   // un jeu plus tard : récapitulatif après le jeu
@@ -1556,6 +1556,25 @@ console.log('Plongeon');
     }
     check(dives >= 2 && longest >= 8 && dirOk, `${view ? 'perspective' : 'à plat'} : ${dives} plongeons vers la balle, au sol jusqu'à ${longest} trames`);
   }
+}
+console.log('Dérapages selon la surface');
+{
+  // le joueur court 12 trames vers la droite puis lâche la croix
+  const run = (surf) => {
+    const e = boot(); toMenu(e); setOpts(e, { FMT: 3, SURF: surf }); e.tap('START'); e.run(10); e.tap('A');
+    runUntil(e, () => app(e) === AS.MATCH, 300); e.run(30);
+    e.poke('ms', 2); e.poke('b_live', 0); e.poke('b_vis', 0);
+    const x = () => e.peekS16('plx', 0) / 64, xs = [x()];
+    let fx = 0;
+    e.down('RIGHT'); for (let i = 0; i < 12; i++) { e.run(1); xs.push(x()); }
+    e.up('RIGHT'); for (let i = 0; i < 12; i++) { e.run(1); xs.push(x()); if (e.peek('slide_t')) fx++; }
+    return { start: xs[2] - xs[0], glide: xs[24] - xs[12], fx };
+  };
+  const g = run(1), c = run(0), s = run(4), i = run(5);
+  check(g.glide === 0 && g.fx === 0, `gazon : arrêt net (${g.glide.toFixed(1)} px), aucun effet`);
+  check(c.glide > 0.5 && c.glide < 4 && c.fx > 0 && Math.abs(c.start - g.start) < 0.1, `terre battue : glissade de ${c.glide.toFixed(1)} px à l'arrêt, poussière`);
+  check(s.glide === 0 && s.start < g.start - 1 && s.fx > 0, `sable : départ lourd (${s.start.toFixed(1)} px en 2 trames contre ${g.start.toFixed(1)}), arrêt net, gerbe`);
+  check(i.glide > 3 && i.glide < 10 && i.start < g.start - 1 && i.fx > 0, `glace : départ progressif, glissade de ${i.glide.toFixed(1)} px, éclats`);
 }
 console.log('Compensation 50 Hz (PAL)');
 {

@@ -158,12 +158,12 @@ Le lancer reste visible quelle que soit votre position, y compris quand vous ser
 
 | Surface | Comportement |
 |---|---|
-| Terre battue (brique) | Rebond haut, balle ralentie : échanges longs |
+| Terre battue (brique) | Rebond haut, balle ralentie : échanges longs. Les joueurs glissent un peu à l'arrêt (environ 2 px), dans un nuage de poussière : bien utile pour arriver sur la balle |
 | Gazon | Rebond bas, balle qui fuse : avantage au service-volée |
 | Dur | Compromis équilibré |
 | Moquette | Rapide et assez bas |
-| Plage (fantaisie) | Sable : balle très lente, rebond très haut |
-| Glace (fantaisie) | Balle qui file au ras du sol |
+| Plage (fantaisie) | Sable : balle très lente, rebond très haut. Départ un peu lourd (on s'enfonce), arrêt net, gerbe de sable |
+| Glace (fantaisie) | Balle qui file au ras du sol. Les joueurs démarrent doucement et glissent sur leur lancée quand ils s'arrêtent ou font demi-tour (environ 5 px) : anticipez ! Éclats de glace et rayure au départ de la glissade |
 
 L'effet modifie aussi le rebond : le lifté rebondit plus haut, le coupé reste bas.
 

@@ -19,7 +19,7 @@
 .import _bounces, _sc_winner, _sc_server, _sc_swap, _srv_slot, _cfg, _npl
 .import _end_reason, _ump_arm, _tired, _pending_winner, _sfx_bounce
 .importzp _frame_cnt, tmp1, tmp2, _oam_i
-.import _oam_buf, _ball_base, _proj
+.import _oam_buf, _ball_base, _proj, _sl_ox, _sl_oy
 .importzp _persp, _proj_x, _proj_y
 
 ; poses (gfx.h)
@@ -273,10 +273,13 @@ pose_fx:
     ldx #0
 @sl:
     cpx _npl
-    bcs @done
-    lda _slide_t,x
-    beq @nx
-    stx pp
+    bcc :+
+    rts
+:   lda _slide_t,x
+    bne :+
+    sta _sl_ox,x            ; effet fini : plus de trace
+    jmp @nx
+:   stx pp
     txa
     asl a
     tay
@@ -298,10 +301,7 @@ pose_fx:
     sec
     sbc #6 + 1
     sta _oam_buf,x
-    lda #6                  ; poussière : petit nuage puis nuage plus large
-    ldy pp
-    cmp _slide_t,y
-    adc #0                  ; (retenue : slide_t <= 6 -> 7)
+    jsr fxtile              ; poussière (terre, sable) ou éclats (glace)
     sta _oam_buf+1,x
     lda #2
     sta _oam_buf+2,x
@@ -309,11 +309,68 @@ pose_fx:
     clc
     adc #4
     sta _oam_i
+    ; trace au départ de la glissade (terre battue, glace), début de l'effet
+    ldx pp
+    lda _slide_t,x
+    cmp #5
+    bcc @notr
+    lda _cfg+CFG_SURF
+    beq @tr
+    cmp #5
+    bne @notr
+@tr:
+    lda _sl_oy,x
+    sta tmp2
+    lda _sl_ox,x
+    beq @notr               ; (pas de départ connu : glissade de frappe)
+    ldy _persp
+    beq :+
+    ldx tmp2
+    jsr _proj
+    lda _proj_y
+    sta tmp2
+    lda _proj_x
+:   ldx _oam_i
+    sec
+    sbc #4
+    sta _oam_buf+3,x
+    lda tmp2
+    sec
+    sbc #6 + 1
+    sta _oam_buf,x
+    lda _cfg+CFG_SURF
+    beq :+
+    lda #15                 ; glace : rayure blanche
+    bne :++
+:   lda #6                  ; terre : petit nuage
+:   sta _oam_buf+1,x
+    lda #2
+    sta _oam_buf+2,x
+    txa
+    clc
+    adc #4
+    sta _oam_i
+@notr:
     ldx pp
 @nx:
     inx
-    bne @sl
-@done:
+    jmp @sl
+
+; tuile de l'effet de glissade du joueur pp : éclats sur glace et grains de
+; sable (15),
+; sinon petit nuage puis nuage plus large (6, 7)
+fxtile:
+    lda _cfg+CFG_SURF
+    cmp #4                  ; plage : grains de sable clairs (la poussière
+    beq :+                  ; beige se perdrait sur le sable jaune)
+    cmp #5
+    bne :++
+:   lda #15
+    rts
+:   lda #6
+    ldy pp
+    cmp _slide_t,y
+    adc #0                  ; (retenue : slide_t <= 6 -> 7)
     rts
 
 ; écarts balle - joueur (pixels, signés) : seulement quand ils servent
@@ -457,6 +514,8 @@ choose:
     lda _pl_moving,x
     beq @sl
     lda _cfg+CFG_SURF
+    beq @sl1
+    cmp #4                  ; plage : gerbe de sable
     beq @sl1
     cmp #5
     bne @sl

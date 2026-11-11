@@ -1051,6 +1051,7 @@ u8 match_tick(void)
         }
         if (pl_moving[p]) ++pl_walk[p];
     }
+    bank_call(BANK_EXTRAS, slip_tick);   /* dérapages : glace, terre battue, sable (src/slip.s) */
 
     if (ms == MS_TOSS) {
         bvz -= bgrav;

@@ -364,6 +364,17 @@ Le jeu calcule tout à plat, comme avant ; seul l'affichage est projeté. Projec
 - **Spectateurs** (`spectator`) : 4 modèles (cheveux courts, longs, casquette, cheveux clairs), même style pour le jeu A (stade, palette 2 : $37 peau, $16 gradins, $0F cheveux, marche du gradin en couleur 0) et le jeu B (club, salle, château, parc, palette 3). Les 6 places de `crowd_idx` utilisent les 4 dessins (tuiles 5-8 et 13-16, bras levés à + 4 : vérifié par le générateur). En perspective, la taille suit l'échelle de la rangée : normale (≥ 0,965), `med` (environ 90 %), `small` (80 %), `tiny` (4 petites têtes par tuile, rangées du fond). Les 3 tailles réduites occupent 24 places consécutives par lieu (`persp_ps` → `ps_idx[0]`) : pour chaque taille, 4 dessins puis leurs 4 « bras levés » ; `ola_row` lève une tuile en lui ajoutant 4 (trois comparaisons d'intervalle, sans boucle). `crowd_tick` tourne les têtes de 18 tuiles (6 normales et 12 réduites, une par trame) et s'arrête de vérifier quand toutes regardent du bon côté (`cr_all`). Pour faire la place (77 à 111 tuiles nouvelles par lieu), les tuiles du court à plat absentes du décor en perspective sont réutilisées pendant le match ; restent réservées la police, le public animé, les panneaux et le filet.
 - **Non projeté dans cette étape** : le tremblement du filet (le filet projeté n'utilise pas les tuiles de mailles d'origine).
 
+### Dérapages selon la surface (`src/slip.s`, banque 3, version 2.42)
+
+`slip_tick` est appelé par `match_tick` (`bank_call`) après les déplacements de tous les joueurs. Le déplacement voulu de la trame est la différence entre la position et celle de la trame précédente (`sp_x`, `sp_y`) ; il passe par la surface, avec une vitesse par joueur (`sv_x`, `sv_y`, 1/64 px par trame) :
+
+- **glace** : `V += (D − V) / 4` (inertie) ; sans poussée, la vitesse décroît jusqu'à moins de 16/64 px puis s'annule ;
+- **terre battue** : `V = D` en mouvement ; à l'arrêt, `V -= V / 2` à chaque trame ;
+- **plage** : `V` rejoint `D` de 50/64 px par trame au plus (départ lourd) ; arrêt net ;
+- gazon, dur et moquette : inchangés.
+
+Seulement pendant l'échange et le point joué. Un saut de plus de 5 px (mise en place au service) remet la vitesse à zéro. En double, une IA ne bouge qu'une trame sur deux (au double de sa vitesse) : ses trames de repos sont ignorées et son accélération dans le sable est doublée. Les bornes (x 48 à 208, côté du filet) sont réappliquées. Un arrêt brusque ou un demi-tour (vitesse d'au moins 48/64 px) arme `slide_t` (8 trames) et note le départ (`sl_ox`, `sl_oy`) : `pose_fx` dessine aux pieds la poussière (terre, tuiles 6-7), des grains de sable ou des éclats de glace (tuile 15, blanc), et sur terre et glace une trace au point de départ. Calibrage (`tests/calib.mjs`, variable `SURF`) : le départ dans le sable a été adouci (36 → 50/64 px) pour que la plage ne pénalise pas davantage le joueur humain que le CPU.
+
 ## 5. Graphismes
 
 ### Animation des joueurs

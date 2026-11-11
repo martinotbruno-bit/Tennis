@@ -85,4 +85,5 @@ extern u8 end_reason;           /* fin de l'échange : END_* */
 #define END_LET   3
 
 extern u8 pause_cur;
+void slip_tick(void);             /* banque 3 (src/slip.s) */
 #endif

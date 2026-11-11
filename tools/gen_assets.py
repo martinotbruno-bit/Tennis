@@ -836,6 +836,12 @@ for (x, y) in ((3, 1), (3, 2), (2, 3), (3, 3), (4, 3), (2, 4), (3, 4), (4, 4), (
     sweat[y][x] = 2
 sweat[3][2] = 3
 spr_tile(14, sweat)
+# éclats de glace quand un joueur dérape (couleur 3 : blanc) ; aussi la
+# rayure laissée au départ de la glissade
+ice = blank()
+for (x, y) in ((1, 4), (2, 5), (5, 3), (6, 5), (3, 6), (4, 6), (0, 6), (7, 6), (4, 2)):
+    ice[y][x] = 3
+spr_tile(15, ice)
 
 # Personnages 16x24 : 0 transparent, 1 peau, 2 tenue, 3 sombre
 def new_canvas():
