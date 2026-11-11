@@ -1,10 +1,16 @@
-# Royal Martinot — Rapport de réalisation (version 2.29)
+# Royal Martinot — Rapport de réalisation (version 2.30)
 
 Comme l'exige le CDC (§ 17.5), ce rapport distingue ce qui est **réalisé**, **testé**, **validé sur matériel réel**, **validé uniquement en émulation**, **dépendant d'une extension**, et les **limitations restantes**.
 
 > **Validation matérielle : aucune.** Aucun test n'a été fait sur console réelle (NES, Famicom, PAL, cartouche MMC1). Toutes les validations ont eu lieu en émulation (jsnes) et par des tests unitaires sur PC. Les critères « vérifié sur console physique » (CDC § 2.1, 15.4, 16.A) **ne sont pas remplis**. Ce point ne peut pas être traité dans l'environnement de développement utilisé.
 
 ## 1. Évolutions
+
+### Version 2.30
+
+| Demande | Réalisation |
+|---|---|
+| « Iiik » du crissement plus discret | Volume 6 au lieu de 11 (sur 15) et 67 ms au lieu de 83 : audible sans dominer. Toujours le même « iiik » qui monte, mêmes conditions (demi-tour brusque sur dur, moquette ou glace, au plus un toutes les 2,5 s) |
 
 ### Version 2.29
 
@@ -268,7 +274,7 @@ Pour loger ce contenu, la cartouche passe de NROM (32 Ko) à **MMC1** : 128 Ko d
 | Relecture des textes (`check_texts.py`) | 0 problème |
 | Contraste (`contrast.py 25`) | 0 paire sous ΔE 25 (personnages, courts, balle, tenues) |
 | Profil CPU, double, 6 000 trames | 27 trames d'échange en dépassement (0,45 %), sans défaut d'image |
-| Compilation | Reproductible : SHA-256 `a5b21ad915eae898316ae0f19d60030814c1bb9994199aeeebd04986c9f87449` sur deux compilations propres |
+| Compilation | Reproductible : SHA-256 `afce1a8fe28bc5fbf2b34e215ec29f1943bb7f486bbea287907e25c10bf681e1` sur deux compilations propres |
 
 ## 3. Conformité par section du CDC
 
