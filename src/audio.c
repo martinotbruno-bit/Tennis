@@ -179,9 +179,23 @@ void sfx_clap(void)       { noise(0x01, 0x05, 2, 8); }
 void sfx_ooh(void)        { noise(0x0B, 0x05, 4, 40); pulse1(0x4C, 0xBA, 520); }
 void sfx_groan(void)      { noise(0x09, 0x09, 4, 30); pulse1(0x4B, 0xB3, 420); }
 void sfx_hush(void)       { APU(0x400C) = 0x30; noise_hold = 0; }
-void sfx_out(void)        { sfx_line(); dpcm(V_OUT); }     /* « bip » et « Out! » */
-void sfx_svfault(void)    { sfx_line(); dpcm(V_FAULT); }   /* service faux : « bip » et « Fault! » */
-void sfx_let(void)        { sfx_whistle(); dpcm(V_LET); }  /* let : sifflet et « Let! » */
+/* annonce : la voix doit dominer. Bip discret (volume 3) au lieu du bip
+   franc, et le public se tait le temps de l'annonce (le canal de bruit est
+   réservé 30 trames : le murmure lancé à la fin du point est coupé) */
+static void announce(u8 k)
+{
+    APU(0x4000) = 0x93;                 /* bip discret : 50 %, volume fixe 3 */
+    APU(0x4001) = 0x08;
+    APU(0x4002) = 0x5C;
+    APU(0x4003) = 0x00;
+    p1_hold = 12;
+    APU(0x400C) = 0x30;                 /* silence du public */
+    noise_pri = 5; noise_hold = 30;
+    dpcm(k);
+}
+void sfx_out(void)        { announce(V_OUT); }     /* « Out! » */
+void sfx_svfault(void)    { announce(V_FAULT); }   /* service faux : « Fault! » */
+void sfx_let(void)        { announce(V_LET); }     /* let : « Let! » */
 
 /* balle dehors : « bip » du juge électronique (aigu, 1/12 s) */
 void sfx_line(void)

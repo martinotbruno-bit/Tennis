@@ -47,6 +47,11 @@ def resample(x, sr, to):
         out.append(a + (b - a) * f)
     return out
 
+def compress(x, drive=3.0):
+    """voix plus présente : normalisation puis saturation douce (tanh)"""
+    peak = max(1e-6, max(abs(v) for v in x))
+    return [math.tanh(v / peak * drive) / math.tanh(drive) for v in x]
+
 def encode(x, gain=1.0, mid=36):
     """x : signal -1..1 ; renvoie les octets DMC (bits de poids faible en
     premier). Le compteur part de 0, monte jusqu'à mid, suit le signal puis
@@ -85,7 +90,9 @@ samples = []
 VOICE_RATE = 6
 for name, word, speed in (('out', 'Out!', 160), ('fault', 'Fault!', 175), ('let', 'Let!', 170)):
     x, sr = speak(word, speed)
-    samples.append((name, encode(resample(x, sr, RATES[VOICE_RATE]), 1.0), VOICE_RATE))
+    # toute la plage du DMC (0..127, autour de 64) et une saturation douce :
+    # à 36 ± 32, la voix était couverte par le bip et le public
+    samples.append((name, encode(compress(resample(x, sr, RATES[VOICE_RATE])), 1.0, 64), VOICE_RATE))
 # « pok » : rebond amorti (sinus de 900 Hz et une pointe de bruit), 30 ms
 POK_RATE = 13
 sr = RATES[POK_RATE]

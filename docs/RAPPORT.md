@@ -1,10 +1,16 @@
-# Royal Martinot — Rapport de réalisation (version 2.39)
+# Royal Martinot — Rapport de réalisation (version 2.40)
 
 Comme l'exige le CDC (§ 17.5), ce rapport distingue ce qui est **réalisé**, **testé**, **validé sur matériel réel**, **validé uniquement en émulation**, **dépendant d'une extension**, et les **limitations restantes**.
 
 > **Validation matérielle : aucune.** Aucun test n'a été fait sur console réelle (NES, Famicom, PAL, cartouche MMC1). Toutes les validations ont eu lieu en émulation (jsnes) et par des tests unitaires sur PC. Les critères « vérifié sur console physique » (CDC § 2.1, 15.4, 16.A) **ne sont pas remplis**. Ce point ne peut pas être traité dans l'environnement de développement utilisé.
 
 ## 1. Évolutions
+
+### Version 2.40
+
+| Demande | Réalisation |
+|---|---|
+| Je n'entends pas les annonces de l'arbitre, ce sont toujours les mêmes sons | Les échantillons jouaient bien (vérifié sur le canal DMC de l'émulateur), mais trop bas : ils n'utilisaient qu'un quart de la plage du canal, et partaient en même temps que le bip franc et le murmure du public. La voix utilise maintenant toute la plage, avec une saturation douce qui la rend plus présente ; pendant l'annonce, le bip est discret (volume 3) et le public se tait |
 
 ### Version 2.39
 
@@ -335,7 +341,7 @@ Pour loger ce contenu, la cartouche passe de NROM (32 Ko) à **MMC1** : 128 Ko d
 | Relecture des textes (`check_texts.py`) | 0 problème |
 | Contraste (`contrast.py 25`) | 0 paire sous ΔE 25 (personnages, courts, balle, tenues) |
 | Profil CPU, double, 6 000 trames | 27 trames d'échange en dépassement (0,45 %), sans défaut d'image |
-| Compilation | Reproductible : SHA-256 `1a80cfaabf4d3301c532dcfd17b23a743c3df8802ced4b14364e71ef6ddb65a0` sur deux compilations propres |
+| Compilation | Reproductible : SHA-256 `f431639260453ef64f58616d007707b10969bc36afe67607715a0294d1b9674b` sur deux compilations propres |
 
 ## 3. Conformité par section du CDC
 
