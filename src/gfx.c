@@ -255,9 +255,12 @@ void bank_read(u8 bank, void *dst, const void *src, u16 n)
 
 /* tuiles prêtées au match (arbitre : tuiles de la coupe ; en perspective,
    tuiles du court) : dessin d'origine, rendu coupé */
+extern u8 swap_on, swap_nude;
+void swap_restore(void);           /* banque 3 (extras.c) */
 void chr_borrow_restore(void)
 {
     persp = 0;
+    if (swap_on != 1 || swap_nude) bank_call(BANK_EXTRAS, swap_restore);   /* célébrations, tenues normales */
     if (bg_dirty) { chr_copy(BANK_CHR, chr_data, 0x0000, 4096); bg_dirty = 0; }
     chr_copy(BANK_CHR, chr_data + 0x1000 + ((u16)trophy_tile << 4), 0x1000 + ((u16)trophy_tile << 4), 64);
     chr_copy(BANK_CHR, chr_data + 0x1000 + (11 << 4), 0x1000 + (11 << 4), 48);   /* arbitre (princesse au court Margaux) */

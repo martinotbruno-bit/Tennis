@@ -1589,6 +1589,31 @@ console.log('Plongeon');
     check(dives >= 2 && longest >= 8 && dirOk, `${view ? 'perspective' : 'à plat'} : ${dives} plongeons vers la balle, au sol jusqu'à ${longest} trames`);
   }
 }
+console.log('Revers et jeu de tuiles par phase');
+{
+  // match CPU : préparation, impact et fin du revers à deux mains ; le jeu
+  // « revers » est chargé pendant l'échange, le jeu « célébrations » ensuite ;
+  // une pose n'est jamais montrée sans ses tuiles ; aux écrans, célébrations
+  const e = boot(); startWith(e, { FMT: 3 }); allCpu(e);
+  // (pendant un ralenti et la trame qui le suit, pose_now n'est pas dessinée :
+  // le ralenti dessine ses poses enregistrées, elles aussi vérifiées)
+  const seen = new Set(); let bad = 0, onR = 0, onC = 0, prevMs = 0;
+  const set = (k) => (k === 7 || (k >= 15 && k <= 18)) ? 1 : (k >= 22 && k <= 26) ? 2 : 0;
+  for (let f = 0; f < 20000 && app(e) === AS.MATCH; f++) {
+    e.run(1);
+    const sw = e.peek('swap_on'), ms = e.peek('ms');
+    if (sw === 2) onR++; if (sw === 1) onC++;
+    if (ms !== 5 && prevMs !== 5)
+      for (let p = 0; p < 2; p++) { const k = e.peek('pose_now', p) & 31; seen.add(k); if (set(k) && set(k) !== sw) bad++; }
+    prevMs = ms;
+  }
+  check([22, 23, 24].every((k) => seen.has(k)) && bad === 0 && onR > 0 && onC > 0,
+    `revers à deux mains (préparation, impact, fin) ; jamais une pose sans ses tuiles (${bad}) ; jeux chargés selon la phase`);
+  runUntil(e, () => app(e) === AS.SCREENS, 60 * 60 * 25); e.run(60);
+  const base = 0x1000 + e.peek('swap_base') * 16, rom2 = e.nes.rom.rom[2];
+  let d = 0; for (let i = 0; i < 34 * 16; i++) if (e.nes.ppu.vramMem[base + i] !== rom2[base + i]) d++;
+  check(d === 0, `écrans : tuiles des célébrations rétablies (${d} octet(s) différent(s))`);
+}
 console.log('Dérapages selon la surface');
 {
   // le joueur court 12 trames vers la droite puis lâche la croix

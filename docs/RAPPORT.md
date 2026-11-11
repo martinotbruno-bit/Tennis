@@ -1,10 +1,16 @@
-# Royal Martinot — Rapport de réalisation (version 2.42)
+# Royal Martinot — Rapport de réalisation (version 2.43)
 
 Comme l'exige le CDC (§ 17.5), ce rapport distingue ce qui est **réalisé**, **testé**, **validé sur matériel réel**, **validé uniquement en émulation**, **dépendant d'une extension**, et les **limitations restantes**.
 
 > **Validation matérielle : aucune.** Aucun test n'a été fait sur console réelle (NES, Famicom, PAL, cartouche MMC1). Toutes les validations ont eu lieu en émulation (jsnes) et par des tests unitaires sur PC. Les critères « vérifié sur console physique » (CDC § 2.1, 15.4, 16.A) **ne sont pas remplis**. Ce point ne peut pas être traité dans l'environnement de développement utilisé.
 
 ## 1. Évolutions
+
+### Version 2.43
+
+| Demande | Réalisation |
+|---|---|
+| Analyser le geste de revers ; faire les 5 corrections | **Analyse** : seul l'armé était un revers à deux mains ; l'impact et l'accompagnement reprenaient le coup droit en miroir (une seule main, comme un gaucher), le revers coupé était dessiné à deux mains, la volée de revers à une main. **Nouvelles poses** : préparation du revers (raquette basse de l'autre côté, deux mains), impact à deux mains (bras tendus vers la balle), fin à deux mains (raquette au-dessus de l'épaule opposée), revers coupé à une main (raquette haute, bras libre en arrière ; impact et fin à une main), volée de revers à deux mains. **Place** : il ne restait que 5 tuiles de sprites ; les poses de célébration (déception, rebond avant le service, poing serré, colère, fatigue), jamais montrées pendant l'échange, et celles du revers, montrées seulement pendant l'échange, se partagent maintenant 34 tuiles (« jeu de tuiles par phase ») : le jeu utile est rechargé en mémoire graphique à chaque changement de phase, jusqu'à trois tuiles par trame (9 à 23 trames) ; d'ici là, la pose d'avant (secours) est montrée, jamais une tuile à moitié chargée. Le choix du coup a quitté la banque 3, pleine, pour la banque 13. **Défaut corrigé** : en 2.42, la tuile des éclats de glace (15) était aussi celle des cheveux de Margaux de profil ; elle a maintenant sa propre place |
 
 ### Version 2.42
 
@@ -354,7 +360,7 @@ Pour loger ce contenu, la cartouche passe de NROM (32 Ko) à **MMC1** : 128 Ko d
 |---|---|
 | Règles (`rules_test`) | 42/42 |
 | Codes (`password_test`) | 200 000/200 000 aller-retour (format v3), ancien code v2 accepté, Margaux codée, Margaux au club nudiste refusée ; 99,98 % des codes altérés d'un signe refusés |
-| Émulateur (`emu_test`) | 269/269 vérifications (environ 22 min) |
+| Émulateur (`emu_test`) | 271/271 vérifications (environ 22 min) |
 | Profil CPU, simple, 6 000 trames | 0 trame d'échange en dépassement |
 | Relecture des textes (`check_texts.py`) | 0 problème |
 | Contraste (`contrast.py 25`) | 0 paire sous ΔE 25 (personnages, courts, balle, tenues) |

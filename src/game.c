@@ -40,7 +40,10 @@ static u8 ad_l[2], ad_r[2], ad_net[2], ad_n[2];
 u8 npl;                         /* 2 en simple, 4 en double */
 s16 plx[4], ply[4];
 u8 pl_state[4], pl_timer[4];        /* lus par poses_all (banque 3) */
-static u8 pl_charge[4], pl_btn[4], pl_hit[4];
+static u8 pl_charge[4], pl_hit[4];
+#pragma bss-name(push, "WBSS")
+u8 pl_btn[4];                   /* bouton armé (lu par poses.s : revers coupé) */
+#pragma bss-name(pop)
 u8 pl_walk[4], pl_moving[4], pl_flip[4];
 u8 ai_delay[4];                  /* lu par les tests */
 static u8 ai_net[4];
@@ -364,7 +367,7 @@ static void do_hit(u8 p, u8 pad, u8 btn, u8 power, u8 spread)
     /* choix du coup (smash, lob, amortie, coupé, à plat, croisé court,
        lifté, volée), frappe parfaite et fatigue : banque 3 (shot_select) */
     sh_p = p; sh_pad = pad; sh_btn = btn; sh_power = power; sh_spread = spread; sh_dx = dx;
-    bank_call(BANK_EXTRAS, shot_select);
+    bank_call(BANK_SWAP, shot_select);
     depth = sh_depth; speed = sh_speed; grav = sh_grav; spread = sh_spread; power = sh_power;
     last_aim = (u8)(pad & (PAD_LEFT | PAD_RIGHT));
 

@@ -6,7 +6,7 @@ extern const unsigned char bigball_tiles[16];
 /* personnages : réserve commune de tuiles à partir de $10 ; pour chaque
    vue (person_row[face] = face * NPOSE * 3) et chaque pose, 3 octets = tuile
    gauche de chaque rangée (la tuile droite suit) ; une table par silhouette */
-#define NPOSE 22
+#define NPOSE 27
 extern const unsigned char person_map_m[2 * NPOSE * 3], person_map_f[2 * NPOSE * 3], person_row[2];
 extern const unsigned char prof_map[24];        /* course de profil : (femme * 4 + image) * 3 */
 extern const unsigned char marg_map[2 * NPOSE]; /* tête de Margaux : face * NPOSE + pose */
@@ -47,4 +47,10 @@ extern const unsigned char persp_ntile[7];
 extern const unsigned char * const persp_ps[7];   /* spectateurs de la perspective : 1re des 24 places (banque 11) */
 extern const unsigned char small_normA[192], small_upA[192], small_normB[192], small_upB[192];   /* 3 tailles x 4 dessins */
 extern const unsigned char proj_tab[512 + 640];   /* y', m (signé), puis produits v x |m| / 128 */
+
+/* jeu de tuiles par phase (version 2.42) : banque 3 pour les tables,
+   banque 13 pour les tuiles */
+extern const unsigned char pose_set[], pose_fb[];   /* 0 permanente, 1 célébrations, 2 revers ; pose de secours */
+extern const unsigned char swap_base, swap_ntile[2], ice_tile;
+extern const unsigned char swap_chrC[], swap_nudeC[], swap_chrR[], swap_nudeR[];
 #endif

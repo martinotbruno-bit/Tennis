@@ -19,7 +19,8 @@
 .import _bounces, _sc_winner, _sc_server, _sc_swap, _srv_slot, _cfg, _npl
 .import _end_reason, _ump_arm, _tired, _pending_winner, _sfx_bounce
 .importzp _frame_cnt, tmp1, tmp2, _oam_i
-.import _oam_buf, _ball_base, _proj, _sl_ox, _sl_oy
+.import _oam_buf, _ball_base, _proj, _sl_ox, _sl_oy, _ice_tile
+.import _pose_set, _pose_fb, _swap_on, _pl_btn
 .importzp _persp, _proj_x, _proj_y
 
 ; poses (gfx.h)
@@ -45,6 +46,13 @@ P_TIRED = 18
 P_RUN3 = 19
 P_RUN4 = 20
 P_DIVE = 21
+P_BPREP = 22
+P_BIMPACT = 23
+P_BFOLLOW = 24
+P_BSLICE = 25
+P_BVOLLEY = 26
+SH_SLICE = 1
+PAD_B = $40
 LIFT = 32
 DOWN = 64
 ST_CHARGE = 1
@@ -78,6 +86,7 @@ imp_t:     .res 4
 imp_k:     .res 4
 dive_t:    .res 4       ; plongeon en cours (trames)
 dive_f:    .res 4       ; son miroir (balle à gauche)
+fbv:       .res 1
 pp:        .res 1       ; joueur
 pt:        .res 1       ; équipe (p & 1)
 pst:       .res 1       ; état du joueur
@@ -239,6 +248,7 @@ _poses_all:
     sta _flip_cache,x
     jsr choose
     ldx pp
+    jsr fallback            ; jeu de tuiles pas encore chargé : pose de secours
     sta _pose_now,x
 @next:
     ldx pp
@@ -340,7 +350,7 @@ pose_fx:
     sta _oam_buf,x
     lda _cfg+CFG_SURF
     beq :+
-    lda #15                 ; glace : rayure blanche
+    lda _ice_tile           ; glace : rayure blanche
     bne :++
 :   lda #6                  ; terre : petit nuage
 :   sta _oam_buf+1,x
@@ -356,6 +366,25 @@ pose_fx:
     inx
     jmp @sl
 
+; pose A (avec ses drapeaux) affichable ? Si elle fait partie d'un jeu de
+; tuiles par phase qui n'est pas entièrement chargé (swap_on, extras.c),
+; on montre sa pose de secours (pose_fb), avec les mêmes drapeaux
+fallback:
+    sta fbv
+    and #31
+    tay
+    lda _pose_set,y
+    beq @ok
+    cmp _swap_on
+    beq @ok
+    lda fbv
+    and #$E0
+    ora _pose_fb,y
+    rts
+@ok:
+    lda fbv
+    rts
+
 ; tuile de l'effet de glissade du joueur pp : éclats sur glace et grains de
 ; sable (15),
 ; sinon petit nuage puis nuage plus large (6, 7)
@@ -365,7 +394,7 @@ fxtile:
     beq :+                  ; beige se perdrait sur le sable jaune)
     cmp #5
     bne :++
-:   lda #15
+:   lda _ice_tile
     rts
 :   lda #6
     ldy pp
@@ -450,10 +479,23 @@ choose:
     beq @srvhit
     cmp #SH_DROP
     beq @drop
+    ; revers (balle à gauche) : à deux mains, sauf le coupé (à une main :
+    ; le geste du coup droit vu en miroir)
+    ldy _pl_flip,x
+    beq @fimp
+    cmp #SH_SLICE
+    beq @fimp
+    lda #P_BIMPACT
+    rts
+@fimp:
     lda #P_IMPACT
     rts
 @volley:
-    lda #P_VOLLEY
+    ldy _pl_flip,x
+    beq :+
+    lda #P_BVOLLEY          ; volée de revers, deux mains
+    rts
+:   lda #P_VOLLEY
     rts
 @drop:
     lda #P_DROP
@@ -470,6 +512,13 @@ choose:
     beq @drop
     cmp #SH_VOLLEY
     beq @volley
+    ldy _pl_flip,x          ; fin du revers à deux mains (sauf coupé)
+    beq @ffol
+    cmp #SH_SLICE
+    beq @ffol
+    lda #P_BFOLLOW
+    rts
+@ffol:
     lda #P_FOLLOW
     rts
 @armed:
@@ -506,6 +555,12 @@ choose:
 @low:
     lda _pl_flip,x
     beq :+
+    lda _pl_btn,x           ; revers coupé (B) : à une main, raquette haute
+    cmp #PAD_B
+    bne @bk2
+    lda #P_BSLICE
+    rts
+@bk2:
     lda #P_BACK
     rts
 :   lda #P_SWING
@@ -724,7 +779,7 @@ choose:
     bpl :+
     lda #1
     sta _flip_cache,x
-    lda #P_BACK
+    lda #P_BPREP            ; préparation du revers
     rts
 :   lda #P_PREP
     rts

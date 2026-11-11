@@ -50,6 +50,11 @@ void __fastcall__ spr_ball(u8 x, s16 sy, u8 shy, u8 zpx);   /* sprp.s */
 #define POSE_RUN3   19   /* course, temps de passage */
 #define POSE_RUN4   20
 #define POSE_DIVE   21   /* plongeon */
+#define POSE_BPREP  22   /* préparation du revers */
+#define POSE_BIMPACT 23  /* impact du revers à deux mains */
+#define POSE_BFOLLOW 24  /* fin du revers à deux mains */
+#define POSE_BSLICE 25   /* revers coupé à une main (armé) */
+#define POSE_BVOLLEY 26  /* volée de revers */
 #define POSE_LIFT   32   /* drapeau : personnage relevé d'1 px (rebond, foulée) */
 #define POSE_DOWN   64   /* drapeau : personnage abaissé d'1 px (genoux fléchis) */
 

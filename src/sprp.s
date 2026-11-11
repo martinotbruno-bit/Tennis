@@ -37,7 +37,7 @@ POSE_RUN1 = 1
 POSE_RUN2 = 2
 POSE_LIFT = 32          ; drapeau : personnage relevé d'1 px
 POSE_DOWN = 64          ; drapeau : personnage abaissé d'1 px
-NPOSE     = 22
+NPOSE     = 27
 MARGAUX   = 16
 NCHARS    = 17
 
@@ -68,6 +68,7 @@ pdy:    .res 2
 ; pose de course. Ordre de la course : 1, 3 (passage), 2, 4 (passage).
 runfr:  .byte $FF, 0, 3, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF
         .byte $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, 6, 9, $FF
+        .byte $FF, $FF, $FF, $FF, $FF          ; 22-26 : revers (version 2.42)
 
 .segment "CODE"
 
