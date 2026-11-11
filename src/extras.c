@@ -2,6 +2,7 @@
  * chargement du court, public animé, ralentis, exercices d'entraînement
  * et tutoriel. Appelées par le moteur via bank_call() ; elles ne peuvent
  * appeler que la banque fixe et échangent leurs données par game_int.h. */
+#include <string.h>
 #include "game_int.h"
 #include "app.h"
 #include "rules.h"
@@ -219,7 +220,7 @@ void net_tick(void)
  *    comme avant. */
 #pragma bss-name(push, "WBSS")
 static u8 st_map[26 * 12];           /* tribunes : rangées 4 à 29, colonnes 0-5 et 26-31 */
-static u8 cr_cur[12], rowbuf[6];
+static u8 cr_cur[18], rowbuf[6];
 static u8 ola_on, ola_o, cr_prev_t, cr_prev_ms, cr_df, cr_mp, cr_clap, cr_react, cr_all;
 #pragma bss-name(pop)
 
@@ -240,12 +241,13 @@ static void crowd_load(void)
         for (r = 0; r < 16; ++r) vram_put(crowd_norm[c * 16 + r]);
         vram_adr((u16)crowdb_idx[c] << 4);
         for (r = 0; r < 16; ++r) vram_put(crowdb_norm[c * 16 + r]);
-        cr_cur[c] = 0; cr_cur[c + 6] = 0;
+        cr_cur[c] = 0;
     }
+    memset(cr_cur + 6, 0, 12);
     if (!persp) ps_idx[0] = 0;
     else if (ps_idx[0])
-        for (c = 0; c < 6; ++c) {
-            vram_adr((u16)ps_idx[c] << 4);
+        for (c = 0; c < 12; ++c) {
+            vram_adr((u16)(ps_idx[0] + ((c >> 2) << 3) + (c & 3)) << 4);
             for (r = 0; r < 16; ++r) vram_put((cfg.env == ENV_STADIUM ? small_normA : small_normB)[c * 16 + r]);
         }
     ola_on = 0; cr_prev_t = 0; cr_prev_ms = 0xFF; cr_mp = 0; cr_clap = 0; cr_react = 0; cr_all = 0;
@@ -262,9 +264,10 @@ static u8 ola_row(u8 o, u8 up)
         for (c = 0; c < n; ++c) {
             t = m[s ? 6 + (6 - n) + c : c];
             /* bras levés = tuile + 4 : public du stade (5-8), du club et de
-               la salle (13-16), petits spectateurs (ps_idx[0] à + 3) ;
+               la salle (13-16), spectateurs plus petits de la perspective
+               (3 tailles x 8 places dès ps_idx[0] : 4 dessins, 4 bras levés) ;
                vérifié par tools/gen_assets.py */
-            if (up && ((u8)(t - 5) < 4 || (u8)(t - 13) < 4 || (k && (u8)(t - k) < 4))) t += 4;
+            if (up && ((u8)(t - 5) < 4 || (u8)(t - 13) < 4 || (k && (u8)(t - k) < 24 && !((u8)(t - k) & 4)))) t += 4;
             rowbuf[c] = t;
         }
         if (!vbuf_raw(NTADR(s ? 32 - n : 0, 4 + o), rowbuf, n)) return 0;
@@ -316,7 +319,7 @@ void crowd_tick(void)
         /* le public suit la balle du regard */
         if (b_vis) {
             /* jeu A au stade, jeu B au club et en salle */
-            u8 a = (u8)(cfg.env == ENV_STADIUM), n = (u8)(ps_idx[0] ? 12 : 6);
+            u8 a = (u8)(cfg.env == ENV_STADIUM), n = (u8)(ps_idx[0] ? 18 : 6);
             m = (u8)(by < NET_Y * FP);
             if (cr_all != m) {
             for (k = 0; k < n; ++k)
@@ -326,7 +329,7 @@ void crowd_tick(void)
                         ok = vbuf_raw((u16)(a ? crowd_idx : crowdb_idx)[k] << 4,
                                       (a ? (m ? crowd_up : crowd_norm) : (m ? crowdb_up : crowdb_norm)) + (k << 4), 16);
                     else      /* petits spectateurs (perspective) */
-                        ok = vbuf_raw((u16)ps_idx[k - 6] << 4,
+                        ok = vbuf_raw((u16)(ps_idx[0] + (((k - 6) >> 2) << 3) + ((k - 6) & 3)) << 4,
                                       (a ? (m ? small_upA : small_normA) : (m ? small_upB : small_normB)) + ((k - 6) << 4), 16);
                     if (ok) cr_cur[k] = m;
                     break;

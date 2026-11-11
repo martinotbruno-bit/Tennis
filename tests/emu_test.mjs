@@ -335,7 +335,7 @@ console.log('Revanche et palmarès');
   check(scr(e) === SS.RESULTS, 'match humain (robot) terminé');
   const pl = e.peek16('sv', 4);
   check(pl === 1, 'palmarès : 1 match joué enregistré');
-  e.tap('A'); e.run(10);
+  e.tap('A'); runUntil(e, () => app(e) === AS.MATCH, 60);
   check(app(e) === AS.MATCH, 'A : revanche immédiate');
   allCpu(e);
   runUntil(e, () => app(e) === AS.SCREENS, 60 * 60 * 25); e.run(20);
@@ -692,7 +692,7 @@ console.log('Vitesse du jeu, coups gagnants, smash sauté, musiques');
   check(e.peek('music_cur') === 1, 'autre lieu : retour à la polka');
   e.tap('RIGHT'); e.run(5); e.tap('START'); e.run(20);
   check(scr(e) === SS.PRESENT && e.peek('music_cur') === 7, 'présentation au court Margaux : valse');
-  e.tap('A'); e.run(10);
+  e.tap('A'); runUntil(e, () => app(e) === AS.MATCH, 60);
   check(app(e) === AS.MATCH && e.peek('music_cur') === 0, 'aucune musique pendant le match');
 }
 {
@@ -706,7 +706,7 @@ console.log('Vitesse du jeu, coups gagnants, smash sauté, musiques');
   check(scr(e) === SS.COMP && e.text(3, 3, 6) === 'FINALE' && e.peek('music_cur') === 6, 'écran de la finale : thème de la finale');
   e.tap('A'); e.run(10);
   check(scr(e) === SS.PRESENT && e.peek('music_cur') === 6, 'présentation de la finale : le thème continue');
-  e.tap('A'); e.run(10);
+  e.tap('A'); runUntil(e, () => app(e) === AS.MATCH, 60);
   check(app(e) === AS.MATCH && e.peek('music_cur') === 0, 'finale : silence pendant le match');
 }
 
@@ -1504,16 +1504,18 @@ console.log('Vue en perspective (option VUE)');
     `court en perspective (${diff} tuiles du court changées) ; vue à plat inchangée`);
   // tribunes en perspective : elles s'avancent vers le court au fond, petits
   // spectateurs dans la moitié du fond, ola jusqu'aux colonnes ajoutées
-  const ps = []; for (let i = 0; i < 12; i++) ps.push(f.peek('ps_idx', i));
-  let small = 0, wide = 0;
-  for (let y = 4; y < 16; y++) for (let x = 0; x < 32; x++) if (ps.slice(0, 6).includes(nt(f, x, y))) small++;
+  // 3 tailles plus petites vers le fond : 24 places dès ps_idx (4 dessins, puis 4 bras levés)
+  const base = f.peek('ps_idx'), sizeOf = (t) => ((t - base) & 255) < 24 && !((t - base) & 4) ? ((t - base) >> 3) : -1;
+  const isUp = (t) => ((t - base) & 255) < 24 && ((t - base) & 4);
+  const sizes = [0, 0, 0]; let wide = 0;
+  for (let y = 4; y < 30; y++) for (let x = 0; x < 32; x++) { const k = sizeOf(nt(f, x, y)); if (k >= 0) sizes[k]++; }
   for (let y = 4; y < 8; y++) for (const x of [4, 27]) if (nt(f, x, y) !== nt(flat, x, y)) wide++;
   f.poke('crowd_timer', 60); f.run(20);
-  let cheer = 0; for (let y = 4; y < 30; y++) for (let x = 0; x < 32; x++) if (ps.slice(6).includes(nt(f, x, y))) cheer++;
+  let cheer = 0; for (let y = 4; y < 30; y++) for (let x = 0; x < 32; x++) if (isUp(nt(f, x, y))) cheer++;
   f.run(80);
-  let rest = 0; for (let y = 4; y < 30; y++) for (let x = 0; x < 32; x++) if (ps.slice(6).includes(nt(f, x, y))) rest++;
-  check(ps[0] > 0 && small > 40 && wide === 8 && cheer > 0 && rest === 0,
-    `tribunes en perspective : ${small} petits spectateurs au fond, tribunes avancées, ola (${cheer} petits spectateurs debout) puis rétablie`);
+  let rest = 0; for (let y = 4; y < 30; y++) for (let x = 0; x < 32; x++) if (isUp(nt(f, x, y))) rest++;
+  check(base > 0 && sizes.every((n) => n > 10) && wide === 8 && cheer > 0 && rest === 0,
+    `tribunes en perspective : spectateurs de 3 tailles réduites (${sizes.join(', ')}), tribunes avancées, ola (${cheer} debout) puis rétablie`);
   // projection : un joueur placé au fond, près du couloir, apparaît plus près du centre qu'à plat
   const s16 = (g, n, v, o = 0) => { g.poke(n, v & 255, o); g.poke(n, (v >> 8) & 255, o + 1); };
   for (const g of [f, flat]) { g.poke('ms', 2); g.poke('b_live', 0); g.poke('b_vis', 0); s16(g, 'plx', 70 * 64, 2); s16(g, 'ply', 50 * 64, 2); g.run(3); }

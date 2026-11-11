@@ -64,7 +64,7 @@ static const u8 surf_pal[NSURF + 1][4] = {
 static const u8 ball_col[NSURF + 1] = { 0x28, 0x28, 0x28, 0x28, 0x2A, 0x28, 0x28 };
 
 static const u8 env_pal[NENV][3] = {
-    { 0x27, 0x16, 0x37 },     /* stade : public */
+    { 0x37, 0x16, 0x0F },     /* stade : peau, gradins rouges, cheveux et rambarde noirs */
     { 0x1A, 0x09, 0x07 },     /* club : haies, arbres, troncs */
     { 0x00, 0x2A, 0x0F },     /* salle : murs, panneaux, projecteurs */
     { 0x1A, 0x27, 0x07 },     /* club nudiste : herbe, peau, cheveux/chapeaux/serviettes */

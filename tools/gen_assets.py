@@ -387,43 +387,87 @@ def draw_court(env=0):
             b[y][x] = 0
     return b
 
-# Spectateurs : un par tuile, assis en rangées. Tête 4 x 4 : de face
-# (regard vers le bas du court) chevelure puis visage avec deux yeux ; de dos
-# (regard vers le haut) chevelure entière et nuque. Épaules et buste en
-# dessous. Le jeu échange les deux versions quand la balle change de moitié :
-# toute la tribune tourne la tête. Bras levés : ola.
-# Jeu A (stade, palette des tribunes) : fond 2 (gradins), peau 1, yeux 2,
-# cheveux 3, maillots 3 ou 1. Jeu B (club, salle ; palette 3 noir, jaune,
-# blanc) : fond 0, peau 2, yeux et cheveux 1, maillots 3 ou 1.
-def spectators(seed, view, b=False):
-    r = random.Random(seed)
-    bg, skin, eye, hair = (0, 2, 1, 1) if b else (2, 1, 2, 3)
+# Spectateurs (version 2.42) : un par tuile, assis en rangées ; 4 modèles
+# (cheveux courts, cheveux longs, casquette, cheveux clairs), décalés d'une
+# place à l'autre pour casser la grille. Le jeu échange « regard vers le bas »
+# et « regard vers le haut » quand la balle change de moitié ; bras levés :
+# ola. Tailles : 'big' (vue à plat, premier plan en perspective), 'med',
+# 'small' et 'tiny' (4 petites têtes par tuile, foule lointaine).
+# Jeu A (stade, palette 2 : 1 peau, 2 gradins, 3 cheveux noirs) : marche des
+# gradins (couleur 0) sur la ligne du haut ; maillots noirs, peau claire ou
+# couleur des abords. Jeu B (club, salle, château, parc ; palette 3 : 1 noir,
+# 2 peau, 3 blanc) : fond 0 (abords), cheveux noirs, maillots blancs ou noirs.
+DESIGNS = 4
+def spectator(d, view, b=False, size='big'):
+    bg, skin, hair = (0, 2, 1) if b else (2, 1, 3)
+    eye = hair
+    shirts = (3, 1, 3, 3) if b else (3, 1, 3, 0)
+    shirt = shirts[d]
     t = [[bg] * 8 for _ in range(8)]
-    ox = 2 + r.choice((-1, 0, 0, 1))              # léger décalage d'une place à l'autre
-    shirt = r.choice((3, 3, 1))
-    if view == 'up':
-        head = ((hair,) * 4, (hair,) * 4, (hair,) * 4, (skin,) * 4)
-    else:
-        head = ((hair,) * 4, (skin, eye, eye, skin), (skin,) * 4, (bg, skin, skin, bg))
-    for k in range(4):
-        for xx in range(4):
-            t[1 + k][ox + xx] = head[k][xx]
-    for yy in range(5, 8):                           # épaules et buste
-        for xx in range(ox - 1, ox + 5):
-            if 0 <= xx < 8:
-                t[yy][xx] = shirt
-    if view == 'cheer':                              # bras levés de part et d'autre de la tête
-        for yy in range(1, 5):
-            if ox - 1 >= 0: t[yy][ox - 1] = skin
-            if ox + 4 < 8: t[yy][ox + 4] = skin
+    def px(x, y, v):
+        if 0 <= x < 8 and 0 <= y < 8: t[y][x] = v
+    if not b and size != 'tiny':
+        for x in range(8): t[0][x] = 0                  # marche du gradin
+    if size == 'tiny':
+        # deux rangées de deux petites têtes (2 x 2) et bustes (3 x 2)
+        for k, (ox, oy) in enumerate(((0, 0), (4, 0), (2, 4), (6, 4))):
+            dd = (d + k) % DESIGNS
+            sh = 3 if b else (1 if dd != 2 else 3)        # foule lointaine : maillots clairs, peu de noir
+            hc = (3 if b else 2) if dd == 3 else hair       # cheveux clairs (blancs au jeu B)
+            if view == 'up':
+                px(ox + 1, oy, hc); px(ox + 2, oy, hc); px(ox + 1, oy + 1, hc); px(ox + 2, oy + 1, hc)
+            else:
+                px(ox + 1, oy, hc); px(ox + 2, oy, hc); px(ox + 1, oy + 1, skin); px(ox + 2, oy + 1, skin)
+            for x in range(ox, ox + 4 if ox + 4 <= 8 else 8):
+                if x != ox + 3: px(x, oy + 2, sh); px(x, oy + 3, sh)
+            if view == 'cheer':
+                px(ox, oy, skin); px(ox + 3, oy, skin)
+        return t
+    ox = (2, 1, 3, 2)[d]
+    hw, top, hh, bw = {'big': (4, 1, 4, 6), 'med': (4, 2, 3, 5), 'small': (3, 3, 3, 5)}[size]
+    hc = skin if (not b and d == 3) else hair             # modèle 3 : cheveux clairs (couleur de peau)
+    if b and d == 3: hc = 3                               # jeu B : cheveux blancs
+    # tête
+    for k in range(hh):
+        for xx in range(hw):
+            x, y = ox + xx, top + k
+            if view == 'up':
+                v = hc if k < hh - 1 else skin            # nuque
+            elif k == 0:
+                v = hc
+            elif k == 1 and xx in (1, hw - 2) and hw == 4:
+                v = eye                                    # yeux
+            elif k == 1 and hw == 3 and xx == 1:
+                v = eye
+            else:
+                v = skin
+            if size == 'big' and k == hh - 1 and xx in (0, hw - 1) and view != 'up':
+                v = bg                                     # menton arrondi
+            px(x, y, v)
+    if d == 1 and view != 'up':                            # cheveux longs
+        for k in range(1, hh):
+            px(ox - 1, top + k, hc); px(ox + hw, top + k, hc)
+    if d == 2:                                             # casquette (couleur du maillot)
+        cap = 3 if not b else 1
+        for xx in range(-1, hw + (1 if view != 'up' else 0)):
+            px(ox + xx, top, cap)
+    # épaules et buste
+    by0 = top + hh
+    for y in range(by0, 8):
+        for xx in range(-(bw - hw) // 2 - (1 if bw - hw == 2 else 0), hw + (bw - hw + 1) // 2 - (1 if bw - hw == 2 else 0)):
+            px(ox + xx, y, shirt)
+    if view == 'cheer':                                    # bras levés
+        for y in range(top - 1, top + hh):
+            px(ox - 1, y, skin); px(ox + hw, y, skin)
     return t
 
-CROWD = [spectators(i, 'down') for i in range(6)]
-CROWD_UP = [spectators(i, 'up') for i in range(6)]
-CHEER = [spectators(i, 'cheer') for i in range(6)]
-CROWDB = [spectators(i, 'down', True) for i in range(6)]
-CROWDB_UP = [spectators(i, 'up', True) for i in range(6)]
-CHEERB = [spectators(i, 'cheer', True) for i in range(6)]
+ORDER = (0, 1, 2, 3, 1, 2)       # 6 places, 4 dessins (ola_row : tuiles 5-8 et 13-16)
+CROWD = [spectator(d, 'down') for d in ORDER]
+CROWD_UP = [spectator(d, 'up') for d in ORDER]
+CHEER = [spectator(d, 'cheer') for d in ORDER]
+CROWDB = [spectator(d, 'down', True) for d in ORDER]
+CROWDB_UP = [spectator(d, 'up', True) for d in ORDER]
+CHEERB = [spectator(d, 'cheer', True) for d in ORDER]
 
 crowd_idx = [bg_alloc(t) for t in CROWD]
 cheer_idx = [bg_alloc(t) for t in CHEER]     # ola : tuiles « bras levés » propres
@@ -1382,38 +1426,26 @@ persp_rles, persp_tiles, persp_ps = [], [], []
 # reprennent le décor du lieu ; une colonne « bord » (fond du décor, rambarde,
 # puis abords) ferme la tribune. Dans la moitié du fond (rangées 4 à 15), les
 # spectateurs sont plus petits (environ 85 %).
-def small_spectator(seed, view, b=False):
-    r = random.Random(seed)
-    bg, skin, eye, hair = (0, 2, 1, 1) if b else (2, 1, 2, 3)
-    t = [[bg] * 8 for _ in range(8)]
-    ox = 2 + r.choice((-1, 0, 0, 1))
-    shirt = r.choice((3, 3, 1))
-    if view == 'up':
-        head = ((hair,) * 3, (hair,) * 3, (skin,) * 3)
-    else:
-        head = ((hair,) * 3, (skin, eye, skin), (bg, skin, bg))
-    for k in range(3):
-        for xx in range(3):
-            t[3 + k][ox + xx] = head[k][xx]
-    for yy in range(6, 8):
-        for xx in range(ox - 1, ox + 4):
-            if 0 <= xx < 8:
-                t[yy][xx] = shirt
-    if view == 'cheer':
-        for yy in range(2, 6):
-            if ox - 1 >= 0: t[yy][ox - 1] = skin
-            if ox + 3 < 8: t[yy][ox + 3] = skin
-    return t
-SMALL = {fam: {v: [small_spectator(i, v, fam == 'B') for i in range(6)] for v in ('down', 'up', 'cheer')}
-         for fam in ('A', 'B')}
-SMALL_ROWS = range(4, 16)            # moitié du fond : petits spectateurs
+SIZES = ('med', 'small', 'tiny')
+SMALL = {fam: {sz: {v: [spectator(d, v, fam == 'B', sz) for d in range(DESIGNS)] for v in ('down', 'up', 'cheer')}
+               for sz in SIZES} for fam in ('A', 'B')}
+def size_of_row(ty):
+    """taille des spectateurs selon l'échelle de la rangée (perspective)"""
+    sc = persp_row_scale(ty)
+    if sc >= 0.965: return None          # premier plan : taille normale
+    if sc >= 0.93: return 0              # 'med'
+    if sc >= 0.895: return 1             # 'small'
+    return 2                             # 'tiny' : foule lointaine
 PERSP_FAM = {0: 'A', 1: 'B', 2: 'B', 5: 'B'}   # lieux avec du public animé
 
 def persp_row_scale(ty):
     return 1 / (1 + PERSP_A * persp_d(ty * 8 + 4))
+PERSP_STEP = 1
 def persp_rail(ty, side):
     sc = persp_row_scale(ty)
     x = 128 + ((31 if side == 0 else 224) - 128) * sc
+    if PERSP_STEP == 1:
+        return round(x)
     return 2 * round(x / 2) + (1 if side == 0 else 0)   # gauche : impair (31, 33...) ; droite : pair
 
 def tile_at(bmp, ty, tx):
@@ -1436,7 +1468,8 @@ def persp_sides(e, bmp, w):
             # fond du décor (colonne du bord et colonnes ajoutées sans public)
             def filler(x, y):
                 if e == 0: return 2
-                if e in (1, 2, 5) and crowd_row: return 0
+                if e in (1, 5) and crowd_row: return 0
+                if e == 2: return 3 if (y // 8) % 6 == 0 else 1   # salle : mur et bandeau
                 if e == 1: return 1 if (((x % 8) * 7 + (y % 8) * 3) % 11) else 2
                 if e == 5:
                     ry = y % 8; off = 0 if ry < 4 else 4
@@ -1456,7 +1489,27 @@ def persp_sides(e, bmp, w):
                         return [r[:] for r in GIRLY[kk // 2]]
                 return [[filler(x, y) for x in range(8)] for y in range(8)]
             ia = 2 if e == 2 else 3                       # salle : ajout entre gradins et panneaux
-            seq = outer[:ia] + [ext(k) for k in range(nins)] + outer[ia:3]
+            shift = (not crowd_row and e != 4) or e == 2  # décor sans public : glissé vers le court
+            if shift and nins == 0 and xr == (31 if side == 0 else 224):
+                seq = outer[:]                            # comme à plat
+                nins = -1
+            elif shift and nins >= 1:
+                # le décor à plat entier (arbres, bannières, torches, spectateurs
+                # du club nudiste) glisse vers le court ; du fond est ajouté
+                # côté écran, la rambarde d'origine devient du fond
+                last = [r[:] for r in outer[3]]
+                rx = 7 if side == 0 else 0
+                for y in range(8):
+                    last[y][rx] = filler((3 * 8 + rx) if side == 0 else (224 + rx), ty * 8 + y)
+                fill = [[[filler(x, y) for x in range(8)] for y in range(8)] for _ in range(nins - 1)]
+                if e == 2:
+                    # salle : les gradins restent au bord de l'écran (palette 3,
+                    # bloc de colonnes 0-1) ; le mur s'élargit avant les panneaux
+                    seq = outer[:2] + fill + outer[2:3] + [last]
+                else:
+                    seq = fill + outer[:3] + [last]
+            else:
+                seq = outer[:ia] + [ext(k) for k in range(nins)] + outer[ia:3]
             edge = [[0] * 8 for _ in range(8)]
             off = xr - ce * 8
             for y in range(8):
@@ -1470,13 +1523,15 @@ def persp_sides(e, bmp, w):
                     else:
                         v = 0
                     edge[y][x] = v
-            seq.append(edge)
-            if fam and ty in SMALL_ROWS:                  # petits spectateurs au fond
+            if nins != -1:
+                seq.append(edge)
+            sz = size_of_row(ty)
+            if fam and sz is not None:                    # plus petits vers le fond
                 big = CROWD if fam == 'A' else CROWDB
                 keys = [tkey(t) for t in big]
                 for i, t in enumerate(seq):
                     if tkey(t) in keys:
-                        seq[i] = [r[:] for r in SMALL[fam]['down'][keys.index(tkey(t))]]
+                        seq[i] = [r[:] for r in SMALL[fam][SIZES[sz]]['down'][ORDER[keys.index(tkey(t))]]]
             for o, t in enumerate(seq):
                 tx = o if side == 0 else 31 - o
                 for y in range(8):
@@ -1503,7 +1558,7 @@ def persp_sides(e, bmp, w):
                 fix[(bxi, by)] = court_attr(bxo, by, e)
     return fix
 
-for e in range(6):
+def persp_build(e):
     bmp = draw_court(e)
     w = [row[:] for row in bmp]
     for ys in range(32, 240):
@@ -1537,27 +1592,40 @@ for e in range(6):
         # petits spectateurs : 4 dessins distincts à 4 places consécutives, et
         # leurs « bras levés » aux 4 suivantes (ola_row : t + 4, comme pour
         # crowd_idx / cheer_idx)
-        downs = list(dict.fromkeys(tkey(t) for t in SMALL[fam]['down']))
-        assert len(downs) == 4, 'petits spectateurs : 4 dessins distincts attendus'
-        base = next(i for i in cand if all(i + j in cand for j in range(8)))
-        for j in range(8):
+        # 3 tailles x (4 dessins, puis leurs 4 « bras levés ») à 24 places
+        # consécutives : ola_row lève une tuile en lui ajoutant 4
+        base = next((i for i in cand if all(i + j in cand for j in range(24))), None)
+        if base is None: raise OverflowError
+        for j in range(24):
             cand.remove(base + j)
-        for i, t in enumerate(SMALL[fam]['down']):
-            r = downs.index(tkey(t))
-            new[tkey(t)] = (base + r, [list(x) for x in t])
-            new[tkey(SMALL[fam]['cheer'][i])] = (base + 4 + r, [list(x) for x in SMALL[fam]['cheer'][i]])
-        ps = [base + downs.index(tkey(t)) for t in SMALL[fam]['down']]
-        ps += [k + 4 for k in ps]
+        for si, sz in enumerate(SIZES):
+            ds = SMALL[fam][sz]
+            assert len({tkey(t) for t in ds['down']}) == 4 and len({tkey(t) for t in ds['cheer']}) == 4, (fam, sz)
+            for d in range(4):
+                new[tkey(ds['down'][d])] = (base + si * 8 + d, [list(x) for x in ds['down'][d]])
+                new[tkey(ds['cheer'][d])] = (base + si * 8 + 4 + d, [list(x) for x in ds['cheer'][d]])
+        ps = [base] + [0] * 11
     for (ty, tx), t in tiles.items():
         k = tkey(t)
         if k in known and known[k] in keep:
             nt[ty * 32 + tx] = known[k]
         else:
             if k not in new:
-                assert cand, 'perspective : plus de place pour les tuiles (lieu %d : %d tuiles nouvelles)' % (e, len(new))
+                if not cand: raise OverflowError
                 new[k] = (cand.pop(0), [list(r) for r in t])
             nt[ty * 32 + tx] = new[k][0]
-    print('perspective, lieu %d : %d tuiles nouvelles, %d places restantes' % (e, len(new), len(cand)))
+    return nt, new, ps, cand
+
+for e in range(6):
+    for PERSP_STEP in (1, 2):                             # rambarde au pixel près si la place suffit
+        try:
+            nt, new, ps, cand = persp_build(e)
+            break
+        except OverflowError:
+            continue
+    else:
+        sys.exit('perspective : plus de place pour les tuiles (lieu %d)' % e)
+    print('perspective, lieu %d : %d tuiles nouvelles, %d places restantes, rambarde au pas de %d px' % (e, len(new), len(cand), PERSP_STEP))
     persp_rles.append(bytes(nt))   # (RLE à l'écriture)
     persp_tiles.append(sorted(new.values()))
     persp_ps.append(ps if ps else [0] * 12)
@@ -1687,8 +1755,8 @@ src.append(c_array('crowd_norm', b''.join(encode_tile(t) for t in CROWD)))
 src.append(c_array('crowd_cheer', b''.join(encode_tile(t) for t in CHEER)))
 # petits spectateurs (vue en perspective) : regard vers le bas / vers le haut
 for fam in ('A', 'B'):
-    src.append(c_array('small_norm%s' % fam, b''.join(encode_tile(t) for t in SMALL[fam]['down'])))
-    src.append(c_array('small_up%s' % fam, b''.join(encode_tile(t) for t in SMALL[fam]['up'])))
+    src.append(c_array('small_norm%s' % fam, b''.join(encode_tile(t) for sz in SIZES for t in SMALL[fam][sz]['down'])))
+    src.append(c_array('small_up%s' % fam, b''.join(encode_tile(t) for sz in SIZES for t in SMALL[fam][sz]['up'])))
 with open(os.path.join(ROOT, 'src', 'assets_court.c'), 'w') as f:
     f.write('\n'.join(src))
 
