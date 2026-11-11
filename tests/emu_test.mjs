@@ -919,7 +919,7 @@ console.log('Service canon');
   const hits = res.filter(([, r]) => r.canon).map(([k]) => k);
   check(hits.length === 2 && hits[1] === hits[0] + 1, `fenêtre du service canon : 2 trames consécutives (${hits.join(', ')})`);
   const c = res.find(([, r]) => r.canon)[1], n = res.find(([k, r]) => !r.canon && k === hits[0] - 3)[1];
-  check(c.vy > n.vy * 1.2 && c.msg === 'SERVICE CANON' && c.ok === 1 && c.tried === 1, `service canon plus rapide (${c.vy} contre ${n.vy}), annoncé et compté`);
+  check(c.vy > n.vy * 1.4 && c.msg === 'SERVICE CANON' && c.ok === 1 && c.tried === 1, `service canon plus rapide (${c.vy} contre ${n.vy}), annoncé et compté`);
   // le CPU Normal ne le réussit jamais
   const f = boot(); startWith(f, { FMT: 3, LEVEL: 1 }); allCpu(f);
   let cpu = 0, serves = 0, prev = 0;
@@ -949,6 +949,9 @@ console.log('Frappe parfaite');
   check(ks.length === 3 && ks[2] === ks[0] + 2 && res.every(([, r]) => r.hit), `fenêtre de la frappe parfaite : 3 trames consécutives (relâché ${ks.join(', ')} trames avant)`);
   const p = res.find(([, r]) => r.perf)[1];
   check(p.n === 1 && p.tries === 1, 'frappe parfaite comptée');
+  // nettement plus rapide qu'une frappe normale relâchée une trame plus tôt
+  const nrm = res.find(([k]) => k === ks[2] + 1)[1];
+  check(p.vy > nrm.vy * 1.3, `frappe parfaite plus puissante (${p.vy} contre ${nrm.vy}, +${Math.round((p.vy / nrm.vy - 1) * 100)} %)`);
   const collee = trial(ks[1], 130), ext = trial(ks[1], 148);
   check(!collee.perf && !ext.perf && collee.hit && ext.hit, 'balle collée au corps ou en extension : frappe normale');
 }

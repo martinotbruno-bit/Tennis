@@ -385,10 +385,10 @@ static void do_hit(u8 p, u8 pad, u8 btn, u8 power, u8 spread)
         if (speed > 42) speed = 42;
         if (last_shot == SH_DRIVE || last_shot == SH_FLAT) last_shot = SH_VOLLEY;
     }
-    /* frappe parfaite (lifté, à plat, coupé ; banque fixe) : +25 % de vitesse,
-       presque sans écart */
+    /* frappe parfaite (lifté, à plat, coupé, croisé court ; banque fixe) :
+       +37,5 % de vitesse, presque sans écart */
     hit_perf = perfect_hit(p, dx);
-    if (hit_perf) { speed = (u8)(speed + (speed >> 2)); spread = 1; power = 0; }
+    if (hit_perf) { speed = (u8)(speed + (speed >> 2) + (speed >> 3)); spread = 1; power = 0; }
     last_aim = (u8)(pad & (PAD_LEFT | PAD_RIGHT));
 
     /* direction : croix gauche/droite, sinon croisé naturel */
@@ -526,7 +526,7 @@ static void serve_hit(u8 p, u8 pad, u8 btn, u8 quality, u8 spread)
            2 trames où |vz| < 8). Le CPU Expert le réussit une fois sur deux
            quand il frappe au sommet ; Facile et Normal jamais */
         if (!quality && (cfg.ctrl[p] != CTRL_CPU || (cfg.level[p] == 2 && (rand8() & 1)))) {
-            srv_canon = 1; speed = 84; grav = 11;
+            srv_canon = 1; speed = 96; grav = 12;     /* +50 % */
             spread = (u8)(faults ? 6 : 1);    /* 2e balle : un peu plus risqué */
             ++st_canon[t];
         }

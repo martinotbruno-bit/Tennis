@@ -1,10 +1,16 @@
-# Royal Martinot — Rapport de réalisation (version 2.23)
+# Royal Martinot — Rapport de réalisation (version 2.24)
 
 Comme l'exige le CDC (§ 17.5), ce rapport distingue ce qui est **réalisé**, **testé**, **validé sur matériel réel**, **validé uniquement en émulation**, **dépendant d'une extension**, et les **limitations restantes**.
 
 > **Validation matérielle : aucune.** Aucun test n'a été fait sur console réelle (NES, Famicom, PAL, cartouche MMC1). Toutes les validations ont eu lieu en émulation (jsnes) et par des tests unitaires sur PC. Les critères « vérifié sur console physique » (CDC § 2.1, 15.4, 16.A) **ne sont pas remplis**. Ce point ne peut pas être traité dans l'environnement de développement utilisé.
 
 ## 1. Évolutions
+
+### Version 2.24
+
+| Demande | Réalisation |
+|---|---|
+| Services canon et coups parfaits un peu plus puissants | Service canon : vitesse 96 au lieu de 84, soit environ 50 % plus rapide qu'un service normal au lieu de 32 % (mesuré : 352 contre 237). Il reste sûr : 36 essais sur 36 dans le carré. Frappe parfaite : +37,5 % au lieu de +25 % (mesuré : +41 % face à une frappe normale presque identique) |
 
 ### Version 2.23
 
@@ -221,12 +227,12 @@ Pour loger ce contenu, la cartouche passe de NROM (32 Ko) à **MMC1** : 128 Ko d
 |---|---|
 | Règles (`rules_test`) | 42/42 |
 | Codes (`password_test`) | 200 000/200 000 aller-retour (format v3), ancien code v2 accepté, Margaux codée, Margaux au club nudiste refusée ; 99,98 % des codes altérés d'un signe refusés |
-| Émulateur (`emu_test`) | 216/216 vérifications (environ 21 min) |
+| Émulateur (`emu_test`) | 217/217 vérifications (environ 21 min) |
 | Profil CPU, simple, 6 000 trames | 0 trame d'échange en dépassement |
 | Relecture des textes (`check_texts.py`) | 0 problème |
 | Contraste (`contrast.py 25`) | 0 paire sous ΔE 25 (personnages, courts, balle, tenues) |
 | Profil CPU, double, 6 000 trames | 27 trames d'échange en dépassement (0,45 %), sans défaut d'image |
-| Compilation | Reproductible : SHA-256 `5c9943807af27caded74e06844fe4b30b97d149e83b666986ce31702f0103f03` sur deux compilations propres |
+| Compilation | Reproductible : SHA-256 `71dec11cdba4855c00fca63fe348ce6673d62f4ae299f07db767a4f51fd24cf7` sur deux compilations propres |
 
 ## 3. Conformité par section du CDC
 
