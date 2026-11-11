@@ -257,6 +257,19 @@ const u8 * const song_trk[11][4] = {
   { mus_intro_mel, mus_intro_bass, 0, mus_intro_drum },
   { mus_cred_mel, mus_cred_bass, mus_cred_harm, mus_cred_drum },
 };
+const u16 song_len[11][4] = {
+  { 0, 0, 0, 0 },
+  { 118, 130, 132, 130 },
+  { 6, 0, 0, 0 },
+  { 12, 0, 0, 0 },
+  { 40, 30, 16, 56 },
+  { 12, 0, 0, 0 },
+  { 94, 34, 34, 130 },
+  { 94, 66, 132, 98 },
+  { 50, 34, 34, 50 },
+  { 244, 90, 0, 110 },
+  { 56, 34, 34, 34 },
+};
 const u8 song_loop[11] = { 0, 1, 0, 0, 0, 0, 1, 1, 1, 0, 1 };
 const u8 song_duty[11][2] = { { 0, 0 }, { 0x36, 0x73 }, { 0x86, 0x72 }, { 0x86, 0x72 }, { 0xB8, 0x74 }, { 0x86, 0x72 }, { 0xB7, 0x74 }, { 0x77, 0x73 }, { 0x76, 0x72 }, { 0xB8, 0x72 }, { 0x76, 0x74 } };
 /* plus gros morceau : 510 octets (tampon MUS_BUF de audio.c) ; total 2134 octets */

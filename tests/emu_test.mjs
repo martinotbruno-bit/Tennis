@@ -377,7 +377,7 @@ function playComp(type, opts, wins) {
   check(scr(e) === SS.COMP && e.text(18, 1, CN.length) === CN, `${CN} : écran d'étape (titre lisible)`);
   while (scr(e) === SS.COMP && matches < 20) {
     if (matches === 1) code = e.text(10, 21, 15).replace(/ /g, '');
-    e.tap('A'); e.run(5); e.tap('A'); e.run(30);
+    e.tap('A'); runUntil(e, () => scr(e) === SS.PRESENT, 60); e.run(3); e.tap('A'); e.run(30);
     if (app(e) !== AS.MATCH) break;
     // victoire forcée du joueur pour parcourir la compétition
     e.poke('sc_winner', wins(matches) ? 0 : 1); e.poke('sc_over', 1); e.poke('ms', 4); e.poke('ms_timer', 2);
@@ -494,8 +494,10 @@ console.log('Compétition en double, levée de coupe et club nudiste');
   toMenu(e);
   let envs = new Set();
   e.poke('cursor', rowOf(e, O.ENV));
-  for (let i = 0; i < 6; i++) { e.tap('RIGHT'); envs.add(e.peek('opt_val', O.ENV)); }
-  check(!envs.has(3) && envs.size === 4, 'lieu « club nudiste » absent avant déblocage (4 lieux proposés)');
+  const names = new Set();
+  for (let i = 0; i < 8; i++) { e.tap('RIGHT'); e.run(3); envs.add(e.peek('opt_val', O.ENV)); names.add(e.text(16, 4 + rowOf(e, O.ENV), 7).replace(/\0/g, ' ').trim()); }
+  check(!envs.has(3) && envs.size === 6, `lieu « club nudiste » absent avant déblocage (6 lieux proposés : ${[...names].join(', ')})`);
+  check(envs.has(5) && envs.has(6) && names.has('CHATEAU') && names.has('PARC'), 'nouveaux lieux : CHATEAU et PARC');
 }
 {
   const { e, matches, code } = playComp(0, { TYPE: 1, P2: 5 }, () => true);
@@ -862,8 +864,11 @@ console.log('Margaux jouable et fatigue');
   const e = boot(); toMenu(e);
   e.poke('cursor', rowOf(e, O.P1)); e.poke('opt_val', 15, O.P1); e.tap('RIGHT'); e.run(5);
   check(e.peek('opt_val', O.P1) === 16 && e.text(16, 4 + rowOf(e, O.P1), 7) === 'MARGAUX', 'MARGAUX sélectionnable (17e personnage)');
+  const nn = [];
+  for (let k = 0; k < 4; k++) { e.tap('RIGHT'); e.run(5); nn.push(e.text(16, 4 + rowOf(e, O.P1), 5).replace(/\0/g, ' ').trim()); }
+  check(nn.join(',') === 'MAX,LOLA,PAPI,TITOU', `nouveaux personnages après Margaux : ${nn.join(', ')}`);
   e.tap('RIGHT'); e.run(5);
-  check(e.peek('opt_val', O.P1) === 0, 'retour au premier personnage après Margaux');
+  check(e.peek('opt_val', O.P1) === 0, 'retour au premier personnage après TITOU');
   const g = boot(); toMenu(g); setOpts(g, { MODE: MODE.P2, P1: 16, TYPE: 1, P2: 3 }); g.tap('START'); g.run(30);
   check(scr(g) === SS.PRESENT && g.text(6, 10, 7) === 'MARGAUX' && g.text(6, 11, 1) === '+' && g.text(8, 11, 3) !== '   ',
     `présentation en double : MARGAUX, partenaire sur la ligne suivante (${g.text(6, 11, 6).replace(/\0/g, " ")})`);

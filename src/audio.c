@@ -6,6 +6,7 @@
 #include "audio.h"
 #include "game.h"
 #include "app.h"
+#include <string.h>
 
 u8 noise_hold;          /* le canal de bruit sert à un bruitage : pas de pas */
 
@@ -26,6 +27,7 @@ extern const u8 *trk_ptr[4], *trk_start[4];
 extern u8 trk_timer[8], music_loop, mel_duty, harm_duty, p1_hold;
 extern const u8 * const song_trk[11][4];
 extern const u8 song_loop[11], song_duty[11][2];
+extern const u16 song_len[11][4];
 #define MUS_BUF 520
 #pragma bss-name(push, "WBSS")
 static u8 mus_buf[MUS_BUF];
@@ -62,10 +64,8 @@ void music_play(u8 id)
         if (!src) continue;
         trk_ptr[k] = trk_start[k] = mus_buf + o;
         trk_timer[k << 1] = 1;
-        do {
-            mus_buf[o] = src[0]; mus_buf[o + 1] = src[1];
-            o += 2; src += 2;
-        } while (src[-2] != 0xFF);
+        memcpy(mus_buf + o, src, song_len[id][k]);   /* copie rapide (bibliothèque, assembleur) */
+        o += song_len[id][k];
     }
     set_bank(prev);
     audio_lock = 0;

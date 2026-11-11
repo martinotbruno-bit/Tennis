@@ -205,28 +205,36 @@ out = ['/* Fichier généré par tools/gen_music.py — ne pas modifier. */',
        '/* Musiques (banque 10) : copiées en RAM de cartouche par music_play. */',
        '#include "audio.h"', '']
 tab = ['const u8 * const song_trk[11][4] = {', '  { 0, 0, 0, 0 },']
+lens = ['  { 0, 0, 0, 0 },']
 flags = ['0']
 duty = ['0, 0']
 total = 0
 biggest = 0
 for (i, name, mel, bass, harm, drum, loop, md, hd) in songs:
     ptrs = []
+    ln = []
     size = 0
     for kind, tr in (('mel', mel), ('bass', bass), ('harm', harm), ('drum', drum)):
         if tr is None:
             ptrs.append('0')
+            ln.append('0')
             continue
         txt, n = c_bytes('mus_%s_%s' % (name, kind), tr)
         out.append(txt)
         ptrs.append('mus_%s_%s' % (name, kind))
+        ln.append(str(n))
         size += n
     total += size
     biggest = max(biggest, size)
     tab.append('  { %s },' % ', '.join(ptrs))
+    lens.append('  { %s },' % ', '.join(ln))
     flags.append(str(loop))
     duty.append('0x%02X, 0x%02X' % (md, hd))
 tab.append('};')
 out += tab
+out.append('const u16 song_len[11][4] = {')
+out += lens
+out.append('};')
 out.append('const u8 song_loop[11] = { %s };' % ', '.join(flags))
 out.append('const u8 song_duty[11][2] = { %s };' % ', '.join('{ %s }' % d for d in duty))
 out.append('/* plus gros morceau : %d octets (tampon MUS_BUF de audio.c) ; total %d octets */' % (biggest, total))
