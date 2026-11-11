@@ -214,9 +214,15 @@ static void pulse1(u8 env, u8 sweep, u16 period)
     APU(0x4003) = (u8)(0x08 | (period >> 8));
 }
 
-static void noise(u8 env, u8 period)
+/* canal de bruit partagé : chaque son a une priorité ; tant qu'un son plus
+   important n'est pas fini (noise_hold), un son moins important est ignoré
+   (un rebond ne coupe plus l'ovation, une frappe ne coupe plus le « OOOH ») */
+static u8 noise_pri;
+static void noise(u8 env, u8 period, u8 pri, u8 hold)
 {
-    noise_hold = 10;
+    if (noise_hold && pri < noise_pri) return;
+    noise_pri = pri;
+    noise_hold = hold;
     APU(0x400C) = env;
     APU(0x400E) = period;
     APU(0x400F) = 0x08;
@@ -226,18 +232,26 @@ void sfx_hit(u8 power)
 {
     /* « pok » : note brève qui descend, plus grave si la frappe est forte */
     pulse1(0x81, 0x8A, (u16)(120 + power * 30));
-    noise(0x01, (u8)(0x04 + power));
+    noise(0x01, (u8)(0x04 + power), 2, 8);
+    /* corps du « pok » : note grave et brève au triangle (libre pendant le
+       match, sans musique), plus grave quand la frappe est forte */
+    if (!bass_ptr) {
+        u16 p = (u16)(260 + power * 6);
+        APU(0x4008) = 0x0A;             /* compteur linéaire : ~40 ms */
+        APU(0x400A) = (u8)p;
+        APU(0x400B) = (u8)(0x08 | (p >> 8));
+    }
 }
 /* rebond : son propre à chaque surface (période du bruit, durée de
    l'enveloppe) : terre sourde, gazon doux, dur sec, moquette mate, sable
    feutré, glace claquante */
 static const u8 bnc_per[6] = { 0x0E, 0x0D, 0x0A, 0x0C, 0x0F, 0x07 };
 static const u8 bnc_env[6] = { 0x02, 0x01, 0x00, 0x01, 0x03, 0x00 };
-void sfx_bounce(void)     { u8 s = cfg.surface < 6 ? cfg.surface : 2; noise(bnc_env[s], bnc_per[s]); }
-void sfx_net(void)        { noise(0x03, 0x0E); pulse1(0x83, 0x00, 900); }
+void sfx_bounce(void)     { u8 s = cfg.surface < 6 ? cfg.surface : 2; noise(bnc_env[s], bnc_per[s], 1, 8); }
+void sfx_net(void)        { noise(0x03, 0x0E, 3, 12); pulse1(0x83, 0x00, 900); }
 void sfx_fault(void)      { pulse1(0x84, 0x00, 1140); }
 void sfx_whistle(void)    { pulse1(0x45, 0xB1, 100); }
-void sfx_crowd(u8 s)      { noise((u8)(0x08 + (s & 7)), 0x02); noise_hold = 40; }
+void sfx_crowd(u8 s)      { noise((u8)(0x08 + (s & 7)), 0x02, 2, 40); }
 void sfx_menu_move(void)  { pulse1(0x81, 0x00, 240); }
 void sfx_menu_ok(void)    { pulse1(0x82, 0x89, 180); }
 void sfx_toss(void)       { pulse1(0x81, 0x8B, 400); }
@@ -261,15 +275,38 @@ void snd_set(u8 m)
     if (m) { audio_lock = 1; mel_ptr = bass_ptr = 0; APU(0x4004) = 0x30; APU(0x4008) = 0x80; audio_lock = 0; }
 }
 /* service canon : « boum » sourd et bref, puis un claquement qui descend */
-void sfx_canon(void)      { noise(0x05, 0x0F); pulse1(0x84, 0x93, 140); }
+void sfx_canon(void)      { noise(0x05, 0x0F, 4, 15); pulse1(0x84, 0x93, 140); }
 /* frappe parfaite : impact plus sec et plus aigu que la frappe normale */
-void sfx_perfect(void)    { pulse1(0x83, 0x8B, 70); noise(0x02, 0x03); }
+void sfx_perfect(void)    { pulse1(0x83, 0x8B, 70); noise(0x02, 0x03, 3, 10); }
 /* un seul applaudissement timide (générique) */
-void sfx_clap(void)       { noise(0x01, 0x05); }
+void sfx_clap(void)       { noise(0x01, 0x05, 2, 8); }
 /* public : « OOOH » (balle dehors de peu), soupir (double faute), silence */
-void sfx_ooh(void)        { noise(0x0B, 0x05); noise_hold = 40; pulse1(0x4C, 0xBA, 520); }
-void sfx_groan(void)      { noise(0x09, 0x09); noise_hold = 30; pulse1(0x4B, 0xB3, 420); }
+void sfx_ooh(void)        { noise(0x0B, 0x05, 4, 40); pulse1(0x4C, 0xBA, 520); }
+void sfx_groan(void)      { noise(0x09, 0x09, 4, 30); pulse1(0x4B, 0xB3, 420); }
 void sfx_hush(void)       { APU(0x400C) = 0x30; noise_hold = 0; }
+/* balle dehors : « bip » du juge électronique (aigu, 1/12 s) */
+void sfx_line(void)
+{
+    APU(0x4000) = 0x9A;                 /* 50 %, volume fixe 10 */
+    APU(0x4001) = 0x00;
+    APU(0x4002) = 0x5C;
+    APU(0x4003) = 0x00;                 /* durée : 10 demi-trames */
+}
+/* geste de raquette : souffle bref (la frappe passe devant si la balle est touchée) */
+void sfx_swing(void)      { noise(0x01, 0x02, 0, 4); }
+/* demi-tour brusque sur dur ou moquette : crissement des chaussures (carré 2,
+   libre pendant le match) */
+static u8 sq_last;
+void sfx_squeak(void)
+{
+    /* au plus un crissement toutes les 2,5 s : un détail, pas un bruit de fond */
+    if (mel_ptr || (cfg.surface != 2 && cfg.surface != 3) || (u8)(frame_cnt - sq_last) < 150) return;
+    sq_last = frame_cnt;
+    APU(0x4004) = 0x55;                 /* 25 %, volume fixe 5 */
+    APU(0x4005) = 0x8A;                 /* balayage rapide vers l'aigu */
+    APU(0x4006) = 0x60;
+    APU(0x4007) = 0x28;                 /* durée : 4 demi-trames */
+}
 /* feu d'artifice : sifflement de la fusée qui monte, puis « pop » */
 void sfx_fw_launch(void)  { pulse1(0x4A, 0xBB, 700); }
-void sfx_fw_pop(void)     { noise(0x04, 0x0C); pulse1(0x82, 0x00, 1600); }
+void sfx_fw_pop(void)     { noise(0x04, 0x0C, 3, 12); pulse1(0x82, 0x00, 1600); }

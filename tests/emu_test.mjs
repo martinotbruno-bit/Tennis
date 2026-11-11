@@ -947,6 +947,42 @@ console.log('Margaux jouable et fatigue');
   check(claps >= 2 && hush && ooh && groan, `réactions : ${claps} applaudissements sur balle de match, silence au lancer${hush ? '' : ' (absent)'}, « OOOH »${ooh ? '' : ' (absent)'}, soupir${groan ? '' : ' (absent)'}`);
 }
 
+{
+  // bruitages : « pok » de la frappe avec un corps au triangle, souffle du geste,
+  // bip du juge électronique sur une balle dehors, crissement sur dur, et
+  // priorités du canal de bruit (un rebond ne coupe plus l'ovation)
+  const e = boot(); startWith(e, { FMT: 3, SURF: 2 }); e.run(60);
+  const mm = e.nes.mmap, w = mm.write.bind(mm); const log = [];
+  mm.write = (a, v) => { if (a >= 0x4000 && a <= 0x400F) log.push([a, v]); return w(a, v); };
+  const has = (a, v) => log.some(([x, y]) => x === a && (v === undefined || y === v));
+  const s16 = (n, v, o = 0) => { e.poke(n, v & 255, o); e.poke(n, (v >> 8) & 255, o + 1); };
+  // frappe du joueur : geste (souffle) puis frappe (triangle)
+  e.poke('ms', 2); e.poke('b_live', 1); e.poke('b_vis', 1); e.poke('b_serve', 0); e.poke('bounces', 1);
+  e.poke('hitter', 1); e.poke('rally_hits', 3); e.poke('bgrav', 0);
+  s16('plx', 128 * 64, 0); s16('ply', 200 * 64, 0);
+  s16('bx', 138 * 64); s16('by', 155 * 64); s16('bz', 6 * 64); s16('bvx', 0); s16('bvy', 128); s16('bvz', 0);
+  log.length = 0; e.down('A'); e.run(8); e.up('A');
+  for (let i = 0; i < 40 && e.peek('hitter') !== 0; i++) e.run(1);
+  const whoosh = has(0x400E, 0x02);
+  const pok = has(0x400B) && has(0x4008, 0x0A);
+  // balle dehors pendant l'échange : bip
+  e.poke('ms', 2); e.run(1); log.length = 0;
+  s16('bx', 40 * 64); s16('by', 100 * 64); e.poke('end_reason', 2); e.poke('ump_arm', 1); e.poke('ms', 3); e.poke('ms_timer', 80); e.run(2);
+  const beep = has(0x4002, 0x5C);
+  // ovation (priorité 2) puis rebond (priorité 1) : le rebond ne la coupe pas
+  e.poke('ms', 2); e.run(1); log.length = 0;
+  e.poke('crowd_timer', 0); e.poke('ms', 3); e.run(1);
+  e.poke('noise_hold', 40); e.poke('noise_pri', 2); log.length = 0;
+  s16('bz', 1 * 64); s16('bvz', -64); e.poke('b_live', 0); e.run(3);
+  const kept = !has(0x400E, 0x0A);       // rebond sur dur : période $0A
+  // crissement : demi-tour d'un joueur en pleine course (sur dur)
+  e.poke('ms', 2); e.poke('b_live', 1); e.poke('hitter', 0); log.length = 0;
+  e.poke('sq_last', (e.peek('frame_cnt') + 56) & 255);   // dernier crissement : il y a plus de 2,5 s
+  e.down('RIGHT'); e.run(10); e.up('RIGHT'); e.down('LEFT'); e.run(10); e.up('LEFT');
+  const squeak = has(0x4005, 0x8A);
+  check(whoosh && pok && beep && kept && squeak, `bruitages : souffle${whoosh ? '' : ' (absent)'}, « pok » au triangle${pok ? '' : ' (absent)'}, bip dehors${beep ? '' : ' (absent)'}, ovation non coupée${kept ? '' : ' (coupée)'}, crissement${squeak ? '' : ' (absent)'}`);
+}
+
 console.log('Service canon');
 {
   // frappe A k trames après le lancer : seules 2 trames consécutives (le sommet) donnent un service canon
@@ -1017,7 +1053,7 @@ console.log('Frappe parfaite');
   check(!fresh.perf && !worn.perf && worn.vy > fresh.vy * 1.15, `fatigue : frappe plus rapide en fin de long échange (${worn.vy} contre ${fresh.vy})`);
   // HAUT / BAS relatifs au joueur : « vers l'adversaire » = coup long, « vers
   // soi » = coup court, que le joueur soit en bas ou en haut de l'écran
-  const shot = (top, dir) => {
+  const shot = (top, dir, btn = 'A') => {
     const e = boot(); startWith(e, { FMT: 3 });
     runUntil(e, () => e.peek('ms') === 0, 300);
     const s16 = (n, v, o = 0) => { e.poke(n, v & 255, o); e.poke(n, (v >> 8) & 255, o + 1); };
@@ -1026,7 +1062,7 @@ console.log('Frappe parfaite');
     e.poke('hitter', 1); e.poke('rally_hits', 3); e.poke('bgrav', 0);
     s16('plx', 128 * 64, 0); s16('ply', (top ? 40 : 200) * 64, 0);
     s16('bx', 138 * 64); s16('by', (top ? 90 : 155) * 64); s16('bz', 6 * 64); s16('bvx', 0); s16('bvy', top ? -128 : 128); s16('bvz', 0);
-    e.down('A'); e.run(top ? 17 : 12); e.down(dir);
+    e.down(btn); e.run(top ? 17 : 12); e.down(dir);
     for (let i = 0; i < 40 && e.peek('hitter') !== 0; i++) e.run(1);
     e.releaseAll();
     return e.peek('last_shot');
@@ -1034,6 +1070,9 @@ console.log('Frappe parfaite');
   const sb = [shot(0, 'UP'), shot(0, 'DOWN'), shot(1, 'UP'), shot(1, 'DOWN')];
   check(sb[0] === 4 && sb[1] === 5 && sb[2] === 5 && sb[3] === 4,
     `commandes relatives : en bas, HAUT à plat / BAS croisé court ; en haut, HAUT croisé court / BAS à plat (${sb.join(',')})`);
+  const bb = [shot(0, 'UP', 'B'), shot(0, 'DOWN', 'B'), shot(1, 'UP', 'B'), shot(1, 'DOWN', 'B')];
+  check(bb[0] === 2 && bb[1] === 3 && bb[2] === 3 && bb[3] === 2,
+    `commandes relatives avec B : en bas, HAUT lob / BAS amortie ; en haut, l'inverse (${bb.join(',')})`);
   const collee = trial(ks[1], 130), ext = trial(ks[1], 148);
   check(!collee.perf && !ext.perf && collee.hit && ext.hit, 'balle collée au corps ou en extension : frappe normale');
 }

@@ -643,7 +643,7 @@ static void human_update(u8 p, u8 pad, u8 pressed)
     }
     if (st == ST_CHARGE) {
         if (pad & pl_btn[p]) { if (pl_charge[p] < 32) ++pl_charge[p]; }
-        else { pl_state[p] = st = ST_SWING; pl_timer[p] = 14; }
+        else { pl_state[p] = st = ST_SWING; pl_timer[p] = 14; sfx_swing(); }
         sp = HUMAN_SPEED / 2;
     }
     if ((st == ST_CHARGE || (st == ST_SWING && pl_timer[p] > 4)) && !pl_hit[p] && can_hit(p)) {

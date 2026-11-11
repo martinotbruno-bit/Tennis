@@ -237,13 +237,19 @@ static u8 ola_row(u8 o, u8 up)
     return 1;
 }
 
-/* balle hors du court de peu (moins de 5 px) : le public retient son souffle */
-static u8 near_miss(void)
+/* distance (px) de la balle hors du court (0 : dedans) */
+static s16 out_by(void)
 {
     s16 x = PX(bx), y = PX(by), d = 0;
     s16 l = cfg.doubles ? DBL_L : SGL_L, r = cfg.doubles ? DBL_R : SGL_R;
     if (x < l) d = l - x; else if (x > r) d = x - r;
     if (y < TOP_BASE) d += TOP_BASE - y; else if (y > BOT_BASE) d += y - BOT_BASE;
+    return d;
+}
+/* balle hors du court de peu (moins de 5 px) : le public retient son souffle */
+static u8 near_miss(void)
+{
+    s16 d = out_by();
     return (u8)(d > 0 && d < 5);
 }
 
@@ -290,6 +296,7 @@ void crowd_tick(void)
     m = ms;
     if (m != cr_prev_ms) {
         if (m == MS_DEAD) {
+            if (end_reason == END_POINT && ump_arm && out_by()) sfx_line();   /* balle dehors : bip */
             if (end_reason == END_POINT && ump_arm && near_miss()) sfx_ooh();
             k = (u8)(st_dfaults[0] + st_dfaults[1]);
             if (k != cr_df) { cr_df = k; sfx_groan(); }
