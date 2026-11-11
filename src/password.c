@@ -1,6 +1,7 @@
 /* Royal Martinot — codes de reprise (C portable, testé sur PC par
  * tests/password_test.c). Les 52 bits de données et 2 bits de version (2 :
- * ancien format à 16 personnages, 3 : format actuel à 17 personnages)
+ * ancien format à 16 personnages, 3 : format actuel, 1 : format des lieux 5
+ * et 6, château et parc, où surface, lieu et niveau sont regroupés)
  * occupent les bits 0 à 53 ; une somme de contrôle de 11 bits suit (bits 54
  * à 64), puis les 65 bits sont écrits en 13 symboles de 5 bits, brouillés en
  * chaîne pour qu'une lettre modifiée en change plusieurs. */
@@ -51,11 +52,19 @@ static void pack(const PwData *d)
        la place vient du regroupement type x conditions (15 valeurs, 4 bits)
        et surface x lieu (30 valeurs, 5 bits) */
     put_bits((pu8)(d->type * 3 + d->cond), 4); put_bits(d->stage, 4); put_bits(d->seed, 8);
-    put_bits(d->chr, 5); put_bits((pu8)(d->surf * 5 + d->env), 5); put_bits(d->fmt, 2);
-    put_bits(d->lvl, 2);
+    put_bits(d->chr, 5);
+    if (d->env <= 4) {
+        put_bits((pu8)(d->surf * 5 + d->env), 5); put_bits(d->fmt, 2);
+        put_bits(d->lvl, 2);
+    } else {
+        /* version 1 (lieux 5 et 6 : château, parc) : surface, lieu et niveau
+           regroupés sur 7 bits ((surface x 7 + lieu) x 3 + niveau < 126) ;
+           les codes des 5 premiers lieux ne changent pas */
+        put_bits((pu8)((d->surf * 7 + d->env) * 3 + d->lvl), 7); put_bits(d->fmt, 2);
+    }
     put_bits(d->results, 8); put_bits(d->opts, 3); put_bits(d->trophies, 4);
     put_bits(d->doubles, 1); put_bits(d->partner, 5); put_bits(d->hum2, 1);
-    put_bits(3, 2);                     /* version */
+    put_bits(d->env <= 4 ? 3 : 1, 2);   /* version */
 }
 
 /* v / k et v % k pour de petites valeurs, sans division */
@@ -111,6 +120,20 @@ pu8 pw_decode(const char *in, PwData *d)
         d->cond = get_bits(2); d->env = get_bits(3); d->lvl = get_bits(2);
         d->results = get_bits(8); d->opts = get_bits(3); d->trophies = get_bits(4);
         d->doubles = get_bits(1); d->partner = get_bits(4); d->hum2 = get_bits(1);
+    } else if (n == 1) {
+        n = get_bits(4);
+        if (n >= 15) return 0;
+        d->type = divk(n, 3, &d->cond);
+        d->stage = get_bits(4); d->seed = get_bits(8);
+        d->chr = get_bits(5);
+        n = get_bits(7);
+        if (n >= 126) return 0;
+        n = divk(n, 3, &d->lvl);
+        d->surf = divk(n, 7, &d->env);
+        if (d->env <= 4) return 0;
+        d->fmt = get_bits(2);
+        d->results = get_bits(8); d->opts = get_bits(3); d->trophies = get_bits(4);
+        d->doubles = get_bits(1); d->partner = get_bits(5); d->hum2 = get_bits(1);
     } else if (n == 3) {
         n = get_bits(4);
         if (n >= 15) return 0;
@@ -126,7 +149,7 @@ pu8 pw_decode(const char *in, PwData *d)
     } else return 0;
     if (bitpos != 52) return 0;
     if (d->chr >= PW_NCHARS || d->partner >= PW_NCHARS) return 0;
-    if (d->env > 4) return 0;
+    if (d->env > 6) return 0;
     if (d->hum2 && !d->doubles) return 0;
     if (d->type > 4 || d->surf > 5 || d->cond > 2 || d->lvl > 2) return 0;
     if (d->doubles && d->partner == d->chr) return 0;

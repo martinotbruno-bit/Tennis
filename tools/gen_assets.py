@@ -219,6 +219,7 @@ cset(0, 31, 3, 31, 1); cset(9, 31, 12, 31, 1)                       # patins
 CHAIR_X, CHAIR_Y = 32, 112      # au bord du court, contre le poteau ; centrée sur le filet (bande : y 125-132)
 
 CLUB_ROWS = (6, 7, 12, 13, 20, 21, 26, 27)     # bancs de spectateurs du club (rangées)
+CASTLE_ROWS = (12, 13, 20, 21)                 # balcons du château (rangées)
 
 def draw_court(env=0):
     W, H = 256, 240
@@ -294,6 +295,40 @@ def draw_court(env=0):
                         for yy in range(8):
                             for xx in range(8):
                                 b[row*8+yy][x0+col*8+xx] = pat[yy][xx]
+        elif env == 5:
+            # CHÂTEAU : murs de pierre (une seule tuile de briques répétée),
+            # bannières royales, torches, deux balcons de spectateurs.
+            # Couleurs (palette 2) : 1 pierre, 2 joints, 3 bannières et flammes
+            for y in range(32, 240):
+                for x in range(x0, x0+32):
+                    ry = y % 8
+                    off = 0 if ry < 4 else 4
+                    b[y][x] = 2 if (ry % 4 == 3 or (x + off) % 8 == 7) else 1
+            bcol = x0 + 8 if side == 0 else x0 + 16          # colonne des bannières
+            for trow in (6, 16, 24):                          # bannières (8 x 16)
+                y0 = trow * 8
+                for yy in range(16):
+                    for xx in range(8):
+                        y, x = y0 + yy, bcol + xx
+                        if yy == 0:
+                            b[y][x] = 2                       # hampe
+                        elif yy < 11 and 1 <= xx <= 6:
+                            b[y][x] = 3 if not (yy in (4, 5) and 3 <= xx <= 4) else 1   # emblème
+                        elif yy >= 11 and abs(xx * 2 - 7) <= (15 - yy) * 2 - 2:
+                            b[y][x] = 3                       # pointe
+            tcol = x0 + 16 if side == 0 else x0 + 8           # torches
+            for trow in (10, 18, 28):
+                y0 = trow * 8
+                for (xx, yy, c) in ((3, 2, 3), (4, 1, 3), (3, 3, 3), (4, 3, 3), (4, 2, 3), (3, 4, 2), (4, 4, 2),
+                                    (3, 5, 2), (4, 5, 2), (2, 6, 2), (5, 6, 2)):
+                    b[y0 + yy][tcol + xx] = c
+            # balcons : spectateurs (palette 3, comme au club)
+            for row in CASTLE_ROWS:
+                for col in range(4):
+                    pat = CROWDB[(row * 3 + col + side) % 6]
+                    for yy in range(8):
+                        for xx in range(8):
+                            b[row*8+yy][x0+col*8+xx] = pat[yy][xx]
         elif env == 3:
             # CLUB NUDISTE : pas de gradins, spectateurs (au naturel) sur des
             # serviettes dans l'herbe. Couleurs : 1 herbe, 2 peau, 3 serviette
@@ -482,11 +517,13 @@ def court_attr(bx, by, env=0):
         return 3
     if env == 2 and bx in (0, 15):
         return 3
+    if env == 5 and bx in (0, 1, 14, 15) and by * 2 in CASTLE_ROWS:
+        return 3
     if bx < 2 or bx >= 14:
         return 2                      # tribunes
     return 0
 
-court_nts = [bitmap_to_nametable(draw_court(e), lambda bx, by, e=e: court_attr(bx, by, e)) for e in range(5)]
+court_nts = [bitmap_to_nametable(draw_court(e), lambda bx, by, e=e: court_attr(bx, by, e)) for e in range(6)]
 # panneau du club nudiste, ligne 3 du bandeau (police ASCII = n° de tuile)
 # court Margaux : petit panneau (32 x 16) dans le bandeau du haut, juste à
 # droite du score de gauche (colonnes 5 à 8, rangées 2 et 3). Palette des
@@ -1348,9 +1385,9 @@ with open(os.path.join(ROOT, 'src', 'assets_nude.c'), 'w') as f:
 # données du court et du public : banque du moteur de jeu
 src = ['/* Fichier généré par tools/gen_assets.py — ne pas modifier. */',
        '#include "assets.h"', '']
-for e in range(5):
+for e in range(6):
     src.append(c_array('court_nt_rle%d' % e, court_rles[e]))
-src.append('const unsigned char * const court_nt_rle[5] = { court_nt_rle0, court_nt_rle1, court_nt_rle2, court_nt_rle3, court_nt_rle4 };\n')
+src.append('/* 6 : le parc reprend le dessin du club (autres couleurs) */\nconst unsigned char * const court_nt_rle[7] = { court_nt_rle0, court_nt_rle1, court_nt_rle2, court_nt_rle3, court_nt_rle4, court_nt_rle5, court_nt_rle1 };\n')
 src.append(c_array('crowd_idx4', bytes(crowd_idx4)))
 src.append(c_array('crowd_norm4', b''.join(encode_tile(t) for t in GIRLY)))
 src.append(c_array('crowd_cheer4', b''.join(encode_tile(t) for t in GIRLY_SPARKLE)))
@@ -1396,7 +1433,7 @@ try:
                 for x in range(8):
                     img.putpixel((tx*8+x, ty*8+y), NESPAL[t[y][x]])
     img.save(os.path.join(ROOT, 'assets', 'preview_court.png'))
-    for e in (1, 2, 3, 4):
+    for e in (1, 2, 3, 4, 5):
         im2 = Image.new('RGB', (256, 240))
         for ty in range(30):
             for tx in range(32):

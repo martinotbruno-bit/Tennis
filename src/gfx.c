@@ -42,7 +42,7 @@ const u8 char_style[NCHARS] = { 0, 1, 2, 3, 4, 5, 6, 7, 2, 3, 5, 4, 1, 7, 6, 0, 
 
 const char * const surf_name[NSURF] = {
     "TERRE BATTUE", "GAZON       ", "DUR         ", "MOQUETTE    ", "PLAGE       ", "GLACE       " };
-const char * const env_name[NENV] = { "STADE", "CLUB ", "SALLE", "CLUB NUDISTE", "COURT MARGAUX" };
+const char * const env_name[NENV] = { "STADE", "CLUB ", "SALLE", "CLUB NUDISTE", "COURT MARGAUX", "CHATEAU", "PARC " };
 /* fond universel, surface, lignes, filet */
 static const u8 surf_pal[NSURF + 1][4] = {
     /* couleurs choisies pour se distinguer des 5 teintes de peau, des tenues
@@ -68,6 +68,8 @@ static const u8 env_pal[NENV][3] = {
     { 0x00, 0x2A, 0x0F },     /* salle : murs, panneaux, projecteurs */
     { 0x1A, 0x27, 0x07 },     /* club nudiste : herbe, peau, cheveux/chapeaux/serviettes */
     { 0x35, 0x24, 0x30 },     /* court Margaux : rose pâle, coeurs, fleurs et étoiles */
+    { 0x10, 0x00, 0x16 },     /* château : pierre, joints, bannières et flammes */
+    { 0x19, 0x27, 0x07 },     /* parc (décor du club) : herbe, feuilles d'automne, troncs */
 };
 
 static u8 darken(u8 c)

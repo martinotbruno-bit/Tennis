@@ -13,7 +13,7 @@ extern const char * const style_name[NSTYLES];
 
 #define NSURF 6         /* 4 surfaces réelles + 2 fantaisie */
 extern const char * const surf_name[NSURF];
-#define NENV 5          /* stade, club, salle, club nudiste (à débloquer), court Margaux */
+#define NENV 7          /* stade, club, salle, club nudiste (à débloquer), court Margaux, château, parc */
 #define ENV_NUDE 3
 #define ENV_MARGAUX 4
 extern const char * const env_name[NENV];

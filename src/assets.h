@@ -14,7 +14,7 @@ extern const unsigned int people_bytes;         /* taille de la réserve (octets
 extern const unsigned char marg_prof_l, marg_prof_r;
 extern const unsigned char trophy_tile, confetti_tile, ball_base;
 /* banque du moteur de jeu (BANK0) */
-extern const unsigned char * const court_nt_rle[5];
+extern const unsigned char * const court_nt_rle[7];
 extern const unsigned char crowd_idx4[3];
 extern const unsigned char crowd_norm4[48];
 extern const unsigned char crowd_cheer4[48];

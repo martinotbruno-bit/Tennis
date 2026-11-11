@@ -14,7 +14,7 @@ typedef struct {
     pu8 surf;      /* 0..7 */
     pu8 fmt;       /* 0..3 */
     pu8 cond;      /* 0..3 */
-    pu8 env;       /* 0..4 */
+    pu8 env;       /* 0..6 */
     pu8 lvl;       /* 0..3 */
     pu8 results;   /* 8 bits de résultats du joueur */
     pu8 opts;      /* 0..7 options (personnalisé) */
