@@ -14,7 +14,7 @@
 .importzp _meta_x, _meta_y, _meta_tile, _meta_attr, _meta_t1, _meta_t2, _oam_i
 .import _person_map, _person_row, _prof_map, _char_female
 .import _marg_map, _marg_prof_l, _marg_prof_r
-.import _sfx_step, _sfx_squeak
+.import _sfx_step
 .import _ms_timer, _confetti_tile
 .export _win_fx
 .import incsp8
@@ -217,21 +217,6 @@ _spr_person:
     lda #0
 @setdir:
     ldx pc
-    sta tmp3                ; nouveau sens
-    cmp #0                  ; (sta ne positionne pas les indicateurs)
-    beq @sq_no
-    lda _run_dir,x          ; demi-tour (gauche <-> droite) : crissement
-    beq @sq_no
-    cmp tmp3
-    beq @sq_no
-    lda tmp3
-    pha
-    jsr _sfx_squeak
-    pla
-    sta tmp3
-    ldx pc
-@sq_no:
-    lda tmp3
     sta _run_dir,x
 @nomove:
     ldx pc

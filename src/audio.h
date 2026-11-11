@@ -21,7 +21,6 @@ void sfx_groan(void);               /* public : double faute */
 void sfx_hush(void);                /* public : silence au lancer */
 void sfx_line(void);                /* bip du juge électronique (balle dehors) */
 void sfx_swing(void);               /* souffle du geste de raquette */
-void sfx_squeak(void);              /* crissement des chaussures (dur, moquette) */
 void sfx_fw_launch(void);           /* feu d'artifice : la fusée monte */
 void sfx_fw_pop(void);              /* feu d'artifice : « pop » */
 void sfx_winner(void);             /* carillon bref d'un coup gagnant */

@@ -294,19 +294,6 @@ void sfx_line(void)
 }
 /* geste de raquette : souffle bref (la frappe passe devant si la balle est touchée) */
 void sfx_swing(void)      { noise(0x01, 0x02, 0, 4); }
-/* demi-tour brusque sur dur ou moquette : crissement des chaussures (carré 2,
-   libre pendant le match) */
-static u8 sq_last;
-void sfx_squeak(void)
-{
-    /* au plus un crissement toutes les 2,5 s : un détail, pas un bruit de fond */
-    if (mel_ptr || (cfg.surface != 2 && cfg.surface != 3 && cfg.surface != 5) || (u8)(frame_cnt - sq_last) < 150) return;
-    sq_last = frame_cnt;
-    APU(0x4004) = 0x56;                 /* 25 %, volume fixe 6 : discret */
-    APU(0x4005) = 0x8B;                 /* balayage vers l'aigu : « iiik » */
-    APU(0x4006) = 0x90;
-    APU(0x4007) = 0x48;                 /* durée : 8 demi-trames (67 ms) */
-}
 /* feu d'artifice : sifflement de la fusée qui monte, puis « pop » */
 void sfx_fw_launch(void)  { pulse1(0x4A, 0xBB, 700); }
 void sfx_fw_pop(void)     { noise(0x04, 0x0C, 3, 12); pulse1(0x82, 0x00, 1600); }

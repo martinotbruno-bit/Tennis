@@ -984,12 +984,11 @@ console.log('Margaux jouable et fatigue');
   e.poke('noise_hold', 40); e.poke('noise_pri', 2); log.length = 0;
   s16('bz', 1 * 64); s16('bvz', -64); e.poke('b_live', 0); e.run(3);
   const kept = !has(0x400E, 0x0A);       // rebond sur dur : période $0A
-  // crissement : demi-tour d'un joueur en pleine course (sur dur)
+  // plus de crissement (supprimé à la demande) : un demi-tour en pleine course sur dur reste muet sur le carré 2
   e.poke('ms', 2); e.poke('b_live', 1); e.poke('hitter', 0); log.length = 0;
-  e.poke('sq_last', (e.peek('frame_cnt') + 56) & 255);   // dernier crissement : il y a plus de 2,5 s
   e.down('RIGHT'); e.run(10); e.up('RIGHT'); e.down('LEFT'); e.run(10); e.up('LEFT');
-  const squeak = has(0x4005, 0x8B);
-  check(whoosh && pok && beep && kept && squeak, `bruitages : souffle${whoosh ? '' : ' (absent)'}, « pok » au triangle${pok ? '' : ' (absent)'}, bip dehors${beep ? '' : ' (absent)'}, ovation non coupée${kept ? '' : ' (coupée)'}, crissement${squeak ? '' : ' (absent)'}`);
+  const quiet = !has(0x4007) && !has(0x4005);
+  check(whoosh && pok && beep && kept && quiet, `bruitages : souffle${whoosh ? '' : ' (absent)'}, « pok » au triangle${pok ? '' : ' (absent)'}, bip dehors${beep ? '' : ' (absent)'}, ovation non coupée${kept ? '' : ' (coupée)'}, pas de crissement${quiet ? '' : ' (présent)'}`);
 }
 
 {
