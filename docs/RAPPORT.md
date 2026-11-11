@@ -1,10 +1,16 @@
-# Royal Martinot — Rapport de réalisation (version 2.37)
+# Royal Martinot — Rapport de réalisation (version 2.38)
 
 Comme l'exige le CDC (§ 17.5), ce rapport distingue ce qui est **réalisé**, **testé**, **validé sur matériel réel**, **validé uniquement en émulation**, **dépendant d'une extension**, et les **limitations restantes**.
 
 > **Validation matérielle : aucune.** Aucun test n'a été fait sur console réelle (NES, Famicom, PAL, cartouche MMC1). Toutes les validations ont eu lieu en émulation (jsnes) et par des tests unitaires sur PC. Les critères « vérifié sur console physique » (CDC § 2.1, 15.4, 16.A) **ne sont pas remplis**. Ce point ne peut pas être traité dans l'environnement de développement utilisé.
 
 ## 1. Évolutions
+
+### Version 2.38
+
+| Demande | Réalisation |
+|---|---|
+| Le jeu tourne-t-il sur console originale ? (correction proposée : sons muets) | Sur la vraie NES, l'unité de balayage d'un canal carré coupe toute note dont la période dépasse $3FF quand elle est réglée « montant, décalage 0 », même désactivée. Le bourdon grave (« ARE YOU SURE? », confirmation de l'effacement) et le « pop » des feux d'artifice auraient été muets. Le balayage inactif est maintenant réglé à $08 (descendant) pour tous les sons et la musique. jsnes ne reproduit pas ce comportement : un test le simule sur toutes les notes jouées (générique, menus, match, feux d'artifice) |
 
 ### Version 2.37
 
@@ -315,7 +321,7 @@ Pour loger ce contenu, la cartouche passe de NROM (32 Ko) à **MMC1** : 128 Ko d
 |---|---|
 | Règles (`rules_test`) | 42/42 |
 | Codes (`password_test`) | 200 000/200 000 aller-retour (format v3), ancien code v2 accepté, Margaux codée, Margaux au club nudiste refusée ; 99,98 % des codes altérés d'un signe refusés |
-| Émulateur (`emu_test`) | 245/245 vérifications (environ 22 min) |
+| Émulateur (`emu_test`) | 246/246 vérifications (environ 22 min) |
 | Profil CPU, simple, 6 000 trames | 0 trame d'échange en dépassement |
 | Relecture des textes (`check_texts.py`) | 0 problème |
 | Contraste (`contrast.py 25`) | 0 paire sous ΔE 25 (personnages, courts, balle, tenues) |

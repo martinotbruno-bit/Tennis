@@ -406,7 +406,7 @@ function playComp(type, opts, wins) {
   // big player : chaque tuile agrandie = tuile du personnage dont chaque pixel est doublé
   const chr = e.nes.ppu.vramMem, f0 = e.nes.cpu.mem;
   let okz = true;
-  { const c = e.peek('c_pl', 0), fem = e.peek('char_female', c), base = e.peek('person_map', e.peek('person_row', (fem << 1) | 1) + 6 * 3);
+  { const c = e.peek('c_pl', 0), fem = e.peek('char_female', c), base = e.peek(fem ? 'person_map_f' : 'person_map_m', e.peek('person_row', 1) + 6 * 3);
     for (let y = 0; y < 8; y++) { const s0 = chr[0x1000 + base * 16 + (y >> 1)], d0 = chr[0x60 * 16 + y];
       let exp = 0; for (let b = 0; b < 4; b++) if (s0 & (0x80 >> b)) exp |= 0xC0 >> (b * 2);
       if (d0 !== exp) okz = false; } }
