@@ -220,7 +220,7 @@ void net_tick(void)
 #pragma bss-name(push, "WBSS")
 static u8 st_map[26 * 12];           /* tribunes : rangées 4 à 29, colonnes 0-5 et 26-31 */
 static u8 cr_cur[12], rowbuf[6];
-static u8 ola_on, ola_o, cr_prev_t, cr_prev_ms, cr_df, cr_mp, cr_clap, cr_react;
+static u8 ola_on, ola_o, cr_prev_t, cr_prev_ms, cr_df, cr_mp, cr_clap, cr_react, cr_all;
 #pragma bss-name(pop)
 
 #define PPU_DATA (*(volatile u8 *)0x2007)
@@ -248,7 +248,7 @@ static void crowd_load(void)
             vram_adr((u16)ps_idx[c] << 4);
             for (r = 0; r < 16; ++r) vram_put((cfg.env == ENV_STADIUM ? small_normA : small_normB)[c * 16 + r]);
         }
-    ola_on = 0; cr_prev_t = 0; cr_prev_ms = 0xFF; cr_mp = 0; cr_clap = 0; cr_react = 0;
+    ola_on = 0; cr_prev_t = 0; cr_prev_ms = 0xFF; cr_mp = 0; cr_clap = 0; cr_react = 0; cr_all = 0;
     cr_df = (u8)(st_dfaults[0] + st_dfaults[1]);
 }
 
@@ -256,16 +256,15 @@ static void crowd_load(void)
    perspective, les tribunes s'avancent jusqu'à 6 colonnes */
 static u8 ola_row(u8 o, u8 up)
 {
-    u8 s, c, k, t, n = (u8)(persp ? 6 : 4);
+    u8 s, c, t, n = (u8)(persp ? 6 : 4), k = ps_idx[0];
     const u8 *m = st_map + o * 12;
     for (s = 0; s < 2; ++s) {
         for (c = 0; c < n; ++c) {
             t = m[s ? 6 + (6 - n) + c : c];
-            if (up) for (k = 0; k < 6; ++k) {
-                if (t == crowd_idx[k]) { t = cheer_idx[k]; break; }
-                if (t == crowdb_idx[k]) { t = cheerb_idx[k]; break; }
-                if (t == ps_idx[k] && t) { t = ps_idx[k + 6]; break; }
-            }
+            /* bras levés = tuile + 4 : public du stade (5-8), du club et de
+               la salle (13-16), petits spectateurs (ps_idx[0] à + 3) ;
+               vérifié par tools/gen_assets.py */
+            if (up && ((u8)(t - 5) < 4 || (u8)(t - 13) < 4 || (k && (u8)(t - k) < 4))) t += 4;
             rowbuf[c] = t;
         }
         if (!vbuf_raw(NTADR(s ? 32 - n : 0, 4 + o), rowbuf, n)) return 0;
@@ -319,6 +318,7 @@ void crowd_tick(void)
             /* jeu A au stade, jeu B au club et en salle */
             u8 a = (u8)(cfg.env == ENV_STADIUM), n = (u8)(ps_idx[0] ? 12 : 6);
             m = (u8)(by < NET_Y * FP);
+            if (cr_all != m) {
             for (k = 0; k < n; ++k)
                 if (cr_cur[k] != m) {
                     u8 ok;
@@ -331,6 +331,8 @@ void crowd_tick(void)
                     if (ok) cr_cur[k] = m;
                     break;
                 }
+            if (k == n) cr_all = m;         /* tous tournés : plus rien à vérifier */
+            }
         }
     }
     /* réactions */

@@ -659,7 +659,7 @@ def big_letter_tiles(ch):
     return tiles
 
 logo_tiles = {}
-for ch in set(LOGO.replace(' ', '')):
+for ch in sorted(set(LOGO.replace(' ', ''))):   # ordre fixe (compilation reproductible)
     logo_tiles[ch] = [bg_alloc(t) for t in big_letter_tiles(ch)]
 
 # Balle géante décorative 4x4 tuiles pour l'écran titre
@@ -1369,6 +1369,9 @@ def persp_net(w):
         for x in range(px, px + 3):
             w[ny - 11][x] = 2
 
+# ola_row (extras.c) : bras levés = tuile + 4, et tuiles 5-8 (stade), 13-16 (club, salle)
+assert sorted(set(crowd_idx)) == [5, 6, 7, 8] and all(c + 4 == h for c, h in zip(crowd_idx, cheer_idx))
+assert sorted(set(crowdb_idx)) == [13, 14, 15, 16] and all(c + 4 == h for c, h in zip(crowdb_idx, cheerb_idx))
 KEEP = set(range(0x60)) | set(crowd_idx) | set(cheer_idx) | set(crowdb_idx) | set(cheerb_idx) | \
        set(crowd_idx3) | set(crowd_idx4) | set(SIGN_IDX) | set(SIGN2_IDX) | set(NET_IDX)
 persp_rles, persp_tiles, persp_ps = [], [], []
@@ -1530,14 +1533,21 @@ for e in range(6):
     new = {}
     fam = PERSP_FAM.get(e)
     ps = []
-    if fam:                                               # petits spectateurs : places fixes
-        for v in ('down', 'cheer'):
-            for t in SMALL[fam][v]:
-                k = tkey(t)
-                assert cand, 'perspective : plus de place (lieu %d)' % e
-                if k not in new:
-                    new[k] = (cand.pop(0), [list(r) for r in t])
-                ps.append(new[k][0])
+    if fam:
+        # petits spectateurs : 4 dessins distincts à 4 places consécutives, et
+        # leurs « bras levés » aux 4 suivantes (ola_row : t + 4, comme pour
+        # crowd_idx / cheer_idx)
+        downs = list(dict.fromkeys(tkey(t) for t in SMALL[fam]['down']))
+        assert len(downs) == 4, 'petits spectateurs : 4 dessins distincts attendus'
+        base = next(i for i in cand if all(i + j in cand for j in range(8)))
+        for j in range(8):
+            cand.remove(base + j)
+        for i, t in enumerate(SMALL[fam]['down']):
+            r = downs.index(tkey(t))
+            new[tkey(t)] = (base + r, [list(x) for x in t])
+            new[tkey(SMALL[fam]['cheer'][i])] = (base + 4 + r, [list(x) for x in SMALL[fam]['cheer'][i]])
+        ps = [base + downs.index(tkey(t)) for t in SMALL[fam]['down']]
+        ps += [k + 4 for k in ps]
     for (ty, tx), t in tiles.items():
         k = tkey(t)
         if k in known and known[k] in keep:
