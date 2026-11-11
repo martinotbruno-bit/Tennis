@@ -1,10 +1,16 @@
-# Royal Martinot — Rapport de réalisation (version 2.40)
+# Royal Martinot — Rapport de réalisation (version 2.41)
 
 Comme l'exige le CDC (§ 17.5), ce rapport distingue ce qui est **réalisé**, **testé**, **validé sur matériel réel**, **validé uniquement en émulation**, **dépendant d'une extension**, et les **limitations restantes**.
 
 > **Validation matérielle : aucune.** Aucun test n'a été fait sur console réelle (NES, Famicom, PAL, cartouche MMC1). Toutes les validations ont eu lieu en émulation (jsnes) et par des tests unitaires sur PC. Les critères « vérifié sur console physique » (CDC § 2.1, 15.4, 16.A) **ne sont pas remplis**. Ce point ne peut pas être traité dans l'environnement de développement utilisé.
 
 ## 1. Évolutions
+
+### Version 2.41
+
+| Demande | Réalisation |
+|---|---|
+| La peau de l'arbitre et des spectateurs semble un peu verte sur certains lieux | Analyse : l'arbitre avait la peau en jaune pâle ($38) et les spectateurs du club, de la salle, du château et du parc en jaune ($28). Dans plusieurs palettes d'émulateur, ces deux couleurs ont plus de vert que de rouge (par exemple $28 = rouge 160, vert 170, bleu 0). Les deux passent au beige $37 (rouge 228, vert 196, bleu 144), teinte de peau déjà portée par plusieurs joueurs. Les spectateurs du stade ($27) et du club nudiste ($27) n'étaient pas concernés. La couronne et la baguette de la princesse, de la même couleur que la peau, deviennent beige doré |
 
 ### Version 2.40
 
@@ -341,7 +347,7 @@ Pour loger ce contenu, la cartouche passe de NROM (32 Ko) à **MMC1** : 128 Ko d
 | Relecture des textes (`check_texts.py`) | 0 problème |
 | Contraste (`contrast.py 25`) | 0 paire sous ΔE 25 (personnages, courts, balle, tenues) |
 | Profil CPU, double, 6 000 trames | 27 trames d'échange en dépassement (0,45 %), sans défaut d'image |
-| Compilation | Reproductible : SHA-256 `f431639260453ef64f58616d007707b10969bc36afe67607715a0294d1b9674b` sur deux compilations propres |
+| Compilation | Reproductible : SHA-256 `2ac2ac7d34c20c04ec9cc398d24f7c830a0a29d9de41db7cfbfc4d7e9dfa6c6e` sur deux compilations propres |
 
 ## 3. Conformité par section du CDC
 

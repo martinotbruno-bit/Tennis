@@ -90,11 +90,16 @@ void pal_set_court(u8 s, u8 cond, u8 env)
     pal_buf[0] = p[0]; pal_buf[1] = p[1]; pal_buf[2] = p[2]; pal_buf[3] = p[3];
     pal_buf[4] = p[0]; pal_buf[5] = 0x0F; pal_buf[6] = 0x00; pal_buf[7] = 0x30;  /* score */
     pal_buf[8] = p[0]; pal_buf[9] = e[0]; pal_buf[10] = e[1]; pal_buf[11] = e[2]; /* bords */
-    pal_buf[12] = p[0]; pal_buf[13] = 0x0F; pal_buf[14] = 0x28; pal_buf[15] = 0x30;
+    /* palette 3 du décor : chaise d'arbitre et spectateurs du club, de la
+       salle, du château et du parc ; peau beige $37 (le jaune $28 tirait sur
+       le vert, surtout avec certaines palettes d'émulateur) */
+    pal_buf[12] = p[0]; pal_buf[13] = 0x0F; pal_buf[14] = 0x37; pal_buf[15] = 0x30;
     /* sprites : 0/1 joueurs (définis à part), 2 balle, 3 effets */
     pal_buf[16 + 8] = p[0];
     /* balle jaune pâle, sauf sur le sable jaune de la plage : blanche */
-    pal_buf[16 + 9] = 0x38; pal_buf[16 + 10] = 0x0F; pal_buf[16 + 11] = 0x30;
+    /* sprites, palette 2 : arbitre (peau beige $37 : le jaune pâle $38 tirait
+       sur le vert), ombres, poussière */
+    pal_buf[16 + 9] = 0x37; pal_buf[16 + 10] = 0x0F; pal_buf[16 + 11] = 0x30;
     /* effets : 1 couleur de la balle (selon le court), 2 bleu (pluie,
        sueur), 3 blanc (couture de la balle, étoiles) */
     pal_buf[16 + 12] = p[0]; pal_buf[16 + 13] = ball_col[env == ENV_MARGAUX ? NSURF : s]; pal_buf[16 + 14] = 0x21; pal_buf[16 + 15] = 0x30;

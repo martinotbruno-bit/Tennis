@@ -783,8 +783,9 @@ const msgText = (e) => { let t = ''; for (let i = 0; i < 14; i++) t += String.fr
     if (!tiles) tiles = t.join(); else if (tiles !== t.join()) okall = false;
     if (((at(e, 0x23D9) >> 4) & 3) !== 3 || (at(e, 0x23E1) & 3) !== 3) okall = false;
     if (cond === 0 && env === 0) { const p = e.addr('pal_buf'); if (e.nes.cpu.mem[p + 13] !== 0x0F || e.nes.cpu.mem[p + 15] !== 0x30) okall = false; }
+    { const p = e.addr('pal_buf'); if (e.nes.cpu.mem[p + 14] !== 0x37 || e.nes.cpu.mem[p + 16 + 9] !== 0x37) okall = false; }   // peau beige (arbitre, spectateurs)
   }
-  check(okall, 'chaise d\'arbitre identique dans les 4 lieux, de jour, de nuit et sous la pluie (palette 3 noir/blanc)');
+  check(okall, 'chaise d\'arbitre identique dans les 4 lieux, de jour, de nuit et sous la pluie (palette 3 noir/blanc) ; peau beige de l\'arbitre et des spectateurs');
   const g = boot(); startWith(g, { ENV: 0, SURF: 0 }); g.run(100);
   const tt = g.peek('trophy_tile');
   g.poke('ump_arm', 1); g.poke('end_reason', 1); g.poke('ms', 3); g.poke('ms_timer', 60); g.run(2);
