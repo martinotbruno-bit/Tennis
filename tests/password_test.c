@@ -13,10 +13,10 @@ int main(void)
     long ok = 0, total = 0, rejected = 0, mutations = 0, i, k, j;
     srand(1234);
     for (i = 0; i < 200000; ++i) {
-        d.type = rand() % 5; d.stage = rand() % 16; d.seed = rand() & 255; d.chr = rand() % 17;
+        d.type = rand() % 5; d.stage = rand() % 16; d.seed = rand() & 255; d.chr = rand() % 21;
         d.surf = rand() % 6; d.fmt = rand() % 4; d.cond = rand() % 3; d.env = rand() % 5;
         d.lvl = rand() % 3; d.results = rand() & 255; d.opts = rand() % 8; d.trophies = rand() % 16;
-        d.doubles = rand() & 1; d.partner = (d.chr + 1 + rand() % 16) % 17; d.hum2 = d.doubles ? (rand() & 1) : 0;
+        d.doubles = rand() & 1; d.partner = (d.chr + 1 + rand() % 20) % 21; d.hum2 = d.doubles ? (rand() & 1) : 0;
         if (d.env == 3 && (d.chr == 16 || d.partner == 16)) d.env = 4;   /* jamais Margaux au club nudiste */
         pw_encode(code, &d);
         ++total;

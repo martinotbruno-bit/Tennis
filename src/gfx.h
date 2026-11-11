@@ -2,7 +2,7 @@
 #define GFX_H
 #include "runtime.h"
 
-#define NCHARS 17     /* 16 + Margaux (index 16) */
+#define NCHARS 21     /* 16 + Margaux (index 16) + MAX, LOLA, PAPI, TITOU (17 à 20) */
 extern const char * const char_name[NCHARS];
 extern const u8 char_female[NCHARS];
 extern const u8 char_style[NCHARS];

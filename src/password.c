@@ -47,7 +47,7 @@ static void pack(const PwData *d)
     pu8 i;
     for (i = 0; i < 9; ++i) buf[i] = 0;
     bitpos = 0;
-    /* version 3 (17 personnages) : personnage et partenaire sur 5 bits ;
+    /* version 3 (jusqu'à 32 personnages, 21 aujourd'hui) : personnage et partenaire sur 5 bits ;
        la place vient du regroupement type x conditions (15 valeurs, 4 bits)
        et surface x lieu (30 valeurs, 5 bits) */
     put_bits((pu8)(d->type * 3 + d->cond), 4); put_bits(d->stage, 4); put_bits(d->seed, 8);

@@ -5,7 +5,7 @@
 typedef unsigned char pu8;
 #define PW_LEN 13
 #define PW_ALPHA "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
-#define PW_NCHARS 17   /* personnages codables (0..16) */
+#define PW_NCHARS 21   /* personnages codables (0..20, 5 bits) */
 typedef struct {
     pu8 type;      /* 0..7  type de compétition */
     pu8 stage;     /* 0..15 étape */

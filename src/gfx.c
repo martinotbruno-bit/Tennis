@@ -6,8 +6,9 @@
 
 const char * const char_name[NCHARS] = {
     "ALEX", "MAYA", "LEON", "NINA", "OMAR", "ZOE ", "HUGO", "EMMA",
-    "IVAN", "LINA", "TOM ", "JADE", "LUCA", "SARA", "NOAH", "INES", "MARGAUX" };
-const u8 char_female[NCHARS] = { 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 1 };
+    "IVAN", "LINA", "TOM ", "JADE", "LUCA", "SARA", "NOAH", "INES", "MARGAUX",
+    "MAX ", "LOLA", "PAPI", "TITOU" };
+const u8 char_female[NCHARS] = { 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 1, 0, 1, 0, 0 };
 /* peau, tenue, sombre (cheveux/short/raquette) */
 static const u8 char_pal[NCHARS][3] = {
     /* tenues choisies pour ressortir sur toutes les surfaces et se distinguer
@@ -29,11 +30,15 @@ static const u8 char_pal[NCHARS][3] = {
     { 0x07, 0x2C, 0x0F },   /* NOAH : cyan */
     { 0x27, 0x07, 0x0F },   /* INES : chocolat (idem) */
     { 0x27, 0x35, 0x28 },   /* MARGAUX : rose clair, cheveux blonds (blond clair $38 sur la plage) */
+    { 0x07, 0x27, 0x0F },   /* MAX : orange */
+    { 0x37, 0x00, 0x07 },   /* LOLA : anthracite, cheveux châtains */
+    { 0x36, 0x30, 0x10 },   /* PAPI : blanc, cheveux gris */
+    { 0x27, 0x0C, 0x07 },   /* TITOU : canard foncé, cheveux châtains */
 };
 const char * const style_name[NSTYLES] = {
     "EQUILIBRE", "FOND DE COURT", "PUISSANCE", "FILET",
     "DEFENSIF", "OFFENSIF", "TACTIQUE", "PLACEMENT", "FANTAISIE" };
-const u8 char_style[NCHARS] = { 0, 1, 2, 3, 4, 5, 6, 7, 2, 3, 5, 4, 1, 7, 6, 0, 8 };
+const u8 char_style[NCHARS] = { 0, 1, 2, 3, 4, 5, 6, 7, 2, 3, 5, 4, 1, 7, 6, 0, 8, 2, 5, 4, 8 };
 
 const char * const surf_name[NSURF] = {
     "TERRE BATTUE", "GAZON       ", "DUR         ", "MOQUETTE    ", "PLAGE       ", "GLACE       " };
