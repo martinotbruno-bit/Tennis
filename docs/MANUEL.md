@@ -95,8 +95,8 @@ Avant chaque match, un **écran de présentation** rappelle l'épreuve, les joue
 La frappe part toute seule quand la balle entre dans votre zone de frappe pendant que vous armez, ou juste après avoir relâché le bouton.
 
 Le type de coup dépend aussi de la situation :
-- balle prise avant le rebond : **volée** ;
-- balle haute avant le rebond : **smash** ;
+- balle prise avant le rebond : **volée**. Vos choix de coup restent valables (lob, amortie, coupé, à plat, croisé court, lifté), en plus court et moins appuyé ; une volée à plat bien armée part plus vite ; l'amortie volée meurt tout près du filet ;
+- balle avant le rebond, au-dessus de la tête (plus de 24 px de haut) : **smash**. A : smash à plat ; A + HAUT : vers la ligne de fond ; A + BAS : dans l'angle court. B : smash coupé, plus lent ; B + BAS : smash amorti, qui surprend l'adversaire resté au fond. Plus vous armez (bouton tenu), plus le smash est fort, mais moins il est précis ;
 - balle très haute (lob un peu court), si vous êtes dans les deux tiers avant de votre moitié de court : **smash sauté**, le joueur saute et frappe plus fort et plus à plat (le CPU Expert sait aussi le faire) ;
 - balle loin du corps : frappe en extension, moins précise ;
 - **frappe parfaite** (lifté, à plat, coupé ou croisé court, après le rebond) : la balle passe **à côté du corps**, ni collée ni en extension, et vous avez **relâché le bouton juste avant** qu'elle n'arrive (fenêtre de 3 images, 1/20 de seconde). La balle part environ 40 % plus vite, presque sans écart, avec un « tchak » sec et un petit éclat blanc près de la raquette. Si ce coup est gagnant, le bandeau annonce « COUP PARFAIT ! ». Si vous gardez le bouton enfoncé jusqu'à l'impact, la frappe reste normale. Ordre de grandeur pour un adulte : 15 à 20 % de vos coups au début, 30 à 40 % avec l'habitude. Le palmarès donne votre pourcentage.

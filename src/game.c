@@ -357,51 +357,15 @@ static void do_hit(u8 p, u8 pad, u8 btn, u8 power, u8 spread)
     s8 dir = side ? 1 : -1;          /* vers l'adversaire en y */
     s16 depth, tx, ty, dist, dx;
     u8 speed, grav, T;
-    u8 smash = (u8)(bounces == 0 && bz > 20 * FP);
-    u8 volley = (u8)(bounces == 0);
     s16 l = cfg.doubles ? DBL_L : SGL_L, r = cfg.doubles ? DBL_R : SGL_R;
 
     dx = PX(bx) - PX(plx[p]);
-    if (dx > 14 || dx < -14) spread += 8;          /* frappe en extension */
 
-    bspin = SPIN_FLAT;
-    hit_jump = (u8)(bz > 40 * FP);
-    if (hit_jump) pl_jump[p] = 14;          /* le joueur saute, frappe en l'air et retombe */
-    if (smash) {
-        depth = 62; speed = 80; grav = 10; spread += 4; last_shot = SH_SMASH;
-        if (hit_jump) { depth = 56; speed = 96; grav = 12; spread += 4; }
-        sfx_crowd(5);
-    } else if (btn == PAD_B && (pad & PAD_UP)) {        /* lob */
-        depth = 74; speed = 24; grav = 6; bspin = SPIN_TOP; last_shot = SH_LOB;
-    } else if (btn == PAD_B && (pad & PAD_DOWN)) {      /* amortie */
-        /* amortie : trajectoire basse et vive juste au-dessus du filet, puis la
-           balle « meurt » au rebond (effet SPIN_DROP) */
-        /* plus elle est jouée loin du filet, plus elle est imprécise et risque
-           de rester trop courte (filet) : jamais un point garanti */
-        T = (u8)(iabs(PX(by) - NET_Y) >> 3);
-        depth = (s16)(22 - T); speed = 40; grav = 5; bspin = SPIN_DROP; spread += T; last_shot = SH_DROP;
-    } else if (btn == PAD_B) {                          /* coupé */
-        depth = 66; speed = 36; grav = 4; bspin = SPIN_SLICE; last_shot = SH_SLICE;
-    } else if (pad & PAD_UP) {                          /* à plat : tendue, rapide, risquée */
-        depth = 78; speed = (u8)(54 + power); grav = 4; spread += 7; last_shot = SH_FLAT;
-    } else if (pad & PAD_DOWN) {                        /* croisé court : en angle, carré de service */
-        depth = 30; speed = (u8)(34 + (power >> 1)); grav = 9; bspin = SPIN_TOP; spread += 3; last_shot = SH_SHORT;
-    } else {                                            /* lifté */
-        depth = 70; speed = (u8)(40 + power); grav = 7; bspin = SPIN_TOP; last_shot = SH_DRIVE;
-    }
-    if (volley && !smash) {
-        depth = (s16)(depth - 10);
-        if (speed > 42) speed = 42;
-        if (last_shot == SH_DRIVE || last_shot == SH_FLAT) last_shot = SH_VOLLEY;
-    }
-    /* frappe parfaite (lifté, à plat, coupé, croisé court ; banque fixe) :
-       +37,5 % de vitesse, presque sans écart */
-    hit_perf = perfect_hit(p, dx);
-    if (hit_perf) { speed = (u8)(speed + (speed >> 2) + (speed >> 3)); spread = 1; power = 0; }
-    /* fatigue (long échange) : faute de jambes, on frappe plus fort pour
-       conclure, mais moins précis : jusqu'à +23 % de vitesse et + 5 d'écart
-       (tired 0..10) ; la frappe parfaite reste précise */
-    else if (tired) { speed = (u8)(speed + (u8)(((u16)speed * (u8)(tired * 3)) >> 7)); spread = (u8)(spread + (tired >> 1)); }
+    /* choix du coup (smash, lob, amortie, coupé, à plat, croisé court,
+       lifté, volée), frappe parfaite et fatigue : banque 3 (shot_select) */
+    sh_p = p; sh_pad = pad; sh_btn = btn; sh_power = power; sh_spread = spread; sh_dx = dx;
+    bank_call(BANK_EXTRAS, shot_select);
+    depth = sh_depth; speed = sh_speed; grav = sh_grav; spread = sh_spread; power = sh_power;
     last_aim = (u8)(pad & (PAD_LEFT | PAD_RIGHT));
 
     /* direction : croix gauche/droite, sinon croisé naturel */
@@ -410,7 +374,7 @@ static void do_hit(u8 p, u8 pad, u8 btn, u8 power, u8 spread)
     else tx = CENTER_X + ((CENTER_X - PX(plx[p])) >> 1);
     if (depth < 30 && !(pad & (PAD_LEFT | PAD_RIGHT))) tx = PX(plx[p]);
     /* croisé court : près de la ligne de côté (croisé, sauf direction) */
-    if (last_shot == SH_SHORT)
+    if (last_shot == SH_SHORT || sh_short)
         tx = ((pad & PAD_LEFT) || (!(pad & PAD_RIGHT) && PX(plx[p]) > CENTER_X)) ? l + 6 : r - 6;
     spread = (u8)(spread + (power >> 2));
     if (spread > 100) spread = 100;

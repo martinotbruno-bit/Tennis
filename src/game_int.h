@@ -85,5 +85,10 @@ extern u8 end_reason;           /* fin de l'échange : END_* */
 #define END_LET   3
 
 extern u8 pause_cur;
-void slip_tick(void);             /* banque 3 (src/slip.s) */
+void slip_tick(void);
+/* choix du coup (banque 3, extras.c : shot_select), appelé par do_hit */
+extern u8 sh_p, sh_pad, sh_btn, sh_power, sh_spread, sh_speed, sh_grav, sh_short;
+extern s16 sh_depth, sh_dx;
+void shot_select(void);
+             /* banque 3 (src/slip.s) */
 #endif

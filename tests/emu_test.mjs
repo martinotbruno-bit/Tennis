@@ -674,6 +674,38 @@ console.log('Vitesse du jeu, coups gagnants, smash sauté, musiques');
   check(f.peek('hitter') === 1, 'le smash sauté est réservé aux humains et au CPU expert');
 }
 {
+  // smash dirigé, charge, volée haute : balle immobile au-dessus d'un joueur
+  // humain près du filet ; la charge se fait balle hors de portée
+  const hit = (z, btn, dirs = [], charge = 0, bnc = 0) => {
+    const e = boot(); startWith(e, { FMT: 3 });
+    runUntil(e, () => e.peek('ms') === 0, 200);
+    const set16 = (n, v, o = 0) => { e.poke(n, v & 255, o); e.poke(n, (v >> 8) & 255, o + 1); };
+    e.poke('ms', 2); e.poke('b_live', 1); e.poke('b_vis', 1); e.poke('b_serve', 0); e.poke('bounces', bnc);
+    e.poke('hitter', 1); e.poke('rally_hits', 3); e.poke('bgrav', 0);
+    set16('plx', 128 * 64, 0); set16('ply', 168 * 64, 0);
+    set16('bx', (charge ? 180 : 132) * 64); set16('by', 165 * 64); set16('bz', z * 64); set16('bvx', 0); set16('bvy', 0); set16('bvz', 0);
+    e.down(btn); for (const d of dirs) e.down(d);
+    if (charge) { e.run(charge); set16('plx', 128 * 64, 0); set16('ply', 168 * 64, 0); set16('bx', 132 * 64); set16('by', 165 * 64); }
+    e.run(3); e.releaseAll(); e.run(1);
+    return { shot: e.peek('last_shot'), spin: e.peek('bspin'), vy: -e.peekS16('bvy'), land: e.peekS16('land_y'), hitter: e.peek('hitter') };
+  };
+  const plain = hit(30, 'A'), deep = hit(30, 'A', ['UP']), short = hit(30, 'A', ['DOWN']);
+  check(plain.shot === 7 && plain.hitter === 0 && deep.land < plain.land - 6 && short.land > plain.land + 10,
+    `smash dirigé : HAUT vers la ligne de fond (y ${deep.land} contre ${plain.land}), BAS dans l'angle court (y ${short.land})`);
+  const sl = hit(30, 'B'), dr = hit(30, 'B', ['DOWN']);
+  check(sl.shot === 7 && sl.spin === 2 && dr.shot === 7 && dr.spin === 3 && dr.land > plain.land + 20,
+    `smash coupé (B) et smash amorti (B + BAS, y ${dr.land})`);
+  const armed = hit(30, 'A', [], 30);
+  check(armed.shot === 7 && armed.vy > plain.vy, `smash armé plus rapide (vitesse ${armed.vy} contre ${plain.vy})`);
+  const high = hit(22, 'A');
+  check(high.shot !== 7, 'balle à 22 px (hauteur d\'épaule) avant le rebond : volée haute, pas un smash');
+  const vf = hit(12, 'A', ['UP']), vfa = hit(12, 'A', ['UP'], 30), vd = hit(12, 'B', ['DOWN']);
+  check(vf.shot === 6 && vfa.vy > vf.vy && vd.shot === 3 && vd.land > 110,
+    `volée à plat appuyée plus vive (${vfa.vy} contre ${vf.vy}), volée amortie près du filet (y ${vd.land})`);
+  const after = hit(30, 'A', [], 0, 1);
+  check(after.shot !== 7, 'balle haute après le rebond : coup normal, pas de smash');
+}
+{
   // musiques hors match : valse Margaux au menu, thème de la finale avant la finale
   const e = boot();
   check(e.peek('music_cur') === 1, 'écran titre : polka');

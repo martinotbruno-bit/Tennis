@@ -490,8 +490,10 @@ choose:
 @noreach:
     lda _bz+1
     bmi @low
-    cmp #10                 ; bz >= 40 px : smash armé
-    bcc @nosmash
+    cmp #6                  ; bz >= 24 px avant le rebond : smash armé
+    bcc @nosmash            ; (geste du service)
+    ldy _bounces
+    bne @low
     lda #P_SERVE
     rts
 @nosmash:
