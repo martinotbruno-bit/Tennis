@@ -952,6 +952,22 @@ console.log('Frappe parfaite');
   // nettement plus rapide qu'une frappe normale relâchée une trame plus tôt
   const nrm = res.find(([k]) => k === ks[2] + 1)[1];
   check(p.vy > nrm.vy * 1.3, `frappe parfaite plus puissante (${p.vy} contre ${nrm.vy}, +${Math.round((p.vy / nrm.vy - 1) * 100)} %)`);
+  // fatigue (échange de plus de 20 frappes) : frappe normale plus rapide
+  const tiredHit = (rh) => {
+    const e = boot(); startWith(e, { FMT: 3 });
+    runUntil(e, () => e.peek('ms') === 0, 300);
+    const s16 = (n, v, o = 0) => { e.poke(n, v & 255, o); e.poke(n, (v >> 8) & 255, o + 1); };
+    e.poke('ms', 2); e.poke('b_live', 1); e.poke('b_vis', 1); e.poke('b_serve', 0); e.poke('bounces', 1);
+    e.poke('hitter', 1); e.poke('rally_hits', rh); e.poke('bgrav', 0);
+    s16('plx', 128 * 64, 0); s16('ply', 200 * 64, 0);
+    s16('bx', 138 * 64); s16('by', 155 * 64); s16('bz', 6 * 64); s16('bvx', 0); s16('bvy', 128); s16('bvz', 0);
+    e.down('A'); e.run(14);
+    for (let i = 0; i < 40 && e.peek('hitter') !== 0; i++) e.run(1);
+    e.up('A');
+    return { vy: Math.abs(e.peekS16('bvy')), perf: e.peek('hit_perf') };
+  };
+  const fresh = tiredHit(3), worn = tiredHit(25);
+  check(!fresh.perf && !worn.perf && worn.vy > fresh.vy * 1.15, `fatigue : frappe plus rapide en fin de long échange (${worn.vy} contre ${fresh.vy})`);
   const collee = trial(ks[1], 130), ext = trial(ks[1], 148);
   check(!collee.perf && !ext.perf && collee.hit && ext.hit, 'balle collée au corps ou en extension : frappe normale');
 }

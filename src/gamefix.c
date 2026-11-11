@@ -325,3 +325,12 @@ void fw_draw(u8 t, u8 dy)
     spr1(x, (u8)(y - d), 3, 2);
     spr1(x, (u8)(y + d), 3, 2);
 }
+
+/* Fête de victoire : quand un humain gagne (ou en démonstration), comme pour
+   la musique de victoire. Hauteur du bond de joie : t·(16−t)/8, en table.
+   (Déplacées depuis la banque du moteur, qui était pleine.) */
+const u8 hop_h[16] = { 0, 1, 3, 5, 6, 7, 7, 7, 8, 7, 7, 7, 6, 5, 3, 1 };
+u8 win_party(void)
+{
+    return (u8)(ms == MS_OVER && !(cfg.ctrl[sc_winner] == CTRL_CPU && cfg.ctrl[sc_winner ^ 1] != CTRL_CPU));
+}

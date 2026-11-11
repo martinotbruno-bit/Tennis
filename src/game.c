@@ -389,6 +389,10 @@ static void do_hit(u8 p, u8 pad, u8 btn, u8 power, u8 spread)
        +37,5 % de vitesse, presque sans écart */
     hit_perf = perfect_hit(p, dx);
     if (hit_perf) { speed = (u8)(speed + (speed >> 2) + (speed >> 3)); spread = 1; power = 0; }
+    /* fatigue (long échange) : faute de jambes, on frappe plus fort pour
+       conclure, mais moins précis : jusqu'à +23 % de vitesse et + 5 d'écart
+       (tired 0..10) ; la frappe parfaite reste précise */
+    else if (tired) { speed = (u8)(speed + (u8)(((u16)speed * (u8)(tired * 3)) >> 7)); spread = (u8)(spread + (tired >> 1)); }
     last_aim = (u8)(pad & (PAD_LEFT | PAD_RIGHT));
 
     /* direction : croix gauche/droite, sinon croisé naturel */
@@ -1084,13 +1088,7 @@ u8 match_tick(void)
 
 /* fête de victoire : quand un humain gagne (ou en démonstration), comme
    pour la musique de victoire */
-/* hauteur du bond de joie : t·(16−t)/8, en table (pas de multiplication) */
-static const u8 hop_h[16] = { 0, 1, 3, 5, 6, 7, 7, 7, 8, 7, 7, 7, 6, 5, 3, 1 };
-
-u8 win_party(void)
-{
-    return (u8)(ms == MS_OVER && !(cfg.ctrl[sc_winner] == CTRL_CPU && cfg.ctrl[sc_winner ^ 1] != CTRL_CPU));
-}
+/* win_party et la table des bonds de joie (hop_h) : banque fixe (gamefix.c) */
 
 static u8 pose_of(u8 p)
 {
