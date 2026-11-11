@@ -1371,7 +1371,135 @@ def persp_net(w):
 
 KEEP = set(range(0x60)) | set(crowd_idx) | set(cheer_idx) | set(crowdb_idx) | set(cheerb_idx) | \
        set(crowd_idx3) | set(crowd_idx4) | set(SIGN_IDX) | set(SIGN2_IDX) | set(NET_IDX)
-persp_rles, persp_tiles = [], []
+persp_rles, persp_tiles, persp_ps = [], [], []
+
+# Tribunes en perspective : la rambarde suit l'inclinaison des lignes de côté
+# (point X = 31 ou 224 projeté, échelle constante par rangée de tuiles, pas de
+# 2 px) et les tribunes s'avancent jusqu'à elle. Les colonnes ajoutées
+# reprennent le décor du lieu ; une colonne « bord » (fond du décor, rambarde,
+# puis abords) ferme la tribune. Dans la moitié du fond (rangées 4 à 15), les
+# spectateurs sont plus petits (environ 85 %).
+def small_spectator(seed, view, b=False):
+    r = random.Random(seed)
+    bg, skin, eye, hair = (0, 2, 1, 1) if b else (2, 1, 2, 3)
+    t = [[bg] * 8 for _ in range(8)]
+    ox = 2 + r.choice((-1, 0, 0, 1))
+    shirt = r.choice((3, 3, 1))
+    if view == 'up':
+        head = ((hair,) * 3, (hair,) * 3, (skin,) * 3)
+    else:
+        head = ((hair,) * 3, (skin, eye, skin), (bg, skin, bg))
+    for k in range(3):
+        for xx in range(3):
+            t[3 + k][ox + xx] = head[k][xx]
+    for yy in range(6, 8):
+        for xx in range(ox - 1, ox + 4):
+            if 0 <= xx < 8:
+                t[yy][xx] = shirt
+    if view == 'cheer':
+        for yy in range(2, 6):
+            if ox - 1 >= 0: t[yy][ox - 1] = skin
+            if ox + 3 < 8: t[yy][ox + 3] = skin
+    return t
+SMALL = {fam: {v: [small_spectator(i, v, fam == 'B') for i in range(6)] for v in ('down', 'up', 'cheer')}
+         for fam in ('A', 'B')}
+SMALL_ROWS = range(4, 16)            # moitié du fond : petits spectateurs
+PERSP_FAM = {0: 'A', 1: 'B', 2: 'B', 5: 'B'}   # lieux avec du public animé
+
+def persp_row_scale(ty):
+    return 1 / (1 + PERSP_A * persp_d(ty * 8 + 4))
+def persp_rail(ty, side):
+    sc = persp_row_scale(ty)
+    x = 128 + ((31 if side == 0 else 224) - 128) * sc
+    return 2 * round(x / 2) + (1 if side == 0 else 0)   # gauche : impair (31, 33...) ; droite : pair
+
+def tile_at(bmp, ty, tx):
+    return [list(bmp[ty * 8 + y][tx * 8:tx * 8 + 8]) for y in range(8)]
+
+def persp_sides(e, bmp, w):
+    """Écrit dans w (image perspective) les tribunes des deux côtés.
+    Renvoie {(ty, tx): palette} pour les blocs d'attributs à corriger."""
+    fam = PERSP_FAM.get(e)
+    rng = random.Random(100 + e)
+    for side in (0, 1):
+        for ty in range(4, 30):
+            xr = persp_rail(ty, side)
+            if side == 0 and CHAIR_Y // 8 <= ty < CHAIR_Y // 8 + 4:
+                xr = 31                                   # chaise d'arbitre devant la tribune
+            ce = xr // 8                                  # colonne du bord
+            nins = (ce - 3) if side == 0 else (28 - ce)  # colonnes ajoutées
+            outer = [tile_at(bmp, ty, (o if side == 0 else 31 - o)) for o in range(4)]
+            crowd_row = (e == 0) or (e == 2) or (e == 1 and ty in CLUB_ROWS) or (e == 5 and ty in CASTLE_ROWS)
+            # fond du décor (colonne du bord et colonnes ajoutées sans public)
+            def filler(x, y):
+                if e == 0: return 2
+                if e in (1, 2, 5) and crowd_row: return 0
+                if e == 1: return 1 if (((x % 8) * 7 + (y % 8) * 3) % 11) else 2
+                if e == 5:
+                    ry = y % 8; off = 0 if ry < 4 else 4
+                    return 2 if (ry % 4 == 3 or (x + off) % 8 == 7) else 1
+                return 1                                  # salle (mur), club nudiste (herbe), Margaux
+            def ext(k):
+                col = 3 + k                               # colonne « virtuelle » du décor à plat
+                if e == 0:
+                    return [r[:] for r in CROWD[rng.randrange(6)]]
+                if e == 2:                                # salle : gradins prolongés (côté extérieur)
+                    return [r[:] for r in CROWDB[(ty * 5 + col * 2 + side) % 6]]
+                if e in (1, 5) and crowd_row:
+                    return [r[:] for r in CROWDB[(ty * 3 + col + side) % 6]]
+                if e == 4:
+                    kk = (ty + col * 3 + side * 3) % 6
+                    if kk % 2 == 0:
+                        return [r[:] for r in GIRLY[kk // 2]]
+                return [[filler(x, y) for x in range(8)] for y in range(8)]
+            ia = 2 if e == 2 else 3                       # salle : ajout entre gradins et panneaux
+            seq = outer[:ia] + [ext(k) for k in range(nins)] + outer[ia:3]
+            edge = [[0] * 8 for _ in range(8)]
+            off = xr - ce * 8
+            for y in range(8):
+                for x in range(8):
+                    X = ce * 8 + x
+                    inside = x < off if side == 0 else x > off
+                    if x == off:
+                        v = 3 if e != 3 else (3 if (ty * 8 + y) % 4 < 2 else 1)
+                    elif inside:
+                        v = filler(X, ty * 8 + y)
+                    else:
+                        v = 0
+                    edge[y][x] = v
+            seq.append(edge)
+            if fam and ty in SMALL_ROWS:                  # petits spectateurs au fond
+                big = CROWD if fam == 'A' else CROWDB
+                keys = [tkey(t) for t in big]
+                for i, t in enumerate(seq):
+                    if tkey(t) in keys:
+                        seq[i] = [r[:] for r in SMALL[fam]['down'][keys.index(tkey(t))]]
+            for o, t in enumerate(seq):
+                tx = o if side == 0 else 31 - o
+                for y in range(8):
+                    w[ty * 8 + y][tx * 8:tx * 8 + 8] = t[y]
+    # blocs d'attributs des colonnes 4-5 et 26-27 : palette de la tribune là
+    # où elle s'avance (jamais de surface de jeu dans ces blocs)
+    fix = {}
+    for by in range(2, 15):
+        for side, bxo, bxi in ((0, 1, 2), (1, 14, 13)):
+            if side == 0 and bxi == CHAIR_X // 16 and CHAIR_Y // 16 <= by < CHAIR_Y // 16 + 2:
+                continue
+            reach = False
+            for ty in (by * 2, by * 2 + 1):
+                if ty < 4: continue
+                xr = persp_rail(ty, side)
+                if (side == 0 and xr >= 32) or (side == 1 and xr <= 223):
+                    reach = True
+            if reach:
+                # aucun pixel de la surface de jeu dans ce bloc
+                for y in range(by * 16, by * 16 + 16):
+                    sc = 1 / (1 + PERSP_A * persp_d(y))
+                    xe = 128 + ((DBL_L - 6 if side == 0 else DBL_R + 6) - 128) * sc
+                    assert (xe > bxi * 16 + 15) if side == 0 else (xe < bxi * 16), ('tribune et court dans un même bloc', e, by)
+                fix[(bxi, by)] = court_attr(bxo, by, e)
+    return fix
+
 for e in range(6):
     bmp = draw_court(e)
     w = [row[:] for row in bmp]
@@ -1381,28 +1509,48 @@ for e in range(6):
             X, Y = int(X), int(min(239, max(32, Y)))
             w[ys][xs] = bmp[Y][X] if 32 <= X < 224 else 0     # au-delà : abords (couleur de fond)
     persp_net(w)
+    fix = persp_sides(e, bmp, w)
     for y in range(32):                                   # chaise d'arbitre : à sa place
         for x in range(16):
             if CHAIR[y][x]:
                 w[CHAIR_Y + y][CHAIR_X + x] = CHAIR[y][x]
     nt = bytearray(court_nts[e])
-    keep = KEEP | set(nt[:960])
-    cand = [k for k in range(256) if k not in keep]
-    known = {tkey(bg_tiles[k]): k for k in keep if bg_tiles[k] is not None}
-    new = {}
+    for (bx, by), pal in fix.items():
+        set_attr(nt, bx * 2, by * 2, pal)
+    # tuiles du décor final : connues (déjà en table), ou nouvelles. Les tuiles
+    # du court à plat absentes du décor final sont libres pendant le match.
+    tiles = {}
     for ty in range(4, 30):
-        for tx in range(4, 28):
-            t = [w[ty * 8 + y][tx * 8:tx * 8 + 8] for y in range(8)]
-            k = tkey(t)
-            if k in known:
-                nt[ty * 32 + tx] = known[k]
-            else:
+        for tx in range(32):
+            tiles[(ty, tx)] = tile_at(w, ty, tx)
+    known = {tkey(bg_tiles[k]): k for k in range(256) if bg_tiles[k] is not None}
+    final_known = {known[tkey(t)] for t in tiles.values() if tkey(t) in known}
+    keep = KEEP | set(nt[:128]) | final_known
+    cand = [k for k in range(256) if k not in keep]
+    new = {}
+    fam = PERSP_FAM.get(e)
+    ps = []
+    if fam:                                               # petits spectateurs : places fixes
+        for v in ('down', 'cheer'):
+            for t in SMALL[fam][v]:
+                k = tkey(t)
+                assert cand, 'perspective : plus de place (lieu %d)' % e
                 if k not in new:
-                    assert cand, 'perspective : plus de place pour les tuiles (lieu %d : %d tuiles nouvelles)' % (e, len(new))
                     new[k] = (cand.pop(0), [list(r) for r in t])
-                nt[ty * 32 + tx] = new[k][0]
+                ps.append(new[k][0])
+    for (ty, tx), t in tiles.items():
+        k = tkey(t)
+        if k in known and known[k] in keep:
+            nt[ty * 32 + tx] = known[k]
+        else:
+            if k not in new:
+                assert cand, 'perspective : plus de place pour les tuiles (lieu %d : %d tuiles nouvelles)' % (e, len(new))
+                new[k] = (cand.pop(0), [list(r) for r in t])
+            nt[ty * 32 + tx] = new[k][0]
+    print('perspective, lieu %d : %d tuiles nouvelles, %d places restantes' % (e, len(new), len(cand)))
     persp_rles.append(bytes(nt))   # (RLE à l'écriture)
     persp_tiles.append(sorted(new.values()))
+    persp_ps.append(ps if ps else [0] * 12)
 proj_tab = bytearray(512)
 for Y in range(256):
     d = (216 - Y) / 168
@@ -1527,6 +1675,10 @@ src.append(c_array('crowdb_up', b''.join(encode_tile(t) for t in CROWDB_UP)))
 src.append(c_array('crowd_up', b''.join(encode_tile(t) for t in CROWD_UP)))
 src.append(c_array('crowd_norm', b''.join(encode_tile(t) for t in CROWD)))
 src.append(c_array('crowd_cheer', b''.join(encode_tile(t) for t in CHEER)))
+# petits spectateurs (vue en perspective) : regard vers le bas / vers le haut
+for fam in ('A', 'B'):
+    src.append(c_array('small_norm%s' % fam, b''.join(encode_tile(t) for t in SMALL[fam]['down'])))
+    src.append(c_array('small_up%s' % fam, b''.join(encode_tile(t) for t in SMALL[fam]['up'])))
 with open(os.path.join(ROOT, 'src', 'assets_court.c'), 'w') as f:
     f.write('\n'.join(src))
 
@@ -1540,6 +1692,7 @@ for e in range(6):
     src.append(c_array('persp_chr%d' % e, b''.join(encode_tile(t) for _, t in persp_tiles[e])))
 for e in range(6):
     src.append(c_array('persp_slot%d' % e, bytes([k for k, _ in persp_tiles[e]])))
+    src.append(c_array('persp_ps%d' % e, bytes(persp_ps[e])))   # petits spectateurs : 6 places, puis 6 « bras levés »
 src.append(c_array('proj_tab', bytes(proj_tab) + bytes(mul_tab)))
 with open(os.path.join(ROOT, 'src', 'assets_persp.c'), 'w') as f:
     f.write('\n'.join(src) + '\n')
@@ -1547,11 +1700,12 @@ src = ['/* Fichier généré par tools/gen_assets.py — ne pas modifier. */',
        '/* Vue en perspective : places des tuiles et pointeurs vers la banque 11 (banque 3). */',
        '#include "assets.h"', '']
 for e in range(6):
-    src.append('extern const unsigned char persp_rle%d[], persp_chr%d[], persp_slot%d[];' % (e, e, e))
+    src.append('extern const unsigned char persp_rle%d[], persp_chr%d[], persp_slot%d[], persp_ps%d[];' % (e, e, e, e))
 src.append('/* 6 : le parc reprend le court du club */')
 src.append('const unsigned char * const persp_rle[7] = { %s, persp_rle1 };' % ', '.join('persp_rle%d' % e for e in range(6)))
 src.append('const unsigned char * const persp_chr[7] = { %s, persp_chr1 };' % ', '.join('persp_chr%d' % e for e in range(6)))
 src.append('const unsigned char * const persp_slot[7] = { %s, persp_slot1 };' % ', '.join('persp_slot%d' % e for e in range(6)))
+src.append('const unsigned char * const persp_ps[7] = { %s, persp_ps1 };' % ', '.join('persp_ps%d' % e for e in range(6)))
 src.append('const unsigned char persp_ntile[7] = { %s, %d };' % (', '.join(str(len(t)) for t in persp_tiles), len(persp_tiles[1])))
 with open(os.path.join(ROOT, 'src', 'assets_persp3.c'), 'w') as f:
     f.write('\n'.join(src) + '\n')

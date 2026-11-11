@@ -11,6 +11,8 @@ Comme l'exige le CDC (§ 17.5), ce rapport distingue ce qui est **réalisé**, *
 | Demande | Réalisation |
 |---|---|
 | Garder le jeu actuel et ajouter au menu une option « perspective » pour jouer exactement au même jeu, aussi complet, en perspective (15 %) — étape 1 | Nouvelle ligne **VUE : À PLAT / PERSPECTIVE** dans le menu, dans tous les modes (match, compétition, entraînement), mémorisée avec les autres réglages. En perspective, le court se resserre de 15 % vers le fond : les 7 lieux ont un court redessiné (lignes, couloirs, filet, poteaux et chaise d'arbitre), les tribunes et le décor restent les mêmes. Les règles, la physique, l'IA et les commandes ne changent pas : seul l'affichage est projeté. Joueurs, balle et son ombre, ombres des joueurs, poussière, éclaboussures, repère d'atterrissage, goutte de sueur, traînée du service canon, balle du dribble, éclat de la frappe parfaite et ralentis suivent la projection. Les joueurs gardent pour l'instant leur taille (étape suivante : 5 à 6 tailles selon la distance). Coût mesuré : en simple, comme à plat ; en double (4 CPU), 508 trames d'échange en dépassement contre 477 à plat sur la même mesure. Hors match, les tuiles d'origine sont rétablies |
+| Le public fait bizarre en perspective : solution 2 (tribunes en perspective) | Les tribunes des 7 lieux suivent maintenant la perspective : leur bord (la rambarde) reste parallèle aux lignes de côté et elles s'avancent vers le court au fond, au lieu de laisser une bande vide qui s'élargissait. Dans la moitié du fond, les spectateurs sont plus petits (environ 85 %). Le public continue de suivre la balle du regard et de faire la ola, y compris dans les colonnes ajoutées et avec les petits spectateurs. Chaque lieu garde son décor (gradins, bancs et haies du club et du parc, gradins et panneaux de la salle, balcons du château, cœurs du court Margaux, pelouse du club nudiste). Pour faire la place, les tuiles du court à plat, inutiles pendant un match en perspective, sont réutilisées puis rétablies ensuite |
+| (défaut trouvé par les tests) | Depuis la version 2.40, le « OOOH » du public sur une balle dehors de peu et son soupir après une double faute étaient étouffés : le public se tait pendant la voix de l'arbitre. Ils viennent maintenant juste après l'annonce |
 
 ### Version 2.41
 
@@ -348,7 +350,7 @@ Pour loger ce contenu, la cartouche passe de NROM (32 Ko) à **MMC1** : 128 Ko d
 |---|---|
 | Règles (`rules_test`) | 42/42 |
 | Codes (`password_test`) | 200 000/200 000 aller-retour (format v3), ancien code v2 accepté, Margaux codée, Margaux au club nudiste refusée ; 99,98 % des codes altérés d'un signe refusés |
-| Émulateur (`emu_test`) | 256/256 vérifications (environ 22 min) |
+| Émulateur (`emu_test`) | 257/257 vérifications (environ 22 min) |
 | Profil CPU, simple, 6 000 trames | 0 trame d'échange en dépassement |
 | Relecture des textes (`check_texts.py`) | 0 problème |
 | Contraste (`contrast.py 25`) | 0 paire sous ΔE 25 (personnages, courts, balle, tenues) |

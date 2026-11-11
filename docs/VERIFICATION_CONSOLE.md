@@ -103,7 +103,7 @@ Pour chaque ligne, lancez un match et regardez l'écran pendant une dizaine de s
 | 6.2 | VITESSE JEU : RAPIDE | Jeu plus rapide, image fluide en simple | ☐ |
 | 6.3 | FATIGUE : OUI, échange de plus de 10 frappes | Les joueurs ralentissent peu à peu ; une goutte de sueur clignote au-dessus d'eux. Au point suivant, tout redevient normal | ☐ |
 | 6.4 | FATIGUE : NON | Aucun ralentissement, pas de goutte | ☐ |
-| 6.5 | VUE : PERSPECTIVE, un match dans chaque lieu | Court resserré vers le fond, lignes nettes, filet et chaise d'arbitre sans tuile parasite ; joueurs, balle et ombres posés sur le court | ☐ |
+| 6.5 | VUE : PERSPECTIVE, un match dans chaque lieu | Court resserré vers le fond, lignes nettes, filet et chaise d'arbitre sans tuile parasite ; tribunes qui suivent les lignes de côté, spectateurs plus petits au fond, ola complète ; joueurs, balle et ombres posés sur le court | ☐ |
 | 6.6 | VUE : PERSPECTIVE, double, échange long | Image fluide, pas de sprite qui disparaît plus qu'à plat | ☐ |
 | 6.7 | Après un match en perspective, revenir au menu puis jouer À PLAT | Écrans et court d'origine intacts | ☐ |
 

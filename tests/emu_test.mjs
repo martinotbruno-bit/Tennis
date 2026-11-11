@@ -170,11 +170,11 @@ console.log("Mode d'emploi");
 console.log('Menu de configuration');
 {
   const e = boot(); toMenu(e);
-  check(scr(e) === SS.MENU && e.peek('nvis') === 13, 'configuration match : 13 lignes (pas de ligne JEU contre le CPU)');
+  check(scr(e) === SS.MENU && e.peek('nvis') === 14, 'configuration match : 14 lignes (pas de ligne JEU contre le CPU)');
   e.tap('DOWN'); e.tap('RIGHT'); e.tap('RIGHT'); e.tap('RIGHT'); e.run(5);
-  check(e.peek('opt_val', O.MODE) === MODE.COMP && e.peek('nvis') === 14, 'mode compétition : lignes adaptées');
+  check(e.peek('opt_val', O.MODE) === MODE.COMP && e.peek('nvis') === 15, 'mode compétition : lignes adaptées');
   e.tap('RIGHT'); e.run(5);
-  check(e.peek('opt_val', O.MODE) === MODE.TRAIN && e.peek('nvis') === 9, 'mode entraînement : lignes adaptées');
+  check(e.peek('opt_val', O.MODE) === MODE.TRAIN && e.peek('nvis') === 10, 'mode entraînement : lignes adaptées');
   e.tap('B'); e.run(5);
   check(scr(e) === SS.TITLE, 'B revient au titre');
 }
@@ -182,7 +182,7 @@ console.log('Menu de configuration');
 console.log('Mode en équipe (double)');
 {
   const e = boot(); toMenu(e); setOpts(e, { MODE: MODE.TEAM, TYPE: 0, CPART: 1 }); e.tap('B'); e.run(5); toMenu(e);
-  check(e.peek('nvis') === 14 && e.text(3, 7, 10) === 'PARTENAIRE' && e.text(3, 8, 8) === 'JOUE PAR', 'pas de ligne JEU ; lignes PARTENAIRE et JOUE PAR');
+  check(e.peek('nvis') === 15 && e.text(3, 7, 10) === 'PARTENAIRE' && e.text(3, 8, 8) === 'JOUE PAR', 'pas de ligne JEU ; lignes PARTENAIRE et JOUE PAR');
   e.tap('START'); e.run(15);
   check(e.text(4, 4, 15) === 'MATCH DE DOUBLE' && e.text(18, 11, 11) === '+ MANETTE 2', 'toujours un double, manette 2 partenaire');
   e.tap('A'); e.run(30);
@@ -296,10 +296,12 @@ function fullMatch(label, opts, maxFrames, extra) {
     // blocage = ni l'état du match, ni la balle, ni les joueurs ne changent
     const sig = m + ',' + e.peek16('bx') + ',' + e.peek16('by') + ',' + e.peek16('plx') + ',' + e.peek16('plx', 2);
     if (sig === lastMs) { same++; worst = Math.max(worst, same); } else { same = 0; lastMs = sig; }
-    if ((e.frames & 255) === 0 && !spOk(e)) spGood = false;
+    // (pendant la construction d'un écran, la pile C contient l'argument de
+    // screens_enter : contrôle seulement pendant le match)
+    if ((e.frames & 255) === 0 && app(e) === AS.MATCH && !spOk(e)) spGood = false;
     return app(e) === AS.SCREENS;
   }, maxFrames);
-  e.run(20);   // l'écran de résultats se construit sur quelques trames
+  e.run(60);   // l'écran de résultats se construit sur quelques trames
   const pts = e.peek('st_points', 0) + e.peek('st_points', 1);
   check(ok && scr(e) === SS.RESULTS, `${label} : match terminé en ${(e.frames / 3600).toFixed(1)} min (${pts} points)`);
   const g = [e.peek('sc_hist', 0), e.peek('sc_hist', 1)];
@@ -975,9 +977,9 @@ console.log('Margaux jouable et fatigue');
   const hush = log.includes('silence');
   // balle dehors de 2 px (couloir gauche du simple)
   e.poke('ms', 2); e.run(1); log.length = 0;
-  s16('bx', 72 * 64); s16('by', 100 * 64); e.poke('end_reason', 2); e.poke('ump_arm', 1); e.poke('ms', 3); e.poke('ms_timer', 80); e.run(2);
+  s16('bx', 72 * 64); s16('by', 100 * 64); e.poke('end_reason', 2); e.poke('ump_arm', 1); e.poke('ms', 3); e.poke('ms_timer', 80); e.run(40);
   const ooh = log.includes('b/5');
-  e.poke('ms', 2); e.run(1); log.length = 0; e.poke('st_dfaults', e.peek('st_dfaults', 0) + 1, 0); e.poke('ump_arm', 0); e.poke('ms', 3); e.run(2);
+  e.poke('ms', 2); e.run(1); log.length = 0; e.poke('st_dfaults', e.peek('st_dfaults', 0) + 1, 0); e.poke('ump_arm', 0); e.poke('ms', 3); e.run(40);
   const groan = log.includes('9/9');
   check(claps >= 2 && hush && ooh && groan, `réactions : ${claps} applaudissements sur balle de match, silence au lancer${hush ? '' : ' (absent)'}, « OOOH »${ooh ? '' : ' (absent)'}, soupir${groan ? '' : ' (absent)'}`);
 }
@@ -1498,9 +1500,20 @@ console.log('Vue en perspective (option VUE)');
   const nt = (g, x, y) => g.nes.ppu.vramMem[0x2000 + y * 32 + x];
   const flat = boot(); startWith(flat, { FMT: 3, ENV: 0 }); flat.run(30);
   let diff = 0; for (let y = 4; y < 30; y++) for (let x = 4; x < 28; x++) if (nt(f, x, y) !== nt(flat, x, y)) diff++;
-  let same = 0; for (let y = 4; y < 30; y++) for (let x of [0, 1, 2, 3, 28, 29, 30, 31]) if (nt(f, x, y) === nt(flat, x, y)) same++;
-  check(f.peek('persp') === 1 && flat.peek('persp') === 0 && diff > 100 && same === 26 * 8,
-    `court en perspective (${diff} tuiles du court changées, tribunes identiques) ; vue à plat inchangée`);
+  check(f.peek('persp') === 1 && flat.peek('persp') === 0 && diff > 100,
+    `court en perspective (${diff} tuiles du court changées) ; vue à plat inchangée`);
+  // tribunes en perspective : elles s'avancent vers le court au fond, petits
+  // spectateurs dans la moitié du fond, ola jusqu'aux colonnes ajoutées
+  const ps = []; for (let i = 0; i < 12; i++) ps.push(f.peek('ps_idx', i));
+  let small = 0, wide = 0;
+  for (let y = 4; y < 16; y++) for (let x = 0; x < 32; x++) if (ps.slice(0, 6).includes(nt(f, x, y))) small++;
+  for (let y = 4; y < 8; y++) for (const x of [4, 27]) if (nt(f, x, y) !== nt(flat, x, y)) wide++;
+  f.poke('crowd_timer', 60); f.run(20);
+  let cheer = 0; for (let y = 4; y < 30; y++) for (let x = 0; x < 32; x++) if (ps.slice(6).includes(nt(f, x, y))) cheer++;
+  f.run(80);
+  let rest = 0; for (let y = 4; y < 30; y++) for (let x = 0; x < 32; x++) if (ps.slice(6).includes(nt(f, x, y))) rest++;
+  check(ps[0] > 0 && small > 40 && wide === 8 && cheer > 0 && rest === 0,
+    `tribunes en perspective : ${small} petits spectateurs au fond, tribunes avancées, ola (${cheer} petits spectateurs debout) puis rétablie`);
   // projection : un joueur placé au fond, près du couloir, apparaît plus près du centre qu'à plat
   const s16 = (g, n, v, o = 0) => { g.poke(n, v & 255, o); g.poke(n, (v >> 8) & 255, o + 1); };
   for (const g of [f, flat]) { g.poke('ms', 2); g.poke('b_live', 0); g.poke('b_vis', 0); s16(g, 'plx', 70 * 64, 2); s16(g, 'ply', 50 * 64, 2); g.run(3); }

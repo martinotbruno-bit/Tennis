@@ -16,6 +16,7 @@ void sfx_step(void);               /* bruit de pas discret */
 void sfx_perfect(void);            /* « tchak » sec de la frappe parfaite */
 void sfx_canon(void);               /* « boum » du service canon */
 void sfx_clap(void);                /* un seul « clap » timide */
+extern u8 noise_hold;          /* canal de bruit réservé (trames), audio.c */
 void sfx_ooh(void);                 /* public : balle dehors de peu */
 void sfx_groan(void);               /* public : double faute */
 void sfx_hush(void);                /* public : silence au lancer */

@@ -49,7 +49,7 @@ Sans action pendant 20 secondes, une démonstration démarre (alternativement en
 | RALENTIS | Oui/Non : ralenti automatique après les plus beaux points |
 | VITESSE JEU | Lent (75 %, idéal pour débuter ou pour les enfants) · Normal · Rapide (125 %). Aussi en compétition et à l'entraînement. En Lent, une petite croix montre une demi-seconde où va tomber la balle adverse |
 | FATIGUE | Oui/Non. Au-delà de 10 frappes dans un échange, tous les joueurs (humains et CPU) ralentissent peu à peu, jusqu'à environ 20 %, et une goutte de sueur clignote au-dessus d'eux. Faute de jambes, ils frappent plus fort pour conclure (jusqu'à +23 %), mais moins précisément. Seule la frappe parfaite reste précise : c'est la meilleure façon de finir un long échange. Tout redevient normal au point suivant. Pas de fatigue à l'entraînement |
-| VUE | À plat (vue d'origine) · Perspective : le court se resserre de 15 % vers le fond, comme vu depuis les tribunes. Le jeu est exactement le même (règles, vitesse, commandes) ; seul l'affichage change |
+| VUE | À plat (vue d'origine) · Perspective : le court et les tribunes se resserrent de 15 % vers le fond, comme vus depuis le haut des gradins ; au fond, les spectateurs sont plus petits. Le jeu est exactement le même (règles, vitesse, commandes) ; seul l'affichage change |
 | SON | Musique + sons · Bruitages seuls · Aucun. L'écran titre et le menu partagent une petite polka de cirque, sautillante et ridicule : « Bruitages seuls » la fait taire |
 
 Les réglages du menu sont **mémorisés** au lancement de chaque partie. Sur une cartouche à pile, ils sont retrouvés au prochain allumage ; le palmarès n'est pas touché.
