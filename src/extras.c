@@ -152,8 +152,10 @@ u8 ump_princess;                 /* 1 : arbitre princesse (court Margaux), lu pa
 /* ---------------------------------------------------------------------- */
 #pragma bss-name(push, "WBSS")
 u8 swap_on, swap_nude;              /* jeu chargé et complet (0 : en cours) ; tenues au naturel */
-static u8 swap_want, swap_pos, swap_tmp[16];
+static u8 swap_want, swap_pos;
+u16 swp_dst;                        /* destination de swap_put (crt0.s) */
 #pragma bss-name(pop)
+u8 __fastcall__ swap_put(const u8 *src);   /* crt0.s, banque 13 (far_call) */
 static const u8 *swap_src(u8 set)
 {
     if (set == 1) return swap_nude ? swap_nudeC : swap_chrC;
@@ -167,6 +169,7 @@ static void swap_sync(u8 set)
 }
 void swap_restore(void)
 {
+    if (swap_on == 1 && !swap_nude) return;
     swap_nude = 0;
     swap_sync(1);
 }
@@ -182,8 +185,8 @@ static void swap_tick(void)
     u8 want = (u8)(ms == MS_TOSS || ms == MS_RALLY || ms == MS_REPLAY ? 2 : 1), k;
     if (want != swap_want) { swap_want = want; swap_on = 0; swap_pos = 0; }
     for (k = 0; k < 3 && !swap_on; ++k) {
-        bank_read(BANK_SWAP, swap_tmp, swap_src(want) + ((u16)swap_pos << 4), 16);
-        if (!vbuf_raw(0x1000 + ((u16)(swap_base + swap_pos) << 4), swap_tmp, 16)) break;
+        swp_dst = 0x1000 + ((u16)(swap_base + swap_pos) << 4);
+        if (!(u8)far_call(BANK_SWAP, (void *)swap_put, (u16)(swap_src(want) + ((u16)swap_pos << 4)))) break;
         if (++swap_pos == swap_ntile[want - 1]) swap_on = want;
     }
 }

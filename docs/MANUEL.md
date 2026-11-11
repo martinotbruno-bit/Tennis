@@ -158,7 +158,7 @@ Le lancer reste visible quelle que soit votre position, y compris quand vous ser
 
 | Surface | Comportement |
 |---|---|
-| Terre battue (brique) | Rebond haut, balle ralentie : échanges longs. Les joueurs glissent un peu à l'arrêt (environ 2 px), dans un nuage de poussière : bien utile pour arriver sur la balle |
+| Terre battue (brique) | Rebond haut, balle ralentie : échanges longs. Les joueurs glissent à l'arrêt et quand ils font demi-tour (environ 6 px), dans un nuage de poussière : on glisse jusqu'à la balle, mais il faut anticiper ses arrêts |
 | Gazon | Rebond bas, balle qui fuse : avantage au service-volée |
 | Dur | Compromis équilibré |
 | Moquette | Rapide et assez bas |

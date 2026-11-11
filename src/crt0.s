@@ -10,12 +10,12 @@
 .import _audio_tick, _is_pal
 .export _pad1, _pad2, _pad1_new, _pad2_new, _region_cnt
 .export _wait_frame, _pad_poll, _ppu_off, _ppu_on, _vram_adr, _vram_put
-.export _vram_fill, _vram_unrle, _rand8, _rand_seed
+.export _swap_put, _vram_fill, _vram_unrle, _rand8, _rand_seed
 .export _scroll_y, _scroll_nt, _mirror_h
 .export _chr_data
 .export _spr1, _spr_meta, _spr_end, _oam_i, _spr_rot, _set_bank, _cur_bank, _bank_call, _far_call, _rp_record
 .import _bx, _by, _bz, _b_vis, _plx, _ply, _pose_cache, _flip_cache
-.import _rp_buf, _rp_head, _rp_count
+.import _rp_buf, _rp_head, _rp_count, _swp_dst
 .import __WBSS_RUN__, __WBSS_SIZE__
 .export _meta_x, _meta_y, _meta_tile, _meta_attr, _meta_t1, _meta_t2
 .import _main, zerobss, copydata
@@ -488,6 +488,46 @@ _vram_fill:
     bne @pg
 @done:
     rts
+
+; u8 __fastcall__ swap_put(const u8 *src) — met dans le tampon VRAM une
+; tuile (16 octets) du jeu de tuiles par phase, destination swp_dst. Rend 0
+; si le tampon de la trame est plein (VBUF_MAX = 96 : 19 octets avec
+; l'en-tête). En banque 13, à côté des tuiles (appelée par far_call) : bien
+; plus rapide que bank_read + vbuf_raw en C.
+.segment "BANK13"
+_swap_put:
+    sta ptr1
+    stx ptr1+1
+    ldx _vram_len
+    cpx #96 - 19
+    bcs @full
+    lda _swp_dst+1
+    sta _vram_buf,x
+    lda _swp_dst
+    sta _vram_buf+1,x
+    lda #16
+    sta _vram_buf+2,x
+    ldy #0
+@c: lda (ptr1),y
+    sta _vram_buf+3,x
+    inx
+    iny
+    cpy #16
+    bne @c
+    lda #$FF
+    sta _vram_buf+3,x
+    inx
+    inx
+    inx
+    stx _vram_len
+    lda #1
+    ldx #0
+    rts
+@full:
+    lda #0
+    tax
+    rts
+.segment "CODE"
 
 ; void vram_unrle(const unsigned char *data) — décompresse vers PPUDATA
 ; format : [MARK] puis octets ; MARK,v,n = v répété n fois ; MARK,x,0 = fin

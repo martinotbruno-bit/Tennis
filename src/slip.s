@@ -7,8 +7,9 @@
 ;   - glace : inertie. La vitesse rejoint le déplacement voulu d'un quart de
 ;     l'écart par trame : départ progressif, et le joueur continue sur sa
 ;     lancée (environ 6 px) quand il s'arrête ou change de sens ;
-;   - terre battue : à l'arrêt, courte glissade (la vitesse est divisée par
-;     deux à chaque trame, environ 2 px) ;
+;   - terre battue : à l'arrêt et au demi-tour, glissade (le joueur garde
+;     les trois quarts de sa vitesse à chaque trame, environ 6 px ; version
+;     2.43, 2 px avant) ;
 ;   - plage : pas de glissade, mais un départ lourd (la vitesse monte de
 ;     50/64 px par trame au plus, comme dans le sable) ; arrêt net ;
 ;   - autres surfaces : rien ne change.
@@ -257,11 +258,18 @@ axis:
     bne :+
     jmp @sand
 :
-    ; --- terre battue : glissade à l'arrêt
+    ; --- terre battue : glissade à l'arrêt et au demi-tour (le joueur garde
+    ; les trois quarts de sa vitesse à chaque trame, environ 6 px)
     lda D
     ora D+1
-    bne @take
-    ; V = V - V/2 (arrondi vers zéro par le décalage arithmétique)
+    beq @glide
+    lda D+1
+    eor V+1
+    bpl @take               ; même sens : il suit la croix
+    jsr bigv                ; demi-tour lancé (|V| >= 48) : il glisse d'abord
+    bcc @take
+@glide:
+    ; V = V - V/4 (décalage arithmétique)
     lda V+1
     cmp #$80
     ror a
@@ -269,6 +277,10 @@ axis:
     lda V
     ror a
     sta E
+    lda E+1
+    cmp #$80
+    ror E+1
+    ror E
     sec
     lda V
     sbc E
@@ -405,6 +417,26 @@ axis:
     sta evt
 @noevt:
     clc
+    rts
+
+; retenue à 1 si |V| >= 48
+bigv:
+    lda V+1
+    bmi @neg
+    bne @yes
+    lda V
+    cmp #48
+    rts
+@neg:
+    cmp #$FF
+    bne @yes
+    lda V
+    cmp #<(-47)             ; V <= -48 : octet bas <= $D0
+    bcc @yes
+    clc
+    rts
+@yes:
+    sec
     rts
 
 ; |V| < 16 : V = 0

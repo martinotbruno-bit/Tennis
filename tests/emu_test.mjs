@@ -1629,7 +1629,7 @@ console.log('Dérapages selon la surface');
   };
   const g = run(1), c = run(0), s = run(4), i = run(5);
   check(g.glide === 0 && g.fx === 0, `gazon : arrêt net (${g.glide.toFixed(1)} px), aucun effet`);
-  check(c.glide > 0.5 && c.glide < 4 && c.fx > 0 && Math.abs(c.start - g.start) < 0.1, `terre battue : glissade de ${c.glide.toFixed(1)} px à l'arrêt, poussière`);
+  check(c.glide > 4 && c.glide < 9 && c.fx > 0 && Math.abs(c.start - g.start) < 0.1, `terre battue : glissade de ${c.glide.toFixed(1)} px à l'arrêt, poussière`);
   check(s.glide === 0 && s.start < g.start - 1 && s.fx > 0, `sable : départ lourd (${s.start.toFixed(1)} px en 2 trames contre ${g.start.toFixed(1)}), arrêt net, gerbe`);
   check(i.glide > 3 && i.glide < 10 && i.start < g.start - 1 && i.fx > 0, `glace : départ progressif, glissade de ${i.glide.toFixed(1)} px, éclats`);
 }
