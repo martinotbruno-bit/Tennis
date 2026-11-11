@@ -767,16 +767,17 @@ const msgText = (e) => { let t = ''; for (let i = 0; i < 14; i++) t += String.fr
   check(!mark2 && oamTiles(g).has(13), 'vitesse normale : pas de repère ; arbitre aussi au club');
 }
 {
-  // chaise d'arbitre de profil, dans le décor de chaque lieu (palette 3 :
+  // chaise d'arbitre de profil, au bord du court contre le poteau du filet
+  // (x 32-47), dans le décor de chaque lieu (palette 3 :
   // mêmes couleurs de jour, de nuit et sous la pluie) ; gestes de l'arbitre
   const nt = (e, x, y) => e.nes.ppu.vramMem[0x2000 + y * 32 + x];
   const at = (e, a) => e.nes.ppu.vramMem[a];
   let tiles = null, okall = true;
   for (const env of [0, 1, 2, 4]) for (const cond of [0, 1, 2]) {
     const e = boot(); startWith(e, { ENV: env, COND: cond, SURF: 0 }); e.run(30);
-    const t = []; for (let r = 14; r < 18; r++) t.push(nt(e, 2, r), nt(e, 3, r));
+    const t = []; for (let r = 14; r < 18; r++) t.push(nt(e, 4, r), nt(e, 5, r));
     if (!tiles) tiles = t.join(); else if (tiles !== t.join()) okall = false;
-    if ((at(e, 0x23D8) >> 6) !== 3 || ((at(e, 0x23E0) >> 2) & 3) !== 3 || (at(e, 0x23E0) >> 6) !== 2) okall = false;
+    if (((at(e, 0x23D9) >> 4) & 3) !== 3 || (at(e, 0x23E1) & 3) !== 3) okall = false;
     if (cond === 0 && env === 0) { const p = e.addr('pal_buf'); if (e.nes.cpu.mem[p + 13] !== 0x0F || e.nes.cpu.mem[p + 15] !== 0x30) okall = false; }
   }
   check(okall, 'chaise d\'arbitre identique dans les 4 lieux, de jour, de nuit et sous la pluie (palette 3 noir/blanc)');

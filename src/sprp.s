@@ -589,7 +589,7 @@ _audio_tick:
 
 ; ---------------------------------------------------------------------------
 ; void ump_draw(void) : petit arbitre de chaise, assis de profil sur la
-; chaise du décor (x 16-31, y 112-143, centrée sur le filet), tourné vers le court. Tête 11 (regard
+; chaise du décor (x 32-47, y 112-143, centrée sur le filet), tourné vers le court. Tête 11 (regard
 ; vers le bas du court) ou 12 (vers le haut), selon la balle ; buste 13 au
 ; repos ou coupe + 0 bras tendu, avec la main (coupe + 1) ; bras levé (coupe
 ; + 2) sur un let (il s'agite) et à la fin du match (il salue). Appelé aussi
@@ -598,7 +598,7 @@ _audio_tick:
 .import _ms, _end_reason, _ump_arm, _trophy_tile, _by, _ump_princess
 .importzp _frame_cnt
 .importzp tmp4
-UMP_X = 18
+UMP_X = 34                  ; au bord du court, contre le poteau du filet
 UMP_Y = 116                 ; arbitre et chaise centrés sur le filet
 
 .segment "CODE"

@@ -193,13 +193,13 @@ def draw_net(b, rect, shake=False):
         for x in range(x0n + 2, x1n + 3):
             if (x + y) % 2 == 0 and (y == NET_Y + 1 or x % 4 < 2):
                 b[y][x] = 3
-    for px in (DBL_L - 8, DBL_R + 6):                        # poteaux
+    for px in (DBL_L - 6, DBL_R + 4):                        # poteaux (aux bouts du filet)
         rect(px, NET_Y - 11, px + 2, NET_Y + 1, 3)
         rect(px, NET_Y - 10, px, NET_Y, 2)                   # reflet
         rect(px, NET_Y - 11, px + 2, NET_Y - 11, 2)          # tête
 
 # Chaise d'arbitre classique, dessinée dans le décor de chaque court, au
-# niveau du filet : 16 x 48 px, x 16-31, y 112-159 (3 blocs d'attributs en
+# niveau du filet : 16 x 48 px, x 32-47, y 112-159 (3 blocs d'attributs en
 # palette 3, inutilisée ailleurs sur le court : 1 noir, 2 jaune, 3 blanc ;
 # mêmes couleurs de jour, de nuit et sous la pluie).
 CHAIR = [[0]*16 for _ in range(32)]
@@ -216,7 +216,7 @@ cset(7, 25, 12, 25, 3); cset(7, 26, 12, 26, 1)                      # repose-pie
 cset(10, 27, 11, 30, 1); cset(11, 27, 11, 30, 3)                    # pied avant
 cset(3, 23, 7, 23, 3); cset(3, 24, 7, 24, 1)                        # traverse
 cset(0, 31, 3, 31, 1); cset(9, 31, 12, 31, 1)                       # patins
-CHAIR_X, CHAIR_Y = 16, 112      # centrée sur le filet (bande du filet : y 125-132)
+CHAIR_X, CHAIR_Y = 32, 112      # au bord du court, contre le poteau ; centrée sur le filet (bande : y 125-132)
 
 CLUB_ROWS = (6, 7, 12, 13, 20, 21, 26, 27)     # bancs de spectateurs du club (rangées)
 
@@ -228,7 +228,9 @@ def draw_court(env=0):
             for x in range(max(0,x0), min(W,x1+1)):
                 b[y][x] = c
     # surface de jeu (couleur 1) avec une marge de dégagement
-    rect(DBL_L-10, TOP_BASE-14, DBL_R+10, BOT_BASE+14, 1)
+    # (6 px sur les côtés : le bloc d'attributs x 32-47, à gauche, reste
+    # libre pour la chaise d'arbitre, au bord du court)
+    rect(DBL_L-6, TOP_BASE-14, DBL_R+6, BOT_BASE+14, 1)
     # lignes (couleur 2)
     rect(DBL_L, TOP_BASE-1, DBL_R, TOP_BASE, 2)        # ligne de fond haute
     rect(DBL_L, BOT_BASE, DBL_R, BOT_BASE+1, 2)        # ligne de fond basse

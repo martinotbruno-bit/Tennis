@@ -1,10 +1,16 @@
-# Royal Martinot — Rapport de réalisation (version 2.35)
+# Royal Martinot — Rapport de réalisation (version 2.36)
 
 Comme l'exige le CDC (§ 17.5), ce rapport distingue ce qui est **réalisé**, **testé**, **validé sur matériel réel**, **validé uniquement en émulation**, **dépendant d'une extension**, et les **limitations restantes**.
 
 > **Validation matérielle : aucune.** Aucun test n'a été fait sur console réelle (NES, Famicom, PAL, cartouche MMC1). Toutes les validations ont eu lieu en émulation (jsnes) et par des tests unitaires sur PC. Les critères « vérifié sur console physique » (CDC § 2.1, 15.4, 16.A) **ne sont pas remplis**. Ce point ne peut pas être traité dans l'environnement de développement utilisé.
 
 ## 1. Évolutions
+
+### Version 2.36
+
+| Demande | Réalisation |
+|---|---|
+| L'arbitre plus près du filet que dans le public | La chaise et l'arbitre (ou la princesse) quittent les tribunes : ils sont au bord du court, contre le poteau gauche du filet, toujours centrés sur lui, dans les 5 lieux, de jour, de nuit et sous la pluie. Pour faire la place sans toucher aux couleurs du court, la surface dépasse un peu moins des lignes de côté (6 px au lieu de 10) et les poteaux sont aux bouts du filet. Les spectateurs reprennent les places libérées |
 
 ### Version 2.35
 
