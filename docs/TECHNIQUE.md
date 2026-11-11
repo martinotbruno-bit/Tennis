@@ -35,7 +35,7 @@ La version 1.0 tenait en NROM-256 (32 Ko, plein à 87 %). Il a fallu plus de pla
 
 | Banque | Contenu | Occupation |
 |---|---|---|
-| 15 (fixe, $C000) | Démarrage, NMI, primitives (sprites, VRAM, manettes, trampolines `bank_call` / `far_call`, enregistrement des ralentis, affichage des personnages), boucle principale, règles, palettes, 17 personnages, noms des compétitions, échange des tuiles de personnages, effets du court, son, bibliothèque cc65 | 14 929 |
+| 15 (fixe, $C000) | Démarrage, NMI, primitives (sprites, VRAM, manettes, trampolines `bank_call` / `far_call`, enregistrement des ralentis, affichage des personnages), boucle principale, règles, palettes, 17 personnages, noms des compétitions, échange des tuiles de personnages, effets du court, son, bibliothèque cc65 | 15 846 |
 | 0 | Moteur de match : physique, frappes, service, arbitrage, IA, fête de victoire | 16 224 |
 | 1 | Écrans : titre, configuration, présentation, résultats, fin de set, compétitions, levée de coupe, saisie de code, palmarès | 16 111 |
 | 2 | Motifs graphiques (8 Ko), copiés en CHR-RAM au démarrage | 8 192 |
