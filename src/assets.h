@@ -29,4 +29,6 @@ extern const unsigned char nude_profile[384];
 extern const unsigned char crowd_idx[6];
 extern const unsigned char crowd_norm[96];
 extern const unsigned char crowd_cheer[96];
+extern const unsigned char cheer_idx[6];       /* ola : spectateurs bras levés (tuiles propres) */
+extern const unsigned char crowd_up[96];       /* spectateurs qui regardent vers le haut du court */
 #endif

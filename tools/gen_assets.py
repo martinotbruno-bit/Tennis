@@ -218,6 +218,8 @@ cset(3, 23, 7, 23, 3); cset(3, 24, 7, 24, 1)                        # traverse
 cset(0, 31, 3, 31, 1); cset(9, 31, 12, 31, 1)                       # patins
 CHAIR_X, CHAIR_Y = 16, 112      # centrée sur le filet (bande du filet : y 125-132)
 
+CLUB_ROWS = (6, 7, 12, 13, 20, 21, 26, 27)     # bancs de spectateurs du club (rangées)
+
 def draw_court(env=0):
     W, H = 256, 240
     b = [[0]*W for _ in range(H)]
@@ -267,9 +269,11 @@ def draw_court(env=0):
                 for y in range(cy+7, cy+12):
                     if y < 240:
                         b[y][cx] = 3
-            for row in (12, 20):
+            # bancs de spectateurs : 4 bandes de 2 rangées (palette 3 : visibles
+            # sur la verdure)
+            for row in CLUB_ROWS:
                 for col in range(4):
-                    pat = CROWD[(row + col) % 6]
+                    pat = CROWD[(row * 3 + col + side) % 6]
                     for yy in range(8):
                         for xx in range(8):
                             b[row*8+yy][x0+col*8+xx] = pat[yy][xx]
@@ -309,20 +313,29 @@ def draw_court(env=0):
                         for xx in range(8):
                             b[ty+yy][tx+xx] = fan[q][yy][xx]
         else:
-            # SALLE : murs, panneaux publicitaires et projecteurs
+            # SALLE : gradins côté extérieur (16 px, palette 3), murs et
+            # panneaux publicitaires côté court
+            xi = x0 + 16 if side == 0 else x0        # bande des panneaux
+            xo = x0 if side == 0 else x0 + 16        # bande des gradins
             for y in range(32, 240):
-                for x in range(x0, x0+32):
+                for x in range(xi, xi+16):
                     b[y][x] = 3 if (y // 8) % 6 == 0 else 1
             for k in range(5):
                 y0 = 40 + k*40
                 for y in range(y0, y0+20):
-                    for x in range(x0+4, x0+28):
+                    for x in range(xi+2, xi+14):
                         if 32 <= y < 240:
                             b[y][x] = 2
                 for y in range(y0+6, y0+14, 2):
-                    for x in range(x0+8, x0+24, 3):
+                    for x in range(xi+4, xi+12, 3):
                         if 32 <= y < 240:
                             b[y][x] = 3
+            for row in range(4, 30):
+                for col in range(2):
+                    pat = CROWD[(row * 5 + col * 2 + side) % 6]
+                    for yy in range(8):
+                        for xx in range(8):
+                            b[row*8+yy][xo+col*8+xx] = pat[yy][xx]
         # rambarde (pas de barrière au club nudiste : simple haie basse)
         bx = 31 if side == 0 else 224
         for y in range(32, 240):
@@ -337,7 +350,10 @@ def draw_court(env=0):
             b[y][x] = 0
     return b
 
-def crowd_tile(seed):
+def crowd_tile(seed, up=False):
+    """2 spectateurs ; cheveux (couleur 2) en haut de la tête : ils regardent
+    vers le bas du court ; en bas (up) : vers le haut. Le jeu échange les deux
+    versions quand la balle change de moitié : le public suit la balle."""
     r = random.Random(seed)
     t = blank()
     for hx in (1, 5):
@@ -347,6 +363,8 @@ def crowd_tile(seed):
         for yy in range(hy, hy+3):
             for xx in range(hx, hx+2):
                 t[yy][xx] = 1
+        for xx in range(hx, hx+2):
+            t[hy + (2 if up else 0)][xx] = 2      # cheveux
         for yy in range(hy+3, 8):
             for xx in range(hx-1, hx+3):
                 if 0 <= xx < 8:
@@ -354,6 +372,7 @@ def crowd_tile(seed):
     return t
 
 CROWD = [crowd_tile(i) for i in range(6)]
+CROWD_UP = [crowd_tile(i, True) for i in range(6)]
 
 def cheer_tile(seed):
     """Même spectateurs, debout et bras levés (animation du public)."""
@@ -377,6 +396,7 @@ def cheer_tile(seed):
 
 CHEER = [cheer_tile(i) for i in range(6)]
 crowd_idx = [bg_alloc(t) for t in CROWD]
+cheer_idx = [bg_alloc(t) for t in CHEER]     # ola : tuiles « bras levés » propres
 
 def nude_fan(kind, cheer=False):
     """Spectateur du club nudiste, debout et en pied (16x24) : silhouette
@@ -454,16 +474,22 @@ NUDE_CROWD = [tile for fan in NUDE_FANS for tile in fan]          # 18 tuiles
 NUDE_CHEER = [tile for fan in NUDE_FANS_CHEER for tile in fan]
 crowd_idx3 = [bg_alloc(t) for t in NUDE_CROWD]
 
-def court_attr(bx, by):
+def court_attr(bx, by, env=0):
     if by < 2:
         return 1                      # bandeau score
     if bx == CHAIR_X // 16 and CHAIR_Y // 16 <= by < CHAIR_Y // 16 + 2:
         return 3                      # chaise d'arbitre
+    # spectateurs du club et de la salle : palette 3 (noir, jaune, blanc),
+    # bien visibles sur la verdure et les murs
+    if env == 1 and bx in (0, 1, 14, 15) and by * 2 in CLUB_ROWS:
+        return 3
+    if env == 2 and bx in (0, 15):
+        return 3
     if bx < 2 or bx >= 14:
         return 2                      # tribunes
     return 0
 
-court_nts = [bitmap_to_nametable(draw_court(e), court_attr) for e in range(5)]
+court_nts = [bitmap_to_nametable(draw_court(e), lambda bx, by, e=e: court_attr(bx, by, e)) for e in range(5)]
 # panneau du club nudiste, ligne 3 du bandeau (police ASCII = n° de tuile)
 # court Margaux : petit panneau (32 x 16) dans le bandeau du haut, juste à
 # droite du score de gauche (colonnes 5 à 8, rangées 2 et 3). Palette des
@@ -1139,6 +1165,8 @@ src.append(c_array('net_norm', b''.join(encode_tile(t) for t in net_tiles(False)
 src.append(c_array('net_shk', b''.join(encode_tile(t) for t in net_tiles(True))))
 src.append(c_array('ump_chr', b''.join(encode_tile(t) for t in UMP_EXTRA)))
 src.append(c_array('crowd_idx', bytes(crowd_idx)))
+src.append(c_array('cheer_idx', bytes(cheer_idx)))
+src.append(c_array('crowd_up', b''.join(encode_tile(t) for t in CROWD_UP)))
 src.append(c_array('crowd_norm', b''.join(encode_tile(t) for t in CROWD)))
 src.append(c_array('crowd_cheer', b''.join(encode_tile(t) for t in CHEER)))
 with open(os.path.join(ROOT, 'src', 'assets_court.c'), 'w') as f:

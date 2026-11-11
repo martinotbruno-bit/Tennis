@@ -135,6 +135,7 @@ static void tiles_load(const u8 *idx, u8 n, const u8 *src)
         for (j = 0; j < 16; ++j) vram_put(*src++);
     }
 }
+static void crowd_load(void);
 void load_court(void)
 {
     u8 nude = (u8)(cfg.env == ENV_NUDE);
@@ -156,6 +157,7 @@ void load_court(void)
     }
     net_state = 0;
     net_shake = 0;
+    crowd_load();                    /* public : copie des tribunes, regard vers le bas */
 }
 
 /* Filet qui tremble quand la balle le touche : les tuiles des mailles
@@ -174,22 +176,120 @@ void net_tick(void)
 }
 
 /* ---------------------------------------------------------------------- */
-/* Public : alterne les motifs « assis » et « debout, bras levés » des
- * tuiles de spectateurs (CHR-RAM), une tuile par trame pour respecter le
- * budget VBlank. */
+/* Public.
+ *  - Il suit la balle : les 6 tuiles de spectateurs passent de « regard vers
+ *    le bas » à « regard vers le haut » (CHR-RAM, une tuile par trame) quand
+ *    la balle change de moitié du court.
+ *  - Ola après les beaux points (stade, club, salle) : une bande de 3
+ *    rangées de spectateurs bras levés (6 tuiles propres) descend les deux
+ *    tribunes, une rangée toutes les 2 trames, puis chaque rangée reprend
+ *    son dessin d'origine (copié à l'écran du court par crowd_load).
+ *  - Réactions : « OOOH » sur une balle dehors de peu, soupir sur une
+ *    double faute, applaudissements rythmés avant une balle de match,
+ *    silence au lancer du service.
+ *  - Court Margaux et club nudiste : leurs motifs scintillent ou se lèvent,
+ *    comme avant. */
+#pragma bss-name(push, "WBSS")
+static u8 st_map[26 * 8];            /* tribunes : rangées 4 à 29, colonnes 0-3 et 28-31 */
+static u8 cr_cur[6], rowbuf[4];
+static u8 ola_on, ola_o, cr_prev_t, cr_prev_ms, cr_df, cr_mp, cr_clap;
+#pragma bss-name(pop)
+
+#define PPU_DATA (*(volatile u8 *)0x2007)
+/* écran du court construit (rendu coupé) : copie des tribunes, tuiles de
+   spectateurs remises « regard vers le bas » */
+static void crowd_load(void)
+{
+    u8 r, c, s;
+    for (r = 0; r < 26; ++r)
+        for (s = 0; s < 2; ++s) {
+            vram_adr(NTADR(s ? 28 : 0, 4 + r));
+            st_map[r * 8 + s * 4] = PPU_DATA;            /* lecture à vide */
+            for (c = 0; c < 4; ++c) st_map[r * 8 + s * 4 + c] = PPU_DATA;
+        }
+    for (c = 0; c < 6; ++c) {
+        vram_adr((u16)crowd_idx[c] << 4);
+        for (r = 0; r < 16; ++r) vram_put(crowd_norm[c * 16 + r]);
+        cr_cur[c] = 0;
+    }
+    ola_on = 0; cr_prev_t = 0; cr_prev_ms = 0xFF; cr_mp = 0; cr_clap = 0;
+    cr_df = (u8)(st_dfaults[0] + st_dfaults[1]);
+}
+
+/* rangée o des deux tribunes, debout (bras levés) ou d'origine */
+static u8 ola_row(u8 o, u8 up)
+{
+    u8 s, c, k, t;
+    const u8 *m = st_map + o * 8;
+    for (s = 0; s < 2; ++s) {
+        for (c = 0; c < 4; ++c) {
+            t = m[s * 4 + c];
+            if (up) for (k = 0; k < 6; ++k) if (t == crowd_idx[k]) { t = cheer_idx[k]; break; }
+            rowbuf[c] = t;
+        }
+        if (!vbuf_raw(NTADR(s ? 28 : 0, 4 + o), rowbuf, 4)) return 0;
+    }
+    return 1;
+}
+
+/* balle hors du court de peu (moins de 5 px) : le public retient son souffle */
+static u8 near_miss(void)
+{
+    s16 x = PX(bx), y = PX(by), d = 0;
+    s16 l = cfg.doubles ? DBL_L : SGL_L, r = cfg.doubles ? DBL_R : SGL_R;
+    if (x < l) d = l - x; else if (x > r) d = x - r;
+    if (y < TOP_BASE) d += TOP_BASE - y; else if (y > BOT_BASE) d += y - BOT_BASE;
+    return (u8)(d > 0 && d < 5);
+}
+
 void crowd_tick(void)
 {
-    u8 nude = (u8)(cfg.env == ENV_NUDE), girly = (u8)(cfg.env == ENV_MARGAUX);
-    u8 n = (u8)(nude ? 18 : girly ? 3 : 6);
-    u8 k = (u8)(crowd_timer % n);
-    u8 cheer = (u8)(crowd_timer >= n && ((crowd_timer >> 3) & 1));
-    const u8 *src, *idx;
-    /* court Margaux : les coeurs, fleurs et étoiles scintillent */
-    if (girly) { src = cheer ? crowd_cheer4 : crowd_norm4; idx = crowd_idx4; }
-    else if (nude) { src = cheer ? crowd_cheer3 : crowd_norm3; idx = crowd_idx3; }
-    else { src = cheer ? crowd_cheer : crowd_norm; idx = crowd_idx; }
-    if (vbuf_raw((u16)idx[k] << 4, src + (k << 4), 16))
-        --crowd_timer;
+    u8 nude = (u8)(cfg.env == ENV_NUDE), girly = (u8)(cfg.env == ENV_MARGAUX), k, m;
+    if (nude || girly) {
+        /* court Margaux : les coeurs, fleurs et étoiles scintillent ; club
+           nudiste : les spectateurs se lèvent */
+        if (crowd_timer) {
+            u8 n = (u8)(nude ? 18 : 3);
+            u8 cheer = (u8)(crowd_timer >= n && ((crowd_timer >> 3) & 1));
+            k = (u8)(crowd_timer % n);
+            if (vbuf_raw((u16)(girly ? crowd_idx4 : crowd_idx3)[k] << 4,
+                         (girly ? (cheer ? crowd_cheer4 : crowd_norm4) : (cheer ? crowd_cheer3 : crowd_norm3)) + (k << 4), 16))
+                --crowd_timer;
+        }
+    } else {
+        /* ola : relancée chaque fois que le jeu ranime le public */
+        if (crowd_timer > cr_prev_t) { ola_on = 1; ola_o = 0; }
+        if (crowd_timer) --crowd_timer;
+        cr_prev_t = crowd_timer;
+        if (ola_on && !(frame_cnt & 1)) {
+            m = 1;
+            if (ola_o < 26) m = ola_row(ola_o, 1);
+            if (m && ola_o >= 3) m = ola_row((u8)(ola_o - 3), 0);
+            if (m && ++ola_o == 29) ola_on = 0;
+        }
+        /* le public suit la balle du regard */
+        if (b_vis) {
+            m = (u8)(by < NET_Y * FP);
+            for (k = 0; k < 6; ++k)
+                if (cr_cur[k] != m) {
+                    if (vbuf_raw((u16)crowd_idx[k] << 4, (m ? crowd_up : crowd_norm) + (k << 4), 16)) cr_cur[k] = m;
+                    break;
+                }
+        }
+    }
+    /* réactions */
+    m = ms;
+    if (m != cr_prev_ms) {
+        if (m == MS_DEAD) {
+            if (end_reason == END_POINT && ump_arm && near_miss()) sfx_ooh();
+            k = (u8)(st_dfaults[0] + st_dfaults[1]);
+            if (k != cr_df) { cr_df = k; sfx_groan(); }
+        }
+        if (m == MS_SERVE) { cr_mp = (u8)(cfg.mode == GM_MATCH && (rules_is_match_point(0) || rules_is_match_point(1))); cr_clap = 0; }
+        if (m == MS_TOSS) sfx_hush();            /* silence au lancer */
+        cr_prev_ms = m;
+    }
+    if (m == MS_SERVE && cr_mp && ++cr_clap >= 18) { cr_clap = 0; sfx_clap(); }   /* clap… clap… clap… */
 }
 
 /* ---------------------------------------------------------------------- */

@@ -1,10 +1,19 @@
-# Royal Martinot — Rapport de réalisation (version 2.25)
+# Royal Martinot — Rapport de réalisation (version 2.26)
 
 Comme l'exige le CDC (§ 17.5), ce rapport distingue ce qui est **réalisé**, **testé**, **validé sur matériel réel**, **validé uniquement en émulation**, **dépendant d'une extension**, et les **limitations restantes**.
 
 > **Validation matérielle : aucune.** Aucun test n'a été fait sur console réelle (NES, Famicom, PAL, cartouche MMC1). Toutes les validations ont eu lieu en émulation (jsnes) et par des tests unitaires sur PC. Les critères « vérifié sur console physique » (CDC § 2.1, 15.4, 16.A) **ne sont pas remplis**. Ce point ne peut pas être traité dans l'environnement de développement utilisé.
 
 ## 1. Évolutions
+
+### Version 2.26
+
+| Demande | Réalisation |
+|---|---|
+| Public qui suit la balle | Toute la tribune tourne la tête vers le haut ou vers le bas du court quand la balle change de moitié |
+| La ola | Après les beaux points et à la fin du match (stade, club, salle), une vague de bras levés descend les tribunes, puis chaque rangée reprend son dessin d'origine |
+| Plus de réactions | « OOOH » sur une balle dehors de peu (moins de 5 px), soupir sur une double faute, applaudissements rythmés avant une balle de match, silence au lancer du service |
+| Spectateurs en salle et au club | Salle : gradins sur le côté extérieur, panneaux publicitaires côté court. Club : 4 bancs de spectateurs de chaque côté au lieu de 2. Les deux sont en noir, jaune et blanc, bien visibles. En double, le coût en calcul reste dans le budget (12 trames en dépassement sur 6 000) |
 
 ### Version 2.25
 
@@ -233,7 +242,7 @@ Pour loger ce contenu, la cartouche passe de NROM (32 Ko) à **MMC1** : 128 Ko d
 |---|---|
 | Règles (`rules_test`) | 42/42 |
 | Codes (`password_test`) | 200 000/200 000 aller-retour (format v3), ancien code v2 accepté, Margaux codée, Margaux au club nudiste refusée ; 99,98 % des codes altérés d'un signe refusés |
-| Émulateur (`emu_test`) | 218/218 vérifications (environ 21 min) |
+| Émulateur (`emu_test`) | 222/222 vérifications (environ 21 min) |
 | Profil CPU, simple, 6 000 trames | 0 trame d'échange en dépassement |
 | Relecture des textes (`check_texts.py`) | 0 problème |
 | Contraste (`contrast.py 25`) | 0 paire sous ΔE 25 (personnages, courts, balle, tenues) |

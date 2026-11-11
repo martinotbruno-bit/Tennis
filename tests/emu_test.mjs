@@ -29,7 +29,8 @@ function startWith(e, opts) {
   // certains écrans (classements) se construisent en plusieurs trames
   for (let n = 0; n < 90 && app(e) === AS.SCREENS && scr(e) === SS.MENU; n++) e.run(1);
   e.run(10);
-  if (app(e) === AS.SCREENS && scr(e) === SS.PRESENT) { e.tap('A'); e.run(5); }
+  // le court se charge sur quelques trames (fondu, décor, copie des tribunes)
+  if (app(e) === AS.SCREENS && scr(e) === SS.PRESENT) { e.tap('A'); runUntil(e, () => app(e) === AS.MATCH, 60); e.run(2); }
 }
 function allCpu(e) { const c = e.addr('cfg'); for (let i = 0; i < 4; i++) e.nes.cpu.mem[c + CFG.CTRL + i] = 2; }
 function runUntil(e, pred, max, each) { let n = 0; while (!pred() && n < max) { if (each) each(); e.run(1); n++; } return n < max; }
@@ -898,6 +899,51 @@ console.log('Margaux jouable et fatigue');
   const landed = short.filter((s) => s.x !== null), angle = landed.filter((s) => s.y >= 87 && s.y <= 132 && (s.x < 92 || s.x > 164));
   check(avg(flat) > avg(lift) * 1.15, `à plat nettement plus rapide que le lifté (${avg(flat).toFixed(0)} contre ${avg(lift).toFixed(0)})`);
   check(landed.length >= 5 && angle.length >= landed.length * 0.7, `croisé court : ${angle.length}/${landed.length} balles en angle dans le carré de service`);
+}
+
+{
+  // public : suit la balle du regard (tuiles en CHR-RAM), ola (tribunes
+  // réécrites puis rétablies), gradins en salle et bancs au club (palette 3)
+  const e = boot(); startWith(e, { ENV: 0, SURF: 2 }); allCpu(e); e.run(200);
+  const r3 = (sym, off) => e.nes.rom.rom[3][e.addr(sym) - 0x8000 + off];
+  const ci = [...Array(6).keys()].map((k) => r3('crowd_idx', k)), chi = [...Array(6).keys()].map((k) => r3('cheer_idx', k));
+  const tileIs = (k, sym) => { for (let b = 0; b < 16; b++) if (e.nes.ppu.vramMem[ci[k] * 16 + b] !== r3(sym, k * 16 + b)) return false; return true; };
+  const by = e.addr('by'), hold = (hi) => { for (let n = 0; n < 12; n++) { e.nes.cpu.mem[by + 1] = hi; e.poke('b_vis', 1); e.run(1); } };
+  hold(0x10); const up = [0, 1, 2, 3, 4, 5].every((k) => tileIs(k, 'crowd_up'));
+  hold(0x30); const dn = [0, 1, 2, 3, 4, 5].every((k) => tileIs(k, 'crowd_norm'));
+  check(up && dn, 'public : regarde vers le haut puis vers le bas selon la balle');
+  const stands = () => { const t = []; for (let r = 4; r < 30; r++) for (const c of [0, 1, 2, 3, 28, 29, 30, 31]) t.push(e.nes.ppu.vramMem[0x2000 + r * 32 + c]); return t; };
+  const before = stands().join();
+  e.poke('crowd_timer', 64); let seen = 0;
+  for (let n = 0; n < 40; n++) { e.run(1); if (stands().some((t) => chi.includes(t))) seen++; }
+  e.run(60);
+  check(seen > 20 && stands().join() === before, `ola : la vague descend les tribunes (${seen} trames) puis tout est rétabli`);
+  const g = boot(); startWith(g, { ENV: 2, SURF: 2 });
+  const h = boot(); startWith(h, { ENV: 1, SURF: 1 });
+  const crowdIn = (x) => { let n = 0; for (let r = 4; r < 30; r++) for (const c of [0, 1, 30, 31]) if (ci.includes(x.nes.ppu.vramMem[0x2000 + r * 32 + c])) n++; return n; };
+  check(crowdIn(g) >= 80 && crowdIn(h) >= 24 && (g.nes.ppu.vramMem[0x23C0 + 2 * 8] & 3) === 3,
+    `spectateurs en salle (${crowdIn(g)} tuiles) et au club (${crowdIn(h)}), bien visibles (palette 3)`);
+}
+{
+  // réactions du public (canal de bruit) : applaudissements rythmés avant une
+  // balle de match, silence au lancer, « OOOH » sur une balle dehors de peu,
+  // soupir sur une double faute
+  const e = boot(); startWith(e, { FMT: 3 }); e.run(60);
+  const mm = e.nes.mmap, w = mm.write.bind(mm); let env = 0; const log = [];
+  mm.write = (a, v) => { if (a === 0x400C) { env = v; if (v === 0x30) log.push('silence'); } if (a === 0x400E) log.push(env.toString(16) + '/' + v.toString(16)); return w(a, v); };
+  const s16 = (n, v) => { e.poke(n, v & 255); e.poke(n, (v >> 8) & 255, 1); };
+  e.poke('sc_games', 3, 0); e.poke('sc_points', 3, 0); e.poke('sc_points', 0, 1); e.poke('sc_server', 0);
+  e.poke('ms', 2); e.run(1); e.poke('ms', 0); e.poke('ms_timer', 250); log.length = 0; e.run(60);
+  const claps = log.filter((x) => x === '1/5').length;
+  log.length = 0; e.tap('A', 1, 1, 0); e.run(3);
+  const hush = log.includes('silence');
+  // balle dehors de 2 px (couloir gauche du simple)
+  e.poke('ms', 2); e.run(1); log.length = 0;
+  s16('bx', 72 * 64); s16('by', 100 * 64); e.poke('end_reason', 2); e.poke('ump_arm', 1); e.poke('ms', 3); e.poke('ms_timer', 80); e.run(2);
+  const ooh = log.includes('b/5');
+  e.poke('ms', 2); e.run(1); log.length = 0; e.poke('st_dfaults', e.peek('st_dfaults', 0) + 1, 0); e.poke('ump_arm', 0); e.poke('ms', 3); e.run(2);
+  const groan = log.includes('9/9');
+  check(claps >= 2 && hush && ooh && groan, `réactions : ${claps} applaudissements sur balle de match, silence au lancer${hush ? '' : ' (absent)'}, « OOOH »${ooh ? '' : ' (absent)'}, soupir${groan ? '' : ' (absent)'}`);
 }
 
 console.log('Service canon');

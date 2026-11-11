@@ -266,6 +266,10 @@ void sfx_canon(void)      { noise(0x05, 0x0F); pulse1(0x84, 0x93, 140); }
 void sfx_perfect(void)    { pulse1(0x83, 0x8B, 70); noise(0x02, 0x03); }
 /* un seul applaudissement timide (générique) */
 void sfx_clap(void)       { noise(0x01, 0x05); }
+/* public : « OOOH » (balle dehors de peu), soupir (double faute), silence */
+void sfx_ooh(void)        { noise(0x0B, 0x05); noise_hold = 40; pulse1(0x4C, 0xBA, 520); }
+void sfx_groan(void)      { noise(0x09, 0x09); noise_hold = 30; pulse1(0x4B, 0xB3, 420); }
+void sfx_hush(void)       { APU(0x400C) = 0x30; noise_hold = 0; }
 /* feu d'artifice : sifflement de la fusée qui monte, puis « pop » */
 void sfx_fw_launch(void)  { pulse1(0x4A, 0xBB, 700); }
 void sfx_fw_pop(void)     { noise(0x04, 0x0C); pulse1(0x82, 0x00, 1600); }
