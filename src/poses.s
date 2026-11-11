@@ -87,6 +87,8 @@ imp_k:     .res 4
 dive_t:    .res 4       ; plongeon en cours (trames)
 dive_f:    .res 4       ; son miroir (balle à gauche)
 fbv:       .res 1
+dive_x:    .res 8       ; position du plongeur (16 bits) : il vole, puis reste au sol
+dive_y:    .res 8
 pp:        .res 1       ; joueur
 pt:        .res 1       ; équipe (p & 1)
 pst:       .res 1       ; état du joueur
@@ -167,12 +169,14 @@ _poses_all:
 :   lda dive_t,x
     beq :+
     dec dive_t,x
+    jsr dive_step           ; plongeon : élan, vol, réception, au sol, relevé
 :
     ; nouvelle frappe : impact pour le frappeur, split-step pour l'adversaire
     lda _rally_hits
     cmp ss_hits,x
-    beq @norc
-    sta ss_hits,x
+    bne :+
+    jmp @norc
+:   sta ss_hits,x
     lda _hitter_p
     cmp pp
     bne @notme
@@ -188,8 +192,8 @@ _poses_all:
     sta imp_t,x
     lda _last_shot
     sta imp_k,x
-    ; balle frappée loin du corps (20 px ou plus sur le côté) : plongeon,
-    ; puis le joueur reste un instant au sol (poussière sur terre et glace)
+    ; balle frappée loin du corps (20 px ou plus sur le côté) : plongeon
+    ; (voir dive_step)
     jsr calcd
     ldx pp
     lda dxs
@@ -197,20 +201,24 @@ _poses_all:
     adc #19
     cmp #39
     bcc @norc
-    lda #22
+    lda #31
     sta dive_t,x
     lda dxs
     rol a                   ; retenue = signe : balle à gauche -> miroir
     lda #0
     rol a
     sta dive_f,x
-    lda _cfg+CFG_SURF
-    beq @dust
-    cmp #5
-    bne @norc
-@dust:
-    lda #10
-    sta _slide_t,x
+    txa
+    asl a
+    tay
+    lda _plx,y
+    sta dive_x,y
+    lda _plx+1,y
+    sta dive_x+1,y
+    lda _ply,y
+    sta dive_y,y
+    lda _ply+1,y
+    sta dive_y+1,y
     jmp @norc
 @notme:
     lda _ms
@@ -366,6 +374,90 @@ pose_fx:
     inx
     jmp @sl
 
+; plongeon du joueur X, une fois par trame (dive_t vient d'être décrémenté) :
+;   30-28 élan (fente) ; 27-21 vol : le joueur avance de 1,25 px par trame
+;   vers la balle (9 px), corps à l'horizontale, décollé du sol (pl_jump :
+;   6 px au plus haut) ; 18 réception (poussière, éclats ou sable) ;
+;   17-10 au sol ; 9-6 relevé.
+; Jusqu'au relevé, le joueur ne peut pas bouger : sa position est celle du
+; plongeon (le prix d'une balle rattrapée).
+dive_step:
+    lda dive_t,x
+    cmp #27
+    bne :+
+    lda #10
+    sta _pl_jump,x          ; envol : 6 px au plus haut, retombe en 10 trames
+:   lda dive_t,x
+    cmp #21
+    bcc @nofly
+    cmp #28
+    bcs @nofly
+    txa
+    asl a
+    tay
+    lda dive_f,x
+    bne @dl
+    clc
+    lda dive_x,y
+    adc #80
+    sta dive_x,y
+    lda dive_x+1,y
+    adc #0
+    sta dive_x+1,y
+    cmp #>(208 * 64)
+    bcc @nofly
+    lda #<(208 * 64)
+    sta dive_x,y
+    lda #>(208 * 64)
+    sta dive_x+1,y
+    bne @nofly
+@dl:
+    sec
+    lda dive_x,y
+    sbc #80
+    sta dive_x,y
+    lda dive_x+1,y
+    sbc #0
+    sta dive_x+1,y
+    cmp #>(48 * 64)
+    bcs @nofly
+    lda #<(48 * 64)
+    sta dive_x,y
+    lda #>(48 * 64)
+    sta dive_x+1,y
+@nofly:
+    lda dive_t,x
+    cmp #18
+    bne @noland
+    lda #0
+    sta _sl_ox,x            ; (pas de trace de glissade)
+    lda _cfg+CFG_SURF
+    beq @land
+    cmp #4
+    beq @land
+    cmp #5
+    bne @noland
+@land:
+    lda #10
+    sta _slide_t,x          ; réception : poussière, sable ou éclats
+@noland:
+    lda dive_t,x
+    cmp #6
+    bcc @free
+    txa
+    asl a
+    tay
+    lda dive_x,y
+    sta _plx,y
+    lda dive_x+1,y
+    sta _plx+1,y
+    lda dive_y,y
+    sta _ply,y
+    lda dive_y+1,y
+    sta _ply+1,y
+@free:
+    rts
+
 ; pose A (avec ses drapeaux) affichable ? Si elle fait partie d'un jeu de
 ; tuiles par phase qui n'est pas entièrement chargé (swap_on, extras.c),
 ; on montre sa pose de secours (pose_fb), avec les mêmes drapeaux
@@ -435,21 +527,22 @@ choose:
     lda #P_SAD
     rts
 @notover:
-    ; plongeon : au sol pendant 8 trames au moins, puis le joueur se relève
-    ; dès qu'il se remet à courir
+    ; plongeon (dive_t de 30 à 1) : élan en fente (30-28), vol puis au sol
+    ; (27-10), relevé en fente (9-6) ; ensuite le jeu reprend
     lda dive_t,x
-    beq @nodive2
-    cmp #14
-    bcs @diving
-    lda _pl_moving,x
-    beq @diving
-    lda #0
-    sta dive_t,x
-    beq @nodive2
-@diving:
+    cmp #6
+    bcc @nodive2
     lda dive_f,x
     sta _flip_cache,x
+    lda dive_t,x
+    cmp #28
+    bcs @dreach
+    cmp #10
+    bcc @dreach
     lda #P_DIVE
+    rts
+@dreach:
+    lda #P_REACH
     rts
 @nodive2:
     lda pst
