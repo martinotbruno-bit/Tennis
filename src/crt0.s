@@ -17,7 +17,7 @@
 .import _bx, _by, _bz, _b_vis, _plx, _ply, _pose_cache, _flip_cache, _sc_swap
 .import _rp_buf, _rp_head, _rp_count
 .import __WBSS_RUN__, __WBSS_SIZE__
-.export _meta_x, _meta_y, _meta_tile, _meta_attr
+.export _meta_x, _meta_y, _meta_tile, _meta_attr, _meta_t1, _meta_t2
 .import _main, zerobss, copydata
 .import __CSTACK_START__, __CSTACK_SIZE__
 .importzp sp, ptr1, ptr2, tmp1, tmp2
@@ -89,6 +89,8 @@ _meta_x:    .res 1      ; paramètres de _spr_meta (personnage 2x3 tuiles)
 _meta_y:    .res 1
 _meta_tile: .res 1
 _meta_attr: .res 1      ; bit 6 = miroir horizontal
+_meta_t1:   .res 1      ; tuile gauche des rangées 2 et 3 (la droite suit)
+_meta_t2:   .res 1
 _cur_bank:  .res 1      ; banque commutable actuellement en $8000
 call_vec:   .res 2      ; adresse appelée par _bank_call / _far_call
 far_arg:    .res 2      ; argument (A/X) puis résultat de _far_call
@@ -595,8 +597,9 @@ _spr1:
     inc sp+1
 :   rts
 
-; void spr_meta(void) : personnage 16x24 (2 colonnes x 3 rangées de tuiles
-; consécutives) en (_meta_x, _meta_y), tuile de base _meta_tile.
+; void spr_meta(void) : personnage 16x24 (2 colonnes x 3 rangées de tuiles)
+; en (_meta_x, _meta_y). Tuile gauche de chaque rangée : _meta_tile, _meta_t1,
+; _meta_t2 ; la tuile droite est la suivante.
 _spr_meta:
     ; deux sprites par rangée, écrits l'un après l'autre : l'index X reboucle
     ; naturellement sur 256 octets (nécessaire avec la rotation des sprites)
@@ -652,8 +655,10 @@ _spr_meta:
     inx
     inx
     inx
-    inc tmp2
-    inc tmp2
+    lda _meta_t1
+    sta tmp2
+    lda _meta_t2
+    sta _meta_t1
     tya
     clc
     adc #8
@@ -828,7 +833,7 @@ _rp_record:
     lda tmp1
     sta (ptr1),y
     ldx tmp2
-    ; pose | miroir << 3 | côté << 4
+    ; pose | miroir << 4 | côté << 5 (saut dans les bits 6-7 de pose_cache)
     txa
     and #1
     eor _sc_swap
@@ -836,8 +841,10 @@ _rp_record:
     asl a
     asl a
     asl a
+    asl a
     sta tmp1
     lda _flip_cache,x
+    asl a
     asl a
     asl a
     asl a

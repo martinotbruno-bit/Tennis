@@ -77,9 +77,6 @@ void hud_update(void);
 void rain_tick(void);
 void rain_draw(void);
 void win_fx(void);              /* étoiles et confettis de victoire (sprp.s, banque fixe) */
-u8 win_party(void);
-u8 rel_pad(u8 p, u8 pad);       /* HAUT/BAS relatifs au côté du joueur (gamefix.c) */
-extern const u8 hop_h[16];      /* hauteur du bond de joie (gamefix.c) */
 extern u8 ump_arm;              /* arbitre : bras tendu (faute, dehors) */
 void ump_draw(void);            /* arbitre de chaise (sprp.s, banque fixe) */
 extern u8 end_reason;           /* fin de l'échange : END_* */

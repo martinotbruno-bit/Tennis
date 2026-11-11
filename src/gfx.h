@@ -36,6 +36,10 @@ void spr_ball(u8 x, s16 sy, u8 shy, u8 zpx);
 #define POSE_SERVE  5
 #define POSE_JOY    6
 #define POSE_SAD    7
+#define POSE_BACK   8    /* revers à deux mains (armé) */
+#define POSE_REACH  9    /* extension vers une balle lointaine */
+#define POSE_SRVHIT 10   /* impact du service */
+#define POSE_LIFT   16   /* drapeau : personnage relevé d'1 px (rebond, foulée) */
 
 /* texte direct (rendu coupé) */
 void txt_at(u8 x, u8 y, const char *s);

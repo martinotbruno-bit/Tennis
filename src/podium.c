@@ -48,7 +48,6 @@ static u8 cup_t, fw_c, third_c;
 static const u8 dbl[16] = { 0x00, 0x03, 0x0C, 0x0F, 0x30, 0x33, 0x3C, 0x3F,
                             0xC0, 0xC3, 0xCC, 0xCF, 0xF0, 0xF3, 0xFC, 0xFF };
 /* variante de bras de la tête de Margaux par pose (comme sprp.s) */
-static const u8 marg_var[8] = { 0, 0, 0, 1, 2, 3, 0, 0 };
 /* couleur de la surface (fond universel) ; Margaux : rose */
 static const u8 surf_col[7] = { 0x26, 0x2A, 0x12, 0x13, 0x28, 0x21, 0x25 };
 
@@ -76,10 +75,10 @@ static void dbl_tile(u16 sa, u16 da)
    (rangée k/2, colonne k&1) -> tuiles dst + 4k .. dst + 4k + 3 */
 static void big_person(u8 c, u8 pose, u16 base, u8 dst)
 {
-    u8 k, s, t0 = (u8)(person_base[(char_female[c] << 1) | 1] + pose * 6);
+    u8 k, s, m = (u8)(person_row[(char_female[c] << 1) | 1] + pose * 3);
     for (k = 0; k < 6; ++k) {
-        s = (u8)(t0 + k);
-        if (c == 16 && k < 2) s = (u8)(marg_head + marg_var[pose] * 2 + 8 + k);   /* Margaux */
+        s = (u8)(person_map[m + (k >> 1)] + (k & 1));
+        if (c == 16 && k < 2) s = (u8)(marg_map[11 + pose] + k);   /* Margaux (de face) */
         dbl_tile((u16)(0x1000 + ((u16)s << 4)), (u16)(base + ((u16)(u8)(dst + k * 4) << 4)));
     }
 }

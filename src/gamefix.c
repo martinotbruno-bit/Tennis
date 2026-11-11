@@ -329,19 +329,5 @@ void fw_draw(u8 t, u8 dy)
 /* Fête de victoire : quand un humain gagne (ou en démonstration), comme pour
    la musique de victoire. Hauteur du bond de joie : t·(16−t)/8, en table.
    (Déplacées depuis la banque du moteur, qui était pleine.) */
-const u8 hop_h[16] = { 0, 1, 3, 5, 6, 7, 7, 7, 8, 7, 7, 7, 6, 5, 3, 1 };
-u8 win_party(void)
-{
-    return (u8)(ms == MS_OVER && !(cfg.ctrl[sc_winner] == CTRL_CPU && cfg.ctrl[sc_winner ^ 1] != CTRL_CPU));
-}
 
-/* Commandes des coups : HAUT et BAS par rapport au joueur. « Vers
-   l'adversaire » = coup long (à plat, lob), « vers soi » = coup court
-   (croisé court, amortie) : en haut du court, HAUT et BAS sont inversés.
-   GAUCHE et DROITE restent ceux de l'écran. */
-u8 rel_pad(u8 p, u8 pad)
-{
-    u8 v = (u8)(pad & (PAD_UP | PAD_DOWN));
-    if (((p & 1) ^ sc_swap) && (v == PAD_UP || v == PAD_DOWN)) pad ^= PAD_UP | PAD_DOWN;
-    return pad;
-}
+/* pose_of (pose d'un joueur pour la trame) : en assembleur, src/sprp.s */

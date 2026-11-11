@@ -345,8 +345,8 @@ void rp_play(void)
     for (i = 0; i < npl; ++i) {
         p = ord[i];
         a = e[6 + p * 3];
-        k = (u8)(a >> 5);           /* saut enregistré (j/2) : hauteur j²/16 */
-        spr_person(e[4 + p * 3], (s16)e[5 + p * 3] - ((k * k) >> 2), cfg.chr[p], (u8)((a >> 4) & 1), (u8)(a & 7), (u8)((a >> 3) & 1), (u8)(p & 1));
+        k = (u8)(a >> 6);           /* saut enregistré (j/4) : hauteur j²/16 = k² */
+        spr_person(e[4 + p * 3], (s16)e[5 + p * 3] - k * k, cfg.chr[p], (u8)((a >> 5) & 1), (u8)(a & 15), (u8)((a >> 4) & 1), (u8)(p & 1));
     }
     ump_draw();                      /* l'arbitre reste sur sa chaise pendant le ralenti */
     spr_end();

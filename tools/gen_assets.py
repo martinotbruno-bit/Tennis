@@ -829,6 +829,11 @@ def draw_person(view, legs, arms, female, nude=False):
     elif legs == 'runB':
         fill(c, 5, 16, 6, 19, 1); fill(c, 9, 16, 10, 21, 1)
         fill(c, 4, 20, 6, 21, 3); fill(c, 9, 22, 11, 23, 3)
+    elif legs == 'lunge':
+        # fente : jambe droite tendue loin sur le côté, jambe gauche fléchie
+        fill(c, 5, 16, 6, 20, 1); fill(c, 4, 21, 5, 21, 1)
+        line(c, 9, 16, 13, 21, 1); line(c, 10, 16, 14, 21, 1)
+        fill(c, 3, 22, 5, 23, 3); fill(c, 13, 22, 15, 23, 3)
     elif legs == 'wide':
         line(c, 5, 16, 3, 21, 1); line(c, 6, 16, 4, 21, 1)
         line(c, 9, 16, 11, 21, 1); line(c, 10, 16, 12, 21, 1)
@@ -861,6 +866,25 @@ def draw_person(view, legs, arms, female, nude=False):
         line(c, 4, 8, 3, 3, 1)          # bras de lancer levé
         line(c, 11, 8, 12, 6, 1)
         racket(c, 12, 5, 12, 2, 5)      # raquette armée au-dessus de la tête
+    elif arms == 'serve_hit':
+        # impact du service : bras tendu tout en haut, raquette inclinée vers
+        # l'avant ; le bras de lancer redescend devant la poitrine
+        line(c, 4, 8, 6, 11, 1); put(c, 7, 11, 1)
+        line(c, 11, 7, 12, 3, 1)
+        racket(c, 12, 3, 14, 2, 5)
+    elif arms == 'backhand':
+        # revers à deux mains (dessin vu en miroir : le sprite est retourné
+        # quand la balle est à gauche) : les deux bras partent du même côté,
+        # mains jointes sur le manche, raquette armée derrière l'épaule
+        line(c, 5, 9, 10, 11, 1)
+        line(c, 11, 9, 11, 11, 1)
+        racket(c, 11, 11, 13, 5)
+    elif arms == 'reach':
+        # balle lointaine : bras tendu au maximum, tamis vers le bas, l'autre
+        # bras en arrière pour l'équilibre
+        line(c, 4, 9, 1, 11, 1)
+        line(c, 11, 9, 14, 11, 1)
+        racket(c, 14, 12, 13, 17)
     return c
 
 def canvas_tiles(c):
@@ -879,30 +903,93 @@ POSES = [  # (jambes, bras) — l'ordre est repris dans src/gfx.c
     ('stand', 'serve'),   # 5 service
     ('wide', 'ready'),    # 6 joie / fente
     ('stand', 'down'),    # 7 déception
+    ('wide', 'backhand'), # 8 revers à deux mains (armé)
+    ('lunge', 'reach'),   # 9 extension (balle lointaine)
+    ('stand', 'serve_hit'),  # 10 impact du service
 ]
 NPOSE = len(POSES)
+# Réserve commune de tuiles : beaucoup de rangées (tête, buste, jambes) se
+# répètent d'une pose à l'autre. Chaque rangée de 2 tuiles n'est rangée
+# qu'une fois ; une table donne, pour chaque pose, la tuile de chacune des
+# 3 rangées. La version au naturel partage les mêmes numéros (une rangée est
+# commune si elle l'est dans les deux versions).
 next_spr = 0x10
-person_base = {}
+POOL0 = next_spr
+pool = {}
+nude_people = bytearray()
+def pool_rows(cv, nv):
+    global next_spr
+    t, tn = canvas_tiles(cv), canvas_tiles(nv)
+    out = []
+    for r in range(3):
+        key = tuple(tuple(map(tuple, x)) for x in (t[2*r], t[2*r+1], tn[2*r], tn[2*r+1]))
+        if key not in pool:
+            pool[key] = next_spr
+            spr_tile(next_spr, t[2*r]); spr_tile(next_spr + 1, t[2*r+1])
+            nude_people.extend(encode_tile(tn[2*r])); nude_people.extend(encode_tile(tn[2*r+1]))
+            next_spr += 2
+        out.append(pool[key])
+    return out
+person_map = []
 preview_people = []
 for female in (0, 1):
     for view in ('back', 'front'):
-        base = next_spr
-        person_base[(female, view)] = base
         for (legs, arms) in POSES:
             cv = draw_person(view, legs, arms, female)
             preview_people.append(cv)
-            for t in canvas_tiles(cv):
-                spr_tile(next_spr, t)
-                next_spr += 1
-nude_people = bytearray()
+            person_map += pool_rows(cv, draw_person(view, legs, arms, female, nude=True))
 for female in (0, 1):
     for view in ('back', 'front'):
         for (legs, arms) in POSES:
-            cv = draw_person(view, legs, arms, female, nude=True)
-            preview_people.append(cv)
-            for t in canvas_tiles(cv):
-                nude_people += encode_tile(t)
-assert len(nude_people) == (next_spr - 0x10) * 16
+            preview_people.append(draw_person(view, legs, arms, female, nude=True))
+
+# --- course de profil (vue de côté, tournée vers la droite ; miroir à gauche)
+def draw_profile(frame, female, nude=False):
+    c = new_canvas()
+    # tête : cheveux à l'arrière, visage tourné vers la droite
+    fill(c, 6, 1, 10, 5, 1)
+    fill(c, 5, 0, 9, 1, 3); fill(c, 5, 1, 6, 4, 3)
+    put(c, 9, 2, 3)                     # oeil
+    put(c, 11, 3, 1)                    # nez
+    if female:
+        fill(c, 3, 2, 4, 4, 3); put(c, 4, 1, 3)   # queue de cheval
+    fill(c, 7, 6, 8, 6, 1)              # cou
+    # buste de profil (plus étroit)
+    if nude:
+        fill(c, 6, 7, 9, 15, 1)
+        for k in range(5):
+            put(c, 6 + (k % 4), 7 + k, 2)
+    else:
+        fill(c, 6, 7, 9, 13, 2)
+        if female:
+            fill(c, 5, 14, 10, 15, 2); fill(c, 5, 15, 10, 15, 3)
+        else:
+            fill(c, 6, 14, 9, 15, 3)
+    if frame == 0:
+        # foulée : bras opposés, jambes écartées
+        line(c, 6, 8, 4, 11, 1)                          # bras arrière
+        line(c, 9, 8, 11, 11, 1)                         # bras avant
+        racket(c, 11, 12, 13, 17, 5)                     # raquette tenue devant
+        line(c, 8, 16, 11, 21, 1); line(c, 9, 16, 12, 21, 1)   # jambe avant
+        line(c, 7, 16, 4, 21, 1); line(c, 6, 16, 3, 21, 1)     # jambe arrière
+        fill(c, 11, 22, 13, 23, 1 if nude else 3); fill(c, 2, 22, 4, 23, 1 if nude else 3)
+    else:
+        # jambes croisées (passage), bras le long du corps
+        line(c, 6, 8, 5, 12, 1)
+        line(c, 9, 8, 10, 12, 1)
+        racket(c, 10, 13, 12, 18, 5)
+        fill(c, 7, 16, 8, 21, 1)
+        line(c, 7, 16, 5, 20, 1)
+        fill(c, 7, 22, 9, 23, 1 if nude else 3); put(c, 4, 21, 1 if nude else 3)
+    return c
+
+prof_map = []
+for female in (0, 1):
+    for frame in (0, 1):
+        cv = draw_profile(frame, female)
+        preview_people.append(cv)
+        prof_map += pool_rows(cv, draw_profile(frame, female, nude=True))
+POOL_END = next_spr
 
 # coupe (2x2 tuiles, palette 2 : 1 or clair, 2 sombre, 3 reflet) et confettis
 cup = [[0]*16 for _ in range(16)]
@@ -951,62 +1038,12 @@ for (x, y) in ((3, 3), (4, 3), (3, 4), (4, 4)):
 conf[3][4] = 3
 spr_tile(next_spr, conf); next_spr += 1
 
-# --- course de profil (vue de côté, tournée vers la droite ; miroir à gauche)
-def draw_profile(frame, female, nude=False):
-    c = new_canvas()
-    # tête : cheveux à l'arrière, visage tourné vers la droite
-    fill(c, 6, 1, 10, 5, 1)
-    fill(c, 5, 0, 9, 1, 3); fill(c, 5, 1, 6, 4, 3)
-    put(c, 9, 2, 3)                     # oeil
-    put(c, 11, 3, 1)                    # nez
-    if female:
-        fill(c, 3, 2, 4, 4, 3); put(c, 4, 1, 3)   # queue de cheval
-    fill(c, 7, 6, 8, 6, 1)              # cou
-    # buste de profil (plus étroit)
-    if nude:
-        fill(c, 6, 7, 9, 15, 1)
-        for k in range(5):
-            put(c, 6 + (k % 4), 7 + k, 2)
-    else:
-        fill(c, 6, 7, 9, 13, 2)
-        if female:
-            fill(c, 5, 14, 10, 15, 2); fill(c, 5, 15, 10, 15, 3)
-        else:
-            fill(c, 6, 14, 9, 15, 3)
-    if frame == 0:
-        # foulée : bras opposés, jambes écartées
-        line(c, 6, 8, 4, 11, 1)                          # bras arrière
-        line(c, 9, 8, 11, 11, 1)                         # bras avant
-        racket(c, 11, 12, 13, 17, 5)                     # raquette tenue devant
-        line(c, 8, 16, 11, 21, 1); line(c, 9, 16, 12, 21, 1)   # jambe avant
-        line(c, 7, 16, 4, 21, 1); line(c, 6, 16, 3, 21, 1)     # jambe arrière
-        fill(c, 11, 22, 13, 23, 1 if nude else 3); fill(c, 2, 22, 4, 23, 1 if nude else 3)
-    else:
-        # jambes croisées (passage), bras le long du corps
-        line(c, 6, 8, 5, 12, 1)
-        line(c, 9, 8, 10, 12, 1)
-        racket(c, 10, 13, 12, 18, 5)
-        fill(c, 7, 16, 8, 21, 1)
-        line(c, 7, 16, 5, 20, 1)
-        fill(c, 7, 22, 9, 23, 1 if nude else 3); put(c, 4, 21, 1 if nude else 3)
-    return c
-
-PROFILE_BASE = next_spr
-nude_profile = bytearray()
-for female in (0, 1):
-    for frame in (0, 1):
-        cv = draw_profile(frame, female)
-        preview_people.append(cv)
-        for t in canvas_tiles(cv):
-            spr_tile(next_spr, t); next_spr += 1
-        for t in canvas_tiles(draw_profile(frame, female, nude=True)):
-            nude_profile += encode_tile(t)
 assert next_spr <= 256, "trop de tuiles de sprites"
 
 # --- Margaux : cheveux longs, blonds et bouclés (couleur 3 de sa palette).
 # Seule la rangée du haut (tête, 2 tuiles) lui est propre ; le corps reste
-# celui des joueuses. 4 variantes de bras par vue (attente, frappe armée,
-# accompagnement, service) + 1 tête de profil pour la course.
+# celui des joueuses. Une tête par vue et par pose (têtes identiques partagées)
+# + 1 tête de profil pour la course.
 def margaux_hair(c, view):
     hair = set()
     for x in range(5, 11): hair.add((x, 0))
@@ -1056,15 +1093,21 @@ def margaux_profile_hair(c):
         c[y][3] = 3
     return c
 
-MARG_ARMS = ['ready', 'swing', 'follow', 'serve']
-MARG_HEAD = next_spr
+# tête de Margaux pour chaque vue et chaque pose (les bras levés passent
+# dans la rangée de la tête) ; les têtes identiques sont partagées
 marg_previews = []
+marg_pool = {}
+marg_map = []
 for view in ('back', 'front'):
-    for arms in MARG_ARMS:
-        cv = margaux_hair(draw_person(view, 'stand', arms, 1), view)
-        marg_previews.append(cv)
+    for (legs, arms) in POSES:
+        cv = margaux_hair(draw_person(view, legs, arms, 1), view)
         t = canvas_tiles(cv)
-        spr_tile(next_spr, t[0]); spr_tile(next_spr + 1, t[1]); next_spr += 2
+        key = (tuple(map(tuple, t[0])), tuple(map(tuple, t[1])))
+        if key not in marg_pool:
+            marg_pool[key] = next_spr
+            marg_previews.append(cv)
+            spr_tile(next_spr, t[0]); spr_tile(next_spr + 1, t[1]); next_spr += 2
+        marg_map.append(marg_pool[key])
 pv = margaux_profile_hair(draw_profile(0, 1))
 marg_previews.append(pv)
 tp = canvas_tiles(pv)
@@ -1122,10 +1165,13 @@ for ch in LOGO:
         logo += logo_tiles[ch]
 src.append(c_array('logo_tiles', bytes(logo)))
 src.append(c_array('bigball_tiles', bytes(ball_tiles)))
-src.append('const unsigned char person_base[4] = {0x%02X,0x%02X,0x%02X,0x%02X};\n' % (
-    person_base[(0,'back')], person_base[(0,'front')], person_base[(1,'back')], person_base[(1,'front')]))
-src.append('const unsigned char marg_head = 0x%02X;\nconst unsigned char marg_prof_l = 0x%02X;\nconst unsigned char marg_prof_r = 0x%02X;\n' % (MARG_HEAD, MARG_PROF_L, MARG_PROF_R))
-src.append('const unsigned char trophy_tile = 0x%02X;\nconst unsigned char confetti_tile = 0x%02X;\nconst unsigned char ball_mid_tile = 0x%02X;\nconst unsigned char ball_big_tile = 0x%02X;\nconst unsigned char profile_base = 0x%02X;\n' % (TROPHY_TILE, CONFETTI_TILE, BALL_MID_TILE, BALL_BIG_TILE, PROFILE_BASE))
+src.append(c_array('person_map', bytes(person_map)))
+src.append(c_array('prof_map', bytes(prof_map)))
+src.append(c_array('marg_map', bytes(marg_map)))
+src.append('const unsigned char person_row[4] = {%d,%d,%d,%d};\n' % tuple(k * NPOSE * 3 for k in range(4)))
+src.append('const unsigned int people_bytes = %d;\n' % ((POOL_END - POOL0) * 16))
+src.append('const unsigned char marg_prof_l = 0x%02X;\nconst unsigned char marg_prof_r = 0x%02X;\n' % (MARG_PROF_L, MARG_PROF_R))
+src.append('const unsigned char trophy_tile = 0x%02X;\nconst unsigned char confetti_tile = 0x%02X;\nconst unsigned char ball_mid_tile = 0x%02X;\nconst unsigned char ball_big_tile = 0x%02X;\n' % (TROPHY_TILE, CONFETTI_TILE, BALL_MID_TILE, BALL_BIG_TILE))
 with open(os.path.join(ROOT, 'src', 'assets_data.c'), 'w') as f:
     f.write('\n'.join(src))
 
@@ -1133,7 +1179,6 @@ with open(os.path.join(ROOT, 'src', 'assets_data.c'), 'w') as f:
 src = ['/* Fichier généré par tools/gen_assets.py — ne pas modifier. */',
        '#include "assets.h"', '']
 src.append(c_array('nude_people', bytes(nude_people)))
-src.append(c_array('nude_profile', bytes(nude_profile)))
 with open(os.path.join(ROOT, 'src', 'assets_nude.c'), 'w') as f:
     f.write('\n'.join(src))
 

@@ -39,8 +39,9 @@ static u8 ad_l[2], ad_r[2], ad_net[2], ad_n[2];
 /* ---------------- joueurs (non statiques : lus par les tests) ---------- */
 u8 npl;                         /* 2 en simple, 4 en double */
 s16 plx[4], ply[4];
-static u8 pl_state[4], pl_timer[4], pl_charge[4], pl_btn[4], pl_hit[4];
-static u8 pl_walk[4], pl_moving[4], pl_flip[4];
+u8 pl_state[4], pl_timer[4];        /* lus par pose_of (banque fixe) */
+static u8 pl_charge[4], pl_btn[4], pl_hit[4];
+u8 pl_walk[4], pl_moving[4], pl_flip[4];
 u8 ai_delay[4];                  /* lu par les tests */
 static u8 ai_net[4];
 /* Fonctions utilitaires et calcul de trajectoire : banque fixe (gamefix.c),
@@ -59,6 +60,9 @@ static s16 ai_gx[4], ai_gy[4];         /* destination courante de l'IA (FP) */
 static u8 ai_x2;                       /* 1 : pas de déplacement doublé */
 static u8 hit_now;                     /* une frappe a eu lieu dans cette trame */
 u8 pl_jump[4];                         /* smash sauté : trames de saut restantes */
+static u8 win_party(void);
+static u8 rel_pad(u8 p, u8 pad);
+u8 __fastcall__ pose_of(u8 p);         /* banque fixe (sprp.s) */
 u8 hit_pass, hit_jump;                 /* dernière frappe : adversaire au filet, smash sauté */
 u8 tired;                              /* fatigue de l'échange en cours, 0..10 */
 u8 srv_slot[2];                 /* double : quel partenaire sert pour l'équipe */
@@ -650,7 +654,7 @@ static void human_update(u8 p, u8 pad, u8 pressed)
         /* frappe partie dans les 3 premières trames du geste : bouton relâché
            juste avant l'arrivée de la balle (condition de la frappe parfaite) */
         swing_early = (u8)(st == ST_SWING ? pl_timer[p] : 0);   /* 0 : encore armé */
-        do_hit(p, rel_pad(p, pad), pl_btn[p], pl_charge[p], 3);   /* HAUT/BAS relatifs (gamefix.c) */
+        do_hit(p, rel_pad(p, pad), pl_btn[p], pl_charge[p], 3);   /* HAUT/BAS relatifs au joueur */
         pl_state[p] = ST_SWING;
         pl_timer[p] = 10;
     }
@@ -1088,23 +1092,24 @@ u8 match_tick(void)
 
 /* fête de victoire : quand un humain gagne (ou en démonstration), comme
    pour la musique de victoire */
-/* win_party et la table des bonds de joie (hop_h) : banque fixe (gamefix.c) */
-
-static u8 pose_of(u8 p)
+static const u8 hop_h[16] = { 0, 1, 3, 5, 6, 7, 7, 7, 8, 7, 7, 7, 6, 5, 3, 1 };
+static u8 win_party(void)
 {
-    u8 st = pl_state[p], t = (u8)(p & 1);
-    if (ms == MS_OVER) {
-        if (t == sc_winner) return (u8)((ms_timer & 16) ? POSE_SERVE : POSE_JOY);
-        return POSE_SAD;
-    }
-    if (st == ST_TOSS) return POSE_SERVE;
-    if (st == ST_SWING) return (u8)(pl_timer[p] > 6 ? POSE_SWING : POSE_FOLLOW);
-    if (st == ST_CHARGE) return POSE_JOY;
-    if (pl_moving[p]) return (u8)((pl_walk[p] & 8) ? POSE_RUN1 : POSE_RUN2);
-    if (ms == MS_DEAD && end_reason == END_POINT && cfg.mode == GM_MATCH && ms_timer < 60)
-        return (u8)(t == pending_winner ? POSE_JOY : POSE_SAD);
-    return POSE_IDLE;
+    return (u8)(ms == MS_OVER && !(cfg.ctrl[sc_winner] == CTRL_CPU && cfg.ctrl[sc_winner ^ 1] != CTRL_CPU));
 }
+
+/* Commandes des coups : HAUT et BAS par rapport au joueur. « Vers
+   l'adversaire » = coup long (à plat, lob), « vers soi » = coup court
+   (croisé court, amortie) : en haut du court, HAUT et BAS sont inversés.
+   GAUCHE et DROITE restent ceux de l'écran. */
+static u8 rel_pad(u8 p, u8 pad)
+{
+    u8 v = (u8)(pad & (PAD_UP | PAD_DOWN));
+    if (((p & 1) ^ sc_swap) && (v == PAD_UP || v == PAD_DOWN)) pad ^= PAD_UP | PAD_DOWN;
+    return pad;
+}
+
+
 
 void match_draw(void)
 {
@@ -1144,11 +1149,11 @@ void match_draw(void)
     for (i = 0; i < npl; ++i) {
         p = ord[i];
         /* saut : hauteur (j²/16) au plus haut à l'impact, puis chute ;
-           j/2 est gardé dans les bits 5-7 de pose_cache pour les ralentis */
+           j/4 est gardé dans les bits 6-7 de pose_cache pour les ralentis */
         j = pl_jump[p];
         if (j) --pl_jump[p];
         k = pose_of(p);
-        pose_cache[p] = (u8)(k | ((j >> 1) << 5));
+        pose_cache[p] = (u8)((k & 15) | ((j >> 2) << 6));
         flip_cache[p] = (u8)(pl_state[p] == ST_SWING ? pl_flip[p] : 0);
         if (cfg.mode == GM_TRAIN && p == 1 && cfg.ex != EX_STATIC) continue;   /* lanceur invisible */
         j = (u8)((j * j) >> 4);

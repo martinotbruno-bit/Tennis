@@ -402,7 +402,7 @@ function playComp(type, opts, wins) {
   // big player : chaque tuile agrandie = tuile du personnage dont chaque pixel est doublé
   const chr = e.nes.ppu.vramMem, f0 = e.nes.cpu.mem;
   let okz = true;
-  { const c = e.peek('c_pl', 0), fem = e.peek('char_female', c), base = e.peek('person_base', (fem << 1) | 1) + 6 * 6;
+  { const c = e.peek('c_pl', 0), fem = e.peek('char_female', c), base = e.peek('person_map', e.peek('person_row', (fem << 1) | 1) + 6 * 3);
     for (let y = 0; y < 8; y++) { const s0 = chr[0x1000 + base * 16 + (y >> 1)], d0 = chr[0x60 * 16 + y];
       let exp = 0; for (let b = 0; b < 4; b++) if (s0 & (0x80 >> b)) exp |= 0xC0 >> (b * 2);
       if (d0 !== exp) okz = false; } }
@@ -728,7 +728,7 @@ const msgText = (e) => { let t = ''; for (let i = 0; i < 14; i++) t += String.fr
   check(j2 >= 2 && j2 <= 7 && j1 === 0, `lob contre un CPU au filet : smash sauté ${j2}/8 en Expert, ${j1}/8 en Normal`);
 }
 {
-  // le saut est enregistré pour les ralentis (bits 5-7 de pose_cache)
+  // le saut est enregistré pour les ralentis (bits 6-7 de pose_cache)
   const e = boot(); startWith(e, { FMT: 3 });
   runUntil(e, () => e.peek('ms') === 0, 200);
   const s16 = (n, v, o = 0) => { e.poke(n, v & 255, o); e.poke(n, (v >> 8) & 255, o + 1); };
@@ -737,7 +737,7 @@ const msgText = (e) => { let t = ''; for (let i = 0; i < 14; i++) t += String.fr
   s16('plx', 128 * 64, 0); s16('ply', 168 * 64, 0);
   s16('bx', 132 * 64); s16('by', 165 * 64); s16('bz', 52 * 64); s16('bvx', 0); s16('bvy', 0); s16('bvz', 0);
   e.down('A'); e.run(4); e.up('A');
-  check((e.peek('pose_cache', 0) >> 5) > 0, 'saut enregistré pour le ralenti');
+  check((e.peek('pose_cache', 0) >> 6) > 0, 'saut enregistré pour le ralenti');
 }
 {
   // effets : ombres (simple), arbitre (tous les lieux), poussière (terre), repère (lent)
@@ -849,9 +849,10 @@ console.log('Margaux jouable et fatigue');
   check(scr(h) === SS.COMP && h.peek('c_pl', 0) === 16 && h.peek('c_pl2', 0) === 7, 'code de reprise avec Margaux relu');
   // tête propre à Margaux (cheveux longs, blonds, bouclés) en match
   const m = boot(); startWith(m, { FMT: 3, P1: 16 }); allCpu(m); m.run(60);
-  const mh = m.peek('marg_head'), ml = m.peek('marg_prof_l');
+  const mt = new Set(); for (let i = 0; i < 22; i++) { mt.add(m.peek('marg_map', i)); mt.add(m.peek('marg_map', i) + 1); }
+  mt.add(m.peek('marg_prof_l')); mt.add(m.peek('marg_prof_r'));
   const tl = oamTiles(m);
-  check([...tl].some((x) => (x >= mh && x < mh + 16) || x === ml || x === 0xFF), 'Margaux affichée avec sa propre chevelure');
+  check([...tl].some((x) => mt.has(x)), 'Margaux affichée avec sa propre chevelure');
   // jamais au club nudiste : lieu sauté au menu
   const n = boot(); n.poke('nude_unlocked', 1); toMenu(n);
   n.poke('opt_val', 16, O.P1); n.poke('opt_val', 2, O.ENV);
@@ -1278,6 +1279,62 @@ console.log('Victoire : sauts de joie et confettis');
   const f = boot(); startWith(f, { MODE: MODE.P1 }); f.run(60);
   f.poke('sc_winner', 1); f.poke('ms_timer', 160); f.poke('ms', 4); f.run(10);
   check(!oamTiles(f).has(confetti), 'défaite contre le CPU : pas de confettis');
+}
+console.log('Animation des joueurs');
+{
+  // tuiles : réserve commune (rangées partagées), versions normale et au naturel de même taille
+  const e = boot();
+  const nb = e.peek16('people_bytes');
+  let okm = true;
+  for (let i = 0; i < 132; i++) { const t = e.peek('person_map', i); if (t < 0x10 || t + 1 >= 0x10 + nb / 16) okm = false; }
+  for (let i = 0; i < 12; i++) { const t = e.peek('prof_map', i); if (t < 0x10 || t + 1 >= 0x10 + nb / 16) okm = false; }
+  check(okm && nb % 32 === 0, `poses dans la réserve de tuiles des joueurs (${nb / 16} tuiles pour 11 poses x 4 vues + profils)`);
+  // match CPU : poses jouées, ordre du service, split-step, rebond d'attente
+  startWith(e, { FMT: 3 }); allCpu(e);
+  const poses = new Set(), seq = [[], []];
+  let split = 0, bob = [new Set(), new Set()];
+  const headY = (p) => {
+    const px = e.peekS16('plx', p * 2) >> 6, py = e.peekS16('ply', p * 2) >> 6;
+    let m = 999;
+    for (let i = 0; i < 64; i++) {
+      const y = e.peek('oam_buf', i * 4), x = e.peek('oam_buf', i * 4 + 3);
+      if (y < 0xEF && x >= px - 9 && x <= px + 1 && y + 1 > py - 30 && y + 1 < py) m = Math.min(m, y + 1);
+    }
+    return m === 999 ? null : m - py;
+  };
+  let last = [-1, -1], still = [0, 0], prev = [0, 0];
+  for (let f = 0; f < 60 * 60 * 3; f++) {
+    e.run(1);
+    for (let p = 0; p < 2; p++) {
+      const k = e.peek('pose_cache', p) & 15;
+      poses.add(k);
+      if (k !== last[p]) { seq[p].push(k); last[p] = k; }
+      const j = e.peek('pl_jump', p);
+      if (j === 6 && (k === 0 || k === 6) && e.peek('ms') === 2) split++;
+      const pos = e.peekS16('plx', p * 2) * 65536 + e.peekS16('ply', p * 2);
+      still[p] = pos === prev[p] ? still[p] + 1 : 0; prev[p] = pos;
+      if (still[p] > 2 && k === 0 && j === 0 && e.peek('ms') === 0) { const h = headY(p); if (h !== null) bob[p].add(h); }
+    }
+  }
+  const has = (a, b) => a.join(',').includes(b);
+  check(poses.has(8) && poses.has(9) && poses.has(10), `revers à deux mains, extension et impact du service joués (${[...poses].sort((a, b) => a - b)})`);
+  check(has(seq[0], '5,10,4') || has(seq[1], '5,10,4'), 'service en 3 temps : lancer, impact bras tendu, accompagnement');
+  check(split > 3, `split-step quand l'adversaire frappe (${split})`);
+  const okb = [0, 1].some((p) => { const v = [...bob[p]]; return v.length === 2 && Math.abs(v[0] - v[1]) === 1; });
+  check(okb, `rebond d'attente de 1 px (${[...bob[0]]} / ${[...bob[1]]})`);
+  // course en 4 temps : deux foulées, chacune basse puis relevée d'1 px
+  const r = boot(); startWith(r, { FMT: 3 });
+  runUntil(r, () => r.peek('ms') === 0, 300);
+  r.poke('ms', 2); r.poke('b_live', 1); r.poke('b_vis', 0); r.poke('hitter', 0);
+  const hs = new Set(), rp = new Set();
+  r.down('RIGHT');
+  for (let f = 0; f < 32; f++) { r.run(1); rp.add(r.peek('pose_cache', 0) & 15);
+    const px = r.peekS16('plx', 0) >> 6, py = r.peekS16('ply', 0) >> 6;
+    let m = 999; for (let i = 0; i < 64; i++) { const y = r.peek('oam_buf', i * 4), x = r.peek('oam_buf', i * 4 + 3);
+      if (y < 0xEF && x >= px - 9 && x <= px + 1 && y + 1 > py - 30 && y + 1 < py) m = Math.min(m, y + 1); }
+    if (m !== 999) hs.add(m - py); }
+  r.up('RIGHT');
+  check(rp.has(1) && rp.has(2) && hs.size === 2, `course : 2 foulées et 2 hauteurs (${[...hs]})`);
 }
 console.log('Compensation 50 Hz (PAL)');
 {

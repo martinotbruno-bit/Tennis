@@ -1,10 +1,16 @@
-# Royal Martinot — Rapport de réalisation (version 2.27)
+# Royal Martinot — Rapport de réalisation (version 2.28)
 
 Comme l'exige le CDC (§ 17.5), ce rapport distingue ce qui est **réalisé**, **testé**, **validé sur matériel réel**, **validé uniquement en émulation**, **dépendant d'une extension**, et les **limitations restantes**.
 
 > **Validation matérielle : aucune.** Aucun test n'a été fait sur console réelle (NES, Famicom, PAL, cartouche MMC1). Toutes les validations ont eu lieu en émulation (jsnes) et par des tests unitaires sur PC. Les critères « vérifié sur console physique » (CDC § 2.1, 15.4, 16.A) **ne sont pas remplis**. Ce point ne peut pas être traité dans l'environnement de développement utilisé.
 
 ## 1. Évolutions
+
+### Version 2.28
+
+| Demande | Réalisation |
+|---|---|
+| Animation des joueurs : toutes les améliorations proposées | **Attente** : léger rebond sur place (1 px toutes les 16 trames, décalé d'un joueur à l'autre). **Split-step** : quand l'adversaire frappe, le joueur à l'arrêt fait un petit saut puis se réceptionne appuis écartés. **Course en 4 temps** : chaque foulée est basse puis relevée d'1 px. **Service en 3 temps** : lancer, impact bras tendu tout en haut, accompagnement. **Revers à deux mains** quand la balle est à gauche (au lieu d'un coup droit en miroir) et **extension** (fente, bras tendu, tamis bas) quand la balle passe loin du joueur. Margaux a sa chevelure dans toutes les poses. Pour faire de la place (la table de sprites était pleine), les rangées de tuiles identiques d'une pose à l'autre sont partagées : 11 poses tiennent dans 116 tuiles au lieu de 216 pour 8. Le choix de la pose est écrit en assembleur : le jeu n'est pas plus lent qu'avant, en simple comme en double. Les ralentis montrent aussi les nouvelles poses |
 
 ### Version 2.27
 
@@ -249,7 +255,7 @@ Pour loger ce contenu, la cartouche passe de NROM (32 Ko) à **MMC1** : 128 Ko d
 |---|---|
 | Règles (`rules_test`) | 42/42 |
 | Codes (`password_test`) | 200 000/200 000 aller-retour (format v3), ancien code v2 accepté, Margaux codée, Margaux au club nudiste refusée ; 99,98 % des codes altérés d'un signe refusés |
-| Émulateur (`emu_test`) | 225/225 vérifications (environ 21 min) |
+| Émulateur (`emu_test`) | 231/231 vérifications (environ 22 min) |
 | Profil CPU, simple, 6 000 trames | 0 trame d'échange en dépassement |
 | Relecture des textes (`check_texts.py`) | 0 problème |
 | Contraste (`contrast.py 25`) | 0 paire sous ΔE 25 (personnages, courts, balle, tenues) |

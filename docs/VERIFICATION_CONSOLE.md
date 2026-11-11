@@ -52,6 +52,7 @@ Réglages : FORMAT RAPIDE, NIVEAU FACILE, VITESSE JEU NORMAL.
 | 3.2 c | Frappe parfaite : se placer à côté de la trajectoire et relâcher A juste avant l'arrivée de la balle | « Tchak » sec, éclat blanc près de la raquette, balle plus rapide. Palmarès : COUPS PARFAITS (nombre et %) | ☐ |
 | 3.3 | Échanges | La balle grossit en hauteur ; son ombre reste au sol ; les joueurs ont une ombre sous les pieds | ☐ |
 | 3.4 | Se déplacer latéralement | Le joueur court de profil, avec des bruits de pas discrets | ☐ |
+| 3.4 b | Animation des joueurs | À l'arrêt, léger rebond sur place ; petit saut (split-step) quand l'adversaire frappe ; service en 3 temps (lancer, bras tendu tout en haut, accompagnement) ; revers à deux mains quand la balle arrive à gauche ; fente bras tendu sur une balle lointaine. Aucun clignotement ni tuile parasite, aussi au club nudiste et avec Margaux | ☐ |
 | 3.5 | Coup gagnant | Bandeau « COUP GAGNANT ! », « PASSING ! », « AMORTIE ! »… et un « ting » bref | ☐ |
 | 3.6 | Lob court sur soi, près du filet : A | Smash sauté : le joueur s'élève puis retombe, son ombre reste au sol | ☐ |
 | 3.7 | Ralenti après un beau point | Le point est rejoué à mi-vitesse ; A le passe | ☐ |

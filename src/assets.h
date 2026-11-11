@@ -3,9 +3,15 @@
 /* banque fixe */
 extern const unsigned char logo_tiles[56];   /* « ROYAL MARTINOT » */
 extern const unsigned char bigball_tiles[16];
-extern const unsigned char person_base[4];
-extern const unsigned char marg_head, marg_prof_l, marg_prof_r;
-extern const unsigned char trophy_tile, confetti_tile, ball_mid_tile, ball_big_tile, profile_base;
+/* personnages : réserve commune de tuiles à partir de $10 ; pour chaque
+   (femme << 1 | face) et chaque pose, 3 octets = tuile gauche de chaque
+   rangée (la tuile droite suit). person_row[k] = k * NPOSE * 3 */
+extern const unsigned char person_map[132], person_row[4];
+extern const unsigned char prof_map[12];        /* course de profil : (femme * 2 + foulée B) * 3 */
+extern const unsigned char marg_map[22];        /* tête de Margaux : face * NPOSE + pose */
+extern const unsigned int people_bytes;         /* taille de la réserve (octets de CHR) */
+extern const unsigned char marg_prof_l, marg_prof_r;
+extern const unsigned char trophy_tile, confetti_tile, ball_mid_tile, ball_big_tile;
 /* banque du moteur de jeu (BANK0) */
 extern const unsigned char * const court_nt_rle[5];
 extern const unsigned char crowd_idx4[3];
@@ -24,8 +30,7 @@ extern const unsigned char ump_chr[48];
 extern const unsigned char net_idx[2];          /* tuiles des mailles du filet */
 extern const unsigned char net_norm[32], net_shk[32];   /* au repos / secouées */
 /* banque 6 */
-extern const unsigned char nude_people[3072];
-extern const unsigned char nude_profile[384];
+extern const unsigned char nude_people[];      /* people_bytes octets */
 extern const unsigned char crowd_idx[6];
 extern const unsigned char crowd_norm[96];
 extern const unsigned char crowd_cheer[96];

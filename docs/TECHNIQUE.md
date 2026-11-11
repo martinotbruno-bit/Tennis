@@ -35,16 +35,16 @@ La version 1.0 tenait en NROM-256 (32 Ko, plein à 87 %). Il a fallu plus de pla
 
 | Banque | Contenu | Occupation |
 |---|---|---|
-| 15 (fixe, $C000) | Démarrage, NMI, primitives (sprites, VRAM, manettes, trampolines `bank_call` / `far_call`, enregistrement des ralentis, affichage des personnages), boucle principale, règles, palettes, 17 personnages, noms des compétitions, échange des tuiles de personnages, effets du court, son, bibliothèque cc65 | 15 846 |
-| 0 | Moteur de match : physique, frappes, service, arbitrage, IA, fête de victoire | 16 224 |
-| 1 | Écrans : titre, configuration, présentation, résultats, fin de set, compétitions, levée de coupe, saisie de code, palmarès | 16 111 |
+| 15 (fixe, $C000) | Démarrage, NMI, primitives (sprites, VRAM, manettes, trampolines `bank_call` / `far_call`, enregistrement des ralentis, affichage et pose des personnages), boucle principale, règles, palettes, 17 personnages, noms des compétitions, échange des tuiles de personnages, effets du court, son, bibliothèque cc65 | 16 128 |
+| 0 | Moteur de match : physique, frappes, service, arbitrage, IA, fête de victoire | 16 276 |
+| 1 | Écrans : titre, configuration, présentation, résultats, fin de set, compétitions, levée de coupe, saisie de code, palmarès | 15 780 |
 | 2 | Motifs graphiques (8 Ko), copiés en CHR-RAM au démarrage | 8 192 |
-| 3 | Annexes du match : score et annonces du club nudiste, courts (5 lieux), panneau du court Margaux, public (regard, ola, réactions), pluie, ralentis, exercices, tutoriel | 12 174 |
-| 4 | Mode d'emploi | 3 636 |
-| 5 | Compétitions (tirages, simulations, classements, équipes de double), palmarès et codes de reprise (`password.c`, appelé par `far_call`) | 9 773 |
-| 6 | Tuiles des personnages « au naturel » (club nudiste), copiées en CHR-RAM à la demande | 3 456 |
+| 3 | Annexes du match : score et annonces du club nudiste, courts (5 lieux), panneau du court Margaux, public (regard, ola, réactions), pluie, ralentis, exercices, tutoriel | 12 545 |
+| 4 | Mode d'emploi | 3 661 |
+| 5 | Compétitions (tirages, simulations, classements, équipes de double), palmarès et codes de reprise (`password.c`, appelé par `far_call`) | 10 052 |
+| 6 | Tuiles des personnages « au naturel » (club nudiste, réserve commune de 116 tuiles), copiées en CHR-RAM à la demande | 1 856 |
 | 7 | Générique de lancement | 4 742 |
-| 8 | Podium d'une compétition gagnée | 4 408 |
+| 8 | Podium d'une compétition gagnée | 4 432 |
 | 9 | Générique de fin | 2 121 |
 | 10 à 14 | Libres (80 Ko) pour les évolutions futures | 0 |
 
@@ -55,9 +55,9 @@ $0010-$00FF  page zéro : NMI, manettes, sprites, banque courante, pile C (sp), 
 $0100-$01FF  pile 6502
 $0200-$02FF  tampon OAM
 $0300-$037F  tampon VRAM (96 octets envoyés au plus par trame : budget VBlank)
-$0400-$06FF  variables du moteur (661 / 768 octets)
+$0400-$06FF  variables du moteur (742 / 768 octets)
 $0700-$07FF  pile de paramètres C
-$6000-$77FF  RAM de cartouche : écrans, compétitions, tampon des ralentis (2 945 / 6 144)
+$6000-$77FF  RAM de cartouche : écrans, compétitions, tampon des ralentis (4 003 / 6 144)
 $7800-$7FFF  palmarès (sauvegardé si la cartouche a une pile ; signature + somme de contrôle)
 ```
 
@@ -93,7 +93,7 @@ Le bloc `so` (signature « PO », 23 octets d'options, somme de contrôle) suit 
 | `src/extras.c` | 3 | Score, courts, public, pluie, ralentis, exercices, tutoriel |
 | `src/manual.c` | 4 | Mode d'emploi (8 pages) |
 | `src/comp.c`, `src/stats.c` | 5 | Compétitions, palmarès |
-| `tools/gen_assets.py` | — | Génère tous les graphismes : police, logo, 3 courts, public assis et debout, 10 personnages × 8 poses |
+| `tools/gen_assets.py` | — | Génère tous les graphismes : police, logo, 3 courts, public assis et debout, personnages × 11 poses (rangées de tuiles partagées) |
 
 ### Effets du court (`match_fx`, banque fixe)
 
@@ -109,7 +109,7 @@ Les tuiles de sprites 5 à 13 (auparavant libres) contiennent l'ombre, la poussi
 ### Margaux (17e personnage) et codes de reprise
 
 Margaux occupe l'index 16, avec le style FANTAISIE (9e style : amorties, lobs, montées au filet). Elle a les cheveux longs, blonds et bouclés :
-- **Tuiles** : la table de sprites n'avait que 18 tuiles libres ($0F, $EF à $FF). Seule la rangée de la tête (2 tuiles) lui est propre : 4 variantes de bras (attente, frappe armée, accompagnement, service) × 2 vues, plus 1 tête de profil commune aux deux images de course, soit 18 tuiles. Le corps reste celui des joueuses. `spr_person` remplace les deux premières entrées OAM après `spr_meta`, en échangeant gauche et droite en miroir. Les ralentis et tous les écrans en profitent.
+- **Tuiles** : seule la rangée de la tête (2 tuiles) lui est propre. Elle est générée pour chaque vue et chaque pose (les bras levés passent dans cette rangée), les têtes identiques étant partagées (`marg_map[face × 11 + pose]`), plus 1 tête de profil commune aux deux images de course. Le corps reste celui des joueuses. `spr_person` remplace les deux premières entrées OAM après `spr_meta`, en échangeant gauche et droite en miroir. Les ralentis et tous les écrans en profitent.
 - **Couleurs** : peau $27, tenue rose clair $35, cheveux blonds $28 (ΔE ≥ 42 sur tous les courts). Sur le sable jaune ($28, $18 sous la pluie), `pal_set_player` passe les cheveux en blond clair $38 (ΔE 30). Comme la raquette, les chaussures et le liseré de jupe utilisent la même couleur, ils sont dorés. En double, la palette est celle de l'équipe : en partenaire, Margaux garde sa coiffure mais prend les couleurs du joueur 1 de l'équipe.
 - **Club nudiste** : Margaux n'y apparaît jamais. Le lieu est sauté au menu quand elle est choisie (et inversement), il est ignoré dans les réglages mémorisés, et un code qui l'associerait au club est refusé.
 - **Adversaires tirés au sort** : uniquement parmi les 16 personnages d'origine. Les anciens codes redonnent donc les mêmes tableaux. Son nom fait 7 lettres :
@@ -208,7 +208,7 @@ Le PPU n'affiche que les 8 premiers sprites d'une ligne (dans l'ordre de l'OAM).
 
 ### Smash sauté
 
-Une balle entre 40 et 62 px de haut, avant le rebond, est jouable si le joueur est à moins de 70 px du filet. C'est réservé aux humains et au CPU Expert, pour ne pas enlever le lob aux joueurs moyens. La frappe est plus rapide (96 au lieu de 80) et plus tendue (gravité 12). Le sprite saute de 12 px (j²/16), au plus haut à l'impact, puis retombe en 14 trames (`pl_jump`). j/2 est rangé dans les bits 5 à 7 de `pose_cache`, que `rp_record` enregistre déjà : le saut apparaît dans les ralentis sans agrandir le tampon (16 octets par trame).
+Une balle entre 40 et 62 px de haut, avant le rebond, est jouable si le joueur est à moins de 70 px du filet. C'est réservé aux humains et au CPU Expert, pour ne pas enlever le lob aux joueurs moyens. La frappe est plus rapide (96 au lieu de 80) et plus tendue (gravité 12). Le sprite saute de 12 px (j²/16), au plus haut à l'impact, puis retombe en 14 trames (`pl_jump`). j/4 est rangé dans les bits 6 et 7 de `pose_cache` (la pose occupe les bits 0 à 3 depuis qu'il y a 11 poses), que `rp_record` enregistre déjà : le saut apparaît dans les ralentis sans agrandir le tampon (16 octets par trame).
 
 Le CPU Expert sait l'utiliser. Sur un lob adverse peu profond, il vise le point situé environ 11 trames avant la chute, où la balle passe vers 50 px de haut. Il ne le fait pas toujours : la décision suit l'erreur d'anticipation tirée à chaque frappe, soit environ 7 fois sur 10. Mesure : 17 lobs sur 30 sont smashés en sautant ; contre Normal, aucun.
 
@@ -327,12 +327,24 @@ Au club, 4 bandes de spectateurs de 2 rangées. En salle, des gradins sur les 16
 
 ## 5. Graphismes
 
+### Animation des joueurs
+
+`pose_of` (banque fixe, en assembleur dans `src/sprp.s`) choisit la pose de chaque joueur à chaque trame. La première version en C coûtait environ 140 cycles par appel et ajoutait des trames en retard en double ; en assembleur, la charge mesurée est la même qu'avant l'animation (simple : 54 trames > 27 000 cycles sur 11 910, comme avant ; double : 366 au lieu de 390). Pour la place, `win_party`, `hop_h` et `rel_pad` reviennent dans la banque du moteur :
+- **attente** : rebond d'1 px toutes les 16 trames, décalé de 8 trames d'un joueur à l'autre. Le drapeau `POSE_LIFT` (bit 4) demande à `spr_person` de remonter le sprite d'1 px ; la position mémorisée pour la course reste celle du sol (sinon le sens de course changeait) ;
+- **split-step** : quand l'adversaire frappe (`rally_hits` change), un joueur à l'arrêt fait un petit saut (`pl_jump` = 7, 3 px au plus), puis se réceptionne appuis écartés pendant 7 trames ;
+- **course en 4 temps** : foulée A puis B toutes les 8 trames, chacune basse puis relevée d'1 px (`pl_walk & 4`) ;
+- **service en 3 temps** : lancer (balle qui monte), impact bras tendu (balle qui redescend, puis 6 trames après la frappe), accompagnement ;
+- **frappe** : coup droit, ou **revers à deux mains** quand la balle est à gauche (le sprite est en miroir : le dessin est fait à l'envers), ou **extension** (fente, bras tendu, tamis bas) quand la balle passe à plus de 12 px du joueur ; puis accompagnement.
+
+Le drapeau `POSE_LIFT` n'est pas enregistré dans les ralentis : l'octet de pose y garde la pose (bits 0-3), le miroir (bit 4), le côté (bit 5) et le saut (bits 6-7).
+
 - **Fond** : 247 tuiles sur 256. Cinq écrans de court compressés en RLE (stade 657 octets, club 648, salle 647, club nudiste 648, court Margaux 675). La surface et les conditions ne changent que les palettes.
-- **Sprites** : 215 tuiles sur 256 (dont la coupe, les confettis et 3 tailles de balle).
+- **Sprites** : 166 tuiles sur 256 (dont la coupe, les confettis et 3 tailles de balle).
   - Course : de profil (2 images de foulée, miroir selon le sens) dès que le déplacement est surtout latéral, de face ou de dos sinon ; la direction est mémorisée par personnage dans `spr_person` (banque fixe) pour ne pas clignoter.
   - Raquettes : tamis ovale de 5 × 7 px (5 × 5 au-dessus de la tête), cadre sombre et cordage en damier, manche de 2 à 3 px.
   - Balle : petite (4 × 4) près du sol, moyenne (5 × 5) à partir de 12 px de hauteur, grande (7 × 7) à partir de 30 px (`spr_ball`, banque fixe), aussi dans les ralentis. L'ombre reste au sol.
-  - 2 vues (dos et face) × 2 silhouettes (homme et femme) × 8 poses : attente, course ×2, frappe ×2, service, joie, déception.
+  - 2 vues (dos et face) × 2 silhouettes (homme et femme) × 11 poses : attente, course ×2, coup droit armé, accompagnement, service (lancer), joie / appuis écartés, déception, revers à deux mains, extension, impact du service.
+  - **Réserve commune de tuiles** : beaucoup de rangées de 2 tuiles (tête, buste, jambes) se répètent d'une pose à l'autre. `gen_assets.py` ne range chaque rangée qu'une fois, à partir de la tuile $10. Une rangée n'est partagée que si elle est identique dans la version habillée **et** dans la version au naturel, si bien que les deux réserves ont les mêmes numéros et la même taille (116 tuiles, `people_bytes` = 1 856 octets, au lieu de 216 tuiles auparavant pour 8 poses). `person_map` donne, pour chaque (silhouette, vue, pose), la tuile gauche de chacune des 3 rangées (la droite suit) ; `prof_map` fait de même pour la course de profil. `spr_meta` lit ces 3 tuiles (`_meta_tile`, `_meta_t1`, `_meta_t2`) au lieu de 6 tuiles consécutives.
   - 16 palettes de personnages.
   - Partenaires de double : couleurs de leur équipe (limite de 4 palettes de sprites).
 - **Score** : dans les coins supérieurs, un panneau de 4 caractères par équipe : nom ; « J » + jeux du set + `*` (serveur) ; points + un rond par set gagné (glyphe `@` de la police). Les joueurs sont limités à x = 48..208 et la colonne 0 n'est pas utilisée (zone rognée par les téléviseurs).
@@ -435,7 +447,7 @@ Outils de mise au point :
 |---|---|
 | `tests/rules_test.c` | 42 vérifications des règles |
 | `tests/password_test.c` | 200 000 codes aléatoires en aller-retour ; 8,06 millions de codes altérés d'un signe, refusés à 99,98 % |
-| `tests/emu_test.mjs` | 225 vérifications : générique de lancement (scènes, fanfare à la trame près, palette jamais écrite pendant l'affichage, barre à 117 %, mentions, « clap », lettre tombée puis remise, passage en deux appuis), démarrage MMC1 et CHR-RAM, mode d'emploi, menus adaptatifs, mode en équipe (toujours en double, partenaire CPU ou manette 2), présentation, menu de pause, lancer du serveur du haut, balle ratée qui sort de l'écran, let, matchs complets (6 surfaces × 3 lieux × 3 conditions, double), ralentis, revanche, palmarès, 9 exercices (joueur robot via la manette), 5 compétitions (dont éliminations), générique de fin après une saison gagnée (défilement sur 2 écrans, textes, retour au titre), double en compétition (dont à 2 joueurs humains), podium (classement, joueurs agrandis au pixel près, marches, noms, double avec le 3e en sprites, Margaux, coupe agrandie, 5 feux d'artifice à pleine vitesse puis le calme, CHR-RAM rétablie), court Margaux, déblocage et club nudiste (tenues échangées en CHR-RAM puis restaurées), reprise par code, vitesse du jeu (lent/normal/rapide, aucun appui perdu), coups gagnants nommés, à plat plus rapide que le lifté et croisé court en angle, HAUT/BAS relatifs au côté du joueur (avec A et avec B), bruitages (souffle, « pok » au triangle, bip dehors, priorités du bruit, crissement), smash sauté (réservé aux humains et au CPU Expert), musiques hors match (même polka au titre et au menu, sans reprise, en boucle ; Margaux, finale) et silence en match, smash sauté du CPU Expert et dans les ralentis, ombres, poussière, chaise d'arbitre (identique dans tous les lieux et conditions), tête qui suit la balle, gestes de l'arbitre et arbitre visible pendant les ralentis, coupe rétablie hors du match, repère d'atterrissage, réglage SON, réglages mémorisés après « rallumage », Margaux (menu, présentation, abréviation MX, code de reprise, chevelure propre, jamais au club nudiste), service canon (fenêtre de 2 trames mesurée en frappant à chaque trame du lancer, vitesse, compteurs, jamais pour le CPU Normal), frappe parfaite (fenêtre de 3 trames mesurée en relâchant à chaque trame, placement, compteurs, +30 % de vitesse au moins), retour sur le timing à l'entraînement, rotation des sprites en double (aucun sprite masqué en permanence), fondus, récapitulatif du score (bandeau, écran de fin de set avec interlude, fermeture par n'importe quel bouton, reprise), bandeau devant la tête du joueur du haut, panneaux Margaux et du club nudiste à côté du score (tuiles empruntées rétablies au court suivant), filet qui tremble, fatigue avec et sans l'option (déplacements plus lents, frappes plus rapides), public (regard qui suit la balle, ola rétablie, gradins de la salle et bancs du club, réactions sonores), menu sans ligne JEU contre le CPU et redessiné sans couper l'écran, fête de victoire (étoiles, confettis, bonds, fanfare de 160 trames, 3 feux d'artifice ; rien si le CPU gagne), 50 Hz |
+| `tests/emu_test.mjs` | 231 vérifications : générique de lancement (scènes, fanfare à la trame près, palette jamais écrite pendant l'affichage, barre à 117 %, mentions, « clap », lettre tombée puis remise, passage en deux appuis), démarrage MMC1 et CHR-RAM, mode d'emploi, menus adaptatifs, mode en équipe (toujours en double, partenaire CPU ou manette 2), présentation, menu de pause, lancer du serveur du haut, balle ratée qui sort de l'écran, let, matchs complets (6 surfaces × 3 lieux × 3 conditions, double), ralentis, revanche, palmarès, 9 exercices (joueur robot via la manette), 5 compétitions (dont éliminations), générique de fin après une saison gagnée (défilement sur 2 écrans, textes, retour au titre), double en compétition (dont à 2 joueurs humains), podium (classement, joueurs agrandis au pixel près, marches, noms, double avec le 3e en sprites, Margaux, coupe agrandie, 5 feux d'artifice à pleine vitesse puis le calme, CHR-RAM rétablie), court Margaux, déblocage et club nudiste (tenues échangées en CHR-RAM puis restaurées), reprise par code, vitesse du jeu (lent/normal/rapide, aucun appui perdu), coups gagnants nommés, à plat plus rapide que le lifté et croisé court en angle, HAUT/BAS relatifs au côté du joueur (avec A et avec B), bruitages (souffle, « pok » au triangle, bip dehors, priorités du bruit, crissement), smash sauté (réservé aux humains et au CPU Expert), musiques hors match (même polka au titre et au menu, sans reprise, en boucle ; Margaux, finale) et silence en match, smash sauté du CPU Expert et dans les ralentis, ombres, poussière, chaise d'arbitre (identique dans tous les lieux et conditions), tête qui suit la balle, gestes de l'arbitre et arbitre visible pendant les ralentis, coupe rétablie hors du match, repère d'atterrissage, réglage SON, réglages mémorisés après « rallumage », Margaux (menu, présentation, abréviation MX, code de reprise, chevelure propre, jamais au club nudiste), service canon (fenêtre de 2 trames mesurée en frappant à chaque trame du lancer, vitesse, compteurs, jamais pour le CPU Normal), frappe parfaite (fenêtre de 3 trames mesurée en relâchant à chaque trame, placement, compteurs, +30 % de vitesse au moins), retour sur le timing à l'entraînement, rotation des sprites en double (aucun sprite masqué en permanence), fondus, récapitulatif du score (bandeau, écran de fin de set avec interlude, fermeture par n'importe quel bouton, reprise), bandeau devant la tête du joueur du haut, panneaux Margaux et du club nudiste à côté du score (tuiles empruntées rétablies au court suivant), filet qui tremble, fatigue avec et sans l'option (déplacements plus lents, frappes plus rapides), public (regard qui suit la balle, ola rétablie, gradins de la salle et bancs du club, réactions sonores), menu sans ligne JEU contre le CPU et redessiné sans couper l'écran, fête de victoire (étoiles, confettis, bonds, fanfare de 160 trames, 3 feux d'artifice ; rien si le CPU gagne), animation des joueurs (réserve de tuiles, revers à deux mains, extension, service en 3 temps, split-step, rebond d'attente, course en 4 temps), 50 Hz |
 | `tools/contrast.py 25` | Contraste (ΔE ≥ 25) de chaque personnage avec chaque court, de jour, de nuit et sous la pluie ; balle ; tenue de Margaux face à toutes les autres tenues. Lancé par `make test` |
 | `tools/check_texts.py` | Relecture des textes : caractères présents dans la police, colonnes, lignes du mode d'emploi, annonces de 14 caractères au plus |
 

@@ -229,11 +229,9 @@ void people_tiles(u8 nude)
 {
     if (nude == chr_nude) return;
     if (nude) {
-        chr_copy(BANK_NUDE, nude_people, 0x1100, 3072);
-        chr_copy(BANK_NUDE, nude_profile, 0x1000 + ((u16)profile_base << 4), 384);
+        chr_copy(BANK_NUDE, nude_people, 0x1100, people_bytes);
     } else {
-        chr_copy(BANK_CHR, chr_data + 0x1100, 0x1100, 3072);
-        chr_copy(BANK_CHR, chr_data + 0x1000 + ((u16)profile_base << 4), 0x1000 + ((u16)profile_base << 4), 384);
+        chr_copy(BANK_CHR, chr_data + 0x1100, 0x1100, people_bytes);
     }
     chr_nude = nude;
 }
