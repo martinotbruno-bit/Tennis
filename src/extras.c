@@ -303,7 +303,7 @@ void crowd_tick(void)
     m = ms;
     if (m != cr_prev_ms) {
         if (m == MS_DEAD) {
-            if (end_reason == END_POINT && ump_arm && out_by()) sfx_line();   /* balle dehors : bip */
+            if (end_reason == END_POINT && ump_arm && out_by()) sfx_out();    /* balle dehors : bip et « Out! » */
             if (end_reason == END_POINT && ump_arm && near_miss()) sfx_ooh();
             k = (u8)(st_dfaults[0] + st_dfaults[1]);
             if (k != cr_df) { cr_df = k; sfx_groan(); }
@@ -571,3 +571,79 @@ void train_event(void)
 /* ---------------------------------------------------------------------- */
 /* calcul des poses : poses_all, en assembleur (src/poses.s) */
 
+
+/* ---------------------------------------------------------------------- */
+/* Petits effets du court (banque 3, appelés à la fin de match_draw) :     */
+/* ombres des joueurs, poussière ou éclaboussures au rebond, arbitre de    */
+/* chaise, repère d'atterrissage en vitesse « lent », éclat de la frappe   */
+/* parfaite, traînée du service canon, goutte de sueur. Les sprites sont   */
+/* ajoutés après les joueurs : ils passent derrière eux. (Déplacés de la    */
+/* banque fixe pour faire la place des échantillons DPCM.)                  */
+/* ---------------------------------------------------------------------- */
+#define PXU(v) ((u8)(((u16)(v) << 2) >> 8))      /* pixels, valeur positive */
+extern u8 perf_t, perf_x, perf_y, tired, pl_jump[4];
+#pragma bss-name(push, "WBSS")
+static u8 fx_t, fx_x, fx_y, fx_kind, fx_bounces, fx_hits, mk_t;
+#pragma bss-name(pop)
+void match_fx(void)
+{
+    u8 i, j;
+    /* rebond : poussière sur terre et sable, éclaboussure sous la pluie */
+    if (bounces != fx_bounces) {
+        fx_bounces = bounces;
+        if (bounces && bounces < 3 && b_vis) {
+            fx_kind = 0;
+            if (cfg.cond == COND_RAIN) fx_kind = 8;
+            else if ((cfg.surface == 0 || cfg.surface == 4) && cfg.env != ENV_MARGAUX) fx_kind = 6;
+            if (fx_kind) { fx_t = 12; fx_x = PXU(bx); fx_y = PXU(by); }
+        }
+    }
+    if (fx_t) {
+        --fx_t;
+        spr1((u8)(fx_x - 4), (u8)(fx_y - 6), (u8)(fx_kind + (fx_t < 6)), (u8)(fx_kind == 8 ? 3 : 2));
+    }
+    /* ombres de tous les joueurs ; en double, quand trop de sprites
+       partagent une ligne, la rotation de l'ordre des sprites (match_draw)
+       évite qu'un sprite disparaisse */
+    for (i = 0; i < npl; ++i) {
+        if (cfg.mode == GM_TRAIN && i == 1 && cfg.ex != EX_STATIC) continue;   /* lanceur invisible */
+        spr1((u8)(PXU(plx[i]) - 3), PXU(ply[i]), 5, 2);   /* sous les pieds, décalée vers la droite */
+    }
+    /* repère d'atterrissage (lent) : 30 trames après chaque frappe vers un
+       joueur humain */
+    if (rally_hits != fx_hits) {
+        fx_hits = rally_hits;
+        j = (u8)(hitter ^ 1);
+        mk_t = 0;
+        if (cfg.gspeed == 0 && rally_hits &&
+            (cfg.ctrl[j] != CTRL_CPU || (npl == 4 && cfg.ctrl[j + 2] != CTRL_CPU))) mk_t = 30;
+    }
+    if (mk_t) {
+        --mk_t;
+        if (b_live && bounces == 0) spr1((u8)(land_x - 4), (u8)(land_y - 4), 10, 3);
+    }
+    /* fatigue : goutte de sueur au-dessus des joueurs (clignote) ; en double,
+       seulement pour les joueurs humains (limite de sprites par ligne) */
+    if (tired >= 4 && (frame_cnt & 16)) {
+        for (i = 0; i < npl; ++i) {
+            if (npl == 4 && cfg.ctrl[i] == CTRL_CPU) continue;
+            spr1((u8)(PXU(plx[i]) + 6), (u8)(PXU(ply[i]) - 30), 14, 3);
+        }
+    }
+    /* frappe parfaite : petit éclat près de la raquette */
+    if (perf_t) { --perf_t; spr1(perf_x, perf_y, 3, 2); }   /* blanc : visible sur tous les courts */
+    /* service canon : traînée de deux points derrière la balle */
+    if (srv_canon && b_serve && b_live && bounces == 0) {
+        for (j = 2; j < 6; j += 3) {
+            s16 z = bz - bvz * j;
+            if (z < 0) z = 0;
+            spr1((u8)(PXU(bx - bvx * j) - 2), (u8)(PXU(by - bvy * j) - PXU(z) - 2), 1, 3);
+        }
+    }
+    /* arbitre de chaise (tous les lieux), assis de profil sur sa chaise
+       (décor, x 16-31), tourné vers le court : bras tendu sur une faute ou
+       une balle dehors ; bras levé qui s'agite sur un let ; bras levé en
+       grand à la fin du match. Tuiles : 11 tête, 12 buste, 13 bras tendu ;
+       coupe + 0 main, + 1 bras levé, + 2 buste bras levé */
+    ump_draw();      /* assembleur (src/sprp.s) : 3 sprites au plus, sans appel coûteux */
+}

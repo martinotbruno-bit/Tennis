@@ -460,149 +460,193 @@ _win_fx:
     rts
 
 ; ---------------------------------------------------------------------------
-; void audio_tick(void) : lecteur de musique, appelé par la NMI à chaque trame
-; (même pendant la construction d'un écran, rendu coupé : la musique ne prend
-; plus de retard). Mélodie sur le carré 2, basse sur le triangle ; données en
-; couples (note, durée), $FE silence, $FF fin (ou boucle). music_play (C)
-; positionne audio_lock pendant qu'il change l'état.
+; Lecteur de musique, appelé par la NMI à chaque trame (la musique avance même
+; pendant la construction d'un écran). 4 voix, copiées en RAM de cartouche par
+; music_play : mélodie (carré 2), basse (triangle), harmonie (carré 1, laissé
+; aux bruitages pendant p1_hold trames), percussions (bruit, laissé aux
+; bruitages tant que noise_hold). Une voix : paires (note, durée) ; $FE
+; silence, $FF fin (boucle si music_loop).
+; ---------------------------------------------------------------------------
 .export _audio_tick
-.import _noise_hold, _mel_ptr, _bass_ptr, _mel_start, _bass_start
-.import _mel_timer, _bass_timer, _music_loop, _mel_duty, _music_cur
-.import _note_period, _audio_lock
+.export _trk_ptr, _trk_start, _trk_timer
+.export _mel_ptr, _bass_ptr, _mel_start, _bass_start, _mel_timer, _bass_timer
+.export _music_loop, _mel_duty, _harm_duty, _p1_hold
+.import _noise_hold, _music_cur, _note_period, _audio_lock
+
+.segment "WBSS"
+_trk_ptr:                   ; pointeurs des 4 voix (mélodie, basse, harmonie, percussions)
+_mel_ptr:   .res 2
+_bass_ptr:  .res 2
+            .res 4
+_trk_start:
+_mel_start: .res 2
+_bass_start: .res 2
+            .res 4
+_trk_timer:                 ; trames restantes de la note en cours (pas de 2)
+_mel_timer: .res 2
+_bass_timer: .res 2
+            .res 4
+_music_loop: .res 1
+_mel_duty:  .res 1
+_harm_duty: .res 1
+_p1_hold:   .res 1          ; carré 1 réservé à un bruitage pendant n trames
+anote:      .res 1
+atrk:       .res 1
 
 .segment "ZEROPAGE"
 aptr:   .res 2
 
+.segment "RODATA"
+; percussions : $400C (volume constant, durée), $400E (période), $400F (durée)
+drum_c: .byte $16, $15, $13         ; grosse caisse, caisse claire, charleston
+drum_e: .byte $0D, $06, $01
+drum_f: .byte $28, $48, $18
+
 .segment "CODE"
 _audio_tick:
     lda _noise_hold
-    beq @nh
+    beq :+
     dec _noise_hold
-@nh:
-    lda _audio_lock
-    beq @mel
+:   lda _p1_hold
+    beq :+
+    dec _p1_hold
+:   lda _audio_lock
+    beq :+
     rts
-@mel:
-    lda _mel_ptr+1          ; pointeur nul : pas de mélodie (données hors page 0)
-    beq @tobass
-    dec _mel_timer
-    beq @mnext
-@tobass:
-    jmp @bass
-@mnext:
-    lda _mel_ptr
+:   ldx #0
+@trk:
+    lda _trk_ptr+1,x        ; pointeur nul : voix absente (données hors page 0)
+    beq @next
+    dec _trk_timer,x
+    bne @next
+    lda _trk_ptr,x
     sta aptr
-    lda _mel_ptr+1
+    lda _trk_ptr+1,x
     sta aptr+1
     ldy #0
     lda (aptr),y
     cmp #$FF
-    bne @mplay
+    bne @play
     lda _music_loop
-    bne @mloop
-    lda #0                  ; fin du morceau
-    sta _mel_ptr
-    sta _mel_ptr+1
+    beq @stop
+    lda _trk_start,x
+    sta aptr
+    lda _trk_start+1,x
+    sta aptr+1
+    lda (aptr),y
+@play:
+    sta anote
+    iny
+    lda (aptr),y
+    sta _trk_timer,x
+    clc
+    lda aptr
+    adc #2
+    sta _trk_ptr,x
+    lda aptr+1
+    adc #0
+    sta _trk_ptr+1,x
+    stx atrk
+    jsr @out
+    ldx atrk
+@next:
+    inx
+    inx
+    cpx #8
+    bne @trk
+    rts
+@stop:
+    lda #0
+    sta _trk_ptr,x
+    sta _trk_ptr+1,x
+    lda #$FE                ; fin : silence sur la voix
+    sta anote
+    stx atrk
+    txa
+    bne :+
+    lda #0                  ; fin de la mélodie : morceau terminé
     sta _music_cur
+:   jsr @out
+    ldx atrk
+    jmp @next
+
+; sortie de la note anote sur le canal de la voix X (0, 2, 4, 6)
+@out:
+    cpx #2
+    beq @bass
+    bcc @mel
+    cpx #4
+    beq @harm
+    ; percussions
+    lda _noise_hold
+    bne @rts
+    ldy anote
+    cpy #3
+    bcs @rts
+    lda drum_c,y
+    sta $400C
+    lda drum_e,y
+    sta $400E
+    lda drum_f,y
+    sta $400F
+@rts:
+    rts
+@mel:
+    lda anote
+    cmp #$FE
+    bne :+
     lda #$30
     sta $4004
-    jmp @bass
-@mloop:
-    lda _mel_start
-    sta aptr
-    lda _mel_start+1
-    sta aptr+1
-    ldy #0
-    lda (aptr),y
-@mplay:
-    cmp #$FE
-    bne @mnote
-    lda #$30                ; silence
-    sta $4004
-    jmp @mdur
-@mnote:
-    asl a
-    tax
+    rts
+:   asl a
+    tay
     lda _mel_duty
     sta $4004
     lda #$08                ; balayage inactif sans couper les notes graves
     sta $4005
-    lda _note_period,x
+    lda _note_period,y
     sta $4006
-    lda _note_period+1,x
+    lda _note_period+1,y
     ora #$08
-    ; $4007 à chaque note : relance identique pour toutes les notes (ne le
-    ; réécrire que quand l'octet change faisait un clic sur certaines notes
-    ; seulement, entendu comme des ratés)
     sta $4007
-@mdur:
-    ldy #1
-    lda (aptr),y
-    sta _mel_timer
-    clc
-    lda aptr
-    adc #2
-    sta _mel_ptr
-    lda aptr+1
-    adc #0
-    sta _mel_ptr+1
-
+    rts
 @bass:
-    lda _bass_ptr+1
-    beq @done
-    dec _bass_timer
-    bne @done
-    lda _bass_ptr
-    sta aptr
-    lda _bass_ptr+1
-    sta aptr+1
-    ldy #0
-    lda (aptr),y
-    cmp #$FF
-    bne @bplay
-    lda _music_loop
-    bne @bloop
-    lda #0
-    sta _bass_ptr
-    sta _bass_ptr+1
+    lda anote
+    cmp #$FE
+    bne :+
     lda #$80
     sta $4008
     rts
-@bloop:
-    lda _bass_start
-    sta aptr
-    lda _bass_start+1
-    sta aptr+1
-    ldy #0
-    lda (aptr),y
-@bplay:
-    cmp #$FE
-    bne @bnote
-    lda #$80
-    sta $4008
-    jmp @bdur
-@bnote:
-    asl a
-    tax
+:   asl a
+    tay
     lda #$FF
     sta $4008
-    lda _note_period,x
+    lda _note_period,y
     sta $400A
-    lda _note_period+1,x
+    lda _note_period+1,y
     ora #$08
     sta $400B
-@bdur:
-    ldy #1
-    lda (aptr),y
-    sta _bass_timer
-    clc
-    lda aptr
-    adc #2
-    sta _bass_ptr
-    lda aptr+1
-    adc #0
-    sta _bass_ptr+1
-@done:
+    rts
+@harm:
+    lda _p1_hold            ; un bruitage occupe le carré 1
+    bne @rts
+    lda anote
+    cmp #$FE
+    bne :+
+    lda #$30
+    sta $4000
+    rts
+:   asl a
+    tay
+    lda _harm_duty
+    sta $4000
+    lda #$08
+    sta $4001
+    lda _note_period,y
+    sta $4002
+    lda _note_period+1,y
+    ora #$08
+    sta $4003
     rts
 
 ; ---------------------------------------------------------------------------

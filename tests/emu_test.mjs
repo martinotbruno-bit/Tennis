@@ -105,7 +105,9 @@ console.log('Générique de lancement');
   let fr = 0; const on = { 0x4006: [], 0x400b: [] }; const vol = new Set(); let w7 = 0;
   mm.write = (a, v) => { if (a === 0x4006 || a === 0x400b) on[a].push(fr); if (a === 0x4004) vol.add(v); if (a === 0x4007) w7++; return w(a, v); };
   for (; fr < 1300; fr++) e.run(1);
-  const score = (sym) => { let a = e.addr(sym), out = [], t = 0; while (m[a] !== 0xFF) { if (m[a] !== 0xFE) out.push(t); t += m[a + 1]; a += 2; } return out; };
+  // partitions : banque 10 (copiées en RAM de cartouche par music_play)
+  const b10 = e.nes.rom.rom[10];
+  const score = (sym) => { let a = e.addr(sym) - 0x8000, out = [], t = 0; while (b10[a] !== 0xFF) { if (b10[a] !== 0xFE) out.push(t); t += b10[a + 1]; a += 2; } return out; };
   let worst = 0, cnt = 0;
   for (const [reg, sym] of [[0x4006, 'mus_intro_mel'], [0x400b, 'mus_intro_bass']]) {
     const got = on[reg], exp = score(sym);
@@ -1296,7 +1298,7 @@ console.log('Victoire : sauts de joie et confettis');
   runUntil(e, () => e.peek('app_state') !== AS.MATCH, 300);
   check(e.peek('app_state') === AS.SCREENS, 'puis écran des résultats');
   // fanfare de victoire : exactement la durée de la fête (160 trames), mélodie et basse
-  const dur = (sym) => { let a = e.addr(sym), n = 0; while (e.nes.cpu.mem[a] !== 0xFF) { n += e.nes.cpu.mem[a + 1]; a += 2; } return n; };
+  const dur = (sym) => { const b10 = e.nes.rom.rom[10]; let a = e.addr(sym) - 0x8000, n = 0; while (b10[a] !== 0xFF) { n += b10[a + 1]; a += 2; } return n; };
   check(dur('mus_vict_mel') === 160 && dur('mus_vict_bass') === 160, `fanfare de victoire : ${dur('mus_vict_mel')}/${dur('mus_vict_bass')} trames (durée de la fête)`);
   // feux d'artifice : 3 gerbes de 4 étoiles qui s'écartent
   const g = boot(); startWith(g, { MODE: MODE.P1 }); g.run(60);

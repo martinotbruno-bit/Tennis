@@ -14,6 +14,7 @@
 #define BANK_INTRO   7   /* générique de lancement */
 #define BANK_PODIUM  8   /* podium d'une compétition gagnée */
 #define BANK_CREDITS 9   /* générique de fin */
+#define BANK_MUSIC  10   /* musiques (copiées en RAM de cartouche par music_play) */
 
 /* état de l'application (lu par la boucle principale, banque fixe) */
 #define AS_SCREENS 0

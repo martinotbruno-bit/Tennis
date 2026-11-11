@@ -17,13 +17,17 @@ BANK6 = assets_nude
 BANK7 = intro
 BANK8 = podium
 BANK9 = credits
-CSRC = $(FIXED) $(BANK0) $(BANK1) $(BANK3) $(BANK4) $(BANK5) $(BANK6) $(BANK7) $(BANK8) $(BANK9)
-OBJS = $(BUILD)/crt0.o $(BUILD)/sprp.o $(BUILD)/poses.o $(addprefix $(BUILD)/,$(addsuffix .o,$(CSRC)))
+BANK10 = music_data
+CSRC = $(FIXED) $(BANK0) $(BANK1) $(BANK3) $(BANK4) $(BANK5) $(BANK6) $(BANK7) $(BANK8) $(BANK9) $(BANK10)
+OBJS = $(BUILD)/crt0.o $(BUILD)/sprp.o $(BUILD)/poses.o $(BUILD)/dpcm.o $(addprefix $(BUILD)/,$(addsuffix .o,$(CSRC)))
 
 all: $(ROM)
 
 assets/tiles.chr src/assets_data.c src/assets_court.c src/assets_nude.c: tools/gen_assets.py
 	python3 tools/gen_assets.py
+
+src/music_data.c: tools/gen_music.py tools/music_src.c
+	python3 tools/gen_music.py
 
 $(BUILD):
 	mkdir -p $(BUILD)
@@ -38,6 +42,7 @@ $(addprefix $(BUILD)/,$(addsuffix .s,$(BANK6))): SEGS = --code-name BANK6 --roda
 $(addprefix $(BUILD)/,$(addsuffix .s,$(BANK7))): SEGS = --code-name BANK7 --rodata-name RODATA7 --bss-name WBSS
 $(addprefix $(BUILD)/,$(addsuffix .s,$(BANK8))): SEGS = --code-name BANK8 --rodata-name RODATA8 --bss-name WBSS
 $(addprefix $(BUILD)/,$(addsuffix .s,$(BANK9))): SEGS = --code-name BANK9 --rodata-name RODATA9 --bss-name WBSS
+$(addprefix $(BUILD)/,$(addsuffix .s,$(BANK10))): SEGS = --code-name BANK10 --rodata-name RODATA10
 
 $(BUILD)/crt0.o: src/crt0.s assets/tiles.chr | $(BUILD)
 	$(CA65) -t nes -g -o $@ src/crt0.s
@@ -47,6 +52,9 @@ $(BUILD)/sprp.o: src/sprp.s | $(BUILD)
 
 $(BUILD)/poses.o: src/poses.s | $(BUILD)
 	$(CA65) -t nes -g -o $@ src/poses.s
+
+$(BUILD)/dpcm.o: src/dpcm.s | $(BUILD)
+	$(CA65) -t nes -g -o $@ src/dpcm.s
 
 $(BUILD)/%.s: src/%.c src/*.h src/assets_data.c src/assets_court.c src/assets_nude.c | $(BUILD)
 	$(CC65) $(CFLAGS) $(SEGS) -o $@ $<

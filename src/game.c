@@ -175,7 +175,7 @@ static void serve_fault(const char *why)
     ms_timer = 60;
     b_live = 0;
     ump_arm = 1;
-    sfx_line();          /* service faux : bip du juge électronique, comme une balle dehors */
+    sfx_svfault();       /* service faux : bip du juge électronique et « Fault! » */
     if (cfg.mode == GM_TRAIN) {
         end_reason = END_FAULT;
         set_msg("FAUTE", why, 50);
@@ -244,7 +244,7 @@ static void ball_bounce(void)
                 /* service qui touche le filet et tombe dans le carré : à remettre */
                 ms = MS_DEAD; ms_timer = 50; b_live = 0; end_reason = END_LET;
                 set_msg("LET", "A REMETTRE", 50);
-                sfx_whistle();
+                sfx_let();
                 ++bounces;
                 return;
             }
@@ -1028,8 +1028,9 @@ u8 match_tick(void)
         ctrl = cfg.ctrl[p];
         if (ctrl == CTRL_CPU) {
             /* double : chaque IA est mise à jour une trame sur deux (vitesse
-               doublée), pour tenir dans le budget CPU d'une trame */
-            if (npl == 4 && (ms == MS_RALLY || ms == MS_DEAD)) {
+               doublée), pour tenir dans le budget CPU d'une trame (aussi
+               pendant la fête de fin de match) */
+            if (npl == 4 && (u8)(ms - MS_RALLY) < 3) {   /* échange, point joué, fin du match */
                 /* trame de frappe (calcul de trajectoire) : les IA restantes
                    attendent la trame suivante */
                 if (hit_now) continue;
@@ -1163,7 +1164,7 @@ void match_draw(void)
         if (party && (u8)(p & 1) == sc_winner) j = hop_h[ms_timer & 15];
         spr_person((u8)(((u16)plx[p] << 2) >> 8), (s16)(ys[p] - j), cfg.chr[p], side_of(p), k, flip_cache[p], (u8)(p & 1));
     }
-    match_fx();     /* ombres, poussière, arbitre, repère (banque fixe) */
+    bank_call(BANK_EXTRAS, match_fx);   /* ombres, poussière, arbitre, repère */
     if (party) { win_fx(); fw_draw(ms_timer, 0); }
     if (cfg.cond == COND_RAIN) bank_call(BANK_EXTRAS, rain_draw);
     spr_end();

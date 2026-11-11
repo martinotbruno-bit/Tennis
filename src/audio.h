@@ -20,6 +20,9 @@ void sfx_ooh(void);                 /* public : balle dehors de peu */
 void sfx_groan(void);               /* public : double faute */
 void sfx_hush(void);                /* public : silence au lancer */
 void sfx_line(void);                /* bip du juge électronique (balle dehors) */
+void sfx_out(void);                 /* bip et voix « Out! » */
+void sfx_svfault(void);             /* bip et voix « Fault! » (service faux) */
+void sfx_let(void);                 /* sifflet et voix « Let! » */
 void sfx_swing(void);               /* souffle du geste de raquette */
 void sfx_fw_launch(void);           /* feu d'artifice : la fusée monte */
 void sfx_fw_pop(void);              /* feu d'artifice : « pop » */

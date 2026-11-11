@@ -83,6 +83,7 @@ _scroll_y:  .res 1      ; défilement vertical (0..239), générique de fin
 _scroll_nt: .res 1      ; écran de nametable (0 ou 2 : bit 1 de PPUCTRL)
 _rand_seed: .res 2
 pad_tmp:    .res 1
+pad_chk:    .res 2      ; lecture de contrôle des manettes (DPCM)
 _oam_i:     .res 1      ; prochain emplacement libre dans _oam_buf
 _spr_rot:   .res 1      ; premier emplacement utilisé (rotation anti-disparition)
 _meta_x:    .res 1      ; paramètres de _spr_meta (personnage 2x3 tuiles)
@@ -542,9 +543,34 @@ _pad_poll:
     rts
 
 read_pads:
-    ; lecture double pour se prémunir d'éventuels conflits de lecture
     lda _pad2
-    sta tmp2
+    pha                 ; état précédent de la manette 2
+    ; pendant un échantillon DPCM, une lecture du DMC peut faire perdre un
+    ; bit à la manette : on lit alors deux fois, jusqu'à deux lectures égales
+@again:
+    jsr read_raw
+    lda $4015
+    and #$10
+    beq @ok
+    lda _pad1
+    sta pad_chk
+    lda _pad2
+    sta pad_chk+1
+    jsr read_raw
+    lda _pad1
+    cmp pad_chk
+    bne @again
+    lda _pad2
+    cmp pad_chk+1
+    bne @again
+@ok:
+    pla
+    eor #$FF
+    and _pad2
+    sta _pad2_new
+    rts
+
+read_raw:
     lda #1
     sta JOY1
     sta _pad2           ; bit sentinelle
@@ -560,10 +586,6 @@ read_pads:
     cmp #1
     rol _pad2
     bcc @l
-    lda tmp2
-    eor #$FF
-    and _pad2
-    sta _pad2_new
     rts
 
 ; -------------------------------------------------------------------------
