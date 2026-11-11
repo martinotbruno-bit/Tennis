@@ -76,6 +76,8 @@ ss_hits:   .res 4
 ss_t:      .res 4
 imp_t:     .res 4
 imp_k:     .res 4
+dive_t:    .res 4       ; plongeon en cours (trames)
+dive_f:    .res 4       ; son miroir (balle à gauche)
 pp:        .res 1       ; joueur
 pt:        .res 1       ; équipe (p & 1)
 pst:       .res 1       ; état du joueur
@@ -153,6 +155,9 @@ _poses_all:
 :   lda _slide_t,x
     beq :+
     dec _slide_t,x
+:   lda dive_t,x
+    beq :+
+    dec dive_t,x
 :
     ; nouvelle frappe : impact pour le frappeur, split-step pour l'adversaire
     lda _rally_hits
@@ -174,6 +179,29 @@ _poses_all:
     sta imp_t,x
     lda _last_shot
     sta imp_k,x
+    ; balle frappée loin du corps (20 px ou plus sur le côté) : plongeon,
+    ; puis le joueur reste un instant au sol (poussière sur terre et glace)
+    jsr calcd
+    ldx pp
+    lda dxs
+    clc
+    adc #19
+    cmp #39
+    bcc @norc
+    lda #22
+    sta dive_t,x
+    lda dxs
+    rol a                   ; retenue = signe : balle à gauche -> miroir
+    lda #0
+    rol a
+    sta dive_f,x
+    lda _cfg+CFG_SURF
+    beq @dust
+    cmp #5
+    bne @norc
+@dust:
+    lda #10
+    sta _slide_t,x
     jmp @norc
 @notme:
     lda _ms
@@ -321,6 +349,23 @@ choose:
     lda #P_SAD
     rts
 @notover:
+    ; plongeon : au sol pendant 8 trames au moins, puis le joueur se relève
+    ; dès qu'il se remet à courir
+    lda dive_t,x
+    beq @nodive2
+    cmp #14
+    bcs @diving
+    lda _pl_moving,x
+    beq @diving
+    lda #0
+    sta dive_t,x
+    beq @nodive2
+@diving:
+    lda dive_f,x
+    sta _flip_cache,x
+    lda #P_DIVE
+    rts
+@nodive2:
     lda pst
     cmp #ST_TOSS
     bne @nottoss
@@ -378,14 +423,6 @@ choose:
     beq @srvhit
 @shot:
     jsr calcd
-    lda dxs
-    clc
-    adc #20
-    cmp #40
-    bcc @nodive
-    lda #P_DIVE
-    jmp @slide
-@nodive:
     lda dxs
     clc
     adc #12

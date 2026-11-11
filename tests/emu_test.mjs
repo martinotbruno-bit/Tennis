@@ -1533,6 +1533,30 @@ console.log('Vue en perspective (option VUE)');
   const done = runUntil(d, () => app(d) === AS.SCREENS, 60 * 60 * 25); d.run(30);
   check(done && d.peek('persp') === 0, 'match complet en perspective (double, château), projection coupée ensuite');
 }
+console.log('Plongeon');
+{
+  // balle frappée loin du corps : le joueur plonge vers elle et reste au sol
+  // au moins 8 trames ; en vue à plat et en perspective
+  for (const view of [0, 1]) {
+    const e = boot(); toMenu(e); e.poke('opt_val', view, 24); setOpts(e, { FMT: 3, SURF: 0 }); e.tap('START'); e.run(10); e.tap('A');
+    runUntil(e, () => app(e) === AS.MATCH, 300); allCpu(e);
+    let dives = 0, longest = 0, run = [0, 0], dirOk = true;
+    for (let f = 0; f < 20000 && app(e) === AS.MATCH; f++) {
+      e.run(1);
+      for (let p = 0; p < 2; p++) {
+        if (e.peek('pose_now', p) === 21) {
+          if (!run[p]) {
+            dives++;
+            const dx = e.peekS16('bx') / 64 - e.peekS16('plx', p * 2) / 64;
+            if (Math.abs(dx) > 6 && (dx < 0) !== (e.peek('flip_cache', p) === 1)) dirOk = false;
+          }
+          run[p]++; longest = Math.max(longest, run[p]);
+        } else run[p] = 0;
+      }
+    }
+    check(dives >= 2 && longest >= 8 && dirOk, `${view ? 'perspective' : 'à plat'} : ${dives} plongeons vers la balle, au sol jusqu'à ${longest} trames`);
+  }
+}
 console.log('Compensation 50 Hz (PAL)');
 {
   const e = boot(); e.poke('is_pal', 1); startWith(e, { FMT: 3 }); allCpu(e);

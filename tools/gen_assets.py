@@ -876,25 +876,26 @@ def racket(c, hx, hy, cx, cy, h=7):
             put(c, x, y, 3 if (x + y) % 2 == 0 else 0)
 
 def draw_dive(view, female, nude=False):
-    """Plongeon : corps presque à l'horizontale près du sol, tête vers la
-    droite (côté balle, miroir à gauche), bras tendu et raquette en avant."""
+    """Plongeon : corps allongé à l'horizontale au ras du sol, tête vers la
+    balle (à droite ; miroir à gauche), bras et raquette tendus devant la
+    tête, l'autre main au sol, jambes tendues derrière."""
     c = new_canvas()
-    fill(c, 11, 13, 14, 16, 1)                          # tête
-    fill(c, 11, 12, 14, 12, 3); fill(c, 10, 13, 10, 15, 3)   # cheveux
-    put(c, 13, 14, 3)                                   # oeil
-    # (même dessin de face, de dos, homme ou femme : une seule série de tuiles)
+    # raquette tendue vers la balle, tamis vu de biais, en bout de bras
+    line(c, 12, 18, 13, 17, 1)                          # bras tendu
+    racket(c, 13, 17, 13, 13, 5)                        # manche puis tamis au-dessus de la main
+    fill(c, 8, 16, 11, 19, 1)                           # tête
+    fill(c, 8, 16, 11, 16, 3); fill(c, 8, 17, 8, 19, 3)  # cheveux
+    put(c, 10, 18, 3)                                   # oeil
     if nude:
-        fill(c, 4, 15, 10, 19, 1)
+        fill(c, 2, 18, 8, 21, 1)
         for k in range(5):
-            put(c, 5 + k, 15 + (k % 5), 2)
+            put(c, 3 + k, 18 + (k % 4), 2)
     else:
-        fill(c, 4, 15, 10, 19, 2)                       # buste
-        fill(c, 2, 16, 4, 19, 3)                        # short
-    fill(c, 0, 17, 2, 19, 1)                            # jambes
-    put(c, 0, 20, 1 if nude else 3); put(c, 1, 20, 1 if nude else 3)
-    line(c, 12, 12, 13, 8, 1)                           # bras tendu
-    racket(c, 13, 8, 14, 3, 5)
-    line(c, 6, 20, 4, 22, 1)                            # bras d'appui
+        fill(c, 3, 18, 8, 21, 2)                        # buste allongé
+        fill(c, 1, 19, 3, 21, 3)                        # short
+    fill(c, 0, 20, 1, 21, 1)                            # jambes tendues
+    put(c, 0, 22, 1 if nude else 3)                     # pied
+    line(c, 6, 22, 7, 23, 1)                            # main d'appui au sol
     return c
 
 def draw_person(view, legs, arms, female, nude=False):
