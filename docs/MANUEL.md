@@ -40,10 +40,10 @@ Sans action pendant 20 secondes, une démonstration démarre (alternativement en
 |---|---|
 | MODE | 1 joueur contre CPU · 2 joueurs adversaires · En équipe · Compétition · Entraînement · Démo |
 | JEU | Simple · Double (en mode 2 joueurs adversaires seulement : contre le CPU, le simple est la règle, et le double avec un partenaire CPU est le mode En équipe) |
-| JOUEUR 1 / JOUEUR 2 | 17 personnages (8 hommes, 9 femmes, dont **Margaux**), chacun avec son style de jeu. En compétition de double, JOUEUR 2 devient PARTENAIRE |
+| JOUEUR 1 / JOUEUR 2 | 21 personnages (11 hommes, 10 femmes, dont **Margaux**, et les nouveaux **MAX**, **LOLA**, **PAPI** et **TITOU**), chacun avec son style de jeu. En compétition de double, JOUEUR 2 devient PARTENAIRE |
 | NIVEAU CPU | Facile · Normal · Expert |
 | SURFACE | Terre battue · Gazon · Dur · Moquette · Plage · Glace (les deux dernières sont des terrains fantaisie) |
-| LIEU | Stade (tribunes pleines) · Club (extérieur, arbres) · Salle (intérieur) · Club nudiste (bonus à débloquer, voir § 9 bis ; panneau « BRONZES » à côté du score) · Court Margaux (court rose, décor de cœurs, fleurs et étoiles, petit panneau « MARGAUX » à côté du score) |
+| LIEU | Stade (tribunes pleines) · Club (extérieur, arbres) · Salle (intérieur) · Club nudiste (bonus à débloquer, voir § 9 bis ; panneau « BRONZES » à côté du score) · Court Margaux (court rose, décor de cœurs, fleurs et étoiles, petit panneau « MARGAUX » à côté du score) · **Château** (murs de pierre, bannières royales, torches, spectateurs aux balcons) · **Parc** (arbres aux couleurs de l'automne) |
 | CONDITIONS | Jour · Nuit · Pluie. Il ne pleut pas en salle : la pluie y devient « jour » |
 | FORMAT | 1 set · 3 sets · 5 sets · Rapide (sets de 4 jeux) |
 | RALENTIS | Oui/Non : ralenti automatique après les plus beaux points |
@@ -138,6 +138,8 @@ Le lancer reste visible quelle que soit votre position, y compris quand vous ser
 - Les **annonces** de l'arbitre s'affichent au centre du bandeau : faute, let, égalité, avantage, balle de set ou de match, jeu décisif, changement de côté, ace, coup gagnant…
 - Les **coups gagnants** sont nommés : SMASH SAUTÉ, SMASH, AMORTIE, LOB GAGNANT, VOLÉE GAGNANTE, PASSING (adversaire au filet) ou COUP GAGNANT, avec un bref « ting » ; sans autre son ajouté et toujours sans musique pendant le match.
 - **Bruitages** : le geste de raquette fait un souffle, la frappe un « pok » avec du corps (plus grave quand elle est forte), une balle dehors ou un service faux déclenche le « bip » du juge électronique. Le public n'est plus coupé par un simple rebond.
+- **Son** : les musiques jouent à 4 voix (mélodie, basse, harmonie et percussions). L'arbitre annonce de vive voix « **Out!** » sur une balle dehors, « **Fault!** » sur un service faux et « **Let!** » sur un let ; au court Margaux, la princesse arbitre a une petite voix aiguë. Chaque frappe fait un vrai « pok ».
+- **L'ordinateur adapte sa tactique au score** : mené, il prend des risques (frappe plus fort, monte au filet) ; devant, il joue placé ; face à une balle de set ou de match, il ne fait presque plus de fautes ; sur une balle de break contre lui, il assure sa première balle de service.
 - Les joueurs sont **animés** : ils arment leur coup pendant que la balle arrive, frappent bras tendu, accompagnent le geste (volée sèche, amortie retenue, lob vers le ciel), plongent sur les balles impossibles et glissent sur la terre battue et la glace. Avant de servir, le serveur fait rebondir la balle ; le receveur attend genoux fléchis. Après le point, le gagnant fête à sa façon (Margaux fait une pirouette) ; le perdant tape le sol de sa raquette après une faute, ou souffle mains sur les genoux après un long échange.
 - Sur le court : chaque joueur a une **ombre** (en double, seulement pendant un saut, car la NES n'affiche que 8 sprites par ligne). La balle soulève un peu de **poussière** en rebondissant sur la terre battue et le sable, et fait une **éclaboussure** sous la pluie. Dans tous les lieux, l'**arbitre de chaise** est assis de profil sur sa petite chaise blanche, au bord du court, contre le poteau gauche du filet, tourné vers le court. Il suit la balle du regard, tend le bras sur une faute ou une balle dehors, agite le bras sur un let et lève le bras pour saluer à la fin du match. Il reste sur sa chaise pendant les ralentis. Au **court Margaux**, l'arbitre est une **princesse** : couronne, robe rose et baguette magique à étoile, qu'elle pointe sur les fautes et lève sur les lets. Le bruit du rebond change selon la surface : sourd sur la terre, sec sur le dur, feutré sur le sable…
 - **Récapitulatif du score** :
@@ -191,7 +193,7 @@ Conditions :
 
 Toutes les compétitions se jouent **en simple ou en double** (ligne JEU) :
 - en double, vous choisissez votre partenaire (ligne PARTENAIRE), puis qui le joue (ligne JOUE PAR) : l'ordinateur ou la **manette 2**. À deux joueurs humains, vous formez une seule équipe contre les équipes CPU ;
-- les autres équipes sont tirées au sort parmi les 17 personnages, qui sont tous différents.
+- les autres équipes sont tirées au sort parmi les 16 personnages d'origine, qui sont tous différents (Margaux, MAX, LOLA, PAPI et TITOU sont réservés aux joueurs).
 
 Quand vous gagnez une compétition, vous montez sur le **podium**, au centre de l'écran et sur le court de la compétition. Vous êtes sur la plus haute marche, le finaliste (ou le 2e du classement) à gauche, le 3e à droite, tous **en grand**. La coupe géante est brandie au-dessus de votre tête sous une pluie de confettis, sur la fanfare de victoire, pendant que **5 feux d'artifice** éclatent. Les noms sont écrits sous les marches. En double, vous montez à deux sur la plus haute marche ; pour les autres équipes, seul le capitaine monte, et le nom de l'équipe est écrit dessous. Ensuite, place au calme : l'écran reste affiché jusqu'à A.
 

@@ -39,6 +39,8 @@ Le jeu a été testé uniquement sur émulateur. Cette liste sert à le vérifie
 | 2.4 | JOUEUR 1 : faire défiler jusqu'à MARGAUX | MARGAUX apparaît après INES : cheveux longs, blonds et bouclés, tenue rose clair | ☐ |
 | 2.5 | LIEU : COURT MARGAUX | La valse « boîte à musique » remplace le thème du titre, sans notes hachées | ☐ |
 | 2.5 b | Match au court Margaux | L'arbitre est une princesse : couronne, robe rose, baguette dorée à étoile ; elle tend sa baguette sur une faute et la lève sur un let | ☐ |
+| 2.5 c | LIEU : CHÂTEAU, puis PARC | Château : murs de pierre, bannières rouges, torches, spectateurs aux balcons ; parc : arbres orange. Aucune tuile parasite, aussi de nuit et sous la pluie | ☐ |
+| 2.5 d | Musiques du titre et du menu | Polka à 4 voix : mélodie, basse, « oum-pa » d'harmonie et percussions ; un déplacement dans le menu (bip) ne coupe pas la musique | ☐ |
 | 2.6 | SON : BRUITAGES SEULS, puis AUCUN, puis MUSIQUE + SONS | La musique s'arrête, puis tout se tait, puis la musique repart | ☐ |
 
 ## 3. Match en simple (1 joueur contre le CPU)
@@ -55,6 +57,7 @@ Réglages : FORMAT RAPIDE, NIVEAU FACILE, VITESSE JEU NORMAL.
 | 3.4 | Se déplacer latéralement | Le joueur court de profil, avec des bruits de pas discrets | ☐ |
 | 3.4 b | Animation des joueurs | À l'arrêt, léger rebond sur place ; petit saut (split-step) quand l'adversaire frappe ; préparation pendant que la balle arrive, impact bras tendu, accompagnement ; volée raquette devant ; service en 3 temps, précédé de 2 rebonds de balle ; receveur genoux fléchis qui se balance ; revers à deux mains quand la balle arrive à gauche ; fente ou plongeon sur une balle lointaine (glissade sur terre et glace) ; course en 4 images ; après le point : joie (pirouette pour Margaux), raquette qui tape le sol après une faute, mains sur les genoux après un long échange. Aucun clignotement ni tuile parasite, aussi au club nudiste et avec Margaux | ☐ |
 | 3.4 c | Faute de service ; demi-tour brusque sur dur | Bip aigu du juge électronique à chaque service faux ; aucun crissement de chaussures | ☐ |
+| 3.4 d | Voix de l'arbitre et « pok » | « Out! » sur une balle dehors, « Fault! » sur un service faux, « Let! » sur un let, compréhensibles ; un « pok » à chaque frappe ; la manette répond normalement pendant les annonces (pas de bouton fantôme) ; au court Margaux, voix plus aiguë | ☐ |
 | 3.5 | Coup gagnant | Bandeau « COUP GAGNANT ! », « PASSING ! », « AMORTIE ! »… et un « ting » bref | ☐ |
 | 3.6 | Lob court sur soi, près du filet : A | Smash sauté : le joueur s'élève puis retombe, son ombre reste au sol | ☐ |
 | 3.7 | Ralenti après un beau point | Le point est rejoué à mi-vitesse ; A le passe | ☐ |

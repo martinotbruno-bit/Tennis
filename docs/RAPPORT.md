@@ -1,10 +1,19 @@
-# Royal Martinot — Rapport de réalisation (version 2.38)
+# Royal Martinot — Rapport de réalisation (version 2.39)
 
 Comme l'exige le CDC (§ 17.5), ce rapport distingue ce qui est **réalisé**, **testé**, **validé sur matériel réel**, **validé uniquement en émulation**, **dépendant d'une extension**, et les **limitations restantes**.
 
 > **Validation matérielle : aucune.** Aucun test n'a été fait sur console réelle (NES, Famicom, PAL, cartouche MMC1). Toutes les validations ont eu lieu en émulation (jsnes) et par des tests unitaires sur PC. Les critères « vérifié sur console physique » (CDC § 2.1, 15.4, 16.A) **ne sont pas remplis**. Ce point ne peut pas être traité dans l'environnement de développement utilisé.
 
 ## 1. Évolutions
+
+### Version 2.39
+
+| Demande | Réalisation |
+|---|---|
+| Toutes les améliorations du son | **Musiques à 4 voix** : en plus de la mélodie et de la basse, une harmonie (« oum-pa » en contretemps pour la polka et la valse, accords tenus ailleurs) et des percussions (grosse caisse, caisse claire, charleston). Elles sont générées à partir des accords de chaque morceau ; un bruitage du menu ne coupe plus la musique que le temps du bip. **Voix de l'arbitre** : « Out! », « Fault! » et « Let! » en vraie voix (échantillons du canal DMC, synthétisés en anglais) ; voix plus aiguë pour la princesse du court Margaux. **« Pok » échantillonné** à chaque frappe. Pour faire la place des échantillons dans la banque fixe, les musiques passent dans une banque libre et sont copiées en mémoire au moment de jouer. Sur console, la lecture des manettes est doublée pendant un échantillon (défaut connu de la NES) |
+| Des personnages en plus | MAX (puissance, tenue orange), LOLA (offensive, anthracite), PAPI (défensif, cheveux gris), TITOU (fantaisie, comme Margaux) : 21 personnages. Couleurs contrôlées sur tous les courts. Les codes de reprise les acceptent ; les anciens codes restent valables |
+| Des lieux en plus | **Château** : murs de pierre, bannières royales, torches, spectateurs aux balcons (6 nouvelles tuiles de décor sur les 8 qui restaient). **Parc** : le décor du club aux couleurs de l'automne. Les codes de reprise utilisent un nouveau format pour ces deux lieux ; ceux des autres lieux ne changent pas |
+| IA qui ajuste davantage sa tactique selon le score | Une fois par point : menée de 2 jeux ou plus, l'IA frappe plus fort, prend moins de marge et monte au filet ; devant, elle joue placé et fait deux fois moins de fautes ; face à une balle de set ou de match, elle défend (marge, peu de fautes) ; avec une balle de set ou de match, elle attaque ; sur une balle de break contre elle au service, elle assure sa première balle |
 
 ### Version 2.38
 

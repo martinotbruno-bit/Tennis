@@ -251,6 +251,18 @@ Le CPU Expert sait l'utiliser. Sur un lob adverse peu profond, il vise le point 
   - Si le joueur monte souvent au filet, elle lobe davantage.
   
   Les compteurs repartent de zéro à chaque match ; le comportement reste borné et déterministe.
+- **Tactique selon le score** (version 2.39) : `ai_tactic` (banque 3) est appelée une fois par point, quand les joueurs se placent pour servir. Pour chaque équipe, elle fixe des corrections lues par l'IA de frappe :
+
+  | Situation | Puissance | Marge | Fautes directes | Montées au filet | Service |
+  |---|---|---|---|---|---|
+  | L'adversaire a une balle de set ou de match | −2 | +6 | deux fois moins | — | — |
+  | Balle de set ou de match pour soi | +4 | — | — | +60/256 | — |
+  | Mené de 2 jeux ou plus (un set compte pour 3 jeux) | +5 | −3 | — | +50/256 | — |
+  | Devant de 2 jeux ou plus | — | +3 | deux fois moins | — | — |
+  | Balle de break contre soi, au service | — | +4 | deux fois moins | — | première balle coupée (assurée) |
+  | Balle de break pour soi, en retour | +3 | — | — | +30/256 | — |
+
+  Les fautes directes passent de 1 sur 4/8/16 à 1 sur 8/16/32 (masque `ai_fault | tac_err`).
 - **Double** : un responsable par balle (le partenaire le plus proche du point de frappe prévu). L'autre couvre sa moitié du court.
 
 ### Compétitions (`comp.c`)
@@ -265,7 +277,18 @@ Le CPU Expert sait l'utiliser. Sur un lob adverse peu profond, il vise le point 
 
 ### Codes de reprise (`password.c`)
 
-52 bits de données (dont double, partenaire, « partenaire joué par la manette 2 » et lieu sur 3 bits) + 2 bits de version + 11 bits de somme de contrôle = 65 bits, écrits en 13 symboles de 5 bits (alphabet sans I, O, 0, 1). Les symboles sont brouillés en chaîne pour qu'une erreur en modifie plusieurs.
+52 bits de données (dont double, partenaire, « partenaire joué par la manette 2 » et lieu) + 2 bits de version + 11 bits de somme de contrôle = 65 bits, écrits en 13 symboles de 5 bits (alphabet sans I, O, 0, 1). Les symboles sont brouillés en chaîne pour qu'une erreur en modifie plusieurs.
+
+Formats (version sur 2 bits) : 2, ancien format à 16 personnages ; 3, format courant (surface × 5 + lieu sur 5 bits, niveau sur 2 bits) ; 1 (version 2.39), pour le château et le parc (lieux 5 et 6) : (surface × 7 + lieu) × 3 + niveau sur 7 bits. Les codes des 5 premiers lieux restent identiques. Personnage et partenaire sur 5 bits : jusqu'à 32 personnages (21 aujourd'hui).
+
+### Personnages (version 2.39 : 21)
+
+16 personnages d'origine, Margaux (16), puis MAX (17, puissance, tenue orange), LOLA (18, offensive, anthracite), PAPI (19, défensif, cheveux gris) et TITOU (20, fantaisie, canard foncé). Les tenues passent `tools/contrast.py` (ΔE ≥ 25 sur tous les courts, de jour, de nuit et sous la pluie). Comme Margaux, les nouveaux personnages ne sont jamais tirés au sort comme adversaires en compétition : les anciens codes redonnent les mêmes tableaux.
+
+### Lieux (version 2.39 : 7)
+
+- **Château** (5) : murs de pierre (une seule tuile de briques décalées, répétée), bannières royales, torches, deux balcons de spectateurs (palette 3, comme au club). Palette des abords : pierre $10, joints $00, bannières et flammes $16. 6 tuiles de décor nouvelles (254 sur 256 utilisées).
+- **Parc** (6) : le décor du club (même table de noms, aucune tuile ni octet de plus) aux couleurs de l'automne : herbe $19, feuilles orange $27, troncs $07.
 
 ### Compétitions en double
 
@@ -378,7 +401,14 @@ Le jeu n'utilise que l'APU natif :
 - **pendant le match**, la musique est muette, donc le carré 2 et le triangle sont libres. La frappe ajoute au « pok » une note grave et brève au triangle (compteur linéaire d'environ 40 ms, plus grave quand la frappe est forte). Un service faux (dehors ou dans le filet) déclenche le même « bip » de juge électronique qu'une balle dehors (`sfx_line`, appelé par `serve_fault`), à la place de l'ancien bourdonnement. Le crissement des chaussures (demi-tours brusques sur dur) a été supprimé en version 2.32, à la demande ;
 - **bip du juge électronique** (`sfx_line`, carré 1, 1/12 s) quand un point se perd sur une balle dehors ; souffle bref (`sfx_swing`) au geste d'un joueur humain ;
 - **carré 1 + bruit** : bruitages, dont des bruits de pas très discrets à chaque foulée (bruit sourd au volume 1, jamais par-dessus un rebond, une frappe ou le public) ;
-- **carré 2 + triangle** : musiques et jingles.
+- **musiques à 4 voix** (version 2.39) : carré 2 (mélodie), triangle (basse), carré 1 (harmonie) et bruit (percussions). L'harmonie et les percussions cèdent la place aux bruitages : un bruitage sur le carré 1 réserve le canal pendant 12 trames (`p1_hold`), les percussions attendent la fin de `noise_hold` ;
+- **DMC** (version 2.39) : échantillons DPCM de la voix de l'arbitre et du « pok » de la balle.
+
+**Musiques à 4 voix.** Les partitions (mélodie et basse) sont dans `tools/music_src.c`. `tools/gen_music.py` ajoute à chaque morceau une harmonie, calculée sur l'accord dont la basse donne la fondamentale (tierce et quinte diatoniques en do majeur ; une note qui frotterait d'un demi-ton ou d'un ton contre la mélodie est remplacée par une autre note de l'accord) : « oum-pa » en contretemps pour la polka et la valse, accords tenus pour la marche, l'hymne, la victoire et l'interlude. Il ajoute aussi des percussions (grosse caisse, caisse claire, charleston au bruit, volume constant et durée courte). Chaque voix a la durée exacte de la mélodie : les boucles restent calées. Les jingles du match (point, jeu, défaite) gardent une seule voix. Le résultat, `src/music_data.c` (2,2 Ko), est dans la banque 10 : `music_play` copie le morceau demandé (au plus 510 octets) en RAM de cartouche, où la NMI le lit quelle que soit la banque en place. La banque fixe y gagne la place des échantillons.
+
+**Voix de l'arbitre et « pok ».** `tools/gen_voice.py` synthétise « Out! », « Fault! » et « Let! » avec espeak-ng (voix anglaise), coupe les silences, rééchantillonne à 7 919 Hz et encode en DPCM (1 bit par pas, ±2 sur un compteur de 0 à 127). Chaque échantillon part de 0 et y revient par des rampes douces : entre deux sons, $4011 reste à 0 et le triangle et le bruit gardent leur volume. Le « pok » est calculé (sinus de 900 Hz amorti et pointe de bruit, 30 ms, 21 307 Hz). `src/dpcm.s` (versionné ; la compilation n'a pas besoin d'espeak-ng) place les 4 échantillons (1 280 octets) dans le segment DPCM de la banque fixe, aligné sur 64 octets (le DMC ne lit que $C000-$FFFF). Annonces : « Out! » avec le bip d'une balle dehors, « Fault! » avec celui d'un service faux, « Let! » avec le sifflet ; « pok » à chaque frappe, sans jamais couper une annonce. Au court Margaux, la princesse annonce 2 crans de fréquence plus haut (voix plus aiguë).
+
+**Manettes et DMC.** Une lecture du DMC pendant la lecture de la manette peut lui faire perdre un bit (défaut connu de la NES). Pendant un échantillon ($4015 bit 4), `read_pads` lit les manettes deux fois, jusqu'à deux lectures identiques.
 
 **Lecteur dans la NMI.** `audio_tick` (assembleur, `src/sprp.s`) est appelé par la NMI à chaque trame, même quand le rendu est coupé ; en 50 Hz, il l'est une fois de plus toutes les 5 trames, pour garder le tempo du 60 Hz. Auparavant, la boucle principale appelait `audio_update`. Pendant la construction d'un écran (rendu coupé, 2 à 3 trames), la note en cours s'allongeait donc et tout le reste se décalait : 12 trames de retard cumulées sur le générique, avec un premier raté dès la 2e scène. Mesuré après correction : les 118 notes de la mélodie et les 41 de la basse tombent à la trame près. `music_play` et `snd_set` positionnent `audio_lock` pendant qu'ils changent l'état, pour que la NMI n'en lise pas un à moitié écrit. Les bruitages (carré 1, bruit) restent déclenchés par le jeu. Effet secondaire : en vitesse « rapide », les jingles ne sont plus accélérés.
 
