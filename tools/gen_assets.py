@@ -1519,6 +1519,21 @@ def persp_net(w):
 # ola_row (extras.c) : bras levés = tuile + 4, et tuiles 5-8 (stade), 13-16 (club, salle)
 assert sorted(set(crowd_idx)) == [5, 6, 7, 8] and all(c + 4 == h for c, h in zip(crowd_idx, cheer_idx))
 assert sorted(set(crowdb_idx)) == [13, 14, 15, 16] and all(c + 4 == h for c, h in zip(crowdb_idx, cheerb_idx))
+def persp_lines(w):
+    """lignes verticales du court (côtés, médiane de service, marques
+    centrales) redessinées en perspective, sans trou : l'échantillonnage du
+    court à plat sautait parfois leur colonne d'un pixel au fond, où le court
+    est rétréci"""
+    verts = [(x, TOP_BASE, BOT_BASE) for x in (DBL_L, SGL_L, SGL_R, DBL_R)]
+    verts += [(CENTER_X, TOP_SERV, BOT_SERV), (CENTER_X, TOP_BASE + 1, TOP_BASE + 3), (CENTER_X, BOT_BASE - 3, BOT_BASE - 1)]
+    for ys in range(32, 240):
+        Y = persp_inv(128, ys + 0.5)[1]
+        sc = 1 / (1 + PERSP_A * persp_d((ys // 8) * 8 + 4))
+        for (X, y0, y1) in verts:
+            if y0 <= Y < y1 + 1:
+                xs = int(round(128 + (X + 0.5 - 128) * sc - 0.5))
+                w[ys][xs] = 2
+
 KEEP = set(range(0x60)) | set(crowd_idx) | set(cheer_idx) | set(crowdb_idx) | set(cheerb_idx) | \
        set(crowd_idx3) | set(crowd_idx4) | set(SIGN_IDX) | set(SIGN2_IDX) | set(NET_IDX)
 persp_rles, persp_tiles, persp_ps = [], [], []
@@ -1669,6 +1684,7 @@ def persp_build(e):
             X, Y = persp_inv(xs + 0.5, ys + 0.5)
             X, Y = int(X), int(min(239, max(32, Y)))
             w[ys][xs] = bmp[Y][X] if 32 <= X < 224 else 0     # au-delà : abords (couleur de fond)
+    persp_lines(w)
     persp_net(w)
     fix = persp_sides(e, bmp, w)
     for y in range(32):                                   # chaise d'arbitre : à sa place
