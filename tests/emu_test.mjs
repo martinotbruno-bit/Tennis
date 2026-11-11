@@ -931,10 +931,12 @@ console.log('Margaux jouable et fatigue');
 {
   // fatigue : déplacement d'un joueur humain en début d'échange et après 20 frappes
   const dist = (fat, hits) => {
-    const e = boot(); startWith(e, { FMT: 3, FATIG: fat });
+    const e = boot(); startWith(e, { FMT: 3, FATIG: fat, SURF: 1 });   // gazon : sans glissade
     runUntil(e, () => e.peek('ms') === 0, 300);
     const s16 = (n, v, o = 0) => { e.poke(n, v & 255, o); e.poke(n, (v >> 8) & 255, o + 1); };
-    e.poke('ms', 2); e.poke('b_live', 1); e.poke('b_vis', 0); e.poke('hitter', 0); e.poke('rally_hits', hits);
+    // (hitter_p : pas ce joueur, sinon le nouveau compteur de frappes passerait
+    // pour une frappe de balle lointaine : plongeon)
+    e.poke('ms', 2); e.poke('b_live', 1); e.poke('b_vis', 0); e.poke('hitter', 0); e.poke('hitter_p', 2); e.poke('rally_hits', hits);
     s16('plx', 80 * 64, 0); s16('ply', 200 * 64, 0);
     // la goutte clignote (16 trames allumée, 16 éteinte) : on la cherche sur toute la course
     const x0 = e.peekS16('plx', 0); let t = false;
@@ -949,9 +951,10 @@ console.log('Margaux jouable et fatigue');
 
 {
   // A + HAUT : à plat nettement plus rapide que le lifté ; A + BAS : croisé
-  // court en angle, dans le carré de service près de la ligne de côté
+  // court en angle, dans le carré de service près de la ligne de côté (sur
+  // gazon : le robot se place sans glissade)
   const play = (dir) => {
-    const e = boot(); startWith(e, { MODE: MODE.TRAIN, EX: 2, COUNT: 0 });
+    const e = boot(); startWith(e, { MODE: MODE.TRAIN, EX: 2, COUNT: 0, SURF: 1 });
     const shots = []; let cur = null, pr = 0, pb = 0;
     for (let n = 0; n < 60 * 90 && shots.length < 16; n++) {
       botStep(e, dir ? ['A', dir] : ['A']); e.run(1);
