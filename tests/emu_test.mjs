@@ -1100,7 +1100,7 @@ console.log('Frappe parfaite');
   // balle qui arrive sur le joueur du bas après rebond ; A maintenu puis relâché k trames avant
   // son entrée dans la zone de frappe : seules 3 trames consécutives donnent une frappe parfaite
   const trial = (k, x = 138) => {
-    const e = boot(); startWith(e, { FMT: 3 });
+    const e = boot(); startWith(e, { FMT: 3, SURF: 1 });   // gazon : le joueur ne glisse pas après sa mise en place
     runUntil(e, () => e.peek('ms') === 0, 300);
     const s16 = (n, v, o = 0) => { e.poke(n, v & 255, o); e.poke(n, (v >> 8) & 255, o + 1); };
     e.poke('ms', 2); e.poke('b_live', 1); e.poke('b_vis', 1); e.poke('b_serve', 0); e.poke('bounces', 1);
@@ -1411,9 +1411,12 @@ console.log('Animation des joueurs');
   const e = boot();
   const nb = e.peek16('people_bytes');
   let okm = true;
-  for (const mp of ['person_map_m', 'person_map_f']) for (let i = 0; i < 132; i++) { const t = e.peek(mp, i); if (t < 0x10 || t + 1 >= 0x10 + nb / 16) okm = false; }
+  // (version 2.43 : rangées des célébrations et du revers dans la zone partagée, swap_base)
+  const rb3 = (sym, off = 0) => e.nes.rom.rom[3][e.addr(sym) - 0x8000 + off];
+  const sb = rb3('swap_base'), inPool = (t) => (t >= 0x10 && t + 1 < 0x10 + nb / 16) || (t >= sb && t + 1 < sb + 34);
+  for (const mp of ['person_map_m', 'person_map_f']) for (let i = 0; i < 162; i++) { if (!inPool(e.peek(mp, i))) okm = false; }
   for (let i = 0; i < 24; i++) { const t = e.peek('prof_map', i); if (t < 0x10 || t + 1 >= 0x10 + nb / 16) okm = false; }
-  check(okm && nb % 32 === 0, `poses dans la réserve de tuiles des joueurs (${nb / 16} tuiles pour 22 poses x 4 vues + 4 images de profil)`);
+  check(okm && nb % 32 === 0, `poses dans la réserve de tuiles des joueurs (${nb / 16} tuiles permanentes et 34 partagées pour 27 poses x 4 vues + 4 images de profil)`);
   // match CPU : poses jouées, ordre du service, split-step, rebond d'attente
   startWith(e, { FMT: 3 }); allCpu(e);
   const poses = new Set(), seq = [[], []];
@@ -1442,7 +1445,7 @@ console.log('Animation des joueurs');
     }
   }
   const has = (a, b) => a.join(',').includes(b);
-  check(poses.has(8) && poses.has(10), `revers à deux mains et impact du service joués (${[...poses].sort((a, b) => a - b)})`);
+  check((poses.has(8) || poses.has(22)) && poses.has(23) && poses.has(24) && poses.has(10), `revers à deux mains (préparation, impact, fin) et impact du service joués (${[...poses].sort((a, b) => a - b)})`);
   check([11, 12, 15, 19, 20].every((k) => poses.has(k)) && [14, 13].some((k) => poses.has(k)), 'préparation, impact, volée ou amortie, rebonds avant le service, course en 4 temps');
   check([16, 17, 18].filter((k) => poses.has(k)).length >= 2 && poses.has(7), 'après le point : joie, déception, colère ou fatigue');
   check(has(seq[0], '5,10,4') || has(seq[1], '5,10,4'), 'service en 3 temps : lancer, impact bras tendu, accompagnement');
