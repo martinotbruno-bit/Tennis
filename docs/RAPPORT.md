@@ -1,10 +1,16 @@
-# Royal Martinot — Rapport de réalisation (version 2.36)
+# Royal Martinot — Rapport de réalisation (version 2.37)
 
 Comme l'exige le CDC (§ 17.5), ce rapport distingue ce qui est **réalisé**, **testé**, **validé sur matériel réel**, **validé uniquement en émulation**, **dépendant d'une extension**, et les **limitations restantes**.
 
 > **Validation matérielle : aucune.** Aucun test n'a été fait sur console réelle (NES, Famicom, PAL, cartouche MMC1). Toutes les validations ont eu lieu en émulation (jsnes) et par des tests unitaires sur PC. Les critères « vérifié sur console physique » (CDC § 2.1, 15.4, 16.A) **ne sont pas remplis**. Ce point ne peut pas être traité dans l'environnement de développement utilisé.
 
 ## 1. Évolutions
+
+### Version 2.37
+
+| Demande | Réalisation |
+|---|---|
+| Animation des joueurs : tout faire (frappes, entre les points, déplacements, finitions), même au-delà des capacités de la NES si l'émulateur suit | **Frappes** en 3 temps : préparation pendant que la balle arrive (coup droit ou revers à deux mains), impact bras tendu, accompagnement propre au coup. Gestes propres à la volée (raquette devant, geste sec), au smash (armé comme le service), à l'amortie (geste retenu) et au lob (raquette vers le ciel) ; plongeon sur une balle très lointaine. **Entre les points** : le serveur fait rebondir la balle deux fois avant de servir ; le receveur attend genoux fléchis en se balançant ; le gagnant fête à sa façon selon le personnage (poing serré, bras levés, poing serré en sautillant ; Margaux fait une pirouette) ; le perdant tape le sol avec sa raquette après une faute, ou met les mains sur les genoux après un long échange. **Déplacements** : course en 4 images de face, de dos et de profil, pas chassés près de la balle, glissade avec poussière sur terre battue et sur glace. Tout tient dans la NES : 22 poses dans 180 tuiles grâce au partage des rangées (253 tuiles de sprites sur 256), et le calcul des poses, en assembleur, a quitté la banque fixe. Charge mesurée : comme avant en simple ; en double, 257 trames d'échange en dépassement sur 11 416 (244 avant) |
 
 ### Version 2.36
 
@@ -309,7 +315,7 @@ Pour loger ce contenu, la cartouche passe de NROM (32 Ko) à **MMC1** : 128 Ko d
 |---|---|
 | Règles (`rules_test`) | 42/42 |
 | Codes (`password_test`) | 200 000/200 000 aller-retour (format v3), ancien code v2 accepté, Margaux codée, Margaux au club nudiste refusée ; 99,98 % des codes altérés d'un signe refusés |
-| Émulateur (`emu_test`) | 241/241 vérifications (environ 22 min) |
+| Émulateur (`emu_test`) | 245/245 vérifications (environ 22 min) |
 | Profil CPU, simple, 6 000 trames | 0 trame d'échange en dépassement |
 | Relecture des textes (`check_texts.py`) | 0 problème |
 | Contraste (`contrast.py 25`) | 0 paire sous ΔE 25 (personnages, courts, balle, tenues) |

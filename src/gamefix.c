@@ -330,4 +330,4 @@ void fw_draw(u8 t, u8 dy)
    la musique de victoire. Hauteur du bond de joie : t·(16−t)/8, en table.
    (Déplacées depuis la banque du moteur, qui était pleine.) */
 
-/* pose_of (pose d'un joueur pour la trame) : en assembleur, src/sprp.s */
+/* poses des joueurs : poses_all (banque 3, extras.c) */

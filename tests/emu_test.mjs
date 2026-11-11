@@ -875,7 +875,7 @@ console.log('Margaux jouable et fatigue');
   check(scr(h) === SS.COMP && h.peek('c_pl', 0) === 16 && h.peek('c_pl2', 0) === 7, 'code de reprise avec Margaux relu');
   // tête propre à Margaux (cheveux longs, blonds, bouclés) en match
   const m = boot(); startWith(m, { FMT: 3, P1: 16 }); allCpu(m); m.run(60);
-  const mt = new Set(); for (let i = 0; i < 22; i++) { mt.add(m.peek('marg_map', i)); mt.add(m.peek('marg_map', i) + 1); }
+  const mt = new Set(); for (let i = 0; i < 44; i++) { mt.add(m.peek('marg_map', i)); mt.add(m.peek('marg_map', i) + 1); }
   mt.add(m.peek('marg_prof_l')); mt.add(m.peek('marg_prof_r'));
   const tl = oamTiles(m);
   check([...tl].some((x) => mt.has(x)), 'Margaux affichée avec sa propre chevelure');
@@ -1366,9 +1366,9 @@ console.log('Animation des joueurs');
   const e = boot();
   const nb = e.peek16('people_bytes');
   let okm = true;
-  for (let i = 0; i < 132; i++) { const t = e.peek('person_map', i); if (t < 0x10 || t + 1 >= 0x10 + nb / 16) okm = false; }
-  for (let i = 0; i < 12; i++) { const t = e.peek('prof_map', i); if (t < 0x10 || t + 1 >= 0x10 + nb / 16) okm = false; }
-  check(okm && nb % 32 === 0, `poses dans la réserve de tuiles des joueurs (${nb / 16} tuiles pour 11 poses x 4 vues + profils)`);
+  for (const mp of ['person_map_m', 'person_map_f']) for (let i = 0; i < 132; i++) { const t = e.peek(mp, i); if (t < 0x10 || t + 1 >= 0x10 + nb / 16) okm = false; }
+  for (let i = 0; i < 24; i++) { const t = e.peek('prof_map', i); if (t < 0x10 || t + 1 >= 0x10 + nb / 16) okm = false; }
+  check(okm && nb % 32 === 0, `poses dans la réserve de tuiles des joueurs (${nb / 16} tuiles pour 22 poses x 4 vues + 4 images de profil)`);
   // match CPU : poses jouées, ordre du service, split-step, rebond d'attente
   startWith(e, { FMT: 3 }); allCpu(e);
   const poses = new Set(), seq = [[], []];
@@ -1386,18 +1386,20 @@ console.log('Animation des joueurs');
   for (let f = 0; f < 60 * 60 * 3; f++) {
     e.run(1);
     for (let p = 0; p < 2; p++) {
-      const k = e.peek('pose_cache', p) & 15;
+      const k = e.peek('pose_cache', p) & 31;
       poses.add(k);
       if (k !== last[p]) { seq[p].push(k); last[p] = k; }
       const j = e.peek('pl_jump', p);
       if (j === 6 && (k === 0 || k === 6) && e.peek('ms') === 2) split++;
       const pos = e.peekS16('plx', p * 2) * 65536 + e.peekS16('ply', p * 2);
       still[p] = pos === prev[p] ? still[p] + 1 : 0; prev[p] = pos;
-      if (still[p] > 2 && k === 0 && j === 0 && e.peek('ms') === 0) { const h = headY(p); if (h !== null) bob[p].add(h); }
+      if (still[p] > 2 && k === 0 && j === 0 && e.peek('ms') === 3 && e.peek('ms_timer') > 62) { const h = headY(p); if (h !== null) bob[p].add(h); }
     }
   }
   const has = (a, b) => a.join(',').includes(b);
-  check(poses.has(8) && poses.has(9) && poses.has(10), `revers à deux mains, extension et impact du service joués (${[...poses].sort((a, b) => a - b)})`);
+  check(poses.has(8) && poses.has(10), `revers à deux mains et impact du service joués (${[...poses].sort((a, b) => a - b)})`);
+  check([11, 12, 15, 19, 20].every((k) => poses.has(k)) && [14, 13].some((k) => poses.has(k)), 'préparation, impact, volée ou amortie, rebonds avant le service, course en 4 temps');
+  check([16, 17, 18].filter((k) => poses.has(k)).length >= 2 && poses.has(7), 'après le point : joie, déception, colère ou fatigue');
   check(has(seq[0], '5,10,4') || has(seq[1], '5,10,4'), 'service en 3 temps : lancer, impact bras tendu, accompagnement');
   check(split > 3, `split-step quand l'adversaire frappe (${split})`);
   const okb = [0, 1].some((p) => { const v = [...bob[p]]; return v.length === 2 && Math.abs(v[0] - v[1]) === 1; });
@@ -1408,13 +1410,29 @@ console.log('Animation des joueurs');
   r.poke('ms', 2); r.poke('b_live', 1); r.poke('b_vis', 0); r.poke('hitter', 0);
   const hs = new Set(), rp = new Set();
   r.down('RIGHT');
-  for (let f = 0; f < 32; f++) { r.run(1); rp.add(r.peek('pose_cache', 0) & 15);
+  for (let f = 0; f < 32; f++) { r.run(1); rp.add(r.peek('pose_cache', 0) & 31);
     const px = r.peekS16('plx', 0) >> 6, py = r.peekS16('ply', 0) >> 6;
     let m = 999; for (let i = 0; i < 64; i++) { const y = r.peek('oam_buf', i * 4), x = r.peek('oam_buf', i * 4 + 3);
       if (y < 0xEF && x >= px - 9 && x <= px + 1 && y + 1 > py - 30 && y + 1 < py) m = Math.min(m, y + 1); }
     if (m !== 999) hs.add(m - py); }
   r.up('RIGHT');
-  check(rp.has(1) && rp.has(2) && hs.size === 2, `course : 2 foulées et 2 hauteurs (${[...hs]})`);
+  check(rp.has(1) && rp.has(2) && rp.has(19) && rp.has(20) && hs.size === 2, `course en 4 images (${[...rp].sort((a, b) => a - b)}) et 2 hauteurs (${[...hs]})`);
+}
+{
+  // service : la balle rebondit à côté du serveur ; le receveur fléchit les genoux
+  const e = boot(); startWith(e, { FMT: 3 }); runUntil(e, () => e.peek('ms') === 0, 300);
+  const srv = e.peek('sc_server'), base = e.peek('ball_base');
+  const hs = new Set(); let crouch = 0;
+  for (let f = 0; f < 64; f++) { e.run(1);
+    for (let i = 0; i < 64; i++) { const y = e.peek('oam_buf', i * 4), t = e.peek('oam_buf', i * 4 + 1); if (y < 0xEF && t === base && (e.peek('oam_buf', i * 4 + 2) & 3) === 3) hs.add(y); }
+    if (e.peek('pose_now', srv ^ 1) === (6 | 64)) crouch++; }
+  check(e.peek('pose_now', srv) === 15 && hs.size >= 6 && crouch > 10, `avant le service : balle qui rebondit (${hs.size} hauteurs), receveur genoux fléchis`);
+  // ralenti : la pose est gardée sur 5 bits (poses jusqu'à 21)
+  e.poke('pose_cache', 21, 0); e.poke('flip_cache', 1, 0);
+  const rb = e.addr('rp_buf'), h = e.peek('rp_head'); e.nes.cpu.mem[0x4000]; 
+  e.poke('ms', 2); e.run(2);
+  let found = false; for (let i = 0; i < 160 * 16; i += 16) if ((e.nes.cpu.mem[rb + i + 6] & 31) <= 21) found = true;
+  check(found, 'ralentis : poses sur 5 bits');
 }
 console.log('Compensation 50 Hz (PAL)');
 {

@@ -353,7 +353,7 @@ void rp_play(void)
         p = ord[i];
         a = e[6 + p * 3];
         k = (u8)(a >> 6);           /* saut enregistré (j/4) : hauteur j²/16 = k² */
-        spr_person(e[4 + p * 3], (s16)e[5 + p * 3] - k * k, cfg.chr[p], (u8)((a >> 5) & 1), (u8)(a & 15), (u8)((a >> 4) & 1), (u8)(p & 1));
+        spr_person(e[4 + p * 3], (s16)e[5 + p * 3] - k * k, cfg.chr[p], side_of(p), (u8)(a & 31), (u8)((a >> 5) & 1), (u8)(p & 1));
     }
     ump_draw();                      /* l'arbitre reste sur sa chaise pendant le ralenti */
     spr_end();
@@ -555,3 +555,19 @@ void train_event(void)
     }
     check_end();
 }
+
+/* ---------------------------------------------------------------------- */
+/* Poses des joueurs (appelé par match_draw avant de dessiner les joueurs) */
+/*  - attente : rebond d'1 px ; split-step quand l'adversaire frappe ;      */
+/*  - préparation : coup droit ou revers armé pendant que la balle arrive ; */
+/*  - frappe : armé (coup droit, revers, extension, plongeon, volée, smash),*/
+/*    impact, puis accompagnement propre au coup (lob, amortie, volée) ;    */
+/*  - course en 4 temps, pas chassés près de la balle, glissade sur terre   */
+/*    et sur glace ;                                                        */
+/*  - service : rebonds de la balle avant de servir ; receveur genoux       */
+/*    fléchis qui se balance ;                                              */
+/*  - après le point : joie propre au personnage (pirouette de Margaux),    */
+/*    colère après une faute, mains sur les genoux après un long échange.   */
+/* ---------------------------------------------------------------------- */
+/* calcul des poses : poses_all, en assembleur (src/poses.s) */
+

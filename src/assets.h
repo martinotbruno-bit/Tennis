@@ -4,14 +4,15 @@
 extern const unsigned char logo_tiles[56];   /* « ROYAL MARTINOT » */
 extern const unsigned char bigball_tiles[16];
 /* personnages : réserve commune de tuiles à partir de $10 ; pour chaque
-   (femme << 1 | face) et chaque pose, 3 octets = tuile gauche de chaque
-   rangée (la tuile droite suit). person_row[k] = k * NPOSE * 3 */
-extern const unsigned char person_map[132], person_row[4];
-extern const unsigned char prof_map[12];        /* course de profil : (femme * 2 + foulée B) * 3 */
-extern const unsigned char marg_map[22];        /* tête de Margaux : face * NPOSE + pose */
+   vue (person_row[face] = face * NPOSE * 3) et chaque pose, 3 octets = tuile
+   gauche de chaque rangée (la tuile droite suit) ; une table par silhouette */
+#define NPOSE 22
+extern const unsigned char person_map_m[2 * NPOSE * 3], person_map_f[2 * NPOSE * 3], person_row[2];
+extern const unsigned char prof_map[24];        /* course de profil : (femme * 4 + image) * 3 */
+extern const unsigned char marg_map[2 * NPOSE]; /* tête de Margaux : face * NPOSE + pose */
 extern const unsigned int people_bytes;         /* taille de la réserve (octets de CHR) */
 extern const unsigned char marg_prof_l, marg_prof_r;
-extern const unsigned char trophy_tile, confetti_tile, ball_mid_tile, ball_big_tile;
+extern const unsigned char trophy_tile, confetti_tile, ball_base;
 /* banque du moteur de jeu (BANK0) */
 extern const unsigned char * const court_nt_rle[5];
 extern const unsigned char crowd_idx4[3];

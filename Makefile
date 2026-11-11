@@ -18,7 +18,7 @@ BANK7 = intro
 BANK8 = podium
 BANK9 = credits
 CSRC = $(FIXED) $(BANK0) $(BANK1) $(BANK3) $(BANK4) $(BANK5) $(BANK6) $(BANK7) $(BANK8) $(BANK9)
-OBJS = $(BUILD)/crt0.o $(BUILD)/sprp.o $(addprefix $(BUILD)/,$(addsuffix .o,$(CSRC)))
+OBJS = $(BUILD)/crt0.o $(BUILD)/sprp.o $(BUILD)/poses.o $(addprefix $(BUILD)/,$(addsuffix .o,$(CSRC)))
 
 all: $(ROM)
 
@@ -44,6 +44,9 @@ $(BUILD)/crt0.o: src/crt0.s assets/tiles.chr | $(BUILD)
 
 $(BUILD)/sprp.o: src/sprp.s | $(BUILD)
 	$(CA65) -t nes -g -o $@ src/sprp.s
+
+$(BUILD)/poses.o: src/poses.s | $(BUILD)
+	$(CA65) -t nes -g -o $@ src/poses.s
 
 $(BUILD)/%.s: src/%.c src/*.h src/assets_data.c src/assets_court.c src/assets_nude.c | $(BUILD)
 	$(CC65) $(CFLAGS) $(SEGS) -o $@ $<

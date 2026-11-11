@@ -14,7 +14,7 @@
 .export _scroll_y, _scroll_nt, _mirror_h
 .export _chr_data
 .export _spr1, _spr_meta, _spr_end, _oam_i, _spr_rot, _set_bank, _cur_bank, _bank_call, _far_call, _rp_record
-.import _bx, _by, _bz, _b_vis, _plx, _ply, _pose_cache, _flip_cache, _sc_swap
+.import _bx, _by, _bz, _b_vis, _plx, _ply, _pose_cache, _flip_cache
 .import _rp_buf, _rp_head, _rp_count
 .import __WBSS_RUN__, __WBSS_SIZE__
 .export _meta_x, _meta_y, _meta_tile, _meta_attr, _meta_t1, _meta_t2
@@ -833,22 +833,14 @@ _rp_record:
     lda tmp1
     sta (ptr1),y
     ldx tmp2
-    ; pose | miroir << 4 | côté << 5 (saut dans les bits 6-7 de pose_cache)
-    txa
-    and #1
-    eor _sc_swap
-    asl a
-    asl a
-    asl a
-    asl a
-    asl a
-    sta tmp1
+    ; pose (bits 0-4) | miroir << 5 | saut (bits 6-7 de pose_cache) ; le
+    ; côté est recalculé au ralenti (sc_swap ne change qu'après le ralenti)
     lda _flip_cache,x
     asl a
     asl a
     asl a
     asl a
-    ora tmp1
+    asl a
     ora _pose_cache,x
     iny
     sta (ptr1),y

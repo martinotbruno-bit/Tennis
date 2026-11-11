@@ -39,7 +39,7 @@ static u8 ad_l[2], ad_r[2], ad_net[2], ad_n[2];
 /* ---------------- joueurs (non statiques : lus par les tests) ---------- */
 u8 npl;                         /* 2 en simple, 4 en double */
 s16 plx[4], ply[4];
-u8 pl_state[4], pl_timer[4];        /* lus par pose_of (banque fixe) */
+u8 pl_state[4], pl_timer[4];        /* lus par poses_all (banque 3) */
 static u8 pl_charge[4], pl_btn[4], pl_hit[4];
 u8 pl_walk[4], pl_moving[4], pl_flip[4];
 u8 ai_delay[4];                  /* lu par les tests */
@@ -62,7 +62,8 @@ static u8 hit_now;                     /* une frappe a eu lieu dans cette trame 
 u8 pl_jump[4];                         /* smash sauté : trames de saut restantes */
 static u8 win_party(void);
 static u8 rel_pad(u8 p, u8 pad);
-u8 __fastcall__ pose_of(u8 p);         /* banque fixe (sprp.s) */
+extern u8 pose_now[4];                 /* poses de la trame (poses_all, banque 3) */
+void poses_all(void);
 u8 hit_pass, hit_jump;                 /* dernière frappe : adversaire au filet, smash sauté */
 u8 tired;                              /* fatigue de l'échange en cours, 0..10 */
 u8 srv_slot[2];                 /* double : quel partenaire sert pour l'équipe */
@@ -1146,15 +1147,16 @@ void match_draw(void)
         spr_ball((u8)PX(bx), PX(by) - sy - 3, (u8)PX(by), k);
     }
     if (tgt_x) spr1(tgt_x, tgt_y, 3, 3);   /* cible d'entraînement */
+    bank_call(BANK_EXTRAS, poses_all);     /* poses et miroirs, balle du dribble, glissades */
     for (i = 0; i < npl; ++i) {
         p = ord[i];
         /* saut : hauteur (j²/16) au plus haut à l'impact, puis chute ;
-           j/4 est gardé dans les bits 6-7 de pose_cache pour les ralentis */
+           j/4 est gardé dans les bits 6-7 de pose_cache pour les ralentis
+           (pose dans les bits 0-4) */
         j = pl_jump[p];
         if (j) --pl_jump[p];
-        k = pose_of(p);
-        pose_cache[p] = (u8)((k & 15) | ((j >> 2) << 6));
-        flip_cache[p] = (u8)(pl_state[p] == ST_SWING ? pl_flip[p] : 0);
+        k = pose_now[p];
+        pose_cache[p] = (u8)((k & 31) | ((j >> 2) << 6));
         if (cfg.mode == GM_TRAIN && p == 1 && cfg.ex != EX_STATIC) continue;   /* lanceur invisible */
         j = (u8)((j * j) >> 4);
         /* victoire : le vainqueur sautille de joie (un bond toutes les 16 trames) */

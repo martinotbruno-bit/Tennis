@@ -38,8 +38,20 @@ void __fastcall__ spr_ball(u8 x, s16 sy, u8 shy, u8 zpx);   /* sprp.s */
 #define POSE_SAD    7
 #define POSE_BACK   8    /* revers à deux mains (armé) */
 #define POSE_REACH  9    /* extension vers une balle lointaine */
-#define POSE_SRVHIT 10   /* impact du service */
-#define POSE_LIFT   16   /* drapeau : personnage relevé d'1 px (rebond, foulée) */
+#define POSE_SRVHIT 10   /* impact du service (et fin du lob) */
+#define POSE_PREP   11   /* préparation du coup droit */
+#define POSE_IMPACT 12
+#define POSE_VOLLEY 13
+#define POSE_DROP   14   /* amortie */
+#define POSE_DRIBBLE 15  /* rebond de la balle avant le service */
+#define POSE_FIST   16   /* poing serré */
+#define POSE_ANGRY  17   /* colère : raquette au sol */
+#define POSE_TIRED  18   /* mains sur les genoux */
+#define POSE_RUN3   19   /* course, temps de passage */
+#define POSE_RUN4   20
+#define POSE_DIVE   21   /* plongeon */
+#define POSE_LIFT   32   /* drapeau : personnage relevé d'1 px (rebond, foulée) */
+#define POSE_DOWN   64   /* drapeau : personnage abaissé d'1 px (genoux fléchis) */
 
 /* texte direct (rendu coupé) */
 void txt_at(u8 x, u8 y, const char *s);

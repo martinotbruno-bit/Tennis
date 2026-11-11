@@ -794,7 +794,31 @@ def racket(c, hx, hy, cx, cy, h=7):
         else:
             put(c, x, y, 3 if (x + y) % 2 == 0 else 0)
 
+def draw_dive(view, female, nude=False):
+    """Plongeon : corps presque à l'horizontale près du sol, tête vers la
+    droite (côté balle, miroir à gauche), bras tendu et raquette en avant."""
+    c = new_canvas()
+    fill(c, 11, 13, 14, 16, 1)                          # tête
+    fill(c, 11, 12, 14, 12, 3); fill(c, 10, 13, 10, 15, 3)   # cheveux
+    put(c, 13, 14, 3)                                   # oeil
+    # (même dessin de face, de dos, homme ou femme : une seule série de tuiles)
+    if nude:
+        fill(c, 4, 15, 10, 19, 1)
+        for k in range(5):
+            put(c, 5 + k, 15 + (k % 5), 2)
+    else:
+        fill(c, 4, 15, 10, 19, 2)                       # buste
+        fill(c, 2, 16, 4, 19, 3)                        # short
+    fill(c, 0, 17, 2, 19, 1)                            # jambes
+    put(c, 0, 20, 1 if nude else 3); put(c, 1, 20, 1 if nude else 3)
+    line(c, 12, 12, 13, 8, 1)                           # bras tendu
+    racket(c, 13, 8, 14, 3, 5)
+    line(c, 6, 20, 4, 22, 1)                            # bras d'appui
+    return c
+
 def draw_person(view, legs, arms, female, nude=False):
+    if legs == 'dive':
+        return draw_dive(view, female, nude)
     c = new_canvas()
     # --- tête
     fill(c, 6, 1, 9, 5, 1)
@@ -805,7 +829,7 @@ def draw_person(view, legs, arms, female, nude=False):
         fill(c, 5, 1, 10, 4, 3); fill(c, 6, 5, 9, 5, 3)
         put(c, 6, 5, 1); put(c, 9, 5, 1)
         if female:
-            fill(c, 7, 6, 8, 8, 3)  # queue de cheval
+            fill(c, 7, 6, 8, 7, 3)  # queue de cheval (s'arrête à y 7 : bustes communs aux deux vues)
     else:
         put(c, 5, 2, 3); put(c, 10, 2, 3)
         put(c, 7, 3, 3); put(c, 9, 3, 3)  # yeux
@@ -845,6 +869,18 @@ def draw_person(view, legs, arms, female, nude=False):
     elif legs == 'runB':
         fill(c, 5, 16, 6, 19, 1); fill(c, 9, 16, 10, 21, 1)
         fill(c, 4, 20, 6, 21, 3); fill(c, 9, 22, 11, 23, 3)
+    elif legs == 'runC':
+        # course, temps de passage : jambe gauche d'appui, genou droit levé
+        fill(c, 5, 16, 6, 21, 1); fill(c, 4, 22, 6, 23, 3)
+        fill(c, 9, 16, 10, 18, 1); fill(c, 10, 19, 11, 20, 1); fill(c, 10, 21, 12, 21, 3)
+    elif legs == 'runD':
+        fill(c, 9, 16, 10, 21, 1); fill(c, 9, 22, 11, 23, 3)
+        fill(c, 5, 16, 6, 18, 1); fill(c, 4, 19, 5, 20, 1); fill(c, 3, 21, 5, 21, 3)
+    elif legs == 'bent':
+        # genoux fléchis (fatigue, mains sur les genoux)
+        line(c, 5, 16, 4, 19, 1); line(c, 4, 19, 5, 21, 1); put(c, 6, 16, 1)
+        line(c, 10, 16, 11, 19, 1); line(c, 11, 19, 10, 21, 1); put(c, 9, 16, 1)
+        fill(c, 3, 22, 5, 23, 3); fill(c, 10, 22, 12, 23, 3)
     elif legs == 'lunge':
         # fente : jambe droite tendue loin sur le côté, jambe gauche fléchie
         fill(c, 5, 16, 6, 20, 1); fill(c, 4, 21, 5, 21, 1)
@@ -895,6 +931,55 @@ def draw_person(view, legs, arms, female, nude=False):
         line(c, 5, 9, 10, 11, 1)
         line(c, 11, 9, 11, 11, 1)
         racket(c, 11, 11, 13, 5)
+    elif arms == 'prep':
+        # préparation : épaules tournées, bras gauche devant, raquette armée
+        # en arrière et basse, côté coup droit
+        line(c, 4, 9, 7, 12, 1)
+        line(c, 11, 9, 13, 12, 1)
+        racket(c, 13, 13, 14, 18, 5)
+    elif arms == 'impact':
+        # impact : bras tendu, tamis au contact à hauteur de hanche
+        line(c, 4, 9, 2, 12, 1)
+        line(c, 11, 9, 13, 11, 1)
+        racket(c, 13, 11, 14, 13, 5)
+    elif arms == 'volley':
+        # volée : raquette devant le corps, tamis haut, petit geste sec
+        line(c, 4, 9, 6, 11, 1)
+        line(c, 11, 9, 12, 12, 1)
+        racket(c, 12, 12, 13, 10, 5)
+    elif arms == 'smash':
+        # smash armé : bras gauche pointé vers la balle, raquette dans le dos
+        line(c, 4, 8, 3, 2, 1)
+        line(c, 11, 8, 13, 6, 1)
+        racket(c, 13, 6, 13, 11, 5)
+    elif arms == 'drop':
+        # amortie : geste retenu, tamis bas et ouvert devant soi
+        line(c, 4, 9, 2, 11, 1)
+        line(c, 11, 9, 12, 13, 1)
+        racket(c, 12, 14, 13, 18, 5)
+    elif arms == 'lobf':
+        # lob : la raquette finit vers le ciel, devant
+        fill(c, 3, 9, 3, 12, 1)
+        line(c, 11, 8, 12, 4, 1)
+        racket(c, 12, 4, 13, 1, 3)
+    elif arms == 'dribble':
+        # fait rebondir la balle avant de servir : bras gauche tendu vers le sol
+        line(c, 4, 9, 4, 14, 1)
+        fill(c, 12, 9, 12, 12, 1); put(c, 12, 13, 1)
+        racket(c, 12, 14, 13, 19)
+    elif arms == 'fist':
+        # poing serré, bras droit levé coude plié ; raquette dans la main gauche
+        line(c, 11, 9, 13, 11, 1); line(c, 13, 11, 13, 9, 1); fill(c, 12, 8, 14, 8, 1)
+        fill(c, 3, 9, 3, 12, 1)
+        racket(c, 3, 13, 3, 18, 5)
+    elif arms == 'angry':
+        # colère : la raquette tape le sol, tête baissée
+        line(c, 5, 9, 7, 15, 1); line(c, 10, 9, 8, 15, 1)
+        racket(c, 8, 16, 8, 20, 5)
+    elif arms == 'tired':
+        # fatigue : mains sur les genoux
+        line(c, 4, 9, 3, 17, 1); line(c, 11, 9, 12, 17, 1)
+        racket(c, 12, 18, 13, 21, 5)
     elif arms == 'reach':
         # balle lointaine : bras tendu au maximum, tamis vers le bas, l'autre
         # bras en arrière pour l'équilibre
@@ -922,7 +1007,20 @@ POSES = [  # (jambes, bras) — l'ordre est repris dans src/gfx.c
     ('wide', 'backhand'), # 8 revers à deux mains (armé)
     ('lunge', 'reach'),   # 9 extension (balle lointaine)
     ('stand', 'serve_hit'),  # 10 impact du service
+    ('wide', 'prep'),     # 11 préparation (coup droit)
+    ('wide', 'impact'),   # 12 impact
+    ('wide', 'volley'),   # 13 volée
+    ('wide', 'drop'),     # 14 amortie
+    ('stand', 'dribble'), # 15 rebond de la balle avant le service
+    ('stand', 'fist'),    # 16 poing serré
+    ('wide', 'angry'),    # 17 colère (raquette au sol)
+    ('bent', 'tired'),    # 18 fatigue (mains sur les genoux)
+    ('runC', 'ready'),    # 19 course, passage (genou droit)
+    ('runD', 'ready'),    # 20 course, passage (genou gauche)
+    ('dive', 'dive'),     # 21 plongeon (dessin à part : draw_dive)
 ]
+# (le smash armé reprend la pose du service, et la fin du lob celle de
+# l'impact du service : mêmes gestes, aucune tuile de plus)
 NPOSE = len(POSES)
 # Réserve commune de tuiles : beaucoup de rangées (tête, buste, jambes) se
 # répètent d'une pose à l'autre. Chaque rangée de 2 tuiles n'est rangée
@@ -989,6 +1087,22 @@ def draw_profile(frame, female, nude=False):
         line(c, 8, 16, 11, 21, 1); line(c, 9, 16, 12, 21, 1)   # jambe avant
         line(c, 7, 16, 4, 21, 1); line(c, 6, 16, 3, 21, 1)     # jambe arrière
         fill(c, 11, 22, 13, 23, 1 if nude else 3); fill(c, 2, 22, 4, 23, 1 if nude else 3)
+    elif frame == 2:
+        # passage, genou avant levé, bras à mi-course
+        line(c, 6, 8, 5, 11, 1)
+        line(c, 9, 8, 11, 10, 1)
+        racket(c, 11, 11, 13, 15, 5)
+        fill(c, 6, 16, 7, 21, 1); fill(c, 6, 22, 8, 23, 1 if nude else 3)       # jambe d'appui
+        line(c, 8, 16, 10, 18, 1); line(c, 10, 18, 10, 20, 1)                  # genou levé
+        put(c, 11, 20, 1 if nude else 3)
+    elif frame == 3:
+        # passage, talon arrière qui remonte
+        line(c, 6, 8, 5, 12, 1)
+        line(c, 9, 8, 10, 11, 1)
+        racket(c, 10, 12, 12, 17, 5)
+        fill(c, 8, 16, 9, 21, 1); fill(c, 8, 22, 10, 23, 1 if nude else 3)      # jambe d'appui
+        line(c, 7, 16, 5, 18, 1); line(c, 5, 18, 4, 19, 1)                     # talon qui remonte
+        put(c, 3, 19, 1 if nude else 3)
     else:
         # jambes croisées (passage), bras le long du corps
         line(c, 6, 8, 5, 12, 1)
@@ -1001,7 +1115,7 @@ def draw_profile(frame, female, nude=False):
 
 prof_map = []
 for female in (0, 1):
-    for frame in (0, 1):
+    for frame in (0, 1, 2, 3):       # course 1, 2 (foulées), 3, 4 (passages)
         cv = draw_profile(frame, female)
         preview_people.append(cv)
         prof_map += pool_rows(cv, draw_profile(frame, female, nude=True))
@@ -1030,23 +1144,7 @@ TROPHY_TILE = next_spr
 for ty in range(2):
     for tx in range(2):
         spr_tile(next_spr, [cup[ty*8+y][tx*8:tx*8+8] for y in range(8)]); next_spr += 1
-# balle moyenne (5x5) et grande (7x7) : la taille suit la hauteur de la balle
-BALL_MID_TILE = next_spr
-bm = blank()
-for y in range(5):
-    for x in range(5):
-        if (x - 2) ** 2 + (y - 2) ** 2 <= 5:
-            bm[y + 1][x + 1] = 1
-bm[2][2] = 3
-spr_tile(next_spr, bm); next_spr += 1
-BALL_BIG_TILE = next_spr
-bb = blank()
-for y in range(7):
-    for x in range(7):
-        if (x - 3) ** 2 + (y - 3) ** 2 <= 10:
-            bb[y][x] = 1
-bb[1][2] = 3; bb[2][1] = 3; bb[2][2] = 3
-spr_tile(next_spr, bb); next_spr += 1
+BALL_MID_TILE = BALL_BIG_TILE = 0   # (anciennes tuiles de balle : remplacées par la série BALL_BASE)
 CONFETTI_TILE = next_spr
 conf = blank()
 for (x, y) in ((3, 3), (4, 3), (3, 4), (4, 4)):
@@ -1228,13 +1326,15 @@ for ch in LOGO:
         logo += logo_tiles[ch]
 src.append(c_array('logo_tiles', bytes(logo)))
 src.append(c_array('bigball_tiles', bytes(ball_tiles)))
-src.append(c_array('person_map', bytes(person_map)))
+src.append(c_array('person_map_m', bytes(person_map[:2 * NPOSE * 3])))
+src.append(c_array('person_map_f', bytes(person_map[2 * NPOSE * 3:])))
 src.append(c_array('prof_map', bytes(prof_map)))
 src.append(c_array('marg_map', bytes(marg_map)))
-src.append('const unsigned char person_row[4] = {%d,%d,%d,%d};\n' % tuple(k * NPOSE * 3 for k in range(4)))
+src.append('const unsigned char person_row[2] = {0,%d};\n' % (NPOSE * 3))
+src.append('#if NPOSE != %d\n#error "NPOSE (assets.h) ne correspond pas a tools/gen_assets.py"\n#endif\n' % NPOSE)
 src.append('const unsigned int people_bytes = %d;\n' % ((POOL_END - POOL0) * 16))
 src.append('const unsigned char marg_prof_l = 0x%02X;\nconst unsigned char marg_prof_r = 0x%02X;\n' % (MARG_PROF_L, MARG_PROF_R))
-src.append('const unsigned char trophy_tile = 0x%02X;\nconst unsigned char confetti_tile = 0x%02X;\nconst unsigned char ball_mid_tile = 0x%02X;\nconst unsigned char ball_big_tile = 0x%02X;\nconst unsigned char ball_base = 0x%02X;\n' % (TROPHY_TILE, CONFETTI_TILE, BALL_MID_TILE, BALL_BIG_TILE, BALL_BASE))
+src.append('const unsigned char trophy_tile = 0x%02X;\nconst unsigned char confetti_tile = 0x%02X;\nconst unsigned char ball_base = 0x%02X;\n' % (TROPHY_TILE, CONFETTI_TILE, BALL_BASE))
 with open(os.path.join(ROOT, 'src', 'assets_data.c'), 'w') as f:
     f.write('\n'.join(src))
 

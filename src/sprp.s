@@ -12,7 +12,7 @@
 .export _run_x, _run_y, _run_dir, _run_pose
 .import _spr_meta, _oam_buf
 .importzp _meta_x, _meta_y, _meta_tile, _meta_attr, _meta_t1, _meta_t2, _oam_i
-.import _person_map, _person_row, _prof_map, _char_female
+.import _person_map_m, _person_map_f, _person_row, _prof_map, _char_female
 .import _marg_map, _marg_prof_l, _marg_prof_r
 .import _sfx_step
 .import _ms_timer, _confetti_tile
@@ -22,8 +22,9 @@
 
 POSE_RUN1 = 1
 POSE_RUN2 = 2
-POSE_LIFT = 16          ; drapeau : personnage relevé d'1 px
-NPOSE     = 11
+POSE_LIFT = 32          ; drapeau : personnage relevé d'1 px
+POSE_DOWN = 64          ; drapeau : personnage abaissé d'1 px
+NPOSE     = 22
 MARGAUX   = 16
 NCHARS    = 17
 
@@ -48,6 +49,12 @@ pt2:    .res 1
 plift:  .res 1
 pdx:    .res 2
 pdy:    .res 2
+
+.segment "RODATA"
+; image de course de profil par pose (décalage dans prof_map), $FF : pas une
+; pose de course. Ordre de la course : 1, 3 (passage), 2, 4 (passage).
+runfr:  .byte $FF, 0, 3, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF
+        .byte $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, 6, 9, $FF
 
 .segment "CODE"
 
@@ -80,10 +87,11 @@ _spr_person:
     lda (sp),y
     sta px+1
 
-    ; drapeau POSE_LIFT : 1 px plus haut (rebond d'attente, foulée) ; la
-    ; position mémorisée pour la course reste celle du sol
+    ; drapeaux POSE_LIFT / POSE_DOWN : 1 px plus haut (rebond, foulée) ou
+    ; plus bas (genoux fléchis) ; la position mémorisée pour la course reste
+    ; celle du sol
     lda ppose
-    and #POSE_LIFT
+    and #POSE_LIFT | POSE_DOWN
     sta plift
     eor ppose
     sta ppose
@@ -123,37 +131,51 @@ _spr_person:
     ldx #0
 @tok:
     lda plift
-    beq :+
+    beq @ty
+    and #POSE_LIFT
+    beq @tdn
     txa
-    beq :+
+    beq @ty
     dex
-:   stx _meta_y
+    jmp @ty
+@tdn:
+    cpx #216
+    bcs @ty
+    inx
+@ty:
+    stx _meta_y
 
-    ; tuiles : person_map[person_row[(femme << 1) | face] + pose * 3 + rangée]
-    ldx pc
-    lda _char_female,x
-    asl a
-    ora pfront
-    tax
+    ; tuiles : person_map_(m|f)[person_row[face] + pose * 3 + rangée]
+    ldx pfront
     lda ppose
     asl a
     clc
     adc ppose
     adc _person_row,x
     tay
-    lda _person_map,y
+    ldx pc
+    lda _char_female,x
+    bne @fem
+    lda _person_map_m,y
     sta ptile
-    lda _person_map+1,y
+    lda _person_map_m+1,y
     sta pt1
-    lda _person_map+2,y
+    lda _person_map_m+2,y
     sta pt2
+    jmp @tiles
+@fem:
+    lda _person_map_f,y
+    sta ptile
+    lda _person_map_f+1,y
+    sta pt1
+    lda _person_map_f+2,y
+    sta pt2
+@tiles:
 
     ; course : de profil si le déplacement est surtout latéral
-    lda ppose
-    cmp #POSE_RUN1
-    beq @run
-    cmp #POSE_RUN2
-    beq @run
+    ldy ppose
+    lda runfr,y
+    bpl @run
     ldx pc
     lda #0
     sta _run_dir,x
@@ -222,17 +244,13 @@ _spr_person:
     ldx pc
     lda _run_dir,x
     beq @nodir
-    ; profil : prof_map[(femme ? 6 : 0) + (course B ? 3 : 0) + rangée]
-    lda #0
-    ldy _char_female,x
-    beq @pm
-    lda #6
-@pm:
+    ; profil : prof_map[(femme ? 12 : 0) + image * 3 + rangée]
     ldy ppose
-    cpy #POSE_RUN2
-    bne @pa
+    lda runfr,y
+    ldy _char_female,x
+    beq @pa
     clc
-    adc #3
+    adc #12
 @pa:
     tay
     lda _prof_map,y
@@ -249,14 +267,16 @@ _spr_person:
 @pf:
     sty pflip
 @nodir:
-    ; bruit de pas discret à chaque foulée
+    ; bruit de pas discret à chaque appui (début des foulées A et B)
     lda ppose
     cmp #POSE_RUN1
-    bne @store
-    ldx pc
-    lda _run_pose,x
+    beq @step
     cmp #POSE_RUN2
     bne @store
+@step:
+    ldx pc
+    cmp _run_pose,x
+    beq @store
     jsr _sfx_step
 
 @store:
@@ -299,11 +319,9 @@ _spr_person:
     ldy pc
     lda _run_dir,y
     beq @head
-    lda ppose
-    cmp #POSE_RUN1
-    beq @prof
-    cmp #POSE_RUN2
-    beq @prof
+    ldy ppose
+    lda runfr,y
+    bpl @prof
 @head:
     lda ppose               ; marg_map[face * NPOSE + pose]
     ldy pfront
@@ -719,219 +737,6 @@ _ump_draw:
     inx
 @fin:
     stx _oam_i
-    rts
-
-; ---------------------------------------------------------------------------
-; u8 __fastcall__ pose_of(u8 p) : pose d'un joueur pour la trame (match_draw).
-;  - attente : rebond d'1 px toutes les 16 trames (décalé de 8 par joueur) ;
-;  - split-step : quand l'adversaire frappe, un joueur à l'arrêt fait un
-;    petit saut (pl_jump = 7) puis se réceptionne appuis écartés (7 trames) ;
-;  - course en 4 temps : foulées A et B, chacune basse puis relevée d'1 px ;
-;  - service en 3 temps : lancer (la balle monte), impact bras tendu (la
-;    balle redescend, puis 6 trames après la frappe), accompagnement ;
-;  - frappe : coup droit, revers à deux mains (balle à gauche, sprite en
-;    miroir) ou extension (balle à plus de 12 px), puis accompagnement.
-; En assembleur : appelée 2 ou 4 fois par trame (la version C coûtait
-; environ 140 cycles par appel).
-; ---------------------------------------------------------------------------
-.export _pose_of
-.import _pl_state, _pl_timer, _pl_walk, _pl_moving, _pl_flip, _pl_jump
-.import _rally_hits, _ms_timer, _hitter, _b_serve, _bx, _plx, _bvz
-.import _sc_winner, _pending_winner, _cfg
-.importzp _frame_cnt
-
-P_IDLE   = 0
-P_RUN1   = 1
-P_RUN2   = 2
-P_SWING  = 3
-P_FOLLOW = 4
-P_SERVE  = 5
-P_JOY    = 6
-P_SAD    = 7
-P_BACK   = 8
-P_REACH  = 9
-P_SRVHIT = 10
-MS_RALLY = 2
-MS_DEAD  = 3
-MS_OVER  = 4
-ST_CHARGE = 1
-ST_SWING  = 2
-ST_TOSS   = 3
-END_POINT = 2
-REACH_FP  = 13 * 64     ; distance balle - joueur au-delà de 12 px
-
-.segment "WBSS"
-ss_hits: .res 4
-ss_t:    .res 4
-pteam:   .res 1
-
-.segment "CODE"
-_pose_of:
-    tax                     ; X = p
-    and #1
-    sta pteam
-    ; split-step : compte à rebours, puis détection d'une nouvelle frappe
-    lda ss_t,x
-    beq :+
-    dec ss_t,x
-:   lda _rally_hits
-    cmp ss_hits,x
-    beq @nosplit
-    sta ss_hits,x
-    lda _ms
-    cmp #MS_RALLY
-    bne @nosplit
-    lda _hitter
-    cmp pteam
-    beq @nosplit
-    lda _pl_state,x
-    ora _pl_moving,x
-    ora _pl_jump,x
-    bne @nosplit
-    lda #14
-    sta ss_t,x
-    lda #7
-    sta _pl_jump,x
-@nosplit:
-    ; fin du match : joie (alternée avec les bras levés) ou déception
-    lda _ms
-    cmp #MS_OVER
-    bne @play
-    lda pteam
-    cmp _sc_winner
-    bne @sad
-    lda _ms_timer
-    and #16
-    bne @serve
-@joy:
-    lda #P_JOY
-    rts
-@sad:
-    lda #P_SAD
-    rts
-@serve:
-    lda #P_SERVE
-    rts
-@play:
-    ldy _pl_state,x
-    cpy #ST_TOSS
-    bne @notoss
-    ; lancer : bras levés tant que la balle monte, puis impact
-    lda _bvz+1
-    bmi @srvhit
-    ora _bvz
-    bne @serve
-@srvhit:
-    lda #P_SRVHIT
-    rts
-@notoss:
-    cpy #ST_SWING
-    bne @noswing
-    lda _pl_timer,x
-    cmp #7
-    bcs @armed
-    lda #P_FOLLOW
-    rts
-@armed:
-    lda _b_serve
-    beq @shot
-    lda _hitter
-    cmp pteam
-    beq @srvhit
-@shot:
-    ; extension si |bx - plx| >= 13 px (en virgule fixe, 1 px = 64)
-    txa
-    asl a
-    tay
-    sec
-    lda _bx
-    sbc _plx,y
-    sta tmp1
-    lda _bx+1
-    sbc _plx+1,y
-    bpl @dpos
-    ; d < 0 : d <= -REACH_FP ?
-    cmp #>(-REACH_FP)
-    bcc @reach
-    bne @fore
-    lda tmp1
-    cmp #<(-REACH_FP)
-    bcc @reach
-    beq @reach
-    bcs @fore
-@dpos:
-    cmp #>REACH_FP
-    bcc @fore
-    bne @reach
-    lda tmp1
-    cmp #<REACH_FP
-    bcs @reach
-@fore:
-    lda _pl_flip,x
-    beq :+
-    lda #P_BACK
-    rts
-:   lda #P_SWING
-    rts
-@reach:
-    lda #P_REACH
-    rts
-@noswing:
-    cpy #ST_CHARGE
-    beq @joy2
-    lda _pl_moving,x
-    beq @still
-    ; course : foulée A ou B (pl_walk & 8), relevée d'1 px sur pl_walk & 4
-    lda _pl_walk,x
-    and #4
-    asl a
-    asl a                   ; 16 = POSE_LIFT
-    sta tmp1
-    lda _pl_walk,x
-    and #8
-    beq :+
-    lda #P_RUN1
-    ora tmp1
-    rts
-:   lda #P_RUN2
-    ora tmp1
-    rts
-@still:
-    ; point gagné / perdu en match : joie ou déception pendant 1 s
-    lda _ms
-    cmp #MS_DEAD
-    bne @idle
-    lda _end_reason
-    cmp #END_POINT
-    bne @idle
-    lda _cfg                ; cfg.mode == GM_MATCH (0)
-    bne @idle
-    lda _ms_timer
-    cmp #60
-    bcs @idle
-    lda pteam
-    cmp _pending_winner
-    beq @joy2
-    lda #P_SAD
-    rts
-@idle:
-    lda ss_t,x
-    beq @bob
-    cmp #7
-    bcc @joy2               ; réception du split-step, appuis écartés
-    lda #P_IDLE
-    rts
-@joy2:
-    lda #P_JOY
-    rts
-@bob:
-    txa
-    asl a
-    asl a
-    asl a
-    clc
-    adc _frame_cnt
-    and #16                 ; 16 = POSE_LIFT
     rts
 
 ; ---------------------------------------------------------------------------

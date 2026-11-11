@@ -75,10 +75,11 @@ static void dbl_tile(u16 sa, u16 da)
    (rangée k/2, colonne k&1) -> tuiles dst + 4k .. dst + 4k + 3 */
 static void big_person(u8 c, u8 pose, u16 base, u8 dst)
 {
-    u8 k, s, m = (u8)(person_row[(char_female[c] << 1) | 1] + pose * 3);
+    u8 k, s, m = (u8)(person_row[1] + pose * 3);
+    const u8 *map = char_female[c] ? person_map_f : person_map_m;
     for (k = 0; k < 6; ++k) {
-        s = (u8)(person_map[m + (k >> 1)] + (k & 1));
-        if (c == 16 && k < 2) s = (u8)(marg_map[11 + pose] + k);   /* Margaux (de face) */
+        s = (u8)(map[m + (k >> 1)] + (k & 1));
+        if (c == 16 && k < 2) s = (u8)(marg_map[NPOSE + pose] + k);   /* Margaux (de face) */
         dbl_tile((u16)(0x1000 + ((u16)s << 4)), (u16)(base + ((u16)(u8)(dst + k * 4) << 4)));
     }
 }
