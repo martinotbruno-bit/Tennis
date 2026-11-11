@@ -1,10 +1,16 @@
-# Royal Martinot — Rapport de réalisation (version 2.30)
+# Royal Martinot — Rapport de réalisation (version 2.31)
 
 Comme l'exige le CDC (§ 17.5), ce rapport distingue ce qui est **réalisé**, **testé**, **validé sur matériel réel**, **validé uniquement en émulation**, **dépendant d'une extension**, et les **limitations restantes**.
 
 > **Validation matérielle : aucune.** Aucun test n'a été fait sur console réelle (NES, Famicom, PAL, cartouche MMC1). Toutes les validations ont eu lieu en émulation (jsnes) et par des tests unitaires sur PC. Les critères « vérifié sur console physique » (CDC § 2.1, 15.4, 16.A) **ne sont pas remplis**. Ce point ne peut pas être traité dans l'environnement de développement utilisé.
 
 ## 1. Évolutions
+
+### Version 2.31
+
+| Demande | Réalisation |
+|---|---|
+| Comme des ratés dans certaines musiques | Le rythme a été vérifié trame par trame (générique, titre, menu, valse, présentation) : aucune note en retard ni sautée. La cause était dans le timbre : depuis la 2.29, le carré de la mélodie n'était relancé qu'aux notes qui changent d'octet de période, d'où un petit clic sur certaines notes seulement. Chaque note est de nouveau relancée de la même façon, comme dans la polka déjà validée. Les silences qui détachent les notes répétées passent de 2 trames à 1 |
 
 ### Version 2.30
 
@@ -274,7 +280,7 @@ Pour loger ce contenu, la cartouche passe de NROM (32 Ko) à **MMC1** : 128 Ko d
 | Relecture des textes (`check_texts.py`) | 0 problème |
 | Contraste (`contrast.py 25`) | 0 paire sous ΔE 25 (personnages, courts, balle, tenues) |
 | Profil CPU, double, 6 000 trames | 27 trames d'échange en dépassement (0,45 %), sans défaut d'image |
-| Compilation | Reproductible : SHA-256 `afce1a8fe28bc5fbf2b34e215ec29f1943bb7f486bbea287907e25c10bf681e1` sur deux compilations propres |
+| Compilation | Reproductible : SHA-256 `81c53c84482ffc24411b6b3c492f23faecd5e646b598c30c68ed06a92f696911` sur deux compilations propres |
 
 ## 3. Conformité par section du CDC
 

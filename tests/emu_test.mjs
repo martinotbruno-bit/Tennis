@@ -113,9 +113,9 @@ console.log('Générique de lancement');
     for (let i = 0; i < exp.length && i < got.length; i++) worst = Math.max(worst, Math.abs(got[i] - got[0] - exp[i]));
   }
   // notes tenues : volume constant (rien ne s'éteint avant la note suivante),
-  // et la forme d'onde n'est remise à zéro ($4007) que si l'octet change
+  // et chaque note est relancée de la même façon ($4007 à chaque note)
   const held = [...vol].every((v) => v === 0x30 || (v & 0x30) === 0x30);
-  check(held && w7 < score('mus_intro_mel').length / 2, `générique : notes tenues sans coupure ni clic (volumes ${[...vol].map((v) => v.toString(16))}, ${w7} remises à zéro pour ${score('mus_intro_mel').length} notes)`);
+  check(held && w7 === score('mus_intro_mel').length, `générique : notes tenues sans coupure, chaque note relancée de la même façon (volumes ${[...vol].map((v) => v.toString(16))}, ${w7} relances pour ${score('mus_intro_mel').length} notes)`);
   check(cnt === 0 && worst === 0, `générique : les ${score('mus_intro_mel').length} notes de la mélodie et ${score('mus_intro_bass').length} de la basse tombent à la trame près (écart max ${worst})`);
 }
 

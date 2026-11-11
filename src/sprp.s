@@ -465,7 +465,7 @@ _win_fx:
 .export _audio_tick
 .import _noise_hold, _mel_ptr, _bass_ptr, _mel_start, _bass_start
 .import _mel_timer, _bass_timer, _music_loop, _mel_duty, _music_cur
-.import _note_period, _audio_lock, _mel_hi
+.import _note_period, _audio_lock
 
 .segment "ZEROPAGE"
 aptr:   .res 2
@@ -528,19 +528,9 @@ _audio_tick:
     sta $4006
     lda _note_period+1,x
     ora #$08
-    ; volume constant : $4007 n'est réécrit que si l'octet change (l'écrire
-    ; remet la forme d'onde à zéro : petit « clic » à chaque note)
-    pha
-    lda _mel_duty
-    and #$10
-    beq @mw
-    pla
-    cmp _mel_hi
-    beq @mdur
-    pha
-@mw:
-    pla
-    sta _mel_hi
+    ; $4007 à chaque note : relance identique pour toutes les notes (ne le
+    ; réécrire que quand l'octet change faisait un clic sur certaines notes
+    ; seulement, entendu comme des ratés)
     sta $4007
 @mdur:
     ldy #1

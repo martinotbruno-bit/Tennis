@@ -81,11 +81,11 @@ static const u8 mus_def_mel[]   = { G4,10, F4,10, E4,10, D4,10, C4,30, END,0 };
 
 /* Thème de la finale (écrans d'avant-match) : marche solennelle, 8 mesures de 80 trames */
 static const u8 mus_final_mel[] = {
- G4,8, R,2, G4,3, R,2, G4,5, C5,20, E5,20, G5,20,
+ G4,9, R,1, G4,4, R,1, G4,5, C5,20, E5,20, G5,20,
  A5,20, G5,10, F5,10, E5,10, D5,10, E5,20,
- G4,8, R,2, G4,3, R,2, G4,5, D5,20, F5,20, A5,20,
+ G4,9, R,1, G4,4, R,1, G4,5, D5,20, F5,20, A5,20,
  G5,20, F5,10, D5,10, B4,10, D5,10, G4,20,
- E5,18, R,2, E5,10, F5,10, G5,20, E5,20,
+ E5,19, R,1, E5,10, F5,10, G5,20, E5,20,
  A5,20, F5,20, G5,20, E5,20,
  F5,10, E5,10, D5,10, C5,10, D5,20, B4,20,
  C5,60, R,20,
@@ -98,7 +98,7 @@ static const u8 mus_final_bass[] = {
 static const u8 mus_margaux_mel[] = {
  C5,12, E5,12, G5,12,  A5,24, G5,12,  F5,12, A5,12, F5,12,  E5,24, C5,12,
  D5,12, F5,12, A5,12,  G5,24, E5,12,  F5,12, E5,12, D5,12,  C5,24, R,12,
- E5,10, R,2, E5,6, F5,6, G5,12,  A5,12, G5,12, E5,12,  F5,10, R,2, F5,6, G5,6, A5,12,  G5,34, R,2,
+ E5,11, R,1, E5,6, F5,6, G5,12,  A5,12, G5,12, E5,12,  F5,11, R,1, F5,6, G5,6, A5,12,  G5,35, R,1,
  G5,12, E5,12, C5,12,  F5,12, A5,12, F5,12,  E5,12, D5,12, G4,12,  C5,24, R,12,
  END,0 };
 static const u8 mus_margaux_bass[] = {
@@ -118,7 +118,7 @@ static const u8 mus_intro_mel[] = {
  C4,30, G4,15, C5,15,  E5,45, D5,15,  C5,15, D5,15, E5,15, G5,15,  A5,60,
  G5,30, E5,15, C5,15,  F5,45, E5,15,  D5,15, E5,15, F5,15, A5,15,  G5,60,
  /* ça déraille (240) */
- G4,13, R,2, G4,6, R,2, G4,7, C5,30,  E5,15, 39,8, E5,7, G5,30,  A5,20, 44,20, F5,20,  E5,30, 37,30,
+ G4,14, R,1, G4,7, R,1, G4,7, C5,30,  E5,15, 39,8, E5,7, G5,30,  A5,20, 44,20, F5,20,  E5,30, 37,30,
  /* ça s'emballe (160) */
  C5,8, D5,8, E5,8, F5,8, G5,8, A5,8, B5,8, A5,8, G5,8, F5,8,
  E5,6, G5,6, C5,6, E5,6, G5,6, C5,6, E5,6, G5,6, C5,6, E5,6, G5,6, C5,6, B4,8,
@@ -170,7 +170,6 @@ static const u8 mus_break_bass[] = {
    (rendu coupé), sans à-coup */
 const u8 *mel_ptr, *bass_ptr, *mel_start, *bass_start;
 u8 mel_timer, bass_timer, music_loop, mel_duty;
-u8 mel_hi;         /* dernier octet écrit en $4007 (timbres à volume constant) */
 u8 audio_lock;     /* 1 : état en cours de modification, la NMI attend */
 u8 music_cur;      /* morceau en cours (MUS_*) */
 u8 snd_mode;       /* 0 musique + bruitages, 1 bruitages seuls, 2 aucun son */
@@ -181,7 +180,6 @@ void music_play(u8 id)
     mel_ptr = bass_ptr = 0;
     music_loop = 0;
     mel_duty = 0x86;                    /* petits jingles : note qui s'éteint */
-    mel_hi = 0xFF;                      /* première note : $4007 toujours écrit */
     music_cur = id;
     APU(0x4004) = 0x30;
     APU(0x4008) = 0x80;
