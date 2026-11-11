@@ -1153,7 +1153,6 @@ void match_draw(void)
         if (ms == MS_TOSS && by < NET_Y * FP) sy = (sy + (sy << 3)) >> 4;
         spr_ball((u8)PX(bx), PX(by) - sy - 3, (u8)PX(by), k);
     }
-    if (tgt_x) spr1(tgt_x, tgt_y, 3, 3);   /* cible d'entraînement */
     bank_call(BANK_EXTRAS, poses_all);     /* poses et miroirs, balle du dribble, glissades */
     for (i = 0; i < npl; ++i) {
         p = ord[i];
@@ -1168,7 +1167,7 @@ void match_draw(void)
         j = (u8)((j * j) >> 4);
         /* victoire : le vainqueur sautille de joie (un bond toutes les 16 trames) */
         if (party && (u8)(p & 1) == sc_winner) j = hop_h[ms_timer & 15];
-        spr_person((u8)(((u16)plx[p] << 2) >> 8), (s16)(ys[p] - j), cfg.chr[p], side_of(p), k, flip_cache[p], (u8)(p & 1));
+        spr_person((u8)(((u16)plx[p] << 2) >> 8), (s16)(ys[p] - j), cfg.chr[p], side_of(p), k, flip_cache[p], p);   /* palette p & 1 */
     }
     bank_call(BANK_EXTRAS, match_fx);   /* ombres, poussière, arbitre, repère */
     if (party) { win_fx(); fw_draw(ms_timer, 0); }

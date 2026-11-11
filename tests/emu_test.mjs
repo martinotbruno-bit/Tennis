@@ -1483,6 +1483,41 @@ console.log('Son sur console réelle : balayage des carrés');
   e.poke('sc_winner', 0); e.poke('ms_timer', 160); e.poke('ms', 4); e.run(170);   // feux d'artifice
   check(bad.length === 0, `aucune note coupée par l'unité de balayage sur console réelle${bad.length ? ' (périodes ' + [...new Set(bad)].join(', ') + ')' : ''}`);
 }
+console.log('Vue en perspective (option VUE)');
+{
+  // menu : ligne VUE, à plat par défaut
+  const m = boot(); toMenu(m);
+  const r = rowOf(m, 24);
+  check(r > 0 && m.text(3, 4 + r, 3) === 'VUE' && m.text(16, 4 + r, 6) === 'A PLAT', 'menu : ligne VUE (à plat par défaut)');
+  m.poke('cursor', r); m.tap('RIGHT'); m.run(5);
+  check(m.peek('opt_val', 24) === 1 && m.text(16, 4 + r, 11) === 'PERSPECTIVE', 'menu : VUE PERSPECTIVE');
+  // match en perspective : court déformé, tuiles chargées, projection
+  const e = boot(); startWith(e, { FMT: 3, ENV: 0 }); e.poke('opt_val', 1, 24);
+  const f = boot(); toMenu(f); f.poke('opt_val', 1, 24); f.poke('opt_val', 3, O.FMT); f.tap('START'); f.run(30); f.tap('A');
+  runUntil(f, () => app(f) === AS.MATCH, 300); f.run(30);
+  const nt = (g, x, y) => g.nes.ppu.vramMem[0x2000 + y * 32 + x];
+  const flat = boot(); startWith(flat, { FMT: 3, ENV: 0 }); flat.run(30);
+  let diff = 0; for (let y = 4; y < 30; y++) for (let x = 4; x < 28; x++) if (nt(f, x, y) !== nt(flat, x, y)) diff++;
+  let same = 0; for (let y = 4; y < 30; y++) for (let x of [0, 1, 2, 3, 28, 29, 30, 31]) if (nt(f, x, y) === nt(flat, x, y)) same++;
+  check(f.peek('persp') === 1 && flat.peek('persp') === 0 && diff > 100 && same === 26 * 8,
+    `court en perspective (${diff} tuiles du court changées, tribunes identiques) ; vue à plat inchangée`);
+  // projection : un joueur placé au fond, près du couloir, apparaît plus près du centre qu'à plat
+  const s16 = (g, n, v, o = 0) => { g.poke(n, v & 255, o); g.poke(n, (v >> 8) & 255, o + 1); };
+  for (const g of [f, flat]) { g.poke('ms', 2); g.poke('b_live', 0); g.poke('b_vis', 0); s16(g, 'plx', 70 * 64, 2); s16(g, 'ply', 50 * 64, 2); g.run(3); }
+  const xOf = (g) => { let best = 999; for (let i = 0; i < 64; i++) { const y = g.peek('oam_buf', i * 4), t = g.peek('oam_buf', i * 4 + 1);
+    if (y < 0xEF && y < 60 && (g.peek('oam_buf', i * 4 + 2) & 3) === 1) best = Math.min(best, g.peek('oam_buf', i * 4 + 3)); } return best; };
+  const xp = xOf(f), xf = xOf(flat);
+  check(xp > xf + 5, `projection : joueur du fond plus près du centre en perspective (x ${xp} contre ${xf} à plat)`);
+  // retour aux menus : motifs d'origine rétablis, projection coupée
+  f.tap('START'); f.run(5); f.tap('DOWN'); f.tap('A'); runUntil(f, () => app(f) === AS.SCREENS, 200); f.run(40);
+  const rom2 = f.nes.rom.rom[2]; let d2 = 0; for (let i = 0; i < 4096; i++) if (f.nes.ppu.vramMem[i] !== rom2[i]) d2++;
+  check(f.peek('persp') === 0 && d2 === 0, `hors du match : tuiles de décor d'origine rétablies (${d2} octet(s) différent(s)), projection coupée`);
+  // match complet en perspective (double, château)
+  const d = boot(); toMenu(d); setOpts(d, { MODE: MODE.P2, TYPE: 1, ENV: 5, FMT: 3 }); d.poke('opt_val', 1, 24); d.tap('START'); d.run(30); d.tap('A');
+  runUntil(d, () => app(d) === AS.MATCH, 300); allCpu(d);
+  const done = runUntil(d, () => app(d) === AS.SCREENS, 60 * 60 * 25); d.run(30);
+  check(done && d.peek('persp') === 0, 'match complet en perspective (double, château), projection coupée ensuite');
+}
 console.log('Compensation 50 Hz (PAL)');
 {
   const e = boot(); e.poke('is_pal', 1); startWith(e, { FMT: 3 }); allCpu(e);

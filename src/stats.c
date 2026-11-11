@@ -8,6 +8,8 @@
 SaveData sv;
 SaveOpts so;
 SaveCanon sx;
+/* vue (option VUE), bloc à part : les réglages déjà mémorisés restent valables */
+u8 sw_view[3];          /* 'V', valeur, contrôle */
 #pragma bss-name(pop)
 
 static u8 sx_sum(void)
@@ -35,6 +37,7 @@ u8 __fastcall__ so_save(u8 unused)
     u8 i;
     for (i = 0; i < NOPT_SAVE; ++i) so.opt[i] = opt_val[i];
     so.sig[0] = 'P'; so.sig[1] = 'O';
+    sw_view[0] = 'V'; sw_view[1] = opt_val[NOPT_SAVE]; sw_view[2] = (u8)(0x5A ^ opt_val[NOPT_SAVE]);
     so.sum = so_sum();
     return unused;
 }
@@ -45,6 +48,7 @@ u8 __fastcall__ so_load(u8 unused)
     (void)unused;
     if (so.sig[0] != 'P' || so.sig[1] != 'O' || so.sum != so_sum()) return 0;
     for (i = 0; i < NOPT_SAVE; ++i) opt_val[i] = so.opt[i];
+    if (sw_view[0] == 'V' && sw_view[1] < 2 && sw_view[2] == (u8)(0x5A ^ sw_view[1])) opt_val[NOPT_SAVE] = sw_view[1];
     return 1;
 }
 

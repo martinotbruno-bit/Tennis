@@ -51,7 +51,8 @@ u8 scr_state;
 #define O_GSPEED 21   /* vitesse du jeu : lent, normal, rapide */
 #define O_SOUND  22   /* son : tout, bruitages seuls, aucun */
 #define O_FATIG  23   /* fatigue dans les très longs échanges */
-#define NOPT     24
+#define O_VIEW   24   /* vue : à plat, perspective */
+#define NOPT     25
 
 #define MODE_1P      0
 #define MODE_2P      1
@@ -61,12 +62,12 @@ u8 scr_state;
 #define MODE_DEMO    5
 #define NMODES       6
 
-u8 opt_val[NOPT] = { 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 2, 1, 0, 1, 0, 1, 0, 1 };
-static const u8 opt_max[NOPT] = { 1, NMODES, 2, NCHARS, NCHARS, 3, NSURF, NENV, 3, 4, 2, NCT, 2, 2, 2, NEX, 4, 3, 3, 3, 2, 3, 3, 2 };
+u8 opt_val[NOPT] = { 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 2, 1, 0, 1, 0, 1, 0, 1, 0 };
+static const u8 opt_max[NOPT] = { 1, NMODES, 2, NCHARS, NCHARS, 3, NSURF, NENV, 3, 4, 2, NCT, 2, 2, 2, NEX, 4, 3, 3, 3, 2, 3, 3, 2, 2 };
 static const char * const opt_label[NOPT] = {
     "COMMENCER", "MODE", "JEU", "JOUEUR 1", "JOUEUR 2", "NIVEAU CPU", "SURFACE", "LIEU",
     "CONDITIONS", "FORMAT", "RALENTIS", "COMPETITION", "JOUEURS", "ADVERSAIRES", "SURFACES",
-    "EXERCICE", "COTE", "VITESSE", "EFFET", "BALLES", "JOUE PAR", "VITESSE JEU", "SON", "FATIGUE" };
+    "EXERCICE", "COTE", "VITESSE", "EFFET", "BALLES", "JOUE PAR", "VITESSE JEU", "SON", "FATIGUE", "VUE" };
 static const char * const mode_name[NMODES] = {
     "1 JOUEUR VS CPU", "2 J. ADVERSAIRES", "EN EQUIPE", "COMPETITION", "ENTRAINEMENT", "DEMO CPU" };
 static const char * const cond_name[3] = { "JOUR", "NUIT", "PLUIE" };
@@ -132,6 +133,7 @@ static void build_visible(void)
         vis[nvis++] = O_GSPEED;
     }
     if (m != MODE_TRAIN) vis[nvis++] = O_FATIG;
+    vis[nvis++] = O_VIEW;
     vis[nvis++] = O_SOUND;
     if (cursor >= nvis) cursor = 0;
 }
@@ -165,6 +167,7 @@ static const char *opt_text(u8 o)
     case O_GSPEED: return gspeed_name[v];
     case O_SOUND:  return sound_name[v];
     case O_FATIG:  return v ? "OUI" : "NON";
+    case O_VIEW:   return v ? "PERSPECTIVE" : "A PLAT";
     }
     return "";
 }
@@ -312,8 +315,8 @@ static void menu_style_line(u8 direct)
 {
     u8 c = opt_val[O_MODE] == MODE_COMP || opt_val[O_MODE] == MODE_TRAIN ? opt_val[O_P1] : opt_val[O_P2];
     pad_text(style_name[char_style[c]], 14);
-    if (direct) { txt_at(3, 23, "STYLE"); txt_at(9, 23, line); }
-    else vbuf_text(9, 23, line, 14);
+    if (direct) { txt_at(3, 24, "STYLE"); txt_at(9, 24, line); }
+    else vbuf_text(9, 24, line, 14);
 }
 
 static void menu_screen(void)
@@ -365,6 +368,7 @@ static void base_cfg(void)
     cfg.replays = opt_val[O_REPLAY];
     cfg.gspeed = opt_val[O_GSPEED];
     cfg.fatigue = opt_val[O_FATIG];
+    cfg.view = opt_val[O_VIEW];
     cfg.demo = 0;
     cfg.mode = GM_MATCH;
     cfg.doubles = 0;
@@ -433,6 +437,7 @@ static void comp_cfg(void)
     }
     cfg.surface = COMP(comp_surface, 0);
     cfg.env = c_env;
+    cfg.view = opt_val[O_VIEW];
     cfg.cond = c_cond;
     if (cfg.env == ENV_HALL && cfg.cond == COND_RAIN) cfg.cond = COND_DAY;
     cfg.sets_to_win = (u8)(c_fmt == 1 ? 2 : c_fmt == 2 ? 3 : 1);

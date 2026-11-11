@@ -141,7 +141,23 @@ u8 ump_princess;                 /* 1 : arbitre princesse (court Margaux), lu pa
 void load_court(void)
 {
     u8 nude = (u8)(cfg.env == ENV_NUDE);
-    vram_unrle(court_nt_rle[cfg.env]);
+    if (cfg.view) {
+        /* vue en perspective : tuiles du court déformé (à la place de tuiles
+           inutilisées sur ce lieu), puis le court, puis les tables de
+           projection ; tout est rétabli par chr_borrow_restore hors du match */
+        u8 i, n = persp_ntile[cfg.env];
+        const u8 *ch = persp_chr[cfg.env];
+        bank_read(BANK_PERSP, proj_ram, persp_slot[cfg.env], n);   /* places (tampon : tables) */
+        for (i = 0; i < n; ++i) chr_copy(BANK_PERSP, ch + (i << 4), (u16)proj_ram[i] << 4, 16);
+        vram_adr(0x2000);
+        bank_unrle(BANK_PERSP, persp_rle[cfg.env]);
+        bank_read(BANK_PERSP, proj_ram, proj_tab, 512 + 640);
+        bg_dirty = 1;
+        persp = 1;
+    } else {
+        bank_unrle(BANK_COURTS, court_nt_rle[cfg.env]);
+        persp = 0;
+    }
     people_tiles(nude);
     /* panneaux à côté du score, dans 8 tuiles distinctes inutilisées sur leur
        court (choisies par l'outil de génération : public d'un autre lieu) ;
@@ -353,7 +369,7 @@ void rp_play(void)
         p = ord[i];
         a = e[6 + p * 3];
         k = (u8)(a >> 6);           /* saut enregistré (j/4) : hauteur j²/16 = k² */
-        spr_person(e[4 + p * 3], (s16)e[5 + p * 3] - k * k, cfg.chr[p], side_of(p), (u8)(a & 31), (u8)((a >> 5) & 1), (u8)(p & 1));
+        spr_person(e[4 + p * 3], (s16)e[5 + p * 3] - k * k, cfg.chr[p], side_of(p), (u8)(a & 31), (u8)((a >> 5) & 1), p);
     }
     ump_draw();                      /* l'arbitre reste sur sa chaise pendant le ralenti */
     spr_end();
@@ -585,6 +601,19 @@ extern u8 perf_t, perf_x, perf_y, tired, pl_jump[4];
 #pragma bss-name(push, "WBSS")
 static u8 fx_t, fx_x, fx_y, fx_kind, fx_bounces, fx_hits, mk_t;
 #pragma bss-name(pop)
+/* point du court à plat -> écran (vue en perspective) : résultat dans qx, qy */
+extern u8 proj_x, proj_y;
+#pragma zpsym("proj_x")
+#pragma zpsym("proj_y")
+void __fastcall__ proj2(u8 x, u8 y);           /* sprp.s */
+static u8 qx, qy;
+extern u8 psh_x[4], psh_y[4];   /* sprp.s */
+static void pj(u8 x, u8 y)
+{
+    if (persp) { proj2(x, y); qx = proj_x; qy = proj_y; }
+    else { qx = x; qy = y; }
+}
+
 void match_fx(void)
 {
     u8 i, j;
@@ -600,14 +629,17 @@ void match_fx(void)
     }
     if (fx_t) {
         --fx_t;
-        spr1((u8)(fx_x - 4), (u8)(fx_y - 6), (u8)(fx_kind + (fx_t < 6)), (u8)(fx_kind == 8 ? 3 : 2));
+        pj(fx_x, fx_y);
+        spr1((u8)(qx - 4), (u8)(qy - 6), (u8)(fx_kind + (fx_t < 6)), (u8)(fx_kind == 8 ? 3 : 2));
     }
     /* ombres de tous les joueurs ; en double, quand trop de sprites
        partagent une ligne, la rotation de l'ordre des sprites (match_draw)
        évite qu'un sprite disparaisse */
     for (i = 0; i < npl; ++i) {
         if (cfg.mode == GM_TRAIN && i == 1 && cfg.ex != EX_STATIC) continue;   /* lanceur invisible */
-        spr1((u8)(PXU(plx[i]) - 3), PXU(ply[i]), 5, 2);   /* sous les pieds, décalée vers la droite */
+        /* perspective : x projeté par spr_person, y du sol lu dans la table */
+        if (persp) { qx = psh_x[i]; qy = proj_ram[PXU(ply[i])]; } else { qx = PXU(plx[i]); qy = PXU(ply[i]); }
+        spr1((u8)(qx - 3), qy, 5, 2);   /* sous les pieds, décalée vers la droite */
     }
     /* repère d'atterrissage (lent) : 30 trames après chaque frappe vers un
        joueur humain */
@@ -620,24 +652,28 @@ void match_fx(void)
     }
     if (mk_t) {
         --mk_t;
-        if (b_live && bounces == 0) spr1((u8)(land_x - 4), (u8)(land_y - 4), 10, 3);
+        if (b_live && bounces == 0) { pj((u8)land_x, (u8)land_y); spr1((u8)(qx - 4), (u8)(qy - 4), 10, 3); }
     }
     /* fatigue : goutte de sueur au-dessus des joueurs (clignote) ; en double,
        seulement pour les joueurs humains (limite de sprites par ligne) */
     if (tired >= 4 && (frame_cnt & 16)) {
         for (i = 0; i < npl; ++i) {
             if (npl == 4 && cfg.ctrl[i] == CTRL_CPU) continue;
-            spr1((u8)(PXU(plx[i]) + 6), (u8)(PXU(ply[i]) - 30), 14, 3);
+            if (persp) { qx = psh_x[i]; qy = psh_y[i]; } else { qx = PXU(plx[i]); qy = PXU(ply[i]); }
+            spr1((u8)(qx + 6), (u8)(qy - 30), 14, 3);
         }
     }
     /* frappe parfaite : petit éclat près de la raquette */
-    if (perf_t) { --perf_t; spr1(perf_x, perf_y, 3, 2); }   /* blanc : visible sur tous les courts */
+    if (perf_t) { --perf_t; pj(perf_x, perf_y); spr1(qx, qy, 3, 2); }
+    /* cible d'entraînement (projetée en perspective : centre du sprite) */
+    if (tgt_x) { pj((u8)(tgt_x + 4), (u8)(tgt_y + 4)); spr1((u8)(qx - 4), (u8)(qy - 4), 3, 3); }   /* blanc : visible sur tous les courts */
     /* service canon : traînée de deux points derrière la balle */
     if (srv_canon && b_serve && b_live && bounces == 0) {
         for (j = 2; j < 6; j += 3) {
             s16 z = bz - bvz * j;
             if (z < 0) z = 0;
-            spr1((u8)(PXU(bx - bvx * j) - 2), (u8)(PXU(by - bvy * j) - PXU(z) - 2), 1, 3);
+            pj(PXU(bx - bvx * j), PXU(by - bvy * j));
+            spr1((u8)(qx - 2), (u8)(qy - PXU(z) - 2), 1, 3);
         }
     }
     /* arbitre de chaise (tous les lieux), assis de profil sur sa chaise

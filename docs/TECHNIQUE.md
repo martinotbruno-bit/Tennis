@@ -39,7 +39,7 @@ La version 1.0 tenait en NROM-256 (32 Ko, plein à 87 %). Il a fallu plus de pla
 | 0 | Moteur de match : physique, frappes, service, arbitrage, IA, fête de victoire | 16 339 |
 | 1 | Écrans : titre, configuration, présentation, résultats, fin de set, compétitions, levée de coupe, saisie de code, palmarès | 15 780 |
 | 2 | Motifs graphiques (8 Ko), copiés en CHR-RAM au démarrage | 8 192 |
-| 3 | Annexes du match : poses des joueurs (`poses.s`), score et annonces du club nudiste, courts (5 lieux), panneau du court Margaux, public (regard, ola, réactions), pluie, ralentis, exercices, tutoriel | 15 909 |
+| 3 | Annexes du match : poses des joueurs et arbitre (`poses.s`), score et annonces du club nudiste, chargement des courts, effets du court (`match_fx`), panneau du court Margaux, public (regard, ola, réactions), pluie, ralentis, exercices, tutoriel, IA tactique, adresses des courts en perspective | 12 768 |
 | 4 | Mode d'emploi | 3 661 |
 | 5 | Compétitions (tirages, simulations, classements, équipes de double), palmarès et codes de reprise (`password.c`, appelé par `far_call`) | 10 502 |
 | 6 | Tuiles des personnages « au naturel » (club nudiste, réserve commune de 180 tuiles), copiées en CHR-RAM à la demande | 2 880 |
@@ -47,7 +47,9 @@ La version 1.0 tenait en NROM-256 (32 Ko, plein à 87 %). Il a fallu plus de pla
 | 8 | Podium d'une compétition gagnée | 4 438 |
 | 9 | Générique de fin | 2 121 |
 | 10 | Musiques (`music_data.c`, généré par `tools/gen_music.py`), copiées en RAM de cartouche par `music_play` | 2 343 |
-| 11 à 14 | Libres (64 Ko) pour les évolutions futures | 0 |
+| 11 | Vue en perspective : décors des 7 courts (RLE), tuiles nouvelles par lieu et leurs places, tables de projection (`assets_persp.c`) | 11 717 |
+| 12 | Décors des 7 courts à plat (RLE, `assets_courts12.c`) | 3 932 |
+| 13 et 14 | Libres (32 Ko) pour les évolutions futures | 0 |
 
 ### RAM
 
@@ -349,6 +351,16 @@ Nouvel état `AS_CREDITS` (`GO_CREDITS`). Il s'ouvre sur A depuis le podium d'un
 - **le court Margaux et le club nudiste**, qui gardent l'ancienne animation : motifs échangés en CHR-RAM.
 
 Au club, 4 bandes de spectateurs de 2 rangées. En salle, des gradins sur les 16 px extérieurs de chaque côté, avec les panneaux publicitaires côté court. Les deux sont en palette 3 (noir, jaune, blanc), pour être bien visibles. `court_attr` prend maintenant le lieu en paramètre.
+
+### Vue en perspective (option VUE, version 2.42)
+
+Le jeu calcule tout à plat, comme avant ; seul l'affichage est projeté. Projection retenue (15 %) : avec `a = 1/0,85 − 1` et `d = (216 − Y) / 168` (0 sur la ligne de fond du bas, 1 sur celle du haut), l'échelle vaut `s = 1 / (1 + a·d)`, puis `y' = 216 − 168·(1 + a)·d·s` et `x' = 128 + (X − 128)·s`. La ligne de fond du haut est donc 15 % plus étroite que celle du bas, et les distances se tassent vers le fond.
+
+- **Courts** : `tools/gen_assets.py` redessine pour chaque lieu le court projeté (surface, lignes, couloirs, filet à mailles régulières, poteaux, chaise d'arbitre) avec une échelle horizontale constante par rangée de tuiles, ce qui limite les tuiles nouvelles à 64 à 67 par lieu. Elles sont placées dans des tuiles du décor inutilisées par ce lieu (jamais dans les 96 premières ni dans les tuiles du public animé). `load_court` (banque 3) copie ces tuiles en CHR-RAM, décompresse le décor projeté de la banque 11 et met `bg_dirty` à 1 ; `chr_borrow_restore` recopie alors les 4 Ko de tuiles du décor au retour aux écrans. Les décors à plat sont passés en banque 12 pour faire la place.
+- **Tables** (`proj_ram`, RAM de cartouche, 1 152 octets copiés depuis la banque 11 au chargement du court) : `y'` pour chaque Y ; un octet d'échelle tassé (signe, `|m|` = échelle × 128 − 128, au plus 19) ; une table de produits `round(v·|m|/128)` pour v par pas de 8. `_proj` (assembleur, `src/sprp.s`) donne `x'`, `y'` et l'échelle d'un point ; `_pscale` met une longueur à l'échelle (hauteur de la balle) par une seule lecture de table (erreur au plus 1 px).
+- **Objets projetés** : joueurs (`spr_person` garde la position projetée de chaque joueur dans `psh_x/psh_y` pour son ombre et sa goutte de sueur, sans second calcul), balle et ombre (`spr_ball`, hauteur réduite selon la distance), balle du dribble et poussière des glissades (`poses.s`), poussière, éclaboussures, repère d'atterrissage, traînée du service canon et éclat de la frappe parfaite (`match_fx`), ralentis. Les joueurs et la balle gardent leur taille dans cette étape.
+- **Coût** : une première version (multiplication par décalages, ombres projetées en C) doublait les trames en dépassement en double ; avec la table de produits et la réutilisation de la projection des joueurs, la mesure (double, 4 CPU, 6 000 trames) donne 508 trames d'échange en dépassement contre 477 à plat. En simple, aucune différence.
+- **Non projetés dans cette étape** : la cible de l'entraînement et le tremblement du filet (le filet projeté n'utilise pas les tuiles de mailles d'origine).
 
 ## 5. Graphismes
 

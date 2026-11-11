@@ -19,7 +19,8 @@
 .import _bounces, _sc_winner, _sc_server, _sc_swap, _srv_slot, _cfg, _npl
 .import _end_reason, _ump_arm, _tired, _pending_winner, _sfx_bounce
 .importzp _frame_cnt, tmp1, tmp2, _oam_i
-.import _oam_buf, _ball_base
+.import _oam_buf, _ball_base, _proj
+.importzp _persp, _proj_x, _proj_y
 
 ; poses (gfx.h)
 P_IDLE = 0
@@ -251,23 +252,29 @@ pose_fx:
     txa
     asl a
     tay
-    ldx _oam_i
+    PXAY _ply
+    sta tmp2                ; pieds (y à plat)
+    PXAY _plx               ; A = x à plat
+    ldy _persp
+    beq :+
+    ldx tmp2
+    jsr _proj               ; vue en perspective
+    lda _proj_y
+    sta tmp2
+    lda _proj_x
+:   ldx _oam_i
+    sec
+    sbc #4
+    sta _oam_buf+3,x
+    lda tmp2
+    sec
+    sbc #6 + 1
+    sta _oam_buf,x
     lda #6                  ; poussière : petit nuage puis nuage plus large
     ldy pp
     cmp _slide_t,y
     adc #0                  ; (retenue : slide_t <= 6 -> 7)
     sta _oam_buf+1,x
-    lda pp
-    asl a
-    tay
-    PXAY _ply
-    sec
-    sbc #6 + 1
-    sta _oam_buf,x
-    PXAY _plx
-    sec
-    sbc #4
-    sta _oam_buf+3,x
     lda #2
     sta _oam_buf+2,x
     txa
@@ -521,7 +528,17 @@ choose:
     sta _dr_x
     PXAY _ply
     sta _dr_y
-    lda _frame_cnt
+    lda _persp              ; vue en perspective : main projetée
+    beq :+
+    ldx _dr_y
+    lda _dr_x
+    jsr _proj
+    lda _proj_x
+    sta _dr_x
+    lda _proj_y
+    sta _dr_y
+    ldx pp
+:   lda _frame_cnt
     and #63
     cmp #32
     bcc :+
@@ -669,3 +686,137 @@ celebrate:
     rts
 :   lda #P_JOY
     rts
+
+; ---------------------------------------------------------------------------
+; void ump_draw(void) : petit arbitre de chaise, assis de profil sur la
+; chaise du décor (x 32-47, y 112-143, centrée sur le filet), tourné vers le court. Tête 11 (regard
+; vers le bas du court) ou 12 (vers le haut), selon la balle ; buste 13 au
+; repos ou coupe + 0 bras tendu, avec la main (coupe + 1) ; bras levé (coupe
+; + 2) sur un let (il s'agite) et à la fin du match (il salue). Appelé aussi
+; pendant les ralentis. En assembleur : peu coûteux à chaque trame.
+.export _ump_draw
+.import _trophy_tile, _ump_princess
+.importzp tmp4
+UMP_X = 34                  ; au bord du court, contre le poteau du filet
+UMP_Y = 116                 ; arbitre et chaise centrés sur le filet
+
+.segment "BANK3"
+_ump_draw:
+    lda #11                 ; tête : regard vers le bas du court
+    ldy _by+1
+    cpy #$21                ; by < NET_Y * FP (132 * 64 = $2100) : moitié du haut
+    bcs @hd
+    lda #12
+@hd:
+    sta tmp4
+    lda #13
+    sta tmp1                ; buste
+    lda #0
+    sta tmp2                ; 3e sprite : 0 aucun, 1 main, 2 bras levé
+    lda _ms
+    cmp #4                  ; MS_OVER : bras levé qui salue
+    beq @up
+    cmp #3                  ; MS_DEAD
+    bne @draw
+    lda _end_reason
+    cmp #3                  ; END_LET : bras levé qui s'agite
+    beq @up
+    lda _ump_arm            ; faute, balle dehors : bras tendu
+    beq @draw
+    lda _ms_timer
+    cmp #16
+    bcc @draw
+    lda _trophy_tile
+    sta tmp1
+    lda #1
+    sta tmp2
+    bne @draw
+@up:
+    lda #2
+    sta tmp2
+@draw:
+    ldx _oam_i
+    lda #UMP_Y - 1          ; tête (le PPU affiche une ligne plus bas)
+    sta _oam_buf,x
+    lda tmp4
+    sta _oam_buf+1,x
+    lda #2
+    sta _oam_buf+2,x
+    lda #UMP_X
+    sta _oam_buf+3,x
+    inx
+    inx
+    inx
+    inx
+    lda #UMP_Y + 8 - 1      ; buste
+    sta _oam_buf,x
+    lda tmp1
+    sta _oam_buf+1,x
+    lda #2
+    sta _oam_buf+2,x
+    lda #UMP_X
+    sta _oam_buf+3,x
+    inx
+    inx
+    inx
+    inx
+    lda tmp2
+    beq @end
+    cmp #1
+    bne @raise
+    lda #UMP_Y + 8 - 1      ; main du bras tendu
+    sta _oam_buf,x
+    lda _trophy_tile
+    clc
+    adc #1
+    sta _oam_buf+1,x
+    lda #UMP_X + 8
+    sta _oam_buf+3,x
+    jmp @attr
+@raise:
+    lda _frame_cnt          ; s'agite / salue : monte et descend d'un pixel
+    lsr a
+    lsr a
+    lsr a
+    and #1
+    eor #$FF
+    sec
+    adc #UMP_Y - 2          ; UMP_Y - 1 - 1 - bob
+    sta _oam_buf,x
+    lda _trophy_tile
+    clc
+    adc #2
+    sta _oam_buf+1,x
+    lda #UMP_X + 2          ; contre l'épaule, devant le visage
+    sta _oam_buf+3,x
+@attr:
+    lda #2
+    sta _oam_buf+2,x
+    inx
+    inx
+    inx
+    inx
+@end:
+    ; princesse au repos : baguette magique tenue devant elle (4e tuile)
+    lda _ump_princess
+    beq @fin
+    lda tmp2
+    bne @fin
+    lda #UMP_Y + 3 - 1
+    sta _oam_buf,x
+    lda _trophy_tile
+    clc
+    adc #3
+    sta _oam_buf+1,x
+    lda #2
+    sta _oam_buf+2,x
+    lda #UMP_X + 6
+    sta _oam_buf+3,x
+    inx
+    inx
+    inx
+    inx
+@fin:
+    stx _oam_i
+    rts
+

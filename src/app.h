@@ -15,6 +15,8 @@
 #define BANK_PODIUM  8   /* podium d'une compétition gagnée */
 #define BANK_CREDITS 9   /* générique de fin */
 #define BANK_MUSIC  10   /* musiques (copiées en RAM de cartouche par music_play) */
+#define BANK_PERSP  11   /* vue en perspective : courts déformés, tuiles, projection */
+#define BANK_COURTS 12   /* tables de noms des courts (vue à plat) */
 
 /* état de l'application (lu par la boucle principale, banque fixe) */
 #define AS_SCREENS 0

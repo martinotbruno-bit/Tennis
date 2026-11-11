@@ -1314,6 +1314,113 @@ spr_tile(MARG_PROF_L, tp[0]); spr_tile(MARG_PROF_R, tp[1]); next_spr += 1
 assert next_spr <= 256, "trop de tuiles de sprites (Margaux)"
 
 # --------------------------------------------------------------------------
+# Vue en perspective (option VUE du menu), 15 % : pour chaque lieu, le court
+# (colonnes 4 à 27, rangées 4 à 29) est déformé comme vu par une caméra : le
+# fond est 15 % plus étroit que le devant et la moitié du fond plus courte.
+# Projection d'un point du court à plat (X, Y) : d = (216 - Y) / 168 (0 ligne
+# de fond du bas, 1 ligne de fond du haut), s = 1 / (1 + a d) avec a = 1/0,85 - 1,
+# x' = 128 + (X - 128) s, y' = 216 - 168 (1 + a) d s. Les lignes de fond restent
+# à y 216 et 48 ; le filet remonte de 132 à 125. Les tribunes, le bandeau et la
+# chaise d'arbitre ne bougent pas.
+# Les tuiles nouvelles (lignes obliques) prennent, pendant le match, la place
+# de tuiles inutilisées sur ce lieu (décors des autres lieux, titre...) ; la
+# table d'origine est rétablie hors du match.
+# --------------------------------------------------------------------------
+PERSP_A = 1 / 0.85 - 1
+PERSP_K = 168 * (1 + PERSP_A)
+def persp_d(ys):
+    u = (216 - ys) / PERSP_K
+    return u / (1 - PERSP_A * u)
+def persp_inv(xs, ys):
+    # échelle horizontale constante sur chaque rangée de tuiles (8 px) : les
+    # lignes obliques ne décalent d'un pixel qu'aux frontières de tuiles (la
+    # pente est de moins d'un pixel par rangée), d'où peu de tuiles nouvelles
+    sc = 1 / (1 + PERSP_A * persp_d((ys // 8) * 8 + 4))
+    return 128 + (xs - 128) / sc, 216 - 168 * persp_d(ys)
+def persp_net(w):
+    """filet redessiné à sa place en perspective, avec ses mailles régulières
+    (déformées, elles donnaient une tuile différente par colonne)"""
+    ny = round(216 - PERSP_K * 0.5 / (1 + PERSP_A * 0.5))
+    sc = 1 / (1 + PERSP_A * 0.5)
+    x0n, x1n = round(128 + (DBL_L - 6 - 128) * sc), round(128 + (DBL_R + 6 - 128) * sc)
+    for y in range(ny - 9, ny + 4):                    # efface le filet déformé
+        for x in range(32, 224):
+            X, Y = persp_inv(x + 0.5, ny + 6)
+            X = int(X)
+            w[y][x] = 1 if x0n - 3 <= x <= x1n + 3 else w[ny + 6][x]
+    for y in range(ny - 5, ny):
+        for x in range(x0n, x1n + 1):
+            w[y][x] = 3 if (x % 4 == 0 or (y - ny) % 2 == 0) else 1
+    for x in range(x0n, x1n + 1):
+        w[ny][x] = 3                                   # câble du bas
+        w[ny - 7][x] = 2; w[ny - 6][x] = 2             # bande blanche
+    for y in range(ny - 5, ny + 1):
+        w[y][127] = 2; w[y][128] = 2                   # sangle centrale
+    for y in (ny + 1, ny + 2):                         # ombre portée
+        for x in range(x0n + 2, x1n + 3):
+            if (x + y) % 2 == 0 and (y == ny + 1 or x % 4 < 2):
+                w[y][x] = 3
+    for px in (x0n - 2, x1n - 2):                      # poteaux
+        for y in range(ny - 11, ny + 2):
+            for x in range(px, px + 3):
+                w[y][x] = 3
+        for y in range(ny - 10, ny + 1):
+            w[y][px] = 2
+        for x in range(px, px + 3):
+            w[ny - 11][x] = 2
+
+KEEP = set(range(0x60)) | set(crowd_idx) | set(cheer_idx) | set(crowdb_idx) | set(cheerb_idx) | \
+       set(crowd_idx3) | set(crowd_idx4) | set(SIGN_IDX) | set(SIGN2_IDX) | set(NET_IDX)
+persp_rles, persp_tiles = [], []
+for e in range(6):
+    bmp = draw_court(e)
+    w = [row[:] for row in bmp]
+    for ys in range(32, 240):
+        for xs in range(32, 224):
+            X, Y = persp_inv(xs + 0.5, ys + 0.5)
+            X, Y = int(X), int(min(239, max(32, Y)))
+            w[ys][xs] = bmp[Y][X] if 32 <= X < 224 else 0     # au-delà : abords (couleur de fond)
+    persp_net(w)
+    for y in range(32):                                   # chaise d'arbitre : à sa place
+        for x in range(16):
+            if CHAIR[y][x]:
+                w[CHAIR_Y + y][CHAIR_X + x] = CHAIR[y][x]
+    nt = bytearray(court_nts[e])
+    keep = KEEP | set(nt[:960])
+    cand = [k for k in range(256) if k not in keep]
+    known = {tkey(bg_tiles[k]): k for k in keep if bg_tiles[k] is not None}
+    new = {}
+    for ty in range(4, 30):
+        for tx in range(4, 28):
+            t = [w[ty * 8 + y][tx * 8:tx * 8 + 8] for y in range(8)]
+            k = tkey(t)
+            if k in known:
+                nt[ty * 32 + tx] = known[k]
+            else:
+                if k not in new:
+                    assert cand, 'perspective : plus de place pour les tuiles (lieu %d : %d tuiles nouvelles)' % (e, len(new))
+                    new[k] = (cand.pop(0), [list(r) for r in t])
+                nt[ty * 32 + tx] = new[k][0]
+    persp_rles.append(bytes(nt))   # (RLE à l'écriture)
+    persp_tiles.append(sorted(new.values()))
+proj_tab = bytearray(512)
+for Y in range(256):
+    d = (216 - Y) / 168
+    sc = 1 / (1 + PERSP_A * d)
+    proj_tab[Y] = max(0, min(255, round(216 - PERSP_K * d * sc)))
+    m = max(-19, min(19, round(sc * 128) - 128))     # échelle x 128 - 128
+    # octet tassé pour _pscale : bits 5-7 = (|m| x 32) & $E0, bits 0-1 = |m| / 8
+    # (page de la table des produits), bit 2 = signe de m
+    proj_tab[256 + Y] = ((abs(m) * 32) & 0xE0) | (abs(m) >> 3) | (4 if m < 0 else 0)
+# table de produits : round(v x |m| / 128) pour v = 8 k + 4 (k 0..31) et |m| 0..19 ;
+# _pscale y lit la correction au lieu de multiplier (erreur au plus 1 px)
+mul_tab = bytearray(20 * 32)
+for m in range(20):
+    for k in range(32):
+        mul_tab[m * 32 + k] = round((k * 8 + 4) * m / 128)
+print('perspective : tuiles nouvelles par lieu', [len(t) for t in persp_tiles])
+
+# --------------------------------------------------------------------------
 # Sorties
 # --------------------------------------------------------------------------
 chr_data = bytearray()
@@ -1385,9 +1492,16 @@ with open(os.path.join(ROOT, 'src', 'assets_nude.c'), 'w') as f:
 # données du court et du public : banque du moteur de jeu
 src = ['/* Fichier généré par tools/gen_assets.py — ne pas modifier. */',
        '#include "assets.h"', '']
+# tables de noms des courts : banque 12 (assets_courts12.c), pointeurs ici
 for e in range(6):
-    src.append(c_array('court_nt_rle%d' % e, court_rles[e]))
+    src.append('extern const unsigned char court_nt_rle%d[];' % e)
 src.append('/* 6 : le parc reprend le dessin du club (autres couleurs) */\nconst unsigned char * const court_nt_rle[7] = { court_nt_rle0, court_nt_rle1, court_nt_rle2, court_nt_rle3, court_nt_rle4, court_nt_rle5, court_nt_rle1 };\n')
+_c12 = ['/* Fichier généré par tools/gen_assets.py — ne pas modifier. */',
+        '/* Tables de noms des courts, compressées (banque 12). */', '#include "assets.h"', '']
+for e in range(6):
+    _c12.append(c_array('court_nt_rle%d' % e, court_rles[e]))
+with open(os.path.join(ROOT, 'src', 'assets_courts12.c'), 'w') as f:
+    f.write('\n'.join(_c12) + '\n')
 src.append(c_array('crowd_idx4', bytes(crowd_idx4)))
 src.append(c_array('crowd_norm4', b''.join(encode_tile(t) for t in GIRLY)))
 src.append(c_array('crowd_cheer4', b''.join(encode_tile(t) for t in GIRLY_SPARKLE)))
@@ -1415,6 +1529,32 @@ src.append(c_array('crowd_norm', b''.join(encode_tile(t) for t in CROWD)))
 src.append(c_array('crowd_cheer', b''.join(encode_tile(t) for t in CHEER)))
 with open(os.path.join(ROOT, 'src', 'assets_court.c'), 'w') as f:
     f.write('\n'.join(src))
+
+# vue en perspective : courts déformés et tables de projection (banque 11) ;
+# places des tuiles et pointeurs (banque 3, lus par load_court)
+src = ['/* Fichier généré par tools/gen_assets.py — ne pas modifier. */',
+       '/* Vue en perspective : courts déformés, tuiles et tables de projection (banque 11). */',
+       '#include "assets.h"', '']
+for e in range(6):
+    src.append(c_array('persp_rle%d' % e, rle(persp_rles[e])))
+    src.append(c_array('persp_chr%d' % e, b''.join(encode_tile(t) for _, t in persp_tiles[e])))
+for e in range(6):
+    src.append(c_array('persp_slot%d' % e, bytes([k for k, _ in persp_tiles[e]])))
+src.append(c_array('proj_tab', bytes(proj_tab) + bytes(mul_tab)))
+with open(os.path.join(ROOT, 'src', 'assets_persp.c'), 'w') as f:
+    f.write('\n'.join(src) + '\n')
+src = ['/* Fichier généré par tools/gen_assets.py — ne pas modifier. */',
+       '/* Vue en perspective : places des tuiles et pointeurs vers la banque 11 (banque 3). */',
+       '#include "assets.h"', '']
+for e in range(6):
+    src.append('extern const unsigned char persp_rle%d[], persp_chr%d[], persp_slot%d[];' % (e, e, e))
+src.append('/* 6 : le parc reprend le court du club */')
+src.append('const unsigned char * const persp_rle[7] = { %s, persp_rle1 };' % ', '.join('persp_rle%d' % e for e in range(6)))
+src.append('const unsigned char * const persp_chr[7] = { %s, persp_chr1 };' % ', '.join('persp_chr%d' % e for e in range(6)))
+src.append('const unsigned char * const persp_slot[7] = { %s, persp_slot1 };' % ', '.join('persp_slot%d' % e for e in range(6)))
+src.append('const unsigned char persp_ntile[7] = { %s, %d };' % (', '.join(str(len(t)) for t in persp_tiles), len(persp_tiles[1])))
+with open(os.path.join(ROOT, 'src', 'assets_persp3.c'), 'w') as f:
+    f.write('\n'.join(src) + '\n')
 court_rle = court_rles[0]
 
 used_bg = sum(1 for t in bg_tiles if t is not None)

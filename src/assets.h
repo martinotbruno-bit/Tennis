@@ -40,4 +40,9 @@ extern const unsigned char cheer_idx[6];       /* ola : spectateurs bras levés 
 extern const unsigned char crowd_up[96];       /* spectateurs qui regardent vers le haut du court */
 /* jeu B (club, salle ; palette 3) */
 extern const unsigned char crowdb_idx[6], cheerb_idx[6], crowdb_norm[96], crowdb_up[96];
+/* vue en perspective : places des tuiles (banque 3), courts et tuiles
+   (banque 11), tables de projection y' et échelle x 128 par y à plat (banque 11) */
+extern const unsigned char * const persp_rle[7], * const persp_chr[7], * const persp_slot[7];
+extern const unsigned char persp_ntile[7];
+extern const unsigned char proj_tab[512 + 640];   /* y', m (signé), puis produits v x |m| / 128 */
 #endif

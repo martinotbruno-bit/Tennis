@@ -66,6 +66,12 @@ void clear_screen(void);
 /* tuiles des personnages : 0 tenue normale, 1 au naturel (rendu coupé) */
 void people_tiles(u8 nude);
 void chr_copy(u8 bank, const u8 *src, u16 dst, u16 len);   /* rendu coupé */
+void bank_unrle(u8 bank, const u8 *rle);                   /* rendu coupé, adresse VRAM déjà fixée */
+void bank_read(u8 bank, void *dst, const void *src, u16 n); /* copie depuis une banque vers la RAM */
+extern u8 proj_ram[512 + 640];                                    /* tables de projection (sprp.s) */
+extern u8 bg_dirty;
+extern u8 persp;
+#pragma zpsym("persp")
 void chr_reload(void);
 void chr_borrow_restore(void);     /* tuiles prêtées au match (arbitre) : rendu coupé */             /* toute la CHR-RAM d'origine (rendu coupé) */
 extern u8 nude_unlocked;

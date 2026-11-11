@@ -59,6 +59,7 @@ typedef struct {
     u8 ex_count;        /* nombre de balles */
     u8 gspeed;          /* vitesse du jeu : 0 lent (75 %), 1 normal, 2 rapide (125 %) */
     u8 fatigue;         /* 1 : fatigue dans les très longs échanges */
+    u8 view;            /* 0 vue à plat, 1 vue en perspective */
 } MatchCfg;
 
 extern MatchCfg cfg;

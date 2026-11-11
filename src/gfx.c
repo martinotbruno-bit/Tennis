@@ -1,5 +1,6 @@
 /* Royal Martinot — affichage : palettes, sprites, texte. */
 #include "gfx.h"
+#include <string.h>
 #include "assets.h"
 #include "app.h"
 #include "audio.h"
@@ -231,10 +232,33 @@ void chr_copy(u8 bank, const u8 *src, u16 dst, u16 len)
     set_bank(old);
 }
 
-/* tuiles prêtées au match (arbitre : tuiles de la coupe) : dessin
-   d'origine, rendu coupé */
+/* vue en perspective : décompression d'un court et copie des tables de
+   projection depuis la banque 11 (appelées par load_court, banque 3) */
+extern u8 persp;
+#pragma zpsym("persp")
+/* proj_ram : déclaré dans gfx.h */
+u8 bg_dirty;                    /* tuiles de décor remplacées pour le match */
+void bank_unrle(u8 bank, const u8 *rle)
+{
+    u8 old = cur_bank;
+    set_bank(bank);
+    vram_unrle(rle);
+    set_bank(old);
+}
+void bank_read(u8 bank, void *dst, const void *src, u16 n)
+{
+    u8 old = cur_bank;
+    set_bank(bank);
+    memcpy(dst, src, n);
+    set_bank(old);
+}
+
+/* tuiles prêtées au match (arbitre : tuiles de la coupe ; en perspective,
+   tuiles du court) : dessin d'origine, rendu coupé */
 void chr_borrow_restore(void)
 {
+    persp = 0;
+    if (bg_dirty) { chr_copy(BANK_CHR, chr_data, 0x0000, 4096); bg_dirty = 0; }
     chr_copy(BANK_CHR, chr_data + 0x1000 + ((u16)trophy_tile << 4), 0x1000 + ((u16)trophy_tile << 4), 64);
     chr_copy(BANK_CHR, chr_data + 0x1000 + (11 << 4), 0x1000 + (11 << 4), 48);   /* arbitre (princesse au court Margaux) */
 }

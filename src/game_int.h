@@ -78,7 +78,7 @@ void rain_tick(void);
 void rain_draw(void);
 void win_fx(void);              /* étoiles et confettis de victoire (sprp.s, banque fixe) */
 extern u8 ump_arm;              /* arbitre : bras tendu (faute, dehors) */
-void ump_draw(void);            /* arbitre de chaise (sprp.s, banque fixe) */
+void ump_draw(void);            /* arbitre de chaise (poses.s, banque 3) */
 extern u8 end_reason;           /* fin de l'échange : END_* */
 #define END_FAULT 1
 #define END_POINT 2

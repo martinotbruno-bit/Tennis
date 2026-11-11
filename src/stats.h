@@ -41,7 +41,7 @@ typedef struct {
 } SaveCanon;
 extern SaveCanon sx;
 void sx_check(void);
-extern u8 opt_val[NOPT_SAVE];
+extern u8 opt_val[NOPT_SAVE + 1];    /* + VUE, mémorisée à part (sw_view) */
 u8 __fastcall__ so_load(u8 unused);    /* 1 si des réglages valides ont été copiés dans opt_val */
 u8 __fastcall__ so_save(u8 unused);
 /* Banque BANK_COMP : appel par far_call() */

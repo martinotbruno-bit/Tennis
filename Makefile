@@ -11,19 +11,21 @@ FIXED = main rules gfx audio assets_data gamefix
 BANK0 = game
 BANK1 = screens
 BANK5 = comp stats password
-BANK3 = extras assets_court
+BANK3 = extras assets_court assets_persp3
 BANK4 = manual
 BANK6 = assets_nude
 BANK7 = intro
 BANK8 = podium
 BANK9 = credits
 BANK10 = music_data
-CSRC = $(FIXED) $(BANK0) $(BANK1) $(BANK3) $(BANK4) $(BANK5) $(BANK6) $(BANK7) $(BANK8) $(BANK9) $(BANK10)
+BANK11 = assets_persp
+BANK12 = assets_courts12
+CSRC = $(FIXED) $(BANK0) $(BANK1) $(BANK3) $(BANK4) $(BANK5) $(BANK6) $(BANK7) $(BANK8) $(BANK9) $(BANK10) $(BANK11) $(BANK12)
 OBJS = $(BUILD)/crt0.o $(BUILD)/sprp.o $(BUILD)/poses.o $(BUILD)/dpcm.o $(addprefix $(BUILD)/,$(addsuffix .o,$(CSRC)))
 
 all: $(ROM)
 
-assets/tiles.chr src/assets_data.c src/assets_court.c src/assets_nude.c: tools/gen_assets.py
+assets/tiles.chr src/assets_data.c src/assets_court.c src/assets_nude.c src/assets_persp.c src/assets_persp3.c src/assets_courts12.c: tools/gen_assets.py
 	python3 tools/gen_assets.py
 
 src/music_data.c: tools/gen_music.py tools/music_src.c
@@ -43,6 +45,8 @@ $(addprefix $(BUILD)/,$(addsuffix .s,$(BANK7))): SEGS = --code-name BANK7 --roda
 $(addprefix $(BUILD)/,$(addsuffix .s,$(BANK8))): SEGS = --code-name BANK8 --rodata-name RODATA8 --bss-name WBSS
 $(addprefix $(BUILD)/,$(addsuffix .s,$(BANK9))): SEGS = --code-name BANK9 --rodata-name RODATA9 --bss-name WBSS
 $(addprefix $(BUILD)/,$(addsuffix .s,$(BANK10))): SEGS = --code-name BANK10 --rodata-name RODATA10
+$(addprefix $(BUILD)/,$(addsuffix .s,$(BANK11))): SEGS = --code-name BANK11 --rodata-name RODATA11
+$(addprefix $(BUILD)/,$(addsuffix .s,$(BANK12))): SEGS = --code-name BANK12 --rodata-name RODATA12
 
 $(BUILD)/crt0.o: src/crt0.s assets/tiles.chr | $(BUILD)
 	$(CA65) -t nes -g -o $@ src/crt0.s
@@ -56,7 +60,7 @@ $(BUILD)/poses.o: src/poses.s | $(BUILD)
 $(BUILD)/dpcm.o: src/dpcm.s | $(BUILD)
 	$(CA65) -t nes -g -o $@ src/dpcm.s
 
-$(BUILD)/%.s: src/%.c src/*.h src/assets_data.c src/assets_court.c src/assets_nude.c | $(BUILD)
+$(BUILD)/%.s: src/%.c src/*.h src/assets_data.c src/assets_court.c src/assets_nude.c src/assets_persp.c src/assets_persp3.c src/assets_courts12.c | $(BUILD)
 	$(CC65) $(CFLAGS) $(SEGS) -o $@ $<
 
 $(BUILD)/%.o: $(BUILD)/%.s

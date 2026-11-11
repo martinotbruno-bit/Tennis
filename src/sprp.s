@@ -8,6 +8,19 @@
 ;  - course de profil selon le sens du déplacement, bruit de pas ;
 ;  - Margaux (personnage 16) : rangée de la tête remplacée par ses tuiles.
 
+.segment "ZEROPAGE"      ; vue en perspective (voir _proj, en fin de fichier)
+_persp:  .res 1         ; 1 : match en vue perspective
+_proj_x: .res 1
+_proj_y: .res 1
+_proj_s: .res 1
+pj_v:    .res 1
+pj_vh:   .res 1
+pj_v0:   .res 1
+pj_sg:   .res 1          ; indice du joueur (spr_person)
+pj_m:    .res 1
+pj_lo:   .res 1
+pj_hi:   .res 1
+.segment "CODE"
 .export _spr_person
 .export _run_x, _run_y, _run_dir, _run_pose
 .import _spr_meta, _oam_buf
@@ -61,6 +74,8 @@ runfr:  .byte $FF, 0, 3, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF
 ; void __fastcall__ spr_person(s16 x, s16 y, u8 c, u8 front, u8 pose, u8 flip, u8 pal)
 ; pile : (sp)+0 flip, +1 pose, +2 front, +3 c, +4/5 y, +6/7 x ; pal dans A
 _spr_person:
+    sta pj_sg               ; indice du joueur (0..3) : position projetée gardée
+    and #1                  ; pour son ombre (match_fx) ; palette = indice & 1
     sta ppal
     ldy #0
     lda (sp),y
@@ -86,6 +101,43 @@ _spr_person:
     iny
     lda (sp),y
     sta px+1
+
+    ; vue en perspective : position projetée (x, y à plat bornés à 0..255)
+    lda _persp
+    beq @flat
+    ldy #255
+    lda px+1
+    bmi @x0
+    beq :+
+    sty px
+    bne :+
+@x0:
+    lda #0
+    sta px
+:   lda py+1
+    bmi @y0
+    beq :+
+    sty py
+    bne :+
+@y0:
+    lda #0
+    sta py
+:   ldx py
+    lda px
+    jsr _proj
+    lda pj_sg
+    and #3
+    tax
+    lda _proj_x
+    sta px
+    sta _psh_x,x
+    lda _proj_y
+    sta py
+    sta _psh_y,x
+    lda #0
+    sta px+1
+    sta py+1
+@flat:
 
     ; drapeaux POSE_LIFT / POSE_DOWN : 1 px plus haut (rebond, foulée) ou
     ; plus bas (genoux fléchis) ; la position mémorisée pour la course reste
@@ -650,140 +702,6 @@ _audio_tick:
     rts
 
 ; ---------------------------------------------------------------------------
-; void ump_draw(void) : petit arbitre de chaise, assis de profil sur la
-; chaise du décor (x 32-47, y 112-143, centrée sur le filet), tourné vers le court. Tête 11 (regard
-; vers le bas du court) ou 12 (vers le haut), selon la balle ; buste 13 au
-; repos ou coupe + 0 bras tendu, avec la main (coupe + 1) ; bras levé (coupe
-; + 2) sur un let (il s'agite) et à la fin du match (il salue). Appelé aussi
-; pendant les ralentis. En assembleur : peu coûteux à chaque trame.
-.export _ump_draw
-.import _ms, _end_reason, _ump_arm, _trophy_tile, _by, _ump_princess
-.importzp _frame_cnt
-.importzp tmp4
-UMP_X = 34                  ; au bord du court, contre le poteau du filet
-UMP_Y = 116                 ; arbitre et chaise centrés sur le filet
-
-.segment "CODE"
-_ump_draw:
-    lda #11                 ; tête : regard vers le bas du court
-    ldy _by+1
-    cpy #$21                ; by < NET_Y * FP (132 * 64 = $2100) : moitié du haut
-    bcs @hd
-    lda #12
-@hd:
-    sta tmp4
-    lda #13
-    sta tmp1                ; buste
-    lda #0
-    sta tmp2                ; 3e sprite : 0 aucun, 1 main, 2 bras levé
-    lda _ms
-    cmp #4                  ; MS_OVER : bras levé qui salue
-    beq @up
-    cmp #3                  ; MS_DEAD
-    bne @draw
-    lda _end_reason
-    cmp #3                  ; END_LET : bras levé qui s'agite
-    beq @up
-    lda _ump_arm            ; faute, balle dehors : bras tendu
-    beq @draw
-    lda _ms_timer
-    cmp #16
-    bcc @draw
-    lda _trophy_tile
-    sta tmp1
-    lda #1
-    sta tmp2
-    bne @draw
-@up:
-    lda #2
-    sta tmp2
-@draw:
-    ldx _oam_i
-    lda #UMP_Y - 1          ; tête (le PPU affiche une ligne plus bas)
-    sta _oam_buf,x
-    lda tmp4
-    sta _oam_buf+1,x
-    lda #2
-    sta _oam_buf+2,x
-    lda #UMP_X
-    sta _oam_buf+3,x
-    inx
-    inx
-    inx
-    inx
-    lda #UMP_Y + 8 - 1      ; buste
-    sta _oam_buf,x
-    lda tmp1
-    sta _oam_buf+1,x
-    lda #2
-    sta _oam_buf+2,x
-    lda #UMP_X
-    sta _oam_buf+3,x
-    inx
-    inx
-    inx
-    inx
-    lda tmp2
-    beq @end
-    cmp #1
-    bne @raise
-    lda #UMP_Y + 8 - 1      ; main du bras tendu
-    sta _oam_buf,x
-    lda _trophy_tile
-    clc
-    adc #1
-    sta _oam_buf+1,x
-    lda #UMP_X + 8
-    sta _oam_buf+3,x
-    jmp @attr
-@raise:
-    lda _frame_cnt          ; s'agite / salue : monte et descend d'un pixel
-    lsr a
-    lsr a
-    lsr a
-    and #1
-    eor #$FF
-    sec
-    adc #UMP_Y - 2          ; UMP_Y - 1 - 1 - bob
-    sta _oam_buf,x
-    lda _trophy_tile
-    clc
-    adc #2
-    sta _oam_buf+1,x
-    lda #UMP_X + 2          ; contre l'épaule, devant le visage
-    sta _oam_buf+3,x
-@attr:
-    lda #2
-    sta _oam_buf+2,x
-    inx
-    inx
-    inx
-    inx
-@end:
-    ; princesse au repos : baguette magique tenue devant elle (4e tuile)
-    lda _ump_princess
-    beq @fin
-    lda tmp2
-    bne @fin
-    lda #UMP_Y + 3 - 1
-    sta _oam_buf,x
-    lda _trophy_tile
-    clc
-    adc #3
-    sta _oam_buf+1,x
-    lda #2
-    sta _oam_buf+2,x
-    lda #UMP_X + 6
-    sta _oam_buf+3,x
-    inx
-    inx
-    inx
-    inx
-@fin:
-    stx _oam_i
-    rts
-
-; ---------------------------------------------------------------------------
 ; void __fastcall__ spr_ball(u8 x, s16 sy, u8 shy, u8 zpx) : balle et ombre.
 ; (x, sy) = position affichée de la balle, shy = ombre au sol, zpx = hauteur.
 ;  - la balle grossit avec la hauteur : 4 px, 5 px dès 12 px de haut, 6 px
@@ -936,6 +854,36 @@ _spr_ball:
     adc _ball_base
     sta btile
 @put:
+    ; vue en perspective : ombre projetée, hauteur réduite selon la distance
+    lda _persp
+    beq @pdone
+    sec
+    lda bshy
+    sbc bsy
+    sta tmp1                ; hauteur affichée (bshy - bsy), bornée à 255
+    lda #0
+    sbc bsy+1
+    beq :+
+    lda #255
+    sta tmp1
+:   ldx bshy
+    lda bxx
+    jsr _proj
+    lda _proj_x
+    sta bxx
+    lda _proj_y
+    sta bshy
+    lda tmp1
+    jsr _pscale
+    sta tmp1
+    sec
+    lda bshy
+    sbc tmp1
+    sta bsy
+    lda #0
+    sbc #0
+    sta bsy+1
+@pdone:
     ; balle (si elle est dans l'écran)
     lda bsy+1
     bne @shadow
@@ -986,3 +934,91 @@ _spr_ball:
     adc #4
     sta _oam_i
     jmp incsp4
+
+; ---------------------------------------------------------------------------
+; Vue en perspective (15 %). Tables (copiées en RAM de cartouche au début du
+; match) : y projeté et échelle x 128, indexés par le y à plat (0..255).
+; _proj : A = x à plat, X = y à plat -> _proj_x, _proj_y, _proj_s
+; _pscale : A = longueur -> A = longueur x échelle (sans multiplication : on
+; ajoute ou retire longueur x |échelle - 128| / 128, sur 5 bits)
+; ---------------------------------------------------------------------------
+.export _psh_x, _psh_y
+.export _proj, _proj2, _pscale, _persp, _proj_x, _proj_y, _proj_s, _proj_ram
+.import popa
+.segment "WBSS"
+_psh_x:   .res 4         ; position projetée de chaque joueur (spr_person)
+_psh_y:   .res 4
+_proj_ram: .res 512 + 640   ; y projeté (256), m = échelle x 128 - 128 (256), produits (20 x 32)
+.segment "CODE"
+; void __fastcall__ proj2(u8 x, u8 y) : pour le C (y dans A, x sur la pile)
+_proj2:
+    tax
+    jsr popa
+_proj:
+    pha
+    lda _proj_ram,x
+    sta _proj_y
+    lda _proj_ram+256,x
+    sta _proj_s
+    pla
+    sec
+    sbc #128
+    bcc @left
+    jsr _pscale             ; à droite du centre : 128 + écart x échelle
+    clc
+    adc #128
+    bcc :+
+    lda #255
+:   sta _proj_x
+    rts
+@left:
+    eor #$FF                ; à gauche : 128 - écart x échelle
+    clc
+    adc #1
+    jsr _pscale
+    sta pj_v
+    lda #128
+    sec
+    sbc pj_v
+    bcs :+
+    lda #0
+:   sta _proj_x
+    rts
+
+_pscale:
+    ; résultat = v ± round(v x |m| / 128), lu dans la table des produits
+    ; (_proj_ram + 512 + |m| x 32 + v / 8) ; _proj_s : octet tassé (gen_assets)
+    sta pj_v0
+    lsr a
+    lsr a
+    lsr a
+    sta pj_v                ; v / 8 (0..31)
+    lda _proj_s
+    and #$E0
+    ora pj_v
+    clc
+    adc #<(_proj_ram + 512)
+    sta pj_lo
+    lda _proj_s
+    and #3
+    adc #>(_proj_ram + 512)
+    sta pj_hi
+    ldy #0
+    lda _proj_s
+    and #4
+    bne @neg
+    lda (pj_lo),y
+    clc
+    adc pj_v0
+    bcc :+
+    lda #255
+:   rts
+@neg:
+    lda (pj_lo),y
+    sta pj_m
+    lda pj_v0
+    sec
+    sbc pj_m
+    bcs :+
+    lda #0
+:   rts
