@@ -647,3 +647,43 @@ void match_fx(void)
        coupe + 0 main, + 1 bras levé, + 2 buste bras levé */
     ump_draw();      /* assembleur (src/sprp.s) : 3 sprites au plus, sans appel coûteux */
 }
+
+/* ---------------------------------------------------------------------- */
+/* Tactique du CPU selon le score (appelée une fois par point, au moment   */
+/* de se placer pour servir). Pour chaque équipe :                        */
+/*  - l'adversaire a une balle de set ou de match : défendre (marge de    */
+/*    sécurité, frappe un peu moins forte, deux fois moins de fautes) ;   */
+/*  - balle de set ou de match pour soi : conclure (plus fort, au filet) ; */
+/*  - mené de 2 jeux ou plus (un set compte pour 3 jeux) : prendre des    */
+/*    risques (plus fort, moins de marge, montées au filet) ;            */
+/*  - devant de 2 jeux ou plus : jouer placé (marge, moins de fautes) ;   */
+/*  - balle de break contre soi au service : première balle assurée,      */
+/*    échange prudent ; balle de break pour soi en retour : attaquer.     */
+/* ---------------------------------------------------------------------- */
+#pragma bss-name(push, "WBSS")
+s8 tac_pow[2], tac_margin[2];
+u8 tac_net[2], tac_err[2], tac_safe[2];
+#pragma bss-name(pop)
+static u8 game_pt(u8 t)
+{
+    u8 a = sc_points[t], b = sc_points[t ^ 1];
+    return (u8)(sc_tiebreak ? (a >= 6 && a > b) : (a >= 3 && a > b));
+}
+void ai_tactic(void)
+{
+    u8 t, o;
+    s8 d, pw, mg;
+    u8 net, err, safe;
+    for (t = 0; t < 2; ++t) {
+        o = (u8)(t ^ 1);
+        pw = 0; mg = 0; net = 0; err = 0; safe = 0;
+        d = (s8)(sc_games[t] - sc_games[o]) + (s8)(3 * ((s8)sc_sets[t] - (s8)sc_sets[o]));
+        if (rules_is_match_point(o) || rules_is_set_point(o)) { mg = 6; pw = -2; err = 0x10; }
+        else if (rules_is_match_point(t) || rules_is_set_point(t)) { pw = 4; net = 60; }
+        else if (d <= -2) { pw = 5; mg = -3; net = 50; }
+        else if (d >= 2) { mg = 3; err = 0x10; }
+        if (game_pt(o) && sc_server == t) { safe = 1; mg += 4; err = 0x10; }   /* balle de break à sauver */
+        else if (game_pt(t) && sc_server == o) { pw += 3; net += 30; }          /* balle de break */
+        tac_pow[t] = pw; tac_margin[t] = mg; tac_net[t] = net; tac_err[t] = err; tac_safe[t] = safe;
+    }
+}

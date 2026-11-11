@@ -105,6 +105,10 @@ static const u8 ai_fault[3]  = { 3, 7, 15 };   /* faute directe : 1 frappe sur 4
 /* tables des styles : banque fixe (gfx.c), pour libérer la banque du moteur */
 extern const s8 sty_pow[9], sty_margin[9], sty_spread[9];
 extern const u8 sty_net[9], sty_lob[9], sty_drop[9], sty_slice[9], sty_deep[9];
+/* tactique selon le score (ai_tactic, banque 3, une fois par point) */
+extern s8 tac_pow[2], tac_margin[2];
+extern u8 tac_net[2], tac_err[2], tac_safe[2];
+void ai_tactic(void);
 
 
 #define side_of(t) ((u8)(((t) & 1) ^ sc_swap))   /* 0 = bas, 1 = haut */
@@ -460,6 +464,7 @@ static void place_for_serve(void)
     u8 ad = rules_ad_side();
     u8 left = (u8)((ss == 0) == (ad == 0));     /* carré visé à gauche ? */
     u8 i;
+    bank_call(BANK_EXTRAS, ai_tactic);          /* tactique du CPU selon le score */
     plx[sp] = (left ? CENTER_X + 22 : CENTER_X - 22) * FP;
     /* serveur juste derrière la ligne de fond ; en haut, le sprite se dessine
        au-dessus des pieds : 2 px de recul suffisent (8 px en bas) */
@@ -760,7 +765,8 @@ static void ai_update(u8 p)
     if (ms == MS_TOSS) {
         if (p == server_p() && bvz <= 0) {
             u8 q = (u8)(rand8() % (u8)(10 - lv * 3));
-            if (faults == 0) serve_hit(p, (u8)(rand8() & 1 ? PAD_LEFT : PAD_RIGHT), PAD_A, q, (u8)(ai_spread[lv] >> 2));
+            /* balle de break à sauver : première balle assurée (coupée) */
+            if (faults == 0 && !tac_safe[t]) serve_hit(p, (u8)(rand8() & 1 ? PAD_LEFT : PAD_RIGHT), PAD_A, q, (u8)(ai_spread[lv] >> 2));
             else serve_hit(p, 0, PAD_B, (u8)(q >> 1), (u8)(ai_spread[lv] >> 3));
         }
         return;
@@ -811,13 +817,13 @@ static void ai_update(u8 p)
             } else if (sty_pow[sty] > 4 && (rand8() & 3) == 0) {
                 pad |= PAD_UP;                                  /* frappe à plat */
             }
-            if ((rand8() & ai_fault[lv]) == 0) spread += 20;   /* faute directe */
-            hit_margin = (u8)(ai_margin[lv] + sty_margin[sty]);
-            do_hit(p, pad, btn, (u8)(ai_power[lv] + sty_pow[sty]), spread);
+            if ((rand8() & (ai_fault[lv] | tac_err[t])) == 0) spread += 20;   /* faute directe */
+            hit_margin = (u8)(ai_margin[lv] + sty_margin[sty] + tac_margin[t]);
+            do_hit(p, pad, btn, (u8)(ai_power[lv] + sty_pow[sty] + tac_pow[t]), spread);
             pl_state[p] = ST_SWING;
             pl_timer[p] = 12;
             /* montée au filet après une frappe à l'intérieur du court */
-            if (npl == 2 && lv >= 1 && iabs(PX(ply[p]) - NET_Y) < 66 && rand8() < (u8)(sty_net[sty] >> (2 - lv))) ai_net[p] = 1;
+            if (npl == 2 && lv >= 1 && iabs(PX(ply[p]) - NET_Y) < 66 && (rand8() < (u8)(sty_net[sty] >> (2 - lv)) || rand8() < tac_net[t])) ai_net[p] = 1;
             return;   /* trame de frappe : pas de calcul de déplacement */
         }
         /* en simple, la décision (coûteuse) est prise une trame sur deux ;

@@ -1436,6 +1436,27 @@ console.log('Animation des joueurs');
   let found = false; for (let i = 0; i < 160 * 16; i += 16) if ((e.nes.cpu.mem[rb + i + 6] & 31) <= 21) found = true;
   check(found, 'ralentis : poses sur 5 bits');
 }
+console.log('IA : tactique selon le score');
+{
+  // mené de 3 jeux : le CPU prend des risques ; devant : il joue placé ;
+  // balle de break contre lui au service : première balle assurée
+  const e = boot(); startWith(e, { FMT: 0 }); allCpu(e);
+  runUntil(e, () => e.peek('ms') === 2, 600);
+  e.poke('sc_games', 1, 0); e.poke('sc_games', 4, 1);
+  runUntil(e, () => e.peek('ms') === 3, 3000); runUntil(e, () => e.peek('ms') === 0, 400);
+  const g0 = e.peek('sc_games', 0), g1 = e.peek('sc_games', 1);
+  const pw = (t) => { const v = e.peek('tac_pow', t); return v > 127 ? v - 256 : v; };
+  const mg = (t) => { const v = e.peek('tac_margin', t); return v > 127 ? v - 256 : v; };
+  const trailing = g1 - g0 >= 2;
+  check(trailing && pw(0) >= 5 && mg(0) < 0 && e.peek('tac_net', 0) >= 50 && mg(1) >= 3 && e.peek('tac_err', 1) === 0x10,
+    `mené ${g0}-${g1} : le CPU attaque (force +${pw(0)}, marge ${mg(0)}, filet ${e.peek('tac_net', 0)}) ; le meneur joue placé (marge +${mg(1)})`);
+  // balle de break contre le serveur
+  const srv = e.peek('sc_server');
+  e.poke('sc_points', 3, srv ^ 1); e.poke('sc_points', 1, srv); e.poke('sc_games', 2, 0); e.poke('sc_games', 2, 1);
+  runUntil(e, () => e.peek('ms') === 2, 600); runUntil(e, () => e.peek('ms') === 3, 3000); runUntil(e, () => e.peek('ms') === 0, 400);
+  const s2 = e.peek('sc_server'), bp = e.peek('sc_points', s2 ^ 1) >= 3 && e.peek('sc_points', s2 ^ 1) > e.peek('sc_points', s2);
+  check(!bp || e.peek('tac_safe', s2) === 1, `balle de break contre le serveur : première balle assurée (${bp ? 'balle de break' : 'situation passée'})`);
+}
 console.log('Son sur console réelle : balayage des carrés');
 {
   // Sur la vraie NES, l'unité de balayage d'un canal carré coupe la note si
