@@ -81,11 +81,11 @@ static const u8 mus_def_mel[]   = { G4,10, F4,10, E4,10, D4,10, C4,30, END,0 };
 
 /* Thème de la finale (écrans d'avant-match) : marche solennelle, 8 mesures de 80 trames */
 static const u8 mus_final_mel[] = {
- G4,10, G4,5, G4,5, C5,20, E5,20, G5,20,
+ G4,8, R,2, G4,3, R,2, G4,5, C5,20, E5,20, G5,20,
  A5,20, G5,10, F5,10, E5,10, D5,10, E5,20,
- G4,10, G4,5, G4,5, D5,20, F5,20, A5,20,
+ G4,8, R,2, G4,3, R,2, G4,5, D5,20, F5,20, A5,20,
  G5,20, F5,10, D5,10, B4,10, D5,10, G4,20,
- E5,20, E5,10, F5,10, G5,20, E5,20,
+ E5,18, R,2, E5,10, F5,10, G5,20, E5,20,
  A5,20, F5,20, G5,20, E5,20,
  F5,10, E5,10, D5,10, C5,10, D5,20, B4,20,
  C5,60, R,20,
@@ -98,7 +98,7 @@ static const u8 mus_final_bass[] = {
 static const u8 mus_margaux_mel[] = {
  C5,12, E5,12, G5,12,  A5,24, G5,12,  F5,12, A5,12, F5,12,  E5,24, C5,12,
  D5,12, F5,12, A5,12,  G5,24, E5,12,  F5,12, E5,12, D5,12,  C5,24, R,12,
- E5,12, E5,6, F5,6, G5,12,  A5,12, G5,12, E5,12,  F5,12, F5,6, G5,6, A5,12,  G5,36,
+ E5,10, R,2, E5,6, F5,6, G5,12,  A5,12, G5,12, E5,12,  F5,10, R,2, F5,6, G5,6, A5,12,  G5,34, R,2,
  G5,12, E5,12, C5,12,  F5,12, A5,12, F5,12,  E5,12, D5,12, G4,12,  C5,24, R,12,
  END,0 };
 static const u8 mus_margaux_bass[] = {
@@ -118,7 +118,7 @@ static const u8 mus_intro_mel[] = {
  C4,30, G4,15, C5,15,  E5,45, D5,15,  C5,15, D5,15, E5,15, G5,15,  A5,60,
  G5,30, E5,15, C5,15,  F5,45, E5,15,  D5,15, E5,15, F5,15, A5,15,  G5,60,
  /* ça déraille (240) */
- G4,15, G4,8, G4,7, C5,30,  E5,15, 39,8, E5,7, G5,30,  A5,20, 44,20, F5,20,  E5,30, 37,30,
+ G4,13, R,2, G4,6, R,2, G4,7, C5,30,  E5,15, 39,8, E5,7, G5,30,  A5,20, 44,20, F5,20,  E5,30, 37,30,
  /* ça s'emballe (160) */
  C5,8, D5,8, E5,8, F5,8, G5,8, A5,8, B5,8, A5,8, G5,8, F5,8,
  E5,6, G5,6, C5,6, E5,6, G5,6, C5,6, E5,6, G5,6, C5,6, E5,6, G5,6, C5,6, B4,8,
@@ -170,6 +170,7 @@ static const u8 mus_break_bass[] = {
    (rendu coupé), sans à-coup */
 const u8 *mel_ptr, *bass_ptr, *mel_start, *bass_start;
 u8 mel_timer, bass_timer, music_loop, mel_duty;
+u8 mel_hi;         /* dernier octet écrit en $4007 (timbres à volume constant) */
 u8 audio_lock;     /* 1 : état en cours de modification, la NMI attend */
 u8 music_cur;      /* morceau en cours (MUS_*) */
 u8 snd_mode;       /* 0 musique + bruitages, 1 bruitages seuls, 2 aucun son */
@@ -179,7 +180,8 @@ void music_play(u8 id)
     audio_lock = 1;
     mel_ptr = bass_ptr = 0;
     music_loop = 0;
-    mel_duty = 0x86;
+    mel_duty = 0x86;                    /* petits jingles : note qui s'éteint */
+    mel_hi = 0xFF;                      /* première note : $4007 toujours écrit */
     music_cur = id;
     APU(0x4004) = 0x30;
     APU(0x4008) = 0x80;
@@ -188,13 +190,13 @@ void music_play(u8 id)
     case MUS_TITLE:   mel_ptr = mus_title_mel; bass_ptr = mus_title_bass; music_loop = 1; mel_duty = 0x36; break;
     case MUS_POINT:   mel_ptr = mus_point_mel; break;
     case MUS_GAME:    mel_ptr = mus_game_mel; break;
-    case MUS_VICTORY: mel_ptr = mus_vict_mel; bass_ptr = mus_vict_bass; break;
+    case MUS_VICTORY: mel_ptr = mus_vict_mel; bass_ptr = mus_vict_bass; mel_duty = 0xB8; break;
     case MUS_DEFEAT:  mel_ptr = mus_def_mel; break;
-    case MUS_FINAL:   mel_ptr = mus_final_mel; bass_ptr = mus_final_bass; music_loop = 1; break;
-    case MUS_INTRO:   mel_ptr = mus_intro_mel; bass_ptr = mus_intro_bass; break;
+    case MUS_FINAL:   mel_ptr = mus_final_mel; bass_ptr = mus_final_bass; music_loop = 1; mel_duty = 0xB7; break;
+    case MUS_INTRO:   mel_ptr = mus_intro_mel; bass_ptr = mus_intro_bass; mel_duty = 0xB8; break;
     case MUS_CREDITS: mel_ptr = mus_cred_mel; bass_ptr = mus_cred_bass; music_loop = 1; mel_duty = 0x76; break;
-    case MUS_BREAK:   mel_ptr = mus_break_mel; bass_ptr = mus_break_bass; music_loop = 1; mel_duty = 0x44; break;
-    case MUS_MARGAUX: mel_ptr = mus_margaux_mel; bass_ptr = mus_margaux_bass; music_loop = 1; mel_duty = 0x44; break;
+    case MUS_BREAK:   mel_ptr = mus_break_mel; bass_ptr = mus_break_bass; music_loop = 1; mel_duty = 0x76; break;
+    case MUS_MARGAUX: mel_ptr = mus_margaux_mel; bass_ptr = mus_margaux_bass; music_loop = 1; mel_duty = 0x77; break;
     default: break;
     }
     mel_start = mel_ptr;
@@ -300,12 +302,12 @@ static u8 sq_last;
 void sfx_squeak(void)
 {
     /* au plus un crissement toutes les 2,5 s : un détail, pas un bruit de fond */
-    if (mel_ptr || (cfg.surface != 2 && cfg.surface != 3) || (u8)(frame_cnt - sq_last) < 150) return;
+    if (mel_ptr || (cfg.surface != 2 && cfg.surface != 3 && cfg.surface != 5) || (u8)(frame_cnt - sq_last) < 150) return;
     sq_last = frame_cnt;
-    APU(0x4004) = 0x55;                 /* 25 %, volume fixe 5 */
-    APU(0x4005) = 0x8A;                 /* balayage rapide vers l'aigu */
-    APU(0x4006) = 0x60;
-    APU(0x4007) = 0x28;                 /* durée : 4 demi-trames */
+    APU(0x4004) = 0x5B;                 /* 25 %, volume fixe 11 */
+    APU(0x4005) = 0x8B;                 /* balayage vers l'aigu : « iiik » */
+    APU(0x4006) = 0x90;
+    APU(0x4007) = 0x00;                 /* durée : 10 demi-trames (83 ms) */
 }
 /* feu d'artifice : sifflement de la fusée qui monte, puis « pop » */
 void sfx_fw_launch(void)  { pulse1(0x4A, 0xBB, 700); }

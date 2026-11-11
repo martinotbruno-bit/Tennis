@@ -19,7 +19,7 @@ Le jeu a été testé uniquement sur émulateur. Cette liste sert à le vérifie
 
 | # | Vérification | Attendu | OK ? |
 |---|---|---|---|
-| 1.1 | Allumer la console | Le générique démarre (« BRUNO MARTINOT PRESENTS », fanfare, sans raté aux changements de scène), barre à 117 %, mentions légales, lettre N tombée puis remise par le stagiaire, puis l'écran titre « ROYAL MARTINOT » après une trentaine de secondes ; sans image brouillée | ☐ |
+| 1.1 | Allumer la console | Le générique démarre (« BRUNO MARTINOT PRESENTS », fanfare aux notes bien tenues, sans raté aux changements de scène), barre à 117 %, mentions légales, lettre N tombée puis remise par le stagiaire, puis l'écran titre « ROYAL MARTINOT » après une trentaine de secondes ; sans image brouillée | ☐ |
 | 1.1 b | Allumer, puis appuyer deux fois sur un bouton | Au 1er appui : « ARE YOU SURE? THIS IS VERY PRESTIGIOUS. » ; au 2e : « FINE. » puis l'écran titre | ☐ |
 | 1.2 | Musique du titre | Polka jouée en boucle, sans trou, grésillement ni note bloquée ; elle continue sans repartir au début en passant au menu | ☐ |
 | 1.3 | HAUT/BAS dans le titre | L'étoile passe d'une ligne à l'autre avec un petit « bip » | ☐ |
@@ -37,7 +37,7 @@ Le jeu a été testé uniquement sur émulateur. Cette liste sert à le vérifie
 | 2.2 | JOUER > configuration | Lignes lisibles ; le personnage animé est à droite du titre et ne masque aucun texte | ☐ |
 | 2.3 | Mode COMPETITION, type PERSONNALISE, jeu DOUBLE | 19 lignes, puis STYLE et l'aide en bas, sans chevauchement | ☐ |
 | 2.4 | JOUEUR 1 : faire défiler jusqu'à MARGAUX | MARGAUX apparaît après INES : cheveux longs, blonds et bouclés, tenue rose clair | ☐ |
-| 2.5 | LIEU : COURT MARGAUX | La valse « boîte à musique » remplace le thème du titre | ☐ |
+| 2.5 | LIEU : COURT MARGAUX | La valse « boîte à musique » remplace le thème du titre, sans notes hachées | ☐ |
 | 2.6 | SON : BRUITAGES SEULS, puis AUCUN, puis MUSIQUE + SONS | La musique s'arrête, puis tout se tait, puis la musique repart | ☐ |
 
 ## 3. Match en simple (1 joueur contre le CPU)
@@ -53,6 +53,7 @@ Réglages : FORMAT RAPIDE, NIVEAU FACILE, VITESSE JEU NORMAL.
 | 3.3 | Échanges | La balle grossit en hauteur ; son ombre reste au sol ; les joueurs ont une ombre sous les pieds | ☐ |
 | 3.4 | Se déplacer latéralement | Le joueur court de profil, avec des bruits de pas discrets | ☐ |
 | 3.4 b | Animation des joueurs | À l'arrêt, léger rebond sur place ; petit saut (split-step) quand l'adversaire frappe ; service en 3 temps (lancer, bras tendu tout en haut, accompagnement) ; revers à deux mains quand la balle arrive à gauche ; fente bras tendu sur une balle lointaine. Aucun clignotement ni tuile parasite, aussi au club nudiste et avec Margaux | ☐ |
+| 3.4 c | Faute de service ; demi-tour brusque sur dur | Bip aigu du juge électronique à chaque service faux ; crissement des chaussures (« iiik ») bien audible | ☐ |
 | 3.5 | Coup gagnant | Bandeau « COUP GAGNANT ! », « PASSING ! », « AMORTIE ! »… et un « ting » bref | ☐ |
 | 3.6 | Lob court sur soi, près du filet : A | Smash sauté : le joueur s'élève puis retombe, son ombre reste au sol | ☐ |
 | 3.7 | Ralenti après un beau point | Le point est rejoué à mi-vitesse ; A le passe | ☐ |

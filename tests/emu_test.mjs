@@ -102,16 +102,20 @@ console.log('Générique de lancement');
   // fanfare du générique : chaque note commence exactement à sa trame (la
   // musique avance dans la NMI, même pendant la construction des scènes)
   const e = new Emu(rom), m = e.nes.cpu.mem, mm = e.nes.mmap, w = mm.write.bind(mm);
-  let fr = 0; const on = { 0x4007: [], 0x400b: [] };
-  mm.write = (a, v) => { if (a === 0x4007 || a === 0x400b) on[a].push(fr); return w(a, v); };
+  let fr = 0; const on = { 0x4006: [], 0x400b: [] }; const vol = new Set(); let w7 = 0;
+  mm.write = (a, v) => { if (a === 0x4006 || a === 0x400b) on[a].push(fr); if (a === 0x4004) vol.add(v); if (a === 0x4007) w7++; return w(a, v); };
   for (; fr < 1300; fr++) e.run(1);
   const score = (sym) => { let a = e.addr(sym), out = [], t = 0; while (m[a] !== 0xFF) { if (m[a] !== 0xFE) out.push(t); t += m[a + 1]; a += 2; } return out; };
   let worst = 0, cnt = 0;
-  for (const [reg, sym] of [[0x4007, 'mus_intro_mel'], [0x400b, 'mus_intro_bass']]) {
+  for (const [reg, sym] of [[0x4006, 'mus_intro_mel'], [0x400b, 'mus_intro_bass']]) {
     const got = on[reg], exp = score(sym);
     cnt += Math.min(got.length, exp.length) === exp.length ? 0 : 1;
     for (let i = 0; i < exp.length && i < got.length; i++) worst = Math.max(worst, Math.abs(got[i] - got[0] - exp[i]));
   }
+  // notes tenues : volume constant (rien ne s'éteint avant la note suivante),
+  // et la forme d'onde n'est remise à zéro ($4007) que si l'octet change
+  const held = [...vol].every((v) => v === 0x30 || (v & 0x30) === 0x30);
+  check(held && w7 < score('mus_intro_mel').length / 2, `générique : notes tenues sans coupure ni clic (volumes ${[...vol].map((v) => v.toString(16))}, ${w7} remises à zéro pour ${score('mus_intro_mel').length} notes)`);
   check(cnt === 0 && worst === 0, `générique : les ${score('mus_intro_mel').length} notes de la mélodie et ${score('mus_intro_bass').length} de la basse tombent à la trame près (écart max ${worst})`);
 }
 
@@ -674,6 +678,10 @@ console.log('Vitesse du jeu, coups gagnants, smash sauté, musiques');
   check(e.peek('music_cur') === 1, 'menu : la polka reboucle');
   e.poke('cursor', rowOf(e, O.ENV)); e.poke('opt_val', 3, O.ENV); e.tap('RIGHT'); e.run(5);
   check(e.peek('opt_val', O.ENV) === 4 && e.peek('music_cur') === 7, 'menu : court Margaux choisi, sa musique démarre');
+  { const mm = e.nes.mmap, w = mm.write.bind(mm), vol = new Set();
+    mm.write = (a, v) => { if (a === 0x4004) vol.add(v); return w(a, v); };
+    e.run(600); mm.write = w;
+    check([...vol].every((v) => v === 0x30 || (v & 0x30) === 0x30), `valse Margaux : notes tenues à volume constant (${[...vol].map((v) => v.toString(16))})`); }
   e.tap('LEFT'); e.run(5);
   check(e.peek('music_cur') === 1, 'autre lieu : retour à la polka');
   e.tap('RIGHT'); e.run(5); e.tap('START'); e.run(20);
@@ -980,10 +988,24 @@ console.log('Margaux jouable et fatigue');
   e.poke('ms', 2); e.poke('b_live', 1); e.poke('hitter', 0); log.length = 0;
   e.poke('sq_last', (e.peek('frame_cnt') + 56) & 255);   // dernier crissement : il y a plus de 2,5 s
   e.down('RIGHT'); e.run(10); e.up('RIGHT'); e.down('LEFT'); e.run(10); e.up('LEFT');
-  const squeak = has(0x4005, 0x8A);
+  const squeak = has(0x4005, 0x8B);
   check(whoosh && pok && beep && kept && squeak, `bruitages : souffle${whoosh ? '' : ' (absent)'}, « pok » au triangle${pok ? '' : ' (absent)'}, bip dehors${beep ? '' : ' (absent)'}, ovation non coupée${kept ? '' : ' (coupée)'}, crissement${squeak ? '' : ' (absent)'}`);
 }
 
+{
+  // service faux : bip du juge électronique, comme une balle dehors
+  const e = boot(); startWith(e, { FMT: 3 }); allCpu(e);
+  const mm = e.nes.mmap, w = mm.write.bind(mm); let beep = false;
+  mm.write = (a, v) => { if (a === 0x4002 && v === 0x5C) beep = true; return w(a, v); };
+  let faults = 0, beeps = 0, prev = e.peek('ms');
+  for (let f = 0; f < 60 * 60 * 6 && faults < 3; f++) {
+    beep = false; const srv = e.peek('b_serve'); e.run(1);
+    const ms = e.peek('ms');
+    if (prev !== 3 && ms === 3 && srv && e.peek('rally_hits') <= 1 && e.peek('ump_arm')) { faults++; if (beep) beeps++; }
+    prev = ms;
+  }
+  check(faults > 0 && beeps === faults, `service faux : bip (${beeps}/${faults})`);
+}
 console.log('Service canon');
 {
   // frappe A k trames après le lancer : seules 2 trames consécutives (le sommet) donnent un service canon

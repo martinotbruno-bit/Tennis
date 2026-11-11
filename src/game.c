@@ -174,7 +174,7 @@ static void serve_fault(const char *why)
     ms_timer = 60;
     b_live = 0;
     ump_arm = 1;
-    sfx_fault();
+    sfx_line();          /* service faux : bip du juge électronique, comme une balle dehors */
     if (cfg.mode == GM_TRAIN) {
         end_reason = END_FAULT;
         set_msg("FAUTE", why, 50);

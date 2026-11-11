@@ -1,10 +1,18 @@
-# Royal Martinot — Rapport de réalisation (version 2.28)
+# Royal Martinot — Rapport de réalisation (version 2.29)
 
 Comme l'exige le CDC (§ 17.5), ce rapport distingue ce qui est **réalisé**, **testé**, **validé sur matériel réel**, **validé uniquement en émulation**, **dépendant d'une extension**, et les **limitations restantes**.
 
 > **Validation matérielle : aucune.** Aucun test n'a été fait sur console réelle (NES, Famicom, PAL, cartouche MMC1). Toutes les validations ont eu lieu en émulation (jsnes) et par des tests unitaires sur PC. Les critères « vérifié sur console physique » (CDC § 2.1, 15.4, 16.A) **ne sont pas remplis**. Ce point ne peut pas être traité dans l'environnement de développement utilisé.
 
 ## 1. Évolutions
+
+### Version 2.29
+
+| Demande | Réalisation |
+|---|---|
+| Vérifier toutes les musiques : certaines semblent saccadées (court Margaux, générique d'ouverture) | Cause trouvée : la fanfare d'ouverture, la valse de Margaux, l'interlude de fin de set, le thème de la finale et la fanfare de victoire jouaient leur mélodie avec un son qui s'éteint tout seul en 0,3 à 0,5 s. Les notes longues mouraient avant la suivante. Mesuré dans l'émulateur : mélodie presque muette 134 trames sur 470 dans la fanfare, 69 sur 480 dans la valse. Ces morceaux sont maintenant joués à volume constant (2 et 18 trames : seulement les silences écrits) ; les notes répétées sont détachées par un silence de 2 trames ; le petit clic au début de chaque note est supprimé. La polka et l'hymne du générique de fin étaient déjà corrects |
+| Le crissement ne s'entend pas | Il était trop faible et trop court (volume 5, 33 ms). Il passe au volume 11 et à 83 ms, et existe aussi sur la glace. Il reste réservé aux surfaces où il est réaliste (dur, moquette, glace : pas sur terre, gazon ni sable) et aux demi-tours brusques gauche-droite, au plus un toutes les 2,5 s |
+| Un bip quand le service est faux, comme pour une balle dehors | Chaque faute de service (dehors ou dans le filet) fait le bip du juge électronique, à la place de l'ancien bourdonnement grave |
 
 ### Version 2.28
 
@@ -255,7 +263,7 @@ Pour loger ce contenu, la cartouche passe de NROM (32 Ko) à **MMC1** : 128 Ko d
 |---|---|
 | Règles (`rules_test`) | 42/42 |
 | Codes (`password_test`) | 200 000/200 000 aller-retour (format v3), ancien code v2 accepté, Margaux codée, Margaux au club nudiste refusée ; 99,98 % des codes altérés d'un signe refusés |
-| Émulateur (`emu_test`) | 231/231 vérifications (environ 22 min) |
+| Émulateur (`emu_test`) | 234/234 vérifications (environ 22 min) |
 | Profil CPU, simple, 6 000 trames | 0 trame d'échange en dépassement |
 | Relecture des textes (`check_texts.py`) | 0 problème |
 | Contraste (`contrast.py 25`) | 0 paire sous ΔE 25 (personnages, courts, balle, tenues) |

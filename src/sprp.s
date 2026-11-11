@@ -465,7 +465,7 @@ _win_fx:
 .export _audio_tick
 .import _noise_hold, _mel_ptr, _bass_ptr, _mel_start, _bass_start
 .import _mel_timer, _bass_timer, _music_loop, _mel_duty, _music_cur
-.import _note_period, _audio_lock
+.import _note_period, _audio_lock, _mel_hi
 
 .segment "ZEROPAGE"
 aptr:   .res 2
@@ -481,9 +481,12 @@ _audio_tick:
     rts
 @mel:
     lda _mel_ptr+1          ; pointeur nul : pas de mélodie (données hors page 0)
-    beq @bass
+    beq @tobass
     dec _mel_timer
-    bne @bass
+    beq @mnext
+@tobass:
+    jmp @bass
+@mnext:
     lda _mel_ptr
     sta aptr
     lda _mel_ptr+1
@@ -525,6 +528,19 @@ _audio_tick:
     sta $4006
     lda _note_period+1,x
     ora #$08
+    ; volume constant : $4007 n'est réécrit que si l'octet change (l'écrire
+    ; remet la forme d'onde à zéro : petit « clic » à chaque note)
+    pha
+    lda _mel_duty
+    and #$10
+    beq @mw
+    pla
+    cmp _mel_hi
+    beq @mdur
+    pha
+@mw:
+    pla
+    sta _mel_hi
     sta $4007
 @mdur:
     ldy #1
