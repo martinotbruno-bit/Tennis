@@ -1262,7 +1262,7 @@ console.log('Rotation des sprites (double)');
 
 console.log('Victoire : sauts de joie et confettis');
 {
-  const confetti = 0xD6;
+  const confetti = boot().peek('confetti_tile');
   // le joueur humain (équipe 0) gagne : confettis et bonds du vainqueur
   const e = boot(); startWith(e, { MODE: MODE.P1 }); e.run(60);
   e.poke('sc_winner', 0); e.poke('ms_timer', 160); e.poke('ms', 4); e.run(2);
