@@ -345,7 +345,6 @@ static u8 near_miss(void)
 void crowd_tick(void)
 {
     u8 nude = (u8)(cfg.env == ENV_NUDE), girly = (u8)(cfg.env == ENV_MARGAUX), k, m;
-    swap_tick();                     /* jeu de tuiles par phase */
     if (nude || girly) {
         /* court Margaux : les coeurs, fleurs et étoiles scintillent ; club
            nudiste : les spectateurs se lèvent */
@@ -390,6 +389,7 @@ void crowd_tick(void)
             }
         }
     }
+    swap_tick();       /* jeu de tuiles par phase : après le public (budget VBlank restant) */
     /* réactions */
     if (cr_react && !noise_hold) { if (cr_react == 1) sfx_ooh(); else sfx_groan(); cr_react = 0; }
     m = ms;
