@@ -51,6 +51,12 @@ static const u8 surf_pal[NSURF + 1][4] = {
     { 0x14, 0x25, 0x30, 0x0F },   /* court Margaux : rose bonbon, abords prune */
 };
 /* palette 2 (bords du court) selon le lieu */
+/* couleur de la balle par court (vérifiée par tools/contrast.py) : jaune de
+   vraie balle de tennis ($28, la teinte NES la plus proche) partout où elle
+   se voit bien ; sur le sable jaune de la plage, couleur approchante la plus
+   lisible : vert-jaune vif ($2A) */
+static const u8 ball_col[NSURF + 1] = { 0x28, 0x28, 0x28, 0x28, 0x2A, 0x28, 0x28 };
+
 static const u8 env_pal[NENV][3] = {
     { 0x27, 0x16, 0x37 },     /* stade : public */
     { 0x1A, 0x09, 0x07 },     /* club : haies, arbres, troncs */
@@ -81,8 +87,10 @@ void pal_set_court(u8 s, u8 cond, u8 env)
     /* sprites : 0/1 joueurs (définis à part), 2 balle, 3 effets */
     pal_buf[16 + 8] = p[0];
     /* balle jaune pâle, sauf sur le sable jaune de la plage : blanche */
-    pal_buf[16 + 9] = (u8)(p == surf_pal[4] ? 0x30 : 0x38); pal_buf[16 + 10] = 0x0F; pal_buf[16 + 11] = 0x30;
-    pal_buf[16 + 12] = p[0]; pal_buf[16 + 13] = 0x30; pal_buf[16 + 14] = 0x21; pal_buf[16 + 15] = 0x28;
+    pal_buf[16 + 9] = 0x38; pal_buf[16 + 10] = 0x0F; pal_buf[16 + 11] = 0x30;
+    /* effets : 1 couleur de la balle (selon le court), 2 bleu (pluie,
+       sueur), 3 blanc (couture de la balle, étoiles) */
+    pal_buf[16 + 12] = p[0]; pal_buf[16 + 13] = ball_col[env == ENV_MARGAUX ? NSURF : s]; pal_buf[16 + 14] = 0x21; pal_buf[16 + 15] = 0x30;
     if (env == ENV_MARGAUX) pal_buf[16 + 11] = 0x34;   /* robe rose de la princesse arbitre (et reflet de la balle) */
     if (cond == 2) {
         /* pluie : ciel couvert, couleurs ternies */
@@ -90,7 +98,7 @@ void pal_set_court(u8 s, u8 cond, u8 env)
         for (i = 4; i < 16; i += 4) pal_buf[i] = pal_buf[0];
         pal_buf[1] = darken(pal_buf[1]);
         pal_buf[16 + 8] = pal_buf[16 + 12] = pal_buf[0];
-        pal_buf[16 + 13] = 0x21; pal_buf[16 + 15] = 0x31;   /* gouttes */
+        pal_buf[16 + 14] = 0x31;   /* gouttes et éclaboussures bleu clair */
     }
     if (cond == 1) {
         /* match de nuit : décors assombris (sans noir), court éclairé */
@@ -253,18 +261,7 @@ void team_label(u8 a, u8 b, char *out)
 /* Noms des compétitions (banque fixe : lus par les écrans et le palmarès) */
 const char * const comp_name[5] = { "TOURNOI", "POULES", "CHAMPIONNAT", "SAISON", "PERSONNALISE" };
 
-/* Balle et ombre. La balle grossit avec la hauteur (zpx, en pixels) : effet
- * de perspective qui aide à lire les lobs et les rebonds. (x, sy) = position
- * affichée de la balle, shy = position de l'ombre au sol. */
-void spr_ball(u8 x, s16 sy, u8 shy, u8 zpx)
-{
-    u8 t = 1;
-    if (zpx >= 30) { t = ball_big_tile; --x; --sy; }
-    else if (zpx >= 12) t = ball_mid_tile;
-    /* balle au-dessus du haut de l'écran : seule l'ombre reste visible */
-    if (sy >= 0) spr1((u8)(x - 3), (u8)sy, t, 2);
-    spr1((u8)(x - 3), (u8)(shy - 3), 2, 2);
-}
+/* spr_ball (balle et ombre) : en assembleur, src/sprp.s */
 
 /* Styles de jeu de l'IA (CDC 10.2), indexés par char_style[] : équilibré,
  * fond de court, puissance, filet, défensif, offensif, tactique, placement.

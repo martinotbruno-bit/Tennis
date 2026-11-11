@@ -51,7 +51,7 @@ Réglages : FORMAT RAPIDE, NIVEAU FACILE, VITESSE JEU NORMAL.
 | 3.2 | Service : A pour lancer, A au sommet | La balle monte et redescend ; le service part. Faites-le aussi en étant le joueur du haut (après un changement de côté) | ☐ |
 | 3.2 b | Service canon : A pile au sommet du lancer, environ une demi-seconde après | Bandeau « SERVICE CANON », « boum », traînée derrière la balle. Notez combien vous en réussissez sur 20 services A (palmarès : SERVICES CANON) | ☐ |
 | 3.2 c | Frappe parfaite : se placer à côté de la trajectoire et relâcher A juste avant l'arrivée de la balle | « Tchak » sec, éclat blanc près de la raquette, balle plus rapide. Palmarès : COUPS PARFAITS (nombre et %) | ☐ |
-| 3.3 | Échanges | La balle grossit en hauteur ; son ombre reste au sol ; les joueurs ont une ombre sous les pieds | ☐ |
+| 3.3 | Échanges | La balle grossit en hauteur, son ombre reste au sol et rétrécit quand la balle monte ; la balle s'aplatit au rebond ; sa couture tourne sur les liftés et les coupés ; elle passe derrière le filet dans le camp du haut ; jaune sur tous les courts, verte sur le sable ; les joueurs ont une ombre sous les pieds | ☐ |
 | 3.4 | Se déplacer latéralement | Le joueur court de profil, avec des bruits de pas discrets | ☐ |
 | 3.4 b | Animation des joueurs | À l'arrêt, léger rebond sur place ; petit saut (split-step) quand l'adversaire frappe ; service en 3 temps (lancer, bras tendu tout en haut, accompagnement) ; revers à deux mains quand la balle arrive à gauche ; fente bras tendu sur une balle lointaine. Aucun clignotement ni tuile parasite, aussi au club nudiste et avec Margaux | ☐ |
 | 3.4 c | Faute de service ; demi-tour brusque sur dur | Bip aigu du juge électronique à chaque service faux ; aucun crissement de chaussures | ☐ |

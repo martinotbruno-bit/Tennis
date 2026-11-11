@@ -1318,6 +1318,42 @@ console.log('Victoire : sauts de joie et confettis');
   f.poke('sc_winner', 1); f.poke('ms_timer', 160); f.poke('ms', 4); f.run(10);
   check(!oamTiles(f).has(confetti), 'défaite contre le CPU : pas de confettis');
 }
+console.log('Balle : couleur, ombre, rebond, effet, filet');
+{
+  const ballSpr = (e) => { const r = []; for (let i = 0; i < 64; i++) { const y = e.peek('oam_buf', i * 4); if (y < 0xEF) r.push({ t: e.peek('oam_buf', i * 4 + 1), a: e.peek('oam_buf', i * 4 + 2) & 3, x: e.peek('oam_buf', i * 4 + 3), y: y + 1 }); } return r; };
+  const setBall = (e, x, y, z, vz, vy, spin) => {
+    const s16 = (n, v) => { e.poke(n, v & 255); e.poke(n, (v >> 8) & 255, 1); };
+    e.poke('ms', 2); e.poke('b_live', 0); e.poke('b_vis', 1); e.poke('bounces', 1); e.poke('bgrav', 0); e.poke('bspin', spin);
+    s16('bx', x * 64); s16('by', y * 64); s16('bz', z * 64); s16('bvx', 0); s16('bvy', vy); s16('bvz', vz);
+  };
+  // couleur selon le court : jaune de balle de tennis, vert-jaune sur le sable
+  const cols = [];
+  for (const surf of [0, 1, 2, 3, 4, 5]) { const e = boot(); startWith(e, { SURF: surf, ENV: 0, FMT: 3 }); cols.push(e.peek('pal_buf', 16 + 13)); }
+  const m = boot(); startWith(m, { ENV: 4, FMT: 3 }); cols.push(m.peek('pal_buf', 16 + 13));
+  check(cols.join() === [0x28, 0x28, 0x28, 0x28, 0x2A, 0x28, 0x28].join(), `couleur de la balle par court : ${cols.map((c) => c.toString(16))}`);
+  // ombre de plus en plus petite avec la hauteur ; balle sur la palette des effets
+  const e = boot(); startWith(e, { SURF: 2, FMT: 3 });
+  runUntil(e, () => e.peek('ms') === 0, 300); e.run(10);
+  const base = e.peek('ball_base');
+  const sh = []; let pal3 = true;
+  for (const z of [4, 20, 45]) { setBall(e, 150, 190, z, 0, 0, 0); e.run(3); const sp = ballSpr(e);
+    const b = sp.find((q) => q.t >= base && q.t < base + 12); if (!b || b.a !== 3) pal3 = false;
+    sh.push(sp.some((q) => q.t === 2 && q.a === 2) ? 'G' : sp.some((q) => q.t === base + 15) ? 'M' : sp.some((q) => q.t === base + 16) ? 'P' : '?'); }
+  check(sh.join('') === 'GMP' && pal3, `ombre qui rétrécit quand la balle monte (${sh.join(' ')}), balle sur la palette des effets`);
+  // rebond : balle écrasée
+  setBall(e, 150, 190, 8, -40, 0, 0); e.poke('bgrav', 4);
+  let sq = 0; for (let f = 0; f < 20; f++) { e.run(1); if (ballSpr(e).some((q) => q.t === base + 12)) sq++; }
+  check(sq >= 2 && sq <= 4, `balle écrasée au rebond (${sq} trames)`);
+  // effet : la couture tourne avec le lifté, pas avec la balle à plat
+  const turn = (spin) => { setBall(e, 150, 190, 20, 0, -64, spin); const seen = new Set();
+    for (let f = 0; f < 16; f++) { e.run(1); for (const q of ballSpr(e)) if (q.t >= base + 4 && q.t < base + 8) seen.add(q.t); } return seen.size; };
+  const top = turn(1), flat = turn(0);
+  check(top === 4 && flat === 1, `couture qui tourne selon l'effet (lifté : ${top} positions, à plat : ${flat})`);
+  // camp du haut, à hauteur du filet : balle vue à travers les mailles ; dans le camp du bas : devant
+  setBall(e, 140, 129, 2, 0, 0, 0); e.run(3); const behind = ballSpr(e).some((q) => q.t === base + 13);
+  setBall(e, 140, 136, 4, 0, 0, 0); e.run(3); const front = ballSpr(e).some((q) => q.t >= base && q.t < base + 4);
+  check(behind && front, 'balle derrière le filet vue à travers les mailles (camp du haut), devant dans le camp du bas');
+}
 console.log('Animation des joueurs');
 {
   // tuiles : réserve commune (rangées partagées), versions normale et au naturel de même taille

@@ -50,14 +50,19 @@ for si, (univ, court, lines, net) in enumerate(sp):
                     d = dE(col, bg)
                     if d < SEUIL:
                         worst.append((d, surf[si], cond, names[ci], part, '%02X' % col, bgn, '%02X' % bg))
-# balle (palette de sprites 2) : jaune pâle $38, blanche $30 sur la plage (gfx.c)
+# balle (palette des effets, couleur 1) : couleur propre à chaque court
+# (table ball_col de gfx.c), contre le court et ses abords, de jour, de nuit
+# et sous la pluie
+bc = [int(x, 16) for x in re.findall(r'0x(\w\w)', src[src.index('ball_col[NSURF + 1] ='):].split(';')[0])]
 for si, (univ, court, lines, net) in enumerate(sp):
-    ball = 0x30 if si == 4 else 0x38
+    ball = bc[si]
     for cond in ('jour', 'nuit', 'pluie'):
         c = darken(court) if cond == 'pluie' else court
-        d = dE(ball, c)
-        if d < SEUIL:
-            worst.append((d, surf[si], cond, 'balle', '-', '%02X' % ball, 'court', '%02X' % c))
+        u = darken(univ) if cond != 'jour' else univ
+        for bgn, bg in (('court', c), ('abords', u)):
+            d = dE(ball, bg)
+            if d < SEUIL:
+                worst.append((d, surf[si], cond, 'balle', '-', '%02X' % ball, bgn, '%02X' % bg))
 # tenues entre elles : la tenue de Margaux (la seule rose) doit se distinguer
 # de toutes les autres ; les autres paires proches sont signalées pour
 # information (elles diffèrent aussi par la peau, les cheveux ou le sexe)

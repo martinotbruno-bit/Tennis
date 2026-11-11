@@ -25,7 +25,7 @@ void spr_begin(void);
 void spr_end(void);
 void __fastcall__ spr1(u8 x, u8 y, u8 tile, u8 attr);
 void __fastcall__ spr_person(s16 x, s16 y, u8 character, u8 front, u8 pose, u8 flip, u8 pal);   /* sprp.s */
-void spr_ball(u8 x, s16 sy, u8 shy, u8 zpx);
+void __fastcall__ spr_ball(u8 x, s16 sy, u8 shy, u8 zpx);   /* sprp.s */
 
 /* poses des personnages */
 #define POSE_IDLE   0

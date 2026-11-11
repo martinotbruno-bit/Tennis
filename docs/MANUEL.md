@@ -163,7 +163,7 @@ Le lancer reste visible quelle que soit votre position, y compris quand vous ser
 
 L'effet modifie aussi le rebond : le lifté rebondit plus haut, le coupé reste bas.
 
-La balle grossit quand elle monte et rapetisse près du sol ; son ombre indique toujours où elle se trouve sur le court.
+La balle grossit quand elle monte et rapetisse près du sol ; son ombre indique toujours où elle se trouve sur le court, et rétrécit quand la balle est haute (lob, chandelle). La balle s'aplatit en rebondissant. Regardez sa **couture blanche** : elle tourne dans le sens du déplacement sur un lifté, en sens inverse sur un coupé (et vite sur une amortie), et reste immobile sur une balle à plat. Dans le camp d'en face, une balle basse près du filet se voit à travers les mailles. La balle est jaune comme une vraie balle de tennis ; sur le sable de la plage, elle est vert-jaune pour rester visible.
 
 Les joueurs courent de profil quand ils se déplacent sur le côté, et l'on entend discrètement leurs pas.
 

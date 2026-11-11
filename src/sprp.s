@@ -933,3 +933,203 @@ _pose_of:
     adc _frame_cnt
     and #16                 ; 16 = POSE_LIFT
     rts
+
+; ---------------------------------------------------------------------------
+; void __fastcall__ spr_ball(u8 x, s16 sy, u8 shy, u8 zpx) : balle et ombre.
+; (x, sy) = position affichée de la balle, shy = ombre au sol, zpx = hauteur.
+;  - la balle grossit avec la hauteur (petite, moyenne dès 12 px, grande dès
+;    30 px) et son ombre rétrécit (grande, moyenne, petite) ;
+;  - la couture blanche tourne selon l'effet : lifté vers l'avant, coupé et
+;    amortie vers l'arrière (plus vite pour l'amortie), à plat immobile ;
+;  - au rebond, la balle est écrasée pendant 3 trames ;
+;  - dans le camp du haut, à hauteur du filet, la balle est vue à travers
+;    les mailles (dessin en damier) ;
+;  - palette des effets (3) : couleur de la balle selon le court.
+; pile : (sp)+0 shy, +1/+2 sy, +3 x ; zpx dans A
+; ---------------------------------------------------------------------------
+.export _spr_ball
+.import _ball_base, _bspin, _bvy
+.import incsp4
+
+SPIN_TOP   = 1
+SPIN_SLICE = 2
+SPIN_DROP  = 3
+NET_Y      = 132
+
+.segment "WBSS"
+bz_px:  .res 1
+bshy:   .res 1
+bsy:    .res 2
+bxx:    .res 1
+brot:   .res 1          ; position de la couture (0..3)
+brot_t: .res 1          ; trames avant le prochain quart de tour
+blast:  .res 1          ; hauteur à la trame précédente
+bsq:    .res 1          ; trames de balle écrasée restantes
+btile:  .res 1
+
+.segment "CODE"
+_spr_ball:
+    sta bz_px
+    ldy #0
+    lda (sp),y
+    sta bshy
+    iny
+    lda (sp),y
+    sta bsy
+    iny
+    lda (sp),y
+    sta bsy+1
+    iny
+    lda (sp),y
+    sta bxx
+
+    ; rotation de la couture
+    dec brot_t
+    bpl @norot
+    lda _bspin
+    beq @norot0             ; à plat : immobile
+    ldx #2                  ; un quart de tour toutes les 3 trames
+    cmp #SPIN_DROP
+    bne :+
+    ldx #1                  ; amortie : toutes les 2 trames
+:   stx brot_t
+    ; sens : +1 (la couture descend) pour un lifté qui descend l'écran ;
+    ; inversé si la balle monte l'écran, inversé pour le coupé et l'amortie
+    ldx #1
+    cmp #SPIN_TOP
+    beq :+
+    ldx #$FF
+:   lda _bvy+1
+    bpl :+
+    txa
+    eor #$FF
+    clc
+    adc #1
+    tax
+:   txa
+    clc
+    adc brot
+    and #3
+    sta brot
+    jmp @norot
+@norot0:
+    lda #2
+    sta brot_t
+@norot:
+    ; rebond : la balle touche le sol après avoir été en l'air
+    lda bz_px
+    cmp #2
+    bcs @air
+    lda blast
+    cmp #2
+    bcc @air
+    lda #3
+    sta bsq
+@air:
+    lda bz_px
+    sta blast
+
+    ; tuile de la balle
+    lda bsq
+    beq @size
+    dec bsq
+    lda _ball_base
+    clc
+    adc #12                 ; balle écrasée
+    sta btile
+    jmp @put
+@size:
+    ldx #0                  ; taille : 0 petite, 4 moyenne, 8 grande
+    lda bz_px
+    cmp #12
+    bcc @sz
+    ldx #4
+    cmp #30
+    bcc @sz
+    ldx #8
+@sz:
+    stx tmp1
+    ; derrière le filet : camp du haut, centre de la balle dans la bande du
+    ; filet (y 124 à 134), entre les poteaux (x 48 à 208)
+    cpx #8
+    beq @rot
+    lda bshy
+    cmp #NET_Y
+    bcs @rot
+    lda bsy+1
+    bne @rot
+    lda bsy
+    cmp #124 - 3
+    bcc @rot
+    cmp #134 - 3 + 1
+    bcs @rot
+    lda bxx
+    cmp #48
+    bcc @rot
+    cmp #209
+    bcs @rot
+    txa
+    lsr a
+    lsr a                   ; 0 petite, 1 moyenne
+    clc
+    adc #13
+    adc _ball_base
+    sta btile
+    jmp @put
+@rot:
+    lda tmp1
+    clc
+    adc brot
+    adc _ball_base
+    sta btile
+@put:
+    ; balle (si elle est dans l'écran)
+    lda bsy+1
+    bne @shadow
+    ldx _oam_i
+    lda bsy
+    sec
+    sbc #1
+    sta _oam_buf,x
+    lda btile
+    sta _oam_buf+1,x
+    lda #3
+    sta _oam_buf+2,x
+    lda bxx
+    sec
+    sbc #3
+    sta _oam_buf+3,x
+    txa
+    clc
+    adc #4
+    sta _oam_i
+@shadow:
+    ; ombre : grande au sol, puis moyenne et petite quand la balle monte
+    lda #2
+    ldx bz_px
+    cpx #12
+    bcc @sh
+    lda _ball_base
+    clc
+    adc #15
+    cpx #30
+    bcc @sh
+    adc #0                  ; retenue à 1 : + 1, petite ombre
+@sh:
+    ldx _oam_i
+    sta _oam_buf+1,x
+    lda bshy
+    sec
+    sbc #3 + 1
+    sta _oam_buf,x
+    lda #2
+    sta _oam_buf+2,x
+    lda bxx
+    sec
+    sbc #3
+    sta _oam_buf+3,x
+    txa
+    clc
+    adc #4
+    sta _oam_i
+    jmp incsp4

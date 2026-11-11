@@ -678,7 +678,7 @@ spr_tile(3, star)
 # gouttes de pluie (réservé pour la météo)
 rain = blank()
 for y in range(1, 6):
-    rain[y][4 - y//3] = 3
+    rain[y][4 - y//3] = 2              # couleur 2 de la palette des effets : bleu
 spr_tile(4, rain)
 # ombre d'un joueur (couleur 2, noir) : ellipse 8 x 3, lignes 0 à 2
 pshadow = blank()
@@ -698,11 +698,11 @@ spr_tile(7, dust2)
 # éclaboussures sous la pluie (couleur 1 de la palette des effets)
 spl1 = blank()
 for (x, y) in ((3, 4), (4, 4), (2, 5), (5, 5), (3, 6), (4, 6)):
-    spl1[y][x] = 1
+    spl1[y][x] = 2
 spr_tile(8, spl1)
 spl2 = blank()
 for (x, y) in ((1, 2), (6, 2), (0, 4), (7, 4), (2, 6), (5, 6), (3, 3), (4, 3)):
-    spl2[y][x] = 1
+    spl2[y][x] = 2
 spr_tile(9, spl2)
 # repère d'atterrissage (mode lent) : petite croix (couleur 3)
 cross = blank()
@@ -751,7 +751,7 @@ UMP_SETS = [[ump_head_dn, ump_head_up, ump_body] + UMP_EXTRA,
 sweat = blank()
 for (x, y) in ((3, 1), (3, 2), (2, 3), (3, 3), (4, 3), (2, 4), (3, 4), (4, 4), (3, 5)):
     sweat[y][x] = 2
-sweat[3][2] = 1
+sweat[3][2] = 3
 spr_tile(14, sweat)
 
 # Personnages 16x24 : 0 transparent, 1 peau, 2 tenue, 3 sombre
@@ -1052,6 +1052,47 @@ for (x, y) in ((3, 3), (4, 3), (3, 4), (4, 4)):
 conf[3][4] = 3
 spr_tile(next_spr, conf); next_spr += 1
 
+# Balle (palette des effets : 1 couleur de la balle, 3 couture blanche).
+# 3 tailles (petite, moyenne, grande) x 4 positions de la couture : elle
+# tourne selon l'effet (lifté, coupé). Puis la balle écrasée au rebond, la
+# balle vue à travers le filet (petite, moyenne) et l'ombre moyenne et petite.
+def ball_mask(size):
+    if size == 0:
+        return {(x, y) for (x, y) in ((2,1),(3,1),(1,2),(2,2),(3,2),(4,2),(1,3),(2,3),(3,3),(4,3),(2,4),(3,4))}
+    if size == 1:
+        return {(x + 1, y + 1) for y in range(5) for x in range(5) if (x - 2) ** 2 + (y - 2) ** 2 <= 5}
+    return {(x, y) for y in range(7) for x in range(7) if (x - 3) ** 2 + (y - 3) ** 2 <= 10}
+BALL_BASE = next_spr
+for size in range(3):
+    m = ball_mask(size)
+    ys = sorted({y for _, y in m}); xs = sorted({x for x, _ in m})
+    top, h = ys[0], len(ys); x0, w = xs[0], len(xs)
+    for f in range(4):
+        t = blank()
+        for (x, y) in m: t[y][x] = 1
+        r = top + (f * h) // 4 + (1 if h > 4 else 0) * (f > 0)
+        r = min(r, ys[-1])
+        for (x, y) in m:
+            mid = x0 + w // 4 <= x <= x0 + w - 1 - w // 4
+            if (y == r and mid) or (y == r - 1 and not mid and h > 4):
+                t[y][x] = 3
+        spr_tile(next_spr, t); next_spr += 1
+sq = blank()
+for (y, a0, a1) in ((4, 2, 5), (5, 1, 6), (6, 2, 5)):
+    for x in range(a0, a1 + 1): sq[y][x] = 1
+spr_tile(next_spr, sq); next_spr += 1                    # base + 12 : écrasée
+for size in (0, 1):                                     # base + 13, 14 : derrière le filet
+    t = blank()
+    for (x, y) in ball_mask(size):
+        if (x + y) % 2 == 0: t[y][x] = 1
+    spr_tile(next_spr, t); next_spr += 1
+shm = blank()
+for (x, y) in ((2, 3), (3, 3), (1, 4), (2, 4), (3, 4), (4, 4)): shm[y][x] = 2
+spr_tile(next_spr, shm); next_spr += 1                   # base + 15 : ombre moyenne
+shs = blank()
+for (x, y) in ((2, 4), (3, 4)): shs[y][x] = 2
+spr_tile(next_spr, shs); next_spr += 1                   # base + 16 : petite ombre
+
 assert next_spr <= 256, "trop de tuiles de sprites"
 
 # --- Margaux : cheveux longs, blonds et bouclés (couleur 3 de sa palette).
@@ -1185,7 +1226,7 @@ src.append(c_array('marg_map', bytes(marg_map)))
 src.append('const unsigned char person_row[4] = {%d,%d,%d,%d};\n' % tuple(k * NPOSE * 3 for k in range(4)))
 src.append('const unsigned int people_bytes = %d;\n' % ((POOL_END - POOL0) * 16))
 src.append('const unsigned char marg_prof_l = 0x%02X;\nconst unsigned char marg_prof_r = 0x%02X;\n' % (MARG_PROF_L, MARG_PROF_R))
-src.append('const unsigned char trophy_tile = 0x%02X;\nconst unsigned char confetti_tile = 0x%02X;\nconst unsigned char ball_mid_tile = 0x%02X;\nconst unsigned char ball_big_tile = 0x%02X;\n' % (TROPHY_TILE, CONFETTI_TILE, BALL_MID_TILE, BALL_BIG_TILE))
+src.append('const unsigned char trophy_tile = 0x%02X;\nconst unsigned char confetti_tile = 0x%02X;\nconst unsigned char ball_mid_tile = 0x%02X;\nconst unsigned char ball_big_tile = 0x%02X;\nconst unsigned char ball_base = 0x%02X;\n' % (TROPHY_TILE, CONFETTI_TILE, BALL_MID_TILE, BALL_BIG_TILE, BALL_BASE))
 with open(os.path.join(ROOT, 'src', 'assets_data.c'), 'w') as f:
     f.write('\n'.join(src))
 
