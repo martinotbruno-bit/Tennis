@@ -89,6 +89,8 @@ Avant chaque match, un **écran de présentation** rappelle l'épreuve, les joue
 | GAUCHE / DROITE à l'impact | Viser le long d'une ligne ; sans direction, le coup part croisé |
 | **START** | Pause : CONTINUER ou QUITTER (HAUT/BAS puis A). SELECT quitte directement |
 
+**HAUT et BAS sont relatifs à votre joueur** : HAUT veut dire « vers l'adversaire » (coup long : frappe à plat, lob), BAS « vers soi » (coup court : croisé court, amortie). Quand votre joueur est en haut de l'écran, après un changement de côté par exemple, c'est donc BAS qui frappe à plat. GAUCHE et DROITE restent ceux de l'écran.
+
 La frappe part toute seule quand la balle entre dans votre zone de frappe pendant que vous armez, ou juste après avoir relâché le bouton.
 
 Le type de coup dépend aussi de la situation :

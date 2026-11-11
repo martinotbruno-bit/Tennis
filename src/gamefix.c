@@ -334,3 +334,14 @@ u8 win_party(void)
 {
     return (u8)(ms == MS_OVER && !(cfg.ctrl[sc_winner] == CTRL_CPU && cfg.ctrl[sc_winner ^ 1] != CTRL_CPU));
 }
+
+/* Commandes des coups : HAUT et BAS par rapport au joueur. « Vers
+   l'adversaire » = coup long (à plat, lob), « vers soi » = coup court
+   (croisé court, amortie) : en haut du court, HAUT et BAS sont inversés.
+   GAUCHE et DROITE restent ceux de l'écran. */
+u8 rel_pad(u8 p, u8 pad)
+{
+    u8 v = (u8)(pad & (PAD_UP | PAD_DOWN));
+    if (((p & 1) ^ sc_swap) && (v == PAD_UP || v == PAD_DOWN)) pad ^= PAD_UP | PAD_DOWN;
+    return pad;
+}

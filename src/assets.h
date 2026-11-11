@@ -31,4 +31,6 @@ extern const unsigned char crowd_norm[96];
 extern const unsigned char crowd_cheer[96];
 extern const unsigned char cheer_idx[6];       /* ola : spectateurs bras levés (tuiles propres) */
 extern const unsigned char crowd_up[96];       /* spectateurs qui regardent vers le haut du court */
+/* jeu B (club, salle ; palette 3) */
+extern const unsigned char crowdb_idx[6], cheerb_idx[6], crowdb_norm[96], crowdb_up[96];
 #endif

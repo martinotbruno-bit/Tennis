@@ -210,6 +210,8 @@ static void crowd_load(void)
     for (c = 0; c < 6; ++c) {
         vram_adr((u16)crowd_idx[c] << 4);
         for (r = 0; r < 16; ++r) vram_put(crowd_norm[c * 16 + r]);
+        vram_adr((u16)crowdb_idx[c] << 4);
+        for (r = 0; r < 16; ++r) vram_put(crowdb_norm[c * 16 + r]);
         cr_cur[c] = 0;
     }
     ola_on = 0; cr_prev_t = 0; cr_prev_ms = 0xFF; cr_mp = 0; cr_clap = 0;
@@ -224,7 +226,10 @@ static u8 ola_row(u8 o, u8 up)
     for (s = 0; s < 2; ++s) {
         for (c = 0; c < 4; ++c) {
             t = m[s * 4 + c];
-            if (up) for (k = 0; k < 6; ++k) if (t == crowd_idx[k]) { t = cheer_idx[k]; break; }
+            if (up) for (k = 0; k < 6; ++k) {
+                if (t == crowd_idx[k]) { t = cheer_idx[k]; break; }
+                if (t == crowdb_idx[k]) { t = cheerb_idx[k]; break; }
+            }
             rowbuf[c] = t;
         }
         if (!vbuf_raw(NTADR(s ? 28 : 0, 4 + o), rowbuf, 4)) return 0;
@@ -269,10 +274,14 @@ void crowd_tick(void)
         }
         /* le public suit la balle du regard */
         if (b_vis) {
+            /* jeu A au stade, jeu B au club et en salle */
+            u8 a = (u8)(cfg.env == ENV_STADIUM);
             m = (u8)(by < NET_Y * FP);
             for (k = 0; k < 6; ++k)
                 if (cr_cur[k] != m) {
-                    if (vbuf_raw((u16)crowd_idx[k] << 4, (m ? crowd_up : crowd_norm) + (k << 4), 16)) cr_cur[k] = m;
+                    if (vbuf_raw((u16)(a ? crowd_idx : crowdb_idx)[k] << 4,
+                                 (a ? (m ? crowd_up : crowd_norm) : (m ? crowdb_up : crowdb_norm)) + (k << 4), 16))
+                        cr_cur[k] = m;
                     break;
                 }
         }

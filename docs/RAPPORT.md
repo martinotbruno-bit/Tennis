@@ -10,9 +10,10 @@ Comme l'exige le CDC (§ 17.5), ce rapport distingue ce qui est **réalisé**, *
 
 | Demande | Réalisation |
 |---|---|
-| Public qui suit la balle | Toute la tribune tourne la tête vers le haut ou vers le bas du court quand la balle change de moitié |
+| Public qui suit la balle | Spectateurs redessinés, un par place et plus lisibles : de face, on voit le visage ; de dos, la chevelure. Toute la tribune tourne la tête quand la balle change de moitié du court. Une première version, à deux spectateurs par case, était illisible (rayures au club et en salle) |
 | La ola | Après les beaux points et à la fin du match (stade, club, salle), une vague de bras levés descend les tribunes, puis chaque rangée reprend son dessin d'origine |
 | Plus de réactions | « OOOH » sur une balle dehors de peu (moins de 5 px), soupir sur une double faute, applaudissements rythmés avant une balle de match, silence au lancer du service |
+| HAUT / BAS selon la place à l'écran | Pour les coups, HAUT veut dire « vers l'adversaire » (à plat, lob) et BAS « vers soi » (croisé court, amortie), en bas comme en haut de l'écran ; les commandes ne s'inversent plus après un changement de côté. Le mode d'emploi intégré le rappelle |
 | Spectateurs en salle et au club | Salle : gradins sur le côté extérieur, panneaux publicitaires côté court. Club : 4 bancs de spectateurs de chaque côté au lieu de 2. Les deux sont en noir, jaune et blanc, bien visibles. En double, le coût en calcul reste dans le budget (12 trames en dépassement sur 6 000) |
 
 ### Version 2.25
@@ -242,12 +243,12 @@ Pour loger ce contenu, la cartouche passe de NROM (32 Ko) à **MMC1** : 128 Ko d
 |---|---|
 | Règles (`rules_test`) | 42/42 |
 | Codes (`password_test`) | 200 000/200 000 aller-retour (format v3), ancien code v2 accepté, Margaux codée, Margaux au club nudiste refusée ; 99,98 % des codes altérés d'un signe refusés |
-| Émulateur (`emu_test`) | 222/222 vérifications (environ 21 min) |
+| Émulateur (`emu_test`) | 223/223 vérifications (environ 21 min) |
 | Profil CPU, simple, 6 000 trames | 0 trame d'échange en dépassement |
 | Relecture des textes (`check_texts.py`) | 0 problème |
 | Contraste (`contrast.py 25`) | 0 paire sous ΔE 25 (personnages, courts, balle, tenues) |
 | Profil CPU, double, 6 000 trames | 27 trames d'échange en dépassement (0,45 %), sans défaut d'image |
-| Compilation | Reproductible : SHA-256 `ad778336e23b46826d6e34f2045ecd4d60c8177f22338e82b1192be41ed07e25` sur deux compilations propres |
+| Compilation | Reproductible : SHA-256 `20c8c112ec7c579dc69f0d48c44aed315947349e127b23eaf3f6fc76fbc83b67` sur deux compilations propres |
 
 ## 3. Conformité par section du CDC
 

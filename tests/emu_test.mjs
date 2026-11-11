@@ -920,7 +920,8 @@ console.log('Margaux jouable et fatigue');
   check(seen > 20 && stands().join() === before, `ola : la vague descend les tribunes (${seen} trames) puis tout est rétabli`);
   const g = boot(); startWith(g, { ENV: 2, SURF: 2 });
   const h = boot(); startWith(h, { ENV: 1, SURF: 1 });
-  const crowdIn = (x) => { let n = 0; for (let r = 4; r < 30; r++) for (const c of [0, 1, 30, 31]) if (ci.includes(x.nes.ppu.vramMem[0x2000 + r * 32 + c])) n++; return n; };
+  const cb = [...Array(6).keys()].map((k) => r3('crowdb_idx', k));   // jeu B : club et salle
+  const crowdIn = (x) => { let n = 0; for (let r = 4; r < 30; r++) for (const c of [0, 1, 30, 31]) if (cb.includes(x.nes.ppu.vramMem[0x2000 + r * 32 + c])) n++; return n; };
   check(crowdIn(g) >= 80 && crowdIn(h) >= 24 && (g.nes.ppu.vramMem[0x23C0 + 2 * 8] & 3) === 3,
     `spectateurs en salle (${crowdIn(g)} tuiles) et au club (${crowdIn(h)}), bien visibles (palette 3)`);
 }
@@ -1014,6 +1015,25 @@ console.log('Frappe parfaite');
   };
   const fresh = tiredHit(3), worn = tiredHit(25);
   check(!fresh.perf && !worn.perf && worn.vy > fresh.vy * 1.15, `fatigue : frappe plus rapide en fin de long échange (${worn.vy} contre ${fresh.vy})`);
+  // HAUT / BAS relatifs au joueur : « vers l'adversaire » = coup long, « vers
+  // soi » = coup court, que le joueur soit en bas ou en haut de l'écran
+  const shot = (top, dir) => {
+    const e = boot(); startWith(e, { FMT: 3 });
+    runUntil(e, () => e.peek('ms') === 0, 300);
+    const s16 = (n, v, o = 0) => { e.poke(n, v & 255, o); e.poke(n, (v >> 8) & 255, o + 1); };
+    e.poke('sc_swap', top ? 1 : 0);
+    e.poke('ms', 2); e.poke('b_live', 1); e.poke('b_vis', 1); e.poke('b_serve', 0); e.poke('bounces', 1);
+    e.poke('hitter', 1); e.poke('rally_hits', 3); e.poke('bgrav', 0);
+    s16('plx', 128 * 64, 0); s16('ply', (top ? 40 : 200) * 64, 0);
+    s16('bx', 138 * 64); s16('by', (top ? 90 : 155) * 64); s16('bz', 6 * 64); s16('bvx', 0); s16('bvy', top ? -128 : 128); s16('bvz', 0);
+    e.down('A'); e.run(top ? 17 : 12); e.down(dir);
+    for (let i = 0; i < 40 && e.peek('hitter') !== 0; i++) e.run(1);
+    e.releaseAll();
+    return e.peek('last_shot');
+  };
+  const sb = [shot(0, 'UP'), shot(0, 'DOWN'), shot(1, 'UP'), shot(1, 'DOWN')];
+  check(sb[0] === 4 && sb[1] === 5 && sb[2] === 5 && sb[3] === 4,
+    `commandes relatives : en bas, HAUT à plat / BAS croisé court ; en haut, HAUT croisé court / BAS à plat (${sb.join(',')})`);
   const collee = trial(ks[1], 130), ext = trial(ks[1], 148);
   check(!collee.perf && !ext.perf && collee.hit && ext.hit, 'balle collée au corps ou en extension : frappe normale');
 }

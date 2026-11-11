@@ -650,7 +650,7 @@ static void human_update(u8 p, u8 pad, u8 pressed)
         /* frappe partie dans les 3 premières trames du geste : bouton relâché
            juste avant l'arrivée de la balle (condition de la frappe parfaite) */
         swing_early = (u8)(st == ST_SWING ? pl_timer[p] : 0);   /* 0 : encore armé */
-        do_hit(p, pad, pl_btn[p], pl_charge[p], 3);
+        do_hit(p, rel_pad(p, pad), pl_btn[p], pl_charge[p], 3);   /* HAUT/BAS relatifs (gamefix.c) */
         pl_state[p] = ST_SWING;
         pl_timer[p] = 10;
     }

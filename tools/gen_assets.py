@@ -273,7 +273,7 @@ def draw_court(env=0):
             # sur la verdure)
             for row in CLUB_ROWS:
                 for col in range(4):
-                    pat = CROWD[(row * 3 + col + side) % 6]
+                    pat = CROWDB[(row * 3 + col + side) % 6]
                     for yy in range(8):
                         for xx in range(8):
                             b[row*8+yy][x0+col*8+xx] = pat[yy][xx]
@@ -332,7 +332,7 @@ def draw_court(env=0):
                             b[y][x] = 3
             for row in range(4, 30):
                 for col in range(2):
-                    pat = CROWD[(row * 5 + col * 2 + side) % 6]
+                    pat = CROWDB[(row * 5 + col * 2 + side) % 6]
                     for yy in range(8):
                         for xx in range(8):
                             b[row*8+yy][xo+col*8+xx] = pat[yy][xx]
@@ -350,53 +350,48 @@ def draw_court(env=0):
             b[y][x] = 0
     return b
 
-def crowd_tile(seed, up=False):
-    """2 spectateurs ; cheveux (couleur 2) en haut de la tête : ils regardent
-    vers le bas du court ; en bas (up) : vers le haut. Le jeu échange les deux
-    versions quand la balle change de moitié : le public suit la balle."""
+# Spectateurs : un par tuile, assis en rangées. Tête 4 x 4 : de face
+# (regard vers le bas du court) chevelure puis visage avec deux yeux ; de dos
+# (regard vers le haut) chevelure entière et nuque. Épaules et buste en
+# dessous. Le jeu échange les deux versions quand la balle change de moitié :
+# toute la tribune tourne la tête. Bras levés : ola.
+# Jeu A (stade, palette des tribunes) : fond 2 (gradins), peau 1, yeux 2,
+# cheveux 3, maillots 3 ou 1. Jeu B (club, salle ; palette 3 noir, jaune,
+# blanc) : fond 0, peau 2, yeux et cheveux 1, maillots 3 ou 1.
+def spectators(seed, view, b=False):
     r = random.Random(seed)
-    t = blank()
-    for hx in (1, 5):
-        c = r.choice((1, 2, 3))
-        hy = r.choice((0, 1))
-        # tête (couleur 1 = peau), corps couleur c
-        for yy in range(hy, hy+3):
-            for xx in range(hx, hx+2):
-                t[yy][xx] = 1
-        for xx in range(hx, hx+2):
-            t[hy + (2 if up else 0)][xx] = 2      # cheveux
-        for yy in range(hy+3, 8):
-            for xx in range(hx-1, hx+3):
-                if 0 <= xx < 8:
-                    t[yy][xx] = 2 if c == 1 else c
+    bg, skin, eye, hair = (0, 2, 1, 1) if b else (2, 1, 2, 3)
+    t = [[bg] * 8 for _ in range(8)]
+    ox = 2 + r.choice((-1, 0, 0, 1))              # léger décalage d'une place à l'autre
+    shirt = r.choice((3, 3, 1))
+    if view == 'up':
+        head = ((hair,) * 4, (hair,) * 4, (hair,) * 4, (skin,) * 4)
+    else:
+        head = ((hair,) * 4, (skin, eye, eye, skin), (skin,) * 4, (bg, skin, skin, bg))
+    for k in range(4):
+        for xx in range(4):
+            t[1 + k][ox + xx] = head[k][xx]
+    for yy in range(5, 8):                           # épaules et buste
+        for xx in range(ox - 1, ox + 5):
+            if 0 <= xx < 8:
+                t[yy][xx] = shirt
+    if view == 'cheer':                              # bras levés de part et d'autre de la tête
+        for yy in range(1, 5):
+            if ox - 1 >= 0: t[yy][ox - 1] = skin
+            if ox + 4 < 8: t[yy][ox + 4] = skin
     return t
 
-CROWD = [crowd_tile(i) for i in range(6)]
-CROWD_UP = [crowd_tile(i, True) for i in range(6)]
+CROWD = [spectators(i, 'down') for i in range(6)]
+CROWD_UP = [spectators(i, 'up') for i in range(6)]
+CHEER = [spectators(i, 'cheer') for i in range(6)]
+CROWDB = [spectators(i, 'down', True) for i in range(6)]
+CROWDB_UP = [spectators(i, 'up', True) for i in range(6)]
+CHEERB = [spectators(i, 'cheer', True) for i in range(6)]
 
-def cheer_tile(seed):
-    """Même spectateurs, debout et bras levés (animation du public)."""
-    r = random.Random(seed)
-    t = blank()
-    for hx in (1, 5):
-        c = r.choice((1, 2, 3))
-        hy = r.choice((0, 1))
-        hy = max(0, hy - 1) + 1
-        for yy in range(hy, hy+3):
-            for xx in range(hx, hx+2):
-                t[yy][xx] = 1
-        for yy in range(hy+3, 8):
-            for xx in range(hx-1, hx+3):
-                if 0 <= xx < 8:
-                    t[yy][xx] = 2 if c == 1 else c
-        for (ax, ay) in ((hx-1, hy-1), (hx-1, hy), (hx+2, hy-1), (hx+2, hy)):
-            if 0 <= ax < 8 and 0 <= ay < 8:
-                t[ay][ax] = 1
-    return t
-
-CHEER = [cheer_tile(i) for i in range(6)]
 crowd_idx = [bg_alloc(t) for t in CROWD]
 cheer_idx = [bg_alloc(t) for t in CHEER]     # ola : tuiles « bras levés » propres
+crowdb_idx = [bg_alloc(t) for t in CROWDB]   # club et salle
+cheerb_idx = [bg_alloc(t) for t in CHEERB]
 
 def nude_fan(kind, cheer=False):
     """Spectateur du club nudiste, debout et en pied (16x24) : silhouette
@@ -1166,6 +1161,10 @@ src.append(c_array('net_shk', b''.join(encode_tile(t) for t in net_tiles(True)))
 src.append(c_array('ump_chr', b''.join(encode_tile(t) for t in UMP_EXTRA)))
 src.append(c_array('crowd_idx', bytes(crowd_idx)))
 src.append(c_array('cheer_idx', bytes(cheer_idx)))
+src.append(c_array('crowdb_idx', bytes(crowdb_idx)))
+src.append(c_array('cheerb_idx', bytes(cheerb_idx)))
+src.append(c_array('crowdb_norm', b''.join(encode_tile(t) for t in CROWDB)))
+src.append(c_array('crowdb_up', b''.join(encode_tile(t) for t in CROWDB_UP)))
 src.append(c_array('crowd_up', b''.join(encode_tile(t) for t in CROWD_UP)))
 src.append(c_array('crowd_norm', b''.join(encode_tile(t) for t in CROWD)))
 src.append(c_array('crowd_cheer', b''.join(encode_tile(t) for t in CHEER)))

@@ -24,7 +24,7 @@ static const char * const page_text[NPAGES][NLINES] = {
     "RELACHE LE BOUTON.",
     "MENU : VITESSE DU JEU,", "FATIGUE ET SON." },
   { "A + HAUT : FRAPPE A PLAT", "A + BAS  : CROISE COURT",
-    "B + HAUT : LOB", "B + BAS  : AMORTIE", "",
+    "B + HAUT : LOB", "B + BAS  : AMORTIE", "HAUT = VERS L'ADVERSAIRE",
     "GAUCHE OU DROITE AU MOMENT", "DE LA FRAPPE : VISER LE", "LONG DE LA LIGNE.",
     "SANS DIRECTION : CROISE.",
     "AVANT LE REBOND : VOLEE", "BALLE HAUTE : SMASH",
