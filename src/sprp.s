@@ -525,7 +525,7 @@ _audio_tick:
     tax
     lda _mel_duty
     sta $4004
-    lda #0
+    lda #$08                ; balayage inactif sans couper les notes graves
     sta $4005
     lda _note_period,x
     sta $4006

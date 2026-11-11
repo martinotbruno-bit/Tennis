@@ -1434,6 +1434,26 @@ console.log('Animation des joueurs');
   let found = false; for (let i = 0; i < 160 * 16; i += 16) if ((e.nes.cpu.mem[rb + i + 6] & 31) <= 21) found = true;
   check(found, 'ralentis : poses sur 5 bits');
 }
+console.log('Son sur console réelle : balayage des carrés');
+{
+  // Sur la vraie NES, l'unité de balayage d'un canal carré coupe la note si
+  // sa période cible (période + période >> décalage, sens montant) dépasse
+  // $7FF, même désactivée. jsnes ne le fait pas : on le vérifie ici sur toutes
+  // les notes jouées (générique passé, menus, match, fête et feux d'artifice).
+  const watch = (e) => { const mm = e.nes.mmap, w = mm.write.bind(mm), reg = {}, bad = [];
+    mm.write = (a, v) => { if (a >= 0x4000 && a <= 0x4007) { reg[a] = v;
+        if (a === 0x4003 || a === 0x4007) { const b = a - 3, per = reg[b + 2] | ((v & 7) << 8), sw = reg[b + 1] ?? 0;
+          const tgt = (sw & 8) ? 0 : per + (per >> (sw & 7));
+          if (per >= 8 && tgt > 0x7FF) bad.push(per); } }
+      return w(a, v); };
+    return bad; };
+  const e = new Emu(rom); const bad = watch(e);
+  e.run(40); e.tap('START', 1, 1, 0); e.run(4); e.tap('START', 1, 1, 0); e.run(60);   // « ARE YOU SURE? » (bourdon grave)
+  toMenu(e); e.tap('START'); e.run(30); e.tap('A');
+  runUntil(e, () => app(e) === AS.MATCH, 300); allCpu(e); e.run(1500);
+  e.poke('sc_winner', 0); e.poke('ms_timer', 160); e.poke('ms', 4); e.run(170);   // feux d'artifice
+  check(bad.length === 0, `aucune note coupée par l'unité de balayage sur console réelle${bad.length ? ' (périodes ' + [...new Set(bad)].join(', ') + ')' : ''}`);
+}
 console.log('Compensation 50 Hz (PAL)');
 {
   const e = boot(); e.poke('is_pal', 1); startWith(e, { FMT: 3 }); allCpu(e);

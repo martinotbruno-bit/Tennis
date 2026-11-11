@@ -206,6 +206,11 @@ void music_play(u8 id)
 u8 music_none(void) { return (u8)(mel_ptr == 0); }
 
 
+/* Balayage « inactif » : $08 (sens descendant, décalage 0) et non $00. Sur
+   la vraie NES, avec le sens montant et un décalage 0, l'unité de balayage
+   calcule en permanence une période cible double ; au-delà de $7FF elle
+   coupe le canal, même désactivée : toute note de période > $3FF serait
+   muette. (Les émulateurs simples, dont jsnes, ne le reproduisent pas.) */
 static void pulse1(u8 env, u8 sweep, u16 period)
 {
     APU(0x4000) = env;
@@ -248,11 +253,11 @@ void sfx_hit(u8 power)
 static const u8 bnc_per[6] = { 0x0E, 0x0D, 0x0A, 0x0C, 0x0F, 0x07 };
 static const u8 bnc_env[6] = { 0x02, 0x01, 0x00, 0x01, 0x03, 0x00 };
 void sfx_bounce(void)     { u8 s = cfg.surface < 6 ? cfg.surface : 2; noise(bnc_env[s], bnc_per[s], 1, 8); }
-void sfx_net(void)        { noise(0x03, 0x0E, 3, 12); pulse1(0x83, 0x00, 900); }
-void sfx_fault(void)      { pulse1(0x84, 0x00, 1140); }
+void sfx_net(void)        { noise(0x03, 0x0E, 3, 12); pulse1(0x83, 0x08, 900); }
+void sfx_fault(void)      { pulse1(0x84, 0x08, 1140); }
 void sfx_whistle(void)    { pulse1(0x45, 0xB1, 100); }
 void sfx_crowd(u8 s)      { noise((u8)(0x08 + (s & 7)), 0x02, 2, 40); }
-void sfx_menu_move(void)  { pulse1(0x81, 0x00, 240); }
+void sfx_menu_move(void)  { pulse1(0x81, 0x08, 240); }
 void sfx_menu_ok(void)    { pulse1(0x82, 0x89, 180); }
 void sfx_toss(void)       { pulse1(0x81, 0x8B, 400); }
 /* pas : bruit sourd très bref à faible volume constant, jamais par-dessus un
@@ -288,7 +293,7 @@ void sfx_hush(void)       { APU(0x400C) = 0x30; noise_hold = 0; }
 void sfx_line(void)
 {
     APU(0x4000) = 0x9A;                 /* 50 %, volume fixe 10 */
-    APU(0x4001) = 0x00;
+    APU(0x4001) = 0x08;
     APU(0x4002) = 0x5C;
     APU(0x4003) = 0x00;                 /* durée : 10 demi-trames */
 }
@@ -296,4 +301,4 @@ void sfx_line(void)
 void sfx_swing(void)      { noise(0x01, 0x02, 0, 4); }
 /* feu d'artifice : sifflement de la fusée qui monte, puis « pop » */
 void sfx_fw_launch(void)  { pulse1(0x4A, 0xBB, 700); }
-void sfx_fw_pop(void)     { noise(0x04, 0x0C, 3, 12); pulse1(0x82, 0x00, 1600); }
+void sfx_fw_pop(void)     { noise(0x04, 0x0C, 3, 12); pulse1(0x82, 0x08, 1600); }
