@@ -27,7 +27,7 @@
 #pragma static-locals(off)
 
 #define PPU_DATA (*(volatile u8 *)0x2007)
-#define T_STREAK 0xF8          /* bandes obliques (couleurs 0, 1, 2) */
+#define T_STREAK 0xF8          /* fond uni (couleur 0) */
 #define T_GROUND 0xF9          /* sol (couleur 3) */
 #define T_LINE   0xFA          /* filet doré (couleur 3) */
 #define T_TITLE  0x60          /* titre : lettres doublées, 4 tuiles chacune */
@@ -69,9 +69,10 @@ static void tile_bits(u8 t, const u8 *p0, const u8 *p1)
     for (i = 0; i < 8; ++i) vram_put(p1[i]);
 }
 
-/* bandes obliques fines et espacées (couleurs 1 et 2) */
-static const u8 st0[8] = { 0x80, 0x40, 0x20, 0x10, 0x08, 0x04, 0x02, 0x01 };
-static const u8 st1[8] = { 0x08, 0x04, 0x02, 0x01, 0x80, 0x40, 0x20, 0x10 };
+/* fond uni : la NES colore l'écran par blocs de 16 x 16 ; ceux qui touchent
+   le personnage prennent ses palettes, des bandes de couleur y feraient une
+   démarcation autour de lui */
+static const u8 z8[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
 static const u8 ff[8] = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
 static const u8 ln[8] = { 0, 0, 0, 0xFF, 0xFF, 0, 0, 0 };
 
@@ -110,7 +111,7 @@ static void cut_build(void)
     vram_fill(0, 16);
     tz_bank = a->bank; tz_n = a->ntile;
     tz_unpack(a->chr);
-    tile_bits(T_STREAK, st0, st1);
+    tile_bits(T_STREAK, z8, z8);
     tile_bits(T_GROUND, ff, ff);
     ts_back(0x2000, z);
     ts_back(0x2400, z);
@@ -227,7 +228,7 @@ void teaser_tick(void)
         else if (cut_whip[ts_cut + 1] && ts_t + 5 >= len) ts_cam = (s16)whip_out[ts_t + 5 - len] + (len >> 2);
         else ts_cam = (s16)(ts_t >> 2);
         scroll_x = (u8)ts_cam; scroll_nt = (u8)((ts_cam >> 8) & 1);
-        /* bandes obliques qui scintillent (en pied) ; après un flash, le fond revient */
+        /* après un flash, le fond revient */
         if ((ts_t & 3) == 0) {
             pal_buf[0] = pal_buf[4] = pal_buf[8] = pal_buf[12] = pal_buf[16] = ts_bk;
             if (!z) { k = (u8)((ts_t >> 2) & 1); pal_buf[1] = col[1 + k]; pal_buf[2] = col[2 - k]; }
