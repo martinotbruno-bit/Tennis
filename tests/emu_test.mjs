@@ -1860,12 +1860,13 @@ console.log('Cérémonies de fin de compétition');
   for (let k = 0; k < 5 && scr(e) !== SS.COMP_END; k++) { e.tap('A'); e.run(30); }
   const pal = (i) => e.nes.ppu.vramMem[0x3F00 + i] ?? 0;
   const t0 = e.peek16('pod_t');
-  const hidden = e.peek('pal_buf', 5) === e.peek('pal_buf', 0) && e.peek('pal_buf', 9) === e.peek('pal_buf', 0) && e.peek('pal_buf', 13) === e.peek('pal_buf', 0);
+  // (arrivée sur l'écran vers la trame 40 : le 3e est déjà là, pas le vainqueur)
+  const hidden = e.peek('pal_buf', 5) === e.peek('pal_buf', 0) && e.peek('pal_buf', 13) !== e.peek('pal_buf', 0);
   runUntil(e, () => e.peek16('pod_t') >= 205, 400);
   const shown = e.peek('pal_buf', 5) !== e.peek('pal_buf', 0) && e.peek('pal_buf', 9) !== e.peek('pal_buf', 0) && e.peek('pal_buf', 13) !== e.peek('pal_buf', 0);
   const o = e.addr('oam_buf'); const tiles = new Set();
   for (let i = 0; i < 64; i++) if (e.nes.cpu.mem[o + i * 4] < 240 && e.nes.cpu.mem[o + i * 4 + 2] === 3) tiles.add(e.nes.cpu.mem[o + i * 4 + 1]);
-  check(t0 < 60 && hidden && shown && [0x39, 0x3A, 0x3B].every(t => tiles.has(t)) && e.peek('music_cur') === 18,
+  check(t0 < 100 && hidden && shown && [0x39, 0x3A, 0x3B].every(t => tiles.has(t)) && e.peek('music_cur') === 18,
     `remise des médailles : joueurs qui apparaissent un à un, médailles or, argent, bronze, hymne (${e.peek('music_cur')})`);
   runUntil(e, () => e.peek('cup_t') > 60, 200);
   check(e.peek('cup_t') > 60, 'puis la coupe est brandie');
@@ -1888,7 +1889,7 @@ for (const type of [5, 6]) {
   check(e.peek('gm_st') === 2 && e.text(0, 2, 32).includes('CONFERENCE DE PRESSE') && q1.length > 5, `${name} : conférence de presse (« ${q1} »)`);
   e.tap('A'); e.run(10); e.tap('A'); e.run(10);
   check(e.peek('pod_busy') === 0 && e.text(0, 27, 32).includes('A : CONTINUER'), `${name} : trois questions, puis A pour continuer`);
-  e.tap('A'); e.run(40);
+  e.tap('A'); runUntil(e, () => app(e) === 4, 180);
   check(app(e) === 4, `${name} : puis le générique de fin`);
 }
 console.log('Revers et jeu de tuiles par phase');

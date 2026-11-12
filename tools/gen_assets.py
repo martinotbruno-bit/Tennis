@@ -1153,6 +1153,14 @@ def draw_person(view, legs, arms, female, nude=False):
         for y in range(16, 24):
             for x in range(16):
                 if tmp[y][x]: c[y][x] = tmp[y][x]
+    if not nude:
+        # un bras qui passe devant le buste (préparations, revers, volée) prend
+        # la couleur du maillot, comme une manche : vu de dos, une barre
+        # couleur chair barrait le dos. Le même dessin sert aux deux vues
+        # (tuiles partagées : la place manque pour des bras différents)
+        for y in range(8, 14):
+            for x in range(5, 11):
+                if c[y][x] == 1: c[y][x] = 2
     if legs in ('kneel', 'sit'):
         # un genou à terre (relevé après un plongeon) ou assis : le sprite est
         # dessiné 4 px plus bas (match_draw, rp_play) ; sous y 19 (le sol),
@@ -1599,14 +1607,16 @@ def persp_net(w):
     ny = round(216 - PERSP_K * 0.5 / (1 + PERSP_A * 0.5))
     sc = 1 / (1 + PERSP_A * 0.5)
     x0n, x1n = round(128 + (DBL_L - 6 - 128) * sc), round(128 + (DBL_R + 6 - 128) * sc)
+    # fond sous le filet : celui de la rangée juste au-dessous (le court, ou
+    # les abords hors du court : sinon la couleur du court débordait jusqu'aux
+    # poteaux, à hauteur du filet), sans les lignes
+    base = [1 if w[ny + 6][x] == 2 else w[ny + 6][x] for x in range(256)]
     for y in range(ny - 9, ny + 4):                    # efface le filet déformé
         for x in range(32, 224):
-            X, Y = persp_inv(x + 0.5, ny + 6)
-            X = int(X)
-            w[y][x] = 1 if x0n - 3 <= x <= x1n + 3 else w[ny + 6][x]
+            w[y][x] = base[x]
     for y in range(ny - 5, ny):
         for x in range(x0n, x1n + 1):
-            w[y][x] = 3 if (x % 4 == 0 or (y - ny) % 2 == 0) else 1
+            w[y][x] = 3 if (x % 4 == 0 or (y - ny) % 2 == 0) else base[x]
     for x in range(x0n, x1n + 1):
         w[ny][x] = 3                                   # câble du bas
         w[ny - 7][x] = 2; w[ny - 6][x] = 2             # bande blanche
