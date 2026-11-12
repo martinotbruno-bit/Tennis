@@ -46,6 +46,8 @@ static u8 sim_win(u8 a, u8 b, u8 salt)
 }
 
 static u8 nrounds(void) { return (u8)(c_n == 16 ? 4 : c_n == 8 ? 3 : c_n == 4 ? 2 : 0); }
+/* nombre de tournois (saison, Grand Martinot : 4 ; Tour du monde : 7) */
+static u8 nev(void) { return (u8)(c_type == CT_WORLD ? 7 : 4); }
 
 u8 __fastcall__ comp_build(u8 unused)
 {
@@ -234,10 +236,17 @@ static const u16 grand_pts[5] = { 180, 360, 720, 1200, 2000 };
 /* tours gagnés par le joueur au tournoi e */
 /* (décalages par boucle : un décalage d'un nombre variable de bits ferait
    entrer une routine de cc65 dans la banque fixe, pleine) */
-static u8 gres_get(u8 e) { u16 v = c_gres; while (e) { v >>= 3; --e; } return (u8)(v & 7); }
+static u8 gres_w(void) { return (u8)(c_type == CT_GRAND ? 3 : 2); }   /* bits par tournoi */
+static u8 gres_get(u8 e)
+{
+    u16 v = c_gres; u8 w = gres_w(), s = 0;
+    while (e) { s += w; --e; }
+    while (s) { v >>= 1; --s; }
+    return (u8)(v & (w == 3 ? 7 : 3));
+}
 static u8 human_reach(u8 e)
 {
-    if (c_type == CT_GRAND) return gres_get(e);
+    if (c_type >= CT_GRAND) return gres_get(e);
     return (u8)((c_results >> (e * 2)) & 3);
 }
 static void season_points(u8 events)
@@ -250,7 +259,7 @@ static void season_points(u8 events)
         reach[0] = hr;
         for (i = 0; i < c_n; ++i) {
             k = reach[i];
-            if (c_type == CT_GRAND) pts[i] += grand_pts[c_n == 16 ? k : k + 1];
+            if (c_type >= CT_GRAND) pts[i] += grand_pts[c_n == 16 ? k : k + 1];
             else pts[i] += season_pts[k > 3 ? 3 : k];
         }
     }
@@ -259,9 +268,17 @@ static void season_points(u8 events)
 /* (sans division : les routines de division de cc65 iraient dans la banque fixe) */
 static u8 ev_of(void) { u8 s = c_stage, n = nrounds(), e = 0; while (s >= n) { s -= n; ++e; } return e; }
 static u8 rd_of(void) { u8 s = c_stage, n = nrounds(); while (s >= n) s -= n; return s; }
-/* surfaces du Grand Martinot : dur, terre battue, gazon, dur */
-static const u8 grand_surf[4] = { 2, 0, 1, 2 };
-static const char * const grand_name[4] = { "OPEN D'AUGUSTRALIE", "DEBOGARROS", "MARTINBLEDON", "US OPAUL" };
+/* les 7 tournois (et leurs images d'annonce) : ceux du Grand Martinot (dur,
+   terre battue, gazon, dur), puis ceux que le Tour du monde ajoute pour
+   jouer sur toutes les surfaces (glace, plage, moquette) */
+static const u8 ev_surf[7] = { 2, 0, 1, 2, 5, 4, 3 };
+static const char * const ev_name[7] = { "OPEN D'AUGUSTRALIE", "DEBOGARROS", "MARTINBLEDON", "US OPAUL",
+                                         "SAINT-MARTINOTZ", "COPAMARGAUX", "BRUNO-BERCY" };
+/* ordre du Tour du monde, comme un calendrier : Augustralie (janvier), la
+   glace des Alpes (février), terre, gazon, la plage (l'été), US Opaul, puis
+   la moquette de Bercy (l'automne, en salle) */
+static const u8 world_ev[7] = { 0, 4, 1, 2, 5, 3, 6 };
+static u8 ev_img(u8 e) { return c_type == CT_WORLD ? world_ev[e < 7 ? e : 6] : (u8)(e & 3); }
 
 /* ---------------------------------------------------------------------- */
 /* Podium d'une compétition gagnée : inscrits classés 1er (le joueur), 2e et
@@ -288,7 +305,8 @@ u8 __fastcall__ comp_podium(u8 unused)
         break;
     case CT_SEASON:
     case CT_GRAND:
-        season_points(4); rank_by(0, c_n, 1);
+    case CT_WORLD:
+        season_points(nev()); rank_by(0, c_n, 1);
         c_pod[1] = order[1]; c_pod[2] = order[2];
         break;
     default:
@@ -325,6 +343,7 @@ u8 __fastcall__ comp_opponent(u8 unused)
         return 1;
     case CT_SEASON:
     case CT_GRAND:
+    case CT_WORLD:
         ko_run(ev_of(), nrounds(), rd_of());
         return ko_cur[1];
     default:
@@ -337,7 +356,7 @@ u8 __fastcall__ comp_surface(u8 unused)
 {
     (void)unused;
     if (c_type == CT_SEASON) return (u8)(c_stage / 3);
-    if (c_type == CT_GRAND) return grand_surf[ev_of() & 3];
+    if (c_type >= CT_GRAND) return ev_surf[ev_img(ev_of())];
     if (c_type == CT_CUSTOM && (c_opts & CO_VARIED)) return (u8)((c_surf + c_stage) & 3);
     return c_surf;
 }
@@ -348,7 +367,7 @@ u8 __fastcall__ comp_level(u8 unused)
     if (c_type == CT_CUSTOM && (c_opts & CO_PROG)) lv = (s8)(c_stage + (c_n == 4 ? 1 : 0));
     else lv = (s8)(c_rt[comp_opponent(unused)] + c_lvl - 1);
     if (c_type == CT_GROUPS && c_stage >= 3) ++lv;
-    if ((c_type == CT_SEASON || c_type == CT_GRAND) && rd_of() == nrounds() - 1) ++lv;   /* finale */
+    if ((c_type == CT_SEASON || c_type >= CT_GRAND) && rd_of() == nrounds() - 1) ++lv;   /* finale */
     if (lv < 0) lv = 0;
     if (lv > 2) lv = 2;
     return (u8)lv;
@@ -393,23 +412,24 @@ u8 __fastcall__ comp_record(u8 won)
         } else ++c_stage;
         break;
     case CT_GRAND:
+    case CT_WORLD:
         ev = ev_of();
         r = rd_of();
         if (won) ++r;
         if (!won || r == nrounds()) {
             {
-                u16 v = r; u8 k = ev;
-                while (k) { v <<= 3; --k; }
+                u16 v = r; u8 k = ev, w = gres_w();
+                while (k) { u8 j = w; while (j) { v <<= 1; --j; } --k; }
                 c_gres |= v;
             }
             c_stage = (u8)((ev + 1) * nrounds());
-            if (ev == 3) {
+            if (ev == nev() - 1) {
                 u8 i;
-                season_points(4);
+                season_points(nev());
                 rank_by(0, c_n, 1);
                 for (i = 0; i < c_n; ++i) if (order[i] == 0) c_rank = (u8)(i + 1);
-                c_slam = 1;               /* les 4 tournois gagnés : Grand Chelem */
-                for (i = 0; i < 4; ++i) if (gres_get(i) != nrounds()) c_slam = 0;
+                c_slam = 1;               /* tous les tournois gagnés : Grand Chelem */
+                for (i = 0; i < nev(); ++i) if (gres_get(i) != nrounds()) c_slam = 0;
                 c_over = 2;
             }
         } else ++c_stage;
@@ -429,18 +449,19 @@ u8 __fastcall__ comp_record(u8 won)
 }
 
 static char nb[6];
-/* nombre sur 4 chiffres (jusqu'à 9 999), sans zéros de tête */
-static void num4(char *o, u16 v)
+/* nombre sur 5 chiffres (jusqu'à 65 535 ; le Tour du monde va jusqu'à
+   14 000 points), sans zéros de tête */
+static void num5(char *o, u16 v)
 {
     u8 k, d, lead = 1;
-    static const u16 p10[4] = { 1000, 100, 10, 1 };
-    for (k = 0; k < 4; ++k) {
+    static const u16 p10[5] = { 10000, 1000, 100, 10, 1 };
+    for (k = 0; k < 5; ++k) {
         d = 0;
         while (v >= p10[k]) { v -= p10[k]; ++d; }
-        if (d || k == 3) lead = 0;
+        if (d || k == 4) lead = 0;
         o[k] = (char)(lead ? ' ' : '0' + d);
     }
-    o[4] = 0;
+    o[5] = 0;
 }
 static void ent_at(u8 i, u8 x, u8 y)
 {
@@ -473,7 +494,8 @@ u8 __fastcall__ comp_stage_name(u8 unused)
         copy_txt(l2, ko_round_name[2 - c_stage % 3]);
         break;
     case CT_GRAND:
-        copy_txt(l1, grand_name[ev_of() & 3]);
+    case CT_WORLD:
+        copy_txt(l1, ev_name[ev_img(ev_of())]);
         copy_txt(l2, ko_round_name[nrounds() - 1 - rd_of()]);
         break;
     default:
@@ -524,9 +546,10 @@ u8 __fastcall__ comp_draw_table(u8 y)
         break;
     case CT_SEASON:
     case CT_GRAND:
+    case CT_WORLD:
         /* classement aux points ; au Grand Martinot (16 inscrits), les 7
            premiers puis le joueur s'il est plus loin */
-        a = ev_of(); if (a > 4) a = 4;
+        a = ev_of(); if (a > nev()) a = nev();
         season_points(a);
         rank_by(0, c_n, 1);
         txt_at(3, y, "CLASSEMENT   POINTS");
@@ -536,8 +559,8 @@ u8 __fastcall__ comp_draw_table(u8 y)
             num2(line, (u8)(b + 1)); line[2] = '.'; line[3] = 0;
             txt_at(2, (u8)(y + 1 + i), line);
             ent_at(order[b], 6, (u8)(y + 1 + i));
-            num4(line, pts[order[b]]);
-            txt_at(16, (u8)(y + 1 + i), line);
+            num5(line, pts[order[b]]);
+            txt_at(15, (u8)(y + 1 + i), line);
         }
         break;
     default:
@@ -556,7 +579,7 @@ u8 __fastcall__ comp_draw_table(u8 y)
 }
 
 /* nom de chaque compétition (menu, écrans, palmarès), copié dans comp_l2 */
-static const char * const comp_name[NCT] = { "TOURNOI", "POULES", "CHAMPIONNAT", "SAISON", "PERSONNALISE", "GRAND MARTINOT" };
+static const char * const comp_name[NCT] = { "TOURNOI", "POULES", "CHAMPIONNAT", "SAISON", "PERSONNALISE", "GRAND MARTINOT", "TOUR DU MONDE" };
 u8 __fastcall__ comp_cname(u8 t)
 {
     const char *n = comp_name[t < NCT ? t : 0];
@@ -575,6 +598,7 @@ static const char * const comp_help[NCT * 4 + 4] = {
     /* saison */       "4 TOURNOIS DE 8 : TERRE,", "GAZON, DUR, MOQUETTE. UNE", "DEFAITE ARRETE LE TOURNOI.", "POINTS PAR TOUR, CLASSEMENT.",
     /* personnalisé */ "VOTRE TOURNOI : 4 OU 8", "JOUEURS, ADVERSAIRES DE", "NIVEAU FIXE OU PROGRESSIF,", "SURFACE FIXE OU VARIEE.",
     /* Grand Martinot */ "4 TOURNOIS DE 16 JOUEURS :", "AUGUSTRALIE, DEBOGARROS,", "MARTINBLEDON, US OPAUL.", "POINTS. 4 TITRES : CHELEM !",
+    /* Tour du monde */ "7 TOURNOIS DE 8, UN PAR", "SURFACE : DUR, GLACE, TERRE,", "GAZON, PLAGE, DUR, MOQUETTE.", "POINTS. 7 TITRES : CHELEM !",
     /* aide des touches du menu (k = NCT x 4 + 1 à 3) */ "", "HAUT/BAS : CHOISIR", "GAUCHE/DROITE : MODIFIER", "START : JOUER   B : RETOUR",
 };
 /* Grand Martinot : tournoi à annoncer (premier tour, pas encore annoncé à
@@ -582,9 +606,9 @@ static const char * const comp_help[NCT * 4 + 4] = {
 u8 __fastcall__ comp_gm_intro(u8 unused)
 {
     (void)unused;
-    if (c_type != CT_GRAND || rd_of() != 0 || c_shown == c_stage) return 0xFF;
+    if (c_type < CT_GRAND || rd_of() != 0 || c_shown == c_stage) return 0xFF;
     c_shown = c_stage;
-    return ev_of();
+    return ev_img(ev_of());       /* image (0 à 6) ; gmintro.c retrouve le rang du tournoi */
 }
 
 u8 __fastcall__ comp_desc(u8 k)

@@ -10,6 +10,9 @@ SaveOpts so;
 SaveCanon sx;
 /* vue (option VUE), bloc à part : les réglages déjà mémorisés restent valables */
 u8 sw_view[3];          /* 'V', valeur, contrôle */
+/* meilleur rang du Grand Martinot et du Tour du monde (types 5 et 6), bloc à
+   part : SaveData n'a de place que pour les types 0 à 4 */
+u8 sw_best[4];          /* 'B', type 5, type 6, contrôle */
 #pragma bss-name(pop)
 
 static u8 sx_sum(void)
@@ -23,6 +26,12 @@ void sx_check(void)
     if (sx.sig[0] != 'P' || sx.sig[1] != 'D' || sx.sum != sx_sum()) {
         sx.sig[0] = 'P'; sx.sig[1] = 'D'; sx.ok = sx.tried = sx.pok = sx.ptry = 0; sx.sum = sx_sum();
     }
+}
+
+static u8 sb_sum(void) { return (u8)(0xA5 ^ sw_best[1] ^ (u8)(sw_best[2] << 1)); }
+static void sb_check(void)
+{
+    if (sw_best[0] != 'B' || sw_best[3] != sb_sum()) { sw_best[0] = 'B'; sw_best[1] = sw_best[2] = 0; sw_best[3] = sb_sum(); }
 }
 
 static u8 so_sum(void)
@@ -71,6 +80,7 @@ u8 __fastcall__ sv_clear(u8 unused)
     sv.sig[0] = 'P'; sv.sig[1] = 'X'; sv.sig[2] = 'O'; sv.sig[3] = '1';
     commit();
     sx.sig[0] = 0; sx_check();             /* services canon remis à zéro */
+    sw_best[0] = 0; sb_check();
     return unused;
 }
 
@@ -79,6 +89,7 @@ u8 __fastcall__ sv_check(u8 unused)
     if (sv.sig[0] != 'P' || sv.sig[1] != 'X' || sv.sig[2] != 'O' || sv.sig[3] != '1' || sv.sum != compute_sum())
         sv_clear(unused);
     sx_check();
+    sb_check();
     return 0;
 }
 
@@ -127,7 +138,11 @@ u8 __fastcall__ sv_comp_end(u8 unused)
     if (sv.comps < 255) ++sv.comps;
     if (rank == 1 && sv.titles < 255) ++sv.titles;
     if (rank == 1) sv.nude = 1;
-    if (!sv.comp_best[type] || rank < sv.comp_best[type]) sv.comp_best[type] = rank;
+    {
+        u8 *b = type < 5 ? &sv.comp_best[type] : &sw_best[type - 4];
+        if (!*b || rank < *b) *b = rank;
+        sw_best[3] = sb_sum();
+    }
     /* historique : les 8 dernières compétitions, la plus récente en tête */
     for (i = 7; i > 0; --i) {
         sv.hist[i][0] = sv.hist[i - 1][0]; sv.hist[i][1] = sv.hist[i - 1][1];

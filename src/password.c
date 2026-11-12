@@ -2,8 +2,9 @@
  * tests/password_test.c). Les 52 bits de données et 2 bits de version (2 :
  * ancien format à 16 personnages, 3 : format actuel, 1 : format des lieux 5
  * et 6, château et parc, où surface, lieu et niveau sont regroupés)
- * occupent les bits 0 à 53 (version 0 : le Grand Martinot, type 5, qui a ses
- * propres champs : résultats sur 12 bits, sans surface ni options) ; une somme de contrôle de 11 bits suit (bits 54
+ * occupent les bits 0 à 53 (version 0 : le Grand Martinot, type 5, et le
+ * Tour du monde, type 6, marqué par les bits 49 à 51 : leurs propres champs,
+ * résultats sur 12 ou 14 bits, sans surface, lieu ni options) ; une somme de contrôle de 11 bits suit (bits 54
  * à 64), puis les 65 bits sont écrits en 13 symboles de 5 bits, brouillés en
  * chaîne pour qu'une lettre modifiée en change plusieurs. */
 #include "password.h"
@@ -49,6 +50,20 @@ static void pack(const PwData *d)
     pu8 i;
     for (i = 0; i < 9; ++i) buf[i] = 0;
     bitpos = 0;
+    if (d->type == 6) {
+        /* version 0, marque 1 : le Tour du monde (surfaces, lieu et
+           conditions imposés ; 7 tournois de 8 : étape sur 5 bits, tours
+           gagnés à chaque tournoi sur 2 bits) */
+        put_bits(d->stage, 5); put_bits(d->seed, 8);
+        put_bits(d->chr, 5); put_bits(d->fmt, 2); put_bits(d->lvl, 2);
+        put_bits((pu8)(d->gres & 0xFF), 8); put_bits((pu8)(d->gres >> 8), 6);
+        put_bits(d->trophies, 4);
+        put_bits(d->doubles, 1); put_bits(d->partner, 5); put_bits(d->hum2, 1);
+        put_bits(0, 2);
+        put_bits(1, 3);   /* marque (le Grand Martinot y met 0) */
+        put_bits(0, 2);   /* version */
+        return;
+    }
     if (d->type == 5) {
         /* version 0 : le Grand Martinot (surfaces imposées, 4 tournois de 16 :
            tours gagnés à chaque tournoi sur 3 bits) */
@@ -128,6 +143,22 @@ pu8 pw_decode(const char *in, PwData *d)
     bitpos = 0;
     d->gres = 0;
     if (n == 0) {
+        bitpos = 49;
+        if (get_bits(3) == 1) {
+            bitpos = 0;
+            d->type = 6; d->surf = 0; d->results = 0; d->opts = 0; d->env = 0; d->cond = 0;
+            d->stage = get_bits(5); d->seed = get_bits(8);
+            d->chr = get_bits(5); d->fmt = get_bits(2); d->lvl = get_bits(2);
+            d->gres = get_bits(8);
+            d->gres |= (unsigned short)get_bits(6) << 8;
+            d->trophies = get_bits(4);
+            d->doubles = get_bits(1); d->partner = get_bits(5); d->hum2 = get_bits(1);
+            if (get_bits(2)) return 0;
+            if (d->stage >= 21) return 0;
+            bitpos = 52;
+            goto checks;
+        }
+        bitpos = 0;
         d->type = 5; d->surf = 0; d->results = 0; d->opts = 0;
         d->cond = get_bits(2); d->stage = get_bits(4); d->seed = get_bits(8);
         d->chr = get_bits(5); d->env = get_bits(3); d->fmt = get_bits(2); d->lvl = get_bits(2);
@@ -176,10 +207,11 @@ pu8 pw_decode(const char *in, PwData *d)
         d->doubles = get_bits(1); d->partner = get_bits(5); d->hum2 = get_bits(1);
     } else return 0;
     if (bitpos != 52) return 0;
+checks:
     if (d->chr >= PW_NCHARS || d->partner >= PW_NCHARS) return 0;
     if (d->env > 6) return 0;
     if (d->hum2 && !d->doubles) return 0;
-    if (d->type > 5 || d->surf > 5 || d->cond > 2 || d->lvl > 2) return 0;
+    if (d->type > 6 || d->surf > 5 || d->cond > 2 || d->lvl > 2) return 0;
     if (d->doubles && d->partner == d->chr) return 0;
     /* Margaux ne joue jamais au club nudiste */
     if (d->env == 3 && (d->chr == 16 || (d->doubles && d->partner == 16))) return 0;

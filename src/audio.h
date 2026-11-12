@@ -39,7 +39,7 @@ void sfx_winner(void);             /* carillon bref d'un coup gagnant */
 #define MUS_BREAK   8   /* interlude de l'écran de fin de set */
 #define MUS_INTRO   9   /* fanfare du générique de lancement */
 #define MUS_CREDITS 10  /* générique de fin : hymne solennel au kazoo */
-#define MUS_GM1     11  /* le Grand Martinot : fanfare de l'Open d'Augustralie (12 à 14 : les 3 autres tournois) */
+#define MUS_GM1     11  /* le Grand Martinot : fanfare de l'Open d'Augustralie (12 à 14 : les 3 autres tournois ; 15 à 17 : glace, plage, moquette du Tour du monde) */
 extern u8 music_cur;
 extern u8 snd_mode;
 void snd_set(u8 m);                /* 0 tout, 1 bruitages seuls, 2 aucun son */

@@ -25,9 +25,9 @@ const u16 note_period[48] = {
    banque en place, et la banque fixe garde la place des échantillons. */
 extern const u8 *trk_ptr[4], *trk_start[4];
 extern u8 trk_timer[8], music_loop, mel_duty, harm_duty, p1_hold;
-extern const u8 * const song_trk[15][4];
-extern const u8 song_loop[15], song_duty[15][2];
-extern const u16 song_len[15][4];
+extern const u8 * const song_trk[18][4];
+extern const u8 song_loop[18], song_duty[18][2];
+extern const u16 song_len[18][4];
 #define MUS_BUF 520
 #pragma bss-name(push, "WBSS")
 static u8 mus_buf[MUS_BUF];
@@ -53,7 +53,7 @@ void music_play(u8 id)
     audio_lock = 1;
     music_stop();
     music_cur = id;
-    if (snd_mode || !id || id > MUS_GM1 + 3) { audio_lock = 0; return; }   /* musique coupée (réglage SON) */
+    if (snd_mode || !id || id > MUS_GM1 + 6) { audio_lock = 0; return; }   /* musique coupée (réglage SON) */
     prev = cur_bank;
     set_bank(BANK_MUSIC);
     music_loop = song_loop[id];

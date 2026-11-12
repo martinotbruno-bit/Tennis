@@ -33,6 +33,8 @@
 #define A2 9
 #define B2 11
 #define AS4 34
+#define FS3 18
+#define FS4 30
 
 
 /* Écran titre et menu : petite polka de cirque, ridicule mais propre et bien
@@ -197,3 +199,35 @@ static const u8 mus_gm4_bass[] = {
  C3,12, E3,12, G3,12, E3,12,  G2,12, B2,12, C3,24,
  END,0 };
 
+/* Le Tour du monde (version 2.47) : fanfares des 3 tournois ajoutés */
+/* Saint-Martinotz (glace, les Alpes) : tyrolienne à 3 temps, grelots */
+static const u8 mus_gm5_mel[] = {
+ G4,12, B4,6, D5,6, G5,12,   FS5,12, E5,6, D5,6, B4,12,   C5,12, E5,6, G5,6, A5,12,
+ G5,24, D5,12,               E5,6, FS5,6, G5,12, D5,12,   B4,12, A4,12, FS4,12,
+ G5,36, R,12,
+ END,0 };
+static const u8 mus_gm5_bass[] = {
+ G2,12, D3,12, D3,12,  D3,12, A3,12, A3,12,  C3,12, G3,12, G3,12,  G2,12, D3,12, D3,12,
+ C3,12, G3,12, G3,12,  D3,12, A3,12, FS3,12,  G2,48,
+ END,0 };
+/* Copamargaux (plage) : petite samba syncopée (2 temps de 16) */
+static const u8 mus_gm6_mel[] = {
+ C5,6, E5,6, G5,4, A5,8, G5,8,   R,4, A5,4, G5,4, E5,8, C5,4, D5,8,
+ F5,6, E5,6, D5,4, F5,8, A5,8,   G5,8, E5,4, C5,4, D5,8, B4,8,
+ C5,6, E5,6, G5,4, A5,8, G5,8,   R,4, A5,4, B5,4, A5,8, G5,4, E5,8,
+ D5,8, E5,4, G5,4, D5,8, B4,8,   C5,32, R,16,
+ END,0 };
+static const u8 mus_gm6_bass[] = {
+ C3,12, C3,4, G2,16,  A2,12, A2,4, E3,16,  F3,12, F3,4, C3,16,  G2,12, G2,4, D3,16,
+ C3,12, C3,4, G2,16,  A2,12, A2,4, E3,16,  G2,12, G2,4, D3,16,  C3,48,
+ END,0 };
+/* Bruno-Bercy (moquette, en salle) : entrée des champions sous les
+   projecteurs, arpèges qui montent (4 temps de 12) */
+static const u8 mus_gm7_mel[] = {
+ C5,6, G4,6, C5,6, E5,6, G5,12, E5,12,   F5,6, C5,6, F5,6, A5,6, A5,12, F5,12,
+ G5,6, D5,6, G5,6, B5,6, B5,12, A5,6, G5,6,   G5,12, F5,6, E5,6, D5,12, B4,12,
+ C5,48, R,12,
+ END,0 };
+static const u8 mus_gm7_bass[] = {
+ C3,24, G2,24,  F3,24, C3,24,  G2,24, D3,24,  G2,24, G3,24,  C3,60,
+ END,0 };

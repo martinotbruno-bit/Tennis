@@ -1,10 +1,20 @@
-# Royal Martinot — Rapport de réalisation (version 2.46)
+# Royal Martinot — Rapport de réalisation (version 2.47)
 
 Comme l'exige le CDC (§ 17.5), ce rapport distingue ce qui est **réalisé**, **testé**, **validé sur matériel réel**, **validé uniquement en émulation**, **dépendant d'une extension**, et les **limitations restantes**.
 
 > **Validation matérielle : aucune.** Aucun test n'a été fait sur console réelle (NES, Famicom, PAL, cartouche MMC1). Toutes les validations ont eu lieu en émulation (jsnes) et par des tests unitaires sur PC. Les critères « vérifié sur console physique » (CDC § 2.1, 15.4, 16.A) **ne sont pas remplis**. Ce point ne peut pas être traité dans l'environnement de développement utilisé.
 
 ## 1. Évolutions
+
+### Version 2.47
+
+| Demande | Réalisation |
+|---|---|
+| Une autre compétition, un Grand Chelem sur toutes les surfaces du jeu, 3 matchs par tournoi, avec le même principe et une image de présentation par tournoi ; on garde les 4 images déjà dessinées, on en crée d'autres, et on invente les noms | **Le Tour du monde** : 7 tournois de 8 joueurs (quarts, demis, finale ; 8 équipes en double), un par surface, toujours au stade, de jour : **Open d'Augustralie** (dur), **Saint-Martinotz** (glace), **Debogarros** (terre battue), **Martinbledon** (gazon), **Copamargaux** (plage), **US Opaul** (dur), **Bruno-Bercy** (moquette), dans l'ordre d'un calendrier. Points par tour (360 à 2 000), classement général, Grand Chelem si les 7 tournois sont gagnés (podium, générique de fin). Explication dans le menu ; lieu, conditions et surface imposés |
+| Images des nouveaux tournois | Saint-Martinotz : les Alpes enneigées, sapins, chalet, court tracé sur une patinoire, **la neige tombe**. Copamargaux : la baie de Rio, le Pain de Sucre et son téléphérique, le Corcovado et sa statue, palmiers, filet sur la plage, **la mer scintille**, promenade aux vagues noires et blanches. Bruno-Bercy : le palais de Bercy la nuit, pentes de gazon, charpente, enseigne, **les projecteurs balaient le ciel**, la Seine. Écran : « TOURNOI 2/7 : GLACE », etc. |
+| Fanfares | 3 fanfares originales : une tyrolienne avec grelots (glace), une petite samba (plage), une entrée des champions sous les projecteurs (moquette) |
+| Codes de reprise | Le Tour du monde a ses codes (format de version 0, marqué) ; les anciens codes restent valables |
+| Défaut corrigé | Le meilleur rang du Grand Martinot s'écrivait dans l'octet du club nudiste (une 3e place le débloquait). Les meilleurs rangs du Grand Martinot et du Tour du monde ont maintenant leur propre bloc de sauvegarde ; le palmarès affiche les 7 compétitions |
 
 ### Version 2.46
 

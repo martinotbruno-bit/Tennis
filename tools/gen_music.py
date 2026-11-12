@@ -204,6 +204,16 @@ song(13, 'gm3', m, b, harmony(m, b, 48, [(0, 48, 1)]),
 m, b = arr('mus_gm4_mel'), arr('mus_gm4_bass')
 song(14, 'gm4', m, b, harmony(m, b, 24, [(8, 4, 1), (20, 4, 2)]),
      drums(length(m), 24, [(0, KICK), (8, HAT), (12, SNARE), (20, HAT)]), mduty=0x76, hduty=0x72)
+# --- le Tour du monde : fanfares des tournois ajoutés (glace, plage, moquette)
+m, b = arr('mus_gm5_mel'), arr('mus_gm5_bass')
+song(15, 'gm5', m, b, harmony(m, b, 36, [(12, 6, 1), (24, 6, 2)]),
+     drums(length(m), 36, [(0, KICK), (6, HAT), (12, HAT), (18, HAT), (24, HAT), (30, HAT)]), mduty=0x77, hduty=0x73)
+m, b = arr('mus_gm6_mel'), arr('mus_gm6_bass')
+song(16, 'gm6', m, b, harmony(m, b, 16, [(4, 4, 1), (12, 4, 2)]),
+     drums(length(m), 16, [(0, KICK), (4, HAT), (6, HAT), (8, SNARE), (12, HAT), (14, HAT)]), mduty=0x76, hduty=0x72)
+m, b = arr('mus_gm7_mel'), arr('mus_gm7_bass')
+song(17, 'gm7', m, b, harmony(m, b, 48, [(0, 48, 1)]),
+     drums(length(m), 48, [(0, KICK), (6, HAT), (12, SNARE), (18, HAT), (24, KICK), (30, HAT), (36, SNARE), (42, HAT)]), mduty=0xB8, hduty=0x74)
 
 def c_bytes(name, tr):
     data = []
@@ -218,7 +228,7 @@ def c_bytes(name, tr):
 out = ['/* Fichier généré par tools/gen_music.py — ne pas modifier. */',
        '/* Musiques (banque 10) : copiées en RAM de cartouche par music_play. */',
        '#include "audio.h"', '']
-tab = ['const u8 * const song_trk[15][4] = {', '  { 0, 0, 0, 0 },']
+tab = ['const u8 * const song_trk[18][4] = {', '  { 0, 0, 0, 0 },']
 lens = ['  { 0, 0, 0, 0 },']
 flags = ['0']
 duty = ['0, 0']
@@ -246,11 +256,11 @@ for (i, name, mel, bass, harm, drum, loop, md, hd) in songs:
     duty.append('0x%02X, 0x%02X' % (md, hd))
 tab.append('};')
 out += tab
-out.append('const u16 song_len[15][4] = {')
+out.append('const u16 song_len[18][4] = {')
 out += lens
 out.append('};')
-out.append('const u8 song_loop[15] = { %s };' % ', '.join(flags))
-out.append('const u8 song_duty[15][2] = { %s };' % ', '.join('{ %s }' % d for d in duty))
+out.append('const u8 song_loop[18] = { %s };' % ', '.join(flags))
+out.append('const u8 song_duty[18][2] = { %s };' % ', '.join('{ %s }' % d for d in duty))
 out.append('/* plus gros morceau : %d octets (tampon MUS_BUF de audio.c) ; total %d octets */' % (biggest, total))
 open(os.path.join(ROOT, 'src', 'music_data.c'), 'w').write('\n'.join(out) + '\n')
 print('musiques : %d octets, plus gros morceau %d octets' % (total, biggest))

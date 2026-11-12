@@ -35,21 +35,22 @@ La version 1.0 tenait en NROM-256 (32 Ko, plein à 87 %). Il a fallu plus de pla
 
 | Banque | Contenu | Occupation |
 |---|---|---|
-| 15 (fixe, $C000) | Démarrage, NMI, primitives (sprites, VRAM, manettes, trampolines `bank_call` / `far_call`, enregistrement des ralentis, affichage des personnages et de la balle), boucle principale, règles, palettes, 17 personnages, noms des compétitions, échange des tuiles de personnages, effets du court, son, échantillons DPCM (voix de l'arbitre, « pok »), bibliothèque cc65 | 14 743 + 1 280 (échantillons DPCM) |
-| 0 | Moteur de match : physique, frappes, service, arbitrage, IA, fête de victoire | 16 339 |
-| 1 | Écrans : titre, configuration, présentation, résultats, fin de set, compétitions, levée de coupe, saisie de code, palmarès | 15 780 |
+| 15 (fixe, $C000) | Démarrage, NMI, primitives (sprites, VRAM, manettes, trampolines `bank_call` / `far_call`, enregistrement des ralentis, affichage des personnages et de la balle), boucle principale, règles, palettes, 17 personnages, noms des compétitions, échange des tuiles de personnages, effets du court, son, échantillons DPCM (voix de l'arbitre, « pok »), bibliothèque cc65 | 15 051 (échantillons DPCM compris) |
+| 0 | Moteur de match : physique, frappes, service, arbitrage, IA, fête de victoire | 15 766 |
+| 1 | Écrans : titre, configuration, présentation, résultats, fin de set, compétitions, levée de coupe, saisie de code, palmarès | 16 315 |
 | 2 | Motifs graphiques (8 Ko), copiés en CHR-RAM au démarrage | 8 192 |
-| 3 | Annexes du match : poses des joueurs et arbitre (`poses.s`), score et annonces du club nudiste, chargement des courts, effets du court (`match_fx`), panneau du court Margaux, public (regard, ola, réactions), pluie, ralentis, exercices, tutoriel, IA tactique, adresses des courts en perspective | 12 768 |
+| 3 | Annexes du match : poses des joueurs et arbitre (`poses.s`), score et annonces du club nudiste, chargement des courts, effets du court (`match_fx`), panneau du court Margaux, public (regard, ola, réactions), pluie, ralentis, exercices, tutoriel, IA tactique, adresses des courts en perspective | 16 006 |
 | 4 | Mode d'emploi | 3 661 |
-| 5 | Compétitions (tirages, simulations, classements, équipes de double), palmarès et codes de reprise (`password.c`, appelé par `far_call`) | 10 502 |
-| 6 | Tuiles des personnages « au naturel » (club nudiste, réserve commune de 180 tuiles), copiées en CHR-RAM à la demande | 2 880 |
+| 5 | Compétitions (tirages, simulations, classements, équipes de double), palmarès et codes de reprise (`password.c`, appelé par `far_call`) | 14 726 |
+| 6 | Tuiles des personnages « au naturel » (club nudiste, réserve commune de 180 tuiles), copiées en CHR-RAM à la demande ; images 4 à 6 des écrans d'annonce (Tour du monde : tuiles, tables de noms, attributs, `assets_gm2.c`) | 10 240 |
 | 7 | Générique de lancement | 4 742 |
-| 8 | Podium d'une compétition gagnée | 4 438 |
-| 9 | Générique de fin | 2 121 |
-| 10 | Musiques (`music_data.c`, généré par `tools/gen_music.py`), copiées en RAM de cartouche par `music_play` | 2 343 |
-| 11 | Vue en perspective : décors des 7 courts (RLE), tuiles nouvelles par lieu et leurs places, tables de projection (`assets_persp.c`) | 11 717 |
-| 12 | Décors des 7 courts à plat (RLE, `assets_courts12.c`) | 3 932 |
-| 13 et 14 | Libres (32 Ko) pour les évolutions futures | 0 |
+| 8 | Podium d'une compétition gagnée | 4 600 |
+| 9 | Générique de fin | 2 258 |
+| 10 | Musiques (`music_data.c`, généré par `tools/gen_music.py`), copiées en RAM de cartouche par `music_play` | 3 960 |
+| 11 | Vue en perspective : décors des 7 courts (RLE), tuiles nouvelles par lieu et leurs places, tables de projection (`assets_persp.c`) | 15 066 |
+| 12 | Décors des 7 courts à plat (RLE, `assets_courts12.c`) | 3 948 |
+| 13 | Jeux de tuiles par phase (célébrations, revers : `assets_swap.c`), coups (`shots.c`), copie rapide `swap_put` | 2 966 |
+| 14 | Écrans d'annonce du Grand Martinot et du Tour du monde : images 0 à 3, palettes et animations des 7 images, aiguille et flocon (`assets_gm.c`), `gmintro.c` | 12 007 |
 
 ### RAM
 
@@ -282,13 +283,21 @@ Le CPU Expert sait l'utiliser. Sur un lob adverse peu profond, il vise le point 
 
 `comp.c` (banque 5) : 16 inscrits en simple (`c_n` = 16, niveaux `rt16` : 4 forts, 7 moyens, 4 faibles), 8 équipes en double. Les tableaux des inscrits (`c_pl`, `c_rt`, `c_pl2`, `ko_cur`) passent à 16 entrées, en RAM de cartouche ; `reach`, `order` et `pts` restent en RAM interne (16 entrées). Étape = tournoi × tours + tour (`ev_of`, `rd_of`, calculés sans division : les routines de division de cc65 iraient dans la banque fixe, pleine). Tours gagnés par le joueur : 3 bits par tournoi dans `c_gres`. Surfaces `grand_surf` = dur, terre, gazon, dur ; noms `grand_name`. Points `grand_pts` = 180, 360, 720, 1 200, 2 000 (en double, à partir des quarts). `c_slam` : les 4 tournois gagnés ; le podium écrit « GRAND CHELEM ! », le générique « GRAND SLAM CHAMPION ». Les noms des compétitions (`comp_cname`) et leurs explications (`comp_desc`, 4 lignes de 28 signes) sont en banque 5 ; le menu (`menu_info_tick`) les écrit une ligne par trame quand le curseur est sur la ligne COMPETITION.
 
-**Écrans d'annonce** (version 2.44) : `tools/gen_gm.py` dessine les 4 scènes en couleurs NES (224 x 128 px), choisit pour chaque bloc de 16 x 16 px la meilleure des 4 palettes de la scène, partage les tuiles identiques (101, 86, 158 et 126 tuiles : sous la limite de 160, sinon les plus proches seraient fusionnées) et écrit `src/assets_gm.c` (banque 14, avec `assets/preview_gm.png`). `gmintro.c` (banque 14) : `gm_intro_build` copie les tuiles en $60-$FF de la table du décor (`bg_dirty` : rétablie par `chr_borrow_restore`), la table de noms (rangées 6 à 21), les attributs et les palettes, écrit les textes et joue la fanfare (`MUS_GM1` + tournoi, 11 à 14, générées par `tools/gen_music.py`) ; `gm_intro_tick` fait tourner des couleurs (eau de Sydney, lumières de la tour Eiffel, fenêtres de New York) et dessine la grande aiguille de Big Ben, un sprite qui prend 8 directions avec 3 tuiles retournées, posées à la place de la coupe. `comp_gm_intro` (banque 5) dit s'il faut annoncer un tournoi (premier tour, pas encore annoncé à cette étape) ; `comp_next` (écrans) montre l'annonce (`SS_GMI`) avant l'écran d'étape. Le Grand Martinot se joue toujours au stade, de jour.
+**Écrans d'annonce** (version 2.44) : `tools/gen_gm.py` dessine les 4 scènes en couleurs NES (224 x 128 px), choisit pour chaque bloc de 16 x 16 px la meilleure des 4 palettes de la scène, partage les tuiles identiques (101, 86, 158 et 126 tuiles ; 154, 133 et 109 pour les 3 images du Tour du monde : sous la limite de 160, sinon les plus proches seraient fusionnées) et écrit `src/assets_gm.c` (banque 14, avec `assets/preview_gm.png`). `gmintro.c` (banque 14) : `gm_intro_build` copie les tuiles en $60-$FF de la table du décor (`bg_dirty` : rétablie par `chr_borrow_restore`), la table de noms (rangées 6 à 21), les attributs et les palettes, écrit les textes et joue la fanfare (`MUS_GM1` + tournoi, 11 à 14, générées par `tools/gen_music.py`) ; `gm_intro_tick` fait tourner des couleurs (eau de Sydney, lumières de la tour Eiffel, fenêtres de New York) et dessine la grande aiguille de Big Ben, un sprite qui prend 8 directions avec 3 tuiles retournées, posées à la place de la coupe. `comp_gm_intro` (banque 5) dit s'il faut annoncer un tournoi (premier tour, pas encore annoncé à cette étape) ; `comp_next` (écrans) montre l'annonce (`SS_GMI`) avant l'écran d'étape. Le Grand Martinot se joue toujours au stade, de jour.
+
+### Le Tour du monde (`CT_WORLD`, version 2.47)
+
+Type 6 : 7 tournois de 8 inscrits (8 équipes en double), un par surface, toujours au stade, de jour : Open d'Augustralie (dur), Saint-Martinotz (glace), Debogarros (terre battue), Martinbledon (gazon), Copamargaux (plage), US Opaul (dur), Bruno-Bercy (moquette). Les 7 tournois partagent leurs tables avec le Grand Martinot : `ev_surf` et `ev_name` (par image, 0 à 6), `world_ev` (ordre du Tour du monde), `ev_img` (tournoi → image). `nev()` vaut 4 ou 7 ; `c_gres` garde 2 bits par tournoi (0 à 3 tours gagnés, 14 bits ; `gres_w`, décalages par boucle). Points `grand_pts` à partir des quarts : 360, 720, 1 200, 2 000, jusqu'à 14 000 ; le classement s'écrit sur 5 chiffres (`num5`). `c_slam` : les 7 tournois gagnés. L'écran de fin lit le classement avec `c_stage` = 99 (le tableau s'arrête au dernier tournoi).
+
+Écrans d'annonce : `comp_gm_intro` rend l'image (0 à 6) ; `gmintro.c` en déduit le rang (`gmi_rank`) et la surface, écrit « TOURNOI 2/7 : GLACE », joue la fanfare `MUS_GM1` + image (15 à 17 : tyrolienne, samba, entrée des champions). Les images 4 à 6 sont en banque 6 (`gm_bank`) : la table de noms et les attributs sont copiés avec `chr_copy` depuis leur banque. Saint-Martinotz : la neige tombe (12 sprites, tuile flocon posée à la 4e place de la coupe, couleur blanche). Copamargaux : la mer scintille (palette 3 : à égalité, un bloc prend la première palette, et les nuages ne doivent pas prendre celle qui tourne). Bruno-Bercy : 3 faisceaux de projecteurs de 3 couleurs qui tournent.
+
+Palmarès : `SaveData.comp_best` n'a que 5 places (types 0 à 4). Jusqu'à la version 2.46, le rang du Grand Martinot s'écrivait dans l'octet suivant, `nude` (une 3e place débloquait le club nudiste). Les meilleurs rangs des types 5 et 6 sont maintenant dans un bloc à part, `sw_best` ('B', type 5, type 6, contrôle), remis à zéro avec le palmarès.
 
 ### Codes de reprise (`password.c`)
 
 52 bits de données (dont double, partenaire, « partenaire joué par la manette 2 » et lieu) + 2 bits de version + 11 bits de somme de contrôle = 65 bits, écrits en 13 symboles de 5 bits (alphabet sans I, O, 0, 1). Les symboles sont brouillés en chaîne pour qu'une erreur en modifie plusieurs.
 
-Version 0 (version 2.44) : le Grand Martinot (type 5). Champs propres : conditions, étape, graine, personnage, lieu, format, niveau, résultats sur 12 bits (`gres` : 0 à 4 tours gagnés par tournoi, 3 en double, vérifiés au décodage), trophées, double, partenaire, manette 2, puis 3 bits à zéro ; pas de surface (imposée) ni d'options. Les versions 1 à 3 ne changent pas.
+Version 0 (version 2.44) : le Grand Martinot (type 5). Champs propres : conditions, étape, graine, personnage, lieu, format, niveau, résultats sur 12 bits (`gres` : 0 à 4 tours gagnés par tournoi, 3 en double, vérifiés au décodage), trophées, double, partenaire, manette 2, puis 3 bits à zéro ; pas de surface (imposée) ni d'options. Le Tour du monde (type 6, version 2.47) utilise aussi la version 0, avec la marque 1 dans les bits 49 à 51 (0 pour le Grand Martinot) : étape sur 5 bits (0 à 20), graine, personnage, format, niveau, résultats sur 14 bits (2 par tournoi), trophées, double, partenaire, manette 2 ; ni surface, ni lieu, ni conditions. Les versions 1 à 3 ne changent pas.
 
 Formats (version sur 2 bits) : 2, ancien format à 16 personnages ; 3, format courant (surface × 5 + lieu sur 5 bits, niveau sur 2 bits) ; 1 (version 2.39), pour le château et le parc (lieux 5 et 6) : (surface × 7 + lieu) × 3 + niveau sur 7 bits. Les codes des 5 premiers lieux restent identiques. Personnage et partenaire sur 5 bits : jusqu'à 32 personnages (21 aujourd'hui).
 

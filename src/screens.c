@@ -84,9 +84,10 @@ static const char * const sound_name[3] = { "MUSIQUE + SONS", "BRUITAGES SEULS",
 static const char * const spin_name[3] = { "LIFTE", "COUPE", "LOB" };
 static const u8 count_val[3] = { 10, 20, 30 };
 
-static const char gm_title[] = "LE GRAND MARTINOT";
-/* nom de la compétition t (liste en banque 5) : copié dans comp_cn */
+/* nom de la compétition t (liste en banque 5) : copié dans comp_l2 */
 static const char *cname(u8 t) { COMP(comp_cname, t); return comp_l2; }
+/* titre du Grand Martinot ou du Tour du monde : « LE » et son nom */
+static void gs_title(u8 y) { txt_at(3, y, "LE "); txt_at(6, y, cname(c_type)); }
 /* écran d'étape ; au premier tour d'un tournoi du Grand Martinot, d'abord
    son annonce (banque 14 : image, nom, fanfare) */
 extern u8 gm_ev;
@@ -123,8 +124,8 @@ static void build_visible(void)
         vis[nvis++] = O_P1;
         if (opt_val[O_TYPE]) { vis[nvis++] = O_P2; vis[nvis++] = O_CPART; }   /* partenaire */
         vis[nvis++] = O_LEVEL;
-        if (opt_val[O_COMP] != CT_SEASON && opt_val[O_COMP] != CT_GRAND) vis[nvis++] = O_SURF;   /* surfaces imposées */
-        if (opt_val[O_COMP] != CT_GRAND) { vis[nvis++] = O_ENV; vis[nvis++] = O_COND; }   /* Grand Martinot : au stade, de jour */
+        if (opt_val[O_COMP] != CT_SEASON && opt_val[O_COMP] < CT_GRAND) vis[nvis++] = O_SURF;   /* surfaces imposées */
+        if (opt_val[O_COMP] < CT_GRAND) { vis[nvis++] = O_ENV; vis[nvis++] = O_COND; }   /* Grand Martinot, Tour du monde : au stade, de jour */
         vis[nvis++] = O_FMT;
         vis[nvis++] = O_REPLAY;
         vis[nvis++] = O_GSPEED;
@@ -573,7 +574,7 @@ static void comp_screen(void)
 {
     u8 o;
     screen_begin();
-    if (c_type == CT_GRAND) txt_at(3, 1, gm_title);
+    if (c_type >= CT_GRAND) gs_title(1);
     else { txt_at(3, 1, "ROYAL MARTINOT"); txt_at(18, 1, cname(c_type)); }
     COMP(comp_stage_name, 0);
     txt_at(3, 3, comp_l1);
@@ -616,14 +617,14 @@ static void comp_end_screen(void)
         bank_call(BANK_PODIUM, podium_build);
     } else {
         pal_set_player(0, c_pl[0]);
-        if (c_type == CT_GRAND) txt_at(3, 2, gm_title);
+        if (c_type >= CT_GRAND) gs_title(2);
         else { txt_at(3, 2, "ROYAL MARTINOT"); txt_at(18, 2, cname(c_type)); }
         if (c_dbl) { team_label(c_pl[0], c_pl2[0], b); txt_at(3, 3, b); txt_at(9, 3, "(DOUBLE)"); }
-        if (c_type == CT_LEAGUE || c_type == CT_SEASON || c_type == CT_GRAND) {
+        if (c_type == CT_LEAGUE || c_type == CT_SEASON || c_type >= CT_GRAND) {
             txt_at(5, 6, "CLASSEMENT FINAL :");
             num2(b, c_rank); b[2] = 'E'; b[3] = 0;
             txt_at(23, 6, b);
-            c_stage = (u8)(c_type == CT_LEAGUE ? 5 : c_type == CT_SEASON ? 12 : (c_dbl ? 12 : 16));
+            c_stage = (u8)(c_type == CT_LEAGUE ? 5 : 99);   /* toutes les étapes (tableau limité au dernier tournoi) */
             COMP(comp_draw_table, 11);
         } else {
             txt_at(5, 6, rank_txt[c_rank > 5 ? 5 : c_rank]);
@@ -655,10 +656,10 @@ static void start_comp(void)
     c_type = opt_val[O_COMP];
     c_opts = (u8)((opt_val[O_CSIZE] ? CO_SIZE8 : 0) | (opt_val[O_CPROG] ? CO_PROG : 0) | (opt_val[O_CVAR] ? CO_VARIED : 0));
     c_lvl = opt_val[O_LEVEL];
-    c_surf = (u8)(opt_val[O_SURF] > 3 && (c_type == CT_SEASON || c_type == CT_GRAND) ? 0 : opt_val[O_SURF]);
+    c_surf = (u8)(opt_val[O_SURF] > 3 && (c_type == CT_SEASON || c_type >= CT_GRAND) ? 0 : opt_val[O_SURF]);
     c_env = opt_val[O_ENV];
     c_cond = opt_val[O_COND];
-    if (c_type == CT_GRAND) { c_env = ENV_STADIUM; c_cond = 0; }   /* Grand Martinot : toujours au stade, de jour */
+    if (c_type >= CT_GRAND) { c_env = ENV_STADIUM; c_cond = 0; }   /* Grand Martinot, Tour du monde : toujours au stade, de jour */
     c_fmt = opt_val[O_FMT];
     c_pl[0] = opt_val[O_P1];
     c_dbl = opt_val[O_TYPE];
@@ -907,10 +908,11 @@ static void palmares_screen(void)
         txt_at(3, 3, "MEILLEURS RESULTATS");
         for (i = 0; i < NCT; ++i) {
             txt_at(3, (u8)(5 + i), cname(i));
-            if (sv.comp_best[i]) txt_at(17, (u8)(5 + i), rank_txt[sv.comp_best[i] > 5 ? 5 : sv.comp_best[i]]);
+            t = i < 5 ? sv.comp_best[i] : sw_best[i - 4];
+            if (t) txt_at(17, (u8)(5 + i), rank_txt[t > 5 ? 5 : t]);
             else txt_at(17, (u8)(5 + i), "-");
         }
-        txt_at(3, 11, "HISTORIQUE");
+        txt_at(3, 12, "HISTORIQUE");
         for (i = 0; i < sv.hist_n && i < 8; ++i) {
             txt_at(3, (u8)(13 + i), cname(sv.hist[i][0]));
             team_label(sv.hist[i][2], 255, line); txt_at(16, (u8)(13 + i), line);
@@ -1059,7 +1061,7 @@ void screens_tick(void)
         if (pad1_new & (PAD_A | PAD_START)) {
             if (c_rank == 1) { ppu_off(); chr_reload(); }   /* tuiles du podium : motifs d'origine */
             /* saison gagnée : générique de fin, puis l'écran titre */
-            if (c_rank == 1 && (c_type == CT_SEASON || c_type == CT_GRAND)) { go_req = GO_CREDITS; break; }
+            if (c_rank == 1 && (c_type == CT_SEASON || c_type >= CT_GRAND)) { go_req = GO_CREDITS; break; }
             title_screen();
             break;
         }

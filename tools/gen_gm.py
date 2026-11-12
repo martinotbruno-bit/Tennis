@@ -10,7 +10,9 @@ colonnes 2 à 29, rangées 6 à 21 de l'écran), puis :
   - les tuiles identiques sont partagées ; au-delà de 160 tuiles (place libre
     après la police, tuiles $60 à $FF), les tuiles les plus proches sont
     fusionnées.
-Sortie : src/assets_gm.c (banque 14) et assets/preview_gm.png.
+Sortie : src/assets_gm.c (banque 14), src/assets_gm2.c (banque 6 : images 4
+à 6, version 2.47 : Saint-Martinotz, Copamargaux, Bruno-Bercy) et
+assets/preview_gm.png.
 Usage : python3 tools/gen_gm.py"""
 import os, math, random
 
@@ -341,7 +343,189 @@ def newyork():
     anim = (1, [0x38, 0x28])                   # les fenêtres scintillent
     return im, pals, anim
 
-SCENES = [sydney, paris, london, newyork]
+def alps():
+    """Saint-Martinotz (glace) : les Alpes en hiver, un sommet pointu enneigé,
+    des sapins, un chalet ; au premier plan, un court de tennis sur une
+    patinoire. La neige tombe (sprites)"""
+    bg = 0x21
+    im = Img(bg)
+    for (cx, cy, rx, ry) in ((30, 14, 16, 5), (46, 11, 10, 5)):
+        im.ellipse(cx, cy, rx, ry, 0x30)        # nuages
+    # montagnes (rangées de blocs 0 à 3) : roche grise, versant à l'ombre, neige
+    def mountain(px, py, left, right, base=64):
+        im.poly([(px - left, base), (px, py), (px + right, base)], 0x10)
+        im.poly([(px, py), (px + right, base), (px + right * 0.35, base)], 0x00)   # versant à l'ombre
+        # neige du sommet : bord dentelé
+        for y in range(py, base):
+            t = (y - py) / (base - py)
+            if t > 0.42 + (0.06 if (y // 4) % 2 else 0): continue
+            x0, x1 = px - left * t, px + right * t
+            im.rect(x0, y, x1, y, 0x30)
+    mountain(176, 22, 60, 50)
+    mountain(40, 18, 52, 44)
+    mountain(104, 2, 46, 38)                     # le grand sommet pointu, au centre
+    # champ de neige et sapins (rangées 4 et 5)
+    im.rect(0, 64, 223, 95, 0x30)
+    def pine(x, y, h):
+        for k in range(3):                       # trois étages de branches
+            top = y + k * h // 4
+            w = 3 + k * 3
+            im.poly([(x - w, top + h // 3), (x, top), (x + w + 1, top + h // 3)], 0x09)
+            im.rect(x - w + 1, top + h // 3 - 1, x + w - 1, top + h // 3 - 1, 0x1A)
+        im.rect(x, y + h - 2, x + 1, y + h + 1, 0x09)
+    for (x, y, h) in ((8, 66, 26), (22, 70, 22), (36, 64, 28), (52, 70, 22), (66, 67, 24),
+                      (80, 72, 20), (138, 70, 22), (150, 66, 26), (214, 68, 24)):
+        pine(x, y, h)
+    # chalet (à droite) : bois, toit chargé de neige, balcon, fenêtres
+    cx0, cx1 = 164, 206
+    im.rect(cx0, 78, cx1, 95, 0x17)
+    for y in range(80, 95, 3):
+        im.rect(cx0, y, cx1, y, 0x07)            # planches
+    im.poly([(cx0 - 6, 80), (185, 64), (cx1 + 7, 80)], 0x07)   # toit
+    im.line(cx0 - 6, 79, 185, 64, 0x30); im.line(cx0 - 5, 79, 185, 65, 0x30)   # neige sur le bord du toit
+    im.line(185, 64, cx1 + 7, 79, 0x30); im.line(185, 65, cx1 + 6, 79, 0x30)
+    im.rect(182, 70, 188, 76, 0x30); im.rect(184, 72, 186, 75, 0x07)   # lucarne
+    for x in (169, 195):
+        im.rect(x, 82, x + 7, 89, 0x30)          # fenêtres (cadres blancs)
+        im.rect(x + 2, 84, x + 5, 87, 0x07)
+    im.rect(181, 84, 189, 95, 0x07)              # porte
+    im.rect(183, 86, 187, 95, 0x17)
+    # premier plan : bandes de la patinoire, glace, court de tennis tracé dessus
+    im.rect(0, 96, 223, 111, 0x30)               # bandes blanches
+    im.rect(0, 102, 223, 104, 0x16)              # liseré rouge
+    im.rect(0, 110, 223, 111, 0x3C)
+    for y in range(112, 128):
+        for x in range(W):
+            im.put(x, y, 0x3C)
+    for x in range(0, W, 32):                    # reflets de la glace
+        im.line(x + 2, 123, x + 6, 119, 0x30)
+    im.rect(0, 125, 223, 126, 0x16)              # ligne de fond (rouge sur la glace)
+    im.rect(16, 116, 207, 116, 0x16)             # ligne de service
+    im.rect(112, 116, 112, 126, 0x16)            # ligne médiane
+    pals = [[bg, 0x30, 0x10, 0x00], [bg, 0x09, 0x1A, 0x30], [bg, 0x07, 0x17, 0x30], [bg, 0x3C, 0x30, 0x16]]
+    anim = None                                  # la neige tombe : sprites (gmintro.c)
+    return im, pals, anim
+
+def rio():
+    """Copamargaux (plage) : la baie de Rio, le Pain de Sucre et son
+    téléphérique, le Corcovado et sa statue ; la mer qui scintille, la
+    plage et son filet, les palmiers, et la célèbre promenade aux vagues
+    noires et blanches"""
+    bg = 0x21
+    im = Img(bg)
+    for (cx, cy, rx, ry) in ((120, 12, 16, 5), (136, 9, 9, 4), (200, 20, 14, 4)):
+        im.ellipse(cx, cy, rx, ry, 0x30)
+    # Corcovado (à droite) : montagne et statue aux bras ouverts
+    im.poly([(128, 80), (176, 30), (186, 26), (196, 30), (224, 52), (224, 80)], 0x0A)
+    im.poly([(150, 80), (176, 34), (186, 30), (200, 40), (190, 80)], 0x1A)
+    im.rect(184, 13, 187, 26, 0x17)              # statue
+    im.rect(178, 16, 193, 17, 0x17)              # bras
+    im.rect(184, 11, 187, 12, 0x17)              # tête
+    # Morro da Urca (petit) et Pain de Sucre (grand dôme)
+    im.ellipse(16, 70, 30, 22, 0x0A, half='top')
+    im.poly([(44, 80), (52, 40), (62, 24), (76, 20), (88, 26), (98, 44), (108, 80)], 0x17)
+    for (x0, y0, x1, y1) in ((60, 30, 56, 78), (70, 24, 68, 78), (82, 26, 86, 78), (92, 40, 98, 78)):
+        im.line(x0, y0, x1, y1, 0x07)            # stries de la roche
+    im.poly([(46, 80), (52, 58), (60, 66), (66, 80)], 0x0A)    # végétation au pied
+    im.poly([(92, 80), (98, 60), (106, 80)], 0x0A)
+    # téléphérique : câble du Morro au sommet, cabine
+    im.line(18, 49, 74, 20, 0x0F)
+    im.rect(42, 38, 47, 43, 0x0F); im.rect(43, 39, 46, 41, 0x30); im.line(44, 36, 44, 37, 0x0F)
+    # mer (rangées 5 et 6) : reflets en 3 tons qui tournent
+    for y in range(80, 100):
+        for x in range(W):
+            k = ((x % 16) + 5 * ((y // 3) % 3)) % 8
+            im.put(x, y, 0x11 if k < 4 else 0x2C if k < 7 else 0x30)
+    # plage, filet de beach-tennis
+    im.rect(0, 100, 223, 111, 0x37)
+    for x in range(0, W, 8):
+        im.put(x + 3, 104, 0x27); im.put(x + 7, 108, 0x27)
+    im.rect(64, 94, 65, 109, 0x27); im.rect(160, 94, 161, 109, 0x27)   # poteaux
+    im.rect(66, 95, 159, 95, 0x30)
+    for y in range(97, 104, 2):
+        im.rect(66, y, 159, y, 0x30)              # mailles du filet
+    for x in range(68, 159, 4):
+        im.rect(x, 95, x, 103, 0x30)
+    im.rect(16, 109, 207, 109, 0x30)             # ligne tracée dans le sable
+    # palmiers (bords) : tronc courbe, palmes
+    def palm(x, top, lean):
+        for y in range(top, 112):
+            t = (112 - y) / (112 - top)
+            xx = x + lean * t * t
+            im.rect(xx, y, xx + 2, y, 0x17)
+            if y % 4 == 0: im.put(xx + 1, y, 0x07)
+        hx = x + lean
+        for (dx, dy) in ((-14, 6), (-10, -6), (0, -9), (10, -6), (14, 6), (-6, 10), (7, 10)):
+            im.line(hx + 1, top, hx + 1 + dx, top + dy, 0x0A)
+            im.line(hx + 1, top + 1, hx + 1 + dx, top + dy + 1, 0x1A)
+    palm(8, 58, 8)
+    palm(208, 54, -10)
+    # promenade de Copacabana : vagues noires et blanches (rangées 7)
+    for y in range(112, 128):
+        for x in range(W):
+            w = 4 * math.sin((x % 32) / 32 * 2 * math.pi)
+            band = int((y - 112 + w + 8) // 4) % 2
+            im.put(x, y, 0x0F if band else 0x30)
+    # (la mer en dernier : à égalité, un bloc prend la première palette ; les
+    # nuages ne doivent pas prendre celle de la mer, qui tourne)
+    pals = [[bg, 0x0A, 0x1A, 0x17], [bg, 0x37, 0x27, 0x30], [bg, 0x0F, 0x30, 0x07], [bg, 0x11, 0x2C, 0x30]]
+    anim = (3, [0x11, 0x2C, 0x30])               # la mer scintille
+    return im, pals, anim
+
+def bercy():
+    """Bruno-Bercy (moquette, en salle) : le palais omnisports de Bercy la
+    nuit, ses pentes de gazon et sa charpente, les projecteurs qui balaient
+    le ciel ; la Seine reflète les lumières"""
+    bg = 0x0F
+    im = Img(bg)
+    random.seed(5)
+    for _ in range(14):
+        im.put(random.randrange(W), random.randrange(28), 0x30)
+    # projecteurs : 3 faisceaux de 3 couleurs qui tournent (balayage)
+    for (x0, x1, c) in ((60, 20, 0x31), (112, 112, 0x11), (164, 204, 0x01)):
+        for k in range(-4, 5):
+            im.line(112 + (x0 - 112) * 0.2 + k * 0.4, 30, x1 + k * 3, 0, c)
+    # palais : pyramide tronquée, pentes de gazon rayées, charpente et verrière
+    im.poly([(16, 96), (64, 40), (160, 40), (208, 96)], 0x0A)
+    for k in range(0, 60, 6):                    # rayures du gazon
+        y = 96 - k
+        x0 = 16 + 48 * k / 56; x1 = 208 - 48 * k / 56
+        im.rect(x0, y, x1, y + 2, 0x1A)
+    im.rect(64, 32, 160, 47, 0x00)              # charpente
+    for x in range(64, 161, 8):
+        im.line(x, 32, x + 4, 47, 0x10)
+        im.line(x + 8, 32, x + 4, 47, 0x10)
+    im.rect(64, 32, 160, 33, 0x10)
+    im.rect(56, 48, 168, 51, 0x00)
+    for x in range(60, 168, 8):
+        im.rect(x, 49, x + 3, 50, 0x38)          # lumières de la verrière
+    # enseigne « BERCY » (lettres de 5 x 7, sur la pente)
+    font = {'B': ['1110', '1001', '1110', '1001', '1110'], 'E': ['1111', '1000', '1110', '1000', '1111'],
+            'R': ['1110', '1001', '1110', '1010', '1001'], 'C': ['0111', '1000', '1000', '1000', '0111'],
+            'Y': ['1001', '1001', '0111', '0001', '0110']}
+    x = 88
+    for ch in 'BERCY':
+        for j, row in enumerate(font[ch]):
+            for i, b in enumerate(row):
+                if b == '1': im.rect(x + i * 2, 66 + j * 2, x + i * 2 + 1, 66 + j * 2 + 1, 0x38)
+        x += 10
+    im.rect(84, 62, 139, 63, 0x00); im.rect(84, 77, 139, 78, 0x00)
+    # entrées éclairées au pied
+    for x in range(32, 196, 24):
+        im.rect(x, 88, x + 9, 95, 0x38)
+        im.rect(x + 2, 90, x + 7, 95, 0x00)
+    # Seine : reflets jaunes et bleus
+    for y in range(96, 128):
+        for x in range(W):
+            k = (x + 3 * (y // 2)) % 12
+            im.put(x, y, 0x02 if k < 7 else 0x12 if k < 10 else 0x28 if (x // 24) % 2 == 0 and y < 112 else 0x02)
+    pals = [[bg, 0x0A, 0x1A, 0x38], [bg, 0x00, 0x10, 0x38], [bg, 0x31, 0x11, 0x01], [bg, 0x02, 0x12, 0x28]]
+    anim = (2, [0x31, 0x11, 0x01])               # les projecteurs balaient le ciel
+    return im, pals, anim
+
+# images 0 à 3 : le Grand Martinot ; 4 à 6 : tournois ajoutés par le Tour du monde
+SCENES = [sydney, paris, london, newyork, alps, rio, bercy]
+BANK2_FROM = 4      # tuiles, tables de noms et attributs des images 4 à 6 : banque 6
 
 # --------------------------------------------------------------------------
 def quantize(im, pals):
@@ -412,7 +596,11 @@ def c_array(name, data):
     return s + '};\n'
 
 src = ['/* Fichier généré par tools/gen_gm.py — ne pas modifier. */',
-       '/* Images des écrans d\'annonce du Grand Martinot (banque 14). */', '']
+       '/* Images des écrans d\'annonce du Grand Martinot et du Tour du monde (banque 14 ;',
+       '   tuiles, tables de noms et attributs des images 4 à 6 : assets_gm2.c, banque 6). */', '']
+src2 = ['/* Fichier généré par tools/gen_gm.py — ne pas modifier. */',
+        '/* Images 4 à 6 des écrans d\'annonce (Tour du monde) : banque 6. */', '']
+ntiles = []
 preview = []
 for k, scene in enumerate(SCENES):
     im, pals, anim = scene()
@@ -430,9 +618,13 @@ for k, scene in enumerate(SCENES):
             i = (by // 2) * 8 + bx // 2
             q = (by & 1) * 2 + (bx & 1)
             at[i] |= p << (q * 2)
-    src.append(c_array('gm_chr%d' % k, b''.join(encode(t) for t in uniq)))
-    src.append(c_array('gm_nt%d' % k, bytes(nt)))
-    src.append(c_array('gm_at%d' % k, bytes(at)))
+    dst = src if k < BANK2_FROM else src2
+    dst.append(c_array('gm_chr%d' % k, b''.join(encode(t) for t in uniq)))
+    dst.append(c_array('gm_nt%d' % k, bytes(nt)))
+    dst.append(c_array('gm_at%d' % k, bytes(at)))
+    if k >= BANK2_FROM:
+        src.append('extern const unsigned char gm_chr%d[], gm_nt%d[], gm_at%d[];' % (k, k, k))
+    ntiles.append(len(uniq))
     src.append(c_array('gm_pal%d' % k, bytes(c for p in pals for c in p)))
     a = anim or (0, [])
     src.append(c_array('gm_anim%d' % k, bytes([a[0], len(a[1])] + a[1] + [0] * (3 - len(a[1])))))
@@ -449,23 +641,29 @@ for k, scene in enumerate(SCENES):
             rgb.append(row)
     preview.append(rgb)
 # grande aiguille de Big Ben : 3 tuiles de sprite (couleur 1), retournées
-# pour 8 directions : verticale (colonne 4), diagonale, horizontale (rangée 4)
+# pour 8 directions : verticale (colonne 4), diagonale, horizontale (rangée 4) ;
+# puis un flocon de neige (Saint-Martinotz)
 hand_v = [[1 if x == 4 else 0 for x in range(8)] for y in range(8)]
 hand_d = [[1 if x == 7 - y else 0 for x in range(8)] for y in range(8)]
 hand_h = [[1 if y == 4 else 0 for x in range(8)] for y in range(8)]
-src.append(c_array('gm_hand', b''.join(encode(tuple(map(tuple, t))) for t in (hand_v, hand_d, hand_h))))
-src.append('const unsigned char gm_ntiles[4] = { %s };' % ', '.join(
-    str(len(reduce_tiles(tiles_of(quantize(*SCENES[k]()[:2])[1]))[0])) for k in range(4)))
-src.append('const unsigned char * const gm_chr[4] = { gm_chr0, gm_chr1, gm_chr2, gm_chr3 };')
-src.append('const unsigned char * const gm_nt[4] = { gm_nt0, gm_nt1, gm_nt2, gm_nt3 };')
-src.append('const unsigned char * const gm_at[4] = { gm_at0, gm_at1, gm_at2, gm_at3 };')
-src.append('const unsigned char * const gm_pal[4] = { gm_pal0, gm_pal1, gm_pal2, gm_pal3 };')
-src.append('const unsigned char * const gm_anim[4] = { gm_anim0, gm_anim1, gm_anim2, gm_anim3 };')
+flake = [[1 if (x, y) in ((3, 2), (2, 3), (3, 3), (4, 3), (3, 4)) else 0 for x in range(8)] for y in range(8)]
+src.append(c_array('gm_hand', b''.join(encode(tuple(map(tuple, t))) for t in (hand_v, hand_d, hand_h, flake))))
+N = len(SCENES)
+lst = lambda name: ', '.join('%s%d' % (name, k) for k in range(N))
+src.append('const unsigned char gm_ntiles[%d] = { %s };' % (N, ', '.join(map(str, ntiles))))
+src.append('const unsigned char gm_bank[%d] = { %s };' % (N, ', '.join('14' if k < BANK2_FROM else '6' for k in range(N))))
+src.append('const unsigned char * const gm_chr[%d] = { %s };' % (N, lst('gm_chr')))
+src.append('const unsigned char * const gm_nt[%d] = { %s };' % (N, lst('gm_nt')))
+src.append('const unsigned char * const gm_at[%d] = { %s };' % (N, lst('gm_at')))
+src.append('const unsigned char * const gm_pal[%d] = { %s };' % (N, lst('gm_pal')))
+src.append('const unsigned char * const gm_anim[%d] = { %s };' % (N, lst('gm_anim')))
 with open(os.path.join(ROOT, 'src', 'assets_gm.c'), 'w') as f:
     f.write('\n'.join(src) + '\n')
+with open(os.path.join(ROOT, 'src', 'assets_gm2.c'), 'w') as f:
+    f.write('\n'.join(src2) + '\n')
 try:
     from PIL import Image
-    img = Image.new('RGB', (W * 2 + 8, H * 2 + 8), (255, 255, 255))
+    img = Image.new('RGB', (W * 2 + 8, H * 4 + 24), (255, 255, 255))
     for k, rgb in enumerate(preview):
         ox, oy = (k % 2) * (W + 8), (k // 2) * (H + 8)
         for y in range(H):

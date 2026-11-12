@@ -13,7 +13,7 @@ BANK1 = screens
 BANK5 = comp stats password
 BANK3 = extras assets_court assets_persp3
 BANK4 = manual
-BANK6 = assets_nude
+BANK6 = assets_nude assets_gm2
 BANK7 = intro
 BANK8 = podium
 BANK9 = credits
@@ -28,7 +28,7 @@ OBJS = $(BUILD)/crt0.o $(BUILD)/sprp.o $(BUILD)/poses.o $(BUILD)/slip.o $(BUILD)
 all: $(ROM)
 
 assets/tiles.chr src/assets_data.c src/assets_court.c src/assets_nude.c src/assets_persp.c src/assets_persp3.c src/assets_courts12.c src/assets_swap.c: tools/gen_assets.py
-src/assets_gm.c: tools/gen_gm.py
+src/assets_gm.c src/assets_gm2.c: tools/gen_gm.py
 	python3 tools/gen_gm.py
 	python3 tools/gen_assets.py
 
@@ -68,7 +68,7 @@ $(BUILD)/slip.o: src/slip.s | $(BUILD)
 $(BUILD)/dpcm.o: src/dpcm.s | $(BUILD)
 	$(CA65) -t nes -g -o $@ src/dpcm.s
 
-$(BUILD)/%.s: src/%.c src/*.h src/assets_data.c src/assets_court.c src/assets_nude.c src/assets_persp.c src/assets_persp3.c src/assets_courts12.c src/assets_swap.c src/assets_gm.c | $(BUILD)
+$(BUILD)/%.s: src/%.c src/*.h src/assets_data.c src/assets_court.c src/assets_nude.c src/assets_persp.c src/assets_persp3.c src/assets_courts12.c src/assets_swap.c src/assets_gm.c src/assets_gm2.c | $(BUILD)
 	$(CC65) $(CFLAGS) $(SEGS) -o $@ $<
 
 $(BUILD)/%.o: $(BUILD)/%.s
