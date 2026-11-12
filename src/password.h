@@ -22,6 +22,7 @@ typedef struct {
     pu8 doubles;   /* 0..1 compétition en double */
     pu8 partner;   /* 0..16 partenaire du joueur (double) */
     pu8 hum2;      /* 0..1 partenaire joué par la manette 2 */
+    unsigned short gres;   /* Grand Martinot (type 5) : tours gagnés, 3 bits par tournoi */
 } PwData;
 void pw_encode(char *out, const PwData *d);
 pu8 pw_decode(const char *in, PwData *d);

@@ -25,7 +25,7 @@ static const Line lines[] = {
     { "GRAND SLAM PRESTIGE", 0 },
     { "PLATINUM DIAMOND EDITION", 0 },
     { "", 0 }, { "", 0 },
-    { "SEASON CHAMPION", 0 },
+    { "#", 0 },          /* SEASON CHAMPION, ou le titre du Grand Martinot */
     { "@", 1 },
     { "", 0 }, { "", 0 },
     { "EXECUTIVE PRODUCER", 0 },
@@ -102,6 +102,8 @@ static void write_slot(u8 s, u8 i)
     static char name[8];
     if (i < NLINES) {
         t = lines[i].s; pal = lines[i].pal;
+        if (t[0] == '#')
+            t = c_type != CT_GRAND ? "SEASON CHAMPION" : c_slam ? "GRAND SLAM CHAMPION" : "LE GRAND MARTINOT CHAMPION";
         if (t[0] == '@') {
             /* le champion de la saison (ou l'équipe, en double) */
             if (c_dbl) team_label(c_pl[0], c_pl2[0], name);

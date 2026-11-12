@@ -278,9 +278,15 @@ Le CPU Expert sait l'utiliser. Sur un lob adverse peu profond, il vise le point 
   - **championnat** : méthode du cercle à 6 joueurs ;
   - **saison** : 4 tableaux différents, un par surface, et barème de points.
 
+### Le Grand Martinot (`CT_GRAND`, version 2.44)
+
+`comp.c` (banque 5) : 16 inscrits en simple (`c_n` = 16, niveaux `rt16` : 4 forts, 7 moyens, 4 faibles), 8 équipes en double. Les tableaux des inscrits (`c_pl`, `c_rt`, `c_pl2`, `ko_cur`) passent à 16 entrées, en RAM de cartouche ; `reach`, `order` et `pts` restent en RAM interne (16 entrées). Étape = tournoi × tours + tour (`ev_of`, `rd_of`, calculés sans division : les routines de division de cc65 iraient dans la banque fixe, pleine). Tours gagnés par le joueur : 3 bits par tournoi dans `c_gres`. Surfaces `grand_surf` = dur, terre, gazon, dur ; noms `grand_name`. Points `grand_pts` = 180, 360, 720, 1 200, 2 000 (en double, à partir des quarts). `c_slam` : les 4 tournois gagnés ; le podium écrit « GRAND CHELEM ! », le générique « GRAND SLAM CHAMPION ». Les noms des compétitions (`comp_cname`) et leurs explications (`comp_desc`, 4 lignes de 28 signes) sont en banque 5 ; le menu (`menu_info_tick`) les écrit une ligne par trame quand le curseur est sur la ligne COMPETITION.
+
 ### Codes de reprise (`password.c`)
 
 52 bits de données (dont double, partenaire, « partenaire joué par la manette 2 » et lieu) + 2 bits de version + 11 bits de somme de contrôle = 65 bits, écrits en 13 symboles de 5 bits (alphabet sans I, O, 0, 1). Les symboles sont brouillés en chaîne pour qu'une erreur en modifie plusieurs.
+
+Version 0 (version 2.44) : le Grand Martinot (type 5). Champs propres : conditions, étape, graine, personnage, lieu, format, niveau, résultats sur 12 bits (`gres` : 0 à 4 tours gagnés par tournoi, 3 en double, vérifiés au décodage), trophées, double, partenaire, manette 2, puis 3 bits à zéro ; pas de surface (imposée) ni d'options. Les versions 1 à 3 ne changent pas.
 
 Formats (version sur 2 bits) : 2, ancien format à 16 personnages ; 3, format courant (surface × 5 + lieu sur 5 bits, niveau sur 2 bits) ; 1 (version 2.39), pour le château et le parc (lieux 5 et 6) : (surface × 7 + lieu) × 3 + niveau sur 7 bits. Les codes des 5 premiers lieux restent identiques. Personnage et partenaire sur 5 bits : jusqu'à 32 personnages (21 aujourd'hui).
 

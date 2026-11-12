@@ -83,6 +83,9 @@ static const char * const sound_name[3] = { "MUSIQUE + SONS", "BRUITAGES SEULS",
 static const char * const spin_name[3] = { "LIFTE", "COUPE", "LOB" };
 static const u8 count_val[3] = { 10, 20, 30 };
 
+static const char gm_title[] = "LE GRAND MARTINOT";
+/* nom de la compétition t (liste en banque 5) : copié dans comp_cn */
+static const char *cname(u8 t) { COMP(comp_cname, t); return comp_cn; }
 static u8 vis[NOPT];
 u8 nvis, cursor;     /* non statiques : lus par les tests */
 static u8 last_mode, demo_dbl;
@@ -102,7 +105,7 @@ static void build_visible(void)
         vis[nvis++] = O_P1;
         if (opt_val[O_TYPE]) { vis[nvis++] = O_P2; vis[nvis++] = O_CPART; }   /* partenaire */
         vis[nvis++] = O_LEVEL;
-        if (opt_val[O_COMP] != CT_SEASON) vis[nvis++] = O_SURF;
+        if (opt_val[O_COMP] != CT_SEASON && opt_val[O_COMP] != CT_GRAND) vis[nvis++] = O_SURF;   /* surfaces imposées */
         vis[nvis++] = O_ENV;
         vis[nvis++] = O_COND;
         vis[nvis++] = O_FMT;
@@ -154,7 +157,7 @@ static const char *opt_text(u8 o)
         return cond_name[v];
     case O_FMT:    return fmt_name[v];
     case O_REPLAY: return v ? "OUI" : "NON";
-    case O_COMP:   return comp_name[v];
+    case O_COMP:   return cname(v);
     case O_CSIZE:  return v ? "8" : "4";
     case O_CPROG:  return v ? "PROGRESSIFS" : "NIVEAU FIXE";
     case O_CVAR:   return v ? "VARIEES" : "IDENTIQUES";
@@ -311,12 +314,39 @@ static void menu_soft_tick(void)
     }
 }
 
+/* Bas du menu (rangées 24 à 27) : style de l'adversaire et aide des
+   touches ; en mode compétition, curseur sur la ligne COMPETITION :
+   explication de la compétition choisie (comp_desc, banque 5). Redessiné
+   une ligne par trame (budget VBlank) quand ce qu'il faut montrer change. */
+static u8 info_k, info_row;          /* réglés par menu_screen */
+static const char * const menu_help[3] = { "HAUT/BAS : CHOISIR", "GAUCHE/DROITE : MODIFIER", "START : JOUER   B : RETOUR" };
 static void menu_style_line(u8 direct)
 {
     u8 c = opt_val[O_MODE] == MODE_COMP || opt_val[O_MODE] == MODE_TRAIN ? opt_val[O_P1] : opt_val[O_P2];
+    if (info_k != 0xFF) return;          /* explication affichée */
     pad_text(style_name[char_style[c]], 14);
     if (direct) { txt_at(3, 24, "STYLE"); txt_at(9, 24, line); }
     else vbuf_text(9, 24, line, 14);
+}
+static void menu_info_tick(void)
+{
+    u8 want = (u8)(opt_val[O_MODE] == MODE_COMP && vis[cursor] == O_COMP ? opt_val[O_COMP] : 0xFF);
+    if (want != info_k) { info_k = want; info_row = 0; }
+    while (info_row < 4 && vram_len + 32 <= VBUF_MAX) {
+        if (info_k != 0xFF) {
+            COMP(comp_desc, (u8)(info_k * 4 + info_row));
+            vbuf_text(2, (u8)(24 + info_row), comp_l1, 28);
+        } else if (info_row == 0) {
+            pad_text(" STYLE", 28);
+            vbuf_text(2, 24, line, 28);
+            info_k = 0xFF;
+            menu_style_line(0);
+        } else {
+            pad_text(menu_help[info_row - 1], 28);
+            vbuf_text(2, (u8)(24 + info_row), line, 28);
+        }
+        ++info_row;
+    }
 }
 
 static void menu_screen(void)
@@ -327,10 +357,11 @@ static void menu_screen(void)
     screen_begin();
     txt_at(9, 1, "CONFIGURATION");
     for (i = 0; i < nvis; ++i) menu_draw_row(i, 1);
+    info_k = 0xFF; info_row = 4;
     menu_style_line(1);
-    txt_at(2, 25, "HAUT/BAS : CHOISIR");
-    txt_at(2, 26, "GAUCHE/DROITE : MODIFIER");
-    txt_at(2, 27, "START : JOUER   B : RETOUR");
+    txt_at(2, 25, menu_help[0]);
+    txt_at(2, 26, menu_help[1]);
+    txt_at(2, 27, menu_help[2]);
     pal_set_player(0, opt_val[O_P1]);
     pal_set_player(1, opt_val[O_P2]);
     ppu_on();
@@ -475,7 +506,7 @@ static void present_screen(void)
     }
     txt_at(9, 2, "ROYAL MARTINOT");
     if (last_mode == MODE_COMP) {
-        txt_at(4, 4, comp_name[c_type]);
+        txt_at(4, 4, cname(c_type));
         COMP(comp_stage_name, 0);
         txt_at(4, 5, comp_l1);
         txt_at(4, 6, comp_l2);
@@ -517,7 +548,7 @@ static void make_code(void)
 {
     pw.type = c_type; pw.stage = c_stage; pw.seed = c_seed; pw.chr = c_pl[0];
     pw.surf = c_surf; pw.fmt = c_fmt; pw.cond = c_cond; pw.env = c_env; pw.lvl = c_lvl;
-    pw.results = c_results; pw.opts = c_opts; pw.trophies = c_trophies;
+    pw.results = c_results; pw.opts = c_opts; pw.trophies = c_trophies; pw.gres = c_gres;
     pw.doubles = c_dbl; pw.partner = (u8)(c_dbl ? c_pl2[0] : 0); pw.hum2 = c_hum2;
     pw_s = code_buf; pw_p = &pw;
     (void)far_call(BANK_COMP, (void *)pw_enc_far, 0);
@@ -528,8 +559,8 @@ static void comp_screen(void)
 {
     u8 o;
     screen_begin();
-    txt_at(3, 1, "ROYAL MARTINOT");
-    txt_at(18, 1, comp_name[c_type]);
+    if (c_type == CT_GRAND) txt_at(3, 1, gm_title);
+    else { txt_at(3, 1, "ROYAL MARTINOT"); txt_at(18, 1, cname(c_type)); }
     COMP(comp_stage_name, 0);
     txt_at(3, 3, comp_l1);
     txt_at(3, 4, comp_l2);
@@ -571,14 +602,14 @@ static void comp_end_screen(void)
         bank_call(BANK_PODIUM, podium_build);
     } else {
         pal_set_player(0, c_pl[0]);
-        txt_at(3, 2, "ROYAL MARTINOT");
-        txt_at(18, 2, comp_name[c_type]);
+        if (c_type == CT_GRAND) txt_at(3, 2, gm_title);
+        else { txt_at(3, 2, "ROYAL MARTINOT"); txt_at(18, 2, cname(c_type)); }
         if (c_dbl) { team_label(c_pl[0], c_pl2[0], b); txt_at(3, 3, b); txt_at(9, 3, "(DOUBLE)"); }
-        if (c_type == CT_LEAGUE || c_type == CT_SEASON) {
+        if (c_type == CT_LEAGUE || c_type == CT_SEASON || c_type == CT_GRAND) {
             txt_at(5, 6, "CLASSEMENT FINAL :");
-            b[0] = (char)('0' + c_rank); b[1] = 'E'; b[2] = 0;
-            txt_at(24, 6, b);
-            c_stage = (u8)(c_type == CT_LEAGUE ? 5 : 12);
+            num2(b, c_rank); b[2] = 'E'; b[3] = 0;
+            txt_at(23, 6, b);
+            c_stage = (u8)(c_type == CT_LEAGUE ? 5 : c_type == CT_SEASON ? 12 : (c_dbl ? 12 : 16));
             COMP(comp_draw_table, 11);
         } else {
             txt_at(5, 6, rank_txt[c_rank > 5 ? 5 : c_rank]);
@@ -610,7 +641,7 @@ static void start_comp(void)
     c_type = opt_val[O_COMP];
     c_opts = (u8)((opt_val[O_CSIZE] ? CO_SIZE8 : 0) | (opt_val[O_CPROG] ? CO_PROG : 0) | (opt_val[O_CVAR] ? CO_VARIED : 0));
     c_lvl = opt_val[O_LEVEL];
-    c_surf = (u8)(opt_val[O_SURF] > 3 && c_type == CT_SEASON ? 0 : opt_val[O_SURF]);
+    c_surf = (u8)(opt_val[O_SURF] > 3 && (c_type == CT_SEASON || c_type == CT_GRAND) ? 0 : opt_val[O_SURF]);
     c_env = opt_val[O_ENV];
     c_cond = opt_val[O_COND];
     c_fmt = opt_val[O_FMT];
@@ -662,7 +693,7 @@ static void code_tick(void)
         if ((u8)far_call(BANK_COMP, (void *)pw_dec_far, 0)) {
             c_type = pw.type; c_stage = pw.stage; c_seed = pw.seed; c_pl[0] = pw.chr;
             c_surf = pw.surf; c_fmt = pw.fmt; c_cond = pw.cond; c_env = pw.env; c_lvl = pw.lvl;
-            c_results = pw.results; c_opts = pw.opts; c_trophies = pw.trophies;
+            c_results = pw.results; c_opts = pw.opts; c_trophies = pw.trophies; c_gres = pw.gres; c_slam = 0;
             c_dbl = pw.doubles; c_pl2[0] = pw.partner; c_hum2 = pw.hum2;
             if (c_trophies) nude_unlocked = 1;     /* un trophée débloque le club nudiste */
             COMP(comp_build, 0);
@@ -860,13 +891,13 @@ static void palmares_screen(void)
     } else if (pal_page == 1) {
         txt_at(3, 3, "MEILLEURS RESULTATS");
         for (i = 0; i < NCT; ++i) {
-            txt_at(3, (u8)(5 + i), comp_name[i]);
+            txt_at(3, (u8)(5 + i), cname(i));
             if (sv.comp_best[i]) txt_at(17, (u8)(5 + i), rank_txt[sv.comp_best[i] > 5 ? 5 : sv.comp_best[i]]);
             else txt_at(17, (u8)(5 + i), "-");
         }
         txt_at(3, 11, "HISTORIQUE");
         for (i = 0; i < sv.hist_n && i < 8; ++i) {
-            txt_at(3, (u8)(13 + i), comp_name[sv.hist[i][0]]);
+            txt_at(3, (u8)(13 + i), cname(sv.hist[i][0]));
             team_label(sv.hist[i][2], 255, line); txt_at(16, (u8)(13 + i), line);
             line[0] = (char)('0' + sv.hist[i][1]); line[1] = 'E'; line[2] = 0;
             txt_at(22, (u8)(13 + i), sv.hist[i][1] == 1 ? "1ER" : line);
@@ -986,6 +1017,7 @@ void screens_tick(void)
             break;
         }
         menu_soft_tick();
+        menu_info_tick();
         menu_sprites();
         break;
     case SS_PRESENT:
@@ -1008,7 +1040,7 @@ void screens_tick(void)
         if (pad1_new & (PAD_A | PAD_START)) {
             if (c_rank == 1) { ppu_off(); chr_reload(); }   /* tuiles du podium : motifs d'origine */
             /* saison gagnée : générique de fin, puis l'écran titre */
-            if (c_rank == 1 && c_type == CT_SEASON) { go_req = GO_CREDITS; break; }
+            if (c_rank == 1 && (c_type == CT_SEASON || c_type == CT_GRAND)) { go_req = GO_CREDITS; break; }
             title_screen();
             break;
         }

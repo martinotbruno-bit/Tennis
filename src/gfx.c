@@ -297,7 +297,7 @@ void team_label(u8 a, u8 b, char *out)
 }
 
 /* Noms des compétitions (banque fixe : lus par les écrans et le palmarès) */
-const char * const comp_name[5] = { "TOURNOI", "POULES", "CHAMPIONNAT", "SAISON", "PERSONNALISE" };
+/* comp_name : banque des écrans (screens.c) ; le podium a sa copie */
 
 /* spr_ball (balle et ombre) : en assembleur, src/sprp.s */
 

@@ -375,8 +375,8 @@ console.log('Compétitions');
 function playComp(type, opts, wins) {
   const e = boot(); startWith(e, Object.assign({ MODE: MODE.COMP, COMP: type, FMT: 3 }, opts));
   let matches = 0, code = '';
-  const CN = ['TOURNOI', 'POULES', 'CHAMPIONNAT', 'SAISON', 'PERSONNALISE'][type];
-  check(scr(e) === SS.COMP && e.text(18, 1, CN.length) === CN, `${CN} : écran d'étape (titre lisible)`);
+  const CN = ['TOURNOI', 'POULES', 'CHAMPIONNAT', 'SAISON', 'PERSONNALISE', 'GRAND MARTINOT'][type];
+  check(scr(e) === SS.COMP && (type === 5 ? e.text(3, 1, 17) === 'LE GRAND MARTINOT' : e.text(18, 1, CN.length) === CN), `${CN} : écran d'étape (titre lisible)`);
   while (scr(e) === SS.COMP && matches < 20) {
     if (matches === 1) code = e.text(10, 21, 15).replace(/ /g, '');
     e.tap('A'); runUntil(e, () => scr(e) === SS.PRESENT, 60); e.run(3); e.tap('A'); e.run(30);
@@ -388,6 +388,32 @@ function playComp(type, opts, wins) {
     e.tap('A'); e.run(40);
   }
   return { e, matches, code };
+}
+{
+  // le Grand Martinot : 4 tournois de 16 (huitièmes, quarts, demis, finale),
+  // dur, terre battue, gazon, dur ; les 16 matchs gagnés : Grand Chelem
+  const g = boot(); startWith(g, { MODE: MODE.COMP, COMP: 5, FMT: 3 });
+  check(scr(g) === SS.COMP && g.peek('c_n') === 16 && g.text(3, 3, 18) === "OPEN D'AUGUSTRALIE" && g.text(3, 4, 18) === 'HUITIEME DE FINALE',
+    `Grand Martinot : 16 joueurs, « ${g.text(3, 3, 18)} », ${g.text(3, 4, 18)}`);
+  const names = new Set(); for (let i = 0; i < 16; i++) names.add(g.peek('c_pl', i));
+  check(names.size === 16, `Grand Martinot : 16 joueurs différents`);
+  const { e, matches } = playComp(5, {}, () => true);
+  for (let k = 0; k < 5 && scr(e) !== SS.COMP_END; k++) { e.tap('A'); e.run(60); }
+  e.run(30);
+  const podTxt = [...Array(30).keys()].map((y) => e.text(0, y, 32)).join('|');
+  check(matches === 16 && scr(e) === SS.COMP_END && e.peek('c_rank') === 1 && e.peek('c_slam') === 1 && podTxt.includes('GRAND CHELEM !') && podTxt.includes('LE GRAND MARTINOT'),
+    `Grand Martinot : 16 matchs gagnés, Grand Chelem et podium (${matches} matchs)`);
+  // en double : 8 équipes ; une défaite ne termine que le tournoi en cours
+  const r = playComp(5, { TYPE: 1, P2: 3 }, (m) => m !== 1);
+  check(r.e.peek('c_n') === 8 && r.matches === 11 && r.e.peek('c_slam') === 0 && scr(r.e) === SS.COMP_END,
+    `Grand Martinot en double : 8 équipes, défaite en demi au 1er tournoi puis 3 tournois (${r.matches} matchs), pas de Grand Chelem`);
+  // menu : explication de la compétition sous le curseur
+  const m = boot(); toMenu(m); setOpts(m, { MODE: MODE.COMP, COMP: 5 }); m.tap('B'); m.run(30); toMenu(m); m.run(10);
+  m.poke('cursor', rowOf(m, O.COMP)); m.run(8);
+  const h = m.text(2, 24, 28).trim(), h4 = m.text(2, 27, 28).trim();
+  m.poke('cursor', rowOf(m, O.P1)); m.run(8);
+  check(h.startsWith('4 TOURNOIS DE 16') && h4.includes('CHELEM') && m.text(3, 24, 5) === 'STYLE' && m.text(2, 25, 8) === 'HAUT/BAS',
+    `menu : explication de la compétition (« ${h} »), puis style et aide`);
 }
 {
   const { e, matches, code } = playComp(0, {}, () => true);

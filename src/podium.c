@@ -235,13 +235,16 @@ void podium_build(void)
     /* textes centrés */
     for (i = 0; i < 15; ++i) b[i] = "ROYAL MARTINOT "[i];
     {
-        const char *n = comp_name[c_type];
+        static const char * const pod_name[NCT] = { "TOURNOI", "POULES", "CHAMPIONNAT", "SAISON", "PERSONNALISE", "GRAND MARTINOT" };
+        const char *n = pod_name[c_type];
         u8 k = 15;
         while (*n && k < 15 + 12) b[k++] = *n++;
         b[k] = 0;
     }
-    txt_c(2, b);
-    txt_c(4, c_type == CT_LEAGUE || c_type == CT_SEASON ? "CHAMPION !" : "VAINQUEUR !");
+    if (c_type == CT_GRAND) txt_c(2, "LE GRAND MARTINOT"); else txt_c(2, b);
+    /* Grand Martinot : les 4 tournois gagnés, c'est le Grand Chelem */
+    txt_c(4, c_type == CT_GRAND && c_slam ? "GRAND CHELEM !" :
+             c_type == CT_LEAGUE || c_type == CT_SEASON || c_type == CT_GRAND ? "CHAMPION !" : "VAINQUEUR !");
     for (i = 0; i < 11; ++i) b[i] = "TROPHEES : "[i];
     num2(b + 11, c_trophies); b[13] = 0;
     txt_c(5, b);
