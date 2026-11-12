@@ -23,7 +23,7 @@ pj_hi:   .res 1
 .segment "CODE"
 .export _spr_person
 .export _run_x, _run_y, _run_dir, _run_pose
-.import _row1_ovr
+.import _row1_ovr, _view_x
 .import _spr_meta, _oam_buf
 .importzp _meta_x, _meta_y, _meta_tile, _meta_attr, _meta_t1, _meta_t2, _oam_i
 .import _person_map_m, _person_map_f, _person_row, _prof_map, _char_female
@@ -87,6 +87,8 @@ _spr_person:
     sta ppose
     iny
     lda (sp),y
+    ldx pj_sg               ; séquences : vue inversée (de dos quand le
+    eor _view_x,x           ; joueur s'éloigne, de face quand il vient)
     sta pfront
     iny
     lda (sp),y

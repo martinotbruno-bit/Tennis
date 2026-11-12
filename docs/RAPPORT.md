@@ -1,10 +1,17 @@
-# Royal Martinot — Rapport de réalisation (version 2.53)
+# Royal Martinot — Rapport de réalisation (version 2.54)
 
 Comme l'exige le CDC (§ 17.5), ce rapport distingue ce qui est **réalisé**, **testé**, **validé sur matériel réel**, **validé uniquement en émulation**, **dépendant d'une extension**, et les **limitations restantes**.
 
 > **Validation matérielle : aucune.** Aucun test n'a été fait sur console réelle (NES, Famicom, PAL, cartouche MMC1). Toutes les validations ont eu lieu en émulation (jsnes) et par des tests unitaires sur PC. Les critères « vérifié sur console physique » (CDC § 2.1, 15.4, 16.A) **ne sont pas remplis**. Ce point ne peut pas être traité dans l'environnement de développement utilisé.
 
 ## 1. Évolutions
+
+### Version 2.54
+
+| Demande | Réalisation |
+|---|---|
+| En entrant sur le court, le joueur qui va au fond marche à reculons | Pendant les séquences (entrée, changement de côté, marche vers le filet), un joueur qui s'éloigne vers le haut est maintenant vu de dos, et un joueur qui vient vers le bas est vu de face ; en marche latérale, il est de profil. Une fois arrivé, il reprend la vue de son côté du court (`view_x`, lu par spr_person) |
+| Un vrai tirage au sort : l'arbitre attribue au hasard pile ou face à chaque joueur, lance la pièce, puis donne le résultat | Le bandeau annonce d'abord ce que l'arbitre attribue (« ALEX : FACE », « MAYA : PILE », au hasard), la pièce est lancée, puis le résultat tombe (« FACE ! ALEX SERT ») : le gagnant du tirage sert le premier jeu. Le serveur du premier jeu étant déjà tiré au hasard au début du match, la pièce tombe sur le côté attribué à ce joueur : résultat et service sont toujours cohérents |
 
 ### Version 2.53
 

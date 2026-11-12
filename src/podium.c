@@ -479,7 +479,7 @@ extern u8 oam_i;
 static const u8 conf_x[10] = { 20, 52, 84, 116, 148, 180, 212, 236, 36, 132 };
 static const u8 conf_v[10] = { 1, 2, 1, 3, 2, 1, 2, 3, 2, 1 };
 static const u8 conf_y0[10] = { 16, 39, 62, 85, 108, 131, 154, 177, 200, 23 };
-#pragma bss-name(push, "WBSS")
+#pragma bss-name(push, "SAVEDATA")    /* (RAM de cartouche libre, non sauvegardée : remis à zéro à chaque levée de coupe) */
 static u8 conf_y[10];
 #pragma bss-name(pop)
 /* 4 x 4 sprites (coupe) ou 4 x 6 (joueur) à partir de l'entrée o de l'OAM */

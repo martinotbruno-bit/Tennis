@@ -56,7 +56,7 @@ u8 cer, cer_skip, pose_force[4];
 u16 cer_t;
 static s16 tx[4], ty[4], sx[4], sy[4], wx[4];
 static u8 stage[4], toss_res, qx, qy;
-static char nm[5], who[12];
+static char nm[5], who[14], who2[14];
 #pragma bss-name(pop)
 
 extern u8 pl_walk[4], pl_moving[4], npl, msg_timer;
@@ -69,10 +69,11 @@ extern u8 proj_x, proj_y;
 
 static const u8 run4[4] = { P_RUN1, P_RUN3, P_RUN2, P_RUN4 };
 
+extern u8 view_x[4];              /* extras.c : vue (face / dos) inversée par sprp.s */
 static void all_free(void)
 {
     u8 p;
-    for (p = 0; p < 4; ++p) { pose_force[p] = 0xFF; pl_moving[p] = 0; }
+    for (p = 0; p < 4; ++p) { pose_force[p] = 0xFF; pl_moving[p] = 0; view_x[p] = 0; }
 }
 
 /* un pas vers (gx, gy) : 2 px par trame au plus sur chaque axe ; 1 si arrivé */
@@ -83,8 +84,12 @@ static u8 step_to(u8 p, s16 gx, s16 gy)
     if (dx > 128) dx = 128; else if (dx < -128) dx = -128;
     if (dy > 128) dy = 128; else if (dy < -128) dy = -128;
     plx[p] += dx; ply[p] += dy;
-    if (!dx && !dy) { pl_moving[p] = 0; return 1; }
+    if (!dx && !dy) { pl_moving[p] = 0; view_x[p] = 0; return 1; }
     pl_moving[p] = 1;
+    /* vu de dos quand il s'éloigne (vers le haut), de face quand il vient
+       vers nous (sinon le joueur qui monte au fond marchait à reculons) ;
+       en marche latérale, la vue ne change pas */
+    if (dy) view_x[p] = (u8)((dy > 0) ^ (((p & 1) ^ sc_swap) != 0));
     ++pl_walk[p];
     if (dx < 0) f = FLIP;
     pose_force[p] = (u8)(run4[(pl_walk[p] >> 3) & 3] | f);
@@ -170,6 +175,18 @@ void cer_end(void)
 }
 
 /* ---------------------------------------------------------------------- */
+/* « ALEX : PILE » : nom de l'équipe t et ce que l'arbitre lui attribue */
+static void name_side(u8 t, char *out)
+{
+    u8 i;
+    const char *w = (u8)(toss_res ^ t) ? "FACE" : "PILE";
+    team_name(t, nm); nm[4] = 0;
+    for (i = 0; i < 4 && nm[i]; ++i) out[i] = nm[i];
+    out[i++] = ' '; out[i++] = ':'; out[i++] = ' ';
+    while (*w) out[i++] = *w++;
+    out[i] = 0;
+}
+
 void cer_tick(void)
 {
     u8 p, done = 1, win, top;
@@ -193,16 +210,25 @@ void cer_tick(void)
         /* salut : raquette levée, agitée */
         for (p = 0; p < npl; ++p) pose_force[p] = (u8)((cer_t >> 3) & 1 ? P_SERVE : P_IDLE);
         if (cer_t >= 48) { cer = CER_TOSS; cer_t = 0; all_free(); for (p = 0; p < npl; ++p) pose_force[p] = P_IDLE; toss_res = (u8)(rand8() & 1); }
+        /* toss_res : ce que l'arbitre attribue à l'équipe 0 (0 pile, 1 face) */
         break;
     case CER_TOSS:
-        if (cer_t == 44) {
+        /* tirage au sort : l'arbitre attribue pile ou face à chaque joueur
+           (au hasard), lance la pièce, et annonce le résultat ; le gagnant
+           sert (le premier serveur, tiré au hasard au début du match : la
+           pièce tombe du côté qu'on lui a attribué) */
+        if (cer_t == 1) {
+            name_side(0, who); name_side(1, who2);
+            set_msg(who, who2, 64);
+        }
+        if (cer_t == 104) {
             team_name(sc_server, nm); nm[4] = 0;
             for (p = 0; p < 4 && nm[p]; ++p) who[p] = nm[p];
             who[p++] = ' '; who[p++] = 'S'; who[p++] = 'E'; who[p++] = 'R'; who[p++] = 'T'; who[p] = 0;
-            set_msg(toss_res ? "PILE !" : "FACE !", who, 70);
+            set_msg((u8)(toss_res ^ sc_server) ? "FACE !" : "PILE !", who, 70);
             sfx_clap();
         }
-        if (cer_t >= 110) { all_free(); cer = 0; }
+        if (cer_t >= 175) { all_free(); cer = 0; }
         break;
     case CER_CHAIR:
         for (p = 0; p < npl; ++p)
@@ -285,9 +311,9 @@ void cer_front(void)
 void cer_draw(void)
 {
     u8 p, h, t;
-    if (cer == CER_TOSS && cer_t < 44) {
+    if (cer == CER_TOSS && cer_t >= 60 && cer_t < 104) {
         /* pièce lancée par l'arbitre : monte, retombe, tourne */
-        t = (u8)cer_t;
+        t = (u8)(cer_t - 60);
         h = (u8)((t * (u8)(44 - t)) >> 4);
         spr1(44, (u8)(110 - h), (u8)(ball_base + ((t >> 2) & 1 ? 12 : 8)), 2);   /* pile (grande balle) / tranche (balle écrasée) */
     }

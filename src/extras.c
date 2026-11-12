@@ -153,6 +153,7 @@ u8 ump_princess;                 /* 1 : arbitre princesse (court Margaux), lu pa
 #pragma bss-name(push, "WBSS")
 u8 swap_on, swap_nude;              /* jeu chargé et complet (0 : en cours) ; tenues au naturel */
 u8 row1_ovr[4];                     /* buste « bras caché » du joueur vu de dos (slot_tick, cer.c), 0 : aucun */
+u8 view_x[4];                       /* 1 : vue de face et de dos inversée (séquences : marche, cer.c) */
 static u8 swap_want, swap_pos;
 u16 swp_dst;                        /* destination de swap_put (crt0.s) */
 #pragma bss-name(pop)
@@ -176,6 +177,7 @@ static void swap_sync(u8 set)
 void swap_restore(void)
 {
     row1_ovr[0] = row1_ovr[1] = row1_ovr[2] = row1_ovr[3] = 0;   /* écrans : dessins communs */
+    view_x[0] = view_x[1] = view_x[2] = view_x[3] = 0;
     if (swap_on == 1 && !swap_nude) return;
     swap_nude = 0;
     swap_sync(1);

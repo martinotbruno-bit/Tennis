@@ -1797,15 +1797,25 @@ console.log('Séquences animées du match');
     const e = boot(); e.cerSkip = false; toMenu(e); e.poke('opt_val', view, 24); setOpts(e, { FMT: 3, SURF: 1 }); e.tap('START'); e.run(10); e.tap('A');
     runUntil(e, () => app(e) === AS.MATCH, 300); e.run(2);
     const start = pos(e, 0);
-    let wave = false, toss = '', coin = false;
-    for (let f = 0; f < 500 && e.peek('cer'); f++) {
+    let wave = false, toss = '', coin = false, calls = '', upBack = false;
+    const msg2 = () => { let t = ''; for (let i = 0; i < 14; i++) t += String.fromCharCode(e.peek('msg2', i)); return t.trim(); };
+    for (let f = 0; f < 600 && e.peek('cer'); f++) {
+      const y0 = e.peekS16('ply', 2);
       e.run(1);
+      // le joueur du haut qui s'éloigne (vers le haut) est vu de dos
+      if (e.peek('cer') === 1 && e.peekS16('ply', 2) < y0 && e.peek('view_x', 1) === 1) upBack = true;
+      if (/ : (PILE|FACE)$/.test(msg(e)) && / : (PILE|FACE)$/.test(msg2())) calls = msg(e) + ' / ' + msg2();
       if (e.peek('pose_force', 0) === 5) wave = true;
       if (e.peek('cer') === 3 && (oamHas(e, e.peek('ball_base') + 8) || oamHas(e, e.peek('ball_base') + 12))) coin = true;
       if (/^(PILE|FACE) !$/.test(msg(e))) toss = msg(e);
     }
-    check(e.peek('cer') === 0 && start[0] === 216 && start[1] >= 230 && wave && coin && toss !== '' && JSON.stringify([pos(e, 0), pos(e, 1)]) === JSON.stringify(want) && e.peek('ms') === 0,
-      `${v} : entrée depuis le tunnel ${JSON.stringify(start)}, salut, pièce de l'arbitre, « ${toss} », puis chacun à sa place ${JSON.stringify(want)}`);
+    check(e.peek('cer') === 0 && start[0] === 216 && start[1] >= 230 && wave && upBack && JSON.stringify([pos(e, 0), pos(e, 1)]) === JSON.stringify(want) && e.peek('ms') === 0,
+      `${v} : entrée depuis le tunnel ${JSON.stringify(start)}, le joueur du fond vu de dos en s'éloignant, salut, puis chacun à sa place ${JSON.stringify(want)}`);
+    // tirage au sort : pile ou face attribués aux deux joueurs, la pièce, puis
+    // le résultat ; le gagnant (celui à qui on a attribué le côté sorti) sert
+    const srvName = calls.split(' / ')[e.peek('sc_server')] ?? '';
+    check(coin && calls !== '' && toss !== '' && srvName.endsWith(toss.replace(' !', '')),
+      `${v} : tirage au sort (« ${calls} », puis « ${toss} ») : le gagnant sert`);
   }
   {
     // A passe l'entrée : chacun à sa place tout de suite
