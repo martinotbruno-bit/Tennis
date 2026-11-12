@@ -153,14 +153,16 @@ def body(f, j, female, face, front=('armR', 'legL'), racket_hand='L', racket_dir
         hip, kn, an, toe = j['hip' + side], j['kn' + side], j['an' + side], j['toe' + side]
         if female:
             # jambe fine et galbée, sans relief musculaire
-            thigh = f.m_caps(hip, kn, 8.8, 4.8)
+            thigh = f.m_caps(hip, kn, 8.0, 4.8)
             cm = lerp(kn, an, 0.32)
             calf = f.m_caps(kn, cm, 4.5, 5.5) | f.m_caps(cm, lerp(cm, an, 0.55), 5.5, 3.9) | f.m_caps(lerp(cm, an, 0.55), an, 3.9, 2.9)
             g = f.part(thigh | calf, S, s, sh=(2, 1))
+            ret['leg' + side] = g
         else:
             thigh = f.m_caps(hip, kn, 9.5, 7)
             calf = f.m_caps(kn, lerp(kn, an, 0.35), 7, 6.3) | f.m_caps(lerp(kn, an, 0.35), an, 6.3, 4.0)
             g = f.part(thigh | calf, S, s, sh=(3, 1))
+            ret['leg' + side] = g
             d = (an[0] - kn[0], an[1] - kn[1]); L = math.hypot(*d) or 1; u = (d[0] / L, d[1] / L); n = (-u[1], u[0])
             c = (kn[0] + u[0] * 2.5, kn[1] + u[1] * 2.5)
             f.paint(f.m_line([(c[0] - n[0] * 3, c[1] - n[1] * 3), (c[0] + u[0] * 1.2, c[1] + u[1] * 1.2), (c[0] + n[0] * 3, c[1] + n[1] * 3)], 0.7), 2, within=[g])   # rotule
@@ -234,7 +236,7 @@ def body(f, j, female, face, front=('armR', 'legL'), racket_hand='L', racket_dir
         # cou (ombre sous le menton)
         hd = j['head']; tl = j.get('tilt', 0.0)
         chin = (hd[0] - math.sin(tl) * 6, hd[1] + math.cos(tl) * 6)                # sous le menton, dans l'axe de la tête
-        nid = f.part(f.m_caps(nk, chin, (4.6 if female else 5.4), (4.2 if female else 5.2)), S, s, sh=(2.5, 0))
+        nid = f.part(f.m_caps(nk, chin, (4.6 if female else 6.0), (4.2 if female else 5.8)), S, s, sh=(2.5, 0))
         f.paint(f.m_ell((chin[0], chin[1] + 1.5), 5.2, 2.6), 2, within=[nid])          # ombre sous le menton
         ch_l = lerp(shL, hpL, 0.36); ch_r = lerp(shR, hpR, 0.36)
         wl = lerp(shL, hpL, 0.68); wr = lerp(shR, hpR, 0.68)
@@ -247,7 +249,7 @@ def body(f, j, female, face, front=('armR', 'legL'), racket_hand='L', racket_dir
             def side(sh_, hp_, sx):
                 P_ = lambda t, dx: (lerp(sh_, hp_, t)[0] + sx * dx, lerp(sh_, hp_, t)[1])
                 return [P_(0.15, -1), P_(0.25, 1.6), P_(0.33, 2.2), P_(0.41, 1.4), P_(0.5, -0.4),
-                        P_(0.6, -2.0), P_(0.7, -2.6), P_(0.8, -1.6), (hp_[0] + sx * 3, hp_[1] - 6)]
+                        P_(0.6, -2.0), P_(0.7, -2.0), P_(0.8, 1.5), (hp_[0] + sx * 9.6, hp_[1] - 8), (hp_[0] + sx * 10.5, hp_[1] - 3)]
             pts = [(shL[0] + 2, shL[1] - 3), (nk[0] - 5, nk[1] + 2), (nk[0] - 3.5, nk[1] + 7), (nk[0], nk[1] + 9),
                    (nk[0] + 3.5, nk[1] + 7), (nk[0] + 5, nk[1] + 2), (shR[0] - 2, shR[1] - 3), (shR[0] + 1, shR[1] + 3)]
             pts += side(shR, hpR, 1) + list(reversed(side(shL, hpL, -1))) + [(shL[0] - 1, shL[1] + 3)]
@@ -269,21 +271,23 @@ def body(f, j, female, face, front=('armR', 'legL'), racket_hand='L', racket_dir
         for side, sx in (('L', -1), ('R', 1)):
             hp, kn = j['hip' + side], j['kn' + side]
             d = (kn[0] - hp[0], kn[1] - hp[1]); L = math.hypot(*d) or 1; u = (d[0] / L, d[1] / L); n = (-u[1], u[0])
-            if n[0] * sx < 0: n = (-n[0], -n[1])
             e = lerp(hp, kn, 0.48)
-            q = [(hp[0] + n[0] * 12, hp[1] + n[1] * 12 - 3), (e[0] + n[0] * 12.5, e[1] + n[1] * 12.5),
-                 (e[0] - n[0] * 11, e[1] - n[1] * 11), (hp[0] - n[0] * 9, hp[1] - n[1] * 9)]
-            m |= f.m_poly(q)
-            hems.append((q[1], q[2]))
+            leg_ = f.m_caps((hp[0] - u[0] * 4, hp[1] - u[1] * 4), e, 11.2, 11.6)
+            keep = f.m_poly([(e[0] + n[0] * 40, e[1] + n[1] * 40), (e[0] - n[0] * 40, e[1] - n[1] * 40),
+                             (e[0] - n[0] * 40 - u[0] * 90, e[1] - n[1] * 40 - u[1] * 90),
+                             (e[0] + n[0] * 40 - u[0] * 90, e[1] + n[1] * 40 - u[1] * 90)])
+            m |= leg_ & keep
+            hems.append(((e[0] + n[0] * 11, e[1] + n[1] * 11), (e[0] - n[0] * 11, e[1] - n[1] * 11), u))
         sid = f.part(m, D, None)
-        for (a_, b_) in hems:
-            f.paint(f.m_line([(a_[0] + (b_[0] - a_[0]) * 0.05, a_[1] - 2.2), (b_[0] - (b_[0] - a_[0]) * 0.05, b_[1] - 2.2)], 0.6), 0, within=[sid])   # ourlet
-        f.paint(f.m_line([(lerp(hpL, hpR, 0.5)[0], hpL[1] - 1), (lerp(hpL, hpR, 0.5)[0], hpL[1] + 6)], 0.7), 0, within=[sid])        # entrejambe
+        for (a_, b_, u_) in hems:
+            f.paint(f.m_line([(a_[0] - u_[0] * 2.2, a_[1] - u_[1] * 2.2), (b_[0] - u_[0] * 2.2, b_[1] - u_[1] * 2.2)], 0.6), 0, within=[sid])   # ourlet
+        cr = lerp(hpL, hpR, 0.5)
+        f.paint(f.m_line([(cr[0], cr[1] + 2), lerp(cr, lerp(lerp(hpL, j['knL'], 0.48), lerp(hpR, j['knR'], 0.48), 0.5), 1.0)], 0.9), 0, within=[sid])   # entrejambe
         # polo, porté par-dessus le short
         top_l = (shL[0] - 2, shL[1] - 5); top_r = (shR[0] + 2, shR[1] - 5)
         pts = [top_l, (nk[0] - 6, nk[1] - 1), (nk[0] + 6, nk[1] - 1), top_r, (shR[0] + 5, shR[1] + 2),
-               (ch_r[0] + 2, ch_r[1]), (wr[0] + 1, wr[1]), (hpR[0] + 5, hpR[1] - 1),
-               (hpL[0] - 5, hpL[1] - 1), (wl[0] - 1, wl[1]), (ch_l[0] - 2, ch_l[1]), (shL[0] - 5, shL[1] + 2)]
+               (ch_r[0] + 2, ch_r[1]), (wr[0] + 1, wr[1]), (hpR[0] + 6, hpR[1] - 6),
+               (hpL[0] - 6, hpL[1] - 6), (wl[0] - 1, wl[1]), (ch_l[0] - 2, ch_l[1]), (shL[0] - 5, shL[1] + 2)]
         tm = f.m_poly(pts)
         tid = f.part(tm, O, o, sh=(5, 2))
         f.paint(tm & ~shift_mask(f, (0, -1.5), tm) & shift_mask(f, (0, 8), tm) | (tm & ~shift_mask(f, (0, -1.5), tm) & ~shift_mask(f, (0, 30), tm)), 4, within=[tid])   # ourlet du polo
@@ -315,7 +319,9 @@ def body(f, j, female, face, front=('armR', 'legL'), racket_hand='L', racket_dir
         hem_r = (hr[0] + nr[0] * 13, hr[1] + nr[1] * 13 + 1)
         sk = hull([(top_l[0] + 2, top_l[1]), (top_r[0] - 2, top_r[1]),
                    (hpL[0] - 10, hpL[1]), (hpR[0] + 10, hpR[1]), hem_l, hem_r,
-                   (hl[0] - nl[0] * 6, hl[1] + 4), (hr[0] - nr[0] * 6, hr[1] + 4)])
+                   (hl[0] - nl[0] * 6, hl[1] + 4), (hr[0] - nr[0] * 6, hr[1] + 4)]
+                  + [(hp_[0] + math.cos(math.radians(a_)) * 10, hp_[1] + math.sin(math.radians(a_)) * 10)
+                     for hp_ in (hpL, hpR) for a_ in range(-30, 211, 30)])
         sm = f.m_poly(sk)
         sid = f.part(sm, O, o, sh=(3, 1), group=tid)
         # plis : du haut de la jupe vers l'ourlet, en éventail
@@ -367,6 +373,9 @@ def body(f, j, female, face, front=('armR', 'legL'), racket_hand='L', racket_dir
         face_features(f, ex, ey, face, hid, tilt, female, hs)
 
     order = list(j['order'])
+    # le buste (et le short ou la robe) passe devant le haut des deux cuisses
+    order.remove('torso')
+    order.insert(max(order.index('legL'), order.index('legR')) + 1, 'torso')
     if female:
         last = max(order.index(k_) for k_ in ('torso', 'legL', 'legR'))
         order.insert(last + 1, 'skirt')
@@ -504,12 +513,15 @@ def skeleton(p, female):
     add = lambda a, b: (a[0] + b[0], a[1] + b[1])
     P = p['pelvis']
     at = p['torso']
-    tl = SEG['torso'] * p.get('torso_len', 1.0)
+    # homme : plus grand (environ 7,75 têtes), membres plus longs
+    G = dict(SEG) if female else dict(torso=SEG['torso'] * 1.05, neck=SEG['neck'], thigh=SEG['thigh'] * 1.06,
+                                       shin=SEG['shin'] * 1.06, upper=SEG['upper'] * 1.06, fore=SEG['fore'] * 1.06)
+    tl = G['torso'] * p.get('torso_len', 1.0)
     neck = add(P, dvec(at, tl))
     perp = dvec(at + 90, 1.0)                      # vers la droite de l'écran (buste vertical)
     if perp[0] < 0: perp = (-perp[0], -perp[1])
     sw = 13.5 if female else 19.0                  # demi-largeur des épaules (articulations)
-    hw = 11.0 if female else 10.0                  # demi-largeur des hanches
+    hw = 11.0 if female else 7.5                   # demi-largeur des hanches (homme : 1,5 tête avec les cuisses)
     shc = add(neck, dvec(at + 180, 3.5))
     j = dict(neck=neck, head=add(neck, dvec(at + p.get('head_bend', 0), SEG['neck'])),
              tilt=p.get('tilt', 0.0), turn=p.get('turn', 0.0), order=p['order'])
@@ -519,14 +531,19 @@ def skeleton(p, female):
     j['hipR'] = (P[0] + perp[0] * hw, P[1] + perp[1] * hw)
     for sd in ('L', 'R'):
         th, sn, tdir = p['leg' + sd]
-        kn = add(j['hip' + sd], dvec(th, SEG['thigh']))
-        an = add(kn, dvec(sn, SEG['shin']))
+        kn = add(j['hip' + sd], dvec(th, G['thigh']))
+        an = add(kn, dvec(sn, G['shin']))
         j['kn' + sd], j['an' + sd] = kn, an
         j['toe' + sd] = add(an, dvec(tdir, 12))
         ua, fa = p['arm' + sd]
-        el = add(j['sh' + sd], dvec(ua, SEG['upper']))
-        wr = add(el, dvec(fa, SEG['fore']))
+        el = add(j['sh' + sd], dvec(ua, G['upper']))
+        wr = add(el, dvec(fa, G['fore']))
         j['el' + sd], j['wr' + sd], j['hd' + sd] = el, wr, add(wr, dvec(fa, 5))
+    # pieds posés au sol : la cheville la plus basse en y = 200
+    dy = 200 - max(j['anL'][1], j['anR'][1])
+    for k_, v in list(j.items()):
+        if isinstance(v, tuple):
+            j[k_] = (v[0], v[1] + dy)
     return j
 
 
@@ -584,6 +601,8 @@ def render(pose, female, k, center):
     f = Fig(W, H, k, cx - 128 / k, oy)
     r = body(f, skeleton(P['s'], female), female, P['face'], racket_hand=P['hand'], racket_dir=P['rdir'], racket_len=P['rlen'])
     f.outline()
+    f.leg_ids = [r[k_] for k_ in ('legL', 'legR') if k_ in r]
+    f.joints = skeleton(P['s'], female)
     r = {key: f.T(v) for key, v in r.items() if isinstance(v, tuple)}
     return f, r
 
