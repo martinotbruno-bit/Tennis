@@ -144,15 +144,22 @@ def body(f, j, female, face, front=('armR', 'legL'), racket_hand='L', racket_dir
 
     def leg(side):
         hip, kn, an, toe = j['hip' + side], j['kn' + side], j['an' + side], j['toe' + side]
-        thigh = f.m_caps(hip, kn, 9.5 * LW, 7 * LW)
-        calf = f.m_caps(kn, lerp(kn, an, 0.35), 7 * LW, 6.3 * LW) | f.m_caps(lerp(kn, an, 0.35), an, 6.3 * LW, 4.0 * LW)
-        g = f.part(thigh | calf, S, s, sh=(3, 1))
-        d = (an[0] - kn[0], an[1] - kn[1]); L = math.hypot(*d) or 1; u = (d[0] / L, d[1] / L); n = (-u[1], u[0])
-        c = (kn[0] + u[0] * 2.5, kn[1] + u[1] * 2.5)
-        f.paint(f.m_line([(c[0] - n[0] * 3, c[1] - n[1] * 3), (c[0] + u[0] * 1.2, c[1] + u[1] * 1.2), (c[0] + n[0] * 3, c[1] + n[1] * 3)], 0.7), 2, within=[g])   # rotule
-        f.paint(f.m_line([lerp(kn, an, 0.12), lerp(kn, an, 0.45)], 0.7) & shift_mask(f, (2.5, 0), calf), 2, within=[g])  # mollet
+        if female:
+            # jambe fine et galbée, sans relief musculaire
+            thigh = f.m_caps(hip, kn, 8.8, 4.8)
+            cm = lerp(kn, an, 0.32)
+            calf = f.m_caps(kn, cm, 4.5, 5.5) | f.m_caps(cm, lerp(cm, an, 0.55), 5.5, 3.9) | f.m_caps(lerp(cm, an, 0.55), an, 3.9, 2.9)
+            g = f.part(thigh | calf, S, s, sh=(2, 1))
+        else:
+            thigh = f.m_caps(hip, kn, 9.5, 7)
+            calf = f.m_caps(kn, lerp(kn, an, 0.35), 7, 6.3) | f.m_caps(lerp(kn, an, 0.35), an, 6.3, 4.0)
+            g = f.part(thigh | calf, S, s, sh=(3, 1))
+            d = (an[0] - kn[0], an[1] - kn[1]); L = math.hypot(*d) or 1; u = (d[0] / L, d[1] / L); n = (-u[1], u[0])
+            c = (kn[0] + u[0] * 2.5, kn[1] + u[1] * 2.5)
+            f.paint(f.m_line([(c[0] - n[0] * 3, c[1] - n[1] * 3), (c[0] + u[0] * 1.2, c[1] + u[1] * 1.2), (c[0] + n[0] * 3, c[1] + n[1] * 3)], 0.7), 2, within=[g])   # rotule
+            f.paint(f.m_line([lerp(kn, an, 0.12), lerp(kn, an, 0.45)], 0.7) & shift_mask(f, (2.5, 0), calf), 2, within=[g])  # mollet
         # chaussette et chaussure
-        sock = f.m_caps(lerp(an, kn, 0.18), an, 4.6, 4.6)
+        sock = f.m_caps(lerp(an, kn, 0.14 if female else 0.18), an, 3.8 if female else 4.6, 3.8 if female else 4.6)
         f.part(sock, W, None, group=g)
         d = (toe[0] - an[0], toe[1] - an[1])
         L = math.hypot(*d) or 1
@@ -230,32 +237,64 @@ def body(f, j, female, face, front=('armR', 'legL'), racket_hand='L', racket_dir
             pts = [(shL[0] + 2, shL[1] - 3), (nk[0] - 5, nk[1] + 2), (nk[0] - 3.5, nk[1] + 7), (nk[0], nk[1] + 9),
                    (nk[0] + 3.5, nk[1] + 7), (nk[0] + 5, nk[1] + 2), (shR[0] - 2, shR[1] - 3), (shR[0] + 1, shR[1] + 3),
                    (lerp(shR, hpR, 0.2)[0] - 1, lerp(shR, hpR, 0.2)[1]), (ch_r[0] + 1.5, ch_r[1]),
-                   (wr[0] - 2.5, wr[1]), (hpR[0] + 2, hpR[1] - 6),
-                   (hpL[0] - 2, hpL[1] - 6), (wl[0] + 2.5, wl[1]), (ch_l[0] - 1.5, ch_l[1]),
+                   (wr[0] - 3.5, wr[1]), (hpR[0] + 3, hpR[1] - 6),
+                   (hpL[0] - 3, hpL[1] - 6), (wl[0] + 3.5, wl[1]), (ch_l[0] - 1.5, ch_l[1]),
                    (lerp(shL, hpL, 0.2)[0] + 1, lerp(shL, hpL, 0.2)[1]), (shL[0] - 1, shL[1] + 3)]
             tid = f.part(f.m_poly(pts), O, o, sh=(4, 2))
-            bx = abs(shR[0] - shL[0]) * 0.2
-            by = lerp(shL, hpL, 0.33)[1] + 1
+            bx = abs(shR[0] - shL[0]) * 0.19
+            by = lerp(shL, hpL, 0.29)[1] + 1
             for sx in (-1, 1):
-                f.paint(f.m_arc((nk[0] + sx * bx, by), bx * 0.95, 3.2, 25, 155, 0.8), 4, within=[tid])
-            f.paint(f.m_line([(wl[0] + 3, wl[1]), (wr[0] - 3, wr[1])], 0.8), 4, within=[tid])     # couture de la taille
-            # jupe plissée (même tissu)
+                f.paint(f.m_arc((nk[0] + sx * bx, by), bx * 0.8, 2.6, 45, 135, 0.7), 4, within=[tid])   # galbe de la poitrine
+            # jupe plissée évasée (même tissu, d'un seul tenant avec le haut) :
+            # elle couvre les hanches et le haut des cuisses, sans fente
             kl, kr = j['knL'], j['knR']
-            hl, hr = lerp(hpL, kl, 0.45), lerp(hpR, kr, 0.45)
-            top_l = lerp(wl, hpL, 0.45); top_r = lerp(wr, hpR, 0.45)
-            hem_l = (hl[0] - 9, hl[1] + 1); hem_r = (hr[0] + 9, hr[1] + 1)
-            hem_m = (lerp(hl, hr, 0.5)[0], max(hl[1], hr[1]) + 3)
-            sid = f.part(f.m_poly([(top_l[0] + 1, top_l[1]), (top_r[0] - 1, top_r[1]), hem_r, hem_m, hem_l]), O, o, sh=(3, 1))
-            for t in (0.2, 0.4, 0.6, 0.8):
-                a_ = lerp(top_l, top_r, t); b_ = lerp(hem_l, hem_r, t)
-                f.paint(f.m_line([lerp(a_, b_, 0.3), b_], 0.7), 4, within=[sid])
+            hl, hr = lerp(hpL, kl, 0.4), lerp(hpR, kr, 0.4)
+            top_l = lerp(wl, hpL, 0.5); top_r = lerp(wr, hpR, 0.5)
+            dl = (hl[0] - hpL[0], hl[1] - hpL[1]); Ll = math.hypot(*dl) or 1; nl = (dl[1] / Ll, -dl[0] / Ll)
+            dr = (hr[0] - hpR[0], hr[1] - hpR[1]); Lr = math.hypot(*dr) or 1; nr = (-dr[1] / Lr, dr[0] / Lr)
+            if nl[0] > 0: nl = (-nl[0], -nl[1])
+            if nr[0] < 0: nr = (-nr[0], -nr[1])
+            hem_l = (hl[0] + nl[0] * 13, hl[1] + nl[1] * 13 + 1)
+            hem_r = (hr[0] + nr[0] * 13, hr[1] + nr[1] * 13 + 1)
+            sk = hull([(top_l[0] + 2, top_l[1]), (top_r[0] - 2, top_r[1]),
+                       (hpL[0] - 10, hpL[1]), (hpR[0] + 10, hpR[1]), hem_l, hem_r,
+                       (hl[0] - nl[0] * 6, hl[1] + 4), (hr[0] - nr[0] * 6, hr[1] + 4)])
+            sm = f.m_poly(sk)
+            sid = f.part(sm, O, o, sh=(3, 1), group=tid)
+            # plis : du haut de la jupe vers l'ourlet, en éventail
+            ys = [p[1] for p in sk]
+            yb = max(ys)
+            for t in (0.18, 0.36, 0.54, 0.72, 0.88):
+                a_ = lerp((top_l[0] + 2, top_l[1]), (top_r[0] - 2, top_r[1]), t)
+                b_ = lerp(hem_l, hem_r, t)
+                f.paint(f.m_line([lerp(a_, b_, 0.35), (b_[0], b_[1] + 6)], 0.7), 4, within=[sid])
+            f.paint(sm & ~shift_mask(f, (0, -1.6), sm), 4, within=[sid])          # ourlet
             ret['shorts'] = sid
             return
+        # short ample : jambes droites, plus larges que la cuisse, ourlet net
+        m = f.m_poly([(hpL[0] - 6, hpL[1] - 8), (hpR[0] + 6, hpR[1] - 8), (hpR[0] + 9, hpR[1] + 2), (hpL[0] - 9, hpL[1] + 2)])
+        hems = []
+        for side, sx in (('L', -1), ('R', 1)):
+            hp, kn = j['hip' + side], j['kn' + side]
+            d = (kn[0] - hp[0], kn[1] - hp[1]); L = math.hypot(*d) or 1; u = (d[0] / L, d[1] / L); n = (-u[1], u[0])
+            if n[0] * sx < 0: n = (-n[0], -n[1])
+            e = lerp(hp, kn, 0.48)
+            q = [(hp[0] + n[0] * 12, hp[1] + n[1] * 12 - 3), (e[0] + n[0] * 12.5, e[1] + n[1] * 12.5),
+                 (e[0] - n[0] * 11, e[1] - n[1] * 11), (hp[0] - n[0] * 9, hp[1] - n[1] * 9)]
+            m |= f.m_poly(q)
+            hems.append((q[1], q[2]))
+        sid = f.part(m, D, None)
+        for (a_, b_) in hems:
+            f.paint(f.m_line([(a_[0] + (b_[0] - a_[0]) * 0.05, a_[1] - 2.2), (b_[0] - (b_[0] - a_[0]) * 0.05, b_[1] - 2.2)], 0.6), 0, within=[sid])   # ourlet
+        f.paint(f.m_line([(lerp(hpL, hpR, 0.5)[0], hpL[1] - 1), (lerp(hpL, hpR, 0.5)[0], hpL[1] + 6)], 0.7), 0, within=[sid])        # entrejambe
+        # polo, porté par-dessus le short
         top_l = (shL[0] - 2, shL[1] - 5); top_r = (shR[0] + 2, shR[1] - 5)
         pts = [top_l, (nk[0] - 6, nk[1] - 1), (nk[0] + 6, nk[1] - 1), top_r, (shR[0] + 5, shR[1] + 2),
-               (ch_r[0] + 2, ch_r[1]), (wr[0] + 1, wr[1]), (hpR[0] + 3, hpR[1] - 4),
-               (hpL[0] - 3, hpL[1] - 4), (wl[0] - 1, wl[1]), (ch_l[0] - 2, ch_l[1]), (shL[0] - 5, shL[1] + 2)]
-        tid = f.part(f.m_poly(pts), O, o, sh=(5, 2))
+               (ch_r[0] + 2, ch_r[1]), (wr[0] + 1, wr[1]), (hpR[0] + 5, hpR[1] - 1),
+               (hpL[0] - 5, hpL[1] - 1), (wl[0] - 1, wl[1]), (ch_l[0] - 2, ch_l[1]), (shL[0] - 5, shL[1] + 2)]
+        tm = f.m_poly(pts)
+        tid = f.part(tm, O, o, sh=(5, 2))
+        f.paint(tm & ~shift_mask(f, (0, -1.5), tm) & shift_mask(f, (0, 8), tm) | (tm & ~shift_mask(f, (0, -1.5), tm) & ~shift_mask(f, (0, 30), tm)), 4, within=[tid])   # ourlet du polo
         # col du polo (rabattu) et patte de boutonnage
         f.part(f.m_poly([(nk[0] - 7, nk[1] - 2), (nk[0] - 1, nk[1] + 7), (nk[0] - 3, nk[1] + 9), (nk[0] - 8, nk[1] + 1)])
                | f.m_poly([(nk[0] + 7, nk[1] - 2), (nk[0] + 1, nk[1] + 7), (nk[0] + 3, nk[1] + 9), (nk[0] + 8, nk[1] + 1)]),
@@ -265,16 +304,6 @@ def body(f, j, female, face, front=('armR', 'legL'), racket_hand='L', racket_dir
         # plis du tissu
         f.paint(f.m_line([lerp(ch_l, wl, 0.2), (lerp(ch_l, wl, 0.2)[0] + 7, lerp(ch_l, wl, 0.2)[1] + 6)], 0.8), 4, within=[tid])
         f.paint(f.m_line([(lerp(wl, wr, 0.3)[0], lerp(wl, wr, 0.3)[1] - 2), (lerp(wl, wr, 0.6)[0], lerp(wl, wr, 0.6)[1] + 1)], 0.8), 4, within=[tid])
-        # short
-        bl = (hpL[0] - 3, hpL[1] - 6); br = (hpR[0] + 3, hpR[1] - 6)
-        m = f.m_poly([bl, br, (hpR[0] + 5, hpR[1] + 4), (hpL[0] - 5, hpL[1] + 4)])
-        m |= f.m_caps(hpL, lerp(hpL, j['knL'], 0.42), 10.5, 9.5) | f.m_caps(hpR, lerp(hpR, j['knR'], 0.42), 10.5, 9.5)
-        sid = f.part(m, D, None)
-        for side, sx in (('L', -1), ('R', 1)):
-            hp, kn = j['hip' + side], j['kn' + side]
-            e = lerp(hp, kn, 0.42)
-            f.paint(f.m_line([(hp[0] + sx * 8, hp[1] - 2), (e[0] + sx * 8.5, e[1])], 1.0), 0, within=[sid])   # couture
-        f.paint(f.m_line([bl, br], 1.6), 3, within=[sid])
         ret['shorts'] = sid
 
     def head():
@@ -393,6 +422,21 @@ def face_features(f, x, y, face, hid, tilt=0.0, female=False):
         P(f.m_poly([R(-w0 + 0.6, 8.0), R(w0 - 0.6, 8.0), R(w0 - 0.9, 8.9), R(-w0 + 0.9, 8.9)]), 6)
         P(line([R(-6.2, 6), R(-5.2, 9.4)], 0.5), 2)                                         # plis
         P(line([R(6.2, 6), R(5.2, 9.4)], 0.5), 2)
+
+
+def hull(pts):
+    """enveloppe convexe (chaîne monotone)"""
+    P = sorted(set(pts))
+    def cr(o, a, b):
+        return (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0])
+    lo, up = [], []
+    for p in P:
+        while len(lo) >= 2 and cr(lo[-2], lo[-1], p) <= 0: lo.pop()
+        lo.append(p)
+    for p in reversed(P):
+        while len(up) >= 2 and cr(up[-2], up[-1], p) <= 0: up.pop()
+        up.append(p)
+    return lo[:-1] + up[:-1]
 
 
 def lerp(a, b, t):
