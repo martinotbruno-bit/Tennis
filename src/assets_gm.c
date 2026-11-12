@@ -703,7 +703,7 @@ const unsigned char gm_hand[64] = {
   0x00,0x00,0x10,0x38,0x10,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
 };
 
-const unsigned char gm_ntiles[7] = { 101, 86, 158, 126, 154, 133, 109 };
+const unsigned char gm_ntiles[7] = { 101, 86, 158, 126, 154, 133, 115 };
 const unsigned char gm_bank[7] = { 14, 14, 14, 14, 6, 6, 6 };
 const unsigned char * const gm_chr[7] = { gm_chr0, gm_chr1, gm_chr2, gm_chr3, gm_chr4, gm_chr5, gm_chr6 };
 const unsigned char * const gm_nt[7] = { gm_nt0, gm_nt1, gm_nt2, gm_nt3, gm_nt4, gm_nt5, gm_nt6 };

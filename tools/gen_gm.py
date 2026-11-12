@@ -499,17 +499,18 @@ def bercy():
     im.rect(56, 48, 168, 51, 0x00)
     for x in range(60, 168, 8):
         im.rect(x, 49, x + 3, 50, 0x38)          # lumières de la verrière
-    # enseigne « BERCY » (lettres de 5 x 7, sur la pente)
+    # enseigne « DEBORCY » (lettres de 5 x 7, sur la pente)
     font = {'B': ['1110', '1001', '1110', '1001', '1110'], 'E': ['1111', '1000', '1110', '1000', '1111'],
             'R': ['1110', '1001', '1110', '1010', '1001'], 'C': ['0111', '1000', '1000', '1000', '0111'],
-            'Y': ['1001', '1001', '0111', '0001', '0110']}
-    x = 88
-    for ch in 'BERCY':
+            'Y': ['1001', '1001', '0111', '0001', '0110'], 'D': ['1110', '1001', '1001', '1001', '1110'],
+            'O': ['0110', '1001', '1001', '1001', '0110']}
+    x = 78
+    for ch in 'DEBORCY':
         for j, row in enumerate(font[ch]):
             for i, b in enumerate(row):
                 if b == '1': im.rect(x + i * 2, 66 + j * 2, x + i * 2 + 1, 66 + j * 2 + 1, 0x38)
         x += 10
-    im.rect(84, 62, 139, 63, 0x00); im.rect(84, 77, 139, 78, 0x00)
+    im.rect(74, 62, 149, 63, 0x00); im.rect(74, 77, 149, 78, 0x00)
     # entrées éclairées au pied
     for x in range(32, 196, 24):
         im.rect(x, 88, x + 9, 95, 0x38)

@@ -10,7 +10,7 @@ Comme l'exige le CDC (§ 17.5), ce rapport distingue ce qui est **réalisé**, *
 
 | Demande | Réalisation |
 |---|---|
-| D'autres noms pour les 3 nouveaux tournois du Martinworld Tour | Glace : **Margaux-les-Neiges** ; plage : **Rio de Bruneiro** (Rio de Janeiro et Bruno) ; moquette : **Deborcy Masters** (Bercy et Déborah). Noms changés dans les écrans d'étape, les annonces, le mode d'emploi et la documentation |
+| D'autres noms pour les 3 nouveaux tournois du Martinworld Tour | Glace : **Margaux-les-Neiges** ; plage : **Rio de Bruneiro** (Rio de Janeiro et Bruno) ; moquette : **Deborcy Masters** (Bercy et Déborah), dont l'image porte maintenant l'enseigne « DEBORCY ». Noms changés dans les écrans d'étape, les annonces, le mode d'emploi et la documentation |
 
 ### Version 2.48
 
@@ -411,7 +411,7 @@ Pour loger ce contenu, la cartouche passe de NROM (32 Ko) à **MMC1** : 128 Ko d
 | Relecture des textes (`check_texts.py`) | 0 problème |
 | Contraste (`contrast.py 25`) | 0 paire sous ΔE 25 (personnages, courts, balle, tenues) |
 | Profil CPU, double, 6 000 trames | 27 trames d'échange en dépassement (0,45 %), sans défaut d'image |
-| Compilation | Reproductible : SHA-256 `e21a39d64c26e219ec108ba99b58534c46d5869c5d29911f3145048813602936` sur deux compilations propres |
+| Compilation | Reproductible : SHA-256 `ca26fe643f0f73ff2f3d2cbbfe879da796ae11860ab74c85ed3b7ea629c7501a` sur deux compilations propres |
 
 ## 3. Conformité par section du CDC
 
