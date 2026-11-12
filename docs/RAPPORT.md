@@ -11,6 +11,7 @@ Comme l'exige le CDC (§ 17.5), ce rapport distingue ce qui est **réalisé**, *
 | Demande | Réalisation |
 |---|---|
 | Un mode Grand Chelem : 4 tournois (dur, terre battue, gazon, dur), aux noms mêlant les vrais tournois et la famille ; 16 joueurs | **Le Grand Martinot** : **Open d'Augustralie** (dur), **Debogarros** (terre battue), **Martinbledon** (gazon), **US Opaul** (dur). Tournois de 16 joueurs (huitièmes, quarts, demis, finale) ; en double, 8 équipes (16 joueurs : il n'y a pas assez de personnages pour 16 équipes toutes différentes). Une défaite ne termine que le tournoi en cours. Points comme les vrais tournois du Grand Chelem : 180, 360, 720, 1 200, 2 000 ; classement général (les 7 premiers et votre place). Adversaire un cran plus fort en finale. Gagner les 4 tournois : « GRAND CHELEM ! » sur le podium, puis le générique de fin (« GRAND SLAM CHAMPION ») ; 1er au classement sans les 4 titres : podium, « CHAMPION ! », générique. Codes de reprise : nouveau format (version 0) pour ce mode, les anciens codes restent valables |
+| Le Grand Martinot se déroule toujours en salle, sur ses surfaces, de jour, sans pluie | Lieu (salle) et conditions (jour) imposés pour ce mode ; les lignes LIEU et CONDITIONS ne sont plus proposées au menu |
 | Expliquer brièvement et clairement le fonctionnement de chaque compétition dans le menu | Curseur sur la ligne COMPETITION : 4 lignes d'explication en bas du menu, à la place du style de l'adversaire et de l'aide des touches, qui reviennent dès que le curseur quitte la ligne |
 
 ### Version 2.43

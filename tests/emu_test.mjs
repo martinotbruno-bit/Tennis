@@ -392,7 +392,8 @@ function playComp(type, opts, wins) {
 {
   // le Grand Martinot : 4 tournois de 16 (huitièmes, quarts, demis, finale),
   // dur, terre battue, gazon, dur ; les 16 matchs gagnés : Grand Chelem
-  const g = boot(); startWith(g, { MODE: MODE.COMP, COMP: 5, FMT: 3 });
+  const g = boot(); startWith(g, { MODE: MODE.COMP, COMP: 5, FMT: 3, ENV: 0, COND: 2 });
+  check(g.peek('c_env') === 2 && g.peek('c_cond') === 0 && rowOf(g, O.ENV) < 0, 'Grand Martinot : toujours en salle, de jour (lieu et conditions imposés)');
   check(scr(g) === SS.COMP && g.peek('c_n') === 16 && g.text(3, 3, 18) === "OPEN D'AUGUSTRALIE" && g.text(3, 4, 18) === 'HUITIEME DE FINALE',
     `Grand Martinot : 16 joueurs, « ${g.text(3, 3, 18)} », ${g.text(3, 4, 18)}`);
   const names = new Set(); for (let i = 0; i < 16; i++) names.add(g.peek('c_pl', i));
