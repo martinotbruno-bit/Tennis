@@ -1707,11 +1707,11 @@ console.log('Plongeon');
   // plongeon, et la frappe part en vol (lob de sauvetage). Joueur humain
   // (bas) : la balle de l'ordinateur arrive à OFF px sur sa gauche ; il
   // appuie sur A puis le lâche à N trames de l'arrivée (direction : facultative).
-  const humanDive = (view, OFF, N, dir) => {
+  const humanDive = (view, OFF, N, dir, trials = 3) => {
     const e = boot(); toMenu(e); e.poke('opt_val', view, 24); setOpts(e, { FMT: 3, SURF: 1 }); e.tap('START'); e.run(10); e.tap('A');
     runUntil(e, () => app(e) === AS.MATCH, 300);
     const out = [];
-    for (let trial = 0; trial < 3; trial++) {
+    for (let trial = 0; trial < trials; trial++) {
       let ok = false;
       for (let f = 0; f < 3000 && !ok; f++) {
         if (e.peek('ms') === 0 && e.peek('sc_server') === 0) { e.tap('A'); e.run(20); e.tap('A'); }
@@ -1721,13 +1721,18 @@ console.log('Plongeon');
       if (!ok) continue;
       const pred = () => { let x = e.peekS16('bx'), y = e.peekS16('by'); const vx = e.peekS16('bvx'), vy = e.peekS16('bvy'), py = e.peekS16('ply', 0);
         for (let n = 0; n < 60; n++) { const d = y - py; if (d > -14 * 64 && d < 9 * 64) return { n, x: x / 64 }; x += vx; y += vy; } return null; };
-      let placed = false, pressed = false, r = { dove: false, hit: false, hitAt: 0, before: false, shot: -1, kneel: false, still: true, startX: 0 };
+      let placed = false, pressed = false, r = { dove: false, hit: false, hitAt: 0, before: false, shot: -1, kneel: false, still: true, startX: 0, rel: -1 };
       const rh0 = e.peek('rally_hits');
       for (let f = 0; f < 150; f++) {
         const p = pred();
         if (p && !placed) { const v = (Math.round(p.x) - OFF) * 64; e.poke('plx', v & 255, 0); e.poke('plx', (v >> 8) & 255, 1); placed = true; }
         if (p && placed && !pressed && p.n <= N) { e.releaseAll(); e.down('A'); if (dir) e.down('RIGHT'); pressed = true; }
-        else if (pressed) e.releaseAll();
+        else if (pressed) {
+          // distance réelle de la balle au lâcher (la joueuse peut être
+          // arrêtée par le bord du court et se retrouver plus près)
+          if (r.rel < 0) { const q = pred(); r.rel = q ? Math.round(Math.abs(q.x - e.peekS16('plx', 0) / 64)) : 0; }
+          e.releaseAll();
+        }
         e.run(1);
         const t = e.peek('dive_t', 0);
         if (t > 0 && !r.dove) { r.dove = true; r.before = e.peek('rally_hits') === rh0; }
@@ -1754,8 +1759,8 @@ console.log('Plongeon');
     if (view) continue;
     const b = humanDive(view, 12, 7, 0);
     check(b.length >= 2 && b.every(r => !r.dove && r.hit && r.shot !== 2), 'joueur bien placé (balle à 12 px) : pas de plongeon, frappe normale');
-    const c = humanDive(view, 48, 7, 1);
-    check(c.length >= 2 && c.every(r => !r.hit), 'balle à 48 px : hors de portée, même en plongeant');
+    const c = humanDive(view, 48, 7, 1, 6).filter(r => r.rel >= 46);
+    check(c.length >= 2 && c.every(r => !r.hit), `balle à 46 px ou plus au lâcher : hors de portée, même en plongeant (${c.length} essai(s) : ${c.map(r => r.rel + ' px').join(', ')})`);
   }
   // ordinateur contre ordinateur : il plonge, touche la balle, jamais sur une balle qui sort
   let dives = 0, touched = 0, outDive = 0;
