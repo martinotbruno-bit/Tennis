@@ -1060,8 +1060,6 @@ console.log('Margaux jouable et fatigue');
     const e = boot(); startWith(e, { FMT: 3, FATIG: fat, SURF: 1 });   // gazon : sans glissade
     runUntil(e, () => e.peek('ms') === 0, 300);
     const s16 = (n, v, o = 0) => { e.poke(n, v & 255, o); e.poke(n, (v >> 8) & 255, o + 1); };
-    // (hitter_p : pas ce joueur, sinon le nouveau compteur de frappes passerait
-    // pour une frappe de balle lointaine : plongeon)
     e.poke('ms', 2); e.poke('b_live', 1); e.poke('b_vis', 0); e.poke('hitter', 0); e.poke('hitter_p', 2); e.poke('rally_hits', hits);
     s16('plx', 80 * 64, 0); s16('ply', 200 * 64, 0);
     // la goutte clignote (16 trames allumée, 16 éteinte) : on la cherche sur toute la course
@@ -1699,27 +1697,82 @@ console.log('Vue en perspective (option VUE)');
 }
 console.log('Plongeon');
 {
-  // balle frappée loin du corps : le joueur plonge vers elle et reste au sol
-  // au moins 8 trames ; en vue à plat et en perspective
-  for (const view of [0, 1]) {
-    const e = boot(); toMenu(e); e.poke('opt_val', view, 24); setOpts(e, { FMT: 3, SURF: 0 }); e.tap('START'); e.run(10); e.tap('A');
-    runUntil(e, () => app(e) === AS.MATCH, 300); allCpu(e);
-    let dives = 0, longest = 0, run = [0, 0], dirOk = true;
-    for (let f = 0; f < 20000 && app(e) === AS.MATCH; f++) {
-      e.run(1);
-      for (let p = 0; p < 2; p++) {
-        if (e.peek('pose_now', p) === 21) {
-          if (!run[p]) {
-            dives++;
-            const dx = e.peekS16('bx') / 64 - e.peekS16('plx', p * 2) / 64;
-            if (Math.abs(dx) > 6 && (dx < 0) !== (e.peek('flip_cache', p) === 1)) dirOk = false;
-          }
-          run[p]++; longest = Math.max(longest, run[p]);
-        } else run[p] = 0;
+  // Le plongeon part AVANT la frappe ; il se décide au lâcher du bouton :
+  // joueur bien placé, frappe normale ; balle trop loin sur le côté,
+  // plongeon, et la frappe part en vol (lob de sauvetage). Joueur humain
+  // (bas) : la balle de l'ordinateur arrive à OFF px sur sa gauche ; il
+  // appuie sur A puis le lâche à N trames de l'arrivée (direction : facultative).
+  const humanDive = (view, OFF, N, dir) => {
+    const e = boot(); toMenu(e); e.poke('opt_val', view, 24); setOpts(e, { FMT: 3, SURF: 1 }); e.tap('START'); e.run(10); e.tap('A');
+    runUntil(e, () => app(e) === AS.MATCH, 300);
+    const out = [];
+    for (let trial = 0; trial < 3; trial++) {
+      let ok = false;
+      for (let f = 0; f < 3000 && !ok; f++) {
+        if (e.peek('ms') === 0 && e.peek('sc_server') === 0) { e.tap('A'); e.run(20); e.tap('A'); }
+        e.run(1);
+        ok = e.peek('ms') === 2 && e.peek('hitter') === 1 && e.peek('b_live') === 1 && e.peekS16('by') / 64 < 150 && e.peekS16('bvy') > 0;
       }
+      if (!ok) continue;
+      const pred = () => { let x = e.peekS16('bx'), y = e.peekS16('by'); const vx = e.peekS16('bvx'), vy = e.peekS16('bvy'), py = e.peekS16('ply', 0);
+        for (let n = 0; n < 60; n++) { const d = y - py; if (d > -14 * 64 && d < 9 * 64) return { n, x: x / 64 }; x += vx; y += vy; } return null; };
+      let placed = false, pressed = false, r = { dove: false, hit: false, hitAt: 0, before: false, shot: -1, kneel: false, still: true, startX: 0 };
+      const rh0 = e.peek('rally_hits');
+      for (let f = 0; f < 150; f++) {
+        const p = pred();
+        if (p && !placed) { const v = (Math.round(p.x) - OFF) * 64; e.poke('plx', v & 255, 0); e.poke('plx', (v >> 8) & 255, 1); placed = true; }
+        if (p && placed && !pressed && p.n <= N) { e.releaseAll(); e.down('A'); if (dir) e.down('RIGHT'); pressed = true; }
+        else if (pressed) e.releaseAll();
+        e.run(1);
+        const t = e.peek('dive_t', 0);
+        if (t > 0 && !r.dove) { r.dove = true; r.before = e.peek('rally_hits') === rh0; }
+        if (r.dove && t === 33) r.startX = e.peekS16('plx', 0);
+        if (r.dove && t < 33 && t >= 8 && e.peekS16('plx', 0) !== r.startX) r.still = false;
+        if ((e.peek('pose_now', 0) & 31) === 27) r.kneel = true;
+        if (!r.hit && e.peek('rally_hits') !== rh0 && e.peek('hitter') === 0) { r.hit = true; r.hitAt = t; r.shot = e.peek('last_shot'); }
+        if (r.dove && t === 0) break;
+        if (!r.dove && (r.hit || e.peek('ms') !== 2)) break;
+      }
+      e.releaseAll();
+      out.push(r);
+      for (let f = 0; f < 400 && e.peek('ms') === 2; f++) e.run(1);
+      for (let f = 0; f < 300 && e.peek('ms') !== 0; f++) e.run(1);
     }
-    check(dives >= 2 && longest >= 8 && dirOk, `${view ? 'perspective' : 'à plat'} : ${dives} plongeons vers la balle, au sol jusqu'à ${longest} trames`);
+    return out;
+  };
+  for (const view of [0, 1]) {
+    const v = view ? 'perspective' : 'à plat';
+    const a = humanDive(view, 34, 7, 0);
+    check(a.length >= 2 && a.every(r => r.dove && r.before && r.hit && r.hitAt >= 30 && r.shot === 2),
+      `${v} : balle à 34 px, bouton lâché : plongeon avant la frappe, balle touchée en vol (lob) [${a.map(r => r.hit ? 't=' + r.hitAt : 'raté').join(', ')}]`);
+    check(a.every(r => r.kneel && r.still), `${v} : au sol puis un genou à terre, immobile jusqu'au relevé`);
+    if (view) continue;
+    const b = humanDive(view, 12, 7, 0);
+    check(b.length >= 2 && b.every(r => !r.dove && r.hit && r.shot !== 2), 'joueur bien placé (balle à 12 px) : pas de plongeon, frappe normale');
+    const c = humanDive(view, 48, 7, 1);
+    check(c.length >= 2 && c.every(r => !r.hit), 'balle à 48 px : hors de portée, même en plongeant');
   }
+  // ordinateur contre ordinateur : il plonge, touche la balle, jamais sur une balle qui sort
+  let dives = 0, touched = 0, outDive = 0;
+  for (const surf of [0, 1, 5]) {
+  const e = boot(); startWith(e, { FMT: 3, SURF: surf }); allCpu(e);
+  for (let i = 0; i < 4; i++) e.poke('cfg', 2, CFG.LEVEL + i);
+  let prev = [0, 0], rh = 0, cur = -1;
+  for (let f = 0; f < 30000 && app(e) === AS.MATCH; f++) {
+    e.run(1);
+    for (let p = 0; p < 2; p++) {
+      const t = e.peek('dive_t', p);
+      if (t > prev[p]) {
+        dives++; cur = p; rh = e.peek('rally_hits');
+        const lx = e.peekS16('land_x'), ly = e.peekS16('land_y');
+        if (e.peek('bounces') === 0 && e.peek('ms') === 2 && (lx < 74 || lx > 182 || ly < 48 || ly > 216)) outDive++;
+      }
+      if (p === cur && t >= 30 && e.peek('rally_hits') !== rh && e.peek('hitter') === (p & 1)) { touched++; cur = -1; }
+      prev[p] = t;
+    }
+  }
+  }
+  check(dives >= 5 && touched * 4 >= dives * 3 && outDive === 0, `ordinateur : ${dives} plongeons, ${touched} balles touchées, ${outDive} sur une balle qui sort`);
 }
 console.log('Revers et jeu de tuiles par phase');
 {

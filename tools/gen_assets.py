@@ -974,6 +974,12 @@ def draw_person(view, legs, arms, female, nude=False):
         fill(c, 5, 16, 6, 20, 1); fill(c, 4, 21, 5, 21, 1)
         line(c, 9, 16, 13, 21, 1); line(c, 10, 16, 14, 21, 1)
         fill(c, 3, 22, 5, 23, 3); fill(c, 13, 22, 15, 23, 3)
+    elif legs == 'kneel':
+        # genou gauche au sol, tibia couché vers l'arrière ; pied droit posé,
+        # genou droit levé (sol à y 19 : sprite abaissé de 4 px)
+        fill(c, 5, 16, 6, 19, 1); line(c, 4, 19, 2, 19, 1); put(c, 1, 19, 3)
+        line(c, 9, 16, 12, 17, 1); line(c, 10, 16, 13, 17, 1); fill(c, 12, 18, 13, 19, 1)
+        fill(c, 12, 19, 14, 19, 3)
     elif legs == 'wide':
         line(c, 5, 16, 3, 21, 1); line(c, 6, 16, 4, 21, 1)
         line(c, 9, 16, 11, 21, 1); line(c, 10, 16, 12, 21, 1)
@@ -1102,6 +1108,12 @@ def draw_person(view, legs, arms, female, nude=False):
         line(c, 4, 9, 1, 11, 1)
         line(c, 11, 9, 14, 11, 1)
         racket(c, 14, 12, 13, 17)
+    if legs == 'kneel':
+        # un genou à terre (relevé après un plongeon) : le sprite est dessiné
+        # 4 px plus bas (sprp.s) ; sous y 19 (le sol), rien n'est dessiné
+        for y in range(20, 24):
+            for x in range(16):
+                c[y][x] = 0
     return c
 
 def canvas_tiles(c):
@@ -1139,6 +1151,7 @@ POSES = [  # (jambes, bras) — l'ordre est repris dans src/gfx.c
     ('wide', 'bfollow'),  # 24 fin du revers à deux mains
     ('wide', 'bslice'),   # 25 revers coupé à une main (armé)
     ('wide', 'bimpact'),  # 26 volée de revers (même geste que l'impact à deux mains)
+    ('kneel', 'ready'),   # 27 un genou à terre (relevé du plongeon), dessiné 4 px plus bas
 ]
 # (le smash armé reprend la pose du service, et la fin du lob celle de
 # l'impact du service : mêmes gestes, aucune tuile de plus)

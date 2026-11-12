@@ -6,7 +6,7 @@ extern const unsigned char bigball_tiles[16];
 /* personnages : réserve commune de tuiles à partir de $10 ; pour chaque
    vue (person_row[face] = face * NPOSE * 3) et chaque pose, 3 octets = tuile
    gauche de chaque rangée (la tuile droite suit) ; une table par silhouette */
-#define NPOSE 27
+#define NPOSE 28
 extern const unsigned char person_map_m[2 * NPOSE * 3], person_map_f[2 * NPOSE * 3], person_row[2];
 extern const unsigned char prof_map[24];        /* course de profil : (femme * 4 + image) * 3 */
 extern const unsigned char marg_map[2 * NPOSE]; /* tête de Margaux : face * NPOSE + pose */

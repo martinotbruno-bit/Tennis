@@ -66,6 +66,7 @@ u8 pl_jump[4];                         /* smash sauté : trames de saut restante
 static u8 win_party(void);
 static u8 rel_pad(u8 p, u8 pad);
 extern u8 pose_now[4];                 /* poses de la trame (poses_all, banque 3) */
+extern u8 dive_t[4], dive_f[4];        /* plongeon en cours (poses.s) */
 void poses_all(void);
 u8 hit_pass, hit_jump;                 /* dernière frappe : adversaire au filet, smash sauté */
 u8 tired;                              /* fatigue de l'échange en cours, 0..10 */
@@ -451,6 +452,7 @@ static void place_for_serve(void)
         pl_charge[i] = 0;
         ai_net[i] = 0;
         pl_jump[i] = 0;
+        dive_t[i] = 0;
     }
     if (npl == 4) { ai_net[sp ^ 2] = 1; }
     /* style « filet » : montée systématique derrière le service */
@@ -572,6 +574,25 @@ static void clamp_player(u8 p)
 }
 
 /* ====================================================================== */
+/* Plongeon (version 2.50) : une balle qui arrive trop loin sur le côté     */
+/* (24 à 40 px environ) peut être rattrapée en plongeant. Le plongeon part  */
+/* AVANT la frappe ; la frappe part en vol, dès que la raquette atteint la  */
+/* balle : un sauvetage, plus lent, plus haut et moins précis. Le vol, la   */
+/* chute et le relevé sont animés par poses.s (dive_t de 42 à 0).           */
+/* ====================================================================== */
+/* décision et départ du plongeon : dive_try (banque 13, shots.c) ;
+   entrées sh_p, sh_pad (0 : joueur humain, au lâcher du bouton ; $FF : IA),
+   sortie sh_short = 1 si le plongeon part */
+void dive_try(void);
+extern u8 sh_p, sh_pad, sh_short;
+/* frappe en vol : lob de sauvetage, sans puissance, peu précis */
+static void dive_hit(u8 p)
+{
+    hit_margin = 16;
+    do_hit(p, PAD_UP, PAD_B, 0, 24);
+}
+
+/* ====================================================================== */
 /* Contrôle humain                                                         */
 /* ====================================================================== */
 static void human_update(u8 p, u8 pad, u8 pressed)
@@ -611,6 +632,13 @@ static void human_update(u8 p, u8 pad, u8 pressed)
         return;
     }
 
+    /* plongeon, décidé au lâcher du bouton : joueur bien placé, frappe
+       normale ; balle trop loin sur le côté, plongeon (dive_try) */
+    if (st == ST_CHARGE && !(pad & pl_btn[p])) {
+        sh_p = p; sh_pad = 0;
+        bank_call(BANK_SWAP, dive_try);
+        if (sh_short) return;
+    }
     /* frappe : appui = armer (la puissance monte), relâcher = frapper */
     if (st == ST_IDLE && (pressed & (PAD_A | PAD_B))) {
         pl_state[p] = st = ST_CHARGE;
@@ -792,6 +820,13 @@ static void ai_update(u8 p)
             /* montée au filet après une frappe à l'intérieur du court */
             if (npl == 2 && lv >= 1 && iabs(PX(ply[p]) - NET_Y) < 66 && (rand8() < (u8)(sty_net[sty] >> (2 - lv)) || rand8() < tac_net[t])) ai_net[p] = 1;
             return;   /* trame de frappe : pas de calcul de déplacement */
+        }
+        /* plongeon : la balle passera trop loin pour l'atteindre en courant,
+           mais assez près pour la toucher en plongeant (dive_try) */
+        if (bz < 36 * FP && iabs(PX(bx) - PX(plx[p])) > 16) {
+            sh_p = p; sh_pad = 0xFF;
+            bank_call(BANK_SWAP, dive_try);
+            if (sh_short) return;
         }
         /* en simple, la décision (coûteuse) est prise une trame sur deux ;
            le déplacement vers la dernière destination a lieu à chaque trame */
@@ -999,6 +1034,13 @@ u8 match_tick(void)
     if (cfg.fatigue && rally_hits > 10) tired = (u8)(rally_hits > 20 ? 10 : rally_hits - 10);
     for (p = 0; p < npl; ++p) {
         ctrl = cfg.ctrl[p];
+        if (dive_t[p] >= 8) {
+            /* en plongeon : immobile ; frappe dès que la balle est à portée
+               (élan, vol, puis 3 trames au sol, raquette tendue) */
+            if (dive_t[p] >= 30 && can_hit(p)) dive_hit(p);
+            pl_moving[p] = 0;
+            continue;
+        }
         if (ctrl == CTRL_CPU) {
             /* double : chaque IA est mise à jour une trame sur deux (vitesse
                doublée), pour tenir dans le budget CPU d'une trame (aussi
@@ -1135,7 +1177,8 @@ void match_draw(void)
         j = (u8)((j * j) >> 4);
         /* victoire : le vainqueur sautille de joie (un bond toutes les 16 trames) */
         if (party && (u8)(p & 1) == sc_winner) j = hop_h[ms_timer & 15];
-        spr_person((u8)(((u16)plx[p] << 2) >> 8), (s16)(ys[p] - j), cfg.chr[p], side_of(p), k, flip_cache[p], p);   /* palette p & 1 */
+        if ((k & 31) == POSE_KNEEL) j -= 4;     /* un genou à terre : 4 px plus bas */
+        spr_person((u8)(((u16)plx[p] << 2) >> 8), (s16)(ys[p] - (s8)j), cfg.chr[p], side_of(p), k, flip_cache[p], p);   /* palette p & 1 */
     }
     bank_call(BANK_EXTRAS, match_fx);   /* ombres, poussière, arbitre, repère */
     if (party) { win_fx(); fw_draw(ms_timer, 0); }

@@ -1,10 +1,18 @@
-# Royal Martinot — Rapport de réalisation (version 2.49)
+# Royal Martinot — Rapport de réalisation (version 2.50)
 
 Comme l'exige le CDC (§ 17.5), ce rapport distingue ce qui est **réalisé**, **testé**, **validé sur matériel réel**, **validé uniquement en émulation**, **dépendant d'une extension**, et les **limitations restantes**.
 
 > **Validation matérielle : aucune.** Aucun test n'a été fait sur console réelle (NES, Famicom, PAL, cartouche MMC1). Toutes les validations ont eu lieu en émulation (jsnes) et par des tests unitaires sur PC. Les critères « vérifié sur console physique » (CDC § 2.1, 15.4, 16.A) **ne sont pas remplis**. Ce point ne peut pas être traité dans l'environnement de développement utilisé.
 
 ## 1. Évolutions
+
+### Version 2.50
+
+| Demande | Réalisation |
+|---|---|
+| Revoir le plongeon : un vrai plongeon pour rattraper une balle, testé et ajusté | **Avant** : le plongeon partait après la frappe (le joueur frappait debout, puis s'envolait vers une balle déjà partie) et ne rattrapait aucune balle. **Maintenant** : il part avant la frappe, sur une balle trop loin sur le côté (environ 24 à 42 px), et la frappe part en vol : un lob de sauvetage, plus lent et moins précis. Vol de 18 px en arc (jusqu'à 9 px de haut), poussière à la réception (terre battue, plage, glace), puis le joueur reste au sol, se relève un genou à terre (nouvelle pose, 2 tuiles) et revient en garde : immobile environ une demi-seconde. Plus de plongeon automatique après une frappe ordinaire |
+| Le plongeon se décide au lâcher du bouton | Joueur humain : au lâcher du bouton, sans direction à tenir ; bien placé, frappe normale ; balle trop loin, plongeon. L'ordinateur plonge quand il n'arriverait pas à temps en courant (souvent en Expert, rarement en Facile), jamais sur une balle qui sort |
+| Mesures | Joueur humain, balle à 28-42 px : touchée en plongeant ; à 46-48 px : hors de portée ; bien placé : frappe normale. Ordinateur contre ordinateur (terre, gazon, dur, plage, glace) : environ un plongeon pour 50 frappes, 35 plongeons sur 35 ont touché la balle après l'ajout du filtre « balle qui sort » (avant ce filtre, 7 sur 11). Vue à plat et en perspective, simple et double |
 
 ### Version 2.49
 

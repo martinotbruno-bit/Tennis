@@ -12,7 +12,7 @@
 ;  - après le point : joie propre au personnage (pirouette de Margaux),
 ;    colère après une faute, mains sur les genoux après un long échange.
 
-.export _poses_all, _pose_now, _slide_t, _dr_on, _dr_x, _dr_y, _dr_h
+.export _poses_all, _pose_now, _slide_t, _dr_on, _dr_x, _dr_y, _dr_h, _dive_t, _dive_f
 .import _pl_state, _pl_timer, _pl_walk, _pl_moving, _pl_flip, _pl_jump
 .import _flip_cache, _rally_hits, _hitter, _hitter_p, _b_serve, _b_live
 .import _last_shot, _ms, _ms_timer, _bx, _by, _bz, _bvy, _bvz, _plx, _ply
@@ -51,6 +51,7 @@ P_BIMPACT = 23
 P_BFOLLOW = 24
 P_BSLICE = 25
 P_BVOLLEY = 26
+P_KNEEL = 27
 SH_SLICE = 1
 PAD_B = $40
 LIFT = 32
@@ -84,11 +85,11 @@ ss_hits:   .res 4
 ss_t:      .res 4
 imp_t:     .res 4
 imp_k:     .res 4
-dive_t:    .res 4       ; plongeon en cours (trames)
-dive_f:    .res 4       ; son miroir (balle à gauche)
+_dive_t:    .res 4       ; plongeon en cours (trames)
+_dive_f:    .res 4       ; son miroir (balle à gauche)
 fbv:       .res 1
-dive_x:    .res 8       ; position du plongeur (16 bits) : il vole, puis reste au sol
-dive_y:    .res 8
+_dive_x:    .res 8       ; position du plongeur (16 bits) : il vole, puis reste au sol
+_dive_y:    .res 8
 pp:        .res 1       ; joueur
 pt:        .res 1       ; équipe (p & 1)
 pst:       .res 1       ; état du joueur
@@ -99,6 +100,7 @@ dxs:       .res 1       ; balle - joueur (pixels, signé)
 dys:       .res 1
 
 .segment "RODATA3"
+dive_j: .byte 8, 11, 12, 12, 11, 8   ; hauteur du vol (_dive_t 34 à 39)
 run4:   .byte P_RUN1, P_RUN3 | LIFT, P_RUN2, P_RUN4 | LIFT
 drib_h: .byte 10, 9, 8, 6, 5, 4, 3, 1, 0, 1, 3, 4, 5, 6, 8, 9
 mod3:   .byte 0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 1
@@ -166,9 +168,9 @@ _poses_all:
 :   lda _slide_t,x
     beq :+
     dec _slide_t,x
-:   lda dive_t,x
+:   lda _dive_t,x
     beq :+
-    dec dive_t,x
+    dec _dive_t,x
     jsr dive_step           ; plongeon : élan, vol, réception, au sol, relevé
 :
     ; nouvelle frappe : impact pour le frappeur, split-step pour l'adversaire
@@ -192,33 +194,6 @@ _poses_all:
     sta imp_t,x
     lda _last_shot
     sta imp_k,x
-    ; balle frappée loin du corps (20 px ou plus sur le côté) : plongeon
-    ; (voir dive_step)
-    jsr calcd
-    ldx pp
-    lda dxs
-    clc
-    adc #19
-    cmp #39
-    bcc @norc
-    lda #31
-    sta dive_t,x
-    lda dxs
-    rol a                   ; retenue = signe : balle à gauche -> miroir
-    lda #0
-    rol a
-    sta dive_f,x
-    txa
-    asl a
-    tay
-    lda _plx,y
-    sta dive_x,y
-    lda _plx+1,y
-    sta dive_x+1,y
-    lda _ply,y
-    sta dive_y,y
-    lda _ply+1,y
-    sta dive_y+1,y
     jmp @norc
 @notme:
     lda _ms
@@ -374,62 +349,80 @@ pose_fx:
     inx
     jmp @sl
 
-; plongeon du joueur X, une fois par trame (dive_t vient d'être décrémenté) :
-;   30-28 élan (fente) ; 27-21 vol : le joueur avance de 1,25 px par trame
-;   vers la balle (9 px), corps à l'horizontale, décollé du sol (pl_jump :
-;   6 px au plus haut) ; 18 réception (poussière, éclats ou sable) ;
-;   17-10 au sol ; 9-6 relevé.
-; Jusqu'au relevé, le joueur ne peut pas bouger : sa position est celle du
-; plongeon (le prix d'une balle rattrapée).
+; plongeon du joueur X, une fois par trame (_dive_t vient d'être décrémenté).
+; Le moteur (game.c, shots.c) le déclenche AVANT la frappe (_dive_t = 42)
+; quand une balle arrive trop loin sur le côté ; la frappe part en vol (ou
+; au plus tard 3 trames après la réception, _dive_t >= 30), dès que la
+; raquette atteint la balle.
+;   41 : position de départ retenue ; 41-40 élan (fente) ;
+;   39-34 vol : 3 px par trame vers la balle (18 px), corps à l'horizontale,
+;         en arc (hauteur 4, 7, 9, 9, 7, 4 px : pl_jump) ;
+;   33 réception (poussière, sable ou éclats) ; 33-18 au sol ;
+;   17-10 relevé, un genou à terre ; 9-8 en garde ; ensuite le jeu reprend.
+; Jusqu'au relevé complet, le joueur ne peut pas bouger (le prix d'une
+; balle rattrapée : il est hors de position pour la suivante).
 dive_step:
-    lda dive_t,x
-    cmp #27
+    lda _dive_t,x
+    cmp #41
     bne :+
-    lda #10
-    sta _pl_jump,x          ; envol : 6 px au plus haut, retombe en 10 trames
-:   lda dive_t,x
-    cmp #21
+    txa                     ; départ : position retenue
+    asl a
+    tay
+    lda _plx,y
+    sta _dive_x,y
+    lda _plx+1,y
+    sta _dive_x+1,y
+    lda _ply,y
+    sta _dive_y,y
+    lda _ply+1,y
+    sta _dive_y+1,y
+:   lda _dive_t,x
+    cmp #34
     bcc @nofly
-    cmp #28
+    cmp #40
     bcs @nofly
+    tay                     ; hauteur du vol (j : j²/16 px)
+    lda dive_j-34,y
+    sta _pl_jump,x
     txa
     asl a
     tay
-    lda dive_f,x
+    lda _dive_f,x
     bne @dl
     clc
-    lda dive_x,y
-    adc #80
-    sta dive_x,y
-    lda dive_x+1,y
+    lda _dive_x,y
+    adc #192
+    sta _dive_x,y
+    lda _dive_x+1,y
     adc #0
-    sta dive_x+1,y
+    sta _dive_x+1,y
     cmp #>(208 * 64)
     bcc @nofly
     lda #<(208 * 64)
-    sta dive_x,y
+    sta _dive_x,y
     lda #>(208 * 64)
-    sta dive_x+1,y
+    sta _dive_x+1,y
     bne @nofly
 @dl:
     sec
-    lda dive_x,y
-    sbc #80
-    sta dive_x,y
-    lda dive_x+1,y
+    lda _dive_x,y
+    sbc #192
+    sta _dive_x,y
+    lda _dive_x+1,y
     sbc #0
-    sta dive_x+1,y
+    sta _dive_x+1,y
     cmp #>(48 * 64)
     bcs @nofly
     lda #<(48 * 64)
-    sta dive_x,y
+    sta _dive_x,y
     lda #>(48 * 64)
-    sta dive_x+1,y
+    sta _dive_x+1,y
 @nofly:
-    lda dive_t,x
-    cmp #18
+    lda _dive_t,x
+    cmp #33
     bne @noland
     lda #0
+    sta _pl_jump,x
     sta _sl_ox,x            ; (pas de trace de glissade)
     lda _cfg+CFG_SURF
     beq @land
@@ -441,19 +434,19 @@ dive_step:
     lda #10
     sta _slide_t,x          ; réception : poussière, sable ou éclats
 @noland:
-    lda dive_t,x
-    cmp #6
+    lda _dive_t,x
+    cmp #8
     bcc @free
     txa
     asl a
     tay
-    lda dive_x,y
+    lda _dive_x,y
     sta _plx,y
-    lda dive_x+1,y
+    lda _dive_x+1,y
     sta _plx+1,y
-    lda dive_y,y
+    lda _dive_y,y
     sta _ply,y
-    lda dive_y+1,y
+    lda _dive_y+1,y
     sta _ply+1,y
 @free:
     rts
@@ -527,18 +520,26 @@ choose:
     lda #P_SAD
     rts
 @notover:
-    ; plongeon (dive_t de 30 à 1) : élan en fente (30-28), vol puis au sol
-    ; (27-10), relevé en fente (9-6) ; ensuite le jeu reprend
-    lda dive_t,x
-    cmp #6
+    ; plongeon (_dive_t de 41 à 8) : élan en fente (41-40), vol puis au sol
+    ; (39-18), relevé un genou à terre (17-10) puis en garde (9-8)
+    lda _dive_t,x
+    cmp #8
     bcc @nodive2
-    lda dive_f,x
+    lda _dive_f,x
     sta _flip_cache,x
-    lda dive_t,x
-    cmp #28
+    lda _dive_t,x
+    cmp #40
     bcs @dreach
+    cmp #18
+    bcs @ddive
     cmp #10
-    bcc @dreach
+    bcc @dprep
+    lda #P_KNEEL            ; relevé : un genou à terre, puis en garde
+    rts
+@dprep:
+    lda #P_PREP
+    rts
+@ddive:
     lda #P_DIVE
     rts
 @dreach:

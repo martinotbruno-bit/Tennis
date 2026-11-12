@@ -92,3 +92,68 @@ void shot_select(void)
     sh_power = power;
     sh_depth = depth; sh_speed = speed; sh_grav = grav; sh_spread = spread;
 }
+
+/* ---------------------------------------------------------------------- */
+/* Plongeon (version 2.50), appelé par le moteur (banque 0) via bank_call.
+ * Entrées : sh_p (joueur), sh_pad (0 : joueur humain, au lâcher du bouton ;
+ * $FF : joueur de l'ordinateur). Sortie : sh_short = 1 si le plongeon part.
+ * La balle est suivie trame par trame jusqu'à ce qu'elle soit frappable en
+ * profondeur (comme can_hit) : écart d (px) et nombre de trames n. La
+ * frappe est possible pendant l'élan, le vol et 3 trames au sol (12 trames). Le plongeon (poses.s) avance de 3 px par
+ * trame après 2 trames d'élan, jusqu'à 18 px : la raquette atteint alors
+ * 24 + 3 (n - 2) px, 42 au plus.
+ *  - humain : au lâcher du bouton (la frappe), sans direction à tenir :
+ *    s'il est bien placé, frappe normale ; si la balle passera trop loin
+ *    sur le côté (au-delà de sa portée, 45 px au plus) et arrive dans 12
+ *    trames au plus, il plonge ;
+ *  - ordinateur : jamais sur une balle qui va sortir ; il plonge quand il
+ *    n'arriverait pas à temps en courant
+ *    (course en diagonale, partie en retard : 3/4 de sa vitesse), mais
+ *    assez tôt pour toucher la balle ; souvent en Expert, parfois en
+ *    Normal, rarement en Facile. */
+/* ---------------------------------------------------------------------- */
+extern u8 dive_t[4], dive_f[4], pl_state[4], pl_moving[4];
+#pragma static-locals(off)          /* RAM interne pleine : variables sur la pile */
+void dive_try(void)
+{
+    static const u8 ai_spd[3] = { 74, 86, 110 };     /* comme ai_speed (game.c) */
+    static const u8 dive_p[3] = { 40, 120, 220 };
+    u8 p = sh_p, n, lv, ok = 0;
+    s16 x = bx, y = by, d, a, run, reach;
+    sh_short = 0;
+    if (ms != MS_RALLY || !b_live || hitter == (u8)(p & 1) || bounces > 1 || dive_t[p] || pl_jump[p]) return;
+    if ((b_serve && bounces == 0) || bz > 36 * FP) return;
+    for (n = 0; ; ++n) {
+        if (n > 12) return;
+        d = y - ply[p];
+        if (d > -14 * FP && d < 9 * FP) break;          /* frappable en profondeur (can_hit) */
+        x += bvx; y += bvy;
+    }
+    d = PX(x) - PX(plx[p]);
+    a = d < 0 ? -d : d;
+    if (sh_pad != 0xFF) {
+        /* humain, au lâcher du bouton : bien placé (la balle passera à portée,
+           en comptant le pas glissé pendant le geste), frappe normale ; trop
+           loin (jusqu'à 45 px), plongeon */
+        ok = (u8)(a > (s16)(24 + (n >> 1)) && a < 46);
+    } else {
+        lv = cfg.level[p];
+        /* balle qui va sortir (pas encore rebondi) : on la laisse */
+        if (bounces == 0) {
+            s16 l = cfg.doubles ? DBL_L : SGL_L, r = cfg.doubles ? DBL_R : SGL_R;
+            if (land_x < l || land_x > r || land_y < TOP_BASE || land_y > BOT_BASE) return;
+        }
+        run = (s16)(22 + (((u16)ai_spd[lv] * n * 3) >> 8));
+        reach = (s16)(n > 2 ? 24 + (n - 2) * 3 : 24);
+        if (reach > 42) reach = 42;
+        ok = (u8)(a > run && a <= reach && rand8() < dive_p[lv]);
+    }
+    if (!ok) return;
+    dive_t[p] = 42;
+    dive_f[p] = (u8)(d < 0);
+    pl_state[p] = 0;                /* ST_IDLE */
+    pl_moving[p] = 0;
+    sfx_swing();
+    sh_short = 1;
+}
+#pragma static-locals(on)
