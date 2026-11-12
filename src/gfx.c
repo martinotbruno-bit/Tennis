@@ -225,11 +225,11 @@ static u8 chr_nude;
 
 void chr_copy(u8 bank, const u8 *src, u16 dst, u16 len)
 {
-    u8 old = cur_bank;
-    set_bank(bank);
+    /* copie rapide en assembleur (tz_copy, crt0.s), par blocs de 256 octets */
     vram_adr(dst);
-    while (len--) vram_put(*src++);
-    set_bank(old);
+    tz_bank = bank;
+    while (len >= 256) { tz_n = 0; tz_copy(src); src += 256; len -= 256; }
+    if (len) { tz_n = (u8)len; tz_copy(src); }
 }
 
 /* vue en perspective : décompression d'un court et copie des tables de
