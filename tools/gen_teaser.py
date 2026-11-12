@@ -1,0 +1,697 @@
+#!/usr/bin/env python3
+"""Royal Martinot — personnages en haute définition de la bande-annonce
+(version 2.57) : dessinés en formes vectorielles (membres effilés, visage,
+ombres, raquette cordée), rendus pixel par pixel puis découpés en tuiles du
+décor, avec 3 palettes du décor par personnage (peau et son ombre, tenue et son
+ombre, sombre : cheveux, short, semelles ; blanc : chaussettes, chaussures,
+cordage). Les mêmes dessins, rendus à une échelle plus grande, donnent les
+plans rapprochés (zoom).
+
+Classes de pixels : 0 contour (couleur du fond), 1 peau, 2 peau ombrée,
+3 tenue, 4 tenue ombrée, 5 sombre, 6 blanc.
+Palettes du décor : P1 = peau, peau ombrée, sombre ; P2 = tenue, tenue
+ombrée, sombre ; P3 = peau, tenue, blanc (P0 : bandes du fond).
+
+Sortie : src/assets_tz.h (descripteurs, inclus par teaser.c) et
+src/assets_tz<b>.c (tuiles, tables de noms, attributs) dans les banques
+libres ; assets/preview_teaser.png (aperçu)."""
+import math, os, sys
+import numpy as np
+from PIL import Image, ImageDraw
+
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, os.path.join(ROOT, 'tools'))
+PAL = [
+ (84,84,84),(0,30,116),(8,16,144),(48,0,136),(68,0,100),(92,0,48),(84,4,0),(60,24,0),
+ (32,42,0),(8,58,0),(0,64,0),(0,60,0),(0,50,60),(0,0,0),(0,0,0),(0,0,0),
+ (152,150,152),(8,76,196),(48,50,236),(92,30,228),(136,20,176),(160,20,100),(152,34,32),(120,60,0),
+ (84,90,0),(40,114,0),(8,124,0),(0,118,40),(0,102,120),(0,0,0),(0,0,0),(0,0,0),
+ (236,238,236),(76,154,236),(120,124,236),(176,98,236),(228,84,236),(236,88,180),(236,106,100),(212,136,32),
+ (160,170,0),(116,196,0),(76,208,32),(56,204,108),(56,180,204),(60,60,60),(0,0,0),(0,0,0),
+ (236,238,236),(168,204,236),(188,188,236),(212,178,236),(236,174,236),(236,174,212),(236,180,176),(228,196,144),
+ (204,210,120),(180,222,120),(168,226,144),(152,226,180),(160,214,228),(160,162,160),(0,0,0),(0,0,0)]
+
+GROUND_ROW = 28            # première rangée du sol (y = 224) : bande du bas
+FIRST_TILE = 1             # tuiles du personnage : 1 à MAX_TILES
+MAX_TILES = 0xF6           # $F7-$FF : bandes, sol, filet (teaser.c)
+T_STREAK, T_GROUND = 0xF8, 0xF9
+
+# ------------------------------------------------------------------ dessin
+class Fig:
+    """Personnage rendu dans un cadre de W x H pixels ; transformation
+    (x, y) -> ((x - ox) * k, (y - oy) * k) des coordonnées de base."""
+    def __init__(self, W, H, k=1.0, ox=0.0, oy=0.0):
+        self.W, self.H, self.k, self.ox, self.oy = W, H, k, ox, oy
+        self.cls = np.zeros((H, W), np.uint8)
+        self.pid = np.zeros((H, W), np.int32)
+        self.grp = {0: 0}
+        self.n = 0
+
+    def T(self, p):
+        return ((p[0] - self.ox) * self.k, (p[1] - self.oy) * self.k)
+
+    def mask(self, fn):
+        im = Image.new('L', (self.W, self.H), 0)
+        fn(ImageDraw.Draw(im))
+        return np.array(im) > 0
+
+    # primitives (coordonnées de base)
+    def m_poly(self, pts):
+        q = [self.T(p) for p in pts]
+        return self.mask(lambda d: d.polygon(q, fill=255))
+
+    def m_ell(self, c, rx, ry, ang=0.0):
+        pts = []
+        for i in range(48):
+            t = 2 * math.pi * i / 48
+            x, y = rx * math.cos(t), ry * math.sin(t)
+            ca, sa = math.cos(ang), math.sin(ang)
+            pts.append((c[0] + x * ca - y * sa, c[1] + x * sa + y * ca))
+        return self.m_poly(pts)
+
+    def m_caps(self, a, b, ra, rb):
+        """membre effilé : de a (rayon ra) à b (rayon rb)"""
+        dx, dy = b[0] - a[0], b[1] - a[1]
+        L = math.hypot(dx, dy) or 1
+        nx, ny = -dy / L, dx / L
+        pts = [(a[0] + nx * ra, a[1] + ny * ra), (b[0] + nx * rb, b[1] + ny * rb),
+               (b[0] - nx * rb, b[1] - ny * rb), (a[0] - nx * ra, a[1] - ny * ra)]
+        return self.m_poly(pts) | self.m_ell(a, ra, ra) | self.m_ell(b, rb, rb)
+
+    def m_line(self, pts, w=1.0):
+        q = [self.T(p) for p in pts]
+        ww = max(1, int(round(w * self.k)))
+        return self.mask(lambda d: d.line(q, fill=255, width=ww, joint='curve'))
+
+    def m_arc(self, c, rx, ry, a0, a1, w=1.0):
+        pts = [(c[0] + rx * math.cos(math.radians(a)), c[1] + ry * math.sin(math.radians(a)))
+               for a in np.linspace(a0, a1, 16)]
+        return self.m_line(pts, w)
+
+    # couches
+    def part(self, m, base, shade=None, sh=(3, 1.5), group=None):
+        """nouvelle pièce, devant les précédentes ; ombre sur le bord en bas à
+        droite (lumière en haut à gauche) sur une épaisseur sh"""
+        self.n += 1
+        self.grp[self.n] = group if group is not None else self.n
+        self.pid[m] = self.n
+        self.cls[m] = base
+        if shade is not None:
+            dx, dy = int(round(sh[0] * self.k)), int(round(sh[1] * self.k))
+            s = np.zeros_like(m)
+            s[:self.H - dy, :self.W - dx] = m[dy:, dx:]
+            self.cls[m & ~s] = shade
+        return self.n
+
+    def paint(self, m, c, within=None):
+        """détail peint (sans nouvelle pièce), éventuellement limité à une pièce"""
+        if within is not None:
+            m = m & np.isin(self.pid, within)
+        self.cls[m] = c
+
+    def outline(self):
+        """contour : un pixel touche une pièce située derrière (ou le fond)"""
+        H, W = self.H, self.W
+        g = np.vectorize(lambda v: self.grp.get(v, v))(self.pid)
+        out = np.zeros((H, W), bool)
+        for dy, dx in ((0, 1), (0, -1), (1, 0), (-1, 0)):
+            sp = np.zeros_like(self.pid); sg = np.zeros_like(g)
+            ys = slice(max(dy, 0), H + min(dy, 0)); yd = slice(max(-dy, 0), H + min(-dy, 0))
+            xs = slice(max(dx, 0), W + min(dx, 0)); xd = slice(max(-dx, 0), W + min(-dx, 0))
+            sp[yd, xd] = self.pid[ys, xs]; sg[yd, xd] = g[ys, xs]
+            out |= (self.pid > 0) & (sp < self.pid) & (sg != g)
+        self.cls[out] = 0
+
+
+# ------------------------------------------------------------------ corps
+def body(f, j, female, face, front=('armR', 'legL'), racket_hand='L', racket_dir=None,
+         racket_len=50, racket_bend=0.0, ret=None):
+    """j : articulations (repère de base, sol en y = 206). 'L'/'R' : côté de
+    l'écran (le joueur, de face, tient la raquette dans sa main droite, à
+    gauche de l'écran)."""
+    S, s, O, o, D, W = 1, 2, 3, 4, 5, 6
+    ret = {} if ret is None else ret
+
+    def leg(side):
+        hip, kn, an, toe = j['hip' + side], j['kn' + side], j['an' + side], j['toe' + side]
+        thigh = f.m_caps(hip, kn, 9.5, 7)
+        calf = f.m_caps(kn, lerp(kn, an, 0.35), 7, 6.2) | f.m_caps(lerp(kn, an, 0.35), an, 6.2, 4.2)
+        g = f.part(thigh | calf, S, s, sh=(3, 1))
+        d = (an[0] - kn[0], an[1] - kn[1]); L = math.hypot(*d) or 1; u = (d[0] / L, d[1] / L); n = (-u[1], u[0])
+        c = (kn[0] + u[0] * 2.5, kn[1] + u[1] * 2.5)
+        f.paint(f.m_line([(c[0] - n[0] * 3, c[1] - n[1] * 3), (c[0] + u[0] * 1.2, c[1] + u[1] * 1.2), (c[0] + n[0] * 3, c[1] + n[1] * 3)], 0.7), 2, within=[g])   # rotule
+        f.paint(f.m_line([lerp(kn, an, 0.12), lerp(kn, an, 0.45)], 0.7) & shift_mask(f, (2.5, 0), calf), 2, within=[g])  # mollet
+        # chaussette et chaussure
+        sock = f.m_caps(lerp(an, kn, 0.18), an, 4.6, 4.6)
+        f.part(sock, W, None, group=g)
+        d = (toe[0] - an[0], toe[1] - an[1])
+        L = math.hypot(*d) or 1
+        u = (d[0] / L, d[1] / L)
+        toe = (toe[0] + u[0] * 2, toe[1] + u[1] * 2)            # pied plus long
+        n = (u[1], -u[0]) if u[0] >= 0 else (-u[1], u[0])          # vers le haut
+        Q = lambda t, h: (an[0] + u[0] * t + n[0] * h, an[1] + u[1] * t + n[1] * h)
+        L = math.hypot(toe[0] - an[0], toe[1] - an[1])
+        shoe = f.m_poly([Q(-6, 5), Q(-1, 7), Q(L * 0.45, 4.5), Q(L + 1, 2.2), Q(L + 3, -1), Q(L + 1, -3.5), Q(-6, -3.5), Q(-7.5, 1)])
+        shoe |= f.m_ell(Q(L, -0.6), 3.3, 2.9)
+        sid = f.part(shoe, W, None)
+        sole = shoe & ~shift_mask(f, (-n[0] * 2.2, -n[1] * 2.2), shoe)
+        f.paint(sole, D, within=[sid])
+        f.paint(f.m_line([Q(-4, 0.5), Q(L * 0.35, 2.2), Q(L * 0.7, 0.2)], 0.9), 3, within=[sid])   # bande de la chaussure
+        for t in (0.25, 0.45):                                    # lacets
+            f.paint(f.m_line([Q(L * t, 5.5), Q(L * t + 2.5, 2.5)], 0.5), 0, within=[sid])
+        ret['foot' + side] = (toe[0], toe[1] + 5)
+
+    def arm(side, hold):
+        sh_, el, wr = j['sh' + side], j['el' + side], j['wr' + side]
+        g = f.part(f.m_caps(sh_, el, 6.5, 5.2) | f.m_caps(el, wr, 5.2, 3.8), S, s, sh=(2.5, 1.5))
+        # manche courte
+        f.part(f.m_caps(sh_, lerp(sh_, el, 0.42), 8, 7.2), O, o, sh=(2.5, 1.5), group=g)
+        hand = j.get('hd' + side, lerp(el, wr, 1.25))
+        if hold:
+            # poignet éponge blanc
+            f.part(f.m_caps(lerp(el, wr, 0.78), wr, 4.6, 4.4), W, None, group=g)
+        h = f.part(f.m_ell(hand, 5.2, 5.2), S, s, sh=(2, 2), group=g)
+        if hold:
+            ret['hand'] = hand
+        else:
+            # doigts repliés
+            f.paint(f.m_line([(hand[0] - 3, hand[1] + 1), (hand[0] + 2, hand[1] + 1)], 0.7), 2, within=[h])
+
+    def racket():
+        hand = j['hd' + racket_hand]
+        a = math.radians(racket_dir)
+        u = (math.cos(a), math.sin(a))
+        nrm = (-u[1], u[0])
+        throat = (hand[0] + u[0] * 17, hand[1] + u[1] * 17)
+        cen = (hand[0] + u[0] * (racket_len - 14), hand[1] + u[1] * (racket_len - 14))
+        # manche (sombre), coeur (tenue), tamis (tenue), cordage blanc
+        f.part(f.m_caps((hand[0] - u[0] * 7, hand[1] - u[1] * 7), throat, 2.4, 2.0), D, None)
+        f.part(f.m_line([throat, (cen[0] + nrm[0] * 9 - u[0] * 13, cen[1] + nrm[1] * 9 - u[1] * 13)], 2.2)
+               | f.m_line([throat, (cen[0] - nrm[0] * 9 - u[0] * 13, cen[1] - nrm[1] * 9 - u[1] * 13)], 2.2), O, None)
+        outer = f.m_ell(cen, 15, 11.5, a)
+        inner = f.m_ell(cen, 12.6, 9.2, a)
+        rid = f.part(outer, O, o, sh=(1.5, 1.5))
+        f.paint(inner, 0, within=[rid])
+        st = np.zeros_like(inner)
+        for t in range(-12, 13, 3):
+            st |= f.m_line([(cen[0] + u[0] * t - nrm[0] * 12, cen[1] + u[1] * t - nrm[1] * 12),
+                            (cen[0] + u[0] * t + nrm[0] * 12, cen[1] + u[1] * t + nrm[1] * 12)], 0.6)
+        for t in range(-9, 10, 3):
+            st |= f.m_line([(cen[0] + nrm[0] * t - u[0] * 15, cen[1] + nrm[1] * t - u[1] * 15),
+                            (cen[0] + nrm[0] * t + u[0] * 15, cen[1] + nrm[1] * t + u[1] * 15)], 0.6)
+        f.paint(st & inner, W, within=[rid])
+        ret['racket'] = cen
+        ret['racket_tip'] = (cen[0] + u[0] * 15, cen[1] + u[1] * 15)
+
+    def torso():
+        shL, shR, hpL, hpR = j['shL'], j['shR'], j['hipL'], j['hipR']
+        nk = j['neck']
+        # cou
+        f.part(f.m_caps(nk, j['head'], 6, 6), s, None)
+        top_l = (shL[0] - 2, shL[1] - 5); top_r = (shR[0] + 2, shR[1] - 5)
+        ch_l = lerp(shL, hpL, 0.38); ch_r = lerp(shR, hpR, 0.38)
+        wl = lerp(shL, hpL, 0.8); wr = lerp(shR, hpR, 0.8)
+        pts = [top_l, (nk[0] - 6, nk[1] - 1), (nk[0] + 6, nk[1] - 1), top_r, (shR[0] + 5, shR[1] + 2),
+               (ch_r[0] + 2, ch_r[1]), (wr[0] + 1, wr[1]), (hpR[0] + 3, hpR[1] - 4),
+               (hpL[0] - 3, hpL[1] - 4), (wl[0] - 1, wl[1]), (ch_l[0] - 2, ch_l[1]), (shL[0] - 5, shL[1] + 2)]
+        tid = f.part(f.m_poly(pts), O, o, sh=(5, 2))
+        # col (polo) : col rabattu et patte de boutonnage
+        f.part(f.m_poly([(nk[0] - 7, nk[1] - 2), (nk[0] - 1, nk[1] + 7), (nk[0] - 3, nk[1] + 9), (nk[0] - 8, nk[1] + 1)])
+               | f.m_poly([(nk[0] + 7, nk[1] - 2), (nk[0] + 1, nk[1] + 7), (nk[0] + 3, nk[1] + 9), (nk[0] + 8, nk[1] + 1)]),
+               O, o, sh=(1, 1), group=tid)
+        f.paint(f.m_poly([(nk[0] - 1.5, nk[1] + 2), (nk[0] + 1.5, nk[1] + 2), (nk[0] + 0.5, nk[1] + 8), (nk[0] - 0.5, nk[1] + 8)]), 1, within=[tid])
+        f.paint(f.m_line([(nk[0], nk[1] + 8), (nk[0], nk[1] + 15)], 0.8), 4, within=[tid])
+        # plis du tissu, liseré sur les côtés
+        f.paint(f.m_line([lerp(ch_l, wl, 0.2), (lerp(ch_l, wl, 0.2)[0] + 7, lerp(ch_l, wl, 0.2)[1] + 6)], 0.8), 4, within=[tid])
+        f.paint(f.m_line([lerp(top_r, ch_r, 0.7), lerp(wr, hpR, 0.3)], 1.4), 5, within=[tid])
+        f.paint(f.m_line([(lerp(wl, wr, 0.3)[0], lerp(wl, wr, 0.3)[1] - 2), (lerp(wl, wr, 0.6)[0], lerp(wl, wr, 0.6)[1] + 1)], 0.8), 4, within=[tid])
+        # petit écusson
+        e = lerp(lerp(shL, shR, 0.72), lerp(hpL, hpR, 0.72), 0.22)
+        f.paint(f.m_ell(e, 1.8, 1.4), 4, within=[tid])
+        # short ou jupe
+        bl = (hpL[0] - 3, hpL[1] - 6); br = (hpR[0] + 3, hpR[1] - 6)
+        if female:
+            kl, kr = j['knL'], j['knR']
+            hl, hr = lerp(hpL, kl, 0.42), lerp(hpR, kr, 0.42)
+            sk = f.m_poly([bl, br, (hr[0] + 8, hr[1] + 2), (lerp(hl, hr, 0.5)[0], max(hl[1], hr[1]) + 3), (hl[0] - 8, hl[1] + 2)])
+            sid = f.part(sk, D, None)
+            for t in (0.25, 0.5, 0.75):
+                a = lerp(bl, br, t); b = lerp((hl[0] - 8, hl[1] + 2), (hr[0] + 8, hr[1] + 2), t)
+                f.paint(f.m_line([lerp(a, b, 0.25), b], 0.8), 0, within=[sid])
+            f.paint(f.m_line([bl, br], 1.6), 3, within=[sid])        # ceinture
+        else:
+            m = f.m_poly([bl, br, (hpR[0] + 5, hpR[1] + 4), (hpL[0] - 5, hpL[1] + 4)])
+            m |= f.m_caps(hpL, lerp(hpL, j['knL'], 0.42), 10.5, 9.5) | f.m_caps(hpR, lerp(hpR, j['knR'], 0.42), 10.5, 9.5)
+            sid = f.part(m, D, None)
+            for side, sx in (('L', -1), ('R', 1)):
+                hp, kn = j['hip' + side], j['kn' + side]
+                e = lerp(hp, kn, 0.42)
+                f.paint(f.m_line([(hp[0] + sx * 8, hp[1] - 2), (e[0] + sx * 8.5, e[1])], 1.0), 0, within=[sid])   # couture
+            f.paint(f.m_line([bl, br], 1.6), 3, within=[sid])
+        ret['shorts'] = sid
+
+    def head():
+        h = j['head']
+        tilt = j.get('tilt', 0.0)
+        turn = j.get('turn', 0.0)
+        ca, sa = math.cos(tilt), math.sin(tilt)
+        R = lambda dx, dy: (h[0] + dx * ca - dy * sa, h[1] + dx * sa + dy * ca)   # repère de la tête
+        if female:
+            # queue de cheval derrière la tête
+            pt = j.get('pony', (h[0] + 15, h[1] + 16))
+            f.part(f.m_caps(R(5, -9), pt, 6.5, 3.2) | f.m_ell(R(6, -8), 5, 4), D, None)
+        f.part(f.m_ell(R(-11 + turn * 0.4, 1), 2.8, 4.4, tilt) | f.m_ell(R(11 + turn * 0.4, 1), 2.8, 4.4, tilt), S, s, sh=(1, 1))   # oreilles
+        # crâne, pommettes, mâchoire et menton
+        hm = f.m_ell(R(0, -2), 11, 12.5, tilt)
+        hm |= f.m_poly([R(-10.5, 0), R(10.5, 0), R(8.5 + turn * 0.3, 9), R(3.5 + turn * 0.4, 14), R(-3.5 + turn * 0.4, 14), R(-8.5 + turn * 0.3, 9)])
+        hid = f.part(hm, S, s, sh=(2.5, 1))
+        f.paint(f.m_line([R(-8 + turn * 0.3, 9.5), R(-3.5 + turn * 0.4, 13.5)], 0.6) & ~shift_mask(f, (0, -1.2), hm), 2, within=[hid])
+        # cheveux : volume, mèches, raie
+        top = f.m_ell(R(0, -6.5), 12.3, 9.8, tilt)
+        if female:
+            hair = top & ~f.m_ell(R(2.5 + turn, 2.5), 10.5, 8.6, tilt)
+            hair |= f.m_caps(R(-11.6, -5), R(-12.6, 8), 2.3, 1.4) | f.m_caps(R(11.6, -5), R(12.4, 6), 2.2, 1.3)
+            hair |= f.m_poly([R(-9, -6), R(-2, -9), R(-6, -1)])
+        else:
+            hair = top & ~f.m_ell(R(1.5 + turn, 2.2), 10.6, 8.2, tilt)
+            hair |= f.m_poly([R(-11.8, -4), R(-10.8, 2.5), R(-9.2, -3)]) | f.m_poly([R(11.8, -4), R(10.8, 2.5), R(9.2, -3)])
+            hair |= f.m_poly([R(-6, -8), R(1, -7.5), R(-3, -3.5)])                      # mèche sur le front
+        hr = f.part(hair, D, None, group=hid)
+        for k0 in (-6, -1, 4):
+            f.paint(f.m_arc(R(k0, -4), 5, 6.5, 215, 290, 0.6), 0, within=[hr])     # mèches
+        ex, ey = R(turn, 1)
+        ret['face'] = (ex, ey)
+        face_features(f, ex, ey, face, hid, tilt)
+
+    order = j['order']
+    for p in order:
+        if p == 'legL': leg('L')
+        elif p == 'legR': leg('R')
+        elif p == 'armL': arm('L', racket_hand == 'L')
+        elif p == 'armR': arm('R', racket_hand == 'R')
+        elif p == 'torso': torso()
+        elif p == 'head': head()
+        elif p == 'racket': racket()
+    return ret
+
+
+def face_features(f, x, y, face, hid, tilt=0.0):
+    """yeux (blanc, iris, paupière), sourcils, nez, bouche selon l'expression"""
+    P = lambda m, c: f.paint(m, c, within=[hid])
+    line = f.m_line
+    ca, sa = math.cos(tilt), math.sin(tilt)
+    R = lambda dx, dy: (x + dx * ca - dy * sa, y + dx * sa + dy * ca)
+
+    def eye(sx, look=0.0, lid=0.0):
+        c = R(sx * 4.6, -0.3)
+        P(f.m_ell(c, 2.5, 1.45 - lid, tilt), 6)
+        P(f.m_ell((c[0] + look, c[1] + 0.1), 1.25, 1.25), 5)
+        P(line([R(sx * 4.6 - 2.6, -1.3 + lid), R(sx * 4.6 + 2.6, -1.3 + lid)], 0.7), 5)     # paupière
+    def nose():
+        P(line([R(0.6, 0.5), R(1.3, 5), R(-0.2, 5.8)], 0.8), 2)
+        P(f.m_ell(R(-1.4, 5.6), 0.7, 0.5), 2)
+    if face == 'focus':
+        for sx in (-1, 1):
+            eye(sx, look=-1.0, lid=0.3)
+            P(line([R(sx * 7.6, -4.1), R(sx * 2.3, -3.4)], 1.2), 5)
+        nose()
+        P(line([R(-3.5, 9.4), R(0, 9.8), R(3.5, 9.2)], 1.0), 5)
+        P(line([R(-2.5, 11), R(2.5, 11)], 0.6), 2)
+    elif face == 'effort':
+        for sx in (-1, 1):
+            P(line([R(sx * 7, -0.6), R(sx * 4.5, 0.4), R(sx * 2.4, -0.2)], 1.1), 5)     # yeux plissés
+            P(line([R(sx * 7.6, -4.6), R(sx * 2, -2.4)], 1.4), 5)
+        nose()
+        P(f.m_ell(R(0, 9.6), 5, 2.4, tilt), 5)                                          # dents serrées
+        P(f.m_ell(R(0, 9.6), 4, 1.1, tilt), 6 if f.k >= 2 else 1)
+        P(line([R(-3.5, 9.6), R(3.5, 9.6)], 0.5), 5)
+    elif face == 'joy':
+        for sx in (-1, 1):
+            P(f.m_arc(R(sx * 4.6, 0.8), 2.6, 1.9, 195, 345, 1.0), 5)                     # yeux plissés de joie
+            P(f.m_arc(R(sx * 4.8, -3.6), 3, 1.4, 200, 340, 1.1), 5)
+        nose()
+        P(f.m_ell(R(0, 9.4), 5.4, 4.2, tilt), 5)                                        # cri de joie
+        P(f.m_ell(R(0, 6.6), 4.3, 1.3, tilt), 6)                                        # dents
+        P(f.m_ell(R(0, 11.6), 2.8, 1.4, tilt), 2)                                       # langue
+    elif face == 'angry':
+        for sx in (-1, 1):
+            eye(sx, look=0.0, lid=0.5)
+            P(line([R(sx * 8, -5.8), R(sx * 1.6, -1.7)], 1.7), 5)                     # sourcils froncés
+        P(line([R(-0.9, -3.5), R(-0.9, -1.3)], 0.6), 2)                                # ride du front
+        P(line([R(0.9, -3.2), R(0.9, -1.5)], 0.6), 2)
+        nose()
+        P(f.m_poly([R(-5.8, 8.3), R(5.8, 8.3), R(3.6, 13.8), R(-3.6, 13.8)]), 5)          # cri
+        P(f.m_poly([R(-4.8, 8.4), R(4.8, 8.4), R(4.2, 9.7), R(-4.2, 9.7)]), 6)            # dents
+        P(f.m_poly([R(-2.8, 12.6), R(2.8, 12.6), R(2.6, 13.6), R(-2.6, 13.6)]), 6)
+        P(line([R(-7, 6.2), R(-6, 9.8)], 0.6), 2)                                       # plis
+        P(line([R(7, 6.2), R(6, 9.8)], 0.6), 2)
+
+
+def lerp(a, b, t):
+    return (a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t)
+
+
+def shift_mask(f, d, m=None):
+    """masque décalé (d en coordonnées de base) ; sans m : demi-plan utile
+    pour ne garder qu'un côté (par rapport au masque courant : tout vrai)"""
+    dx, dy = int(round(d[0] * f.k)), int(round(d[1] * f.k))
+    s = np.zeros_like(m)
+    ys = slice(max(dy, 0), f.H + min(dy, 0)); yd = slice(max(-dy, 0), f.H + min(-dy, 0))
+    xs = slice(max(dx, 0), f.W + min(dx, 0)); xd = slice(max(-dx, 0), f.W + min(-dx, 0))
+    s[yd, xd] = m[ys, xs]
+    return s
+
+
+# ------------------------------------------------------------------ poses
+# repère de base : sol en y = 206 ; figure d'environ 190 px de haut
+POSES = {}
+
+# 1. frappe de coup droit, à l'impact : bras tendu vers la gauche de l'écran
+POSES['impact'] = dict(
+    j=dict(head=(86, 30), neck=(86, 44), tilt=-0.08, turn=-3.0,
+           shL=(66, 56), shR=(104, 55), elL=(42, 66), wrL=(22, 70), hdL=(17, 70),
+           elR=(122, 72), wrR=(132, 92), hdR=(134, 97),
+           hipL=(76, 122), hipR=(98, 122), knL=(60, 160), anL=(50, 196), toeL=(38, 199),
+           knR=(112, 158), anR=(120, 194), toeR=(132, 198),
+           order=['racket', 'legR', 'armR', 'legL', 'torso', 'armL', 'head']),
+    face='focus', hand='L', rdir=200, rlen=52)
+
+# 2. glissade sur terre battue : jambe droite de l'écran tendue, très bas
+POSES['slide'] = dict(
+    j=dict(head=(70, 84), neck=(74, 97), tilt=0.15, turn=4.0,
+           shL=(58, 106), shR=(94, 110), elL=(40, 92), wrL=(28, 74), hdL=(24, 68),
+           elR=(118, 126), wrR=(140, 138), hdR=(146, 141),
+           hipL=(68, 162), hipR=(90, 164), knL=(44, 172), anL=(48, 200), toeL=(36, 203),
+           knR=(124, 182), anR=(156, 196), toeR=(170, 194),
+           order=['armL', 'legL', 'torso', 'legR', 'head', 'armR', 'racket']),
+    face='effort', hand='R', rdir=-10, rlen=50)
+POSES['slide']['hand'] = 'R'
+
+# 3. bras levés au ciel, raquette au poing, tête renversée, cri de joie
+POSES['victory'] = dict(
+    j=dict(head=(80, 56), neck=(80, 70), tilt=0.0, turn=0.0,
+           shL=(60, 80), shR=(100, 80), elL=(40, 58), wrL=(30, 36), hdL=(28, 31),
+           elR=(120, 58), wrR=(130, 36), hdR=(132, 31),
+           hipL=(70, 142), hipR=(90, 142), knL=(62, 174), anL=(58, 201), toeL=(48, 204),
+           knR=(98, 174), anR=(102, 201), toeR=(112, 204),
+           order=['racket', 'legL', 'legR', 'torso', 'armL', 'armR', 'head']),
+    face='joy', hand='L', rdir=-140, rlen=50)
+
+# 4. raquette fracassée au sol : penché en avant, bras abattu, cri de colère
+POSES['angry'] = dict(
+    j=dict(head=(84, 74), neck=(84, 86), tilt=-0.1, turn=-1.5,
+           shL=(64, 96), shR=(104, 98), elL=(52, 122), wrL=(58, 144), hdL=(60, 149),
+           elR=(122, 120), wrR=(130, 140), hdR=(131, 145),
+           hipL=(74, 146), hipR=(98, 146), knL=(58, 176), anL=(52, 202), toeL=(40, 205),
+           knR=(116, 176), anR=(122, 202), toeR=(134, 205),
+           order=['legR', 'legL', 'torso', 'armR', 'racket', 'armL', 'head']),
+    face='angry', hand='L', rdir=100, rlen=50)
+
+# plans : (nom, pose, échelle, (x, y) de base visé au centre ; None : pieds au sol)
+# zoom : True si le visage est assez grand pour sa palette (peau, sombre, blanc)
+SHOTS = [
+    ('impact', 'impact', 1.4, (58, 94), False),     # gros plan : buste, raquette à l'impact
+    ('slide', 'slide', 1.12, None, False),           # glissade, en pied
+    ('slide_z', 'slide', 1.3, (110, None), False),   # zoom : la chaussure qui glisse
+    ('victory', 'victory', 1.0, (82, None), False),        # bras levés, en pied
+    ('victory_z', 'victory', 2.0, (80, 66), True),   # zoom : buste et visage
+    ('angry', 'angry', 1.12, None, False),           # raquette au sol, en pied
+    ('angry_z', 'angry', 3.4, (84, 80), True),       # zoom : le visage qui crie
+]
+
+
+def render(pose, female, k, center):
+    P = POSES[pose]
+    W, H = 256, GROUND_ROW * 8
+    cx, cy = center if center else (90, None)
+    if cy is None:
+        oy = 206.5 - (H - 1) / k          # pieds au sol (dernière rangée du cadre)
+    else:
+        oy = cy - (H / 2) / k
+    f = Fig(W, H, k, cx - 128 / k, oy)
+    r = body(f, P['j'], female, P['face'], racket_hand=P['hand'], racket_dir=P['rdir'], racket_len=P['rlen'])
+    f.outline()
+    r = {key: f.T(v) for key, v in r.items() if isinstance(v, tuple)}
+    return f, r
+
+
+# ------------------------------------------------------------------ tuiles
+COST = {  # coût de remplacement d'une classe par une autre (0..6)
+    (1, 2): 2, (1, 6): 4, (1, 3): 7, (1, 5): 8, (1, 4): 7,
+    (2, 1): 2, (2, 5): 4, (2, 4): 4, (2, 3): 6,
+    (3, 4): 2, (3, 6): 4, (3, 1): 7, (3, 5): 6,
+    (4, 3): 2, (4, 5): 3, (4, 2): 4, (4, 1): 6,
+    (5, 0): 3, (5, 2): 4, (5, 4): 4,
+    (6, 1): 3, (6, 3): 3, (6, 2): 5,
+}
+PALS = {1: (1, 2, 5), 2: (3, 4, 5), 3: (1, 3, 6)}
+PALS_Z = {**PALS, 0: (1, 5, 6)}       # plans rapprochés : P0 = peau, sombre, blanc
+
+
+def cost(a, b):
+    if a == b:
+        return 0
+    if b == 0:
+        return COST.get((a, 0), 6)
+    return COST.get((a, b), 9)
+
+
+def quantize(f, pals):
+    """attribut de chaque bloc 16 x 16 (palette la moins coûteuse), puis
+    indices 0-3 des pixels"""
+    H, W = f.H, f.W
+    idx = np.zeros((H, W), np.uint8)
+    attr = np.full((H // 16 + 1, W // 16), 255, np.uint8)
+    for by in range(0, H, 16):
+        for bx in range(0, W, 16):
+            blk = f.cls[by:by + 16, bx:bx + 16]
+            if not blk.any() and not (f.pid[by:by + 16, bx:bx + 16] > 0).any():
+                continue
+            vals, cnt = np.unique(blk, return_counts=True)
+            best = None
+            for p, cols in pals.items():
+                tgt = (0,) + cols
+                c = sum(min(cost(v, t) for t in tgt) * n for v, n in zip(vals, cnt))
+                if best is None or c < best[0]:
+                    best = (c, p)
+            p = best[1]
+            attr[by // 16, bx // 16] = p
+            tgt = (0,) + pals[p]
+            lut = {v: min(range(4), key=lambda i: cost(v, tgt[i])) for v in vals}
+            sub = idx[by:by + 16, bx:bx + 16]
+            for v in vals:
+                sub[blk == v] = lut[v]
+    return idx, attr
+
+
+def tile_bytes(idx, tx, ty):
+    b = []
+    for plane in (0, 1):
+        for y in range(8):
+            v = 0
+            for x in range(8):
+                v = (v << 1) | ((int(idx[ty * 8 + y, tx * 8 + x]) >> plane) & 1)
+            b.append(v)
+    return bytes(b)
+
+
+def build(f, zoom):
+    idx, attr = quantize(f, PALS_Z if zoom else PALS)
+    rows = f.H // 8
+    tiles, tmap = [], {}
+    nt = [[None] * 32 for _ in range(rows)]
+    for ty in range(rows):
+        for tx in range(32):
+            a = attr[ty // 2, tx // 2]
+            t = tile_bytes(idx, tx, ty)
+            if a == 255:
+                nt[ty][tx] = 0 if zoom else T_STREAK
+            elif not any(t):
+                nt[ty][tx] = 0
+            else:
+                if t not in tmap:
+                    tmap[t] = FIRST_TILE + len(tiles)
+                    tiles.append(t)
+                nt[ty][tx] = tmap[t]
+    # rectangle utile (rangées / colonnes qui ne sont pas que du fond)
+    used = [(x, y) for y in range(rows) for x in range(32) if attr[y // 2, x // 2] != 255]
+    x0 = min(x for x, _ in used) & ~1; x1 = (max(x for x, _ in used) | 1) + 1
+    y0 = min(y for _, y in used) & ~1; y1 = rows
+    # table des attributs complète (64 octets) : 2 bits par bloc 16 x 16
+    at = []
+    for ay in range(8):
+        for ax in range(8):
+            v = 0
+            for q, (dy, dx) in enumerate(((0, 0), (0, 1), (1, 0), (1, 1))):
+                by, bx = ay * 2 + dy, ax * 2 + dx
+                p = attr[by, bx] if by < attr.shape[0] and by * 16 < f.H and bx < attr.shape[1] else 255
+                v |= (0 if p == 255 else int(p)) << (q * 2)
+            at.append(v)
+    assert len(tiles) <= MAX_TILES, len(tiles)
+    return dict(tiles=tiles, nt=nt, x0=x0, x1=x1, y0=y0, y1=y1, at=at, idx=idx, attr=attr, zoom=zoom)
+
+
+# ------------------------------------------------------------------ aperçu
+SAMPLES = [(0x27, 0x30, 0x0F), (0x37, 0x1C, 0x0F), (0x07, 0x27, 0x0F), (0x27, 0x35, 0x28)]
+
+
+def shades(S, O, D):
+    sl, sd = (S, S - 0x10) if S >= 0x10 else (S + 0x10, S)
+    ol, od = (O, O - 0x10) if O >= 0x10 else (O + 0x10, O)
+    if O == 0x30: od = 0x10
+    return sl, sd, ol, od
+
+
+def bg_pals(c, back=0x01, zoom=False):
+    S, O, D = c
+    sl, sd, ol, od = shades(S, O, D)
+    p0 = (back, sl, D, 0x30) if zoom else (back, 0x11, 0x21, 0x12)
+    return [p0, (back, sl, sd, D), (back, ol, od, D), (back, sl, ol, 0x30)]
+
+
+def preview(res, c, back=0x01):
+    pals = bg_pals(c, back, res['zoom'])
+    H = GROUND_ROW * 8 + 32
+    im = Image.new('RGB', (256, H), PAL[back])
+    px = im.load()
+    idx, attr = res['idx'], res['attr']
+    for y in range(GROUND_ROW * 8):
+        for x in range(256):
+            a = attr[y // 16, x // 16]
+            v = idx[y, x]
+            if a == 255:
+                if res['zoom']: continue
+                if (x + y) % 8 == 0: px[x, y] = PAL[0x11]
+                continue
+            if v:
+                px[x, y] = PAL[pals[a][v]]
+    for y in range(GROUND_ROW * 8, H):
+        for x in range(256):
+            px[x, y] = PAL[0x12]
+    return im
+
+
+def main():
+    out = {}
+    sheet = []
+    for name, pose, k, cen, zoom in SHOTS:
+        for female in (0, 1):
+            f, r = render(pose, female, k, cen)
+            res = build(f, zoom)
+            res['r'] = r
+            out[(name, female)] = res
+            print('%-10s %s : %3d tuiles, colonnes %d-%d, rangées %d-%d' % (
+                name, 'F' if female else 'H', len(res['tiles']), res['x0'], res['x1'] - 1, res['y0'], res['y1'] - 1))
+            if not female:
+                sheet.append([preview(res, c) for c in SAMPLES[:2]])
+            else:
+                sheet[-1] += [preview(res, c) for c in SAMPLES[2:]]
+    return out, sheet
+
+
+# ------------------------------------------------------------------ export
+# banques libres (octets disponibles, marge comprise)
+BANKS = [(9, 13600), (12, 11900), (4, 12200), (10, 11400), (2, 7900)]
+
+
+def pack(chr_):
+    """par tuile : masque 16 bits (octet répété = 1), puis octets nouveaux"""
+    out = bytearray()
+    for t in range(0, len(chr_), 16):
+        m, prev, new = 0, 0, bytearray()
+        for i, b in enumerate(chr_[t:t + 16]):
+            if b == prev:
+                m |= 1 << i
+            else:
+                new.append(b)
+            prev = b
+        out += bytes((m & 255, m >> 8)) + new
+    return bytes(out)
+
+
+def export(out):
+    blobs, arts = [], {}
+    for name, pose, k, cen, zoom in SHOTS:
+        for female in (0, 1):
+            res = out[(name, female)]
+            chr_ = pack(b''.join(res['tiles']))
+            mp = bytes(res['nt'][y][x] for y in range(res['y0'], res['y1']) for x in range(res['x0'], res['x1']))
+            key = (chr_, mp, bytes(res['at']))
+            same = [i for i, b in enumerate(blobs) if b['key'] == key]
+            if same:
+                arts[(name, female)] = same[0]
+                continue
+            blobs.append(dict(key=key, size=len(chr_) + len(mp) + 64, id='%s_%s' % (name, 'f' if female else 'm'), res=res))
+            arts[(name, female)] = len(blobs) - 1
+    # rangement : la plus grosse d'abord, dans la banque la moins remplie qui l'accepte
+    free = {b: n for b, n in BANKS}
+    for b in sorted(blobs, key=lambda b: -b['size']):
+        cand = [k for k in free if free[k] >= b['size']]
+        assert cand, 'plus de place pour ' + b['id']
+        k = max(cand, key=lambda k: free[k])
+        free[k] -= b['size']
+        b['bank'] = k
+    used = sorted(k for k, _ in BANKS)
+    def arr(name, data):
+        lines = ['const unsigned char %s[%d] = {' % (name, len(data))]
+        for i in range(0, len(data), 16):
+            lines.append('  ' + ','.join('0x%02X' % v for v in data[i:i + 16]) + ',')
+        lines.append('};')
+        return lines
+    for bk in used:
+        L = ['/* Fichier généré par tools/gen_teaser.py — ne pas modifier. */',
+             '/* Bande-annonce : personnages en haute définition (banque %d). */' % bk, '']
+        for b in blobs:
+            if b['bank'] != bk:
+                continue
+            chr_, mp, at = b['key']
+            L += arr('tz_chr_' + b['id'], chr_) + arr('tz_map_' + b['id'], mp) + arr('tz_at_' + b['id'], at) + ['']
+        open(os.path.join(ROOT, 'src', 'assets_tz%d.c' % bk), 'w').write('\n'.join(L))
+    H = ['/* Fichier généré par tools/gen_teaser.py — ne pas modifier. */',
+         '/* Bande-annonce : descripteurs des images en haute définition (teaser.c). */', '']
+    for b in blobs:
+        for t in ('chr', 'map', 'at'):
+            H.append('extern const unsigned char tz_%s_%s[];' % (t, b['id']))
+    H += ['', 'typedef struct { unsigned char bank, ntile, x0, w, y0, h, zoom; const unsigned char *chr, *map, *at; } tz_art_t;', '']
+    names = [sh[0] for sh in SHOTS]
+    for i, n in enumerate(names):
+        H.append('#define TZ_%s %d' % (n.upper(), i))
+    H.append('#define TZ_N %d' % len(names))
+    H.append('static const tz_art_t tz_art[TZ_N][2] = {')
+    for name, pose, k, cen, zoom in SHOTS:
+        row = []
+        for female in (0, 1):
+            b = blobs[arts[(name, female)]]; r = b['res']
+            row.append('{ %d, %d, %d, %d, %d, %d, %d, tz_chr_%s, tz_map_%s, tz_at_%s }' % (
+                b['bank'], len(r['tiles']), r['x0'], r['x1'] - r['x0'], r['y0'], r['y1'] - r['y0'], 1 if zoom else 0, b['id'], b['id'], b['id']))
+        H.append('    { %s,\n      %s },' % tuple(row))
+    H.append('};')
+    # repères (pixels de l'écran) : centre du tamis, pied qui glisse, visage
+    for name in names:
+        r = out[(name, 0)]['r']
+        for key in ('racket', 'footR', 'face', 'racket_tip'):
+            if key in r:
+                x, y = r[key]
+                H.append('#define TZ_%s_%s_X %d' % (name.upper(), key.upper(), max(0, min(255, int(round(x))))))
+                H.append('#define TZ_%s_%s_Y %d' % (name.upper(), key.upper(), max(0, min(239, int(round(y))))))
+    H.append('#define TZ_GROUND_ROW %d' % GROUND_ROW)
+    H.append('#define TZ_FIRST_TILE %d' % FIRST_TILE)
+    open(os.path.join(ROOT, 'src', 'assets_tz.h'), 'w').write('\n'.join(H) + '\n')
+    tot = sum(b['size'] for b in blobs)
+    print('export : %d images, %d octets, banques %s' % (len(blobs), tot,
+          ', '.join('%d (%d libres)' % (k, free[k]) for k in used)))
+    return used
+
+
+if __name__ == '__main__':
+    out, sheet = main()
+    export(out)
+    cols = len(sheet[0])
+    w, h = sheet[0][0].size
+    big = Image.new('RGB', (w * cols, h * len(sheet)))
+    for r, row in enumerate(sheet):
+        for c, im in enumerate(row):
+            big.paste(im, (c * w, r * h))
+    dst = sys.argv[1] if len(sys.argv) > 1 else os.path.join(ROOT, 'assets', 'preview_teaser.png')
+    big.resize((big.width * 2, big.height * 2), Image.NEAREST).save(dst)
+    print('aperçu :', dst)

@@ -48,6 +48,12 @@ extern u8 vram_len;
 extern u8 scroll_y, scroll_nt;      /* défilement vertical (générique de fin) */
 #pragma zpsym("scroll_y")
 #pragma zpsym("scroll_nt")
+extern u8 scroll_x, tz_bank, tz_n;  /* défilement horizontal ; tz_unpack (bande-annonce) */
+#pragma zpsym("scroll_x")
+#pragma zpsym("tz_bank")
+#pragma zpsym("tz_n")
+void __fastcall__ tz_unpack(const u8 *src);   /* tuiles compressées -> PPU (rendu coupé) */
+void __fastcall__ tz_copy(const u8 *src);     /* tz_n octets (0 : 256) d'une banque -> PPU */
 void __fastcall__ mirror_h(u8 h);   /* 1 : écrans empilés (MMC1 horizontal) ; rendu coupé */
 
 extern u8 oam_i, meta_x, meta_y, meta_tile, meta_attr;

@@ -28,6 +28,8 @@ function startWith(e, opts) {
   toMenu(e); setOpts(e, opts); e.tap('START');
   // certains écrans (classements) se construisent en plusieurs trames
   for (let n = 0; n < 90 && app(e) === AS.SCREENS && scr(e) === SS.MENU; n++) e.run(1);
+  // bande-annonce du Grand Martinot (passée par le banc d'essai), puis l'annonce
+  if (app(e) === AS.SCREENS && scr(e) === 11) runUntil(e, () => scr(e) !== 11, 120);
   e.run(10);
   // le court se charge sur quelques trames (fondu, décor, copie des tribunes)
   if (app(e) === AS.SCREENS && scr(e) === SS.PRESENT) { e.tap('A'); runUntil(e, () => app(e) === AS.MATCH, 60); e.run(2); }
@@ -1923,20 +1925,25 @@ for (const type of [5, 6]) {
   // environ 6 secondes ; puis l'annonce du premier tournoi
   const e = boot(); e.cerSkip = false; toMenu(e); setOpts(e, { MODE: MODE.COMP, COMP: type, FMT: 3 }); e.tap('START');
   runUntil(e, () => scr(e) === 11, 120);
-  const t0 = e.frames, shots = new Set(); let rock = false, big = false, title = '', dur = 0;
+  const t0 = e.frames, cuts = new Set(); let rock = false, big = 0, cam = false, title = '', dur = 0;
   runUntil(e, () => {
     if (scr(e) !== 11) return true;
-    shots.add(e.peek('ts_shot'));
+    const c = e.peek('ts_cut');
+    cuts.add(c);
     if (e.peek('music_cur') === 19) rock = true;
-    if (e.nes.ppu.vramMem[0x2000 + 8 * 32 + 12] === 0x60) big = true;      // personnage agrandi (tuiles $60...)
-    if (!title && e.peek('ts_shot') === 4 && e.peek('ts_t') > 120) title = e.text(0, 21, 32).trim();
+    if (e.peek('scroll_x') !== 0) cam = true;                                // travellings
+    if (c < 7 && e.peek('ts_t') === 12) {                                    // image en haute définition
+      const t = new Set(); for (let i = 0; i < 28 * 32; i++) t.add(e.nes.ppu.vramMem[0x2000 + i]);
+      big = Math.max(big, t.size);
+    }
+    if (!title && c === 7 && e.peek('ts_t') > 120) title = e.text(0, 21, 32).trim();
     if (!dur && e.peek('teaser_done')) dur = (e.frames - t0) / 60;
     return false;
-  }, 600);
+  }, 700);
   runUntil(e, () => scr(e) === 10 && litScr(e), 120);
   const name = type === 5 ? 'Grand Martinot' : 'Martinworld Tour';
-  check(shots.size === 5 && rock && big && dur > 5.5 && dur < 7 && title.includes('TOURNOIS') && scr(e) === 10,
-    `${name} : bande-annonce (4 gros plans et le titre, riff de rock, ${dur.toFixed(1)} s, « ${title} »), puis l'annonce du 1er tournoi`);
+  check(cuts.size === 8 && rock && big > 140 && cam && dur > 5.5 && dur < 7 && title.includes('TOURNOIS') && scr(e) === 10,
+    `${name} : bande-annonce (7 plans en haute définition jusqu'à ${big} tuiles, travellings, riff de rock, ${dur.toFixed(1)} s, « ${title} »), puis l'annonce du 1er tournoi`);
   const a = boot(); a.cerSkip = false; toMenu(a); setOpts(a, { MODE: MODE.COMP, COMP: type, FMT: 3 }); a.tap('START');
   runUntil(a, () => scr(a) === 11, 120); a.run(20); a.tap('A'); runUntil(a, () => scr(a) === 10, 60);
   check(scr(a) === 10, `${name} : A passe la bande-annonce`);

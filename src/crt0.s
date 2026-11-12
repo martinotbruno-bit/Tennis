@@ -11,7 +11,7 @@
 .export _pad1, _pad2, _pad1_new, _pad2_new, _region_cnt
 .export _wait_frame, _pad_poll, _ppu_off, _ppu_on, _vram_adr, _vram_put
 .export _swap_put, _vram_fill, _vram_unrle, _rand8, _rand_seed
-.export _scroll_y, _scroll_nt, _mirror_h
+.export _scroll_y, _scroll_nt, _mirror_h, _scroll_x, _tz_bank, _tz_n, _tz_unpack, _tz_copy
 .export _chr_data
 .export _spr1, _spr_meta, _spr_end, _oam_i, _spr_rot, _set_bank, _cur_bank, _bank_call, _far_call, _rp_record
 .import _bx, _by, _bz, _b_vis, _plx, _ply, _pose_cache, _flip_cache
@@ -81,6 +81,12 @@ nmi_vlen:   .res 1      ; copie de vram_len pour la NMI
 nmi_pal:    .res 1      ; compteur 50 Hz du son
 _scroll_y:  .res 1      ; défilement vertical (0..239), générique de fin
 _scroll_nt: .res 1      ; écran de nametable (0 ou 2 : bit 1 de PPUCTRL)
+_scroll_x:  .res 1      ; défilement horizontal (bande-annonce : travellings)
+_tz_bank:   .res 1      ; tz_unpack : banque des tuiles compressées
+_tz_n:      .res 1      ; tz_unpack : nombre de tuiles
+tz_src:     .res 2
+tz_m:       .res 2
+tz_prev:    .res 1
 _rand_seed: .res 2
 pad_tmp:    .res 1
 pad_chk:    .res 2      ; lecture de contrôle des manettes (DPCM)
@@ -314,6 +320,7 @@ nmi:
     lda #0
     sta PPUADDR
     sta PPUADDR
+    lda _scroll_x
     sta PPUSCROLL
     lda _scroll_y
     sta PPUSCROLL
@@ -394,6 +401,71 @@ _ppu_off:
     lda #0
     sta PPUMASK
     rts
+
+; void __fastcall__ tz_unpack(const u8 *src) : tuiles compressées de la
+; bande-annonce (banque tz_bank, tz_n tuiles) vers la mémoire du PPU, à
+; l'adresse déjà fixée (rendu coupé). Par tuile : un masque de 16 bits (bit
+; i à 1 : l'octet i répète le précédent), puis les octets nouveaux.
+_tz_unpack:
+    sta tz_src
+    stx tz_src+1
+    lda _cur_bank
+    pha
+    lda _tz_bank
+    jsr _set_bank
+    ldy #0
+@tile:
+    lda (tz_src),y
+    sta tz_m
+    inc tz_src
+    bne :+
+    inc tz_src+1
+:   lda (tz_src),y
+    sta tz_m+1
+    inc tz_src
+    bne :+
+    inc tz_src+1
+:   sty tz_prev
+    ldx #16
+@byte:
+    lsr tz_m+1
+    ror tz_m
+    bcs @rep
+    lda (tz_src),y
+    sta tz_prev
+    inc tz_src
+    bne @rep
+    inc tz_src+1
+@rep:
+    lda tz_prev
+    sta PPUDATA
+    dex
+    bne @byte
+    dec _tz_n
+    bne @tile
+    pla
+    jmp _set_bank
+
+; void __fastcall__ tz_copy(const u8 *src) : tz_n octets (0 : 256) de la
+; banque tz_bank vers la mémoire du PPU (rendu coupé)
+_tz_copy:
+    sta tz_src
+    stx tz_src+1
+    lda _cur_bank
+    pha
+    lda _tz_bank
+    jsr _set_bank
+    ldy #0
+    ldx _tz_n
+@l: lda (tz_src),y
+    sta PPUDATA
+    iny
+    bne :+
+    inc tz_src+1
+:   dex
+    bne @l
+    pla
+    jmp _set_bank
 
 ; void __fastcall__ mirror_h(u8 h) : miroir MMC1 horizontal (1, écrans
 ; empilés : défilement vertical du générique de fin) ou vertical (0, normal).

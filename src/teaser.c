@@ -1,12 +1,16 @@
 /* Royal Martinot — bande-annonce du Grand Martinot et du Martinworld Tour
- * (banque 7, version 2.56), au lancement de la compétition, sur un riff de
- * rock (MUS_ROCK), environ 6 secondes :
- *  - 4 plans en gros plan (personnages agrandis 4 fois dans le décor :
- *    96 tuiles), séparés par des coupes franches : la frappe (flash à
- *    l'impact, la balle part en traînée), la glissade sur terre battue
- *    (gerbe de poussière, l'écran tremble), les bras levés au ciel (pluie de
- *    confettis), la raquette frappée au sol (choc, l'écran tremble, éclats) ;
- *    au fond, des bandes obliques dont les couleurs tournent (vitesse) ;
+ * (banque 7, versions 2.56 et 2.57), au lancement de la compétition, sur un
+ * riff de rock (MUS_ROCK), environ 6 secondes :
+ *  - 7 plans de personnages dessinés en haute définition (tools/gen_teaser.py :
+ *    jusqu'à 225 tuiles par image, visage, ombres, raquette cordée) : la
+ *    frappe (gros plan, la balle arrive, flash à l'impact), la glissade sur
+ *    terre battue (en pied puis zoom, gerbe de poussière, l'écran tremble),
+ *    les bras levés au ciel (en pied puis zoom sur le buste, confettis), la
+ *    raquette fracassée au sol (choc, éclats, puis zoom brutal sur le visage
+ *    qui crie) ;
+ *  - caméra : travellings éclair d'un plan à l'autre (défilement horizontal
+ *    sur deux écrans), lente dérive pendant le plan, tremblements ; les zooms
+ *    sont des coupes avec un éclair blanc ;
  *  - puis le titre, façon cinéma : sur fond noir, entre deux filets dorés, le
  *    nom de la compétition apparaît lettre par lettre (lettres doublées),
  *    chacune avec un éclair ; un reflet doré le parcourt ; le sous-titre suit.
@@ -18,76 +22,44 @@
 #include "audio.h"
 #include "assets.h"
 #include "comp.h"
+#include "assets_tz.h"
 
 #pragma static-locals(off)
 
 #define PPU_DATA (*(volatile u8 *)0x2007)
-#define T_BIG    0x60          /* personnage agrandi : 96 tuiles $60-$BF */
-#define T_STREAK 0xC0          /* bandes obliques (couleurs 0, 1, 2) */
-#define T_GROUND 0xC1          /* sol (couleur 3) */
-#define T_LINE   0xC2          /* filet doré (couleur 3) */
+#define T_STREAK 0xF8          /* bandes obliques (couleurs 0, 1, 2) */
+#define T_GROUND 0xF9          /* sol (couleur 3) */
+#define T_LINE   0xFA          /* filet doré (couleur 3) */
 #define T_TITLE  0x60          /* titre : lettres doublées, 4 tuiles chacune */
-#define SHOT_T   40            /* trames par plan */
-#define NSHOT    4
+#define NCUT     7
 
 #pragma bss-name(push, "SAVEDATA")
 u8 teaser_done;
-static u8 ts_shot, ts_t, ts_n, ts_sh, ts_fx;
-static u8 ts_buf[16], ts_exp[64];
+static u8 ts_shot, ts_t, ts_n, ts_sh, ts_fx, ts_cut, ts_c;
+static s16 ts_cam;
+static u8 ts_buf[16];
 #pragma bss-name(pop)
 extern u8 cer_skip;            /* (cer.c) : le banc d'essai passe les séquences */
 
-/* poses et décors des plans : frappe (impact), glissade (fente), bras levés
-   (victoire, jeu F), raquette au sol (colère, jeu C) */
-static const u8 shot_pose[NSHOT] = { POSE_IMPACT, POSE_REACH, POSE_VICTORY, POSE_ANGRY };
-static const u8 shot_col[NSHOT][4] = {
-    { 0x01, 0x11, 0x21, 0x12 },    /* nuit bleue, court dur */
-    { 0x07, 0x17, 0x27, 0x16 },    /* terre battue */
-    { 0x09, 0x19, 0x29, 0x1A },    /* gazon */
-    { 0x05, 0x15, 0x25, 0x06 },    /* colère : rouge sombre */
+/* les plans : image, durée (trames), groupe (couleurs, effets, personnage),
+   entrée en travelling éclair (1) ou coupe de zoom avec éclair blanc (0) */
+static const u8 cut_art[NCUT] = { TZ_IMPACT, TZ_SLIDE, TZ_SLIDE_Z, TZ_VICTORY, TZ_VICTORY_Z, TZ_ANGRY, TZ_ANGRY_Z };
+static const u8 cut_len[NCUT] = { 40, 18, 24, 16, 26, 20, 26 };
+static const u8 cut_shot[NCUT] = { 0, 1, 1, 2, 2, 3, 3 };
+static const u8 cut_whip[NCUT + 1] = { 1, 1, 0, 1, 0, 1, 0, 1 };
+static const u8 shot_col[4][4] = {
+    /* fond, bandes (sombres, discrètes : le fond autour du personnage, sans
+       bandes à cause des blocs de palette 16 x 16, ne fait pas de halo), sol */
+    { 0x01, 0x0F, 0x02, 0x11 },    /* nuit bleue, court dur */
+    { 0x07, 0x0F, 0x08, 0x17 },    /* terre battue */
+    { 0x09, 0x0F, 0x0A, 0x19 },    /* gazon */
+    { 0x05, 0x0F, 0x04, 0x15 },    /* colère : rouge sombre */
 };
-static const u8 q4[4] = { 0x00, 0x0F, 0xF0, 0xFF };
+/* travelling éclair : entrée (le personnage arrive de la droite), sortie (il
+   part à gauche) ; décalage de la caméra en pixels */
+static const u8 whip_in[6] = { 150, 90, 48, 22, 8, 2 };
+static const u8 whip_out[5] = { 6, 20, 48, 96, 160 };
 
-/* tuile source (table des sprites) -> 16 tuiles agrandies 4 fois (décor).
-   Chaque octet source est d'abord développé en 4 octets (2 pixels chacun,
-   doublés 4 fois), sans décalage variable (lent sur 6502) */
-static void big4_tile(u8 s, u8 dst)
-{
-    u8 i, oy, ox, r, b, *e;
-    vram_adr(0x1000 + ((u16)s << 4));
-    ts_buf[0] = PPU_DATA;                  /* lecture à vide (tampon du PPU) */
-    for (i = 0; i < 16; ++i) ts_buf[i] = PPU_DATA;
-    for (i = 0; i < 16; ++i) {
-        b = ts_buf[i]; e = ts_exp + i * 4;
-        e[0] = q4[b >> 6]; e[1] = q4[(b >> 4) & 3]; e[2] = q4[(b >> 2) & 3]; e[3] = q4[b & 3];
-    }
-    vram_adr((u16)dst << 4);
-    for (oy = 0; oy < 4; ++oy)
-        for (ox = 0; ox < 4; ++ox) {
-            e = ts_exp + oy * 8 + ox;               /* rangée source 2 oy, colonne ox */
-            for (r = 0; r < 4; ++r) vram_put(e[0]);
-            for (r = 0; r < 4; ++r) vram_put(e[4]);
-            e += 32;                                /* plan 2 */
-            for (r = 0; r < 4; ++r) vram_put(e[0]);
-            for (r = 0; r < 4; ++r) vram_put(e[4]);
-        }
-}
-/* personnage c (de face) dans la pose donnée, agrandi 4 fois : 64 x 96 px,
-   colonnes 12 à 19, rangées 8 à 19 */
-static void big4_person(u8 c, u8 pose)
-{
-    u8 k, s, m = (u8)(person_row[1] + pose * 3), oy, ox;
-    const u8 *map = char_female[c] ? person_map_f : person_map_m;
-    for (k = 0; k < 6; ++k) {
-        s = (u8)(map[m + (k >> 1)] + (k & 1));
-        if (c == 16 && k < 2) s = (u8)(marg_map[NPOSE + pose] + k);   /* Margaux */
-        big4_tile(s, (u8)(T_BIG + k * 16));
-        for (oy = 0; oy < 4; ++oy) {
-            vram_adr(NTADR(12 + (k & 1) * 4, 8 + (k >> 1) * 4 + oy));
-            for (ox = 0; ox < 4; ++ox) vram_put((u8)(T_BIG + k * 16 + oy * 4 + ox));
-        }
-    }
-}
 /* tuile unie (ou motif) de 8 octets par plan */
 static void tile_bits(u8 t, const u8 *p0, const u8 *p1)
 {
@@ -97,46 +69,81 @@ static void tile_bits(u8 t, const u8 *p0, const u8 *p1)
     for (i = 0; i < 8; ++i) vram_put(p1[i]);
 }
 
-/* bandes obliques fines et espacées (couleurs 1 et 2) : le fond est surtout
-   de la couleur 0, comme autour du personnage agrandi */
+/* bandes obliques fines et espacées (couleurs 1 et 2) */
 static const u8 st0[8] = { 0x80, 0x40, 0x20, 0x10, 0x08, 0x04, 0x02, 0x01 };
 static const u8 st1[8] = { 0x08, 0x04, 0x02, 0x01, 0x80, 0x40, 0x20, 0x10 };
 static const u8 ff[8] = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
 static const u8 ln[8] = { 0, 0, 0, 0xFF, 0xFF, 0, 0, 0 };
 
-static void shot_build(void)
+/* fond d'un écran : bandes et sol (en pied) ou noir (zoom : bandes noires) */
+static void ts_back(u16 nt, u8 zoom)
 {
-    u8 i, c;
-    const u8 *col = shot_col[ts_shot];
+    u8 i;
+    vram_adr(nt);
+    for (i = 0; i < 30; ++i)
+        vram_fill(zoom ? 0 : (i >= TZ_GROUND_ROW ? T_GROUND : T_STREAK), 32);
+}
+
+static u8 ts_zoom(void)
+{
+    return tz_art[cut_art[ts_cut]][0].zoom;
+}
+
+/* un plan : image en haute définition (rendu coupé, environ 3 trames ; noir,
+   ou blanc pour une coupe de zoom) */
+static void cut_build(void)
+{
+    u8 i, S, O, D, z;
+    const tz_art_t *a;
+    const u8 *col;
+    ts_shot = cut_shot[ts_cut];
+    col = shot_col[ts_shot];
+    ts_c = ts_shot == 0 || ts_shot == 2 ? c_pl[0] : c_pl[ts_shot == 1 ? 1 : 2];
+    a = &tz_art[cut_art[ts_cut]][char_female[ts_c] ? 1 : 0];
+    z = a->zoom;
+    pal_buf[0] = pal_buf[16] = cut_whip[ts_cut] ? col[0] : 0x30;   /* éclair blanc du zoom */
+    pal_dirty = 1;
     fade_skip = 1; fade_lvl = 0;     /* coupe franche (cinéma), sans fondu */
     ppu_off();
+    /* tuiles : 0 vide, puis l'image (décompressée), bandes et sol */
+    vram_adr(0x0000);
+    vram_fill(0, 16);
+    tz_bank = a->bank; tz_n = a->ntile;
+    tz_unpack(a->chr);
     tile_bits(T_STREAK, st0, st1);
     tile_bits(T_GROUND, ff, ff);
-    vram_adr(0x2000);
-    for (i = 0; i < 30; ++i) vram_fill(i >= 20 ? T_GROUND : T_STREAK, 32);
+    ts_back(0x2000, z);
+    ts_back(0x2400, z);
+    {
+        const u8 *m = a->map;
+        u8 w = a->w, h = a->h;
+        u16 ad = NTADR(a->x0, a->y0);
+        for (i = 0; i < h; ++i) {
+            vram_adr(ad); ad += 32;
+            tz_n = w; tz_copy(m); m += w;
+        }
+    }
     vram_adr(0x23C0);
-    for (i = 0; i < 64; ++i) {
-        /* blocs du personnage (colonnes 12-19, rangées 8-19) : palette 1 */
-        u8 bx = (u8)((i & 7) * 4), by = (u8)((i >> 3) * 4), a = 0;
-        if (bx >= 12 && bx < 20 && by >= 8 && by < 20) a = 0x55;
-        vram_put(a);
-    }
-    c = ts_shot == 0 || ts_shot == 2 ? c_pl[0] : c_pl[ts_shot == 1 ? 1 : 2];
-    if (ts_shot == 2) {
-        /* bras levés : pose du jeu F (zone partagée), chargée pour l'agrandir */
-        u8 base, n;
-        bank_read(BANK_EXTRAS, &base, &swap_base, 1);
-        bank_read(BANK_EXTRAS, &n, &swap_ntile[2], 1);
-        chr_copy(BANK_SWAP, swap_chrF, 0x1000 + ((u16)base << 4), (u16)n << 4);
-    }
-    big4_person(c, shot_pose[ts_shot]);
-    pal_buf[0] = col[0]; pal_buf[1] = col[1]; pal_buf[2] = col[2]; pal_buf[3] = col[3];
-    pal_set_player(61, c);                   /* palette 1 du décor : le joueur */
-    pal_buf[4] = pal_buf[16] = pal_buf[0];   /* ($3F10 recopie $3F00) */
+    tz_n = 64; tz_copy(a->at);
+    vram_adr(0x27C0); vram_fill(0, 64);
+    /* palettes : P0 bandes (ou peau, sombre, blanc en zoom), P1 peau et son
+       ombre, P2 tenue et son ombre, P3 peau, tenue, blanc */
+    pal_set_player(61, ts_c);                 /* (P1 : peau, tenue, sombre) */
+    S = pal_buf[5]; O = pal_buf[6]; D = pal_buf[7];
+    pal_buf[0] = pal_buf[4] = pal_buf[8] = pal_buf[12] = pal_buf[16] = col[0];
+    if (S >= 0x10) { pal_buf[5] = S; pal_buf[6] = (u8)(S - 0x10); } else { pal_buf[5] = (u8)(S + 0x10); pal_buf[6] = S; }
+    if (O >= 0x10) { pal_buf[9] = O; pal_buf[10] = (u8)(O - 0x10); } else { pal_buf[9] = (u8)(O + 0x10); pal_buf[10] = O; }
+    if (O == 0x30) pal_buf[10] = 0x10;
+    pal_buf[7] = pal_buf[11] = D;
+    pal_buf[13] = pal_buf[5]; pal_buf[14] = pal_buf[9]; pal_buf[15] = 0x30;
+    if (z) { pal_buf[1] = pal_buf[5]; pal_buf[2] = D; pal_buf[3] = 0x30; }
+    else { pal_buf[1] = col[1]; pal_buf[2] = col[2]; pal_buf[3] = col[3]; }
     pal_buf[16 + 8] = col[0]; pal_buf[16 + 9] = 0x37; pal_buf[16 + 10] = 0x0F; pal_buf[16 + 11] = 0x30;   /* poussière, éclats */
     pal_buf[16 + 12] = col[0]; pal_buf[16 + 13] = 0x38; pal_buf[16 + 14] = 0x27; pal_buf[16 + 15] = 0x30;   /* balle, confettis */
     pal_dirty = 1;
     ts_t = 0; ts_sh = 0; ts_fx = 0;
+    ts_cam = cut_whip[ts_cut] ? -(s16)whip_in[0] : 0;
+    scroll_x = (u8)ts_cam; scroll_nt = (u8)((ts_cam >> 8) & 1); scroll_y = 0;
     ppu_on();
 }
 
@@ -148,11 +155,15 @@ static void title_build(void)
     const char *n = ts_name[c_type == CT_WORLD];
     fade_skip = 1; fade_lvl = 0;     /* coupe franche (cinéma), sans fondu */
     ppu_off();
-    scroll_y = 0;
+    /* la police ($20-$5F : l'image avait pris toutes les tuiles du décor) */
+    vram_adr(0x0200); tz_bank = BANK_CHR;
+    for (i = 0; i < 4; ++i) { tz_n = 0; tz_copy(chr_data + 0x200 + ((u16)i << 8)); }
+    scroll_y = 0; scroll_x = 0; scroll_nt = 0;
     tile_bits(T_LINE, ln, ln);
     vram_adr(0x2000);
     for (i = 0; i < 30; ++i) vram_fill(0, 32);
     vram_adr(0x23C0); vram_fill(0, 64);
+    pal_buf[4] = pal_buf[8] = pal_buf[12] = 0x0F;
     /* lettres doublées : 4 tuiles par lettre ($60 et suivantes) */
     for (k = 0; n[k]; ++k) {
         ch = (u8)n[k];
@@ -181,16 +192,16 @@ static void title_build(void)
     vram_adr(NTADR(2, 18)); vram_fill(T_LINE, 28);
     pal_buf[0] = pal_buf[16] = 0x0F; pal_buf[1] = 0x0F; pal_buf[2] = 0x0F; pal_buf[3] = 0x28;
     pal_dirty = 1;
-    ts_t = 0; ts_shot = NSHOT;
+    ts_t = 0; ts_cut = NCUT;
     ppu_on();
 }
 
 void teaser_build(void)
 {
     teaser_done = 0;
-    ts_shot = 0;
+    ts_cut = 0;
     music_play(MUS_ROCK);
-    shot_build();
+    cut_build();
 }
 
 /* à chaque trame */
@@ -199,59 +210,81 @@ void teaser_tick(void)
     u8 i, x, y, k;
     const u8 *col;
     if (cer_skip || (ts_t > 4 && (pad1_new & (PAD_A | PAD_START)))) {
-        scroll_y = 0; teaser_done = 1; music_play(MUS_NONE); return;
+        scroll_y = 0; scroll_x = 0; scroll_nt = 0; teaser_done = 1; music_play(MUS_NONE); return;
     }
     ++ts_t;
     spr_begin();
-    if (ts_shot < NSHOT) {
+    if (ts_cut < NCUT) {
+        u8 len = cut_len[ts_cut], z = ts_zoom();
+        s16 sx;
         col = shot_col[ts_shot];
-        /* bandes obliques qui scintillent (leurs 2 couleurs alternent) sur
-           un fond fixe ; après un flash, le fond revient */
+        /* caméra : entrée en travelling éclair, dérive lente, sortie éclair
+           si le plan suivant arrive aussi en travelling */
+        if (cut_whip[ts_cut] && ts_t < 6) ts_cam = -(s16)whip_in[ts_t];
+        else if (cut_whip[ts_cut + 1] && ts_t + 5 >= len) ts_cam = (s16)whip_out[ts_t + 5 - len] + (len >> 2);
+        else ts_cam = (s16)(ts_t >> 2);
+        scroll_x = (u8)ts_cam; scroll_nt = (u8)((ts_cam >> 8) & 1);
+        /* bandes obliques qui scintillent (en pied) ; après un flash, le fond revient */
         if ((ts_t & 3) == 0) {
-            k = (u8)((ts_t >> 2) & 1);
-            pal_buf[0] = pal_buf[4] = pal_buf[16] = col[0];   /* ($3F10 recopie $3F00 : même couleur de fond) */
-            pal_buf[1] = col[1 + k]; pal_buf[2] = col[2 - k];
+            pal_buf[0] = pal_buf[4] = pal_buf[8] = pal_buf[12] = pal_buf[16] = col[0];
+            if (!z) { k = (u8)((ts_t >> 2) & 1); pal_buf[1] = col[1 + k]; pal_buf[2] = col[2 - k]; }
             pal_dirty = 1;
         }
-        switch (ts_shot) {
+#define SPR(px, py, t, at) { sx = (s16)(px) - ts_cam; if (sx >= 0 && sx < 248) spr1((u8)sx, (u8)(py), (u8)(t), (u8)(at)); }
+        switch (ts_cut) {
         case 0:
-            /* la balle arrive, impact (flash), puis part en traînée */
-            if (ts_t < 18) spr1((u8)(250 - ts_t * 4), 100, (u8)(ball_base + 8), 3);
-            else if (ts_t == 18) { pal_buf[0] = pal_buf[4] = pal_buf[16] = 0x30; pal_dirty = 1; sfx_hit(3); }
-            else for (i = 0; i < 3; ++i) {
-                x = (u8)(180 + (ts_t - 18) * 7 - i * 8);
-                if (x > 180) spr1(x, (u8)(100 - (ts_t - 18) * 2 + i * 2), (u8)(ball_base + 8), 3);
+            /* la frappe : la balle arrive en diagonale sur le tamis, impact
+               (flash blanc), puis elle part en traînée vers la gauche */
+            if (ts_t >= 8 && ts_t < 22) {
+                k = (u8)(22 - ts_t);
+                SPR(TZ_IMPACT_RACKET_X + k * 9, TZ_IMPACT_RACKET_Y - 4 + k * 5, ball_base + 8, 3);
+            } else if (ts_t == 22) {
+                pal_buf[0] = pal_buf[4] = pal_buf[8] = pal_buf[12] = pal_buf[16] = 0x30; pal_dirty = 1; sfx_hit(3);
+            } else if (ts_t > 22 && ts_t < 32) {
+                for (i = 0; i < 3; ++i) {
+                    k = (u8)((ts_t - 22) * 10 - i * 6);
+                    if (k < 40) SPR(TZ_IMPACT_RACKET_X + 4 - k, TZ_IMPACT_RACKET_Y - 8 - (k >> 1), ball_base + 8, 3);
+                }
             }
             break;
-        case 1:
-            /* glissade : gerbe de poussière depuis le pied, l'écran tremble */
-            for (i = 0; i < 6; ++i) {
-                x = (u8)(196 + ((ts_t * (i + 2)) & 31));
-                y = (u8)(152 - ((ts_t * (i + 1)) & 15) - i * 3);
-                spr1(x, y, (u8)(6 + (i & 1)), 2);
+        case 1: case 2:
+            /* glissade : gerbe de terre battue depuis le pied, l'écran tremble au zoom */
+            for (i = 0; i < 7; ++i) {
+                x = (u8)((ts_t * (i + 2) + i * 9) & 31);
+                y = (u8)(((ts_t * (i + 1)) & 15) + i * 3);
+                if (ts_cut == 1) { SPR(TZ_SLIDE_FOOTR_X + x - 4, TZ_SLIDE_FOOTR_Y - 6 - y, 6 + (i & 1), 2); }
+                else { SPR(TZ_SLIDE_Z_FOOTR_X + x * 2 - 8, TZ_SLIDE_Z_FOOTR_Y - 10 - y * 2, 6 + (i & 1), 2); }
             }
-            scroll_y = (u8)((ts_t & 2) ? 1 : 0);
-            if (ts_t == 4) sfx_crowd(4);
+            if (ts_cut == 2) scroll_y = (u8)((ts_t & 2) ? 2 : 0);
+            if (ts_cut == 1 && ts_t == 2) sfx_crowd(4);
             break;
-        case 2:
-            /* bras levés : confettis */
-            for (i = 0; i < 10; ++i)
-                spr1((u8)(i * 25 + 6), (u8)(((ts_t * (1 + (i & 1)) + i * 23) & 0x7F) + 8), confetti_tile, (u8)(i & 3));
-            if (ts_t == 2) sfx_crowd(7);
+        case 3: case 4:
+            /* bras levés : pluie de confettis, ovation */
+            for (i = 0; i < 12; ++i)
+                spr1((u8)(i * 21 + 6), (u8)(((ts_t * (1 + (i & 1)) + i * 23 + (ts_cut == 4 ? 40 : 0)) & 0xBF) + 8), confetti_tile, (u8)(i & 3));
+            if (ts_cut == 3 && ts_t == 2) sfx_crowd(7);
+            break;
+        case 5:
+            /* raquette fracassée au sol : choc (flash), éclats, tremblement */
+            if (ts_t == 8) { pal_buf[0] = pal_buf[4] = pal_buf[8] = pal_buf[12] = pal_buf[16] = 0x30; pal_dirty = 1; sfx_canon(); ts_sh = 6; }
+            if (ts_t > 8)
+                for (i = 0; i < 6; ++i) {
+                    k = (u8)(ts_t - 8);
+                    SPR(TZ_ANGRY_RACKET_TIP_X - 15 + i * 6 + k * (i - 2) * 2, TZ_ANGRY_RACKET_TIP_Y - 4 - k * 3 + (u8)(k * k / 4), ice_tile, 2);
+                }
             break;
         default:
-            /* raquette au sol : choc à la trame 16, tremblement qui s'amortit, éclats */
-            if (ts_t == 16) { pal_buf[0] = pal_buf[4] = pal_buf[16] = 0x30; pal_dirty = 1; sfx_canon(); ts_sh = 6; }
-            if (ts_sh) { scroll_y = (u8)((ts_t & 1) ? ts_sh : 0); if ((ts_t & 3) == 0) --ts_sh; } else scroll_y = 0;
-            if (ts_t > 16 && ts_t < 44)
-                for (i = 0; i < 6; ++i)
-                    spr1((u8)(150 + i * 6 + (ts_t - 16) * (i - 2)), (u8)(158 - (ts_t - 16) * 2 + (u8)((ts_t - 16) * (ts_t - 16) / 12)), ice_tile, 2);
+            /* zoom brutal sur le visage qui crie : l'écran tremble, s'amortit */
+            if (ts_t == 1) { ts_sh = 7; sfx_crowd(2); }
             break;
         }
+        if (ts_cut >= 5) {
+            if (ts_sh) { scroll_y = (u8)((ts_t & 1) ? ts_sh : 0); if ((ts_t & 3) == 0) --ts_sh; } else scroll_y = 0;
+        }
         spr_end();
-        if (ts_t >= SHOT_T) {
+        if (ts_t >= len) {
             scroll_y = 0;
-            if (++ts_shot < NSHOT) shot_build(); else title_build();
+            if (++ts_cut < NCUT) cut_build(); else title_build();
         }
         return;
     }

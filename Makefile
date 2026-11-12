@@ -12,17 +12,18 @@ BANK0 = game
 BANK1 = screens
 BANK5 = comp stats password
 BANK3 = extras assets_court assets_persp3
-BANK4 = manual
+BANK2 = assets_tz2
+BANK4 = manual assets_tz4
 BANK6 = assets_nude assets_gm2
 BANK7 = intro teaser
 BANK8 = podium
-BANK9 = credits
-BANK10 = music_data
+BANK9 = credits assets_tz9
+BANK10 = music_data assets_tz10
 BANK11 = assets_persp
-BANK12 = assets_courts12
+BANK12 = assets_courts12 assets_tz12
 BANK13 = assets_swap shots cer
 BANK14 = assets_gm gmintro
-CSRC = $(FIXED) $(BANK0) $(BANK1) $(BANK3) $(BANK4) $(BANK5) $(BANK6) $(BANK7) $(BANK8) $(BANK9) $(BANK10) $(BANK11) $(BANK12) $(BANK13) $(BANK14)
+CSRC = $(FIXED) $(BANK0) $(BANK1) $(BANK2) $(BANK3) $(BANK4) $(BANK5) $(BANK6) $(BANK7) $(BANK8) $(BANK9) $(BANK10) $(BANK11) $(BANK12) $(BANK13) $(BANK14)
 OBJS = $(BUILD)/crt0.o $(BUILD)/sprp.o $(BUILD)/poses.o $(BUILD)/slip.o $(BUILD)/dpcm.o $(addprefix $(BUILD)/,$(addsuffix .o,$(CSRC)))
 
 all: $(ROM)
@@ -31,6 +32,9 @@ assets/tiles.chr src/assets_data.c src/assets_court.c src/assets_nude.c src/asse
 src/assets_gm.c src/assets_gm2.c: tools/gen_gm.py
 	python3 tools/gen_gm.py
 	python3 tools/gen_assets.py
+
+src/assets_tz.h src/assets_tz2.c src/assets_tz4.c src/assets_tz9.c src/assets_tz10.c src/assets_tz12.c: tools/gen_teaser.py
+	python3 tools/gen_teaser.py
 
 src/music_data.c: tools/gen_music.py tools/music_src.c
 	python3 tools/gen_music.py
@@ -41,6 +45,7 @@ $(BUILD):
 # segments par banque
 $(addprefix $(BUILD)/,$(addsuffix .s,$(BANK0))): SEGS = --code-name BANK0 --rodata-name RODATA0
 $(addprefix $(BUILD)/,$(addsuffix .s,$(BANK1))): SEGS = --code-name BANK1 --rodata-name RODATA1 --bss-name WBSS
+$(addprefix $(BUILD)/,$(addsuffix .s,$(BANK2))): SEGS = --code-name BANK2 --rodata-name RODATA2
 $(addprefix $(BUILD)/,$(addsuffix .s,$(BANK3))): SEGS = --code-name BANK3 --rodata-name RODATA3
 $(addprefix $(BUILD)/,$(addsuffix .s,$(BANK4))): SEGS = --code-name BANK4 --rodata-name RODATA4
 $(addprefix $(BUILD)/,$(addsuffix .s,$(BANK5))): SEGS = --code-name BANK5 --rodata-name RODATA5 --bss-name WBSS
@@ -68,7 +73,7 @@ $(BUILD)/slip.o: src/slip.s | $(BUILD)
 $(BUILD)/dpcm.o: src/dpcm.s | $(BUILD)
 	$(CA65) -t nes -g -o $@ src/dpcm.s
 
-$(BUILD)/%.s: src/%.c src/*.h src/assets_data.c src/assets_court.c src/assets_nude.c src/assets_persp.c src/assets_persp3.c src/assets_courts12.c src/assets_swap.c src/assets_gm.c src/assets_gm2.c | $(BUILD)
+$(BUILD)/%.s: src/%.c src/*.h src/assets_data.c src/assets_court.c src/assets_nude.c src/assets_persp.c src/assets_persp3.c src/assets_courts12.c src/assets_swap.c src/assets_gm.c src/assets_gm2.c src/assets_tz.h | $(BUILD)
 	$(CC65) $(CFLAGS) $(SEGS) -o $@ $<
 
 $(BUILD)/%.o: $(BUILD)/%.s

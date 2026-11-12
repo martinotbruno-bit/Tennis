@@ -303,7 +303,15 @@ Le dessin des personnages est commun aux vues de face et de dos (rangées de tui
 
 ### Bande-annonce (`src/teaser.c`, banque 7, version 2.56)
 
-`start_comp` (screens.c) lance `teaser_build` pour le Grand Martinot et le Martinworld Tour (`SS_TEASER`) ; `teaser_tick` à chaque trame ; à la fin (`teaser_done`), `chr_reload` puis `comp_next` (annonce du 1er tournoi). Gros plans : `big4_person` agrandit 4 fois les 6 tuiles d'une pose (vue de face, table des sprites lue par le PPU) en 96 tuiles du décor ($60-$BF), colonnes 12 à 19, rangées 8 à 19 (palette 1 du décor : le joueur) ; chaque octet source est développé d'avance en 4 octets (`ts_exp`), sans décalage variable : environ 3 trames de noir entre deux plans. La pose des bras levés vient du jeu F (copié dans la zone partagée avant l'agrandissement). Coupes franches : `fade_skip`. La couleur de fond est aussi écrite en $3F10 (copie de $3F00 sur la NES). Titre : lettres de la police doublées (4 tuiles chacune), écrites une par une par le tampon VRAM. Musique `MUS_ROCK` (19). Le banc d'essai la passe (`cer_skip`). Variables : bloc SAVEDATA.
+`start_comp` (screens.c) lance `teaser_build` pour le Grand Martinot et le Martinworld Tour (`SS_TEASER`) ; `teaser_tick` à chaque trame ; à la fin (`teaser_done`), `chr_reload` puis `comp_next` (annonce du 1er tournoi).
+
+**Images en haute définition** (`tools/gen_teaser.py`) : chaque pose est décrite par ses articulations ; le corps est dessiné en formes vectorielles (membres effilés, tête, cheveux, polo, short ou jupe, chaussures, raquette cordée), avec une classe par pixel (contour = couleur du fond, peau, peau ombrée, tenue, tenue ombrée, sombre, blanc), une ombre sur le bord opposé à la lumière et un contour là où une pièce passe devant une autre. Le même dessin, rendu à une autre échelle, donne les plans rapprochés (zoom). Pour chaque bloc 16 x 16, la palette la moins coûteuse est choisie parmi P1 (peau, peau ombrée, sombre), P2 (tenue, tenue ombrée, sombre), P3 (peau, tenue, blanc) et, en zoom, P0 (peau, sombre, blanc : yeux, dents) ; les couleurs viennent de `char_pal` (ombres : un cran plus sombre). Tuiles dédoublonnées (au plus 246, $01-$F6), compressées (par tuile : masque 16 bits des octets répétés, puis les octets nouveaux), rangées dans les banques libres 2, 4, 9, 10 et 12 (`src/assets_tz*.c`), descripteurs et repères (tamis, pied, visage) dans `src/assets_tz.h`.
+
+**Chargement** (rendu coupé, environ 5 trames : noir, ou blanc pour un zoom) : `tz_unpack` (crt0.s) décompresse les tuiles vers le PPU, `tz_copy` copie la table de noms (rectangle utile) et les attributs depuis leur banque. Les deux écrans ($2000, $2400) reçoivent les bandes et le sol.
+
+**Caméra** : `scroll_x` (nouveau, écrit par la NMI) et le bit 0 de `scroll_nt` font défiler horizontalement sur les deux écrans : entrée en travelling éclair (`whip_in`), dérive lente, sortie éclair (`whip_out`) quand le plan suivant arrive aussi en travelling ; tremblements par `scroll_y`. Les sprites (balle, poussière, confettis, éclats) suivent la caméra.
+
+Titre : la police est rechargée ($20-$5F), lettres doublées (4 tuiles chacune) écrites une par une par le tampon VRAM. Musique `MUS_ROCK` (19). Le banc d'essai la passe (`cer_skip`). Variables : bloc SAVEDATA.
 
 ### Cérémonies de fin de compétition (`src/podium.c`, banque 8, version 2.52)
 
