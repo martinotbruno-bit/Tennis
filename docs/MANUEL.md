@@ -164,7 +164,7 @@ Le lancer reste visible quelle que soit votre position, y compris quand vous ser
 
 ### La bande-annonce (version 2.56)
 
-Au lancement d'un **Grand Martinot** ou d'un **Martinworld Tour**, une bande-annonce d'environ 6 secondes, sur un riff de rock, avec vos joueurs dessinés en grand et en détail : la frappe en gros plan (flash à l'impact), la glissade sur terre battue dans une gerbe de poussière, en pied puis zoomée, les bras levés au ciel sous les confettis, puis zoom sur le buste, la raquette fracassée au sol, puis zoom brutal sur le visage qui crie ; la caméra passe d'un plan à l'autre en travellings éclair. Puis le nom de la compétition qui apparaît lettre par lettre, entre deux filets dorés, avant son sous-titre. **A** ou **START** la passe.
+Au lancement d'un **Grand Martinot** ou d'un **Martinworld Tour**, une bande-annonce d'environ 6 secondes, sur un riff de rock, avec vos joueurs dessinés en grand et en détail (polo et short pour les hommes, robe de tennis pour les femmes) : la frappe en gros plan (flash à l'impact), la glissade sur terre battue dans une gerbe de poussière, en pied puis zoomée, les bras levés au ciel sous les confettis, puis zoom sur le buste, la raquette fracassée au sol, puis zoom brutal sur le visage qui crie ; la caméra passe d'un plan à l'autre en travellings éclair. Puis le nom de la compétition qui apparaît lettre par lettre, entre deux filets dorés, avant son sous-titre. **A** ou **START** la passe.
 
 ### Les cérémonies (version 2.52)
 

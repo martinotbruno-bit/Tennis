@@ -131,11 +131,21 @@ def body(f, j, female, face, front=('armR', 'legL'), racket_hand='L', racket_dir
     gauche de l'écran)."""
     S, s, O, o, D, W = 1, 2, 3, 4, 5, 6
     ret = {} if ret is None else ret
+    j = dict(j)
+    if female:
+        # silhouette féminine : épaules plus étroites, hanches plus larges,
+        # bras et jambes plus fins
+        j['shL'] = lerp(j['shL'], j['neck'], 0.14)
+        j['shR'] = lerp(j['shR'], j['neck'], 0.14)
+        j['hipL'] = (j['hipL'][0] - 1.5, j['hipL'][1])
+        j['hipR'] = (j['hipR'][0] + 1.5, j['hipR'][1])
+    LW = 0.88 if female else 1.0
+    AW = 0.82 if female else 1.0
 
     def leg(side):
         hip, kn, an, toe = j['hip' + side], j['kn' + side], j['an' + side], j['toe' + side]
-        thigh = f.m_caps(hip, kn, 9.5, 7)
-        calf = f.m_caps(kn, lerp(kn, an, 0.35), 7, 6.2) | f.m_caps(lerp(kn, an, 0.35), an, 6.2, 4.2)
+        thigh = f.m_caps(hip, kn, 9.5 * LW, 7 * LW)
+        calf = f.m_caps(kn, lerp(kn, an, 0.35), 7 * LW, 6.3 * LW) | f.m_caps(lerp(kn, an, 0.35), an, 6.3 * LW, 4.0 * LW)
         g = f.part(thigh | calf, S, s, sh=(3, 1))
         d = (an[0] - kn[0], an[1] - kn[1]); L = math.hypot(*d) or 1; u = (d[0] / L, d[1] / L); n = (-u[1], u[0])
         c = (kn[0] + u[0] * 2.5, kn[1] + u[1] * 2.5)
@@ -163,14 +173,15 @@ def body(f, j, female, face, front=('armR', 'legL'), racket_hand='L', racket_dir
 
     def arm(side, hold):
         sh_, el, wr = j['sh' + side], j['el' + side], j['wr' + side]
-        g = f.part(f.m_caps(sh_, el, 6.5, 5.2) | f.m_caps(el, wr, 5.2, 3.8), S, s, sh=(2.5, 1.5))
-        # manche courte
-        f.part(f.m_caps(sh_, lerp(sh_, el, 0.42), 8, 7.2), O, o, sh=(2.5, 1.5), group=g)
+        g = f.part(f.m_caps(sh_, el, 6.5 * AW, 5.2 * AW) | f.m_caps(el, wr, 5.2 * AW, 3.8 * AW), S, s, sh=(2.5, 1.5))
+        if not female:
+            # manche courte du polo
+            f.part(f.m_caps(sh_, lerp(sh_, el, 0.36), 7.4, 6.8), O, o, sh=(2.5, 1.5), group=g)
         hand = j.get('hd' + side, lerp(el, wr, 1.25))
         if hold:
             # poignet éponge blanc
             f.part(f.m_caps(lerp(el, wr, 0.78), wr, 4.6, 4.4), W, None, group=g)
-        h = f.part(f.m_ell(hand, 5.2, 5.2), S, s, sh=(2, 2), group=g)
+        h = f.part(f.m_ell(hand, 5.2 * AW, 5.2 * AW), S, s, sh=(2, 2), group=g)
         if hold:
             ret['hand'] = hand
         else:
@@ -206,48 +217,64 @@ def body(f, j, female, face, front=('armR', 'legL'), racket_hand='L', racket_dir
     def torso():
         shL, shR, hpL, hpR = j['shL'], j['shR'], j['hipL'], j['hipR']
         nk = j['neck']
-        # cou
-        f.part(f.m_caps(nk, j['head'], 6, 6), s, None)
+        # cou (ombre sous le menton)
+        nid = f.part(f.m_caps(nk, j['head'], 5.2 * AW, 5.2 * AW), S, s, sh=(2.5, 0))
+        f.paint(f.m_ell((nk[0], nk[1] - 5), 5.5, 3), 2, within=[nid])
+        ch_l = lerp(shL, hpL, 0.36); ch_r = lerp(shR, hpR, 0.36)
+        wl = lerp(shL, hpL, 0.68); wr = lerp(shR, hpR, 0.68)
+        if female:
+            # épaules nues, robe de tennis sans manches : bretelles, encolure
+            # arrondie, poitrine suggérée par un pli, taille marquée, jupe plissée
+            f.part(f.m_poly([(shL[0] - 4, shL[1] + 1), (shL[0], shL[1] - 4), (nk[0], nk[1] - 2), (shR[0], shR[1] - 4),
+                             (shR[0] + 4, shR[1] + 1), (ch_r[0], ch_r[1] - 6), (ch_l[0], ch_l[1] - 6)]), S, s, sh=(3, 1), group=nid)
+            pts = [(shL[0] + 2, shL[1] - 3), (nk[0] - 5, nk[1] + 2), (nk[0] - 3.5, nk[1] + 7), (nk[0], nk[1] + 9),
+                   (nk[0] + 3.5, nk[1] + 7), (nk[0] + 5, nk[1] + 2), (shR[0] - 2, shR[1] - 3), (shR[0] + 1, shR[1] + 3),
+                   (lerp(shR, hpR, 0.2)[0] - 1, lerp(shR, hpR, 0.2)[1]), (ch_r[0] + 1.5, ch_r[1]),
+                   (wr[0] - 2.5, wr[1]), (hpR[0] + 2, hpR[1] - 6),
+                   (hpL[0] - 2, hpL[1] - 6), (wl[0] + 2.5, wl[1]), (ch_l[0] - 1.5, ch_l[1]),
+                   (lerp(shL, hpL, 0.2)[0] + 1, lerp(shL, hpL, 0.2)[1]), (shL[0] - 1, shL[1] + 3)]
+            tid = f.part(f.m_poly(pts), O, o, sh=(4, 2))
+            bx = abs(shR[0] - shL[0]) * 0.2
+            by = lerp(shL, hpL, 0.33)[1] + 1
+            for sx in (-1, 1):
+                f.paint(f.m_arc((nk[0] + sx * bx, by), bx * 0.95, 3.2, 25, 155, 0.8), 4, within=[tid])
+            f.paint(f.m_line([(wl[0] + 3, wl[1]), (wr[0] - 3, wr[1])], 0.8), 4, within=[tid])     # couture de la taille
+            # jupe plissée (même tissu)
+            kl, kr = j['knL'], j['knR']
+            hl, hr = lerp(hpL, kl, 0.45), lerp(hpR, kr, 0.45)
+            top_l = lerp(wl, hpL, 0.45); top_r = lerp(wr, hpR, 0.45)
+            hem_l = (hl[0] - 9, hl[1] + 1); hem_r = (hr[0] + 9, hr[1] + 1)
+            hem_m = (lerp(hl, hr, 0.5)[0], max(hl[1], hr[1]) + 3)
+            sid = f.part(f.m_poly([(top_l[0] + 1, top_l[1]), (top_r[0] - 1, top_r[1]), hem_r, hem_m, hem_l]), O, o, sh=(3, 1))
+            for t in (0.2, 0.4, 0.6, 0.8):
+                a_ = lerp(top_l, top_r, t); b_ = lerp(hem_l, hem_r, t)
+                f.paint(f.m_line([lerp(a_, b_, 0.3), b_], 0.7), 4, within=[sid])
+            ret['shorts'] = sid
+            return
         top_l = (shL[0] - 2, shL[1] - 5); top_r = (shR[0] + 2, shR[1] - 5)
-        ch_l = lerp(shL, hpL, 0.38); ch_r = lerp(shR, hpR, 0.38)
-        wl = lerp(shL, hpL, 0.8); wr = lerp(shR, hpR, 0.8)
         pts = [top_l, (nk[0] - 6, nk[1] - 1), (nk[0] + 6, nk[1] - 1), top_r, (shR[0] + 5, shR[1] + 2),
                (ch_r[0] + 2, ch_r[1]), (wr[0] + 1, wr[1]), (hpR[0] + 3, hpR[1] - 4),
                (hpL[0] - 3, hpL[1] - 4), (wl[0] - 1, wl[1]), (ch_l[0] - 2, ch_l[1]), (shL[0] - 5, shL[1] + 2)]
         tid = f.part(f.m_poly(pts), O, o, sh=(5, 2))
-        # col (polo) : col rabattu et patte de boutonnage
+        # col du polo (rabattu) et patte de boutonnage
         f.part(f.m_poly([(nk[0] - 7, nk[1] - 2), (nk[0] - 1, nk[1] + 7), (nk[0] - 3, nk[1] + 9), (nk[0] - 8, nk[1] + 1)])
                | f.m_poly([(nk[0] + 7, nk[1] - 2), (nk[0] + 1, nk[1] + 7), (nk[0] + 3, nk[1] + 9), (nk[0] + 8, nk[1] + 1)]),
                O, o, sh=(1, 1), group=tid)
         f.paint(f.m_poly([(nk[0] - 1.5, nk[1] + 2), (nk[0] + 1.5, nk[1] + 2), (nk[0] + 0.5, nk[1] + 8), (nk[0] - 0.5, nk[1] + 8)]), 1, within=[tid])
         f.paint(f.m_line([(nk[0], nk[1] + 8), (nk[0], nk[1] + 15)], 0.8), 4, within=[tid])
-        # plis du tissu, liseré sur les côtés
+        # plis du tissu
         f.paint(f.m_line([lerp(ch_l, wl, 0.2), (lerp(ch_l, wl, 0.2)[0] + 7, lerp(ch_l, wl, 0.2)[1] + 6)], 0.8), 4, within=[tid])
-        f.paint(f.m_line([lerp(top_r, ch_r, 0.7), lerp(wr, hpR, 0.3)], 1.4), 5, within=[tid])
         f.paint(f.m_line([(lerp(wl, wr, 0.3)[0], lerp(wl, wr, 0.3)[1] - 2), (lerp(wl, wr, 0.6)[0], lerp(wl, wr, 0.6)[1] + 1)], 0.8), 4, within=[tid])
-        # petit écusson
-        e = lerp(lerp(shL, shR, 0.72), lerp(hpL, hpR, 0.72), 0.22)
-        f.paint(f.m_ell(e, 1.8, 1.4), 4, within=[tid])
-        # short ou jupe
+        # short
         bl = (hpL[0] - 3, hpL[1] - 6); br = (hpR[0] + 3, hpR[1] - 6)
-        if female:
-            kl, kr = j['knL'], j['knR']
-            hl, hr = lerp(hpL, kl, 0.42), lerp(hpR, kr, 0.42)
-            sk = f.m_poly([bl, br, (hr[0] + 8, hr[1] + 2), (lerp(hl, hr, 0.5)[0], max(hl[1], hr[1]) + 3), (hl[0] - 8, hl[1] + 2)])
-            sid = f.part(sk, D, None)
-            for t in (0.25, 0.5, 0.75):
-                a = lerp(bl, br, t); b = lerp((hl[0] - 8, hl[1] + 2), (hr[0] + 8, hr[1] + 2), t)
-                f.paint(f.m_line([lerp(a, b, 0.25), b], 0.8), 0, within=[sid])
-            f.paint(f.m_line([bl, br], 1.6), 3, within=[sid])        # ceinture
-        else:
-            m = f.m_poly([bl, br, (hpR[0] + 5, hpR[1] + 4), (hpL[0] - 5, hpL[1] + 4)])
-            m |= f.m_caps(hpL, lerp(hpL, j['knL'], 0.42), 10.5, 9.5) | f.m_caps(hpR, lerp(hpR, j['knR'], 0.42), 10.5, 9.5)
-            sid = f.part(m, D, None)
-            for side, sx in (('L', -1), ('R', 1)):
-                hp, kn = j['hip' + side], j['kn' + side]
-                e = lerp(hp, kn, 0.42)
-                f.paint(f.m_line([(hp[0] + sx * 8, hp[1] - 2), (e[0] + sx * 8.5, e[1])], 1.0), 0, within=[sid])   # couture
-            f.paint(f.m_line([bl, br], 1.6), 3, within=[sid])
+        m = f.m_poly([bl, br, (hpR[0] + 5, hpR[1] + 4), (hpL[0] - 5, hpL[1] + 4)])
+        m |= f.m_caps(hpL, lerp(hpL, j['knL'], 0.42), 10.5, 9.5) | f.m_caps(hpR, lerp(hpR, j['knR'], 0.42), 10.5, 9.5)
+        sid = f.part(m, D, None)
+        for side, sx in (('L', -1), ('R', 1)):
+            hp, kn = j['hip' + side], j['kn' + side]
+            e = lerp(hp, kn, 0.42)
+            f.paint(f.m_line([(hp[0] + sx * 8, hp[1] - 2), (e[0] + sx * 8.5, e[1])], 1.0), 0, within=[sid])   # couture
+        f.paint(f.m_line([bl, br], 1.6), 3, within=[sid])
         ret['shorts'] = sid
 
     def head():
@@ -257,31 +284,33 @@ def body(f, j, female, face, front=('armR', 'legL'), racket_hand='L', racket_dir
         ca, sa = math.cos(tilt), math.sin(tilt)
         R = lambda dx, dy: (h[0] + dx * ca - dy * sa, h[1] + dx * sa + dy * ca)   # repère de la tête
         if female:
-            # queue de cheval derrière la tête
-            pt = j.get('pony', (h[0] + 15, h[1] + 16))
-            f.part(f.m_caps(R(5, -9), pt, 6.5, 3.2) | f.m_ell(R(6, -8), 5, 4), D, None)
-        f.part(f.m_ell(R(-11 + turn * 0.4, 1), 2.8, 4.4, tilt) | f.m_ell(R(11 + turn * 0.4, 1), 2.8, 4.4, tilt), S, s, sh=(1, 1))   # oreilles
-        # crâne, pommettes, mâchoire et menton
-        hm = f.m_ell(R(0, -2), 11, 12.5, tilt)
-        hm |= f.m_poly([R(-10.5, 0), R(10.5, 0), R(8.5 + turn * 0.3, 9), R(3.5 + turn * 0.4, 14), R(-3.5 + turn * 0.4, 14), R(-8.5 + turn * 0.3, 9)])
-        hid = f.part(hm, S, s, sh=(2.5, 1))
-        f.paint(f.m_line([R(-8 + turn * 0.3, 9.5), R(-3.5 + turn * 0.4, 13.5)], 0.6) & ~shift_mask(f, (0, -1.2), hm), 2, within=[hid])
-        # cheveux : volume, mèches, raie
-        top = f.m_ell(R(0, -6.5), 12.3, 9.8, tilt)
+            # chevelure arrière (encadre le visage) et queue de cheval haute
+            f.part(f.m_caps(R(6, -10), R(13, 7), 4, 2.2) | f.m_ell(R(6.5, -9.5), 4.5, 3.5, tilt), D, None)
+            back = f.m_ell(R(0, -1), 12.2, 12.5, tilt) & ~f.m_poly([R(-20, 6), R(20, 6), R(20, 30), R(-20, 30)])
+            f.part(back, D, None)
+        ear_x = 10.2
+        f.part(f.m_ell(R(-ear_x + turn * 0.3, 1.8), 2.1, 3.4, tilt) | f.m_ell(R(ear_x + turn * 0.3, 1.8), 2.1, 3.4, tilt), S, s, sh=(1, 1))
+        # crâne et mâchoire : carrée chez l'homme, plus fine et arrondie chez la femme
         if female:
-            hair = top & ~f.m_ell(R(2.5 + turn, 2.5), 10.5, 8.6, tilt)
-            hair |= f.m_caps(R(-11.6, -5), R(-12.6, 8), 2.3, 1.4) | f.m_caps(R(11.6, -5), R(12.4, 6), 2.2, 1.3)
-            hair |= f.m_poly([R(-9, -6), R(-2, -9), R(-6, -1)])
+            jaw = [(-9.6, 0), (9.6, 0), (8.6, 5.5), (5.6, 10), (2, 12.4), (-2, 12.4), (-5.6, 10), (-8.6, 5.5)]
+            hm = f.m_ell(R(0, -1.5), 10, 11.8, tilt)
         else:
-            hair = top & ~f.m_ell(R(1.5 + turn, 2.2), 10.6, 8.2, tilt)
-            hair |= f.m_poly([R(-11.8, -4), R(-10.8, 2.5), R(-9.2, -3)]) | f.m_poly([R(11.8, -4), R(10.8, 2.5), R(9.2, -3)])
-            hair |= f.m_poly([R(-6, -8), R(1, -7.5), R(-3, -3.5)])                      # mèche sur le front
+            jaw = [(-10.2, 0), (10.2, 0), (9.6, 6), (7.2, 10.6), (3.4, 12.9), (-3.4, 12.9), (-7.2, 10.6), (-9.6, 6)]
+            hm = f.m_ell(R(0, -1.5), 10.5, 12, tilt)
+        hm |= f.m_poly([R(x + turn * 0.25 * (y / 12), y) for x, y in jaw])
+        hid = f.part(hm, S, s, sh=(2, 0.8))
+        # cheveux
+        if female:
+            hair = f.m_ell(R(0, -5.6), 11.6, 9.4, tilt) & ~f.m_ell(R(turn * 0.6, 3.2), 9.8, 8.2, tilt)
+            hair |= f.m_poly([R(-9.5, -5), R(-1, -9), R(6, -6.5), R(1.5, -4.2), R(-5, -2.2)])        # frange de côté
+        else:
+            hair = f.m_ell(R(0, -5.4), 11.1, 8.8, tilt) & ~f.m_ell(R(turn * 0.6, 3), 10.3, 8.4, tilt)
+            hair |= f.m_poly([R(-10.6, -3), R(-9.6, 2.6), R(-8.7, -2.5)]) | f.m_poly([R(10.6, -3), R(9.6, 2.6), R(8.7, -2.5)])
         hr = f.part(hair, D, None, group=hid)
-        for k0 in (-6, -1, 4):
-            f.paint(f.m_arc(R(k0, -4), 5, 6.5, 215, 290, 0.6), 0, within=[hr])     # mèches
+        f.paint(f.m_line([R(-3.5, -12.5), R(-2.5, -8.5)], 0.6), 0, within=[hr])          # raie
         ex, ey = R(turn, 1)
         ret['face'] = (ex, ey)
-        face_features(f, ex, ey, face, hid, tilt)
+        face_features(f, ex, ey, face, hid, tilt, female)
 
     order = j['order']
     for p in order:
@@ -295,56 +324,75 @@ def body(f, j, female, face, front=('armR', 'legL'), racket_hand='L', racket_dir
     return ret
 
 
-def face_features(f, x, y, face, hid, tilt=0.0):
-    """yeux (blanc, iris, paupière), sourcils, nez, bouche selon l'expression"""
+def face_features(f, x, y, face, hid, tilt=0.0, female=False):
+    """yeux (blanc, iris, paupière, cils), sourcils, nez, bouche (lèvres)
+    selon l'expression : concentration, effort, joie, colère. Pupilles et
+    intérieur de la bouche : couleur 0 (sombre du fond)."""
     P = lambda m, c: f.paint(m, c, within=[hid])
     line = f.m_line
     ca, sa = math.cos(tilt), math.sin(tilt)
     R = lambda dx, dy: (x + dx * ca - dy * sa, y + dx * sa + dy * ca)
+    bw = 0.8 if female else 1.25                       # sourcils fins / épais
 
     def eye(sx, look=0.0, lid=0.0):
-        c = R(sx * 4.6, -0.3)
-        P(f.m_ell(c, 2.5, 1.45 - lid, tilt), 6)
-        P(f.m_ell((c[0] + look, c[1] + 0.1), 1.25, 1.25), 5)
-        P(line([R(sx * 4.6 - 2.6, -1.3 + lid), R(sx * 4.6 + 2.6, -1.3 + lid)], 0.7), 5)     # paupière
+        c = R(sx * 4.4, -0.2)
+        P(f.m_ell(c, 2.4 if female else 2.2, 1.35 - lid * 0.5, tilt), 6)
+        P(f.m_ell((c[0] + look, c[1] + 0.15), 1.15, 1.15), 0)
+        P(line([R(sx * 4.4 - 2.6, -1.3 + lid), R(sx * 4.4 + 2.6, -1.3 + lid)], 0.9 if female else 0.6), 5)   # paupière
+        if female:
+            P(line([R(sx * 6.8, -1.2 + lid), R(sx * 7.9, -2.3 + lid)], 0.7), 5)                 # cils
+    def brow(sx, inner=-3.3, outer=-3.6, arch=0.0):
+        if female:
+            P(f.m_arc(R(sx * 4.6, -2.6 + arch), 3.0, 1.4, 200, 340, bw), 5)
+        else:
+            P(line([R(sx * 7.2, outer), R(sx * 2.2, inner)], bw), 5)
     def nose():
-        P(line([R(0.6, 0.5), R(1.3, 5), R(-0.2, 5.8)], 0.8), 2)
-        P(f.m_ell(R(-1.4, 5.6), 0.7, 0.5), 2)
+        if female:
+            P(line([R(0.8, 2.5), R(1.1, 4.8)], 0.6), 2)
+            P(f.m_ell(R(-0.9, 5.4), 0.6, 0.45), 2); P(f.m_ell(R(1.1, 5.4), 0.6, 0.45), 2)
+        else:
+            P(line([R(0.6, 0.5), R(1.4, 5.2), R(-0.4, 5.9)], 0.8), 2)
+            P(f.m_ell(R(-1.4, 5.7), 0.7, 0.5), 2)
     if face == 'focus':
         for sx in (-1, 1):
-            eye(sx, look=-1.0, lid=0.3)
-            P(line([R(sx * 7.6, -4.1), R(sx * 2.3, -3.4)], 1.2), 5)
+            eye(sx, look=-0.9, lid=0.25)
+            brow(sx, -3.2, -3.9)
         nose()
-        P(line([R(-3.5, 9.4), R(0, 9.8), R(3.5, 9.2)], 1.0), 5)
-        P(line([R(-2.5, 11), R(2.5, 11)], 0.6), 2)
+        if female:
+            P(line([R(-2.6, 8.9), R(0, 9.3), R(2.6, 8.9)], 0.7), 0)
+            P(f.m_ell(R(0, 10.0), 2.2, 0.8, tilt), 2)                                    # lèvre inférieure
+        else:
+            P(line([R(-3.2, 9.2), R(0, 9.5), R(3.2, 9.1)], 0.9), 0)
+            P(line([R(-2, 10.8), R(2, 10.8)], 0.5), 2)
     elif face == 'effort':
         for sx in (-1, 1):
-            P(line([R(sx * 7, -0.6), R(sx * 4.5, 0.4), R(sx * 2.4, -0.2)], 1.1), 5)     # yeux plissés
-            P(line([R(sx * 7.6, -4.6), R(sx * 2, -2.4)], 1.4), 5)
+            P(line([R(sx * 6.6, -0.5), R(sx * 4.3, 0.4), R(sx * 2.3, -0.1)], 1.0), 5 if female else 0)   # yeux plissés
+            brow(sx, -2.2, -4.4, 0.6)
         nose()
-        P(f.m_ell(R(0, 9.6), 5, 2.4, tilt), 5)                                          # dents serrées
-        P(f.m_ell(R(0, 9.6), 4, 1.1, tilt), 6 if f.k >= 2 else 1)
-        P(line([R(-3.5, 9.6), R(3.5, 9.6)], 0.5), 5)
+        P(f.m_ell(R(0, 9.4), 3.8 if female else 4.2, 1.7, tilt), 0)                        # dents serrées
+        P(f.m_ell(R(0, 9.4), 3.1 if female else 3.5, 0.8, tilt), 6 if f.k >= 2 else 1)
     elif face == 'joy':
         for sx in (-1, 1):
-            P(f.m_arc(R(sx * 4.6, 0.8), 2.6, 1.9, 195, 345, 1.0), 5)                     # yeux plissés de joie
-            P(f.m_arc(R(sx * 4.8, -3.6), 3, 1.4, 200, 340, 1.1), 5)
+            P(f.m_arc(R(sx * 4.4, 0.9), 2.4, 1.7, 195, 345, 1.0), 5 if female else 0)      # yeux plissés de joie
+            brow(sx, -4.0, -4.2, -0.6)
         nose()
-        P(f.m_ell(R(0, 9.4), 5.4, 4.2, tilt), 5)                                        # cri de joie
-        P(f.m_ell(R(0, 6.6), 4.3, 1.3, tilt), 6)                                        # dents
-        P(f.m_ell(R(0, 11.6), 2.8, 1.4, tilt), 2)                                       # langue
+        P(f.m_ell(R(0, 8.9), 3.6 if female else 4.0, 2.3, tilt), 0)                        # bouche ouverte
+        P(f.m_ell(R(0, 7.3), 3.0 if female else 3.3, 0.8, tilt), 6)                        # dents
+        P(f.m_ell(R(0, 10.0), 1.7, 0.7, tilt), 2)                                          # langue
+        if female:
+            P(f.m_arc(R(0, 8.9), 3.9, 2.8, 20, 160, 0.6), 2)                                # lèvre
     elif face == 'angry':
         for sx in (-1, 1):
-            eye(sx, look=0.0, lid=0.5)
-            P(line([R(sx * 8, -5.8), R(sx * 1.6, -1.7)], 1.7), 5)                     # sourcils froncés
-        P(line([R(-0.9, -3.5), R(-0.9, -1.3)], 0.6), 2)                                # ride du front
-        P(line([R(0.9, -3.2), R(0.9, -1.5)], 0.6), 2)
+            eye(sx, look=0.0, lid=0.6)
+            P(line([R(sx * 7.6, -5.2), R(sx * 1.8, -2.0)], bw + 0.3), 5)                   # sourcils froncés
+        P(line([R(-0.8, -3.4), R(-0.8, -1.6)], 0.5), 2)                                    # ride du front
+        P(line([R(0.8, -3.2), R(0.8, -1.7)], 0.5), 2)
         nose()
-        P(f.m_poly([R(-5.8, 8.3), R(5.8, 8.3), R(3.6, 13.8), R(-3.6, 13.8)]), 5)          # cri
-        P(f.m_poly([R(-4.8, 8.4), R(4.8, 8.4), R(4.2, 9.7), R(-4.2, 9.7)]), 6)            # dents
-        P(f.m_poly([R(-2.8, 12.6), R(2.8, 12.6), R(2.6, 13.6), R(-2.6, 13.6)]), 6)
-        P(line([R(-7, 6.2), R(-6, 9.8)], 0.6), 2)                                       # plis
-        P(line([R(7, 6.2), R(6, 9.8)], 0.6), 2)
+        w0 = 3.6 if female else 4.2
+        P(f.m_poly([R(-w0, 7.9), R(w0, 7.9), R(w0 - 1.2, 11.2), R(-w0 + 1.2, 11.2)]), 0)  # cri
+        P(f.m_poly([R(-w0 + 0.6, 8.0), R(w0 - 0.6, 8.0), R(w0 - 0.9, 8.9), R(-w0 + 0.9, 8.9)]), 6)
+        P(line([R(-6.2, 6), R(-5.2, 9.4)], 0.5), 2)                                         # plis
+        P(line([R(6.2, 6), R(5.2, 9.4)], 0.5), 2)
 
 
 def lerp(a, b, t):
@@ -445,7 +493,7 @@ COST = {  # coût de remplacement d'une classe par une autre (0..6)
     (6, 1): 3, (6, 3): 3, (6, 2): 5,
 }
 PALS = {1: (1, 2, 5), 2: (3, 4, 5), 3: (1, 3, 6)}
-PALS_Z = {**PALS, 0: (1, 5, 6)}       # plans rapprochés : P0 = peau, sombre, blanc
+PALS_Z = {0: (1, 5, 6), 1: (1, 2, 5), 2: (3, 4, 5), 3: (1, 2, 3)}       # plans rapprochés : P0 = peau, sombre, blanc
 
 
 def cost(a, b):
@@ -546,7 +594,8 @@ def bg_pals(c, back=0x01, zoom=False):
     S, O, D = c
     sl, sd, ol, od = shades(S, O, D)
     p0 = (back, sl, D, 0x30) if zoom else (back, 0x11, 0x21, 0x12)
-    return [p0, (back, sl, sd, D), (back, ol, od, D), (back, sl, ol, 0x30)]
+    p3 = (back, sl, sd, ol) if zoom else (back, sl, ol, 0x30)
+    return [p0, (back, sl, sd, D), (back, ol, od, D), p3]
 
 
 def preview(res, c, back=0x01):

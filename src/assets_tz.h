@@ -55,20 +55,20 @@ typedef struct { unsigned char bank, ntile, x0, w, y0, h, zoom; const unsigned c
 #define TZ_ANGRY_Z 6
 #define TZ_N 7
 static const tz_art_t tz_art[TZ_N][2] = {
-    { { 9, 217, 0, 32, 0, 28, 0, tz_chr_impact_m, tz_map_impact_m, tz_at_impact_m },
-      { 4, 225, 0, 32, 0, 28, 0, tz_chr_impact_f, tz_map_impact_f, tz_at_impact_f } },
-    { { 9, 175, 6, 26, 6, 22, 0, tz_chr_slide_m, tz_map_slide_m, tz_at_slide_m },
-      { 2, 179, 6, 26, 6, 22, 0, tz_chr_slide_f, tz_map_slide_f, tz_at_slide_f } },
-    { { 9, 206, 0, 32, 4, 24, 0, tz_chr_slide_z_m, tz_map_slide_z_m, tz_at_slide_z_m },
-      { 10, 212, 0, 32, 4, 24, 0, tz_chr_slide_z_f, tz_map_slide_z_f, tz_at_slide_z_f } },
-    { { 12, 146, 4, 20, 0, 28, 0, tz_chr_victory_m, tz_map_victory_m, tz_at_victory_m },
-      { 4, 150, 4, 20, 0, 28, 0, tz_chr_victory_f, tz_map_victory_f, tz_at_victory_f } },
-    { { 10, 197, 0, 32, 0, 28, 1, tz_chr_victory_z_m, tz_map_victory_z_m, tz_at_victory_z_m },
-      { 4, 202, 0, 32, 0, 28, 1, tz_chr_victory_z_f, tz_map_victory_z_f, tz_at_victory_z_f } },
-    { { 9, 148, 8, 16, 6, 22, 0, tz_chr_angry_m, tz_map_angry_m, tz_at_angry_m },
-      { 10, 156, 8, 16, 6, 22, 0, tz_chr_angry_f, tz_map_angry_f, tz_at_angry_f } },
-    { { 12, 216, 0, 32, 4, 24, 1, tz_chr_angry_z_m, tz_map_angry_z_m, tz_at_angry_z_m },
-      { 12, 228, 0, 32, 4, 24, 1, tz_chr_angry_z_f, tz_map_angry_z_f, tz_at_angry_z_f } },
+    { { 4, 215, 0, 32, 0, 28, 0, tz_chr_impact_m, tz_map_impact_m, tz_at_impact_m },
+      { 9, 220, 0, 32, 0, 28, 0, tz_chr_impact_f, tz_map_impact_f, tz_at_impact_f } },
+    { { 9, 169, 6, 26, 6, 22, 0, tz_chr_slide_m, tz_map_slide_m, tz_at_slide_m },
+      { 2, 167, 6, 26, 6, 22, 0, tz_chr_slide_f, tz_map_slide_f, tz_at_slide_f } },
+    { { 12, 205, 0, 32, 4, 24, 0, tz_chr_slide_z_m, tz_map_slide_z_m, tz_at_slide_z_m },
+      { 10, 204, 0, 32, 4, 24, 0, tz_chr_slide_z_f, tz_map_slide_z_f, tz_at_slide_z_f } },
+    { { 4, 144, 4, 20, 0, 28, 0, tz_chr_victory_m, tz_map_victory_m, tz_at_victory_m },
+      { 12, 141, 4, 20, 0, 28, 0, tz_chr_victory_f, tz_map_victory_f, tz_at_victory_f } },
+    { { 9, 183, 0, 32, 0, 28, 1, tz_chr_victory_z_m, tz_map_victory_z_m, tz_at_victory_z_m },
+      { 4, 174, 0, 32, 0, 28, 1, tz_chr_victory_z_f, tz_map_victory_z_f, tz_at_victory_z_f } },
+    { { 10, 149, 8, 16, 6, 22, 0, tz_chr_angry_m, tz_map_angry_m, tz_at_angry_m },
+      { 9, 142, 8, 16, 6, 22, 0, tz_chr_angry_f, tz_map_angry_f, tz_at_angry_f } },
+    { { 10, 195, 0, 32, 4, 24, 1, tz_chr_angry_z_m, tz_map_angry_z_m, tz_at_angry_z_m },
+      { 12, 189, 2, 30, 4, 24, 1, tz_chr_angry_z_f, tz_map_angry_z_f, tz_at_angry_z_f } },
 };
 #define TZ_IMPACT_RACKET_X 21
 #define TZ_IMPACT_RACKET_Y 60

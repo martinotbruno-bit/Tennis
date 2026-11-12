@@ -35,7 +35,7 @@
 
 #pragma bss-name(push, "SAVEDATA")
 u8 teaser_done;
-static u8 ts_shot, ts_t, ts_n, ts_sh, ts_fx, ts_cut, ts_c;
+static u8 ts_shot, ts_t, ts_n, ts_sh, ts_fx, ts_cut, ts_c, ts_bk;
 static s16 ts_cam;
 static u8 ts_buf[16];
 #pragma bss-name(pop)
@@ -127,16 +127,19 @@ static void cut_build(void)
     tz_n = 64; tz_copy(a->at);
     vram_adr(0x27C0); vram_fill(0, 64);
     /* palettes : P0 bandes (ou peau, sombre, blanc en zoom), P1 peau et son
-       ombre, P2 tenue et son ombre, P3 peau, tenue, blanc */
+       ombre, P2 tenue et son ombre, P3 peau, tenue, blanc (en zoom : peau,
+       son ombre, tenue) */
     pal_set_player(61, ts_c);                 /* (P1 : peau, tenue, sombre) */
     S = pal_buf[5]; O = pal_buf[6]; D = pal_buf[7];
-    pal_buf[0] = pal_buf[4] = pal_buf[8] = pal_buf[12] = pal_buf[16] = col[0];
+    /* zoom sur la joie : fond rouge sombre (la bouche ouverte, de la couleur du fond, reste naturelle) */
+    ts_bk = cut_art[ts_cut] == TZ_VICTORY_Z ? 0x06 : col[0];
+    pal_buf[0] = pal_buf[4] = pal_buf[8] = pal_buf[12] = pal_buf[16] = ts_bk;
     if (S >= 0x10) { pal_buf[5] = S; pal_buf[6] = (u8)(S - 0x10); } else { pal_buf[5] = (u8)(S + 0x10); pal_buf[6] = S; }
     if (O >= 0x10) { pal_buf[9] = O; pal_buf[10] = (u8)(O - 0x10); } else { pal_buf[9] = (u8)(O + 0x10); pal_buf[10] = O; }
     if (O == 0x30) pal_buf[10] = 0x10;
     pal_buf[7] = pal_buf[11] = D;
     pal_buf[13] = pal_buf[5]; pal_buf[14] = pal_buf[9]; pal_buf[15] = 0x30;
-    if (z) { pal_buf[1] = pal_buf[5]; pal_buf[2] = D; pal_buf[3] = 0x30; }
+    if (z) { pal_buf[1] = pal_buf[5]; pal_buf[2] = D; pal_buf[3] = 0x30; pal_buf[14] = pal_buf[6]; pal_buf[15] = pal_buf[9]; }
     else { pal_buf[1] = col[1]; pal_buf[2] = col[2]; pal_buf[3] = col[3]; }
     pal_buf[16 + 8] = col[0]; pal_buf[16 + 9] = 0x37; pal_buf[16 + 10] = 0x0F; pal_buf[16 + 11] = 0x30;   /* poussière, éclats */
     pal_buf[16 + 12] = col[0]; pal_buf[16 + 13] = 0x38; pal_buf[16 + 14] = 0x27; pal_buf[16 + 15] = 0x30;   /* balle, confettis */
@@ -226,7 +229,7 @@ void teaser_tick(void)
         scroll_x = (u8)ts_cam; scroll_nt = (u8)((ts_cam >> 8) & 1);
         /* bandes obliques qui scintillent (en pied) ; après un flash, le fond revient */
         if ((ts_t & 3) == 0) {
-            pal_buf[0] = pal_buf[4] = pal_buf[8] = pal_buf[12] = pal_buf[16] = col[0];
+            pal_buf[0] = pal_buf[4] = pal_buf[8] = pal_buf[12] = pal_buf[16] = ts_bk;
             if (!z) { k = (u8)((ts_t >> 2) & 1); pal_buf[1] = col[1 + k]; pal_buf[2] = col[2 - k]; }
             pal_dirty = 1;
         }
