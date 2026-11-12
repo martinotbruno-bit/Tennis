@@ -1212,7 +1212,7 @@ POSES = [  # (jambes, bras) — l'ordre est repris dans src/gfx.c
     ('stand', 'shake'),   # 28 poignée de main au filet (fin du match)
     ('kneel', 'victory'), # 29 victoire à genoux, poings levés (balle de match), 4 px plus bas
     ('supine', 'supine'), # 30 allongé sur le dos (balle de match)
-    ('sit', 'ready'),     # 31 assis (changement de côté), 4 px plus bas
+    ('kneel', 'ready'),   # 31 assis (changement de côté) : dessiné de profil (image 4 de prof_map), 4 px plus bas
 ]
 # (le smash armé reprend la pose du service, et la fin du lob celle de
 # l'impact du service : mêmes gestes, aucune tuile de plus)
@@ -1313,6 +1313,20 @@ def draw_profile(frame, female, nude=False):
         fill(c, 8, 16, 9, 21, 1); fill(c, 8, 22, 10, 23, 1 if nude else 3)      # jambe d'appui
         line(c, 7, 16, 5, 18, 1); line(c, 5, 18, 4, 19, 1)                     # talon qui remonte
         put(c, 3, 19, 1 if nude else 3)
+    elif frame == 4:
+        # assis sur la chaise (changement de côté), tourné vers le court :
+        # mêmes bras et raquette que l'image 3 (rangée du buste partagée),
+        # cuisses à l'horizontale, tibias vers le sol ; sprite dessiné 4 px
+        # plus bas (sol à y 19)
+        line(c, 6, 8, 5, 12, 1)
+        line(c, 9, 8, 10, 12, 1)
+        racket(c, 10, 13, 12, 18, 5)
+        fill(c, 6, 16, 11, 17, 1)
+        fill(c, 10, 18, 11, 18, 1)
+        fill(c, 10, 19, 12, 19, 1 if nude else 3)
+        for y in range(20, 24):
+            for x in range(16):
+                c[y][x] = 0
     else:
         # jambes croisées (passage), bras le long du corps
         line(c, 6, 8, 5, 12, 1)
@@ -1325,11 +1339,11 @@ def draw_profile(frame, female, nude=False):
 
 prof_keys = []
 for female in (0, 1):
-    for frame in (0, 1, 2, 3):       # course 1, 2 (foulées), 3, 4 (passages)
+    for frame in (0, 1, 2, 3, 4):    # course 1, 2 (foulées), 3, 4 (passages), assis (pose 31)
         cv = draw_profile(frame, female)
         preview_people.append(cv)
         for key in row_keys(cv, draw_profile(frame, female, nude=True)):
-            row_use.setdefault(key, set()).add('prof')
+            row_use.setdefault(key, set()).add('prof' if frame < 4 else 31)
             prof_keys.append(key)
 # rangées permanentes : à la suite (copiées au naturel par people_tiles)
 pool = {}
@@ -1340,7 +1354,6 @@ for key in list(dict.fromkeys(person_keys + prof_keys)):
         spr_tile(next_spr, a0); spr_tile(next_spr + 1, a1)
         nude_people.extend(encode_tile(n0)); nude_people.extend(encode_tile(n1))
         next_spr += 2
-prof_map = [pool[k] for k in prof_keys]
 POOL_END = next_spr
 
 # coupe (2x2 tuiles, palette 2 : 1 or clair, 2 sombre, 3 reflet) et confettis
@@ -1517,12 +1530,12 @@ spr_tile(ICE_TILE, ice); next_spr += 1
 # accessoires des séquences animées (sprites 8 x 8, palette 2 : 1 beige,
 # 2 noir, 3 blanc)
 def prop_chair():
-    """chaise vue de haut : dossier, assise blanche, pieds noirs"""
+    """chaise de profil (tournée vers la droite) : dossier à gauche, assise
+    blanche bordée de noir, pieds noirs"""
     t = [[0] * 8 for _ in range(8)]
-    for x in range(1, 7): t[0][x] = 2; t[1][x] = 3
-    for y in range(2, 6):
-        for x in range(1, 7): t[y][x] = 3 if 1 < x < 6 else 2
-    for x in (1, 6): t[6][x] = 2; t[7][x] = 2
+    for y in range(0, 5): t[y][0] = 2; t[y][1] = 3
+    for x in range(0, 8): t[4][x] = 3; t[5][x] = 2
+    for y in range(6, 8): t[y][1] = 2; t[y][6] = 2
     return t
 def prop_bottle():
     """gourde : bouchon noir, corps blanc, étiquette beige"""
@@ -1533,12 +1546,12 @@ def prop_bottle():
     for x in range(2, 6): t[4][x] = 1; t[5][x] = 1
     return t
 def prop_towel():
-    """serviette blanche à bandes noires, posée sur les épaules"""
+    """serviette blanche à liseré noir, en écharpe autour du cou (assis de
+    profil) : une bande sur les épaules et un pan qui tombe devant"""
     t = [[0] * 8 for _ in range(8)]
-    for y in range(0, 5):
-        for x in range(0, 8): t[y][x] = 3
-    for x in range(0, 8): t[2][x] = 2
-    for y in range(5, 8): t[y][0] = t[y][7] = 3
+    for x in range(1, 7): t[0][x] = 3; t[1][x] = 2
+    for y in range(2, 6): t[y][5] = 3; t[y][6] = 3
+    t[6][5] = 2; t[6][6] = 2
     return t
 def prop_racket():
     """raquette posée au sol (lâchée), tamis en biais"""
@@ -1549,14 +1562,18 @@ def prop_racket():
             if (x - 5) ** 2 + (y - 2) ** 2 <= 5:
                 t[y][x] = 2 if (x - 5) ** 2 + (y - 2) ** 2 >= 3 else (3 if (x + y) % 2 else 0)
     return t
+# chaise des changements de côté : tuile permanente (elle apparaît dès la
+# fin de l'échange, quand les célébrations sont chargées)
+CHAIR_TILE = next_spr
+spr_tile(CHAIR_TILE, prop_chair()); next_spr += 1
 # zone partagée : jeu « célébrations » (chargé au départ : c'est lui que
 # montrent les écrans) ou jeu « revers » (pendant l'échange)
 SWAP0 = next_spr
 swap_sets = {}
-PROPS = [prop_chair(), prop_bottle(), prop_towel(), prop_racket()]
+PROPS = [prop_bottle(), prop_towel(), prop_racket()]   # (la chaise : tuile permanente, CHAIR_TILE)
 for cls in ('C', 'R', 'F'):
     tiles, nude, idx = [], [], SWAP0
-    for key in dict.fromkeys(person_keys):
+    for key in dict.fromkeys(person_keys + prof_keys):
         if row_class(key) == cls:
             pool[key] = idx; idx += 2
             (a0, a1), (n0, n1) = row_data[key]
@@ -1571,6 +1588,7 @@ for cls in ('C', 'R', 'F'):
         tiles += PROPS; nude += PROPS; idx += len(PROPS)
     swap_sets[cls] = (tiles, nude)
 NSWAP = max(len(swap_sets['C'][0]), len(swap_sets['R'][0]), len(swap_sets['F'][0]))
+prof_map = [pool[k] for k in prof_keys]
 print('jeux de tuiles par phase : C %d, R %d, F %d (zone %d)' % (tuple(len(swap_sets[k][0]) for k in 'CRF') + (NSWAP,)))
 for i, t in enumerate(swap_sets['C'][0]):
     spr_tile(SWAP0 + i, t)
@@ -2045,7 +2063,7 @@ for cls in ('C', 'R', 'F'):
     tiles, nude = swap_sets[cls]
     _sw.append(c_array('swap_chr%s' % cls, b''.join(encode_tile(t) for t in tiles)))
     _sw.append(c_array('swap_nude%s' % cls, b''.join(encode_tile(t) for t in nude)))
-_sw.append('/* accessoires des séquences (cer.c, même banque) : chaise, gourde, serviette, raquette */\nconst unsigned char prop_tile13 = 0x%02X;' % PROP0)
+_sw.append('/* accessoires des séquences (cer.c, même banque) : gourde, serviette, raquette ; chaise (permanente) */\nconst unsigned char prop_tile13 = 0x%02X, chair_tile13 = 0x%02X;' % (PROP0, CHAIR_TILE))
 # bustes « bras caché » pour la vue de dos (version 2.52) : les poses dont un
 # bras passe devant le buste ; 2 tuiles (rangée du buste) par pose et par
 # silhouette, chargées à la volée dans 2 cases (une par joueur vu de dos) à

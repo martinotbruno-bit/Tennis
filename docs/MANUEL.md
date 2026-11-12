@@ -158,7 +158,7 @@ Le lancer reste visible quelle que soit votre position, y compris quand vous ser
 ### Les moments du match (version 2.52)
 
 - **Entrée des joueurs** : au début de chaque match, les joueurs sortent du tunnel (en bas à droite), longent le court jusqu'à leur place et saluent le public, raquette levée. Puis vient le **tirage au sort** : l'arbitre attribue pile ou face à chaque joueur (par exemple « ALEX : FACE », « MAYA : PILE »), lance la pièce et annonce le résultat (« FACE ! ALEX SERT ») : le gagnant sert le premier jeu. En marchant, un joueur qui s'éloigne vers le fond est vu de dos.
-- **Changement de côté** : les joueurs vont s'asseoir sur leur chaise, près de l'arbitre, serviette sur les épaules, et boivent à la gourde pendant que le score s'affiche ; puis ils rejoignent l'autre côté du court en passant à côté du poteau du filet. À la fin d'un set, l'écran de fin de set reste comme avant.
+- **Changement de côté** : dès la fin de l'échange, les chaises apparaissent près de l'arbitre ; les joueurs s'y rendent et s'assoient, de profil, tournés vers le court, serviette autour du cou, et boivent à la gourde pendant que le score s'affiche ; puis ils rejoignent l'autre côté du court en passant à côté du poteau du filet. À la fin d'un set, l'écran de fin de set reste comme avant.
 - **Balle de match** : le vainqueur fête d'abord le point comme d'habitude, puis tombe à genoux, poings levés, et s'allonge sur le dos, raquette lâchée près de lui. Ensuite, tous vont au filet se serrer la main, puis se tournent vers l'arbitre pour le saluer.
 - **A** ou **START** passe chacune de ces séquences.
 

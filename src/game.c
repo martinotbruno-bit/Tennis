@@ -1037,7 +1037,7 @@ u8 match_tick(void)
     }
 
     /* séquence animée (entrée, changement de côté, fin du match) */
-    if (cer && cer != 0xFE) {
+    if (cer && cer < 0xF0) {
         bank_call(BANK_SWAP, cer_tick);
         if (ms == MS_OVER) {
             if (ms_timer > 1) --ms_timer;

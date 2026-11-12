@@ -162,6 +162,7 @@ extern u8 cer;                              /* séquence animée en cours (cer.c
 extern u16 cer_t;
 extern u8 pose_now[4];
 void slot_tick(void);                       /* banque 13 (cer.c) */
+void cer_watch(void);
 static const u8 *swap_src(u8 set)
 {
     if (set == 1) return swap_nude ? swap_nudeC : swap_chrC;
@@ -194,7 +195,7 @@ static void swap_tick(void)
     u8 want = (u8)(ms == MS_TOSS || ms == MS_RALLY || ms == MS_REPLAY ? 2 : 1), k;
     /* séquences animées (cer.c) : jeu F ; en fin de match, après la fête
        habituelle (jeu C) */
-    if (cer && cer != 0xFE && (cer != 7 || cer_t >= 50)) want = 3;
+    if (cer && cer < 0xF0 && (cer != 7 || cer_t >= 50)) want = 3;
     if (want != swap_want) { swap_want = want; swap_on = 0; swap_pos = 0; }
     for (k = 0; k < 3 && !swap_on; ++k) {
         swp_dst = 0x1000 + ((u16)(swap_base + swap_pos) << 4);
@@ -404,6 +405,7 @@ void crowd_tick(void)
             }
         }
     }
+    bank_call(BANK_SWAP, cer_watch);   /* chaises dès la fin de l'échange (changement de côté) */
     swap_tick();       /* jeu de tuiles par phase : après le public (budget VBlank restant) */
     /* réactions */
     if (cr_react && !noise_hold) { if (cr_react == 1) sfx_ooh(); else sfx_groan(); cr_react = 0; }

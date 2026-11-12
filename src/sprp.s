@@ -70,6 +70,9 @@ pdy:    .res 2
 runfr:  .byte $FF, 0, 3, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF
         .byte $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, 6, 9, $FF
         .byte $FF, $FF, $FF, $FF, $FF          ; 22-26 : revers (version 2.42)
+        .byte $FF, $FF, $FF, $FF, $FF          ; 27-31 (la 31, assis, est dessinée à part : POSE_SIT)
+POSE_SIT  = 31
+PROF_SIT  = 12                                 ; image 4 de prof_map : assis de profil
 
 .segment "CODE"
 
@@ -227,6 +230,24 @@ _spr_person:
     lda _person_map_f+2,y
     sta pt2
 @tiles:
+    ; assis (changement de côté) : de profil, tourné selon le miroir donné
+    lda ppose
+    cmp #POSE_SIT
+    bne @nsit
+    ldx pc
+    lda #PROF_SIT
+    ldy _char_female,x
+    beq :+
+    lda #PROF_SIT + 15
+:   tay
+    lda _prof_map,y
+    sta ptile
+    lda _prof_map+1,y
+    sta pt1
+    lda _prof_map+2,y
+    sta pt2
+    jmp @store
+@nsit:
     ; joueur vu de dos dans un geste où un bras passe devant le buste : buste
     ; « bras caché », chargé à la volée (row1_ovr, slot_tick dans cer.c)
     lda pj_sg
@@ -309,13 +330,13 @@ _spr_person:
     ldx pc
     lda _run_dir,x
     beq @nodir
-    ; profil : prof_map[(femme ? 12 : 0) + image * 3 + rangée]
+    ; profil : prof_map[(femme ? 15 : 0) + image * 3 + rangée]
     ldy ppose
     lda runfr,y
     ldy _char_female,x
     beq @pa
     clc
-    adc #12
+    adc #15
 @pa:
     tay
     lda _prof_map,y
@@ -381,6 +402,9 @@ _spr_person:
     sec
     sbc #24
     tax                     ; première entrée OAM de ce personnage
+    lda ppose
+    cmp #POSE_SIT           ; assise : de profil
+    beq @prof
     ldy pc
     lda _run_dir,y
     beq @head

@@ -1786,7 +1786,9 @@ console.log('Séquences animées du match');
   const oamHas = (e, t) => { const o = e.addr('oam_buf'); for (let i = 0; i < 64; i++) if (e.nes.cpu.mem[o + i * 4] < 240 && e.nes.cpu.mem[o + i * 4 + 1] === t) return true; return false; };
   // tuile des accessoires : constante de la banque 13 (pas toujours visible
   // par le processeur), lue dans le fichier généré
-  const PROP = parseInt((await import('fs')).readFileSync(new URL('../src/assets_swap.c', import.meta.url), 'utf8').match(/prop_tile13 = 0x([0-9A-F]+)/)[1], 16);
+  const SWAPC = (await import('fs')).readFileSync(new URL('../src/assets_swap.c', import.meta.url), 'utf8');
+  const PROP = parseInt(SWAPC.match(/prop_tile13 = 0x([0-9A-F]+)/)[1], 16);      // gourde, serviette, raquette
+  const CHAIR = parseInt(SWAPC.match(/chair_tile13 = 0x([0-9A-F]+)/)[1], 16);
   const prop = () => PROP;
   for (const view of [0, 1]) {
     const v = view ? 'perspective' : 'à plat';
@@ -1826,18 +1828,23 @@ console.log('Séquences animées du match');
   {
     // changement de côté (ordinateur contre ordinateur) : chaises, puis l'autre côté
     const e = boot(); startWith(e, { FMT: 3, SURF: 1 }); allCpu(e); e.run(20); e.cerSkip = false;
-    runUntil(e, () => e.peek('cer') === 4, 60 * 120);
+    // les chaises apparaissent dès la fin de l'échange qui amène le changement de côté
+    runUntil(e, () => e.peek('cer') === 0xFD || e.peek('cer') === 4, 60 * 120);
+    e.run(2);
+    const early = e.peek('ms') === 3 && oamHas(e, CHAIR);
+    runUntil(e, () => e.peek('cer') === 4, 1500);
     const before = [pos(e, 0)[1] < 132, pos(e, 1)[1] < 132];
     let seated = false, chair = false, bottle = false, towel = false;
     for (let f = 0; f < 600 && e.peek('cer'); f++) {
       e.run(1);
       if (e.peek('cer') === 5) {
         seated = seated || (e.peek('pose_force', 0) === 31 && e.peek('pose_force', 1) === 31 && pos(e, 0)[0] === 46);
-        chair = chair || oamHas(e, prop(e)); bottle = bottle || oamHas(e, prop(e) + 1); towel = towel || oamHas(e, prop(e) + 2);
+        chair = chair || oamHas(e, CHAIR); bottle = bottle || oamHas(e, prop(e)); towel = towel || oamHas(e, prop(e) + 1);
       }
     }
     const after = [pos(e, 0)[1] < 132, pos(e, 1)[1] < 132];
-    check(seated && chair && bottle && towel, 'changement de côté : assis sur leur chaise, près de l\'arbitre (chaise, gourde, serviette)');
+    check(early, 'changement de côté : les chaises apparaissent dès la fin de l\'échange');
+    check(seated && chair && bottle && towel, 'changement de côté : assis de profil sur leur chaise, près de l\'arbitre (chaise, gourde, serviette)');
     check(e.peek('cer') === 0 && before[0] !== after[0] && before[1] !== after[1], 'changement de côté : chacun rejoint l\'autre côté du court');
   }
   for (const dbl of [0, 1]) {
@@ -1852,7 +1859,7 @@ console.log('Séquences animées du match');
       const c = e.peek('cer');
       if (c === 7) {
         if ((e.peek('pose_force', w) & 31) === 29) kneel = true;
-        if ((e.peek('pose_force', w) & 31) === 30) { supine = true; racket = racket || oamHas(e, prop(e) + 3); }
+        if ((e.peek('pose_force', w) & 31) === 30) { supine = true; racket = racket || oamHas(e, prop(e) + 2); }
       }
       if (c === 9) {
         shake = [...Array(n).keys()].every(p => (e.peek('pose_force', p) & 31) === 28);

@@ -24,7 +24,7 @@
 
 #pragma static-locals(off)
 
-extern const unsigned char prop_tile13;   /* assets_swap.c (cette banque) */
+extern const unsigned char prop_tile13, chair_tile13;   /* assets_swap.c (cette banque) : gourde, serviette, raquette ; chaise */
 
 #define PXU(v) ((u8)(((u16)(v) << 2) >> 8))      /* pixels, valeur positive */
 
@@ -39,6 +39,7 @@ extern const unsigned char prop_tile13;   /* assets_swap.c (cette banque) */
 #define CER_SHAKE  9    /* poignée de main */
 #define CER_SALUTE 10   /* salut à l'arbitre */
 #define CER_PEND   0xFE /* changement de côté annoncé (positions retenues) */
+#define CER_CHAIRS 0xFD /* fin de l'échange qui amène un changement de côté : les chaises apparaissent */
 
 #define P_IDLE 0
 #define P_RUN1 1
@@ -149,7 +150,7 @@ void cer_save(void)
 void cer_change(void)
 {
     u8 p;
-    static const u8 chair_top[4] = { 100, 100, 88, 88 }, chair_bot[4] = { 158, 158, 170, 170 };
+    static const u8 chair_top[4] = { 100, 100, 88, 88 }, chair_bot[4] = { 158, 158, 170, 170 };   /* (comme chair_y) */
     if (cer != CER_PEND) return;
     for (p = 0; p < npl; ++p) {
         tx[p] = plx[p]; ty[p] = ply[p];
@@ -175,6 +176,33 @@ void cer_end(void)
 }
 
 /* ---------------------------------------------------------------------- */
+/* Le point qui vient de finir amène-t-il un changement de côté (sans fin
+   de set, qui a son écran) ? Mêmes règles que rules_point. */
+extern u8 pending_winner, end_reason;
+static u8 change_next(u8 w)
+{
+    u8 o = (u8)(w ^ 1), pw = (u8)(sc_points[w] + 1), g, n;
+    if (sc_over) return 0;
+    if (sc_tiebreak) {
+        if (pw >= 7 && pw >= sc_points[o] + 2) return 0;
+        n = (u8)(sc_points[0] + sc_points[1] + 1);
+        while (n >= 6) n -= 6;
+        return (u8)(n == 0);
+    }
+    if (pw < 4 || pw < sc_points[o] + 2) return 0;
+    g = (u8)(sc_games[w] + 1);
+    if (g >= sc_games_per_set && g >= sc_games[o] + 2) return 0;
+    return (u8)((g + sc_games[o]) & 1);
+}
+/* à chaque trame (swap_tick) : les chaises apparaissent dès la fin de
+   l'échange qui amène un changement de côté */
+void cer_watch(void)
+{
+    if (cer == CER_CHAIRS && ms != MS_DEAD) cer = 0;
+    if (cer || ms != MS_DEAD || cfg.mode != GM_MATCH || cfg.demo || end_reason != 2) return;
+    if (change_next(pending_winner)) cer = CER_CHAIRS;
+}
+
 /* « ALEX : PILE » : nom de l'équipe t et ce que l'arbitre lui attribue */
 static void name_side(u8 t, char *out)
 {
@@ -190,7 +218,7 @@ static void name_side(u8 t, char *out)
 void cer_tick(void)
 {
     u8 p, done = 1, win, top;
-    if (cer == CER_PEND) return;
+    if (cer >= CER_CHAIRS) return;
     ++cer_t;
     if (cer_skip || ((pad1_new | pad2_new) & (PAD_A | PAD_START))) {
         /* passer : fin du match, il reste peu de temps (sauf pour les
@@ -303,11 +331,15 @@ void cer_front(void)
     if (cer != CER_SEAT) return;
     for (p = 0; p < npl; ++p) {
         at(p);
-        spr1((u8)(qx - 4), (u8)(qy - 14), (u8)(prop_tile13 + 2), 2);          /* serviette sur les épaules */
+        /* assis de profil, tourné vers le court (à droite) */
+        spr1((u8)(qx - 4), (u8)(qy - 14), (u8)(prop_tile13 + 1), 2);        /* serviette autour du cou */
         if ((u8)(cer_t + p * 40) % 80 < 30)
-            spr1((u8)(qx + 4), (u8)(qy - 20), (u8)(prop_tile13 + 1), 2);      /* elle boit à la gourde */
+            spr1((u8)(qx + 2), (u8)(qy - 21), prop_tile13, 2);              /* il boit à la gourde */
     }
 }
+/* chaises des changements de côté : à côté de l'arbitre, une par joueur
+   (dès la fin de l'échange, puis pendant la marche et la pause) */
+static const u8 chair_y[4] = { 100, 158, 88, 170 };
 void cer_draw(void)
 {
     u8 p, h, t;
@@ -317,19 +349,19 @@ void cer_draw(void)
         h = (u8)((t * (u8)(44 - t)) >> 4);
         spr1(44, (u8)(110 - h), (u8)(ball_base + ((t >> 2) & 1 ? 12 : 8)), 2);   /* pile (grande balle) / tranche (balle écrasée) */
     }
-    if (cer == CER_SEAT || cer == CER_CHAIR) {
-        for (p = 0; p < npl; ++p) {
-            at(p);
-            if (cer == CER_SEAT) {
-                spr1((u8)(qx - 12), (u8)(qy - 10), prop_tile13, 2);             /* chaise (dossier, derrière) */
-                if ((u8)(cer_t + p * 40) % 80 >= 30)
-                    spr1((u8)(qx + 7), (u8)(qy - 7), (u8)(prop_tile13 + 1), 2);   /* gourde posée */
-            }
+    if (cer == CER_CHAIRS || cer == CER_CHAIR || cer == CER_SEAT) {
+        for (p = 0; p < (u8)(npl == 4 ? 4 : 2); ++p) {
+            qx = CHAIR_X; qy = chair_y[p];
+            if (persp) { proj2(qx, qy); qx = proj_x; qy = proj_y; }
+            spr1((u8)(qx - 5), (u8)(qy - 8), chair_tile13, 2);              /* chaise (de profil, derrière) */
         }
+        if (cer == CER_SEAT)
+            for (p = 0; p < npl; ++p)
+                if ((u8)(cer_t + p * 40) % 80 >= 30) { at(p); spr1((u8)(qx + 8), (u8)(qy - 7), prop_tile13, 2); }   /* gourde posée */
     }
     if (cer == CER_JOY && cer_t >= 130)
         for (p = 0; p < npl; ++p)
-            if ((p & 1) == sc_winner) { at(p); spr1((u8)(qx + 10), (u8)(qy - 6), (u8)(prop_tile13 + 3), 2); }   /* raquette lâchée */
+            if ((p & 1) == sc_winner) { at(p); spr1((u8)(qx + 10), (u8)(qy - 6), (u8)(prop_tile13 + 2), 2); }   /* raquette lâchée */
 }
 
 /* ---------------------------------------------------------------------- */

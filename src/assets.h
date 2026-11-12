@@ -8,7 +8,7 @@ extern const unsigned char bigball_tiles[16];
    gauche de chaque rangée (la tuile droite suit) ; une table par silhouette */
 #define NPOSE 32
 extern const unsigned char person_map_m[2 * NPOSE * 3], person_map_f[2 * NPOSE * 3], person_row[2];
-extern const unsigned char prof_map[24];        /* course de profil : (femme * 4 + image) * 3 */
+extern const unsigned char prof_map[30];        /* profil : (femme * 5 + image) * 3 (images 0-3 course, 4 assis) */
 extern const unsigned char marg_map[2 * NPOSE]; /* tête de Margaux : face * NPOSE + pose */
 extern const unsigned int people_bytes;         /* taille de la réserve (octets de CHR) */
 extern const unsigned char marg_prof_l, marg_prof_r;
