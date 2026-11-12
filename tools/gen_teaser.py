@@ -237,20 +237,24 @@ def body(f, j, female, face, front=('armR', 'legL'), racket_hand='L', racket_dir
             # arrondie, poitrine suggérée par un pli, taille marquée, jupe plissée
             f.part(f.m_poly([(shL[0] - 4, shL[1] + 1), (shL[0], shL[1] - 4), (nk[0], nk[1] - 2), (shR[0], shR[1] - 4),
                              (shR[0] + 4, shR[1] + 1), (ch_r[0], ch_r[1] - 6), (ch_l[0], ch_l[1] - 6)]), S, s, sh=(3, 1), group=nid)
+            # profil en courbe douce : aisselle, poitrine, dessous de poitrine, taille, hanche
+            def side(sh_, hp_, sx):
+                P_ = lambda t, dx: (lerp(sh_, hp_, t)[0] + sx * dx, lerp(sh_, hp_, t)[1])
+                return [P_(0.15, -1), P_(0.25, 1.6), P_(0.33, 2.2), P_(0.41, 1.4), P_(0.5, -0.4),
+                        P_(0.6, -2.0), P_(0.7, -2.6), P_(0.8, -1.6), (hp_[0] + sx * 3, hp_[1] - 6)]
             pts = [(shL[0] + 2, shL[1] - 3), (nk[0] - 5, nk[1] + 2), (nk[0] - 3.5, nk[1] + 7), (nk[0], nk[1] + 9),
-                   (nk[0] + 3.5, nk[1] + 7), (nk[0] + 5, nk[1] + 2), (shR[0] - 2, shR[1] - 3), (shR[0] + 1, shR[1] + 3),
-                   (lerp(shR, hpR, 0.2)[0] - 1, lerp(shR, hpR, 0.2)[1]), (ch_r[0] + 2.5, ch_r[1]),
-                   (wr[0] - 3.5, wr[1]), (hpR[0] + 3, hpR[1] - 6),
-                   (hpL[0] - 3, hpL[1] - 6), (wl[0] + 3.5, wl[1]), (ch_l[0] - 2.5, ch_l[1]),
-                   (lerp(shL, hpL, 0.2)[0] + 1, lerp(shL, hpL, 0.2)[1]), (shL[0] - 1, shL[1] + 3)]
+                   (nk[0] + 3.5, nk[1] + 7), (nk[0] + 5, nk[1] + 2), (shR[0] - 2, shR[1] - 3), (shR[0] + 1, shR[1] + 3)]
+            pts += side(shR, hpR, 1) + list(reversed(side(shL, hpL, -1))) + [(shL[0] - 1, shL[1] + 3)]
             tid = f.part(f.m_poly(pts), O, o, sh=(4, 2))
-            # poitrine : volume suggéré par une ombre douce sous chaque sein
+            # poitrine : volume rond, ombre douce sous chaque sein et sur le côté
             bx = abs(hpR[0] - hpL[0]) * 0.27
-            by = lerp(nk, lerp(hpL, hpR, 0.5), 0.21)[1]
+            by = lerp(lerp(shL, shR, 0.5), lerp(hpL, hpR, 0.5), 0.26)[1]
             for sx in (-1, 1):
                 c_ = (nk[0] + sx * bx, by)
-                e_ = f.m_ell(c_, bx * 0.9, 4.6)
-                f.paint(e_ & ~shift_mask(f, (0, 2.4), e_) & ~f.m_poly([(c_[0] - 20, c_[1] - 20), (c_[0] + 20, c_[1] - 20), (c_[0] + 20, c_[1] + 1), (c_[0] - 20, c_[1] + 1)]), 4, within=[tid])
+                e_ = f.m_ell(c_, bx * 1.0, 5.4)
+                low = ~f.m_poly([(c_[0] - 20, c_[1] - 20), (c_[0] + 20, c_[1] - 20), (c_[0] + 20, c_[1] + 0.5), (c_[0] - 20, c_[1] + 0.5)])
+                f.paint(e_ & ~shift_mask(f, (0, 2.8), e_) & low, 4, within=[tid])
+                f.paint(e_ & ~shift_mask(f, (1.6, 0), e_) & low & f.m_poly([(c_[0], c_[1] - 20), (c_[0] + 30, c_[1] - 20), (c_[0] + 30, c_[1] + 20), (c_[0], c_[1] + 20)]), 4, within=[tid])
             ret['dress'] = tid
             return
         # short ample : jambes droites, plus larges que la cuisse, ourlet net
