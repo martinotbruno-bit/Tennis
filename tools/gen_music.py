@@ -220,6 +220,11 @@ m, b = arr('mus_medal_mel'), arr('mus_medal_bass')
 song(18, 'medal', m, b, harmony(m, b, 64, [(0, 32, 1), (32, 32, 2)]),
      drums(length(m), 64, [(0, KICK), (32, KICK), (48, SNARE)]), mduty=0xB8, hduty=0x74)
 
+# --- bande-annonce : rock, accords de quinte tenus, batterie
+m, b = arr('mus_rock_mel'), arr('mus_rock_bass')
+song(19, 'rock', m, b, harmony(m, b, 16, [(0, 16, 2)]),
+     drums(length(m), 64, [(0, KICK), (8, HAT), (16, SNARE), (24, HAT), (32, KICK), (40, KICK), (48, SNARE), (56, HAT)]), mduty=0xB8, hduty=0x74)
+
 def c_bytes(name, tr):
     data = []
     for n, d in tr:
@@ -233,7 +238,7 @@ def c_bytes(name, tr):
 out = ['/* Fichier généré par tools/gen_music.py — ne pas modifier. */',
        '/* Musiques (banque 10) : copiées en RAM de cartouche par music_play. */',
        '#include "audio.h"', '']
-tab = ['const u8 * const song_trk[19][4] = {', '  { 0, 0, 0, 0 },']
+tab = ['const u8 * const song_trk[20][4] = {', '  { 0, 0, 0, 0 },']
 lens = ['  { 0, 0, 0, 0 },']
 flags = ['0']
 duty = ['0, 0']
@@ -261,11 +266,11 @@ for (i, name, mel, bass, harm, drum, loop, md, hd) in songs:
     duty.append('0x%02X, 0x%02X' % (md, hd))
 tab.append('};')
 out += tab
-out.append('const u16 song_len[19][4] = {')
+out.append('const u16 song_len[20][4] = {')
 out += lens
 out.append('};')
-out.append('const u8 song_loop[19] = { %s };' % ', '.join(flags))
-out.append('const u8 song_duty[19][2] = { %s };' % ', '.join('{ %s }' % d for d in duty))
+out.append('const u8 song_loop[20] = { %s };' % ', '.join(flags))
+out.append('const u8 song_duty[20][2] = { %s };' % ', '.join('{ %s }' % d for d in duty))
 out.append('/* plus gros morceau : %d octets (tampon MUS_BUF de audio.c) ; total %d octets */' % (biggest, total))
 open(os.path.join(ROOT, 'src', 'music_data.c'), 'w').write('\n'.join(out) + '\n')
 print('musiques : %d octets, plus gros morceau %d octets' % (total, biggest))

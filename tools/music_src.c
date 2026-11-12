@@ -34,6 +34,7 @@
 #define B2 11
 #define AS4 34
 #define FS3 18
+#define E2 4
 #define FS4 30
 
 
@@ -243,4 +244,24 @@ static const u8 mus_medal_mel[] = {
 static const u8 mus_medal_bass[] = {
  C3,32, E3,32,  F3,32, C3,32,  D3,32, G2,32,  C3,32, E3,32,
  C3,32, A2,32,  F3,32, C3,32,  G2,32, G3,32,  C3,64,
+ END,0 };
+
+/* Bande-annonce du Grand Martinot et du Martinworld Tour (version 2.56) :
+   riff de rock original, 4 temps de 16 trames, basse en croches, accords de
+   quinte, batterie (grosse caisse, caisse claire, charleston) */
+static const u8 mus_rock_mel[] = {
+ E4,8, E4,8, G4,8, E4,8, A4,8, E4,8, B4,16,
+ D5,8, B4,8, A4,8, G4,8, A4,16, E4,16,
+ E4,8, E4,8, G4,8, E4,8, A4,8, E4,8, B4,16,
+ G4,8, A4,8, B4,8, D5,8, E5,32,
+ E5,8, D5,8, B4,8, D5,8, E5,8, G5,8, E5,16,
+ B4,16, E5,48,
+ END,0 };
+static const u8 mus_rock_bass[] = {
+ E2,8, E2,8, E2,8, E2,8, E2,8, E2,8, E2,8, E2,8,
+ G2,8, G2,8, G2,8, G2,8, A2,8, A2,8, A2,8, A2,8,
+ E2,8, E2,8, E2,8, E2,8, E2,8, E2,8, E2,8, E2,8,
+ G2,8, G2,8, G2,8, G2,8, B2,8, B2,8, B2,8, B2,8,
+ E2,8, E3,8, E2,8, E3,8, E2,8, E3,8, E2,8, E3,8,
+ B2,8, B2,8, E2,48,
  END,0 };

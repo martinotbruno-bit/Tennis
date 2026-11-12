@@ -1,10 +1,16 @@
-# Royal Martinot — Rapport de réalisation (version 2.55)
+# Royal Martinot — Rapport de réalisation (version 2.56)
 
 Comme l'exige le CDC (§ 17.5), ce rapport distingue ce qui est **réalisé**, **testé**, **validé sur matériel réel**, **validé uniquement en émulation**, **dépendant d'une extension**, et les **limitations restantes**.
 
 > **Validation matérielle : aucune.** Aucun test n'a été fait sur console réelle (NES, Famicom, PAL, cartouche MMC1). Toutes les validations ont eu lieu en émulation (jsnes) et par des tests unitaires sur PC. Les critères « vérifié sur console physique » (CDC § 2.1, 15.4, 16.A) **ne sont pas remplis**. Ce point ne peut pas être traité dans l'environnement de développement utilisé.
 
 ## 1. Évolutions
+
+### Version 2.56
+
+| Demande | Réalisation |
+|---|---|
+| Au lancement d'un tournoi Martinot, une animation d'environ 6 secondes enchaînant des gros plans percutants (frappe, glissade sur terre battue, bras levés, raquette frappée au sol...) sur une musique rock, et le nom de la compétition qui apparaît de manière cinématographique | **Bande-annonce** (Grand Martinot et Martinworld Tour, 6,0 s mesurées) : 4 plans en gros plan, les personnages agrandis 4 fois (64 x 96 px, 96 tuiles), séparés par des coupes franches (sans fondu) : la frappe (la balle arrive, flash blanc à l'impact, elle repart en traînée), la glissade sur terre battue (gerbe de poussière, l'écran tremble), les bras levés au ciel (pluie de confettis, ovation), la raquette frappée au sol (choc, l'écran tremble et s'amortit, éclats) ; au fond, des bandes obliques qui scintillent, une couleur par plan. Puis le titre : sur fond noir, entre deux filets dorés, le nom apparaît lettre par lettre en lettres doublées, chacune avec un éclair, un reflet doré le parcourt, puis le sous-titre (« 4 TOURNOIS - LE GRAND CHELEM », « 7 TOURNOIS - TOUTES LES SURFACES »). **Riff de rock original** (basse en croches, accords de quinte, batterie). A ou START la passe |
 
 ### Version 2.55
 

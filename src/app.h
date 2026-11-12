@@ -11,7 +11,7 @@
 #define BANK_MANUAL  4   /* mode d'emploi */
 #define BANK_COMP    5   /* compétitions et palmarès */
 #define BANK_NUDE    6   /* tuiles des personnages au naturel */
-#define BANK_INTRO   7   /* générique de lancement */
+#define BANK_INTRO   7   /* générique de lancement ; bande-annonce du Grand Martinot (teaser.c) */
 #define BANK_PODIUM  8   /* podium d'une compétition gagnée */
 #define BANK_CREDITS 9   /* générique de fin */
 #define BANK_MUSIC  10   /* musiques (copiées en RAM de cartouche par music_play) */

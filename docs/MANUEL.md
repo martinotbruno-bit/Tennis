@@ -162,6 +162,10 @@ Le lancer reste visible quelle que soit votre position, y compris quand vous ser
 - **Balle de match** : le vainqueur fête d'abord le point comme d'habitude, puis tombe à genoux, poings levés, et s'allonge sur le dos, raquette lâchée près de lui. Ensuite, tous vont au filet se serrer la main, puis se tournent vers l'arbitre pour le saluer.
 - **A** ou **START** passe chacune de ces séquences.
 
+### La bande-annonce (version 2.56)
+
+Au lancement d'un **Grand Martinot** ou d'un **Martinworld Tour**, une bande-annonce d'environ 6 secondes, sur un riff de rock : quatre gros plans enchaînés en coupes franches (une frappe avec un flash à l'impact, une glissade sur terre battue dans une gerbe de poussière, des bras levés au ciel sous les confettis, une raquette frappée au sol qui fait trembler l'écran), puis le nom de la compétition qui apparaît lettre par lettre, entre deux filets dorés, avant son sous-titre. **A** ou **START** la passe.
+
 ### Les cérémonies (version 2.52)
 
 - **Compétition classique gagnée** (tournoi, poules, championnat, saison, personnalisé) : remise des médailles. Les trois premiers apparaissent un à un sur le podium, les médailles de bronze, d'argent et d'or descendent sur leur ruban, l'hymne retentit sous les flashs des photographes, puis le vainqueur brandit la coupe.

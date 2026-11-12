@@ -23,6 +23,9 @@
 #define SS_TRAIN_RES 7
 #define SS_COMP_END  8
 #define SS_GMI      10   /* annonce d'un tournoi du Grand Martinot */
+#define SS_TEASER   11   /* bande-annonce du Grand Martinot et du Martinworld Tour */
+void teaser_build(void); void teaser_tick(void);
+extern u8 teaser_done;
 #define SS_SETBREAK  9
 u8 scr_state;
 
@@ -674,6 +677,13 @@ static void start_comp(void)
     if (c_dbl && c_pl2[0] == c_pl[0]) c_pl2[0] = (u8)((c_pl[0] + 1) % NCHARS);
     c_seed = (u8)(rand8() ^ frame_cnt);
     COMP(comp_new, 0);
+    if (c_type >= CT_GRAND) {
+        /* Grand Martinot, Martinworld Tour : bande-annonce (banque 7) */
+        screen_begin();
+        bank_call(BANK_INTRO, teaser_build);
+        scr_state = SS_TEASER;
+        return;
+    }
     comp_next();
 }
 
@@ -1042,6 +1052,10 @@ void screens_tick(void)
         menu_soft_tick();
         menu_info_tick();
         menu_sprites();
+        break;
+    case SS_TEASER:
+        bank_call(BANK_INTRO, teaser_tick);
+        if (teaser_done) { ppu_off(); chr_reload(); comp_next(); }   /* tuiles d'origine, puis l'annonce du 1er tournoi */
         break;
     case SS_GMI:
         bank_call(BANK_GMI, gm_intro_tick);

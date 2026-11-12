@@ -1917,6 +1917,30 @@ for (const type of [5, 6]) {
   const m = boot(); toMenu(m); setOpts(m, { MODE: MODE.COMP, COMP: type }); m.tap('B'); m.run(30); toMenu(m); m.run(10);
   check(ok && rowOf(m, O.FMT) < 0, `${type === 5 ? 'Grand Martinot' : 'Martinworld Tour'} : 3 sets, finales en 5 sets, FORMAT imposé (${seen.join(' ')})`);
 }
+console.log('Bande-annonce du Grand Martinot et du Martinworld Tour');
+for (const type of [5, 6]) {
+  // au lancement : 4 plans en gros plan, puis le titre, sur le riff de rock ;
+  // environ 6 secondes ; puis l'annonce du premier tournoi
+  const e = boot(); e.cerSkip = false; toMenu(e); setOpts(e, { MODE: MODE.COMP, COMP: type, FMT: 3 }); e.tap('START');
+  runUntil(e, () => scr(e) === 11, 120);
+  const t0 = e.frames, shots = new Set(); let rock = false, big = false, title = '', dur = 0;
+  runUntil(e, () => {
+    if (scr(e) !== 11) return true;
+    shots.add(e.peek('ts_shot'));
+    if (e.peek('music_cur') === 19) rock = true;
+    if (e.nes.ppu.vramMem[0x2000 + 8 * 32 + 12] === 0x60) big = true;      // personnage agrandi (tuiles $60...)
+    if (!title && e.peek('ts_shot') === 4 && e.peek('ts_t') > 120) title = e.text(0, 21, 32).trim();
+    if (!dur && e.peek('teaser_done')) dur = (e.frames - t0) / 60;
+    return false;
+  }, 600);
+  runUntil(e, () => scr(e) === 10 && litScr(e), 120);
+  const name = type === 5 ? 'Grand Martinot' : 'Martinworld Tour';
+  check(shots.size === 5 && rock && big && dur > 5.5 && dur < 7 && title.includes('TOURNOIS') && scr(e) === 10,
+    `${name} : bande-annonce (4 gros plans et le titre, riff de rock, ${dur.toFixed(1)} s, « ${title} »), puis l'annonce du 1er tournoi`);
+  const a = boot(); a.cerSkip = false; toMenu(a); setOpts(a, { MODE: MODE.COMP, COMP: type, FMT: 3 }); a.tap('START');
+  runUntil(a, () => scr(a) === 11, 120); a.run(20); a.tap('A'); runUntil(a, () => scr(a) === 10, 60);
+  check(scr(a) === 10, `${name} : A passe la bande-annonce`);
+}
 console.log('Cérémonies de fin de compétition');
 {
   // compétition classique gagnée : remise des médailles (3e, 2e, puis 1er
