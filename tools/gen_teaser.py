@@ -135,8 +135,9 @@ def body(f, j, female, face, front=('armR', 'legL'), racket_hand='L', racket_dir
     if female:
         # silhouette féminine : épaules plus étroites, hanches plus larges,
         # bras et jambes plus fins
-        j['shL'] = lerp(j['shL'], j['neck'], 0.14)
-        j['shR'] = lerp(j['shR'], j['neck'], 0.14)
+        for k_ in ('shL', 'shR'):
+            p_ = lerp(j[k_], j['neck'], 0.24)
+            j[k_] = (p_[0], p_[1] + 3)
         j['hipL'] = (j['hipL'][0] - 1.5, j['hipL'][1])
         j['hipR'] = (j['hipR'][0] + 1.5, j['hipR'][1])
     LW = 0.88 if female else 1.0
@@ -225,7 +226,9 @@ def body(f, j, female, face, front=('armR', 'legL'), racket_hand='L', racket_dir
         shL, shR, hpL, hpR = j['shL'], j['shR'], j['hipL'], j['hipR']
         nk = j['neck']
         # cou (ombre sous le menton)
-        nid = f.part(f.m_caps(nk, j['head'], 5.2 * AW, 5.2 * AW), S, s, sh=(2.5, 0))
+        hd = j['head']; tl = j.get('tilt', 0.0)
+        chin = (hd[0] - math.sin(tl) * 7, hd[1] + math.cos(tl) * 7)                # sous le menton, dans l'axe de la tête
+        nid = f.part(f.m_caps(nk, chin, (4.6 if female else 5.4), (4.2 if female else 5.2)), S, s, sh=(2.5, 0))
         f.paint(f.m_ell((nk[0], nk[1] - 5), 5.5, 3), 2, within=[nid])
         ch_l = lerp(shL, hpL, 0.36); ch_r = lerp(shR, hpR, 0.36)
         wl = lerp(shL, hpL, 0.68); wr = lerp(shR, hpR, 0.68)
@@ -236,40 +239,19 @@ def body(f, j, female, face, front=('armR', 'legL'), racket_hand='L', racket_dir
                              (shR[0] + 4, shR[1] + 1), (ch_r[0], ch_r[1] - 6), (ch_l[0], ch_l[1] - 6)]), S, s, sh=(3, 1), group=nid)
             pts = [(shL[0] + 2, shL[1] - 3), (nk[0] - 5, nk[1] + 2), (nk[0] - 3.5, nk[1] + 7), (nk[0], nk[1] + 9),
                    (nk[0] + 3.5, nk[1] + 7), (nk[0] + 5, nk[1] + 2), (shR[0] - 2, shR[1] - 3), (shR[0] + 1, shR[1] + 3),
-                   (lerp(shR, hpR, 0.2)[0] - 1, lerp(shR, hpR, 0.2)[1]), (ch_r[0] + 1.5, ch_r[1]),
+                   (lerp(shR, hpR, 0.2)[0] - 1, lerp(shR, hpR, 0.2)[1]), (ch_r[0] + 2.5, ch_r[1]),
                    (wr[0] - 3.5, wr[1]), (hpR[0] + 3, hpR[1] - 6),
-                   (hpL[0] - 3, hpL[1] - 6), (wl[0] + 3.5, wl[1]), (ch_l[0] - 1.5, ch_l[1]),
+                   (hpL[0] - 3, hpL[1] - 6), (wl[0] + 3.5, wl[1]), (ch_l[0] - 2.5, ch_l[1]),
                    (lerp(shL, hpL, 0.2)[0] + 1, lerp(shL, hpL, 0.2)[1]), (shL[0] - 1, shL[1] + 3)]
             tid = f.part(f.m_poly(pts), O, o, sh=(4, 2))
-            bx = abs(shR[0] - shL[0]) * 0.19
-            by = lerp(shL, hpL, 0.29)[1] + 1
+            # poitrine : volume suggéré par une ombre douce sous chaque sein
+            bx = abs(hpR[0] - hpL[0]) * 0.27
+            by = lerp(nk, lerp(hpL, hpR, 0.5), 0.3)[1]
             for sx in (-1, 1):
-                f.paint(f.m_arc((nk[0] + sx * bx, by), bx * 0.8, 2.6, 45, 135, 0.7), 4, within=[tid])   # galbe de la poitrine
-            # jupe plissée évasée (même tissu, d'un seul tenant avec le haut) :
-            # elle couvre les hanches et le haut des cuisses, sans fente
-            kl, kr = j['knL'], j['knR']
-            hl, hr = lerp(hpL, kl, 0.4), lerp(hpR, kr, 0.4)
-            top_l = lerp(wl, hpL, 0.5); top_r = lerp(wr, hpR, 0.5)
-            dl = (hl[0] - hpL[0], hl[1] - hpL[1]); Ll = math.hypot(*dl) or 1; nl = (dl[1] / Ll, -dl[0] / Ll)
-            dr = (hr[0] - hpR[0], hr[1] - hpR[1]); Lr = math.hypot(*dr) or 1; nr = (-dr[1] / Lr, dr[0] / Lr)
-            if nl[0] > 0: nl = (-nl[0], -nl[1])
-            if nr[0] < 0: nr = (-nr[0], -nr[1])
-            hem_l = (hl[0] + nl[0] * 13, hl[1] + nl[1] * 13 + 1)
-            hem_r = (hr[0] + nr[0] * 13, hr[1] + nr[1] * 13 + 1)
-            sk = hull([(top_l[0] + 2, top_l[1]), (top_r[0] - 2, top_r[1]),
-                       (hpL[0] - 10, hpL[1]), (hpR[0] + 10, hpR[1]), hem_l, hem_r,
-                       (hl[0] - nl[0] * 6, hl[1] + 4), (hr[0] - nr[0] * 6, hr[1] + 4)])
-            sm = f.m_poly(sk)
-            sid = f.part(sm, O, o, sh=(3, 1), group=tid)
-            # plis : du haut de la jupe vers l'ourlet, en éventail
-            ys = [p[1] for p in sk]
-            yb = max(ys)
-            for t in (0.18, 0.36, 0.54, 0.72, 0.88):
-                a_ = lerp((top_l[0] + 2, top_l[1]), (top_r[0] - 2, top_r[1]), t)
-                b_ = lerp(hem_l, hem_r, t)
-                f.paint(f.m_line([lerp(a_, b_, 0.35), (b_[0], b_[1] + 6)], 0.7), 4, within=[sid])
-            f.paint(sm & ~shift_mask(f, (0, -1.6), sm), 4, within=[sid])          # ourlet
-            ret['shorts'] = sid
+                c_ = (nk[0] + sx * bx, by)
+                e_ = f.m_ell(c_, bx * 0.9, 4.6)
+                f.paint(e_ & ~shift_mask(f, (0, 2.4), e_) & ~f.m_poly([(c_[0] - 20, c_[1] - 20), (c_[0] + 20, c_[1] - 20), (c_[0] + 20, c_[1] + 1), (c_[0] - 20, c_[1] + 1)]), 4, within=[tid])
+            ret['dress'] = tid
             return
         # short ample : jambes droites, plus larges que la cuisse, ourlet net
         m = f.m_poly([(hpL[0] - 6, hpL[1] - 8), (hpR[0] + 6, hpR[1] - 8), (hpR[0] + 9, hpR[1] + 2), (hpL[0] - 9, hpL[1] + 2)])
@@ -304,6 +286,37 @@ def body(f, j, female, face, front=('armR', 'legL'), racket_hand='L', racket_dir
         # plis du tissu
         f.paint(f.m_line([lerp(ch_l, wl, 0.2), (lerp(ch_l, wl, 0.2)[0] + 7, lerp(ch_l, wl, 0.2)[1] + 6)], 0.8), 4, within=[tid])
         f.paint(f.m_line([(lerp(wl, wr, 0.3)[0], lerp(wl, wr, 0.3)[1] - 2), (lerp(wl, wr, 0.6)[0], lerp(wl, wr, 0.6)[1] + 1)], 0.8), 4, within=[tid])
+        ret['shorts'] = sid
+
+    def skirt():
+        shL, shR, hpL, hpR = j['shL'], j['shR'], j['hipL'], j['hipR']
+        wl = lerp(shL, hpL, 0.68); wr = lerp(shR, hpR, 0.68)
+        tid = ret['dress']
+        # jupe plissée évasée (même tissu, d'un seul tenant avec le haut) :
+        # elle couvre les hanches et le haut des cuisses, sans fente
+        kl, kr = j['knL'], j['knR']
+        hl, hr = lerp(hpL, kl, 0.4), lerp(hpR, kr, 0.4)
+        top_l = lerp(wl, hpL, 0.5); top_r = lerp(wr, hpR, 0.5)
+        dl = (hl[0] - hpL[0], hl[1] - hpL[1]); Ll = math.hypot(*dl) or 1; nl = (dl[1] / Ll, -dl[0] / Ll)
+        dr = (hr[0] - hpR[0], hr[1] - hpR[1]); Lr = math.hypot(*dr) or 1; nr = (-dr[1] / Lr, dr[0] / Lr)
+        if nl[0] > 0: nl = (-nl[0], -nl[1])
+        if nr[0] < 0: nr = (-nr[0], -nr[1])
+        hem_l = (hl[0] + nl[0] * 13, hl[1] + nl[1] * 13 + 1)
+        hem_r = (hr[0] + nr[0] * 13, hr[1] + nr[1] * 13 + 1)
+        sk = hull([(top_l[0] + 2, top_l[1]), (top_r[0] - 2, top_r[1]),
+                   (hpL[0] - 10, hpL[1]), (hpR[0] + 10, hpR[1]), hem_l, hem_r,
+                   (hl[0] - nl[0] * 6, hl[1] + 4), (hr[0] - nr[0] * 6, hr[1] + 4)])
+        sm = f.m_poly(sk)
+        sid = f.part(sm, O, o, sh=(3, 1), group=tid)
+        # plis : du haut de la jupe vers l'ourlet, en éventail
+        ys = [p[1] for p in sk]
+        yb = max(ys)
+        for t in (0.18, 0.36, 0.54, 0.72, 0.88):
+            a_ = lerp((top_l[0] + 2, top_l[1]), (top_r[0] - 2, top_r[1]), t)
+            b_ = lerp(hem_l, hem_r, t)
+            f.paint(f.m_line([lerp(a_, b_, 0.35), (b_[0], b_[1] + 6)], 0.7), 4, within=[sid])
+        f.paint(sm & ~shift_mask(f, (0, -1.6), sm), 4, within=[sid])          # ourlet
+
         ret['shorts'] = sid
 
     def head():
@@ -341,7 +354,10 @@ def body(f, j, female, face, front=('armR', 'legL'), racket_hand='L', racket_dir
         ret['face'] = (ex, ey)
         face_features(f, ex, ey, face, hid, tilt, female)
 
-    order = j['order']
+    order = list(j['order'])
+    if female:
+        last = max(order.index(k_) for k_ in ('torso', 'legL', 'legR'))
+        order.insert(last + 1, 'skirt')
     for p in order:
         if p == 'legL': leg('L')
         elif p == 'legR': leg('R')
@@ -349,6 +365,7 @@ def body(f, j, female, face, front=('armR', 'legL'), racket_hand='L', racket_dir
         elif p == 'armR': arm('R', racket_hand == 'R')
         elif p == 'torso': torso()
         elif p == 'head': head()
+        elif p == 'skirt': skirt()
         elif p == 'racket': racket()
     return ret
 
@@ -460,7 +477,7 @@ POSES = {}
 
 # 1. frappe de coup droit, à l'impact : bras tendu vers la gauche de l'écran
 POSES['impact'] = dict(
-    j=dict(head=(86, 30), neck=(86, 44), tilt=-0.08, turn=-3.0,
+    j=dict(head=(86, 30), neck=(86, 44), tilt=-0.08, turn=-1.0,
            shL=(66, 56), shR=(104, 55), elL=(42, 66), wrL=(22, 70), hdL=(17, 70),
            elR=(122, 72), wrR=(132, 92), hdR=(134, 97),
            hipL=(76, 122), hipR=(98, 122), knL=(60, 160), anL=(50, 196), toeL=(38, 199),
@@ -470,7 +487,7 @@ POSES['impact'] = dict(
 
 # 2. glissade sur terre battue : jambe droite de l'écran tendue, très bas
 POSES['slide'] = dict(
-    j=dict(head=(70, 84), neck=(74, 97), tilt=0.15, turn=4.0,
+    j=dict(head=(70, 84), neck=(74, 97), tilt=0.15, turn=1.5,
            shL=(58, 106), shR=(94, 110), elL=(40, 92), wrL=(28, 74), hdL=(24, 68),
            elR=(118, 126), wrR=(140, 138), hdR=(146, 141),
            hipL=(68, 162), hipR=(90, 164), knL=(44, 172), anL=(48, 200), toeL=(36, 203),
@@ -491,7 +508,7 @@ POSES['victory'] = dict(
 
 # 4. raquette fracassée au sol : penché en avant, bras abattu, cri de colère
 POSES['angry'] = dict(
-    j=dict(head=(84, 74), neck=(84, 86), tilt=-0.1, turn=-1.5,
+    j=dict(head=(84, 74), neck=(84, 86), tilt=-0.1, turn=-0.5,
            shL=(64, 96), shR=(104, 98), elL=(52, 122), wrL=(58, 144), hdL=(60, 149),
            elR=(122, 120), wrR=(130, 140), hdR=(131, 145),
            hipL=(74, 146), hipR=(98, 146), knL=(58, 176), anL=(52, 202), toeL=(40, 205),
