@@ -17,6 +17,7 @@
 #define BANK_MUSIC  10   /* musiques (copiées en RAM de cartouche par music_play) */
 #define BANK_PERSP  11   /* vue en perspective : courts déformés, tuiles, projection */
 #define BANK_SWAP 13     /* jeux de tuiles par phase (célébrations, revers) */
+#define BANK_GMI 14      /* écrans d'annonce du Grand Martinot */
 #define BANK_COURTS 12   /* tables de noms des courts (vue à plat) */
 
 /* état de l'application (lu par la boucle principale, banque fixe) */

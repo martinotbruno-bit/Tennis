@@ -30,6 +30,10 @@
 #define G5 43
 #define A5 45
 #define B5 47
+#define A2 9
+#define B2 11
+#define AS4 34
+
 
 /* Écran titre et menu : petite polka de cirque, ridicule mais propre et bien
  * carrée. Mélodie sautillante liée, sans aucun silence (carré 12,5 % « kazoo » à
@@ -153,5 +157,43 @@ static const u8 mus_break_mel[] = {
 static const u8 mus_break_bass[] = {
  C3,24, G3,24,  A3,24, E3,24,  D3,24, F3,24,  G3,24, D3,24,
  F3,24, C3,24,  A3,24, E3,24,  D3,24, G3,24,  C3,36, R,12,
+ END,0 };
+
+/* Le Grand Martinot : fanfares originales des écrans d'annonce des tournois
+   (version 2.44), une par tournoi, environ 3 à 4 secondes, sans boucle. */
+/* Open d'Augustralie : air sautillant, comme un kangourou (2 temps de 24) */
+static const u8 mus_gm1_mel[] = {
+ G4,6, R,6, B4,6, R,6, D5,12, B4,12,   C5,6, R,6, E5,6, R,6, G5,24,
+ F5,6, E5,6, D5,6, C5,6, B4,12, D5,12, G5,36, R,12,
+ END,0 };
+static const u8 mus_gm1_bass[] = {
+ G3,24, D3,24,  C3,24, G3,24,  D3,24, D3,24,  G3,48,
+ END,0 };
+/* Debogarros : valse musette (3 temps de 12) */
+static const u8 mus_gm2_mel[] = {
+ E5,12, D5,6, E5,6, G5,12,   F5,12, E5,6, F5,6, A5,12,   G5,12, F5,6, E5,6, D5,12,
+ C5,24, R,12,                E5,6, F5,6, G5,12, E5,12,   D5,12, B4,12, G4,12,
+ C5,36,
+ END,0 };
+static const u8 mus_gm2_bass[] = {
+ C3,12, G3,12, G3,12,  F3,12, C4,12, C4,12,  G2,12, D3,12, D3,12,  C3,12, G3,12, G3,12,
+ C3,12, G3,12, G3,12,  G2,12, D3,12, D3,12,  C3,36,
+ END,0 };
+/* Martinbledon : fanfare de cuivres, solennelle (4 temps de 12) */
+static const u8 mus_gm3_mel[] = {
+ C5,12, C5,6, C5,6, G4,24,   E5,12, E5,6, E5,6, C5,24,
+ G5,12, F5,12, E5,12, D5,12, C5,36, R,12,
+ END,0 };
+static const u8 mus_gm3_bass[] = {
+ C3,24, G2,24,  C3,24, E3,24,  G2,24, G3,24,  C3,48,
+ END,0 };
+/* US Opaul : petit swing, notes « bleues » (4 temps de 12) */
+static const u8 mus_gm4_mel[] = {
+ C5,8, DS5,4, E5,12, G5,12, A5,12,   G5,8, E5,4, C5,12, D5,12, DS5,12,
+ E5,8, G5,4, A5,12, G5,8, E5,4, C5,12,   D5,12, B4,12, C5,24,
+ END,0 };
+static const u8 mus_gm4_bass[] = {
+ C3,12, E3,12, G3,12, A3,12,  F3,12, A3,12, C4,12, A3,12,
+ C3,12, E3,12, G3,12, E3,12,  G2,12, B2,12, C3,24,
  END,0 };
 

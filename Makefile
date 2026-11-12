@@ -21,12 +21,15 @@ BANK10 = music_data
 BANK11 = assets_persp
 BANK12 = assets_courts12
 BANK13 = assets_swap shots
-CSRC = $(FIXED) $(BANK0) $(BANK1) $(BANK3) $(BANK4) $(BANK5) $(BANK6) $(BANK7) $(BANK8) $(BANK9) $(BANK10) $(BANK11) $(BANK12) $(BANK13)
+BANK14 = assets_gm gmintro
+CSRC = $(FIXED) $(BANK0) $(BANK1) $(BANK3) $(BANK4) $(BANK5) $(BANK6) $(BANK7) $(BANK8) $(BANK9) $(BANK10) $(BANK11) $(BANK12) $(BANK13) $(BANK14)
 OBJS = $(BUILD)/crt0.o $(BUILD)/sprp.o $(BUILD)/poses.o $(BUILD)/slip.o $(BUILD)/dpcm.o $(addprefix $(BUILD)/,$(addsuffix .o,$(CSRC)))
 
 all: $(ROM)
 
 assets/tiles.chr src/assets_data.c src/assets_court.c src/assets_nude.c src/assets_persp.c src/assets_persp3.c src/assets_courts12.c src/assets_swap.c: tools/gen_assets.py
+src/assets_gm.c: tools/gen_gm.py
+	python3 tools/gen_gm.py
 	python3 tools/gen_assets.py
 
 src/music_data.c: tools/gen_music.py tools/music_src.c
@@ -49,6 +52,7 @@ $(addprefix $(BUILD)/,$(addsuffix .s,$(BANK10))): SEGS = --code-name BANK10 --ro
 $(addprefix $(BUILD)/,$(addsuffix .s,$(BANK11))): SEGS = --code-name BANK11 --rodata-name RODATA11
 $(addprefix $(BUILD)/,$(addsuffix .s,$(BANK12))): SEGS = --code-name BANK12 --rodata-name RODATA12
 $(addprefix $(BUILD)/,$(addsuffix .s,$(BANK13))): SEGS = --code-name BANK13 --rodata-name RODATA13
+$(addprefix $(BUILD)/,$(addsuffix .s,$(BANK14))): SEGS = --code-name BANK14 --rodata-name RODATA14
 
 $(BUILD)/crt0.o: src/crt0.s assets/tiles.chr | $(BUILD)
 	$(CA65) -t nes -g -o $@ src/crt0.s
@@ -64,7 +68,7 @@ $(BUILD)/slip.o: src/slip.s | $(BUILD)
 $(BUILD)/dpcm.o: src/dpcm.s | $(BUILD)
 	$(CA65) -t nes -g -o $@ src/dpcm.s
 
-$(BUILD)/%.s: src/%.c src/*.h src/assets_data.c src/assets_court.c src/assets_nude.c src/assets_persp.c src/assets_persp3.c src/assets_courts12.c src/assets_swap.c | $(BUILD)
+$(BUILD)/%.s: src/%.c src/*.h src/assets_data.c src/assets_court.c src/assets_nude.c src/assets_persp.c src/assets_persp3.c src/assets_courts12.c src/assets_swap.c src/assets_gm.c | $(BUILD)
 	$(CC65) $(CFLAGS) $(SEGS) -o $@ $<
 
 $(BUILD)/%.o: $(BUILD)/%.s

@@ -10,8 +10,7 @@
 #define CT_CUSTOM  4   /* tournoi personnalisé */
 #define CT_GRAND   5   /* le Grand Martinot : 4 tournois de 16 (8 équipes en double) */
 #define NCT        6
-extern char comp_cn[16];                    /* nom d'une compétition (comp_cname) */
-u8 __fastcall__ comp_cname(u8 t);           /* banque 5 : nom de la compétition t dans comp_cn */
+u8 __fastcall__ comp_cname(u8 t);           /* banque 5 : nom de la compétition t dans comp_l2 */
 
 /* options du tournoi personnalisé (bits de c_opts) */
 #define CO_SIZE8   1   /* 8 joueurs (sinon 4) */
@@ -37,7 +36,8 @@ u8 __fastcall__ comp_record(u8 won);
 u8 __fastcall__ comp_stage_name(u8 unused); /* remplit comp_l1 / comp_l2 */
 u8 __fastcall__ comp_draw_table(u8 y);
 u8 __fastcall__ comp_podium(u8 unused);    /* remplit c_pod (compétition gagnée) */
-u8 __fastcall__ comp_desc(u8 k);           /* ligne k (type x 4 + ligne) de l'explication du menu, dans comp_l1 */
+u8 __fastcall__ comp_desc(u8 k);
+u8 __fastcall__ comp_gm_intro(u8 unused);   /* Grand Martinot : tournoi à annoncer, ou $FF */           /* ligne k (type x 4 + ligne) de l'explication du menu, dans comp_l1 */
 extern u8 c_pod[3];
 #define COMP(fn, arg) ((u8)far_call(BANK_COMP, (void *)(fn), (arg)))
 /* codes de reprise (banque 5) : renseigner pw_s (13 signes) et pw_p (PwData) */

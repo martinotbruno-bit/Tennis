@@ -24,6 +24,7 @@ u8 c_pl2[16];                 /* double : partenaire de chaque inscrit */
 u16 c_gres;
 #pragma bss-name(pop)
 char comp_l1[32], comp_l2[32];
+static u8 c_shown;            /* étape dont le tournoi a été annoncé (Grand Martinot) */
 
 static u16 rs;
 static void rs_seed(u8 a, u8 b) { rs = (u16)(((u16)a << 8) | b) ^ 0xACE1; if (!rs) rs = 1; }
@@ -76,6 +77,7 @@ u8 __fastcall__ comp_build(u8 unused)
     c_active = 1;
     c_over = 0;
     c_rank = 0;
+    c_shown = 0xFF;
     return 0;
 }
 
@@ -553,28 +555,38 @@ u8 __fastcall__ comp_draw_table(u8 y)
     return 0;
 }
 
-/* nom de chaque compétition (menu, écrans, palmarès), copié dans comp_cn */
-char comp_cn[16];
+/* nom de chaque compétition (menu, écrans, palmarès), copié dans comp_l2 */
 static const char * const comp_name[NCT] = { "TOURNOI", "POULES", "CHAMPIONNAT", "SAISON", "PERSONNALISE", "GRAND MARTINOT" };
 u8 __fastcall__ comp_cname(u8 t)
 {
     const char *n = comp_name[t < NCT ? t : 0];
     u8 i = 0;
-    while (*n) comp_cn[i++] = *n++;
-    comp_cn[i] = 0;
+    while (*n) comp_l2[i++] = *n++;   /* (tampon de l'étape : lu aussitôt) */
+    comp_l2[i] = 0;
     return 0;
 }
 
 /* Explication de chaque compétition, montrée en bas du menu quand le
    curseur est sur la ligne COMPETITION : 4 lignes de 28 signes au plus */
-static const char * const comp_help[NCT * 4] = {
+static const char * const comp_help[NCT * 4 + 4] = {
     /* tournoi */      "8 JOUEURS EN ELIMINATION", "DIRECTE : QUART, DEMI, PUIS", "FINALE. UNE DEFAITE ET", "C'EST FINI.",
     /* poules */       "2 POULES DE 4 : 3 MATCHS.", "LES 2 PREMIERS DE CHAQUE", "POULE EN DEMI-FINALES", "CROISEES, PUIS LA FINALE.",
     /* championnat */  "6 JOUEURS, CHACUN CONTRE", "TOUS (5 JOURNEES).", "LE PLUS DE VICTOIRES GAGNE,", "EGALITE : MATCH ENTRE EUX.",
     /* saison */       "4 TOURNOIS DE 8 : TERRE,", "GAZON, DUR, MOQUETTE. UNE", "DEFAITE ARRETE LE TOURNOI.", "POINTS PAR TOUR, CLASSEMENT.",
     /* personnalisé */ "VOTRE TOURNOI : 4 OU 8", "JOUEURS, ADVERSAIRES DE", "NIVEAU FIXE OU PROGRESSIF,", "SURFACE FIXE OU VARIEE.",
     /* Grand Martinot */ "4 TOURNOIS DE 16 JOUEURS :", "AUGUSTRALIE, DEBOGARROS,", "MARTINBLEDON, US OPAUL.", "POINTS. 4 TITRES : CHELEM !",
+    /* aide des touches du menu (k = NCT x 4 + 1 à 3) */ "", "HAUT/BAS : CHOISIR", "GAUCHE/DROITE : MODIFIER", "START : JOUER   B : RETOUR",
 };
+/* Grand Martinot : tournoi à annoncer (premier tour, pas encore annoncé à
+   cette étape), sinon $FF */
+u8 __fastcall__ comp_gm_intro(u8 unused)
+{
+    (void)unused;
+    if (c_type != CT_GRAND || rd_of() != 0 || c_shown == c_stage) return 0xFF;
+    c_shown = c_stage;
+    return ev_of();
+}
+
 u8 __fastcall__ comp_desc(u8 k)
 {
     const char *t = comp_help[k];

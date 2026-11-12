@@ -22,6 +22,7 @@
 #define SS_PALMARES  6
 #define SS_TRAIN_RES 7
 #define SS_COMP_END  8
+#define SS_GMI      10   /* annonce d'un tournoi du Grand Martinot */
 #define SS_SETBREAK  9
 u8 scr_state;
 
@@ -85,7 +86,24 @@ static const u8 count_val[3] = { 10, 20, 30 };
 
 static const char gm_title[] = "LE GRAND MARTINOT";
 /* nom de la compétition t (liste en banque 5) : copié dans comp_cn */
-static const char *cname(u8 t) { COMP(comp_cname, t); return comp_cn; }
+static const char *cname(u8 t) { COMP(comp_cname, t); return comp_l2; }
+/* écran d'étape ; au premier tour d'un tournoi du Grand Martinot, d'abord
+   son annonce (banque 14 : image, nom, fanfare) */
+extern u8 gm_ev;
+void gm_intro_build(void);
+void gm_intro_tick(void);
+static void comp_screen(void);
+static void screen_begin(void);
+static void comp_next(void)
+{
+    u8 e = COMP(comp_gm_intro, 0);
+    if (e == 0xFF) { comp_screen(); return; }
+    gm_ev = e;
+    screen_begin();
+    bank_call(BANK_GMI, gm_intro_build);
+    ppu_on();
+    scr_state = SS_GMI;
+}
 static u8 vis[NOPT];
 u8 nvis, cursor;     /* non statiques : lus par les tests */
 static u8 last_mode, demo_dbl;
@@ -106,7 +124,7 @@ static void build_visible(void)
         if (opt_val[O_TYPE]) { vis[nvis++] = O_P2; vis[nvis++] = O_CPART; }   /* partenaire */
         vis[nvis++] = O_LEVEL;
         if (opt_val[O_COMP] != CT_SEASON && opt_val[O_COMP] != CT_GRAND) vis[nvis++] = O_SURF;   /* surfaces imposées */
-        if (opt_val[O_COMP] != CT_GRAND) { vis[nvis++] = O_ENV; vis[nvis++] = O_COND; }   /* Grand Martinot : en salle, de jour */
+        if (opt_val[O_COMP] != CT_GRAND) { vis[nvis++] = O_ENV; vis[nvis++] = O_COND; }   /* Grand Martinot : au stade, de jour */
         vis[nvis++] = O_FMT;
         vis[nvis++] = O_REPLAY;
         vis[nvis++] = O_GSPEED;
@@ -318,7 +336,6 @@ static void menu_soft_tick(void)
    explication de la compétition choisie (comp_desc, banque 5). Redessiné
    une ligne par trame (budget VBlank) quand ce qu'il faut montrer change. */
 static u8 info_k, info_row;          /* réglés par menu_screen */
-static const char * const menu_help[3] = { "HAUT/BAS : CHOISIR", "GAUCHE/DROITE : MODIFIER", "START : JOUER   B : RETOUR" };
 static void menu_style_line(u8 direct)
 {
     u8 c = opt_val[O_MODE] == MODE_COMP || opt_val[O_MODE] == MODE_TRAIN ? opt_val[O_P1] : opt_val[O_P2];
@@ -341,8 +358,8 @@ static void menu_info_tick(void)
             info_k = 0xFF;
             menu_style_line(0);
         } else {
-            pad_text(menu_help[info_row - 1], 28);
-            vbuf_text(2, (u8)(24 + info_row), line, 28);
+            COMP(comp_desc, (u8)(NCT * 4 + info_row));      /* aide des touches */
+            vbuf_text(2, (u8)(24 + info_row), comp_l1, 28);
         }
         ++info_row;
     }
@@ -358,9 +375,7 @@ static void menu_screen(void)
     for (i = 0; i < nvis; ++i) menu_draw_row(i, 1);
     info_k = 0xFF; info_row = 4;
     menu_style_line(1);
-    txt_at(2, 25, menu_help[0]);
-    txt_at(2, 26, menu_help[1]);
-    txt_at(2, 27, menu_help[2]);
+    for (i = 1; i < 4; ++i) { COMP(comp_desc, (u8)(NCT * 4 + i)); txt_at(2, (u8)(24 + i), comp_l1); }
     pal_set_player(0, opt_val[O_P1]);
     pal_set_player(1, opt_val[O_P2]);
     ppu_on();
@@ -643,7 +658,7 @@ static void start_comp(void)
     c_surf = (u8)(opt_val[O_SURF] > 3 && (c_type == CT_SEASON || c_type == CT_GRAND) ? 0 : opt_val[O_SURF]);
     c_env = opt_val[O_ENV];
     c_cond = opt_val[O_COND];
-    if (c_type == CT_GRAND) { c_env = ENV_HALL; c_cond = 0; }   /* Grand Martinot : toujours en salle, de jour */
+    if (c_type == CT_GRAND) { c_env = ENV_STADIUM; c_cond = 0; }   /* Grand Martinot : toujours au stade, de jour */
     c_fmt = opt_val[O_FMT];
     c_pl[0] = opt_val[O_P1];
     c_dbl = opt_val[O_TYPE];
@@ -652,7 +667,7 @@ static void start_comp(void)
     if (c_dbl && c_pl2[0] == c_pl[0]) c_pl2[0] = (u8)((c_pl[0] + 1) % NCHARS);
     c_seed = (u8)(rand8() ^ frame_cnt);
     COMP(comp_new, 0);
-    comp_screen();
+    comp_next();
 }
 
 /* ---------------------------------------------------------------------- */
@@ -699,7 +714,7 @@ static void code_tick(void)
             COMP(comp_build, 0);
             opt_val[O_P1] = c_pl[0];
             sfx_menu_ok();
-            comp_screen();
+            comp_next();
             return;
         }
         sfx_fault();
@@ -1020,6 +1035,10 @@ void screens_tick(void)
         menu_info_tick();
         menu_sprites();
         break;
+    case SS_GMI:
+        bank_call(BANK_GMI, gm_intro_tick);
+        if (pad1_new & (PAD_A | PAD_START)) { sfx_menu_ok(); comp_screen(); }
+        break;
     case SS_PRESENT:
         if (pad1_new & (PAD_A | PAD_START)) { go_match(); break; }
         if (pad1_new & PAD_B) { if (last_mode == MODE_COMP) comp_screen(); else menu_screen(); break; }
@@ -1048,7 +1067,7 @@ void screens_tick(void)
         break;
     case SS_RESULTS:
         if (pad1_new & PAD_A) {
-            if (last_mode == MODE_COMP) { if (c_over) comp_end_screen(); else comp_screen(); }
+            if (last_mode == MODE_COMP) { if (c_over) comp_end_screen(); else comp_next(); }
             else { setup_cfg(last_mode); go_match(); }
             break;
         }

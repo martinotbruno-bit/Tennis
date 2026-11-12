@@ -372,8 +372,15 @@ for (let ex = 0; ex < 9; ex++) {
 }
 
 console.log('Compétitions');
+// Grand Martinot : écran d'annonce d'un tournoi (état 10) avant son écran d'étape
+const litScr = (e) => e.peek('ppu_mask') !== 0 && e.peek('fade_lvl') === 0;
+const skipIntro = (e) => {
+  runUntil(e, () => litScr(e), 90);
+  if (scr(e) === 10) { e.tap('A'); runUntil(e, () => scr(e) !== 10 && litScr(e), 120); }
+};
 function playComp(type, opts, wins) {
   const e = boot(); startWith(e, Object.assign({ MODE: MODE.COMP, COMP: type, FMT: 3 }, opts));
+  skipIntro(e);
   let matches = 0, code = '';
   const CN = ['TOURNOI', 'POULES', 'CHAMPIONNAT', 'SAISON', 'PERSONNALISE', 'GRAND MARTINOT'][type];
   check(scr(e) === SS.COMP && (type === 5 ? e.text(3, 1, 17) === 'LE GRAND MARTINOT' : e.text(18, 1, CN.length) === CN), `${CN} : écran d'étape (titre lisible)`);
@@ -386,18 +393,39 @@ function playComp(type, opts, wins) {
     runUntil(e, () => app(e) === AS.SCREENS, 60); e.run(20);
     matches++;
     e.tap('A'); e.run(40);
+    skipIntro(e);
   }
   return { e, matches, code };
 }
 {
   // le Grand Martinot : 4 tournois de 16 (huitièmes, quarts, demis, finale),
   // dur, terre battue, gazon, dur ; les 16 matchs gagnés : Grand Chelem
-  const g = boot(); startWith(g, { MODE: MODE.COMP, COMP: 5, FMT: 3, ENV: 0, COND: 2 });
-  check(g.peek('c_env') === 2 && g.peek('c_cond') === 0 && rowOf(g, O.ENV) < 0, 'Grand Martinot : toujours en salle, de jour (lieu et conditions imposés)');
+  const g = boot(); startWith(g, { MODE: MODE.COMP, COMP: 5, FMT: 3, ENV: 2, COND: 2 });
+  // écran d'annonce : image (tuiles $60 et suivantes), nom, fanfare ; puis l'écran d'étape, décor rétabli
+  const rom2 = g.nes.rom.rom[2];
+  let tiles = 0; for (let i = 0x600; i < 0x1000; i++) if (g.nes.ppu.vramMem[i] !== rom2[i]) tiles++;
+  check(scr(g) === 10 && g.peek('music_cur') === 11 && g.text(7, 4, 18) === "OPEN D'AUGUSTRALIE" && tiles > 500,
+    `Grand Martinot : annonce de l'Open d'Augustralie (image, fanfare ${g.peek('music_cur')})`);
+  runUntil(g, () => litScr(g), 90); g.tap('A'); runUntil(g, () => scr(g) === SS.COMP && litScr(g), 120);
+  let back = 0; for (let i = 0x600; i < 0x1000; i++) if (g.nes.ppu.vramMem[i] !== rom2[i]) back++;
+  check(scr(g) === SS.COMP && back === 0, `Grand Martinot : écran d'étape ensuite, décor rétabli (${back} octet(s))`);
+  check(g.peek('c_env') === 0 && g.peek('c_cond') === 0, 'Grand Martinot : toujours au stade, de jour (lieu et conditions imposés)');
   check(scr(g) === SS.COMP && g.peek('c_n') === 16 && g.text(3, 3, 18) === "OPEN D'AUGUSTRALIE" && g.text(3, 4, 18) === 'HUITIEME DE FINALE',
     `Grand Martinot : 16 joueurs, « ${g.text(3, 3, 18)} », ${g.text(3, 4, 18)}`);
   const names = new Set(); for (let i = 0; i < 16; i++) names.add(g.peek('c_pl', i));
   check(names.size === 16, `Grand Martinot : 16 joueurs différents`);
+  {
+    const h = boot(); startWith(h, { MODE: MODE.COMP, COMP: 5, FMT: 3 }); skipIntro(h);
+    const seen = [];
+    for (let m = 0; m < 5; m++) {
+      h.tap('A'); runUntil(h, () => scr(h) === SS.PRESENT, 60); h.run(3); h.tap('A'); h.run(30);
+      h.poke('sc_winner', 0); h.poke('sc_over', 1); h.poke('ms', 4); h.poke('ms_timer', 2);
+      runUntil(h, () => app(h) === AS.SCREENS, 60); runUntil(h, () => scr(h) === SS.RESULTS && litScr(h), 120);
+      h.tap('A'); runUntil(h, () => scr(h) !== SS.RESULTS && litScr(h), 120);
+      seen.push(scr(h) === 10 ? h.peek('music_cur') : 0); skipIntro(h);
+    }
+    check(seen.join(',') === '0,0,0,12,0', `annonce au premier tour de chaque tournoi seulement (Debogarros après 4 victoires : ${seen})`);
+  }
   const { e, matches } = playComp(5, {}, () => true);
   for (let k = 0; k < 5 && scr(e) !== SS.COMP_END; k++) { e.tap('A'); e.run(60); }
   e.run(30);
@@ -413,6 +441,7 @@ function playComp(type, opts, wins) {
   m.poke('cursor', rowOf(m, O.COMP)); m.run(8);
   const h = m.text(2, 24, 28).trim(), h4 = m.text(2, 27, 28).trim();
   m.poke('cursor', rowOf(m, O.P1)); m.run(8);
+  check(rowOf(m, O.ENV) < 0 && rowOf(m, O.COND) < 0 && rowOf(m, O.SURF) < 0, 'menu du Grand Martinot : ni lieu, ni conditions, ni surface (imposés)');
   check(h.startsWith('4 TOURNOIS DE 16') && h4.includes('CHELEM') && m.text(3, 24, 5) === 'STYLE' && m.text(2, 25, 8) === 'HAUT/BAS',
     `menu : explication de la compétition (« ${h} »), puis style et aide`);
 }
