@@ -1540,9 +1540,10 @@ console.log('Animation des joueurs');
   // (version 2.43 : rangées des célébrations et du revers dans la zone partagée, swap_base)
   const rb3 = (sym, off = 0) => e.nes.rom.rom[3][e.addr(sym) - 0x8000 + off];
   const sb = rb3('swap_base'), inPool = (t) => (t >= 0x10 && t + 1 < 0x10 + nb / 16) || (t >= sb && t + 1 < sb + 34);
-  for (const mp of ['person_map_m', 'person_map_f']) for (let i = 0; i < 162; i++) { if (!inPool(e.peek(mp, i))) okm = false; }
-  for (let i = 0; i < 24; i++) { const t = e.peek('prof_map', i); if (t < 0x10 || t + 1 >= 0x10 + nb / 16) okm = false; }
-  check(okm && nb % 32 === 0, `poses dans la réserve de tuiles des joueurs (${nb / 16} tuiles permanentes et 34 partagées pour 27 poses x 4 vues + 4 images de profil)`);
+  // (version 2.54 : 32 poses ; 5 images de profil, la 5e — assis — dans la zone partagée)
+  for (const mp of ['person_map_m', 'person_map_f']) for (let i = 0; i < 192; i++) { if (!inPool(e.peek(mp, i))) okm = false; }
+  for (let i = 0; i < 30; i++) { if (!inPool(e.peek('prof_map', i))) okm = false; }
+  check(okm && nb % 32 === 0, `poses dans la réserve de tuiles des joueurs (${nb / 16} tuiles permanentes et 34 partagées pour 32 poses x 4 vues + 5 images de profil)`);
   // match CPU : poses jouées, ordre du service, split-step, rebond d'attente
   startWith(e, { FMT: 3 }); allCpu(e);
   const poses = new Set(), seq = [[], []];
