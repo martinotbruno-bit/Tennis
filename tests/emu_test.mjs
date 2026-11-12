@@ -634,7 +634,8 @@ console.log('Compétition en double, levée de coupe et club nudiste');
   const pl = new Set(); for (let i = 0; i < 8; i++) { pl.add(e.peek('c_pl', i)); pl.add(e.peek('c_pl2', i)); }
   check(pl.size === 16, '8 équipes de 2 : 16 personnages différents');
   // levée de coupe : la coupe agrandie (16 sprites) au-dessus des vainqueurs
-  e.run(80);
+  // (après la remise des médailles, version 2.52)
+  runUntil(e, () => e.peek16('pod_t') >= 290, 400);
   const ct = e.peek('confetti_tile'); let cup = 0, conf = 0, third = 0;
   for (let i = 0; i < 64; i++) { const t = e.nes.cpu.mem[0x201 + i * 4], y = e.nes.cpu.mem[0x200 + i * 4]; if (y < 0xEF) { if (t >= 0x10 && t < 0x20) cup++; if (t >= 0x20 && t < 0x38) third++; if (t === ct) conf++; } }
   check(third === 24, `double : le capitaine 3e en sprites agrandis (${third}/24)`);
@@ -1101,6 +1102,7 @@ console.log('Margaux jouable et fatigue');
   // public : suit la balle du regard (tuiles en CHR-RAM), ola (tribunes
   // réécrites puis rétablies), gradins en salle et bancs au club (palette 3)
   const e = boot(); startWith(e, { ENV: 0, SURF: 2 }); allCpu(e); e.run(200);
+  runUntil(e, () => e.peek('ms') === 2, 600);   // un échange en cours (le public suit la balle)
   const r3 = (sym, off) => e.nes.rom.rom[3][e.addr(sym) - 0x8000 + off];
   const ci = [...Array(6).keys()].map((k) => r3('crowd_idx', k)), chi = [...Array(6).keys()].map((k) => r3('cheer_idx', k));
   const tileIs = (k, sym) => { for (let b = 0; b < 16; b++) if (e.nes.ppu.vramMem[ci[k] * 16 + b] !== r3(sym, k * 16 + b)) return false; return true; };

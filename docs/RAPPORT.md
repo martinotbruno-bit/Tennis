@@ -432,12 +432,12 @@ Pour loger ce contenu, la cartouche passe de NROM (32 Ko) à **MMC1** : 128 Ko d
 |---|---|
 | Règles (`rules_test`) | 42/42 |
 | Codes (`password_test`) | 200 000/200 000 aller-retour (formats v3 et v0, le Grand Martinot), ancien code v2 accepté, Margaux codée, Margaux au club nudiste refusée ; 99,98 % des codes altérés d'un signe refusés |
-| Émulateur (`emu_test`) | 301/301 vérifications (environ 25 min) |
+| Émulateur (`emu_test`) | 326/326 vérifications (environ 27 min) |
 | Profil CPU, simple, 6 000 trames | 0 trame d'échange en dépassement |
 | Relecture des textes (`check_texts.py`) | 0 problème |
 | Contraste (`contrast.py 25`) | 0 paire sous ΔE 25 (personnages, courts, balle, tenues) |
 | Profil CPU, double, 6 000 trames | 27 trames d'échange en dépassement (0,45 %), sans défaut d'image |
-| Compilation | Reproductible : SHA-256 `3a9f395a02c26e5f9dbc1313e1965ad5e18568fefe1d02d82e829cf02a35f279` sur deux compilations propres |
+| Compilation | Reproductible : SHA-256 `4bdc42cc08326edd4249ed1ba214664d03c46d11334f77b2014f96d5b89846fe` sur deux compilations propres |
 
 ## 3. Conformité par section du CDC
 
