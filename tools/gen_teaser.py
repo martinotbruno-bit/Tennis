@@ -248,7 +248,7 @@ def body(f, j, female, face, front=('armR', 'legL'), racket_hand='L', racket_dir
             # profil en courbe douce : aisselle, poitrine, dessous de poitrine, taille, hanche
             def side(sh_, hp_, sx):
                 P_ = lambda t, dx: (lerp(sh_, hp_, t)[0] + sx * dx, lerp(sh_, hp_, t)[1])
-                return [P_(0.15, -1), P_(0.25, 1.6), P_(0.33, 2.2), P_(0.41, 1.4), P_(0.5, -0.4),
+                return [P_(0.13, -0.5), P_(0.22, 3.2), P_(0.31, 4.4), P_(0.4, 3.0), P_(0.5, 0.0),
                         P_(0.6, -2.0), P_(0.7, -2.0), P_(0.8, 1.5), (hp_[0] + sx * 9.6, hp_[1] - 8), (hp_[0] + sx * 10.5, hp_[1] - 3)]
             # bretelles : elles montent jusqu'en haut de l'épaule, le long de sa pente, jusqu'au cou
             pts = [(shL[0] + 0.5, shL[1] - 4.8), (nk[0] - 6.6, nk[1] - 2.9), (nk[0] - 4.0, nk[1] - 1.6),
@@ -261,9 +261,9 @@ def body(f, j, female, face, front=('armR', 'legL'), racket_hand='L', racket_dir
             by = lerp(lerp(shL, shR, 0.5), lerp(hpL, hpR, 0.5), 0.26)[1]
             for sx in (-1, 1):
                 c_ = (nk[0] + sx * bx, by)
-                e_ = f.m_ell(c_, bx * 1.0, 5.4)
+                e_ = f.m_ell(c_, bx * 1.18, 7.2)
                 low = ~f.m_poly([(c_[0] - 20, c_[1] - 20), (c_[0] + 20, c_[1] - 20), (c_[0] + 20, c_[1] + 0.5), (c_[0] - 20, c_[1] + 0.5)])
-                f.paint(e_ & ~shift_mask(f, (0, 2.8), e_) & low, 4, within=[tid])
+                f.paint(e_ & ~shift_mask(f, (0, 3.4), e_) & low, 4, within=[tid])
                 f.paint(e_ & ~shift_mask(f, (1.6, 0), e_) & low & f.m_poly([(c_[0], c_[1] - 20), (c_[0] + 30, c_[1] - 20), (c_[0] + 30, c_[1] + 20), (c_[0], c_[1] + 20)]), 4, within=[tid])
             ret['dress'] = tid
             return
