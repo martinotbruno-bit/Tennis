@@ -1,10 +1,20 @@
-# Royal Martinot — Rapport de réalisation (version 2.51)
+# Royal Martinot — Rapport de réalisation (version 2.52)
 
 Comme l'exige le CDC (§ 17.5), ce rapport distingue ce qui est **réalisé**, **testé**, **validé sur matériel réel**, **validé uniquement en émulation**, **dépendant d'une extension**, et les **limitations restantes**.
 
 > **Validation matérielle : aucune.** Aucun test n'a été fait sur console réelle (NES, Famicom, PAL, cartouche MMC1). Toutes les validations ont eu lieu en émulation (jsnes) et par des tests unitaires sur PC. Les critères « vérifié sur console physique » (CDC § 2.1, 15.4, 16.A) **ne sont pas remplis**. Ce point ne peut pas être traité dans l'environnement de développement utilisé.
 
 ## 1. Évolutions
+
+### Version 2.52
+
+| Demande | Réalisation |
+|---|---|
+| Plus de séquences animées : entrée des joueurs et tirage au sort, balle de match, poignée de main au filet, changement de côté (pour tous les matchs) ; remise des médailles (compétitions classiques) ; remise du trophée et conférence de presse (Grand Martinot, Martinworld Tour) | **Entrée** : les joueurs sortent du tunnel (en bas à droite), longent le court jusqu'à leur place, saluent le public, puis l'arbitre lance une pièce (« PILE ! » ou « FACE ! ») et annonce l'équipe au service. **Changement de côté** (sans fin de set) : les joueurs s'assoient sur leur chaise près de l'arbitre, serviette sur les épaules, gourde à la bouche puis posée, pendant le récapitulatif du score ; puis ils gagnent l'autre côté en passant à côté du poteau du filet. **Balle de match** : après la fête habituelle, les vainqueurs tombent à genoux, poings levés, puis s'allongent sur le dos, raquette lâchée au sol ; tous vont au filet se serrer la main, puis saluent l'arbitre. A ou START passe chaque séquence. Vue à plat et en perspective, simple et double ; jamais en démonstration ni à l'entraînement |
+| Graphismes | 4 poses nouvelles (poignée de main, victoire à genoux, allongé sur le dos, assis) et 4 accessoires (chaise, gourde, serviette, raquette au sol) dans un 3e jeu de tuiles par phase, chargé seulement pendant les séquences (34 tuiles, comme les deux autres) ; la pièce est la tuile de la balle. Pour faire place aux tables des nouvelles poses dans la banque fixe, la frappe parfaite et les messages de timing de l'entraînement passent dans la banque 13 |
+| Remise des médailles (compétitions classiques : tournoi, poules, championnat, saison, personnalisé) | Sur le podium : les joueurs apparaissent un à un sur leur marche (3e, 2e, puis le vainqueur), avec un flash ; les médailles de bronze, d'argent et d'or descendent sur leur ruban jusqu'au cou des joueurs ; hymne original (nouveau morceau) et flashs des photographes ; puis la coupe est brandie sous les feux d'artifice, comme avant |
+| Remise du trophée et conférence de presse (Grand Martinot, Martinworld Tour) | **Remise du trophée** : tapis rouge jusqu'à la table des trophées, ramasseurs de balles en haie d'honneur, l'officiel à côté de la table ; le finaliste monte le tapis, reçoit sa plaque, salue et se range ; le vainqueur monte à son tour, reçoit la coupe, l'embrasse, puis la soulève sous les confettis et les feux d'artifice (« GRAND CHELEM ! » si tous les tournois sont gagnés). **Conférence de presse** : le champion derrière la table, micros, flashs des photographes, trois questions et leurs réponses (la famille s'invite : les goûters de Déborah, Augustin qui veut la coupe, Paul qui lance un défi au ping-pong, Margaux à l'arbitrage). A avance ; le générique de fin suit |
+| Défaut corrigé au passage | Margaux : sa chevelure était aussi dessinée dans la rangée du haut, vide, de la pose du plongeon (une mèche flottait au-dessus d'elle quand elle plongeait) |
 
 ### Version 2.51
 

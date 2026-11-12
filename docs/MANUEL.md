@@ -155,6 +155,18 @@ Le lancer reste visible quelle que soit votre position, y compris quand vous ser
   - l'écran de résultats donne les statistiques : points gagnés, aces, doubles fautes, coups gagnants, fautes, pourcentage de premières balles, plus long échange ;
   - **A** relance une revanche, **B** revient au menu.
 
+### Les moments du match (version 2.52)
+
+- **Entrée des joueurs** : au début de chaque match, les joueurs sortent du tunnel (en bas à droite), longent le court jusqu'à leur place et saluent le public, raquette levée. L'arbitre lance alors une pièce : « PILE ! » ou « FACE ! », et le bandeau annonce l'équipe qui sert.
+- **Changement de côté** : les joueurs vont s'asseoir sur leur chaise, près de l'arbitre, serviette sur les épaules, et boivent à la gourde pendant que le score s'affiche ; puis ils rejoignent l'autre côté du court en passant à côté du poteau du filet. À la fin d'un set, l'écran de fin de set reste comme avant.
+- **Balle de match** : le vainqueur fête d'abord le point comme d'habitude, puis tombe à genoux, poings levés, et s'allonge sur le dos, raquette lâchée près de lui. Ensuite, tous vont au filet se serrer la main, puis se tournent vers l'arbitre pour le saluer.
+- **A** ou **START** passe chacune de ces séquences.
+
+### Les cérémonies (version 2.52)
+
+- **Compétition classique gagnée** (tournoi, poules, championnat, saison, personnalisé) : remise des médailles. Les trois premiers apparaissent un à un sur le podium, les médailles de bronze, d'argent et d'or descendent sur leur ruban, l'hymne retentit sous les flashs des photographes, puis le vainqueur brandit la coupe.
+- **Grand Martinot ou Martinworld Tour gagné** : remise du trophée sur un tapis rouge, entre deux rangées de ramasseurs de balles. Le finaliste reçoit sa plaque, puis le vainqueur reçoit la coupe, l'embrasse et la soulève sous les confettis. **A** passe à la **conférence de presse** : trois questions, une par appui sur A, puis le générique de fin.
+
 ## 6. Surfaces, lieux et conditions
 
 | Surface | Comportement |

@@ -38,6 +38,16 @@
 #define S_CUP    0x10          /* coupe agrandie : 16 tuiles de sprites */
 #define S_THIRD  0x20          /* 3e (double) : 24 tuiles de sprites */
 
+/* remise des médailles (compétitions classiques, version 2.53) : RAM de
+   cartouche libre (bloc SAVEDATA, non sauvegardé) */
+#define S_MED    0x38          /* ruban, médailles or, argent, bronze : 4 tuiles de sprites */
+#define MED_T0   210           /* trames de la remise, avant la coupe */
+#pragma bss-name(push, "SAVEDATA")
+u8 pod_busy;                   /* 1 : la cérémonie retient A (screens.c) */
+static u8 gm_st, gm_qa, gm_q0;
+static u16 pod_t;
+static u8 pal_sv[16], med_x[4], med_y[4], med_ty[4], med_c[4], n_med, fl_t, medals;
+#pragma bss-name(pop)
 #pragma bss-name(push, "WBSS")
 u8 pod_new;
 static u8 src[16], out[64], at[64];
@@ -169,11 +179,199 @@ static void make_tiles(void)
     for (n = 0; n < 2; ++n) for (i = 0; i < 8; ++i) vram_put((u8)(i < 3 ? 0x00 : i < 5 ? 0xF8 : 0x18));
 }
 
+/* tuiles de sprites des médailles : ruban en V (couleur 2), disques or (1),
+   argent (2), bronze (3) */
+static void medal_tiles(void)
+{
+    static const u8 rib[8] = { 0x81, 0x42, 0x42, 0x24, 0x24, 0x18, 0x18, 0x00 };
+    static const u8 disc[8] = { 0x00, 0x3C, 0x7E, 0x7E, 0x7E, 0x7E, 0x3C, 0x00 };
+    u8 i, k;
+    vram_adr(0x1000 + ((u16)S_MED << 4));
+    for (i = 0; i < 8; ++i) vram_put(0);
+    for (i = 0; i < 8; ++i) vram_put(rib[i]);
+    for (k = 1; k < 4; ++k) {
+        for (i = 0; i < 8; ++i) vram_put((u8)(k & 1 ? disc[i] : 0));
+        for (i = 0; i < 8; ++i) vram_put((u8)(k & 2 ? disc[i] : 0));
+    }
+}
+static void medal_at(u8 x, u8 row, u8 c)
+{
+    med_x[n_med] = x; med_ty[n_med] = (u8)(row * 8 + 18); med_y[n_med] = 0; med_c[n_med] = c;
+    ++n_med;
+}
+
+/* ====================================================================== */
+/* Grand Martinot et Martinworld Tour (version 2.53) : remise du trophée,   */
+/* puis conférence de presse.                                               */
+/*  - tapis rouge jusqu'à la table des trophées ; ramasseurs de balles en   */
+/*    haie d'honneur ; le finaliste monte recevoir sa plaque, salue et se   */
+/*    range ; le vainqueur monte, reçoit la coupe, l'embrasse, puis la      */
+/*    soulève sous les confettis et les feux d'artifice ;                   */
+/*  - conférence de presse : le champion derrière la table, micros, flashs */
+/*    des photographes, trois questions et leurs réponses.                  */
+/* A avance (pod_busy : screens.c ne quitte l'écran qu'à la fin).           */
+/* ====================================================================== */
+#pragma static-locals(off)          /* variables locales sur la pile : RAM pleine */
+#define G_CARPET 0x60          /* tuiles du décor : tapis, liseré, table, nappe, toile */
+#define G_EDGE   0x61
+#define G_TABLE  0x62
+#define G_CLOTH  0x63
+#define G_WALL   0x64
+#define G_END    560           /* trophée soulevé : fin de la remise */
+#define P_IDLE_  0
+#define P_JOY_   6
+#define P_SERVE_ 5
+static const u8 run4g[4] = { 1, 19, 2, 20 };
+static const u8 kid_x[4] = { 100, 156, 100, 156 };
+static const u8 kid_y[4] = { 150, 150, 200, 200 };
+static const u8 kid_c[4] = { 3, 7, 9, 12 };
+static void gm_head(void)
+{
+    txt_c(2, c_type == CT_GRAND ? "LE GRAND MARTINOT" : "MARTINWORLD TOUR");
+    txt_c(4, c_slam ? "GRAND CHELEM !" : "CHAMPION !");
+}
+static void gm_build(void)
+{
+    u8 i, r;
+    gm_st = 1; pod_busy = 1; pod_t = 0;
+    /* tuiles : tapis rouge (1), liseré doré (3 sur 1), table (2), nappe (3) */
+    tile8(G_CARPET, 0xFF, 0x00);
+    vram_adr((u16)G_EDGE << 4);
+    for (i = 0; i < 8; ++i) vram_put(0xFF);
+    for (i = 0; i < 8; ++i) vram_put(0x81);
+    tile8(G_TABLE, 0x00, 0xFF);
+    tile8(G_CLOTH, 0xFF, 0xFF);
+    vram_adr((u16)G_WALL << 4);
+    for (i = 0; i < 8; ++i) vram_put((u8)(i & 1 ? 0x22 : 0x88));
+    for (i = 0; i < 8; ++i) vram_put(0);
+    medal_tiles();
+    /* tapis : colonnes 14 à 17, des rangées 11 à 29 ; table : rangées 9-10 */
+    for (r = 11; r < 30; ++r) {
+        vram_adr(NTADR(13, r)); vram_put(G_EDGE);
+        vram_fill(G_CARPET, 4); vram_put(G_EDGE);
+    }
+    vram_adr(NTADR(11, 9)); vram_fill(G_CLOTH, 10);
+    vram_adr(NTADR(11, 10)); vram_fill(G_TABLE, 10);
+    gm_head();
+    if (pod_new) txt_c(6, "MODE NUDISTE DEBLOQUE !");
+    /* palettes : fond = surface ; rouge, brun, blanc ; sprites : 0
+       vainqueur, 1 finaliste, 2 ramasseurs et officiel, 3 or, argent, blanc */
+    pal_buf[0] = pal_buf[16] = surf_col[c_env == ENV_MARGAUX ? 6 : 2];
+    pal_buf[1] = 0x16; pal_buf[2] = 0x07; pal_buf[3] = 0x30;
+    pal_set_player(0, c_pl[0]);
+    pal_set_player(1, c_pl[c_pod[1]]);
+    pal_set_player(2, 3);
+    pal_buf[16 + 12] = pal_buf[0]; pal_buf[16 + 13] = 0x28; pal_buf[16 + 14] = 0x10; pal_buf[16 + 15] = 0x30;
+    pal_dirty = 1;
+}
+/* conférence de presse : toile de fond, table et micros */
+static const char * const gm_q[12] = {
+    "UN MOT SUR CETTE FINALE ?",     "J'AI JOUE COMME UN MARTINOT :", "AVEC LE COEUR.",
+    "QUI REMERCIEZ-VOUS ?",          "DEBORAH, POUR LES GOUTERS,",    "ET MON REVERS, QUI A TENU.",
+    "AUGUSTIN VEUT LA COUPE.",       "OUI, MAIS PAS POUR Y RANGER",   "SES CHAUSSETTES.",
+    "PAUL VOUS DEFIE AU PING-PONG.", "J'ACCEPTE, SI MARGAUX",          "FAIT L'ARBITRE.",
+};
+static void gm_text(void)
+{
+    u8 k = (u8)(((gm_q0 + gm_qa) & 3) * 3), r;
+    ppu_off();                       /* (écriture hors du rendu : une image noire) */
+    for (r = 5; r < 13; ++r) { vram_adr(NTADR(1, r)); vram_fill(' ', 30); }
+    txt_at(2, 5, "QUESTION :"); txt_c(7, gm_q[k]);
+    txt_at(2, 9, "REPONSE :"); txt_c(11, gm_q[k + 1]); txt_c(12, gm_q[k + 2]);
+    if (gm_qa == 2) { txt_c(27, "A : CONTINUER"); pod_busy = 0; }   /* A quitte l'écran */
+    ppu_on();
+}
+static void gm_press_build(void)
+{
+    u8 r;
+    ppu_off();
+    vram_adr(0x2000);
+    for (r = 0; r < 30; ++r) vram_fill(r >= 21 ? (r == 21 ? G_CLOTH : G_TABLE) : (r >= 15 && r < 21 ? G_WALL : 0), 32);
+    vram_adr(0x23C0); vram_fill(0, 64);
+    pal_buf[0] = 0x01; pal_buf[1] = 0x11; pal_buf[2] = 0x07; pal_buf[3] = 0x30;
+    pal_dirty = 1;
+    txt_c(2, "CONFERENCE DE PRESSE");
+    gm_qa = 0;
+    gm_q0 = (u8)(rand8() & 1);
+    gm_st = 2; pod_t = 0;
+    gm_text();
+}
+static void gm_tick(void)
+{
+    u8 i, x, y, f, hy, cupx, cupy;
+    u16 t;
+    if (pod_t < 0xFFFF) ++pod_t;
+    t = pod_t;
+    if (gm_st == 1) {
+        if ((pad1_new & (PAD_A | PAD_START)) && t > 60) {      /* (pas l'appui qui a mené ici) */
+            if (t < G_END) { pod_t = t = G_END; }
+            else { gm_press_build(); return; }
+        }
+        spr_begin();
+        cupx = 124; cupy = 66;                      /* coupe sur la table */
+        /* le vainqueur : monte le tapis (266-390), reçoit la coupe,
+           l'embrasse (420-480), la soulève */
+        if (t >= 266) {
+            y = (u8)(t < 390 ? 236 - (t - 266) : 112);
+            f = (u8)(t < 390 ? run4g[(t >> 3) & 3] : (t < 480 ? P_IDLE_ : P_SERVE_));
+            spr_person(128, y, c_pl[0], (u8)(t >= 390), f, 0, 0);
+            if (c_dbl) spr_person(150, (u8)(y + 6), c_pl2[0], (u8)(t >= 390), f, 0, 0);
+            if (t >= 390) {
+                hy = (u8)(t < 420 ? 66 + ((t - 390) * 2 / 3) : t < 480 ? 84 : 66 - ((t >> 3) & 1));
+                cupx = 120; cupy = hy;
+            }
+        }
+        /* la coupe (4 tuiles) */
+        spr1(cupx, cupy, trophy_tile, 3); spr1((u8)(cupx + 8), cupy, (u8)(trophy_tile + 1), 3);
+        spr1(cupx, (u8)(cupy + 8), (u8)(trophy_tile + 2), 3); spr1((u8)(cupx + 8), (u8)(cupy + 8), (u8)(trophy_tile + 3), 3);
+        /* le finaliste : monte (40-164), reçoit la plaque (164-214), se range à gauche */
+        if (t >= 40) {
+            if (t < 164) { x = 128; y = (u8)(236 - (t - 40)); f = run4g[(t >> 3) & 3]; }
+            else if (t < 214) { x = 128; y = 112; f = P_IDLE_; }
+            else if (t < 266) { x = (u8)(128 - (t - 214)); y = 112; f = run4g[(t >> 3) & 3]; }
+            else { x = 76; y = 112; f = (u8)((t >> 4) & 1 ? P_JOY_ : P_IDLE_); }
+            spr_person(x, y, c_pl[c_pod[1]], (u8)(t >= 164), f, 0, 1);
+            /* la plaque : sur la table, puis dans ses mains */
+            spr1((u8)(t < 184 ? 140 : x - 4), (u8)(t < 184 ? 70 : y - 14), (u8)(S_MED + 2), 3);
+        } else spr1(140, 70, (u8)(S_MED + 2), 3);
+        if (t == 184 || t == 420) sfx_crowd(5);
+        if (t == 480) { sfx_crowd(7); music_play(MUS_VICTORY); }
+        /* l'officiel, à droite de la table ; les ramasseurs en haie d'honneur */
+        spr_person(176, 100, 5, 1, P_IDLE_, 1, 2);
+        for (i = 0; i < (u8)(c_dbl ? 2 : 4); ++i) spr_person(kid_x[i], kid_y[i], kid_c[i], 1, P_IDLE_, (u8)(i & 1), 2);
+        /* trophée soulevé : confettis et feux d'artifice */
+        if (t >= 480) {
+            for (i = 0; i < 8; ++i) spr1((u8)(i * 31 + 9), (u8)(((t + i * 29) * (u8)(1 + (i & 1))) & 0xFF), confetti_tile, (u8)(i & 3));
+            fw_draw((u8)(130 - ((t - 480) % 130)), 0);
+            fw_sound((u8)(130 - ((t - 480) % 130)));
+        }
+        if (t == G_END) txt_c(28, "A : CONFERENCE DE PRESSE");
+        spr_end();
+        return;
+    }
+    /* conférence de presse */
+    if ((pad1_new & (PAD_A | PAD_START)) || (gm_qa < 2 && t > 300)) {
+        if (gm_qa < 2) { ++gm_qa; pod_t = 0; gm_text(); }
+    }
+    /* flashs des photographes */
+    if ((u8)(pod_t * 23) < 9) { pal_buf[0] = (u8)((pod_t & 1) ? 0x30 : 0x01); pal_dirty = 1; }
+    else if (pal_buf[0] != 0x01) { pal_buf[0] = 0x01; pal_dirty = 1; }
+    spr_begin();
+    /* micros (balles noires sur la table) ; le champion derrière la table */
+    spr1(120, 158, (u8)(ball_base + 4), 2); spr1(136, 158, (u8)(ball_base + 4), 2);
+    spr_person(128, (u8)(184), c_pl[0], 1, (u8)(gm_qa == 1 && (t >> 4) & 1 ? P_JOY_ : P_IDLE_), 0, 0);
+    if (c_dbl) spr_person(152, 184, c_pl2[0], 1, P_IDLE_, 0, 0);
+    spr_end();
+}
+#pragma static-locals(on)
+
 void podium_build(void)
 {
     static char b[32];
     u8 i, sc, w, x1, x2, x3, wc, light;
     COMP(comp_podium, 0);
+    pod_busy = 0; gm_st = 0;
+    if (c_type >= CT_GRAND) { gm_build(); return; }
     for (i = 0; i < 64; ++i) at[i] = 0;
     make_tiles();
 
@@ -253,16 +451,28 @@ void podium_build(void)
 
     vram_adr(0x23C0);
     for (i = 0; i < 64; ++i) vram_put(at[i]);
+    /* remise des médailles (compétitions classiques) : les joueurs
+       apparaissent un à un (palettes du décor 1 à 3 masquées), puis les
+       médailles descendent ; la coupe vient ensuite */
+    medals = (u8)(c_type < CT_GRAND);
+    pod_t = medals ? 0 : MED_T0;
+    n_med = 0; fl_t = 0;
+    for (i = 0; i < 16; ++i) pal_sv[i] = pal_buf[i];
+    if (medals) {
+        medal_tiles();
+        for (i = 5; i < 16; ++i) if (i & 3) pal_buf[i] = pal_buf[0];
+        pal_buf[16 + 12] = pal_buf[0]; pal_buf[16 + 13] = 0x28; pal_buf[16 + 14] = 0x10; pal_buf[16 + 15] = 0x17;
+        if (c_dbl) {
+            medal_at((u8)((x1 + 1) * 8 + 12), 12, 1); medal_at((u8)((x1 + 5) * 8 + 12), 12, 1);
+            medal_at((u8)((x2 + 1) * 8 + 12), 14, 2); medal_at((u8)((((32 - 22) >> 1) + 16 + 1) * 8 + 12), 16, 3);
+        } else {
+            medal_at((u8)((x1 + 1) * 8 + 12), 12, 1); medal_at((u8)((x2 + 1) * 8 + 12), 14, 2); medal_at((u8)((x3 + 1) * 8 + 12), 16, 3);
+        }
+    }
     pal_dirty = 1;
     cup_t = 0;
 }
 
-/* Coupe brandie au-dessus du ou des vainqueurs, feux d'artifice, confettis ;
-   en double, le 3e en sprites agrandis. Pour tenir dans une image, seuls les
-   éléments qui bougent sont réécrits à chaque trame, directement dans la
-   copie de l'OAM : entrées 0-15 la coupe (hauteur), 16-19 les feux
-   d'artifice, 20-29 les confettis (hauteur, par addition), 30-53 le 3e
-   (écrit une seule fois). */
 extern u8 oam_buf[256];
 extern u8 oam_i;
 #pragma zpsym("oam_i")
@@ -285,19 +495,62 @@ static void big_spr(u8 o, u8 x, u8 y, u8 t, u8 rows, u8 pal)
             o += 4;
         }
 }
+/* remise des médailles : apparitions, flashs des photographes, médailles
+   (entrées 54 à 61 de l'OAM, réécrites à chaque trame) */
+static void reveal(u8 pal)
+{
+    u8 i;
+    for (i = 1; i < 4; ++i) pal_buf[pal * 4 + i] = pal_sv[pal * 4 + i];
+    pal_dirty = 1;
+    fl_t = 3;
+    sfx_crowd(4);
+}
+static void medal_tick(void)
+{
+    u8 i, o, k;
+    if (pod_t == 20) { if (c_dbl) big_spr(120, (u8)((((32 - 22) >> 1) + 16 + 1) * 8), 128, S_THIRD, 6, 0); else reveal(3); }
+    if (pod_t == 60) reveal(c_dbl ? 3 : 2);
+    if (pod_t == 100) { reveal(1); if (c_dbl) reveal(2); music_play(MUS_MEDAL); }
+    /* flashs des photographes : le fond blanchit 2 trames, de temps en temps */
+    if (pod_t > 100 && pod_t < 420 && (u8)(pod_t * 37) < 6) fl_t = 2;
+    if (fl_t) { --fl_t; pal_buf[0] = fl_t ? 0x30 : pal_sv[0]; pal_dirty = 1; }
+    /* médailles : bronze, argent, puis or, du haut de l'écran au cou */
+    for (i = 0; i < n_med; ++i) {
+        k = (u8)(med_c[i] == 3 ? 120 : med_c[i] == 2 ? 145 : 170);
+        if (pod_t >= k && med_y[i] < med_ty[i]) { med_y[i] += 3; if (med_y[i] > med_ty[i]) med_y[i] = med_ty[i]; }
+        o = (u8)(216 + i * 8);
+        if (pod_t < k) { oam_buf[o] = oam_buf[o + 4] = 0xFF; continue; }
+        oam_buf[o] = (u8)(med_y[i] - 9); oam_buf[o + 1] = S_MED; oam_buf[o + 2] = 3; oam_buf[o + 3] = med_x[i];
+        oam_buf[o + 4] = (u8)(med_y[i] - 1); oam_buf[o + 5] = (u8)(S_MED + med_c[i]); oam_buf[o + 6] = 3; oam_buf[o + 7] = med_x[i];
+    }
+}
+
+/* Coupe brandie au-dessus du ou des vainqueurs, feux d'artifice, confettis ;
+   en double, le 3e en sprites agrandis. Pour tenir dans une image, seuls les
+   éléments qui bougent sont réécrits à chaque trame, directement dans la
+   copie de l'OAM : entrées 0-15 la coupe (hauteur), 16-19 les feux
+   d'artifice, 20-29 les confettis (hauteur, par addition), 30-53 le 3e
+   (écrit une seule fois). */
 void podium_sprites(void)
 {
     u8 i, o, cy, y;
+    if (gm_st) { gm_tick(); return; }
+    if (pod_t < 0xFFFF) ++pod_t;
+    if (medals) {
+        if (pod_t == 1) for (i = 0; i < 64; ++i) oam_buf[i * 4] = 0xFF;
+        medal_tick();
+        if (pod_t < MED_T0) return;
+    }
     if (cup_t == 0) {
         /* première trame : tout masqué, puis coupe, confettis et 3e en place */
-        for (i = 0; i < 64; ++i) oam_buf[i * 4] = 0xFF;
+        for (i = 0; i < (u8)(medals ? 30 : 64); ++i) oam_buf[i * 4] = 0xFF;   /* (le 3e et les médailles restent) */
         big_spr(0, 112, 80, S_CUP, 4, 2);
         for (i = 0; i < 10; ++i) {
             o = (u8)(80 + i * 4);
             conf_y[i] = conf_y0[i];
             oam_buf[o + 1] = confetti_tile; oam_buf[o + 2] = (u8)(i & 3); oam_buf[o + 3] = conf_x[i];
         }
-        if (c_dbl) big_spr(120, (u8)((((32 - 22) >> 1) + 16 + 1) * 8), 128, S_THIRD, 6, 0);
+        if (c_dbl && !medals) big_spr(120, (u8)((((32 - 22) >> 1) + 16 + 1) * 8), 128, S_THIRD, 6, 0);
     }
     if (cup_t < 255) ++cup_t;
     /* la coupe monte des mains au-dessus de la tête, puis oscille */

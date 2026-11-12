@@ -156,9 +156,12 @@ static u8 swap_want, swap_pos;
 u16 swp_dst;                        /* destination de swap_put (crt0.s) */
 #pragma bss-name(pop)
 u8 __fastcall__ swap_put(const u8 *src);   /* crt0.s, banque 13 (far_call) */
+extern u8 cer;                              /* séquence animée en cours (cer.c) */
+extern u16 cer_t;
 static const u8 *swap_src(u8 set)
 {
     if (set == 1) return swap_nude ? swap_nudeC : swap_chrC;
+    if (set == 3) return swap_nude ? swap_nudeF : swap_chrF;
     return swap_nude ? swap_nudeR : swap_chrR;
 }
 /* chargement immédiat (rendu coupé) */
@@ -183,6 +186,9 @@ static u8 pose_ok(u8 k)
 static void swap_tick(void)
 {
     u8 want = (u8)(ms == MS_TOSS || ms == MS_RALLY || ms == MS_REPLAY ? 2 : 1), k;
+    /* séquences animées (cer.c) : jeu F ; en fin de match, après la fête
+       habituelle (jeu C) */
+    if (cer && cer != 0xFE && (cer != 7 || cer_t >= 50)) want = 3;
     if (want != swap_want) { swap_want = want; swap_on = 0; swap_pos = 0; }
     for (k = 0; k < 3 && !swap_on; ++k) {
         swp_dst = 0x1000 + ((u16)(swap_base + swap_pos) << 4);
@@ -451,7 +457,7 @@ void rp_play(void)
         p = ord[i];
         a = e[6 + p * 3];
         k = (u8)(a >> 6);           /* saut enregistré (j/4) : hauteur j²/16 = k² */
-        spr_person(e[4 + p * 3], (s16)e[5 + p * 3] - k * k + ((a & 31) == POSE_KNEEL ? 4 : 0), cfg.chr[p], side_of(p), pose_ok((u8)(a & 31)), (u8)((a >> 5) & 1), p);
+        spr_person(e[4 + p * 3], (s16)e[5 + p * 3] - k * k + (POSE_LOW(a & 31) ? 4 : 0), cfg.chr[p], side_of(p), pose_ok((u8)(a & 31)), (u8)((a >> 5) & 1), p);
     }
     ump_draw();                      /* l'arbitre reste sur sa chaise pendant le ralenti */
     spr_end();

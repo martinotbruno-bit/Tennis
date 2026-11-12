@@ -231,3 +231,16 @@ static const u8 mus_gm7_mel[] = {
 static const u8 mus_gm7_bass[] = {
  C3,24, G2,24,  F3,24, C3,24,  G2,24, D3,24,  G2,24, G3,24,  C3,60,
  END,0 };
+
+/* Remise des médailles (version 2.53) : hymne solennel et original, 4 temps
+   de 16 trames, une mesure d'introduction en accords puis la mélodie */
+static const u8 mus_medal_mel[] = {
+ G4,16, C5,16, E5,16, G5,16,   A5,24, G5,8, E5,16, C5,16,
+ F5,24, E5,8, D5,16, B4,16,    C5,32, G4,32,
+ E5,16, G5,16, C5,16, E5,16,   F5,24, A5,8, G5,32,
+ E5,16, D5,16, B4,16, D5,16,   C5,64,
+ END,0 };
+static const u8 mus_medal_bass[] = {
+ C3,32, E3,32,  F3,32, C3,32,  D3,32, G2,32,  C3,32, E3,32,
+ C3,32, A2,32,  F3,32, C3,32,  G2,32, G3,32,  C3,64,
+ END,0 };

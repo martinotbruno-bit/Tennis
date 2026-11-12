@@ -604,6 +604,7 @@ static void comp_screen(void)
 
 static const char * const rank_txt[6] = { "", "VAINQUEUR !", "FINALISTE", "DEMI-FINALISTE", "4E", "ELIMINE" };
 static u8 was_unlocked;
+extern u8 pod_busy;             /* podium.c : cérémonie du Grand Martinot en cours */
 /* Fin de compétition : victoire = podium (banque BANK_PODIUM) ; sinon,
    classement et joueur déçu */
 static void comp_end_screen(void)
@@ -1058,7 +1059,7 @@ void screens_tick(void)
         }
         break;
     case SS_COMP_END:
-        if (pad1_new & (PAD_A | PAD_START)) {
+        if ((pad1_new & (PAD_A | PAD_START)) && !pod_busy) {   /* (cérémonie en cours : A la fait avancer) */
             if (c_rank == 1) { ppu_off(); chr_reload(); }   /* tuiles du podium : motifs d'origine */
             /* saison gagnée : générique de fin, puis l'écran titre */
             if (c_rank == 1 && (c_type == CT_SEASON || c_type >= CT_GRAND)) { go_req = GO_CREDITS; break; }

@@ -67,6 +67,10 @@ static u8 win_party(void);
 static u8 rel_pad(u8 p, u8 pad);
 extern u8 pose_now[4];                 /* poses de la trame (poses_all, banque 3) */
 extern u8 dive_t[4], dive_f[4];        /* plongeon en cours (poses.s) */
+/* séquences animées (banque 13, cer.c) */
+extern u8 cer, pose_force[4];
+void cer_entry(void); void cer_save(void); void cer_change(void); void cer_end(void);
+void cer_tick(void); void cer_draw(void); void cer_front(void);
 void poses_all(void);
 u8 hit_pass, hit_jump;                 /* dernière frappe : adversaire au filet, smash sauté */
 u8 tired;                              /* fatigue de l'échange en cours, 0..10 */
@@ -350,8 +354,7 @@ static void ball_update(void)
 u8 can_hit(u8 p);
 void score_recap(void);
 u8 recap_pend, brk_pend;          /* récapitulatif du score à afficher / fin de set */
-u8 perfect_hit(u8 p, s16 dx);
-void serve_fb(s16 vz);
+u8 __fastcall__ serve_fb(s16 vz);             /* banque 13 (shots.c) */
 
 /* pad : directions maintenues ; btn : PAD_A ou PAD_B ; power 0..32 */
 static void do_hit(u8 p, u8 pad, u8 btn, u8 power, u8 spread)
@@ -619,7 +622,7 @@ static void human_update(u8 p, u8 pad, u8 pressed)
     if (ms == MS_TOSS && p == server_p()) {
         if (pressed & (PAD_A | PAD_B)) {
             s16 q = iabs(bvz) >> 3;          /* 0 au sommet du lancer */
-            if (cfg.mode == GM_TRAIN && (pressed & PAD_A)) serve_fb(bvz);   /* entraînement : timing */
+            if (cfg.mode == GM_TRAIN && (pressed & PAD_A)) far_call(BANK_SWAP, (void *)serve_fb, (u16)bvz);   /* entraînement : timing */
             serve_hit(p, pad, (u8)(pressed & PAD_A ? PAD_A : PAD_B), (u8)(q > 20 ? 20 : q), 3);
         }
         return;
@@ -945,6 +948,7 @@ void match_begin(void)
     court_load();
     music_play(MUS_NONE);
     match_start();
+    bank_call(BANK_SWAP, cer_entry);   /* entrée des joueurs, tirage au sort */
     match_draw();
     ppu_on();
     sfx_whistle();
@@ -974,6 +978,7 @@ static void after_point(void)
         music_play(cfg.ctrl[w] == CTRL_CPU && cfg.ctrl[w ^ 1] != CTRL_CPU ? MUS_DEFEAT : MUS_VICTORY);
         sfx_crowd(7);
         crowd_timer = 120;
+        bank_call(BANK_SWAP, cer_end);   /* à genoux, au filet, salut */
         return;
     }
     {
@@ -995,8 +1000,12 @@ static void after_point(void)
             music_play(MUS_POINT);
         }
     }
-    if (ev & EV_CHANGE) set_msg("CHANGEMENT", "DE COTE", 90);
+    if (ev & EV_CHANGE) {
+        set_msg("CHANGEMENT", "DE COTE", 90);
+        if (!(ev & EV_SET)) bank_call(BANK_SWAP, cer_save);   /* (fin de set : écran à part) */
+    }
     place_for_serve();
+    if (cer) bank_call(BANK_SWAP, cer_change);   /* les joueurs vont s'asseoir */
 }
 
 u8 match_tick(void)
@@ -1024,6 +1033,20 @@ u8 match_tick(void)
         if (rp_done) { ms = MS_DEAD; ms_timer = 1; msg_timer = 1; rp_pending = 0; }
         if (msg_timer && --msg_timer == 0) hud_dirty = 1;
         if (hud_dirty) bank_call(BANK_EXTRAS, hud_update);
+        return 0;
+    }
+
+    /* séquence animée (entrée, changement de côté, fin du match) */
+    if (cer && cer != 0xFE) {
+        bank_call(BANK_SWAP, cer_tick);
+        if (ms == MS_OVER) {
+            if (ms_timer > 1) --ms_timer;
+            if (win_party()) fw_sound(ms_timer);
+            if (!cer) return 1;
+        } else if (!cer) ms_timer = 30;          /* le serveur prend son temps */
+        if (msg_timer) { if (--msg_timer == 0) { hud_dirty = 1; if (recap_pend) score_recap(); } }
+        if (hud_dirty) bank_call(BANK_EXTRAS, hud_update);
+        bank_call(BANK_EXTRAS, crowd_tick);
         return 0;
     }
 
@@ -1164,6 +1187,7 @@ void match_draw(void)
         spr_ball((u8)PX(bx), PX(by) - sy - 3, (u8)PX(by), k);
     }
     bank_call(BANK_EXTRAS, poses_all);     /* poses et miroirs, balle du dribble, glissades */
+    if (cer) bank_call(BANK_SWAP, cer_front);   /* serviette, gourde (devant les joueurs) */
     for (i = 0; i < npl; ++i) {
         p = ord[i];
         /* saut : hauteur (j²/16) au plus haut à l'impact, puis chute ;
@@ -1176,10 +1200,11 @@ void match_draw(void)
         if (cfg.mode == GM_TRAIN && p == 1 && cfg.ex != EX_STATIC) continue;   /* lanceur invisible */
         j = (u8)((j * j) >> 4);
         /* victoire : le vainqueur sautille de joie (un bond toutes les 16 trames) */
-        if (party && (u8)(p & 1) == sc_winner) j = hop_h[ms_timer & 15];
-        if ((k & 31) == POSE_KNEEL) j -= 4;     /* un genou à terre : 4 px plus bas */
+        if (party && (u8)(p & 1) == sc_winner && pose_force[p] == 0xFF) j = hop_h[ms_timer & 15];
+        if (POSE_LOW(k & 31)) j -= 4;          /* à genoux, assis : 4 px plus bas */
         spr_person((u8)(((u16)plx[p] << 2) >> 8), (s16)(ys[p] - (s8)j), cfg.chr[p], side_of(p), k, flip_cache[p], p);   /* palette p & 1 */
     }
+    if (cer) bank_call(BANK_SWAP, cer_draw);    /* pièce, chaises, raquette lâchée */
     bank_call(BANK_EXTRAS, match_fx);   /* ombres, poussière, arbitre, repère */
     if (party) { win_fx(); fw_draw(ms_timer, 0); }
     if (cfg.cond == COND_RAIN) bank_call(BANK_EXTRAS, rain_draw);

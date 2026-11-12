@@ -37,7 +37,7 @@ POSE_RUN1 = 1
 POSE_RUN2 = 2
 POSE_LIFT = 32          ; drapeau : personnage relevé d'1 px
 POSE_DOWN = 64          ; drapeau : personnage abaissé d'1 px
-NPOSE     = 28
+NPOSE     = 32
 MARGAUX   = 16
 NCHARS    = 17
 

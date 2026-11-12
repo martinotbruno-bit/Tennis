@@ -144,66 +144,7 @@ u8 can_hit(u8 p)
 /* relâché juste avant l'arrivée de la balle (3 premières trames du geste) */
 /* ---------------------------------------------------------------------- */
 
-/* Entraînement : écart au bon moment, en images (trames) */
-#pragma bss-name(push, "WBSS")
-static char timing_b[12];
-#pragma bss-name(pop)
-void timing_msg(u8 early, u8 n)
-{
-    char *b = timing_b;
-    if (n > 9) n = 9;
-    b[0] = (char)('0' + n);
-    b[1] = ' '; b[2] = 'I'; b[3] = 'M'; b[4] = 'A'; b[5] = 'G'; b[6] = 'E';
-    b[7] = (char)(n > 1 ? 'S' : 0); b[8] = 0;
-    set_msg(early ? "TROP TOT DE" : "TROP TARD DE", b, 45);
-}
-
-/* Entraînement, service frappé avec A : écart au sommet du lancer (vz = 4
-   ou -2 au sommet ; la vitesse verticale perd 6 par trame) */
-void serve_fb(s16 vz)
-{
-    if (vz > 4) timing_msg(1, (u8)((u8)(vz - 4) / 6));
-    else if (vz < -2) timing_msg(0, (u8)((u8)(-2 - vz) / 6));
-}
-
-u8 perfect_hit(u8 p, s16 dx)
-{
-    u8 t = (u8)(p & 1), r = 0;
-    if (bounces == 0 || (last_shot != SH_DRIVE && last_shot != SH_FLAT && last_shot != SH_SLICE && last_shot != SH_SHORT)) return 0;
-    if (cfg.ctrl[p] != CTRL_CPU) ++st_ptry[t];
-    /* balle à côté du corps : ni collée (< 5 px), ni en extension (> 14 px) ;
-       la frappe part dès que la balle entre dans la zone, sa position en
-       profondeur n'est donc pas un critère */
-    if (dx < 0) dx = -dx;
-    if (dx < 5 || dx > 14) {
-        if (cfg.mode == GM_TRAIN && cfg.ctrl[p] != CTRL_CPU)
-            set_msg("BALLE TROP", dx < 5 ? "PRES DU CORPS" : "LOIN DU CORPS", 45);
-        return 0;
-    }
-    if (cfg.ctrl[p] == CTRL_CPU) {
-        /* CPU : Expert de temps en temps, Normal rarement, Facile jamais */
-        if (cfg.level[p] == 2) r = (u8)(rand8() < 40);
-        else if (cfg.level[p] == 1) r = (u8)(rand8() < 10);
-    } else {
-        /* bouton relâché 0 à 2 trames avant l'arrivée : 3 premières trames du
-           geste (pl_timer 14, 13, 12) */
-        r = (u8)(swing_early >= 12);
-        if (cfg.mode == GM_TRAIN) {
-            if (r) set_msg("COUP PARFAIT !", "", 45);
-            else if (!swing_early) set_msg("RELACHEZ LE", "BOUTON AVANT", 45);
-            else timing_msg(1, (u8)(12 - swing_early));
-        }
-    }
-    if (r) {
-        ++st_perf[t];
-        /* éclat au bout de la raquette, hors du sprite du joueur (sinon il
-           passe derrière lui) : à droite ou à gauche selon le côté de la balle */
-        perf_t = 12;
-        perf_x = (u8)(PXU(plx[p]) + (PX(bx) < PX(plx[p]) ? -16 : 8));
-        perf_y = (u8)(PXU(ply[p]) - 22);
-    }
-    return r;
-}
+/* timing_msg, serve_fb et perfect_hit : banque 13 (shots.c), version 2.52 */
 
 /* ---------------------------------------------------------------------- */
 /* Récapitulatif du score : une ligne par équipe, « ALEX 6 3 2 », sets    */

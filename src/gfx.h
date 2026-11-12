@@ -56,6 +56,11 @@ void __fastcall__ spr_ball(u8 x, s16 sy, u8 shy, u8 zpx);   /* sprp.s */
 #define POSE_BSLICE 25   /* revers coupé à une main (armé) */
 #define POSE_BVOLLEY 26  /* volée de revers */
 #define POSE_KNEEL  27   /* un genou à terre (relevé du plongeon) : dessinée 4 px plus bas */
+#define POSE_SHAKE  28   /* poignée de main (jeu F) */
+#define POSE_VICTORY 29  /* victoire à genoux, poings levés (jeu F), 4 px plus bas */
+#define POSE_SUPINE 30   /* allongé sur le dos (jeu F) */
+#define POSE_SIT    31   /* assis (jeu F), 4 px plus bas */
+#define POSE_LOW(k) ((k) >= POSE_KNEEL && ((k) & 1))   /* poses dessinées 4 px plus bas */
 #define POSE_LIFT   32   /* drapeau : personnage relevé d'1 px (rebond, foulée) */
 #define POSE_DOWN   64   /* drapeau : personnage abaissé d'1 px (genoux fléchis) */
 

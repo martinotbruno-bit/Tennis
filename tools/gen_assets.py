@@ -904,9 +904,31 @@ def draw_dive(view, female, nude=False):
     line(c, 6, 22, 7, 23, 1)                            # main d'appui au sol
     return c
 
+def draw_supine(view, female, nude=False):
+    """Allongé sur le dos (victoire) : corps à l'horizontale, tête à
+    gauche, visage vers le ciel, bras écartés, sans raquette (lâchée).
+    Même dessin pour toutes et tous (place dans le jeu de tuiles F)."""
+    c = new_canvas()
+    fill(c, 1, 15, 4, 18, 1)                            # tête
+    fill(c, 0, 15, 0, 18, 3)                            # cheveux (sur le sol)
+    put(c, 3, 16, 3); put(c, 3, 17, 3)                  # yeux
+    if nude:
+        fill(c, 5, 15, 10, 19, 1)
+        for k in range(5):
+            put(c, 5 + k, 15 + (k % 4), 2)
+    else:
+        fill(c, 5, 15, 10, 19, 2)                       # buste
+        fill(c, 11, 15, 12, 19, 3)                      # short (même dessin pour tous : 4 tuiles)
+    fill(c, 13, 15, 15, 16, 1); fill(c, 13, 18, 15, 19, 1)   # jambes
+    put(c, 15, 14, 1 if nude else 3); put(c, 15, 20, 1 if nude else 3)   # pieds
+    line(c, 6, 14, 4, 10, 1); line(c, 6, 20, 4, 23, 1)  # bras écartés
+    return c
+
 def draw_person(view, legs, arms, female, nude=False):
     if legs == 'dive':
         return draw_dive(view, female, nude)
+    if legs == 'supine':
+        return draw_supine(view, female, nude)
     c = new_canvas()
     # --- tête
     fill(c, 6, 1, 9, 5, 1)
@@ -974,6 +996,11 @@ def draw_person(view, legs, arms, female, nude=False):
         fill(c, 5, 16, 6, 20, 1); fill(c, 4, 21, 5, 21, 1)
         line(c, 9, 16, 13, 21, 1); line(c, 10, 16, 14, 21, 1)
         fill(c, 3, 22, 5, 23, 3); fill(c, 13, 22, 15, 23, 3)
+    elif legs == 'sit':
+        # assis sur une chaise (changement de côté) : cuisses vers l'avant,
+        # pieds posés (sol à y 19 : sprite abaissé de 4 px)
+        fill(c, 5, 16, 6, 18, 1); fill(c, 9, 16, 10, 18, 1)
+        fill(c, 4, 19, 6, 19, 3); fill(c, 9, 19, 11, 19, 3)
     elif legs == 'kneel':
         # genou gauche au sol, tibia couché vers l'arrière ; pied droit posé,
         # genou droit levé (sol à y 19 : sprite abaissé de 4 px)
@@ -1108,9 +1135,28 @@ def draw_person(view, legs, arms, female, nude=False):
         line(c, 4, 9, 1, 11, 1)
         line(c, 11, 9, 14, 11, 1)
         racket(c, 14, 12, 13, 17)
-    if legs == 'kneel':
-        # un genou à terre (relevé après un plongeon) : le sprite est dessiné
-        # 4 px plus bas (sprp.s) ; sous y 19 (le sol), rien n'est dessiné
+    elif arms == 'shake':
+        # poignée de main : bras droit tendu sur le côté, main ouverte ;
+        # raquette tenue basse dans la main gauche
+        line(c, 11, 9, 14, 10, 1); fill(c, 14, 10, 15, 11, 1)
+        fill(c, 3, 9, 3, 12, 1)
+        racket(c, 3, 13, 2, 18, 5)
+    elif arms == 'victory':
+        # victoire à genoux : les deux poings levés au ciel, raquette lâchée
+        line(c, 4, 9, 2, 3, 1); line(c, 3, 9, 1, 3, 1)
+        line(c, 11, 9, 13, 3, 1); line(c, 12, 9, 14, 3, 1)
+        fill(c, 1, 1, 2, 2, 1); fill(c, 13, 1, 14, 2, 1)
+        # la raquette, lâchée, reste au sol près du genou : mêmes pixels que
+        # la pose à genou (rangée des jambes commune, déjà chargée)
+        tmp = new_canvas()
+        racket(tmp, 12, 14, 13, 19)
+        for y in range(16, 24):
+            for x in range(16):
+                if tmp[y][x]: c[y][x] = tmp[y][x]
+    if legs in ('kneel', 'sit'):
+        # un genou à terre (relevé après un plongeon) ou assis : le sprite est
+        # dessiné 4 px plus bas (match_draw, rp_play) ; sous y 19 (le sol),
+        # rien n'est dessiné
         for y in range(20, 24):
             for x in range(16):
                 c[y][x] = 0
@@ -1152,6 +1198,10 @@ POSES = [  # (jambes, bras) — l'ordre est repris dans src/gfx.c
     ('wide', 'bslice'),   # 25 revers coupé à une main (armé)
     ('wide', 'bimpact'),  # 26 volée de revers (même geste que l'impact à deux mains)
     ('kneel', 'ready'),   # 27 un genou à terre (relevé du plongeon), dessiné 4 px plus bas
+    ('stand', 'shake'),   # 28 poignée de main au filet (fin du match)
+    ('kneel', 'victory'), # 29 victoire à genoux, poings levés (balle de match), 4 px plus bas
+    ('supine', 'supine'), # 30 allongé sur le dos (balle de match)
+    ('sit', 'ready'),     # 31 assis (changement de côté), 4 px plus bas
 ]
 # (le smash armé reprend la pose du service, et la fin du lob celle de
 # l'impact du service : mêmes gestes, aucune tuile de plus)
@@ -1174,6 +1224,7 @@ nude_people = bytearray()
 # jeu (célébrations hors échange, revers pendant l'échange).
 SET_C = {7, 15, 16, 17, 18}
 SET_R = {22, 23, 24, 25, 26}
+SET_F = {28, 29, 30, 31}   # séquences animées (entrée, changement de côté, fin du match)
 row_use = {}       # clé de rangée -> poses qui l'utilisent ('prof' : course de profil)
 row_data = {}      # clé -> (2 tuiles, 2 tuiles au naturel)
 person_keys = []   # clés dans l'ordre de person_map
@@ -1189,6 +1240,7 @@ def row_class(key):
     u = row_use[key]
     if u <= SET_C: return 'C'
     if u <= SET_R: return 'R'
+    if u <= SET_F: return 'F'
     return 'res'
 preview_people = []
 for female in (0, 1):
@@ -1422,7 +1474,9 @@ marg_use = {}
 marg_data = {}
 for view in ('back', 'front'):
     for k, (legs, arms) in enumerate(POSES):
-        cv = margaux_hair(draw_person(view, legs, arms, 1), view)
+        cv = draw_person(view, legs, arms, 1)
+        if any(cv[y][x] for y in range(8) for x in range(16)):
+            cv = margaux_hair(cv, view)     # (rangée du haut vide : plongeon, allongée, rien à coiffer)
         t = canvas_tiles(cv)
         key = ('marg', tuple(map(tuple, t[0])), tuple(map(tuple, t[1])))
         if key not in marg_data:
@@ -1434,6 +1488,7 @@ def marg_class(key):
     u = marg_use[key]
     if u <= SET_C: return 'C'
     if u <= SET_R: return 'R'
+    if u <= SET_F: return 'F'
     return 'res'
 for key in dict.fromkeys(marg_keys):
     if marg_class(key) == 'res':
@@ -1448,11 +1503,47 @@ spr_tile(MARG_PROF_L, tp[0]); spr_tile(MARG_PROF_R, tp[1]); next_spr += 1
 # tuile 15 est celle des cheveux de Margaux de profil
 ICE_TILE = next_spr
 spr_tile(ICE_TILE, ice); next_spr += 1
+# accessoires des séquences animées (sprites 8 x 8, palette 2 : 1 beige,
+# 2 noir, 3 blanc)
+def prop_chair():
+    """chaise vue de haut : dossier, assise blanche, pieds noirs"""
+    t = [[0] * 8 for _ in range(8)]
+    for x in range(1, 7): t[0][x] = 2; t[1][x] = 3
+    for y in range(2, 6):
+        for x in range(1, 7): t[y][x] = 3 if 1 < x < 6 else 2
+    for x in (1, 6): t[6][x] = 2; t[7][x] = 2
+    return t
+def prop_bottle():
+    """gourde : bouchon noir, corps blanc, étiquette beige"""
+    t = [[0] * 8 for _ in range(8)]
+    t[0][3] = t[0][4] = 2
+    for y in range(1, 8):
+        for x in range(2, 6): t[y][x] = 3
+    for x in range(2, 6): t[4][x] = 1; t[5][x] = 1
+    return t
+def prop_towel():
+    """serviette blanche à bandes noires, posée sur les épaules"""
+    t = [[0] * 8 for _ in range(8)]
+    for y in range(0, 5):
+        for x in range(0, 8): t[y][x] = 3
+    for x in range(0, 8): t[2][x] = 2
+    for y in range(5, 8): t[y][0] = t[y][7] = 3
+    return t
+def prop_racket():
+    """raquette posée au sol (lâchée), tamis en biais"""
+    t = [[0] * 8 for _ in range(8)]
+    for (x, y) in ((1, 7), (2, 6), (3, 5)): t[y][x] = 1          # manche
+    for y in range(0, 5):
+        for x in range(3, 8):
+            if (x - 5) ** 2 + (y - 2) ** 2 <= 5:
+                t[y][x] = 2 if (x - 5) ** 2 + (y - 2) ** 2 >= 3 else (3 if (x + y) % 2 else 0)
+    return t
 # zone partagée : jeu « célébrations » (chargé au départ : c'est lui que
 # montrent les écrans) ou jeu « revers » (pendant l'échange)
 SWAP0 = next_spr
 swap_sets = {}
-for cls in ('C', 'R'):
+PROPS = [prop_chair(), prop_bottle(), prop_towel(), prop_racket()]
+for cls in ('C', 'R', 'F'):
     tiles, nude, idx = [], [], SWAP0
     for key in dict.fromkeys(person_keys):
         if row_class(key) == cls:
@@ -1463,8 +1554,13 @@ for cls in ('C', 'R'):
         if marg_class(key) == cls:
             marg_pool[key] = idx; idx += 2
             tiles += list(marg_data[key]); nude += list(marg_data[key])   # (Margaux jamais au club nudiste)
+    if cls == 'F':
+        # accessoires des séquences : chaise, gourde, serviette, raquette au sol
+        PROP0 = idx
+        tiles += PROPS; nude += PROPS; idx += len(PROPS)
     swap_sets[cls] = (tiles, nude)
-NSWAP = max(len(swap_sets['C'][0]), len(swap_sets['R'][0]))
+NSWAP = max(len(swap_sets['C'][0]), len(swap_sets['R'][0]), len(swap_sets['F'][0]))
+print('jeux de tuiles par phase : C %d, R %d, F %d (zone %d)' % (tuple(len(swap_sets[k][0]) for k in 'CRF') + (NSWAP,)))
 for i, t in enumerate(swap_sets['C'][0]):
     spr_tile(SWAP0 + i, t)
 next_spr = SWAP0 + NSWAP
@@ -1915,11 +2011,12 @@ src.append(c_array('crowd_norm', b''.join(encode_tile(t) for t in CROWD)))
 src.append(c_array('crowd_cheer', b''.join(encode_tile(t) for t in CHEER)))
 # jeu de tuiles par phase : poses de chaque jeu, pose de secours tant que le
 # jeu n'est pas chargé, place et taille de la zone partagée
-POSE_FALLBACK = {7: 0, 15: 0, 16: 6, 17: 0, 18: 0, 22: 8, 23: 12, 24: 4, 25: 8, 26: 12}
-src.append(c_array('pose_set', bytes([1 if k in SET_C else 2 if k in SET_R else 0 for k in range(NPOSE)])))
+POSE_FALLBACK = {7: 0, 15: 0, 16: 6, 17: 0, 18: 0, 22: 8, 23: 12, 24: 4, 25: 8, 26: 12,
+                 28: 9, 29: 27, 30: 21, 31: 27}
+src.append(c_array('pose_set', bytes([1 if k in SET_C else 2 if k in SET_R else 3 if k in SET_F else 0 for k in range(NPOSE)])))
 src.append(c_array('pose_fb', bytes([POSE_FALLBACK.get(k, k) for k in range(NPOSE)])))
-src.append('const unsigned char swap_base = 0x%02X, swap_ntile[2] = { %d, %d };\nconst unsigned char ice_tile = 0x%02X;\n' % (
-    SWAP0, len(swap_sets['C'][0]), len(swap_sets['R'][0]), ICE_TILE))
+src.append('const unsigned char swap_base = 0x%02X, swap_ntile[3] = { %d, %d, %d };\nconst unsigned char ice_tile = 0x%02X, prop_tile = 0x%02X;\n' % (
+    SWAP0, len(swap_sets['C'][0]), len(swap_sets['R'][0]), len(swap_sets['F'][0]), ICE_TILE, PROP0))
 # petits spectateurs (vue en perspective) : regard vers le bas / vers le haut
 for fam in ('A', 'B'):
     src.append(c_array('small_norm%s' % fam, b''.join(encode_tile(t) for sz in SIZES for t in SMALL[fam][sz]['down'])))
@@ -1930,11 +2027,12 @@ with open(os.path.join(ROOT, 'src', 'assets_court.c'), 'w') as f:
 # jeux de tuiles par phase (banque 13) : célébrations et revers, normaux et
 # au naturel
 _sw = ['/* Fichier généré par tools/gen_assets.py — ne pas modifier. */',
-       '/* Jeux de tuiles par phase : célébrations (C) et revers (R), banque 13. */', '#include "assets.h"', '']
-for cls in ('C', 'R'):
+       '/* Jeux de tuiles par phase : célébrations (C), revers (R) et séquences (F), banque 13. */', '#include "assets.h"', '']
+for cls in ('C', 'R', 'F'):
     tiles, nude = swap_sets[cls]
     _sw.append(c_array('swap_chr%s' % cls, b''.join(encode_tile(t) for t in tiles)))
     _sw.append(c_array('swap_nude%s' % cls, b''.join(encode_tile(t) for t in nude)))
+_sw.append('/* accessoires des séquences (cer.c, même banque) : chaise, gourde, serviette, raquette */\nconst unsigned char prop_tile13 = 0x%02X;' % PROP0)
 with open(os.path.join(ROOT, 'src', 'assets_swap.c'), 'w') as f:
     f.write('\n'.join(_sw) + '\n')
 

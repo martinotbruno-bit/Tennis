@@ -20,7 +20,7 @@
 .import _end_reason, _ump_arm, _tired, _pending_winner, _sfx_bounce
 .importzp _frame_cnt, tmp1, tmp2, _oam_i
 .import _oam_buf, _ball_base, _proj, _sl_ox, _sl_oy, _ice_tile
-.import _pose_set, _pose_fb, _swap_on, _pl_btn
+.import _pose_set, _pose_fb, _swap_on, _pl_btn, _pose_force
 .importzp _persp, _proj_x, _proj_y
 
 ; poses (gfx.h)
@@ -52,6 +52,10 @@ P_BFOLLOW = 24
 P_BSLICE = 25
 P_BVOLLEY = 26
 P_KNEEL = 27
+P_SHAKE = 28
+P_VICTORY = 29
+P_SUPINE = 30
+P_SIT = 31
 SH_SLICE = 1
 PAD_B = $40
 LIFT = 32
@@ -506,8 +510,20 @@ calcd:
     sta dys
     rts
 
-; choisit la pose du joueur pp (X = pp), résultat dans A
+; choisit la pose du joueur pp (X = pp), résultat dans A ; une séquence
+; animée (cer.c) peut imposer la pose : pose_force (bit 7 : miroir)
 choose:
+    lda _pose_force,x
+    cmp #$FF
+    beq @nforce
+    asl a                   ; retenue = miroir
+    lda #0
+    rol a
+    sta _flip_cache,x
+    lda _pose_force,x
+    and #$1F
+    rts
+@nforce:
     lda _ms
     cmp #MS_OVER
     bne @notover

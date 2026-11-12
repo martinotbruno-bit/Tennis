@@ -29,6 +29,10 @@ class Emu {
     }
     this.frames = 0;
     this.held = [new Set(), new Set()];
+    // séquences animées du match (entrée, changement de côté, fin) : passées
+    // à chaque trame, sauf pour les tests qui les regardent (cerSkip = false)
+    this.cerSkip = true;
+    this.cerAddr = this.labels['_cer_skip'];
   }
   addr(sym) {
     const a = this.labels['_' + sym] ?? this.labels[sym];
@@ -42,7 +46,13 @@ class Emu {
   down(btn, pad = 1) { this.nes.buttonDown(pad, BTN[btn]); this.held[pad - 1].add(btn); }
   up(btn, pad = 1) { this.nes.buttonUp(pad, BTN[btn]); this.held[pad - 1].delete(btn); }
   releaseAll() { for (const p of [1, 2]) for (const b of [...this.held[p - 1]]) this.up(b, p); }
-  run(n = 1, each) { for (let i = 0; i < n; i++) { this.nes.frame(); this.frames++; if (each) each(this); } }
+  run(n = 1, each) {
+    for (let i = 0; i < n; i++) {
+      this.nes.frame(); this.frames++;
+      if (this.cerAddr !== undefined) this.nes.cpu.mem[this.cerAddr] = this.cerSkip ? 1 : 0;
+      if (each) each(this);
+    }
+  }
   tap(btn, pad = 1, hold = 3, after = 6) { this.down(btn, pad); this.run(hold); this.up(btn, pad); this.run(after); }
   // texte affiché à l'écran (table des noms $2000)
   text(x, y, len) {
