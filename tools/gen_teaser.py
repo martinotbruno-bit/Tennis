@@ -262,9 +262,9 @@ def body(f, j, female, face, front=('armR', 'legL'), racket_hand='L', racket_dir
             for sx in (-1, 1):
                 c_ = (nk[0] + sx * bx, by)
                 e_ = f.m_ell(c_, bx * 1.18, 7.2)
-                low = ~f.m_poly([(c_[0] - 20, c_[1] - 20), (c_[0] + 20, c_[1] - 20), (c_[0] + 20, c_[1] + 0.5), (c_[0] - 20, c_[1] + 0.5)])
-                f.paint(e_ & ~shift_mask(f, (0, 3.4), e_) & low, 4, within=[tid])
-                f.paint(e_ & ~shift_mask(f, (1.6, 0), e_) & low & f.m_poly([(c_[0], c_[1] - 20), (c_[0] + 30, c_[1] - 20), (c_[0] + 30, c_[1] + 20), (c_[0], c_[1] + 20)]), 4, within=[tid])
+                low = ~f.m_poly([(c_[0] - 20, c_[1] - 20), (c_[0] + 20, c_[1] - 20), (c_[0] + 20, c_[1] + 1.5), (c_[0] - 20, c_[1] + 1.5)])
+                mid = ~f.m_poly([(nk[0] - 1.6, c_[1] - 20), (nk[0] + 1.6, c_[1] - 20), (nk[0] + 1.6, c_[1] + 20), (nk[0] - 1.6, c_[1] + 20)])
+                f.paint(e_ & ~shift_mask(f, (0, 2.2), e_) & low & mid, 4, within=[tid])   # ombre douce sous le sein
             ret['dress'] = tid
             return
         # short ample : jambes droites, plus larges que la cuisse, ourlet net
@@ -378,6 +378,12 @@ def body(f, j, female, face, front=('armR', 'legL'), racket_hand='L', racket_dir
     # le buste (et le short ou la robe) passe devant le haut des deux cuisses
     order.remove('torso')
     order.insert(max(order.index('legL'), order.index('legR')) + 1, 'torso')
+    # les bras partent des épaules : toujours devant le buste (sinon le haut de
+    # la robe ou du polo déborde sur l'épaule)
+    for a_ in ('armL', 'armR'):
+        if order.index(a_) < order.index('torso'):
+            order.remove(a_)
+            order.insert(order.index('torso') + 1, a_)
     if female:
         last = max(order.index(k_) for k_ in ('torso', 'legL', 'legR'))
         order.insert(last + 1, 'skirt')
