@@ -250,8 +250,10 @@ def body(f, j, female, face, front=('armR', 'legL'), racket_hand='L', racket_dir
                 P_ = lambda t, dx: (lerp(sh_, hp_, t)[0] + sx * dx, lerp(sh_, hp_, t)[1])
                 return [P_(0.15, -1), P_(0.25, 1.6), P_(0.33, 2.2), P_(0.41, 1.4), P_(0.5, -0.4),
                         P_(0.6, -2.0), P_(0.7, -2.0), P_(0.8, 1.5), (hp_[0] + sx * 9.6, hp_[1] - 8), (hp_[0] + sx * 10.5, hp_[1] - 3)]
-            pts = [(shL[0] + 2, shL[1] - 3), (nk[0] - 5, nk[1] + 2), (nk[0] - 3.5, nk[1] + 7), (nk[0], nk[1] + 9),
-                   (nk[0] + 3.5, nk[1] + 7), (nk[0] + 5, nk[1] + 2), (shR[0] - 2, shR[1] - 3), (shR[0] + 1, shR[1] + 3)]
+            # bretelles : elles montent jusqu'en haut de l'épaule, le long de sa pente, jusqu'au cou
+            pts = [(shL[0] + 0.5, shL[1] - 4.8), (nk[0] - 6.6, nk[1] - 2.9), (nk[0] - 4.0, nk[1] - 1.6),
+                   (nk[0] - 3.6, nk[1] + 7), (nk[0], nk[1] + 9), (nk[0] + 3.6, nk[1] + 7),
+                   (nk[0] + 4.0, nk[1] - 1.6), (nk[0] + 6.6, nk[1] - 2.9), (shR[0] - 0.5, shR[1] - 4.8), (shR[0] + 1, shR[1] + 3)]
             pts += side(shR, hpR, 1) + list(reversed(side(shL, hpL, -1))) + [(shL[0] - 1, shL[1] + 3)]
             tid = f.part(f.m_poly(pts), O, o, sh=(4, 2))
             # poitrine : volume rond, ombre douce sous chaque sein et sur le côté
