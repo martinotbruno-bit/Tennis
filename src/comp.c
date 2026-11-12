@@ -356,7 +356,12 @@ u8 __fastcall__ comp_surface(u8 unused)
 {
     (void)unused;
     if (c_type == CT_SEASON) return (u8)(c_stage / 3);
-    if (c_type >= CT_GRAND) return ev_surf[ev_img(ev_of())];
+    if (c_type >= CT_GRAND) {
+        /* format imposé, comme les tournois du Grand Chelem : 3 sets, et la
+           finale en 5 sets (version 2.53) */
+        c_fmt = (u8)(rd_of() == nrounds() - 1 ? 2 : 1);
+        return ev_surf[ev_img(ev_of())];
+    }
     if (c_type == CT_CUSTOM && (c_opts & CO_VARIED)) return (u8)((c_surf + c_stage) & 3);
     return c_surf;
 }

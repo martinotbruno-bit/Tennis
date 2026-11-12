@@ -111,51 +111,56 @@ static u8 last_mode, demo_dbl;
 static u16 idle;
 static char line[32];
 
+/* ajoute une ligne au menu (appel court : la banque 1 est pleine) */
+static void __fastcall__ add_opt(u8 o) { vis[nvis++] = o; }
 static void build_visible(void)
 {
     u8 m = opt_val[O_MODE];
     nvis = 0;
-    vis[nvis++] = O_START;
-    vis[nvis++] = O_MODE;
+    add_opt(O_START);
+    add_opt(O_MODE);
     if (m == MODE_COMP) {
-        vis[nvis++] = O_COMP;
-        if (opt_val[O_COMP] == CT_CUSTOM) { vis[nvis++] = O_CSIZE; vis[nvis++] = O_CPROG; vis[nvis++] = O_CVAR; }
-        vis[nvis++] = O_TYPE;
-        vis[nvis++] = O_P1;
-        if (opt_val[O_TYPE]) { vis[nvis++] = O_P2; vis[nvis++] = O_CPART; }   /* partenaire */
-        vis[nvis++] = O_LEVEL;
-        if (opt_val[O_COMP] != CT_SEASON && opt_val[O_COMP] < CT_GRAND) vis[nvis++] = O_SURF;   /* surfaces imposées */
-        if (opt_val[O_COMP] < CT_GRAND) { vis[nvis++] = O_ENV; vis[nvis++] = O_COND; }   /* Grand Martinot, Martinworld Tour : au stade, de jour */
-        vis[nvis++] = O_FMT;
-        vis[nvis++] = O_REPLAY;
-        vis[nvis++] = O_GSPEED;
+        add_opt(O_COMP);
+        if (opt_val[O_COMP] == CT_CUSTOM) { add_opt(O_CSIZE); add_opt(O_CPROG); add_opt(O_CVAR); }
+        add_opt(O_TYPE);
+        add_opt(O_P1);
+        if (opt_val[O_TYPE]) { add_opt(O_P2); add_opt(O_CPART); }   /* partenaire */
+        add_opt(O_LEVEL);
+        /* Grand Martinot, Martinworld Tour : au stade, de jour, surfaces
+           imposées, 3 sets et finale en 5 ; saison : surfaces imposées */
+        if (opt_val[O_COMP] < CT_GRAND) {
+            if (opt_val[O_COMP] != CT_SEASON) add_opt(O_SURF);
+            add_opt(O_ENV); add_opt(O_COND); add_opt(O_FMT);
+        }
+        add_opt(O_REPLAY);
+        add_opt(O_GSPEED);
     } else if (m == MODE_TRAIN) {
-        vis[nvis++] = O_EX;
-        if (opt_val[O_EX] == EX_CUSTOM) { vis[nvis++] = O_SIDE; vis[nvis++] = O_SPEED; vis[nvis++] = O_SPIN; vis[nvis++] = O_COUNT; }
-        vis[nvis++] = O_P1;
-        vis[nvis++] = O_SURF;
-        vis[nvis++] = O_ENV;
-        vis[nvis++] = O_COND;
-        vis[nvis++] = O_GSPEED;
+        add_opt(O_EX);
+        if (opt_val[O_EX] == EX_CUSTOM) { add_opt(O_SIDE); add_opt(O_SPEED); add_opt(O_SPIN); add_opt(O_COUNT); }
+        add_opt(O_P1);
+        add_opt(O_SURF);
+        add_opt(O_ENV);
+        add_opt(O_COND);
+        add_opt(O_GSPEED);
     } else {
         /* simple ou double : seulement à 2 joueurs adversaires. « 2 J. EQUIPE »
            est toujours en double ; « 1 joueur contre CPU » toujours en simple
            (son double, avec un partenaire CPU, est le mode en équipe) */
-        if (m == MODE_2P) vis[nvis++] = O_TYPE;
-        vis[nvis++] = O_P1;
-        vis[nvis++] = O_P2;
-        if (m == MODE_2P_TEAM) vis[nvis++] = O_CPART;   /* partenaire : CPU ou manette 2 */
-        vis[nvis++] = O_LEVEL;
-        vis[nvis++] = O_SURF;
-        vis[nvis++] = O_ENV;
-        vis[nvis++] = O_COND;
-        vis[nvis++] = O_FMT;
-        vis[nvis++] = O_REPLAY;
-        vis[nvis++] = O_GSPEED;
+        if (m == MODE_2P) add_opt(O_TYPE);
+        add_opt(O_P1);
+        add_opt(O_P2);
+        if (m == MODE_2P_TEAM) add_opt(O_CPART);   /* partenaire : CPU ou manette 2 */
+        add_opt(O_LEVEL);
+        add_opt(O_SURF);
+        add_opt(O_ENV);
+        add_opt(O_COND);
+        add_opt(O_FMT);
+        add_opt(O_REPLAY);
+        add_opt(O_GSPEED);
     }
-    if (m != MODE_TRAIN) vis[nvis++] = O_FATIG;
-    vis[nvis++] = O_VIEW;
-    vis[nvis++] = O_SOUND;
+    if (m != MODE_TRAIN) add_opt(O_FATIG);
+    add_opt(O_VIEW);
+    add_opt(O_SOUND);
     if (cursor >= nvis) cursor = 0;
 }
 
@@ -532,7 +537,7 @@ static void present_screen(void)
     txt_at(4, 21, surf_name[cfg.surface]);
     txt_at(17, 21, env_name[cfg.env]);
     txt_at(4, 22, cond_name[cfg.cond]);
-    txt_at(17, 22, fmt_name[opt_val[O_FMT]]);
+    txt_at(17, 22, fmt_name[cfg.games_per_set == 4 ? 3 : cfg.sets_to_win - 1]);   /* format réel du match */
     txt_at(4, 27, "A : JOUER   B : RETOUR");
     ppu_on();
     if (last_mode == MODE_COMP && is_final()) music_play(MUS_FINAL);

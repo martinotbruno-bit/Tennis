@@ -1,10 +1,16 @@
-# Royal Martinot — Rapport de réalisation (version 2.52)
+# Royal Martinot — Rapport de réalisation (version 2.53)
 
 Comme l'exige le CDC (§ 17.5), ce rapport distingue ce qui est **réalisé**, **testé**, **validé sur matériel réel**, **validé uniquement en émulation**, **dépendant d'une extension**, et les **limitations restantes**.
 
 > **Validation matérielle : aucune.** Aucun test n'a été fait sur console réelle (NES, Famicom, PAL, cartouche MMC1). Toutes les validations ont eu lieu en émulation (jsnes) et par des tests unitaires sur PC. Les critères « vérifié sur console physique » (CDC § 2.1, 15.4, 16.A) **ne sont pas remplis**. Ce point ne peut pas être traité dans l'environnement de développement utilisé.
 
 ## 1. Évolutions
+
+### Version 2.53
+
+| Demande | Réalisation |
+|---|---|
+| Grand Martinot et Martinworld Tour : format comme les vrais Grands Chelems (option 2) | Format imposé : tous les matchs en 3 sets, les finales de chaque tournoi en 5 sets. La ligne FORMAT disparaît du menu pour ces deux compétitions ; l'écran de présentation du match affiche le format réel (« 3 SETS » ou « 5 SETS »). Pour faire la place dans la banque des écrans (pleine), les lignes du menu sont ajoutées par une fonction commune (500 octets gagnés) |
 
 ### Version 2.52
 

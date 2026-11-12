@@ -1882,6 +1882,23 @@ console.log('Bras devant le buste : vue de dos');
   check(back >= 5 && backOk === back && front >= 5 && frontOk === front,
     `vu de dos : buste « bras caché » chargé à la volée (${backOk}/${back}) ; vu de face : bras visible (${frontOk}/${front})`);
 }
+console.log('Format du Grand Martinot et du Martinworld Tour');
+for (const type of [5, 6]) {
+  // 3 sets, et la finale de chaque tournoi en 5 sets ; ligne FORMAT absente du menu
+  const e = boot(); startWith(e, { MODE: MODE.COMP, COMP: type, FMT: 0 }); skipIntro(e);
+  const seen = [];
+  for (let m = 0; m < 8 && scr(e) === SS.COMP; m++) {
+    const fin = e.text(0, 4, 32).replace(/\0/g, ' ').trim() === 'FINALE';
+    e.tap('A'); runUntil(e, () => scr(e) === SS.PRESENT, 60); e.run(3);
+    seen.push(`${fin ? 'F' : '-'}${e.peek('cfg', 16)}:${e.text(17, 22, 6).trim()}`);
+    e.tap('A'); e.run(30);
+    e.poke('sc_winner', 0); e.poke('sc_over', 1); e.poke('ms', 4); e.poke('ms_timer', 2);
+    runUntil(e, () => app(e) === AS.SCREENS, 60); e.run(20); e.tap('A'); e.run(40); skipIntro(e);
+  }
+  const ok = seen.length >= 4 && seen.every(x => x[0] === 'F' ? x.endsWith('3:5 SETS') : x.endsWith('2:3 SETS'));
+  const m = boot(); toMenu(m); setOpts(m, { MODE: MODE.COMP, COMP: type }); m.tap('B'); m.run(30); toMenu(m); m.run(10);
+  check(ok && rowOf(m, O.FMT) < 0, `${type === 5 ? 'Grand Martinot' : 'Martinworld Tour'} : 3 sets, finales en 5 sets, FORMAT imposé (${seen.join(' ')})`);
+}
 console.log('Cérémonies de fin de compétition');
 {
   // compétition classique gagnée : remise des médailles (3e, 2e, puis 1er
