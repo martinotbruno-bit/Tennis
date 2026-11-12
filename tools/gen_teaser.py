@@ -123,6 +123,20 @@ class Fig:
         self.cls[out] = 0
 
 
+class HS:
+    """dessin de la tête à l'échelle hs (rayons et épaisseurs)"""
+    def __init__(self, f, hs):
+        self.f, self.hs, self.k = f, hs, f.k
+    def m_ell(self, c, rx, ry, ang=0.0): return self.f.m_ell(c, rx * self.hs, ry * self.hs, ang)
+    def m_caps(self, a, b, ra, rb): return self.f.m_caps(a, b, ra * self.hs, rb * self.hs)
+    def m_arc(self, c, rx, ry, a0, a1, w=1.0): return self.f.m_arc(c, rx * self.hs, ry * self.hs, a0, a1, w)
+    def m_line(self, pts, w=1.0): return self.f.m_line(pts, w)
+    def m_poly(self, pts): return self.f.m_poly(pts)
+    def part(self, *a, **kw): return self.f.part(*a, **kw)
+    def paint(self, *a, **kw): return self.f.paint(*a, **kw)
+    def __getattr__(self, n): return getattr(self.f, n)
+
+
 # ------------------------------------------------------------------ corps
 def body(f, j, female, face, front=('armR', 'legL'), racket_hand='L', racket_dir=None,
          racket_len=50, racket_bend=0.0, ret=None):
@@ -132,14 +146,6 @@ def body(f, j, female, face, front=('armR', 'legL'), racket_hand='L', racket_dir
     S, s, O, o, D, W = 1, 2, 3, 4, 5, 6
     ret = {} if ret is None else ret
     j = dict(j)
-    if female:
-        # silhouette féminine : épaules plus étroites, hanches plus larges,
-        # bras et jambes plus fins
-        for k_ in ('shL', 'shR'):
-            p_ = lerp(j[k_], j['neck'], 0.24)
-            j[k_] = (p_[0], p_[1] + 3)
-        j['hipL'] = (j['hipL'][0] - 1.5, j['hipL'][1])
-        j['hipR'] = (j['hipR'][0] + 1.5, j['hipR'][1])
     LW = 0.88 if female else 1.0
     AW = 0.82 if female else 1.0
 
@@ -227,9 +233,9 @@ def body(f, j, female, face, front=('armR', 'legL'), racket_hand='L', racket_dir
         nk = j['neck']
         # cou (ombre sous le menton)
         hd = j['head']; tl = j.get('tilt', 0.0)
-        chin = (hd[0] - math.sin(tl) * 7, hd[1] + math.cos(tl) * 7)                # sous le menton, dans l'axe de la tête
+        chin = (hd[0] - math.sin(tl) * 6, hd[1] + math.cos(tl) * 6)                # sous le menton, dans l'axe de la tête
         nid = f.part(f.m_caps(nk, chin, (4.6 if female else 5.4), (4.2 if female else 5.2)), S, s, sh=(2.5, 0))
-        f.paint(f.m_ell((nk[0], nk[1] - 5), 5.5, 3), 2, within=[nid])
+        f.paint(f.m_ell((chin[0], chin[1] + 1.5), 5.2, 2.6), 2, within=[nid])          # ombre sous le menton
         ch_l = lerp(shL, hpL, 0.36); ch_r = lerp(shR, hpR, 0.36)
         wl = lerp(shL, hpL, 0.68); wr = lerp(shR, hpR, 0.68)
         if female:
@@ -323,12 +329,14 @@ def body(f, j, female, face, front=('armR', 'legL'), racket_hand='L', racket_dir
 
         ret['shorts'] = sid
 
-    def head():
+    def head(f=f):
+        hs = 0.86                                                                # tête de 22 px (canon)
+        f = HS(f, hs)
         h = j['head']
         tilt = j.get('tilt', 0.0)
         turn = j.get('turn', 0.0)
         ca, sa = math.cos(tilt), math.sin(tilt)
-        R = lambda dx, dy: (h[0] + dx * ca - dy * sa, h[1] + dx * sa + dy * ca)   # repère de la tête
+        R = lambda dx, dy: (h[0] + hs * (dx * ca - dy * sa), h[1] + hs * (dx * sa + dy * ca))   # repère de la tête
         if female:
             # chevelure arrière (encadre le visage) et queue de cheval haute
             f.part(f.m_caps(R(6, -10), R(13, 7), 4, 2.2) | f.m_ell(R(6.5, -9.5), 4.5, 3.5, tilt), D, None)
@@ -356,7 +364,7 @@ def body(f, j, female, face, front=('armR', 'legL'), racket_hand='L', racket_dir
         f.paint(f.m_line([R(-3.5, -12.5), R(-2.5, -8.5)], 0.6), 0, within=[hr])          # raie
         ex, ey = R(turn, 1)
         ret['face'] = (ex, ey)
-        face_features(f, ex, ey, face, hid, tilt, female)
+        face_features(f, ex, ey, face, hid, tilt, female, hs)
 
     order = list(j['order'])
     if female:
@@ -374,14 +382,14 @@ def body(f, j, female, face, front=('armR', 'legL'), racket_hand='L', racket_dir
     return ret
 
 
-def face_features(f, x, y, face, hid, tilt=0.0, female=False):
+def face_features(f, x, y, face, hid, tilt=0.0, female=False, hs=1.0):
     """yeux (blanc, iris, paupière, cils), sourcils, nez, bouche (lèvres)
     selon l'expression : concentration, effort, joie, colère. Pupilles et
     intérieur de la bouche : couleur 0 (sombre du fond)."""
     P = lambda m, c: f.paint(m, c, within=[hid])
     line = f.m_line
     ca, sa = math.cos(tilt), math.sin(tilt)
-    R = lambda dx, dy: (x + dx * ca - dy * sa, y + dx * sa + dy * ca)
+    R = lambda dx, dy: (x + hs * (dx * ca - dy * sa), y + hs * (dx * sa + dy * ca))
     bw = 0.8 if female else 1.25                       # sourcils fins / épais
 
     def eye(sx, look=0.0, lid=0.0):
@@ -476,60 +484,92 @@ def shift_mask(f, d, m=None):
 
 
 # ------------------------------------------------------------------ poses
-# repère de base : sol en y = 206 ; figure d'environ 190 px de haut
+# repère de base : sol en y = 206. Proportions du canon de dessin de figure
+# (Loomis, Richer) : environ 7,5 têtes de haut (tête HU = 22 px, de la
+# calotte au menton), entrejambe à mi-hauteur, cuisse 1,9 tête, tibia 1,8,
+# bras 1,4 + avant-bras 1,1 ; épaules : 2,3 têtes chez l'homme, 1,8 chez la
+# femme ; hanches : 1,5 tête (un peu plus que les épaules chez la femme).
+HU = 22.0
+SEG = dict(torso=48, neck=18.5, thigh=42, shin=40, upper=31, fore=24)
+
+
+def dvec(a, L):
+    r = math.radians(a)
+    return (math.cos(r) * L, math.sin(r) * L)
+
+
+def skeleton(p, female):
+    """articulations à partir du bassin, de l'angle du buste et des angles
+    des membres (degrés à l'écran : 0 droite, 90 bas, -90 haut)"""
+    add = lambda a, b: (a[0] + b[0], a[1] + b[1])
+    P = p['pelvis']
+    at = p['torso']
+    tl = SEG['torso'] * p.get('torso_len', 1.0)
+    neck = add(P, dvec(at, tl))
+    perp = dvec(at + 90, 1.0)                      # vers la droite de l'écran (buste vertical)
+    if perp[0] < 0: perp = (-perp[0], -perp[1])
+    sw = 13.5 if female else 19.0                  # demi-largeur des épaules (articulations)
+    hw = 11.0 if female else 10.0                  # demi-largeur des hanches
+    shc = add(neck, dvec(at + 180, 3.5))
+    j = dict(neck=neck, head=add(neck, dvec(at + p.get('head_bend', 0), SEG['neck'])),
+             tilt=p.get('tilt', 0.0), turn=p.get('turn', 0.0), order=p['order'])
+    j['shL'] = (shc[0] - perp[0] * sw, shc[1] - perp[1] * sw + (2 if female else 0))
+    j['shR'] = (shc[0] + perp[0] * sw, shc[1] + perp[1] * sw + (2 if female else 0))
+    j['hipL'] = (P[0] - perp[0] * hw, P[1] - perp[1] * hw)
+    j['hipR'] = (P[0] + perp[0] * hw, P[1] + perp[1] * hw)
+    for sd in ('L', 'R'):
+        th, sn, tdir = p['leg' + sd]
+        kn = add(j['hip' + sd], dvec(th, SEG['thigh']))
+        an = add(kn, dvec(sn, SEG['shin']))
+        j['kn' + sd], j['an' + sd] = kn, an
+        j['toe' + sd] = add(an, dvec(tdir, 12))
+        ua, fa = p['arm' + sd]
+        el = add(j['sh' + sd], dvec(ua, SEG['upper']))
+        wr = add(el, dvec(fa, SEG['fore']))
+        j['el' + sd], j['wr' + sd], j['hd' + sd] = el, wr, add(wr, dvec(fa, 5))
+    return j
+
+
 POSES = {}
 
 # 1. frappe de coup droit, à l'impact : bras tendu vers la gauche de l'écran
 POSES['impact'] = dict(
-    j=dict(head=(86, 30), neck=(86, 44), tilt=-0.08, turn=-1.0,
-           shL=(66, 56), shR=(104, 55), elL=(42, 66), wrL=(22, 70), hdL=(17, 70),
-           elR=(122, 72), wrR=(132, 92), hdR=(134, 97),
-           hipL=(76, 122), hipR=(98, 122), knL=(60, 160), anL=(50, 196), toeL=(38, 199),
-           knR=(112, 158), anR=(120, 194), toeR=(132, 198),
+    s=dict(pelvis=(88, 121), torso=-93, legL=(113, 104, 160), legR=(68, 76, 20),
+           armL=(176, 183), armR=(62, 102), tilt=-0.08, turn=-1.0,
            order=['racket', 'legR', 'armR', 'legL', 'torso', 'armL', 'head']),
     face='focus', hand='L', rdir=200, rlen=52)
 
-# 2. glissade sur terre battue : jambe droite de l'écran tendue, très bas
+# 2. glissade sur terre battue : jambe gauche fléchie, jambe droite tendue, très bas
 POSES['slide'] = dict(
-    j=dict(head=(70, 84), neck=(74, 97), tilt=0.15, turn=1.5,
-           shL=(58, 106), shR=(94, 110), elL=(40, 92), wrL=(28, 74), hdL=(24, 68),
-           elR=(118, 126), wrR=(140, 138), hdR=(146, 141),
-           hipL=(68, 162), hipR=(90, 164), knL=(44, 172), anL=(48, 200), toeL=(36, 203),
-           knR=(124, 182), anR=(156, 196), toeR=(170, 194),
+    s=dict(pelvis=(62, 146), torso=-78, legL=(158, 95, 175), legR=(47, 38, 5),
+           armL=(-140, -112), armR=(22, 14), tilt=0.15, turn=1.5, head_bend=-8,
            order=['armL', 'legL', 'torso', 'legR', 'head', 'armR', 'racket']),
     face='effort', hand='R', rdir=-10, rlen=50)
-POSES['slide']['hand'] = 'R'
 
-# 3. bras levés au ciel, raquette au poing, tête renversée, cri de joie
+# 3. bras levés au ciel, raquette au poing, cri de joie
 POSES['victory'] = dict(
-    j=dict(head=(80, 56), neck=(80, 70), tilt=0.0, turn=0.0,
-           shL=(60, 80), shR=(100, 80), elL=(40, 58), wrL=(30, 36), hdL=(28, 31),
-           elR=(120, 58), wrR=(130, 36), hdR=(132, 31),
-           hipL=(70, 142), hipR=(90, 142), knL=(62, 174), anL=(58, 201), toeL=(48, 204),
-           knR=(98, 174), anR=(102, 201), toeR=(112, 204),
+    s=dict(pelvis=(80, 118), torso=-90, legL=(97, 94, 165), legR=(83, 86, 15),
+           armL=(-128, -108), armR=(-52, -72), tilt=0.0, turn=0.0,
            order=['racket', 'legL', 'legR', 'torso', 'armL', 'armR', 'head']),
     face='joy', hand='L', rdir=-140, rlen=50)
 
-# 4. raquette fracassée au sol : penché en avant, bras abattu, cri de colère
+# 4. raquette fracassée au sol : penché en avant (buste raccourci), bras abattu, cri de colère
 POSES['angry'] = dict(
-    j=dict(head=(84, 74), neck=(84, 86), tilt=-0.1, turn=-0.5,
-           shL=(64, 96), shR=(104, 98), elL=(52, 122), wrL=(58, 144), hdL=(60, 149),
-           elR=(122, 120), wrR=(130, 140), hdR=(131, 145),
-           hipL=(74, 146), hipR=(98, 146), knL=(58, 176), anL=(52, 202), toeL=(40, 205),
-           knR=(116, 176), anR=(122, 202), toeR=(134, 205),
+    s=dict(pelvis=(88, 124), torso=-96, torso_len=0.9, legL=(116, 96, 165), legR=(64, 84, 15),
+           armL=(112, 78), armR=(60, 98), tilt=-0.1, turn=-0.5, head_bend=4,
            order=['legR', 'legL', 'torso', 'armR', 'racket', 'armL', 'head']),
     face='angry', hand='L', rdir=100, rlen=50)
 
 # plans : (nom, pose, échelle, (x, y) de base visé au centre ; None : pieds au sol)
 # zoom : True si le visage est assez grand pour sa palette (peau, sombre, blanc)
 SHOTS = [
-    ('impact', 'impact', 1.4, (58, 94), False),     # gros plan : buste, raquette à l'impact
+    ('impact', 'impact', 1.4, (50, 102), False),     # gros plan : buste, raquette à l'impact
     ('slide', 'slide', 1.12, None, False),           # glissade, en pied
-    ('slide_z', 'slide', 1.3, (110, None), False),   # zoom : la chaussure qui glisse
+    ('slide_z', 'slide', 1.3, (100, None), False),   # zoom : la chaussure qui glisse
     ('victory', 'victory', 1.0, (82, None), False),        # bras levés, en pied
-    ('victory_z', 'victory', 2.0, (80, 66), True),   # zoom : buste et visage
+    ('victory_z', 'victory', 2.0, (80, 62), True),   # zoom : buste et visage
     ('angry', 'angry', 1.12, None, False),           # raquette au sol, en pied
-    ('angry_z', 'angry', 3.4, (84, 80), True),       # zoom : le visage qui crie
+    ('angry_z', 'angry', 3.4, (83, 70), True),       # zoom : le visage qui crie
 ]
 
 
@@ -542,7 +582,7 @@ def render(pose, female, k, center):
     else:
         oy = cy - (H / 2) / k
     f = Fig(W, H, k, cx - 128 / k, oy)
-    r = body(f, P['j'], female, P['face'], racket_hand=P['hand'], racket_dir=P['rdir'], racket_len=P['rlen'])
+    r = body(f, skeleton(P['s'], female), female, P['face'], racket_hand=P['hand'], racket_dir=P['rdir'], racket_len=P['rlen'])
     f.outline()
     r = {key: f.T(v) for key, v in r.items() if isinstance(v, tuple)}
     return f, r
