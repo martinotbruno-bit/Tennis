@@ -6,9 +6,9 @@
  *  - Martinbledon : Big Ben, dont la grande aiguille tourne (sprite) ;
  *  - US Opaul : la statue de la Liberté, raquette au poing ; les fenêtres
  *    de New York s'allument et s'éteignent ;
- *  - Saint-Martinotz (glace) : les Alpes, un chalet, une patinoire ; il neige ;
- *  - Copamargaux (plage) : Rio, le Pain de Sucre, la mer qui scintille ;
- *  - Bruno-Bercy (moquette) : Bercy la nuit, les projecteurs balaient le ciel.
+ *  - Margaux-les-Neiges (glace) : les Alpes, un chalet, une patinoire ; il neige ;
+ *  - Rio de Bruneiro (plage) : Rio, le Pain de Sucre, la mer qui scintille ;
+ *  - Deborcy Masters (moquette) : Bercy la nuit, les projecteurs balaient le ciel.
  * Les images 4 à 6 sont dans la banque 6 (gm_bank).
  * Les tuiles de l'image prennent la place des tuiles de décor $60 à $FF
  * (rétablies par chr_borrow_restore, bg_dirty) ; l'aiguille, celle des 3
@@ -37,7 +37,7 @@ static u8 gm_t;
 #pragma bss-name(pop)
 
 static const char * const gmi_name[7] = { "OPEN D'AUGUSTRALIE", "DEBOGARROS", "MARTINBLEDON", "US OPAUL",
-                                          "SAINT-MARTINOTZ", "COPAMARGAUX", "BRUNO-BERCY" };
+                                          "MARGAUX-LES-NEIGES", "RIO DE BRUNEIRO", "DEBORCY MASTERS" };
 /* surface de chaque tournoi (image), et son rang dans le Martinworld Tour */
 static const u8 gmi_surf[7] = { 2, 0, 1, 2, 5, 4, 3 };
 static const u8 gmi_rank[7] = { 0, 2, 3, 5, 1, 4, 6 };

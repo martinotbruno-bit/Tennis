@@ -469,7 +469,7 @@ function playComp(type, opts, wins) {
     h.tap('A'); runUntil(h, () => scr(h) !== SS.RESULTS && litScr(h), 120);
   }
   check(seen.join(',') === '11,15,12,13,16,14,17', `Martinworld Tour : 7 annonces et 7 fanfares (${seen.join(',')})`);
-  check(names.join('/') === "OPEN D'AUGUSTRALIE/SAINT-MARTINOTZ/DEBOGARROS/MARTINBLEDON/COPAMARGAUX/US OPAUL/BRUNO-BERCY",
+  check(names.join('/') === "OPEN D'AUGUSTRALIE/MARGAUX-LES-NEIGES/DEBOGARROS/MARTINBLEDON/RIO DE BRUNEIRO/US OPAUL/DEBORCY MASTERS",
     `Martinworld Tour : ${names.join(', ')}`);
   check(ranks.join(',') === 'TOURNOI 1/7 : DUR,TOURNOI 2/7 : GLACE,TOURNOI 3/7 : TERRE BATTUE,TOURNOI 4/7 : GAZON,TOURNOI 5/7 : PLAGE,TOURNOI 6/7 : DUR,TOURNOI 7/7 : MOQUETTE',
     `rangs et surfaces annoncés (${ranks.join(', ')})`);
@@ -485,7 +485,7 @@ function playComp(type, opts, wins) {
   check(matches === 21 && scr(e) === SS.COMP_END && e.peek('c_rank') === 1 && e.peek('c_slam') === 1 && podTxt.includes('GRAND CHELEM !') && podTxt.includes('MARTINWORLD TOUR'),
     `Martinworld Tour : 21 matchs gagnés, Grand Chelem et podium (${matches} matchs)`);
   check(/^[A-Z2-9]{13}$/.test(code), `Martinworld Tour : code de reprise (${code})`);
-  // reprise par le code : 4 matchs gagnés (Saint-Martinotz, demi-finale)
+  // reprise par le code : 4 matchs gagnés (Margaux-les-Neiges, demi-finale)
   {
     const r = boot(); startWith(r, { MODE: MODE.COMP, COMP: 6, FMT: 3, P1: 16 }); skipIntro(r);
     for (let m = 0; m < 4; m++) {
@@ -505,8 +505,8 @@ function playComp(type, opts, wins) {
     f.tap('START'); f.run(40); skipIntro(f);
     const got = ['c_type', 'c_stage', 'c_seed', 'c_n'].map(n => f.peek(n)).concat([f.peek16('c_gres')]);
     check(scr(f) === SS.COMP && JSON.stringify(got) === JSON.stringify(want) && want[1] === 4 && want[4] === 3
-      && f.text(3, 3, 15) === 'SAINT-MARTINOTZ' && f.peek('c_pl', 0) === 16,
-      `Martinworld Tour : code ${rc} relu (Saint-Martinotz, demi-finale, ${JSON.stringify(got)})`);
+      && f.text(3, 3, 18) === 'MARGAUX-LES-NEIGES' && f.peek('c_pl', 0) === 16,
+      `Martinworld Tour : code ${rc} relu (Margaux-les-Neiges, demi-finale, ${JSON.stringify(got)})`);
   }
   // menu : explication ; ni lieu, ni conditions, ni surface
   const m = boot(); toMenu(m); setOpts(m, { MODE: MODE.COMP, COMP: 6 }); m.tap('B'); m.run(30); toMenu(m); m.run(10);

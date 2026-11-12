@@ -11,7 +11,7 @@ colonnes 2 à 29, rangées 6 à 21 de l'écran), puis :
     après la police, tuiles $60 à $FF), les tuiles les plus proches sont
     fusionnées.
 Sortie : src/assets_gm.c (banque 14), src/assets_gm2.c (banque 6 : images 4
-à 6, version 2.47 : Saint-Martinotz, Copamargaux, Bruno-Bercy) et
+à 6, version 2.47 : Margaux-les-Neiges, Rio de Bruneiro, Deborcy Masters) et
 assets/preview_gm.png.
 Usage : python3 tools/gen_gm.py"""
 import os, math, random
@@ -344,7 +344,7 @@ def newyork():
     return im, pals, anim
 
 def alps():
-    """Saint-Martinotz (glace) : les Alpes en hiver, un sommet pointu enneigé,
+    """Margaux-les-Neiges (glace) : les Alpes en hiver, un sommet pointu enneigé,
     des sapins, un chalet ; au premier plan, un court de tennis sur une
     patinoire. La neige tombe (sprites)"""
     bg = 0x21
@@ -407,7 +407,7 @@ def alps():
     return im, pals, anim
 
 def rio():
-    """Copamargaux (plage) : la baie de Rio, le Pain de Sucre et son
+    """Rio de Bruneiro (plage) : la baie de Rio, le Pain de Sucre et son
     téléphérique, le Corcovado et sa statue ; la mer qui scintille, la
     plage et son filet, les palmiers, et la célèbre promenade aux vagues
     noires et blanches"""
@@ -473,7 +473,7 @@ def rio():
     return im, pals, anim
 
 def bercy():
-    """Bruno-Bercy (moquette, en salle) : le palais omnisports de Bercy la
+    """Deborcy Masters (moquette, en salle) : le palais omnisports de Bercy la
     nuit, ses pentes de gazon et sa charpente, les projecteurs qui balaient
     le ciel ; la Seine reflète les lumières"""
     bg = 0x0F
@@ -642,7 +642,7 @@ for k, scene in enumerate(SCENES):
     preview.append(rgb)
 # grande aiguille de Big Ben : 3 tuiles de sprite (couleur 1), retournées
 # pour 8 directions : verticale (colonne 4), diagonale, horizontale (rangée 4) ;
-# puis un flocon de neige (Saint-Martinotz)
+# puis un flocon de neige (Margaux-les-Neiges)
 hand_v = [[1 if x == 4 else 0 for x in range(8)] for y in range(8)]
 hand_d = [[1 if x == 7 - y else 0 for x in range(8)] for y in range(8)]
 hand_h = [[1 if y == 4 else 0 for x in range(8)] for y in range(8)]

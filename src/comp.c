@@ -273,7 +273,7 @@ static u8 rd_of(void) { u8 s = c_stage, n = nrounds(); while (s >= n) s -= n; re
    jouer sur toutes les surfaces (glace, plage, moquette) */
 static const u8 ev_surf[7] = { 2, 0, 1, 2, 5, 4, 3 };
 static const char * const ev_name[7] = { "OPEN D'AUGUSTRALIE", "DEBOGARROS", "MARTINBLEDON", "US OPAUL",
-                                         "SAINT-MARTINOTZ", "COPAMARGAUX", "BRUNO-BERCY" };
+                                         "MARGAUX-LES-NEIGES", "RIO DE BRUNEIRO", "DEBORCY MASTERS" };
 /* ordre du Martinworld Tour, comme un calendrier : Augustralie (janvier), la
    glace des Alpes (février), terre, gazon, la plage (l'été), US Opaul, puis
    la moquette de Bercy (l'automne, en salle) */
