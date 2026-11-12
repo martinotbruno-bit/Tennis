@@ -246,7 +246,7 @@ def body(f, j, female, face, front=('armR', 'legL'), racket_hand='L', racket_dir
             tid = f.part(f.m_poly(pts), O, o, sh=(4, 2))
             # poitrine : volume suggéré par une ombre douce sous chaque sein
             bx = abs(hpR[0] - hpL[0]) * 0.27
-            by = lerp(nk, lerp(hpL, hpR, 0.5), 0.3)[1]
+            by = lerp(nk, lerp(hpL, hpR, 0.5), 0.21)[1]
             for sx in (-1, 1):
                 c_ = (nk[0] + sx * bx, by)
                 e_ = f.m_ell(c_, bx * 0.9, 4.6)
