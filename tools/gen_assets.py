@@ -1539,12 +1539,40 @@ def persp_lines(w):
     est rétréci"""
     verts = [(x, TOP_BASE, BOT_BASE) for x in (DBL_L, SGL_L, SGL_R, DBL_R)]
     verts += [(CENTER_X, TOP_SERV, BOT_SERV), (CENTER_X, TOP_BASE + 1, TOP_BASE + 3), (CENTER_X, BOT_BASE - 3, BOT_BASE - 1)]
+    def lx(X, ty):
+        sc = 1 / (1 + PERSP_A * persp_d(ty * 8 + 4))
+        return int(round(128 + (X + 0.5 - 128) * sc - 0.5))
+    # Au filet, chaque ligne doit ressortir là où elle entre : la rangée de
+    # tuiles visible au-dessus (t - 2) et celle au-dessous (t + 1) du filet
+    # (rangée t) prennent la même colonne. Sinon, la marche d'un pixel tombe
+    # derrière le filet et la ligne paraît cassée. Au-dessus du filet,
+    # l'escalier de la ligne est décalé d'une rangée, en remontant, jusqu'à
+    # rejoindre sa place : chaque marche reste d'un pixel.
+    ny = round(216 - PERSP_K * 0.5 / (1 + PERSP_A * 0.5))
+    t = ny // 8
+    fix = {}
+    for (X, y0, y1) in verts[:4]:
+        b = lx(X, t + 1)
+        if lx(X, t - 2) == b: continue
+        m = {t: b, t - 1: b, t - 2: b}
+        ty = t - 3
+        while ty >= TOP_BASE // 8:
+            n, prev = lx(X, ty), m[ty + 1]
+            if abs(n - prev) <= 1:
+                break                      # l'escalier a rejoint sa place
+            m[ty] = prev + (1 if n > prev else -1)
+            ty -= 1
+        fix[X] = m
     for ys in range(32, 240):
         Y = persp_inv(128, ys + 0.5)[1]
         sc = 1 / (1 + PERSP_A * persp_d((ys // 8) * 8 + 4))
         for (X, y0, y1) in verts:
             if y0 <= Y < y1 + 1:
                 xs = int(round(128 + (X + 0.5 - 128) * sc - 0.5))
+                f = fix.get(X, {}).get(ys // 8)
+                if f is not None and f != xs:
+                    w[ys][xs] = w[ys][xs + (2 if f < xs else -2)]   # efface la ligne échantillonnée
+                    xs = f
                 w[ys][xs] = 2
 
 KEEP = set(range(0x60)) | set(crowd_idx) | set(cheer_idx) | set(crowdb_idx) | set(cheerb_idx) | \

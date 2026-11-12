@@ -1,10 +1,16 @@
-# Royal Martinot — Rapport de réalisation (version 2.50)
+# Royal Martinot — Rapport de réalisation (version 2.51)
 
 Comme l'exige le CDC (§ 17.5), ce rapport distingue ce qui est **réalisé**, **testé**, **validé sur matériel réel**, **validé uniquement en émulation**, **dépendant d'une extension**, et les **limitations restantes**.
 
 > **Validation matérielle : aucune.** Aucun test n'a été fait sur console réelle (NES, Famicom, PAL, cartouche MMC1). Toutes les validations ont eu lieu en émulation (jsnes) et par des tests unitaires sur PC. Les critères « vérifié sur console physique » (CDC § 2.1, 15.4, 16.A) **ne sont pas remplis**. Ce point ne peut pas être traité dans l'environnement de développement utilisé.
 
 ## 1. Évolutions
+
+### Version 2.51
+
+| Demande | Réalisation |
+|---|---|
+| Défaut d'alignement des lignes du court des deux côtés du filet (vue en perspective) | En perspective, les lignes obliques ne se décalent d'un pixel qu'aux frontières de rangées de tuiles (8 px), pour économiser les tuiles. Pour les 4 lignes de côté, une de ces marches tombait derrière le filet : la ligne ressortait du filet un pixel plus loin qu'elle n'y entrait, et paraissait cassée. Désormais, chaque ligne ressort exactement où elle entre (mêmes colonnes juste au-dessus et juste au-dessous du filet) ; au-dessus du filet, l'escalier de la ligne est décalé d'une rangée jusqu'à rejoindre sa place, chaque marche restant d'un pixel. Mesuré sur les 4 lignes, tous lieux ; même nombre de tuiles |
 
 ### Version 2.50
 
