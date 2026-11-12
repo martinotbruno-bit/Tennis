@@ -305,3 +305,51 @@ void cer_draw(void)
         for (p = 0; p < npl; ++p)
             if ((p & 1) == sc_winner) { at(p); spr1((u8)(qx + 10), (u8)(qy - 6), (u8)(prop_tile13 + 3), 2); }   /* raquette lâchée */
 }
+
+/* ---------------------------------------------------------------------- */
+/* Bustes « bras caché » pour le joueur vu de dos (version 2.52). Dans les
+ * gestes où un bras passe devant le buste (préparations, revers, volée,
+ * impact du service), le dessin commun aux deux vues montre le bras : juste
+ * de face, mais de dos il barrerait le dos. Pour chaque joueur vu de dos
+ * dans un de ces gestes, les 2 tuiles de son buste « bras caché » sont
+ * chargées dans une case (2 cases à la fin de la zone partagée, libres
+ * pendant l'échange : jeu R complet) ; row1_ovr dit à spr_person (sprp.s)
+ * d'utiliser la case pour la rangée du buste. Le chargement passe par le
+ * tampon VRAM (swap_put) : tuiles et sprites changent dans la même image.
+ * Appelé après le calcul des poses (match_draw) et pendant les ralentis. */
+extern const unsigned char xrow1[], xpose_idx[], slot_tile13;
+extern u8 pose_now[4], swap_on, swap_nude, row1_ovr[4];
+extern u16 swp_dst;
+
+u8 __fastcall__ swap_put(const u8 *src);
+#pragma bss-name(push, "SAVEDATA")
+static u8 slot_have[2];
+#pragma bss-name(pop)
+void slot_tick(void)
+{
+    u8 p, k, s, want, t;
+    const u8 *d;
+    if (swap_on != 2 || swap_nude) {
+        slot_have[0] = slot_have[1] = 0xFF;
+        row1_ovr[0] = row1_ovr[1] = row1_ovr[2] = row1_ovr[3] = 0;
+        return;
+    }
+    for (p = 0; p < 4; ++p) {
+        row1_ovr[p] = 0;
+        if (p >= npl || ((p & 1) ^ sc_swap)) continue;         /* vu de face (en haut) */
+        k = xpose_idx[pose_now[p] & 31];
+        if (k == 0xFF) continue;
+        want = (u8)(k * 2 + (char_female[cfg.chr[p]] ? 1 : 0));
+        s = (u8)(p >> 1);
+        t = (u8)(slot_tile13 + s * 2);
+        if (slot_have[s] != want) {
+            d = xrow1 + (u16)want * 32;
+            swp_dst = 0x1000 + ((u16)t << 4);
+            if (!swap_put(d)) continue;                         /* tampon plein : l'image suivante */
+            swp_dst += 16;
+            if (!swap_put(d + 16)) { slot_have[s] = 0xFF; continue; }
+            slot_have[s] = want;
+        }
+        row1_ovr[p] = t;
+    }
+}

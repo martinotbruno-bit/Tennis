@@ -152,12 +152,15 @@ u8 ump_princess;                 /* 1 : arbitre princesse (court Margaux), lu pa
 /* ---------------------------------------------------------------------- */
 #pragma bss-name(push, "WBSS")
 u8 swap_on, swap_nude;              /* jeu chargé et complet (0 : en cours) ; tenues au naturel */
+u8 row1_ovr[4];                     /* buste « bras caché » du joueur vu de dos (slot_tick, cer.c), 0 : aucun */
 static u8 swap_want, swap_pos;
 u16 swp_dst;                        /* destination de swap_put (crt0.s) */
 #pragma bss-name(pop)
 u8 __fastcall__ swap_put(const u8 *src);   /* crt0.s, banque 13 (far_call) */
 extern u8 cer;                              /* séquence animée en cours (cer.c) */
 extern u16 cer_t;
+extern u8 pose_now[4];
+void slot_tick(void);                       /* banque 13 (cer.c) */
 static const u8 *swap_src(u8 set)
 {
     if (set == 1) return swap_nude ? swap_nudeC : swap_chrC;
@@ -172,6 +175,7 @@ static void swap_sync(u8 set)
 }
 void swap_restore(void)
 {
+    row1_ovr[0] = row1_ovr[1] = row1_ovr[2] = row1_ovr[3] = 0;   /* écrans : dessins communs */
     if (swap_on == 1 && !swap_nude) return;
     swap_nude = 0;
     swap_sync(1);
@@ -453,6 +457,9 @@ void rp_play(void)
         for (j = i; j > 0 && e[5 + ord[j - 1] * 3] < e[5 + k * 3]; --j) ord[j] = ord[j - 1];
         ord[j] = k;
     }
+    /* bustes « bras caché » des joueurs vus de dos (poses du ralenti) */
+    for (p = 0; p < npl; ++p) pose_now[p] = pose_ok((u8)(e[6 + p * 3] & 31));
+    bank_call(BANK_SWAP, slot_tick);
     for (i = 0; i < npl; ++i) {
         p = ord[i];
         a = e[6 + p * 3];

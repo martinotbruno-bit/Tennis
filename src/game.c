@@ -70,7 +70,7 @@ extern u8 dive_t[4], dive_f[4];        /* plongeon en cours (poses.s) */
 /* séquences animées (banque 13, cer.c) */
 extern u8 cer, pose_force[4];
 void cer_entry(void); void cer_save(void); void cer_change(void); void cer_end(void);
-void cer_tick(void); void cer_draw(void); void cer_front(void);
+void cer_tick(void); void cer_draw(void); void cer_front(void); void slot_tick(void);
 void poses_all(void);
 u8 hit_pass, hit_jump;                 /* dernière frappe : adversaire au filet, smash sauté */
 u8 tired;                              /* fatigue de l'échange en cours, 0..10 */
@@ -1187,6 +1187,7 @@ void match_draw(void)
         spr_ball((u8)PX(bx), PX(by) - sy - 3, (u8)PX(by), k);
     }
     bank_call(BANK_EXTRAS, poses_all);     /* poses et miroirs, balle du dribble, glissades */
+    bank_call(BANK_SWAP, slot_tick);            /* bustes « bras caché » (joueur vu de dos) */
     if (cer) bank_call(BANK_SWAP, cer_front);   /* serviette, gourde (devant les joueurs) */
     for (i = 0; i < npl; ++i) {
         p = ord[i];

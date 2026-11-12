@@ -1852,6 +1852,34 @@ console.log('Séquences animées du match');
     check(shake && close && salute && app(e) !== AS.MATCH && frames < 700, `${dbl ? 'double' : 'simple'} : poignée de main au filet, salut à l'arbitre, puis les résultats (${frames} trames)`);
   }
 }
+console.log('Bras devant le buste : vue de dos');
+{
+  // gestes où un bras passe devant le buste : de face, le bras est visible ;
+  // de dos, le buste « bras caché » est chargé à la volée (case de la zone
+  // partagée) et utilisé pour ce joueur seulement
+  const X = new Set([8, 10, 11, 13, 22, 23, 24, 25, 26]);
+  const e = boot(); startWith(e, { FMT: 3, SURF: 1 }); allCpu(e);
+  let back = 0, backOk = 0, front = 0, frontOk = 0;
+  const o = e.addr('oam_buf');
+  for (let f = 0; f < 20000 && (back < 5 || front < 5); f++) {
+    e.run(1);
+    if (e.peek('swap_on') !== 2) continue;
+    for (let p = 0; p < 2; p++) {
+      const k = e.peek('pose_now', p) & 31;
+      if (!X.has(k)) continue;
+      const isBack = ((p & 1) ^ e.peek('sc_swap')) === 0, ovr = e.peek('row1_ovr', p);
+      if (isBack) {
+        back++;
+        // la case est utilisée dans l'OAM (rangée du buste du joueur)
+        let used = false;
+        for (let i = 0; i < 64; i++) if (e.nes.cpu.mem[o + i * 4 + 1] === ovr || e.nes.cpu.mem[o + i * 4 + 1] === ovr + 1) used = true;
+        if (ovr && used) backOk++;
+      } else { front++; if (ovr === 0) frontOk++; }
+    }
+  }
+  check(back >= 5 && backOk === back && front >= 5 && frontOk === front,
+    `vu de dos : buste « bras caché » chargé à la volée (${backOk}/${back}) ; vu de face : bras visible (${frontOk}/${front})`);
+}
 console.log('Cérémonies de fin de compétition');
 {
   // compétition classique gagnée : remise des médailles (3e, 2e, puis 1er

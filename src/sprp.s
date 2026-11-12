@@ -23,6 +23,7 @@ pj_hi:   .res 1
 .segment "CODE"
 .export _spr_person
 .export _run_x, _run_y, _run_dir, _run_pose
+.import _row1_ovr
 .import _spr_meta, _oam_buf
 .importzp _meta_x, _meta_y, _meta_tile, _meta_attr, _meta_t1, _meta_t2, _oam_i
 .import _person_map_m, _person_map_f, _person_row, _prof_map, _char_female
@@ -224,6 +225,15 @@ _spr_person:
     lda _person_map_f+2,y
     sta pt2
 @tiles:
+    ; joueur vu de dos dans un geste où un bras passe devant le buste : buste
+    ; « bras caché », chargé à la volée (row1_ovr, slot_tick dans cer.c)
+    lda pj_sg
+    and #3
+    tax
+    lda _row1_ovr,x
+    beq :+
+    sta pt1
+:
 
     ; course : de profil si le déplacement est surtout latéral
     ldy ppose

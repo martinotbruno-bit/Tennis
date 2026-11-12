@@ -924,6 +924,7 @@ def draw_supine(view, female, nude=False):
     line(c, 6, 14, 4, 10, 1); line(c, 6, 20, 4, 23, 1)  # bras écartés
     return c
 
+HIDE_ARM = False
 def draw_person(view, legs, arms, female, nude=False):
     if legs == 'dive':
         return draw_dive(view, female, nude)
@@ -1122,9 +1123,11 @@ def draw_person(view, legs, arms, female, nude=False):
         fill(c, 3, 9, 3, 12, 1)
         racket(c, 3, 13, 3, 18, 5)
     elif arms == 'angry':
-        # colère : la raquette tape le sol, tête baissée
-        line(c, 5, 9, 7, 15, 1); line(c, 10, 9, 8, 15, 1)
-        racket(c, 8, 16, 8, 20, 5)
+        # colère : la raquette tape le sol à côté du pied, poing serré, tête
+        # baissée (les bras ne passent pas devant le buste : même dessin de
+        # face et de dos)
+        line(c, 11, 9, 13, 14, 1); racket(c, 13, 15, 13, 20, 5)
+        fill(c, 3, 9, 3, 12, 1); fill(c, 3, 13, 4, 13, 1)
     elif arms == 'tired':
         # fatigue : mains sur les genoux
         line(c, 4, 9, 3, 17, 1); line(c, 11, 9, 12, 17, 1)
@@ -1153,11 +1156,11 @@ def draw_person(view, legs, arms, female, nude=False):
         for y in range(16, 24):
             for x in range(16):
                 if tmp[y][x]: c[y][x] = tmp[y][x]
-    if not nude:
-        # un bras qui passe devant le buste (préparations, revers, volée) prend
-        # la couleur du maillot, comme une manche : vu de dos, une barre
-        # couleur chair barrait le dos. Le même dessin sert aux deux vues
-        # (tuiles partagées : la place manque pour des bras différents)
+    if HIDE_ARM and not nude:
+        # variante « vu de dos » : un bras (ou le manche) qui passe devant le
+        # buste est caché par le corps (sinon une barre couleur chair barre le
+        # dos). Ces tuiles du buste sont chargées à la volée pour le joueur
+        # vu de dos (slot_tick, cer.c) : le dessin commun garde le bras visible
         for y in range(8, 14):
             for x in range(5, 11):
                 if c[y][x] == 1: c[y][x] = 2
@@ -2043,6 +2046,28 @@ for cls in ('C', 'R', 'F'):
     _sw.append(c_array('swap_chr%s' % cls, b''.join(encode_tile(t) for t in tiles)))
     _sw.append(c_array('swap_nude%s' % cls, b''.join(encode_tile(t) for t in nude)))
 _sw.append('/* accessoires des séquences (cer.c, même banque) : chaise, gourde, serviette, raquette */\nconst unsigned char prop_tile13 = 0x%02X;' % PROP0)
+# bustes « bras caché » pour la vue de dos (version 2.52) : les poses dont un
+# bras passe devant le buste ; 2 tuiles (rangée du buste) par pose et par
+# silhouette, chargées à la volée dans 2 cases (une par joueur vu de dos) à
+# la fin de la zone partagée, libre pendant l'échange (jeu R : 28 tuiles)
+def _row1(view, legs, arms, fem, hide):
+    global HIDE_ARM
+    HIDE_ARM = hide
+    t = canvas_tiles(draw_person(view, legs, arms, fem))
+    HIDE_ARM = False
+    return (t[2], t[3])
+XP = [k for k, (legs, arms) in enumerate(POSES) if legs not in ('dive', 'supine')
+      and any(_row1('back', legs, arms, f, True) != _row1('back', legs, arms, f, False) for f in (0, 1))]
+SLOT0 = SWAP0 + len(swap_sets['R'][0])
+assert NSWAP - len(swap_sets['R'][0]) >= 4, 'pas de place pour les cases des bustes'
+print('bustes vus de dos : poses', XP, ', cases', hex(SLOT0))
+_x = []
+for k in XP:
+    for f in (0, 1):
+        _x += list(_row1('back', POSES[k][0], POSES[k][1], f, True))
+_sw.append(c_array('xrow1', b''.join(encode_tile(t) for t in _x)))
+_sw.append(c_array('xpose_idx', bytes([XP.index(k) if k in XP else 255 for k in range(NPOSE)])))
+_sw.append('const unsigned char slot_tile13 = 0x%02X;' % SLOT0)
 with open(os.path.join(ROOT, 'src', 'assets_swap.c'), 'w') as f:
     f.write('\n'.join(_sw) + '\n')
 
