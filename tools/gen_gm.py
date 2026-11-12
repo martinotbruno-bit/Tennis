@@ -204,27 +204,62 @@ def newyork():
     random.seed(3)
     for _ in range(12):
         im.put(random.randrange(W), random.randrange(40), 0x30)
-    # gratte-ciel (à droite de la statue), alignés sur les tuiles ; fenêtres
-    # régulières (2 par tuile), allumées par étage, en deux groupes
-    random.seed(5)
-    x = 96
-    heights = [72, 48, 96, 56, 84, 64, 100, 52, 76]
-    widths = [16, 24, 16, 24, 16, 16, 24, 16]
-    n = 0
-    while x < W:
-        w = widths[n % len(widths)]
-        h = heights[n % len(heights)]
-        n += 1
+    # gratte-ciel (à droite de la statue) : tours fines séparées par le ciel,
+    # hauteurs variées, et trois silhouettes célèbres : l'Empire State
+    # Building (gradins et antenne), le Chrysler Building (couronne en arcs,
+    # flèche) et une tour effilée façon One World Trade Center
+    G = 0x00
+    def windows(x0, x1, top, bottom):
+        # fenêtres de 1 x 2 px sur une grille fixe de l'écran (colonnes x = 4k + 1,
+        # étages y = 4k + 1) ; chaque tuile prend l'un de 3 motifs d'éclairage :
+        # peu de tuiles différentes. Deux groupes de couleurs (scintillement).
+        for wy in range(top + 3, bottom - 2):
+            if wy % 4 != 1: continue
+            for wx in range(x0 + 2, x1 - 1):
+                if wx % 4 != 1: continue
+                pat = ((wx // 8) * 5 + (wy // 8) * 3) % 3
+                lit = (pat == 0) or (pat == 1 and (wx // 4 + wy // 4) % 2 == 0) or (pat == 2 and (wy // 4) % 2 == 0)
+                if lit:
+                    im.rect(wx, wy, wx, wy + 1, 0x38 if (wx // 8) % 2 else 0x28)
+    random.seed(9)
+    towers = [(88, 12, 44, 'f'), (100, 12, 72, 'f'), (116, 8, 52, 'f'), (128, 20, 96, 'empire'),
+              (152, 8, 60, 'f'), (164, 12, 88, 'chrysler'), (180, 8, 48, 'f'),
+              (192, 16, 80, 'wtc'), (212, 12, 60, 'f')]
+    for (x, w, h, kind) in towers:
         top = 112 - h
-        im.rect(x, top, x + w - 1, 111, 0x00)
-        if w == 24 and random.random() < 0.5:
-            im.rect(x + 10, top - 8, x + 13, top - 1, 0x00)    # antenne
-        for wy in range(top + 2, 108, 8):
-            on = random.random()
-            for wx in range(x + 1, x + w - 1, 4):
-                if on < 0.75:
-                    im.rect(wx, wy, wx + 1, wy + 3, 0x38 if ((wy // 8) + (x // 8)) % 2 else 0x28)
-        x += w
+        x1 = x + w - 1
+        if kind == 'empire':
+            im.rect(x, top + 26, x1, 111, G)                  # base
+            im.rect(x + 3, top + 14, x1 - 3, top + 26, G)     # premier gradin
+            im.rect(x + 6, top + 6, x1 - 6, top + 14, G)      # second gradin
+            im.rect(x + 9, top - 10, x1 - 9, top + 6, G)      # flèche et antenne
+            windows(x, x1, top + 26, 111); windows(x + 3, x1 - 3, top + 14, top + 26)
+            im.put(x + 10, top - 12, 0x38)                    # feu de l'antenne
+        elif kind == 'chrysler':
+            im.rect(x, top + 16, x1, 111, G)
+            cx = (x + x1) / 2
+            for k in range(4):                                # couronne en arcs, lumineuse
+                r = (w // 2) - 2 * k
+                for a in range(0, 181, 15):
+                    t = math.radians(a)
+                    im.put(cx + r * math.cos(t), top + 16 - k * 4 - r * 0.6 * math.sin(t), 0x38)
+            im.line(cx, top + 2, cx, top - 12, G)              # flèche
+            im.poly([(x + 2, top + 16), (cx, top), (x1 - 1, top + 16)], G)
+            for k in range(4):
+                r = (w // 2) - 2 * k - 1
+                for a in range(0, 181, 30):
+                    t = math.radians(a)
+                    im.put(cx + r * math.cos(t), top + 14 - k * 4 - r * 0.5 * math.sin(t), 0x38)
+            windows(x, x1, top + 16, 111)
+        elif kind == 'wtc':
+            im.poly([(x, 112), (x + 4, top), (x1 - 3, top), (x1 + 1, 112)], G)   # tour effilée
+            im.line((x + x1) // 2, top, (x + x1) // 2, top - 14, G)             # antenne
+            windows(x + 2, x1 - 2, top + 2, 111)
+        else:
+            im.rect(x, top, x1, 111, G)
+            if h >= 60:
+                im.rect(x + w // 2 - 1, top - 6, x + w // 2, top - 1, G)        # petite antenne
+            windows(x, x1, top, 111)
     # eau de la baie (motif régulier)
     for y in range(112, 128):
         for x in range(W):
