@@ -1851,6 +1851,10 @@ def persp_build(e):
         for xs in range(32, 224):
             X, Y = persp_inv(xs + 0.5, ys + 0.5)
             X, Y = int(X), int(min(239, max(32, Y)))
+            if CHAIR_X <= X < CHAIR_X + 16 and CHAIR_Y <= Y < CHAIR_Y + 32:
+                Y = CHAIR_Y - 1                           # sous la chaise d'arbitre (redessinée à sa place) : les abords
+                                                          # (rangée juste au-dessus) ; sinon ses pixels, échantillonnés,
+                                                          # laissaient une bande à côté d'elle, contre le poteau du filet
             w[ys][xs] = bmp[Y][X] if 32 <= X < 224 else 0     # au-delà : abords (couleur de fond)
     persp_lines(w)
     persp_net(w)

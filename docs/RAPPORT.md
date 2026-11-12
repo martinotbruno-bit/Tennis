@@ -1,10 +1,16 @@
-# Royal Martinot — Rapport de réalisation (version 2.54)
+# Royal Martinot — Rapport de réalisation (version 2.55)
 
 Comme l'exige le CDC (§ 17.5), ce rapport distingue ce qui est **réalisé**, **testé**, **validé sur matériel réel**, **validé uniquement en émulation**, **dépendant d'une extension**, et les **limitations restantes**.
 
 > **Validation matérielle : aucune.** Aucun test n'a été fait sur console réelle (NES, Famicom, PAL, cartouche MMC1). Toutes les validations ont eu lieu en émulation (jsnes) et par des tests unitaires sur PC. Les critères « vérifié sur console physique » (CDC § 2.1, 15.4, 16.A) **ne sont pas remplis**. Ce point ne peut pas être traité dans l'environnement de développement utilisé.
 
 ## 1. Évolutions
+
+### Version 2.55
+
+| Demande | Réalisation |
+|---|---|
+| Il subsiste un défaut de terrain au niveau du poteau gauche en perspective | Entre la chaise d'arbitre et le poteau gauche du filet, une bande de 3 px couleur du court (et un morceau de chaise en trop) descendait le long de la chaise. Cause : l'image en perspective est calculée en échantillonnant le court à plat ; à côté de la chaise, l'échantillonnage tombait sur la chaise dessinée à plat, ensuite redessinée à sa place. Sous la chaise, l'échantillonnage prend maintenant les abords (la rangée juste au-dessus). Vérifié dans les 6 lieux ; 5 tuiles de moins par lieu en perspective |
 
 ### Version 2.54
 

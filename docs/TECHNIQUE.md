@@ -383,7 +383,7 @@ Au club, 4 bandes de spectateurs de 2 rangées. En salle, des gradins sur les 16
 
 ### Vue en perspective (option VUE, version 2.42)
 
-Alignement au filet (version 2.51) : `persp_lines` (gen_assets.py) donne à chaque ligne de côté la même colonne dans la rangée de tuiles visible au-dessus du filet et dans celle au-dessous ; au-dessus, l'escalier de la ligne est décalé d'une rangée en remontant jusqu'à rejoindre sa place (marches d'un pixel), la ligne échantillonnée du court à plat est effacée là où elle change de colonne.
+Chaise d'arbitre (version 2.55) : dans `persp_build`, un point du court à plat qui tombe sous la chaise prend la valeur de la rangée juste au-dessus de la chaise (les abords) : la chaise est redessinée à sa place ensuite, ses pixels échantillonnés ne laissent plus de bande à côté d'elle. Alignement au filet (version 2.51) : `persp_lines` (gen_assets.py) donne à chaque ligne de côté la même colonne dans la rangée de tuiles visible au-dessus du filet et dans celle au-dessous ; au-dessus, l'escalier de la ligne est décalé d'une rangée en remontant jusqu'à rejoindre sa place (marches d'un pixel), la ligne échantillonnée du court à plat est effacée là où elle change de colonne.
 
 Le jeu calcule tout à plat, comme avant ; seul l'affichage est projeté. Projection retenue (15 %) : avec `a = 1/0,85 − 1` et `d = (216 − Y) / 168` (0 sur la ligne de fond du bas, 1 sur celle du haut), l'échelle vaut `s = 1 / (1 + a·d)`, puis `y' = 216 − 168·(1 + a)·d·s` et `x' = 128 + (X − 128)·s`. La ligne de fond du haut est donc 15 % plus étroite que celle du bas, et les distances se tassent vers le fond.
 

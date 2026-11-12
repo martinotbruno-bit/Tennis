@@ -13,4 +13,4 @@ const unsigned char * const persp_rle[7] = { persp_rle0, persp_rle1, persp_rle2,
 const unsigned char * const persp_chr[7] = { persp_chr0, persp_chr1, persp_chr2, persp_chr3, persp_chr4, persp_chr5, persp_chr1 };
 const unsigned char * const persp_slot[7] = { persp_slot0, persp_slot1, persp_slot2, persp_slot3, persp_slot4, persp_slot5, persp_slot1 };
 const unsigned char * const persp_ps[7] = { persp_ps0, persp_ps1, persp_ps2, persp_ps3, persp_ps4, persp_ps5, persp_ps1 };
-const unsigned char persp_ntile[7] = { 103, 111, 105, 77, 77, 105, 111 };
+const unsigned char persp_ntile[7] = { 98, 106, 100, 72, 72, 100, 106 };
