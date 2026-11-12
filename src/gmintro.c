@@ -74,8 +74,8 @@ void gm_intro_build(void)
 /* à chaque trame : couleurs qui tournent, aiguille de Big Ben */
 void gm_intro_tick(void)
 {
-    static const u8 dx[8] = { 128, 132, 132, 132, 128, 124, 124, 124 };
-    static const u8 dy[8] = { 80, 80, 84, 88, 88, 88, 84, 80 };
+    static const u8 dx[8] = { 126, 130, 130, 130, 126, 122, 122, 122 };
+    static const u8 dy[8] = { 82, 82, 86, 90, 90, 90, 86, 82 };
     static const u8 tl[8] = { 0, 1, 2, 1, 0, 1, 2, 1 };
     static const u8 fl[8] = { 0, 0, 0, 0x80, 0x80, 0xC0, 0x40, 0x40 };
     u8 k = (u8)(gm_ev & 3), pal, n, i, j, s, q, d;
@@ -95,7 +95,7 @@ void gm_intro_tick(void)
     }
     spr_begin();
     if (k == 2) {
-        /* centre du cadran : image (116, 40), soit l'écran (132, 88) ; une
+        /* centre du cadran : image (114, 42), soit l'écran (130, 90) ; une
            direction toutes les 16 trames (8 directions, tuiles retournées) */
         d = (u8)((gm_t >> 4) & 7);
         spr1(dx[d], dy[d], (u8)(trophy_tile + tl[d]), fl[d]);

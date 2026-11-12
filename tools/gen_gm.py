@@ -159,40 +159,87 @@ def paris():
     return im, pals, anim
 
 def london():
-    """Martinbledon : Big Ben et le Parlement par beau temps, gazon rayé au
-    premier plan ; l'aiguille de l'horloge tourne (sprite)"""
+    """Martinbledon : Londres par beau temps. Big Ben (clocheton gothique,
+    flèche et pinacles, grand cadran : la grande aiguille est un sprite qui
+    tourne), le Parlement et ses tourelles, la Victoria Tower, la grande roue
+    du London Eye ; au premier plan, un court de Wimbledon : bâche violette,
+    gazon rayé, lignes blanches et filet"""
     bg = 0x21
     im = Img(bg)
-    for (cx, cy, rx, ry) in ((40, 18, 22, 7), (60, 14, 16, 8), (170, 26, 26, 8), (190, 20, 14, 7)):
+    for (cx, cy, rx, ry) in ((34, 12, 18, 6), (52, 9, 12, 6), (150, 16, 20, 6), (166, 12, 10, 5)):
         im.ellipse(cx, cy, rx, ry, 0x30)       # nuages
-    # Parlement (bas, sur toute la largeur), fenêtres en ogive
-    im.rect(0, 70, 223, 111, 0x37)
-    for x in range(0, 224, 8):
-        im.rect(x, 66, x + 3, 69, 0x37)        # créneaux
-        if 92 <= x <= 140: continue
-        im.rect(x + 2, 76, x + 4, 84, 0x07)
-        im.rect(x + 2, 92, x + 4, 100, 0x07)
-    im.rect(0, 106, 223, 111, 0x27)
-    # Big Ben (tour), horloge, flèche
-    tx0, tx1 = 96, 136
-    im.rect(tx0, 22, tx1, 111, 0x37)
-    im.rect(tx0, 22, tx0 + 3, 111, 0x27); im.rect(tx1 - 3, 22, tx1, 111, 0x27)
-    for y in range(60, 100, 8):
-        im.rect(tx0 + 8, y, tx0 + 10, y + 5, 0x07); im.rect(tx1 - 10, y, tx1 - 8, y + 5, 0x07)
-    im.ellipse(116, 40, 15, 15, 0x27)
-    im.ellipse(116, 40, 13, 13, 0x30)          # cadran (la grande aiguille est un sprite qui tourne)
+    # London Eye (à droite) : jante, rayons, nacelles, pieds en A
+    ex, ey, er = 194, 50, 27
+    for a in range(0, 360, 2):
+        t = math.radians(a)
+        im.put(ex + er * math.cos(t), ey + er * math.sin(t), 0x30)
+        im.put(ex + (er - 1) * math.cos(t), ey + (er - 1) * math.sin(t), 0x30)
+    for a in range(0, 360, 30):
+        t = math.radians(a)
+        im.line(ex, ey, ex + (er - 2) * math.cos(t), ey + (er - 2) * math.sin(t), 0x0F)
+        im.rect(ex + er * math.cos(t) - 1, ey + er * math.sin(t) - 1, ex + er * math.cos(t) + 1, ey + er * math.sin(t) + 1, 0x30)
+    im.line(ex, ey, ex - 14, 95, 0x0F); im.line(ex, ey, ex + 14, 95, 0x0F)
+    # Victoria Tower (à gauche) : grosse tour carrée, tourelles d'angle, mât
+    vx0, vx1, vtop = 8, 36, 30
+    im.rect(vx0, vtop, vx1, 95, 0x37)
+    for x in (vx0, vx1 - 3):
+        im.rect(x, vtop - 8, x + 3, 95, 0x27)             # tourelles d'angle
+        im.poly([(x - 1, vtop - 8), (x + 1.5, vtop - 14), (x + 4, vtop - 8)], 0x07)
+    for y in range(vtop + 8, 92, 16):
+        for x in range(16, vx1 - 4, 8):
+            im.rect(x, y, x + 1, y + 7, 0x07)               # fenêtres en ogive
+            im.put(x, y - 1, 0x07)
+    im.line(22, vtop - 8, 22, vtop - 22, 0x07)              # mât et drapeau
+    im.rect(23, vtop - 22, 30, vtop - 18, 0x07)
+    # Parlement : façade gothique, tourelles régulières, fenêtres en ogive
+    im.rect(36, 68, 172, 95, 0x37)
+    for x in range(40, 172, 16):
+        im.rect(x, 62, x + 2, 95, 0x27)                     # contreforts
+        im.poly([(x - 1, 62), (x + 1, 55), (x + 3, 62)], 0x07)   # pinacles
+    for x in range(44, 170, 4):
+        if 94 <= x <= 132 or x % 16 == 8: continue
+        for y in (72, 84):
+            im.rect(x, y, x + 1, y + 7, 0x07)
+            im.put(x, y - 1, 0x07); im.put(x + 1, y - 1, 0x07)
+    im.rect(36, 92, 172, 95, 0x27)
+    # Big Ben : tour, clocheton, cadran, flèche et pinacles
+    tx0, tx1 = 98, 130
+    im.rect(tx0, 30, tx1, 95, 0x37)
+    for x in (tx0, tx1 - 2):
+        im.rect(x, 30, x + 2, 95, 0x27)                     # arêtes
+    for x in range(104, tx1 - 4, 8):
+        im.line(x, 58, x, 92, 0x27)                         # nervures
+    for y in range(64, 92, 8):
+        for x in (108, 116):
+            im.rect(x, y, x + 1, y + 4, 0x07); im.put(x, y - 1, 0x07)
+    im.rect(tx0, 30, tx1, 63, 0x27)                         # étage de l'horloge : pierre dorée (même palette que le cadran)
+    im.rect(tx0 - 3, 24, tx1 + 3, 30, 0x27)                 # corniche du beffroi
+    im.ellipse(114, 42, 14, 14, 0x27)                       # cadran (doré) : la grande aiguille est un sprite
+    im.ellipse(114, 42, 12, 12, 0x30)
     for k in range(12):
         a = k * math.pi / 6
-        im.put(116 + 11 * math.cos(a), 40 + 11 * math.sin(a), 0x0F)
-    im.line(116, 40, 121, 45, 0x0F); im.line(117, 40, 122, 45, 0x0F)   # petite aiguille
-    im.poly([(tx0 - 2, 22), (116, 0), (tx1 + 2, 22)], 0x07)   # flèche
-    im.rect(tx0 - 2, 20, tx1 + 2, 22, 0x27)
-    # gazon rayé et ligne de fond
+        im.put(114 + 10 * math.cos(a), 42 + 10 * math.sin(a), 0x0F)
+        if k % 3 == 0:
+            im.put(114 + 9 * math.cos(a), 42 + 9 * math.sin(a), 0x0F)
+    im.line(114, 42, 118, 46, 0x0F); im.line(115, 42, 119, 46, 0x0F)   # petite aiguille
+    im.rect(tx0 + 2, 14, tx1 - 2, 24, 0x37)                 # clocheton (beffroi)
+    for x in range(104, tx1 - 3, 8):
+        im.rect(x, 16, x + 2, 22, 0x07)                     # baies du beffroi
+    im.poly([(tx0, 14), (114, -2), (tx1, 14)], 0x07)        # flèche
+    for x in (tx0 + 1, tx1 - 3):
+        im.poly([(x - 1, 14), (x + 1, 6), (x + 3, 14)], 0x27)   # pinacles
+    im.rect(113, -2, 115, 2, 0x27)                          # croix dorée
+    # premier plan : bâche violette de Wimbledon, gazon rayé, lignes, filet
+    im.rect(0, 96, 223, 111, 0x14)
+    im.rect(0, 97, 223, 97, 0x30)                           # liserés blancs de la bâche
+    im.rect(0, 110, 223, 110, 0x30)
     for y in range(112, 128):
         for x in range(W):
             im.put(x, y, 0x2A if (x // 16) % 2 else 0x1A)
-    im.rect(0, 120, 223, 121, 0x30)
-    pals = [[bg, 0x0F, 0x27, 0x30], [bg, 0x37, 0x27, 0x07], [bg, 0x1A, 0x2A, 0x30], [bg, 0x30, 0x10, 0x0F]]
+    im.rect(0, 125, 223, 126, 0x30)                         # ligne de fond
+    im.rect(16, 116, 207, 116, 0x30)                        # ligne de service
+    im.rect(112, 116, 112, 126, 0x30)                       # ligne médiane
+    pals = [[bg, 0x0F, 0x27, 0x30], [bg, 0x37, 0x27, 0x07], [bg, 0x1A, 0x2A, 0x30], [bg, 0x30, 0x14, 0x0F]]
     anim = None
     return im, pals, anim
 

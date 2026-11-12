@@ -1,10 +1,16 @@
-# Royal Martinot — Rapport de réalisation (version 2.45)
+# Royal Martinot — Rapport de réalisation (version 2.46)
 
 Comme l'exige le CDC (§ 17.5), ce rapport distingue ce qui est **réalisé**, **testé**, **validé sur matériel réel**, **validé uniquement en émulation**, **dépendant d'une extension**, et les **limitations restantes**.
 
 > **Validation matérielle : aucune.** Aucun test n'a été fait sur console réelle (NES, Famicom, PAL, cartouche MMC1). Toutes les validations ont eu lieu en émulation (jsnes) et par des tests unitaires sur PC. Les critères « vérifié sur console physique » (CDC § 2.1, 15.4, 16.A) **ne sont pas remplis**. Ce point ne peut pas être traité dans l'environnement de développement utilisé.
 
 ## 1. Évolutions
+
+### Version 2.46
+
+| Demande | Réalisation |
+|---|---|
+| Travailler davantage Martinbledon | Image de l'annonce redessinée : Big Ben avec son étage de l'horloge en pierre dorée, un grand cadran blanc (chiffres et petite aiguille ; la grande aiguille tourne), un beffroi gothique, une flèche et des pinacles ; le Parlement avec ses contreforts surmontés de tourelles et ses rangées de fenêtres ; la tour Victoria et son drapeau ; la grande roue (London Eye) ; la bâche violette de Wimbledon et un court de gazon rayé, lignes blanches. 158 tuiles, aucune fusionnée. La grande aiguille (sprite) est recentrée sur le nouveau cadran |
 
 ### Version 2.45
 
@@ -383,7 +389,7 @@ Pour loger ce contenu, la cartouche passe de NROM (32 Ko) à **MMC1** : 128 Ko d
 | Relecture des textes (`check_texts.py`) | 0 problème |
 | Contraste (`contrast.py 25`) | 0 paire sous ΔE 25 (personnages, courts, balle, tenues) |
 | Profil CPU, double, 6 000 trames | 27 trames d'échange en dépassement (0,45 %), sans défaut d'image |
-| Compilation | Reproductible : SHA-256 `64baee826f1ac39e55b0858ae3b05ae9a891f12435f73839d757abcb55df0a66` sur deux compilations propres |
+| Compilation | Reproductible : SHA-256 `c33bd51aa77442549b159280c96f5cd8cd3e0b0a268bd8ea64298ba16fb68b12` sur deux compilations propres |
 
 ## 3. Conformité par section du CDC
 
