@@ -86,8 +86,8 @@ static const u8 count_val[3] = { 10, 20, 30 };
 
 /* nom de la compétition t (liste en banque 5) : copié dans comp_l2 */
 static const char *cname(u8 t) { COMP(comp_cname, t); return comp_l2; }
-/* titre du Grand Martinot ou du Tour du monde : « LE » et son nom */
-static void gs_title(u8 y) { txt_at(3, y, "LE "); txt_at(6, y, cname(c_type)); }
+/* titre du Grand Martinot ou du Martinworld Tour */
+static void gs_title(u8 y) { txt_at(3, y, c_type == CT_GRAND ? "LE GRAND MARTINOT" : "MARTINWORLD TOUR"); }
 /* écran d'étape ; au premier tour d'un tournoi du Grand Martinot, d'abord
    son annonce (banque 14 : image, nom, fanfare) */
 extern u8 gm_ev;
@@ -125,7 +125,7 @@ static void build_visible(void)
         if (opt_val[O_TYPE]) { vis[nvis++] = O_P2; vis[nvis++] = O_CPART; }   /* partenaire */
         vis[nvis++] = O_LEVEL;
         if (opt_val[O_COMP] != CT_SEASON && opt_val[O_COMP] < CT_GRAND) vis[nvis++] = O_SURF;   /* surfaces imposées */
-        if (opt_val[O_COMP] < CT_GRAND) { vis[nvis++] = O_ENV; vis[nvis++] = O_COND; }   /* Grand Martinot, Tour du monde : au stade, de jour */
+        if (opt_val[O_COMP] < CT_GRAND) { vis[nvis++] = O_ENV; vis[nvis++] = O_COND; }   /* Grand Martinot, Martinworld Tour : au stade, de jour */
         vis[nvis++] = O_FMT;
         vis[nvis++] = O_REPLAY;
         vis[nvis++] = O_GSPEED;
@@ -659,7 +659,7 @@ static void start_comp(void)
     c_surf = (u8)(opt_val[O_SURF] > 3 && (c_type == CT_SEASON || c_type >= CT_GRAND) ? 0 : opt_val[O_SURF]);
     c_env = opt_val[O_ENV];
     c_cond = opt_val[O_COND];
-    if (c_type >= CT_GRAND) { c_env = ENV_STADIUM; c_cond = 0; }   /* Grand Martinot, Tour du monde : toujours au stade, de jour */
+    if (c_type >= CT_GRAND) { c_env = ENV_STADIUM; c_cond = 0; }   /* Grand Martinot, Martinworld Tour : toujours au stade, de jour */
     c_fmt = opt_val[O_FMT];
     c_pl[0] = opt_val[O_P1];
     c_dbl = opt_val[O_TYPE];

@@ -1,5 +1,5 @@
 /* Fichier généré par tools/gen_gm.py — ne pas modifier. */
-/* Images 4 à 6 des écrans d'annonce (Tour du monde) : banque 6. */
+/* Images 4 à 6 des écrans d'annonce (Martinworld Tour) : banque 6. */
 
 const unsigned char gm_chr4[2464] = {
   0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,

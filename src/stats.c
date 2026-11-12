@@ -10,7 +10,7 @@ SaveOpts so;
 SaveCanon sx;
 /* vue (option VUE), bloc à part : les réglages déjà mémorisés restent valables */
 u8 sw_view[3];          /* 'V', valeur, contrôle */
-/* meilleur rang du Grand Martinot et du Tour du monde (types 5 et 6), bloc à
+/* meilleur rang du Grand Martinot et du Martinworld Tour (types 5 et 6), bloc à
    part : SaveData n'a de place que pour les types 0 à 4 */
 u8 sw_best[4];          /* 'B', type 5, type 6, contrôle */
 #pragma bss-name(pop)

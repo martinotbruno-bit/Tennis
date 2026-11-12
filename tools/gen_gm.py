@@ -523,7 +523,7 @@ def bercy():
     anim = (2, [0x31, 0x11, 0x01])               # les projecteurs balaient le ciel
     return im, pals, anim
 
-# images 0 à 3 : le Grand Martinot ; 4 à 6 : tournois ajoutés par le Tour du monde
+# images 0 à 3 : le Grand Martinot ; 4 à 6 : tournois ajoutés par le Martinworld Tour
 SCENES = [sydney, paris, london, newyork, alps, rio, bercy]
 BANK2_FROM = 4      # tuiles, tables de noms et attributs des images 4 à 6 : banque 6
 
@@ -596,10 +596,10 @@ def c_array(name, data):
     return s + '};\n'
 
 src = ['/* Fichier généré par tools/gen_gm.py — ne pas modifier. */',
-       '/* Images des écrans d\'annonce du Grand Martinot et du Tour du monde (banque 14 ;',
+       '/* Images des écrans d\'annonce du Grand Martinot et du Martinworld Tour (banque 14 ;',
        '   tuiles, tables de noms et attributs des images 4 à 6 : assets_gm2.c, banque 6). */', '']
 src2 = ['/* Fichier généré par tools/gen_gm.py — ne pas modifier. */',
-        '/* Images 4 à 6 des écrans d\'annonce (Tour du monde) : banque 6. */', '']
+        '/* Images 4 à 6 des écrans d\'annonce (Martinworld Tour) : banque 6. */', '']
 ntiles = []
 preview = []
 for k, scene in enumerate(SCENES):

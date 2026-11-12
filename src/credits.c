@@ -104,7 +104,7 @@ static void write_slot(u8 s, u8 i)
         t = lines[i].s; pal = lines[i].pal;
         if (t[0] == '#')
             t = c_type < CT_GRAND ? "SEASON CHAMPION" : c_slam ? "GRAND SLAM CHAMPION" :
-                c_type == CT_GRAND ? "LE GRAND MARTINOT CHAMPION" : "WORLD TOUR CHAMPION";
+                c_type == CT_GRAND ? "LE GRAND MARTINOT CHAMPION" : "MARTINWORLD TOUR CHAMPION";
         if (t[0] == '@') {
             /* le champion de la saison (ou l'équipe, en double) */
             if (c_dbl) team_label(c_pl[0], c_pl2[0], name);

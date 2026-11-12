@@ -1,5 +1,5 @@
 /* Fichier généré par tools/gen_gm.py — ne pas modifier. */
-/* Images des écrans d'annonce du Grand Martinot et du Tour du monde (banque 14 ;
+/* Images des écrans d'annonce du Grand Martinot et du Martinworld Tour (banque 14 ;
    tuiles, tables de noms et attributs des images 4 à 6 : assets_gm2.c, banque 6). */
 
 const unsigned char gm_chr0[1616] = {

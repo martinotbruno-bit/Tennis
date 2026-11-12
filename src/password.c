@@ -3,7 +3,7 @@
  * ancien format à 16 personnages, 3 : format actuel, 1 : format des lieux 5
  * et 6, château et parc, où surface, lieu et niveau sont regroupés)
  * occupent les bits 0 à 53 (version 0 : le Grand Martinot, type 5, et le
- * Tour du monde, type 6, marqué par les bits 49 à 51 : leurs propres champs,
+ * Martinworld Tour, type 6, marqué par les bits 49 à 51 : leurs propres champs,
  * résultats sur 12 ou 14 bits, sans surface, lieu ni options) ; une somme de contrôle de 11 bits suit (bits 54
  * à 64), puis les 65 bits sont écrits en 13 symboles de 5 bits, brouillés en
  * chaîne pour qu'une lettre modifiée en change plusieurs. */
@@ -51,7 +51,7 @@ static void pack(const PwData *d)
     for (i = 0; i < 9; ++i) buf[i] = 0;
     bitpos = 0;
     if (d->type == 6) {
-        /* version 0, marque 1 : le Tour du monde (surfaces, lieu et
+        /* version 0, marque 1 : le Martinworld Tour (surfaces, lieu et
            conditions imposés ; 7 tournois de 8 : étape sur 5 bits, tours
            gagnés à chaque tournoi sur 2 bits) */
         put_bits(d->stage, 5); put_bits(d->seed, 8);

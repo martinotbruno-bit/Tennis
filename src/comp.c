@@ -46,7 +46,7 @@ static u8 sim_win(u8 a, u8 b, u8 salt)
 }
 
 static u8 nrounds(void) { return (u8)(c_n == 16 ? 4 : c_n == 8 ? 3 : c_n == 4 ? 2 : 0); }
-/* nombre de tournois (saison, Grand Martinot : 4 ; Tour du monde : 7) */
+/* nombre de tournois (saison, Grand Martinot : 4 ; Martinworld Tour : 7) */
 static u8 nev(void) { return (u8)(c_type == CT_WORLD ? 7 : 4); }
 
 u8 __fastcall__ comp_build(u8 unused)
@@ -269,12 +269,12 @@ static void season_points(u8 events)
 static u8 ev_of(void) { u8 s = c_stage, n = nrounds(), e = 0; while (s >= n) { s -= n; ++e; } return e; }
 static u8 rd_of(void) { u8 s = c_stage, n = nrounds(); while (s >= n) s -= n; return s; }
 /* les 7 tournois (et leurs images d'annonce) : ceux du Grand Martinot (dur,
-   terre battue, gazon, dur), puis ceux que le Tour du monde ajoute pour
+   terre battue, gazon, dur), puis ceux que le Martinworld Tour ajoute pour
    jouer sur toutes les surfaces (glace, plage, moquette) */
 static const u8 ev_surf[7] = { 2, 0, 1, 2, 5, 4, 3 };
 static const char * const ev_name[7] = { "OPEN D'AUGUSTRALIE", "DEBOGARROS", "MARTINBLEDON", "US OPAUL",
                                          "SAINT-MARTINOTZ", "COPAMARGAUX", "BRUNO-BERCY" };
-/* ordre du Tour du monde, comme un calendrier : Augustralie (janvier), la
+/* ordre du Martinworld Tour, comme un calendrier : Augustralie (janvier), la
    glace des Alpes (février), terre, gazon, la plage (l'été), US Opaul, puis
    la moquette de Bercy (l'automne, en salle) */
 static const u8 world_ev[7] = { 0, 4, 1, 2, 5, 3, 6 };
@@ -449,7 +449,7 @@ u8 __fastcall__ comp_record(u8 won)
 }
 
 static char nb[6];
-/* nombre sur 5 chiffres (jusqu'à 65 535 ; le Tour du monde va jusqu'à
+/* nombre sur 5 chiffres (jusqu'à 65 535 ; le Martinworld Tour va jusqu'à
    14 000 points), sans zéros de tête */
 static void num5(char *o, u16 v)
 {
@@ -579,7 +579,7 @@ u8 __fastcall__ comp_draw_table(u8 y)
 }
 
 /* nom de chaque compétition (menu, écrans, palmarès), copié dans comp_l2 */
-static const char * const comp_name[NCT] = { "TOURNOI", "POULES", "CHAMPIONNAT", "SAISON", "PERSONNALISE", "GRAND MARTINOT", "TOUR DU MONDE" };
+static const char * const comp_name[NCT] = { "TOURNOI", "POULES", "CHAMPIONNAT", "SAISON", "PERSONNALISE", "GRAND MARTINOT", "MARTINWORLD" };
 u8 __fastcall__ comp_cname(u8 t)
 {
     const char *n = comp_name[t < NCT ? t : 0];
@@ -598,7 +598,7 @@ static const char * const comp_help[NCT * 4 + 4] = {
     /* saison */       "4 TOURNOIS DE 8 : TERRE,", "GAZON, DUR, MOQUETTE. UNE", "DEFAITE ARRETE LE TOURNOI.", "POINTS PAR TOUR, CLASSEMENT.",
     /* personnalisé */ "VOTRE TOURNOI : 4 OU 8", "JOUEURS, ADVERSAIRES DE", "NIVEAU FIXE OU PROGRESSIF,", "SURFACE FIXE OU VARIEE.",
     /* Grand Martinot */ "4 TOURNOIS DE 16 JOUEURS :", "AUGUSTRALIE, DEBOGARROS,", "MARTINBLEDON, US OPAUL.", "POINTS. 4 TITRES : CHELEM !",
-    /* Tour du monde */ "7 TOURNOIS DE 8, UN PAR", "SURFACE : DUR, GLACE, TERRE,", "GAZON, PLAGE, DUR, MOQUETTE.", "POINTS. 7 TITRES : CHELEM !",
+    /* Martinworld Tour */ "7 TOURNOIS DE 8, UN PAR", "SURFACE : DUR, GLACE, TERRE,", "GAZON, PLAGE, DUR, MOQUETTE.", "POINTS. 7 TITRES : CHELEM !",
     /* aide des touches du menu (k = NCT x 4 + 1 à 3) */ "", "HAUT/BAS : CHOISIR", "GAUCHE/DROITE : MODIFIER", "START : JOUER   B : RETOUR",
 };
 /* Grand Martinot : tournoi à annoncer (premier tour, pas encore annoncé à

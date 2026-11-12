@@ -204,7 +204,7 @@ song(13, 'gm3', m, b, harmony(m, b, 48, [(0, 48, 1)]),
 m, b = arr('mus_gm4_mel'), arr('mus_gm4_bass')
 song(14, 'gm4', m, b, harmony(m, b, 24, [(8, 4, 1), (20, 4, 2)]),
      drums(length(m), 24, [(0, KICK), (8, HAT), (12, SNARE), (20, HAT)]), mduty=0x76, hduty=0x72)
-# --- le Tour du monde : fanfares des tournois ajoutés (glace, plage, moquette)
+# --- le Martinworld Tour : fanfares des tournois ajoutés (glace, plage, moquette)
 m, b = arr('mus_gm5_mel'), arr('mus_gm5_bass')
 song(15, 'gm5', m, b, harmony(m, b, 36, [(12, 6, 1), (24, 6, 2)]),
      drums(length(m), 36, [(0, KICK), (6, HAT), (12, HAT), (18, HAT), (24, HAT), (30, HAT)]), mduty=0x77, hduty=0x73)

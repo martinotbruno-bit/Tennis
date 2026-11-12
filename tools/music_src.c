@@ -199,7 +199,7 @@ static const u8 mus_gm4_bass[] = {
  C3,12, E3,12, G3,12, E3,12,  G2,12, B2,12, C3,24,
  END,0 };
 
-/* Le Tour du monde (version 2.47) : fanfares des 3 tournois ajoutés */
+/* Le Martinworld Tour (version 2.47) : fanfares des 3 tournois ajoutés */
 /* Saint-Martinotz (glace, les Alpes) : tyrolienne à 3 temps, grelots */
 static const u8 mus_gm5_mel[] = {
  G4,12, B4,6, D5,6, G5,12,   FS5,12, E5,6, D5,6, B4,12,   C5,12, E5,6, G5,6, A5,12,

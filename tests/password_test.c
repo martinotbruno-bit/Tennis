@@ -26,7 +26,7 @@ int main(void)
             for (k = 0; k < 4; ++k) d.gres |= (unsigned short)(rand() % (d.doubles ? 4 : 5)) << (k * 3);
         }
         if (d.type == 6) {
-            /* le Tour du monde (version 0, marque 1) : ni surface, ni lieu, ni
+            /* le Martinworld Tour (version 0, marque 1) : ni surface, ni lieu, ni
                conditions ; 21 étapes ; 0 à 3 tours gagnés à chacun des 7 tournois */
             d.surf = 0; d.results = 0; d.opts = 0; d.env = 0; d.cond = 0; d.stage = rand() % 21;
             for (k = 0; k < 7; ++k) d.gres |= (unsigned short)(rand() % 4) << (k * 2);
@@ -67,12 +67,12 @@ int main(void)
     pw_encode(code, &d);
     if (!pw_decode(code, &e) || !same(&d, &e)) { printf("Grand Martinot : code non relu\n"); return 1; }
     printf("Grand Martinot (version 0) codé et relu\n");
-    /* le Tour du monde : 7 tournois gagnés, dernière étape */
+    /* le Martinworld Tour : 7 tournois gagnés, dernière étape */
     memset(&d, 0, sizeof d); d.type = 6; d.stage = 20; d.seed = 201; d.chr = 16; d.lvl = 1; d.trophies = 15;
     d.doubles = 1; d.partner = 5; d.hum2 = 1; d.gres = 0x3FFF;
     pw_encode(code, &d);
-    if (!pw_decode(code, &e) || !same(&d, &e)) { printf("Tour du monde : code non relu\n"); return 1; }
-    printf("Tour du monde (version 0, marque 1) codé et relu\n");
+    if (!pw_decode(code, &e) || !same(&d, &e)) { printf("Martinworld Tour : code non relu\n"); return 1; }
+    printf("Martinworld Tour (version 0, marque 1) codé et relu\n");
         printf("caractères invalides refusés\n");
     return (ok == total && rejected * 1000 >= mutations * 997) ? 0 : 1;
 }

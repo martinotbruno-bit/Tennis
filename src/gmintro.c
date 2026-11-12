@@ -1,5 +1,5 @@
 /* Royal Martinot — écrans d'annonce des tournois du Grand Martinot et du
- * Tour du monde (banque 14, versions 2.44 et 2.47) : au premier tour de chaque tournoi, une image (images de
+ * Martinworld Tour (banque 14, versions 2.44 et 2.47) : au premier tour de chaque tournoi, une image (images de
  * tools/gen_gm.py), le nom du tournoi, sa surface, le tour, et sa fanfare.
  *  - Open d'Augustralie : l'Opéra de Sydney, l'eau de la baie scintille ;
  *  - Debogarros : la tour Eiffel qui scintille, au-dessus d'un court de terre ;
@@ -38,7 +38,7 @@ static u8 gm_t;
 
 static const char * const gmi_name[7] = { "OPEN D'AUGUSTRALIE", "DEBOGARROS", "MARTINBLEDON", "US OPAUL",
                                           "SAINT-MARTINOTZ", "COPAMARGAUX", "BRUNO-BERCY" };
-/* surface de chaque tournoi (image), et son rang dans le Tour du monde */
+/* surface de chaque tournoi (image), et son rang dans le Martinworld Tour */
 static const u8 gmi_surf[7] = { 2, 0, 1, 2, 5, 4, 3 };
 static const u8 gmi_rank[7] = { 0, 2, 3, 5, 1, 4, 6 };
 static const char * const sname[6] = { "TERRE BATTUE", "GAZON", "DUR", "MOQUETTE", "PLAGE", "GLACE" };
@@ -65,7 +65,7 @@ void gm_intro_build(void)
     for (i = 0; i < 16; ++i) pal_buf[i] = p[i];
     pal_buf[16] = p[0]; pal_buf[17] = (u8)(k == 4 ? 0x30 : 0x0F);   /* sprites : aiguille noire, flocons blancs */
     pal_dirty = 1;
-    center(2, c_type == CT_WORLD ? "LE TOUR DU MONDE" : "LE GRAND MARTINOT");
+    center(2, c_type == CT_WORLD ? "MARTINWORLD TOUR" : "LE GRAND MARTINOT");
     center(4, gmi_name[k]);
     /* « TOURNOI 2/7 : GLACE » */
     q = "TOURNOI";

@@ -382,8 +382,8 @@ function playComp(type, opts, wins) {
   const e = boot(); startWith(e, Object.assign({ MODE: MODE.COMP, COMP: type, FMT: 3 }, opts));
   skipIntro(e);
   let matches = 0, code = '';
-  const CN = ['TOURNOI', 'POULES', 'CHAMPIONNAT', 'SAISON', 'PERSONNALISE', 'GRAND MARTINOT', 'TOUR DU MONDE'][type];
-  check(scr(e) === SS.COMP && (type === 5 ? e.text(3, 1, 17) === 'LE GRAND MARTINOT' : type === 6 ? e.text(3, 1, 16) === 'LE TOUR DU MONDE' : e.text(18, 1, CN.length) === CN), `${CN} : écran d'étape (titre lisible)`);
+  const CN = ['TOURNOI', 'POULES', 'CHAMPIONNAT', 'SAISON', 'PERSONNALISE', 'GRAND MARTINOT', 'MARTINWORLD'][type];
+  check(scr(e) === SS.COMP && (type === 5 ? e.text(3, 1, 17) === 'LE GRAND MARTINOT' : type === 6 ? e.text(3, 1, 16) === 'MARTINWORLD TOUR' : e.text(18, 1, CN.length) === CN), `${CN} : écran d'étape (titre lisible)`);
   while (scr(e) === SS.COMP && matches < 24) {
     if (matches === 1) code = e.text(10, 21, 15).replace(/ /g, '');
     e.tap('A'); runUntil(e, () => scr(e) === SS.PRESENT, 60); e.run(3); e.tap('A'); e.run(30);
@@ -446,14 +446,14 @@ function playComp(type, opts, wins) {
     `menu : explication de la compétition (« ${h} »), puis style et aide`);
 }
 {
-  // le Tour du monde : 7 tournois de 8 (quarts, demis, finale), un par surface
+  // le Martinworld Tour : 7 tournois de 8 (quarts, demis, finale), un par surface
   const g = boot(); startWith(g, { MODE: MODE.COMP, COMP: 6, FMT: 3, ENV: 3, COND: 2, SURF: 4 });
   const row = (e, y) => e.text(0, y, 32).replace(/\0/g, ' ').trim();
-  check(scr(g) === 10 && g.peek('music_cur') === 11 && row(g, 4) === "OPEN D'AUGUSTRALIE" && row(g, 2) === 'LE TOUR DU MONDE'
-    && row(g, 23) === 'TOURNOI 1/7 : DUR', `Tour du monde : annonce du 1er tournoi (« ${row(g, 23)} »)`);
+  check(scr(g) === 10 && g.peek('music_cur') === 11 && row(g, 4) === "OPEN D'AUGUSTRALIE" && row(g, 2) === 'MARTINWORLD TOUR'
+    && row(g, 23) === 'TOURNOI 1/7 : DUR', `Martinworld Tour : annonce du 1er tournoi (« ${row(g, 23)} »)`);
   runUntil(g, () => litScr(g), 90); g.tap('A'); runUntil(g, () => scr(g) === SS.COMP && litScr(g), 120);
-  check(g.peek('c_env') === 0 && g.peek('c_cond') === 0 && g.peek('c_n') === 8 && g.text(3, 1, 16) === 'LE TOUR DU MONDE',
-    'Tour du monde : 8 joueurs, au stade, de jour');
+  check(g.peek('c_env') === 0 && g.peek('c_cond') === 0 && g.peek('c_n') === 8 && g.text(3, 1, 16) === 'MARTINWORLD TOUR',
+    'Martinworld Tour : 8 joueurs, au stade, de jour');
   // chaque tournoi : annonce (image, fanfare, rang), surface, nom ; une défaite au 1er tour à chaque fois
   const h = boot(); startWith(h, { MODE: MODE.COMP, COMP: 6, FMT: 3 });
   const seen = [], surfs = [], names = [], ranks = [];
@@ -468,23 +468,23 @@ function playComp(type, opts, wins) {
     runUntil(h, () => app(h) === AS.SCREENS, 60); runUntil(h, () => scr(h) === SS.RESULTS && litScr(h), 120);
     h.tap('A'); runUntil(h, () => scr(h) !== SS.RESULTS && litScr(h), 120);
   }
-  check(seen.join(',') === '11,15,12,13,16,14,17', `Tour du monde : 7 annonces et 7 fanfares (${seen.join(',')})`);
+  check(seen.join(',') === '11,15,12,13,16,14,17', `Martinworld Tour : 7 annonces et 7 fanfares (${seen.join(',')})`);
   check(names.join('/') === "OPEN D'AUGUSTRALIE/SAINT-MARTINOTZ/DEBOGARROS/MARTINBLEDON/COPAMARGAUX/US OPAUL/BRUNO-BERCY",
-    `Tour du monde : ${names.join(', ')}`);
+    `Martinworld Tour : ${names.join(', ')}`);
   check(ranks.join(',') === 'TOURNOI 1/7 : DUR,TOURNOI 2/7 : GLACE,TOURNOI 3/7 : TERRE BATTUE,TOURNOI 4/7 : GAZON,TOURNOI 5/7 : PLAGE,TOURNOI 6/7 : DUR,TOURNOI 7/7 : MOQUETTE',
     `rangs et surfaces annoncés (${ranks.join(', ')})`);
-  check(surfs.join(',') === '2,5,0,1,4,2,3', `Tour du monde : toutes les surfaces (${surfs.join(',')})`);
+  check(surfs.join(',') === '2,5,0,1,4,2,3', `Martinworld Tour : toutes les surfaces (${surfs.join(',')})`);
   check(scr(h) === SS.COMP_END && h.peek('c_rank') > 1 && h.peek('c_slam') === 0, `7 défaites au 1er tour : fin, ${h.peek('c_rank')}e`);
   check(h.peek('sw_best', 0) === 66 && h.peek('sw_best', 2) === h.peek('c_rank'),
-    `palmarès : meilleur rang au Tour du monde (${h.peek('sw_best', 2)}e), rangé à part`);
+    `palmarès : meilleur rang au Martinworld Tour (${h.peek('sw_best', 2)}e), rangé à part`);
   // les 21 matchs gagnés : Grand Chelem, podium, 14 000 points
   const { e, matches, code } = playComp(6, {}, () => true);
   for (let k = 0; k < 5 && scr(e) !== SS.COMP_END; k++) { e.tap('A'); e.run(60); }
   e.run(30);
   const podTxt = [...Array(30).keys()].map((y) => e.text(0, y, 32)).join('|');
-  check(matches === 21 && scr(e) === SS.COMP_END && e.peek('c_rank') === 1 && e.peek('c_slam') === 1 && podTxt.includes('GRAND CHELEM !') && podTxt.includes('LE TOUR DU MONDE'),
-    `Tour du monde : 21 matchs gagnés, Grand Chelem et podium (${matches} matchs)`);
-  check(/^[A-Z2-9]{13}$/.test(code), `Tour du monde : code de reprise (${code})`);
+  check(matches === 21 && scr(e) === SS.COMP_END && e.peek('c_rank') === 1 && e.peek('c_slam') === 1 && podTxt.includes('GRAND CHELEM !') && podTxt.includes('MARTINWORLD TOUR'),
+    `Martinworld Tour : 21 matchs gagnés, Grand Chelem et podium (${matches} matchs)`);
+  check(/^[A-Z2-9]{13}$/.test(code), `Martinworld Tour : code de reprise (${code})`);
   // reprise par le code : 4 matchs gagnés (Saint-Martinotz, demi-finale)
   {
     const r = boot(); startWith(r, { MODE: MODE.COMP, COMP: 6, FMT: 3, P1: 16 }); skipIntro(r);
@@ -506,14 +506,14 @@ function playComp(type, opts, wins) {
     const got = ['c_type', 'c_stage', 'c_seed', 'c_n'].map(n => f.peek(n)).concat([f.peek16('c_gres')]);
     check(scr(f) === SS.COMP && JSON.stringify(got) === JSON.stringify(want) && want[1] === 4 && want[4] === 3
       && f.text(3, 3, 15) === 'SAINT-MARTINOTZ' && f.peek('c_pl', 0) === 16,
-      `Tour du monde : code ${rc} relu (Saint-Martinotz, demi-finale, ${JSON.stringify(got)})`);
+      `Martinworld Tour : code ${rc} relu (Saint-Martinotz, demi-finale, ${JSON.stringify(got)})`);
   }
   // menu : explication ; ni lieu, ni conditions, ni surface
   const m = boot(); toMenu(m); setOpts(m, { MODE: MODE.COMP, COMP: 6 }); m.tap('B'); m.run(30); toMenu(m); m.run(10);
   m.poke('cursor', rowOf(m, O.COMP)); m.run(8);
   const t1 = m.text(2, 24, 28).trim(), t4 = m.text(2, 27, 28).trim();
   check(rowOf(m, O.ENV) < 0 && rowOf(m, O.COND) < 0 && rowOf(m, O.SURF) < 0 && t1.startsWith('7 TOURNOIS DE 8') && t4.includes('CHELEM'),
-    `menu du Tour du monde : explication (« ${t1} ») ; lieu, conditions, surface imposés`);
+    `menu du Martinworld Tour : explication (« ${t1} ») ; lieu, conditions, surface imposés`);
 }
 {
   const { e, matches, code } = playComp(0, {}, () => true);
