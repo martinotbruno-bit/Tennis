@@ -207,7 +207,7 @@ void dive_try(void)
     sh_short = 0;
     if (ms != MS_RALLY || !b_live || hitter == (u8)(p & 1) || bounces > 1 || dive_t[p] || pl_jump[p]) return;
     if ((b_serve && bounces == 0) || bz > 36 * FP) return;
-    if (sh_pad == 0xFF && ((frame_cnt ^ p) & 1)) return;   /* ordinateur : une trame sur deux */
+    if (sh_pad == 0xFF && ((frame_cnt ^ p) & (npl == 4 ? 3 : 1))) return;   /* ordinateur : une trame sur deux (sur quatre en double) */
     x = bx; y = by; py = ply[p];
     /* balle encore loin en profondeur (plus de 13 trames à 4 px) : rien à
        décider, sans parcourir la boucle */

@@ -550,7 +550,7 @@ console.log('Compétitions');
   const h = m.text(2, 24, 28).trim(), h4 = m.text(2, 27, 28).trim();
   m.poke('cursor', rowOf(m, O.P1)); m.run(8);
   check(rowOf(m, O.ENV) < 0 && rowOf(m, O.COND) < 0 && rowOf(m, O.SURF) < 0, 'menu du Grand Martinot : ni lieu, ni conditions, ni surface (imposés)');
-  check(h.startsWith('4 TOURNOIS DE 16') && h4.includes('CHELEM') && m.text(2, 24, 7) === 'STYLE :' && m.text(2, 26, 13) === 'GAUCHE/DROITE',
+  check(h.startsWith('4 TOURNOIS DE 16') && h4.includes('CHELEM') && m.text(2, 24, 7) === 'STYLE :' && m.text(2, 26, 15) === 'HAUT/BAS: LIGNE',
     `menu : explication de la compétition (« ${h} »), puis style du joueur et touches`);
 }
 {
@@ -1014,7 +1014,8 @@ console.log('Finitions : ralentis, IA, effets, son, réglages mémorisés');
   };
   let j2 = 0, j1 = 0;
   for (let t = 0; t < 8; t++) { j2 += lobTrial(2, t * 37 + 11, t); j1 += lobTrial(1, t * 37 + 11, t); }
-  check(j2 >= 2 && j2 <= 7 && j1 === 0, `lob contre un CPU au filet : smash sauté ${j2}/8 en Expert, ${j1}/8 en Normal`);
+  // (version 2.59 : un lob relâché aussitôt est court ; l'Expert peut le smasher à chaque fois)
+  check(j2 >= 2 && j1 === 0, `lob court contre un CPU au filet : smash sauté ${j2}/8 en Expert, ${j1}/8 en Normal`);
 }
 {
   // le saut est enregistré pour les ralentis (bits 6-7 de pose_cache)
