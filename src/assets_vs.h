@@ -4,9 +4,9 @@
 #define VS_W 12
 #define VS_H 14
 extern const unsigned char vs_ml_chr[], vs_ml_map[], vs_ml_ab[];
-#define VS_ML_N 74
+#define VS_ML_N 82
 extern const unsigned char vs_mr_chr[], vs_mr_map[], vs_mr_ab[];
-#define VS_MR_N 74
+#define VS_MR_N 82
 extern const unsigned char vs_fl_chr[], vs_fl_map[], vs_fl_ab[];
 #define VS_FL_N 73
 extern const unsigned char vs_fr_chr[], vs_fr_map[], vs_fr_ab[];

@@ -269,9 +269,10 @@ def body(f, j, female, face, front=('armR', 'legL'), racket_hand='L', racket_dir
                 low = ~f.m_poly([(c_[0] - 20, c_[1] - 20), (c_[0] + 20, c_[1] - 20), (c_[0] + 20, c_[1] + 1.5), (c_[0] - 20, c_[1] + 1.5)])
                 mid = ~f.m_poly([(nk[0] - 1.6, c_[1] - 20), (nk[0] + 1.6, c_[1] - 20), (nk[0] + 1.6, c_[1] + 20), (nk[0] - 1.6, c_[1] + 20)])
                 if VS_LINE:     # affiche VS : contour arrondi (côté et dessous du sein), lisible en gros plan
-                    ring = e_ & ~f.m_ell((c_[0], c_[1] - 0.4), bx * 1.18 - 1.15, 7.2 - 1.15)
-                    half = ~f.m_poly([(c_[0] - 20, c_[1] - 20), (c_[0] + 20, c_[1] - 20), (c_[0] + 20, c_[1] - 2.5), (c_[0] - 20, c_[1] - 2.5)])
-                    f.paint(ring & half & mid, 0, within=[tid])
+                    ring = e_ & ~f.m_ell((c_[0], c_[1] - 1.6), bx * 1.18 - 1.0, 7.2 - 1.0)
+                    half = ~f.m_poly([(c_[0] - 20, c_[1] - 20), (c_[0] + 20, c_[1] - 20), (c_[0] + 20, c_[1] - 0.5), (c_[0] - 20, c_[1] - 0.5)])
+                    yy, xx = np.mgrid[0:f.H, 0:f.W]
+                    f.paint(ring & half & mid & ((xx + yy) % 2 == 0), 0, within=[tid])   # trait tramé : contour fondu
                 else:
                     f.paint(e_ & ~shift_mask(f, (0, 2.2), e_) & low & mid, 4, within=[tid])   # ombre douce sous le sein
             ret['dress'] = tid
@@ -915,7 +916,7 @@ VS_BANK = 10
 def vs_render(female, mirror, k=1.38):
     W, H = VS_W * 8, VS_H * 8
     global VS_LINE
-    f = Fig(W, H, k, 80 - (W / 2) / k, 36.0)
+    f = Fig(W, H, k, 80 - (W / 2) / k, 36.0 if female else 32.5)   # homme plus grand : tête entière dans le cadre
     VS_LINE = True
     body(f, skeleton(POSES['bust']['s'], female), female, 'focus', racket_hand='X', racket_dir=0, racket_len=50)
     VS_LINE = False
