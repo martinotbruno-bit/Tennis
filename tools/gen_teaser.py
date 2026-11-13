@@ -620,6 +620,15 @@ POSES['smash'] = dict(
            order=['legR', 'legL', 'torso', 'armR', 'head', 'armL', 'racket']),
     face='focus', hand='L', rdir=-122, rlen=50)
 
+# 6. revers à deux mains, à l'impact (version 2.68, gros plan du ralenti) :
+#    miroir du coup droit, les deux bras tendus vers la droite de l'écran,
+#    mains jointes sur le manche
+POSES['backhand'] = dict(
+    s=dict(pelvis=(112, 121), torso=-87, legL=(112, 104, 160), legR=(67, 76, 20),
+           armR=(95, -35), armL=(12, 8), tilt=0.08, turn=1.0,
+           order=['racket', 'legL', 'armL', 'legR', 'torso', 'armR', 'head']),
+    face='focus', hand='R', rdir=-20, rlen=52)
+
 # plans : (nom, pose, échelle, (x, y) de base visé au centre ; None : pieds au sol)
 # zoom : True si le visage est assez grand pour sa palette (peau, sombre, blanc)
 SHOTS = [
@@ -630,7 +639,8 @@ SHOTS = [
     ('victory_z', 'victory', 2.0, (80, 62), True),   # zoom : buste et visage
     ('angry', 'angry', 1.12, None, False),           # raquette au sol, en pied
     ('angry_z', 'angry', 3.4, (83, 70), True),       # zoom : le visage qui crie
-    ('smash', 'smash', 0.86, (92, None), False),      # smash et service, en pied (ralenti, 2.68)
+    ('smash', 'smash', 0.86, (92, None), False),
+    ('backhand', 'backhand', 1.4, (150, 102), False),   # revers à deux mains, gros plan (ralenti, 2.68)      # smash et service, en pied (ralenti, 2.68)
 ]
 
 

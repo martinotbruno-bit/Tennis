@@ -420,7 +420,7 @@ static void do_hit(u8 p, u8 pad, u8 btn, u8 power, u8 spread)
     hitter_p = p;
     hit_now = 1;
     b_serve = 0;
-    HL_HIT(p, (u8)(last_shot == SH_SMASH));
+    HL_HIT(p, (u8)(last_shot == SH_SMASH ? 1 : dx < 0 ? 3 : 0));   /* 1 smash, 3 revers (balle à gauche du joueur), 0 coup droit */
     ++rally_hits;
     pl_hit[p] = 1;
     pl_flip[p] = (u8)(dx < 0);

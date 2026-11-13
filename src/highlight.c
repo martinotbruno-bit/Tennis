@@ -295,7 +295,7 @@ static void closeup_tick(void)
     ++hl_t;
     if (hl_t < 12) {                     /* image figée */
         if (hl_t == 9) { flash(0x30); sfx_perfect(); }
-        if (hl_t == 11) cut_build(hl_sk ? TZ_SMASH : TZ_IMPACT);   /* service, smash : raquette au-dessus de la tête (2.68) */
+        if (hl_t == 11) cut_build(hl_sk == 3 ? TZ_BACKHAND : hl_sk ? TZ_SMASH : TZ_IMPACT);   /* revers ; service, smash : raquette au-dessus de la tête (2.68) */
         return;
     }
     hl_c = (u8)(hl_t - 11);             /* temps du plan */
@@ -310,7 +310,8 @@ static void closeup_tick(void)
            service et smash (elle tombe d'en haut, repart vers le bas) */
         if (hl_c >= 8 && hl_c < 22) {
             k = (u8)(22 - hl_c);
-            if (hl_sk) { if ((s16)(TZ_SMASH_RACKET_Y - 4) - (s16)(k * 7) >= 0) SPR(TZ_SMASH_RACKET_X + k * 4, TZ_SMASH_RACKET_Y - 4 - k * 7, ball_base + 8, 3); }   /* (au-dessus du cadre : cachée) */
+            if (hl_sk == 3) { SPR(TZ_BACKHAND_RACKET_X - k * 9, TZ_BACKHAND_RACKET_Y - 4 + k * 5, ball_base + 8, 3); }   /* revers : de la gauche */
+            else if (hl_sk) { if ((s16)(TZ_SMASH_RACKET_Y - 4) - (s16)(k * 7) >= 0) SPR(TZ_SMASH_RACKET_X + k * 4, TZ_SMASH_RACKET_Y - 4 - k * 7, ball_base + 8, 3); }   /* (au-dessus du cadre : cachée) */
             else { SPR(TZ_IMPACT_RACKET_X + k * 9, TZ_IMPACT_RACKET_Y - 4 + k * 5, ball_base + 8, 3); }
         } else if (hl_c == 22) {
             flash(0x30); sfx_hit(3);
@@ -318,7 +319,8 @@ static void closeup_tick(void)
             for (i = 0; i < 3; ++i) {
                 k = (u8)((hl_c - 22) * 10 - i * 6);
                 if (k >= 40) continue;
-                if (hl_sk) { SPR(TZ_SMASH_RACKET_X - k, TZ_SMASH_RACKET_Y + k + (k >> 1), ball_base + 8, 3); }
+                if (hl_sk == 3) { SPR(TZ_BACKHAND_RACKET_X - 4 + k, TZ_BACKHAND_RACKET_Y - 8 - (k >> 1), ball_base + 8, 3); }
+                else if (hl_sk) { SPR(TZ_SMASH_RACKET_X - k, TZ_SMASH_RACKET_Y + k + (k >> 1), ball_base + 8, 3); }
                 else { SPR(TZ_IMPACT_RACKET_X + 4 - k, TZ_IMPACT_RACKET_Y - 8 - (k >> 1), ball_base + 8, 3); }
             }
         }

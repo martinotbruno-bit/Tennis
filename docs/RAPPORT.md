@@ -11,6 +11,7 @@ Comme l'exige le CDC (§ 17.5), ce rapport distingue ce qui est **réalisé**, *
 | Demande | Réalisation |
 |---|---|
 | Suite : gros plan adapté au coup | Le gros plan du ralenti montrait toujours un coup droit. Nouvelle image haute définition (homme, femme, fillette) pour le service et le smash : raquette au-dessus de la tête et en avant, bras libre replié, buste cambré ; la balle tombe sur le tamis puis repart vers le bas. Titre du coup déplacé en haut de l'écran (il touchait les pieds ou était rogné en bas). Image : `docs/gros_plan_268.png` |
+| Image du revers | Nouvelle image haute définition (homme, femme, fillette) : revers à deux mains à l'impact, les deux mains sur le manche ; montrée quand la frappe décisive est un revers (balle à gauche du joueur, comme pour ses poses en jeu) ; la balle arrive de la gauche et repart vers la droite. Image : `docs/revers_268.png` |
 | Le filet tremble-t-il toujours quand la balle le frappe ? | À plat, oui. En perspective, non depuis la vue en perspective (2.42) : son filet redessiné n'utilisait pas les tuiles animées. Désormais il tremble aussi en perspective, dans tous les lieux : bande affaissée d'un pixel et mailles décalées sur toute la largeur, croisements des lignes compris (15 tuiles par lieu, préparées par le générateur en banque 16), puis retour exact au repos. Test ajouté (5 lieux) |
 
 ### Version 2.67
@@ -588,7 +589,7 @@ Pour loger ce contenu, la cartouche passe de NROM (32 Ko) à **MMC1** : 128 Ko d
 | Relecture des textes (`check_texts.py`) | 0 problème |
 | Contraste (`contrast.py 25`) | 0 paire sous ΔE 25 (personnages, courts, balle, tenues) |
 | Profil CPU, double, 6 000 trames | 27 trames d'échange en dépassement (0,45 %), sans défaut d'image |
-| Compilation | Reproductible : SHA-256 `e749e4204def84b082551996ee1ab12b9b98ea79da9b61ed2f188e8188e61b43` sur deux compilations propres |
+| Compilation | Reproductible : SHA-256 `2c7ffec98eec8f77fb2c6c348195374b23ac0b19a45392af806dcafd372c1f84` sur deux compilations propres |
 
 ## 3. Conformité par section du CDC
 
