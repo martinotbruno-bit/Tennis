@@ -195,7 +195,8 @@ static void swap_tick(void)
     u8 want = (u8)(ms == MS_TOSS || ms == MS_RALLY || ms == MS_REPLAY ? 2 : 1), k;
     /* séquences animées (cer.c) : jeu F ; en fin de match, après la fête
        habituelle (jeu C) */
-    if (cer && cer < 0xF0 && (cer != 7 || cer_t >= 50)) want = 3;
+    /* (dès la 2e trame de la séquence : à la 1re, la pose d'avant est encore dessinée) */
+    if (cer && cer < 0xF0 && cer_t && (cer != 7 || cer_t >= 50)) want = 3;
     if (want != swap_want) { swap_want = want; swap_on = 0; swap_pos = 0; }
     for (k = 0; k < 3 && !swap_on; ++k) {
         swp_dst = 0x1000 + ((u16)(swap_base + swap_pos) << 4);

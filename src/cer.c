@@ -160,6 +160,7 @@ void cer_change(void)
         sy[p] = (s16)((PX(ply[p]) < NET_Y ? chair_top[p] : chair_bot[p]) * FP);
         wx[p] = CHAIR_X * FP;
         stage[p] = 0;
+        pose_force[p] = P_IDLE;     /* (fin de fête : sa pose n'a plus ses tuiles, jeu F chargé) */
     }
     cer = CER_CHAIR;
     cer_t = 0;
