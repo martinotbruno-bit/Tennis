@@ -3,8 +3,8 @@
  * Tuiles du décor libres pendant les menus (celles des courts, rétablies
  * avant le match par chr_borrow_restore, bg_dirty) :
  *   $60-$9F police surlignée (tools/gen_menu.py), $A0-$A7 ornements dorés,
- *   $A8-$AB traits du tableau des tournois, $AC-$AF accolades des réglages,
- *   $B0-$FB lettres doublées des titres (fabriquées à chaque écran).
+ *   $A8-$AD traits du tableau des tournois, $AE-$B1 accolades des réglages,
+ *   $B2-$FB lettres doublées des titres (fabriquées à chaque écran).
  * Palettes du décor (pal_set_menu) : 0 texte blanc, 1 libellés bleu pâle,
  * 2 valeurs jaunes, 3 or ; couleur 2 de chaque palette : texte surligné.
  *
@@ -31,7 +31,7 @@
 #define T_LEND   0xA2
 #define T_REND   0xA3
 #define T_STAR   0xA4
-#define T_TITLE  0xB0      /* lettres doublées : 4 tuiles chacune, jusqu'à $FB (19 lettres distinctes) */
+#define T_TITLE  0xB2      /* lettres doublées : 4 tuiles chacune, jusqu'à $FB (18 lettres distinctes) */
 
 extern const u8 menu_font2[], menu_deco[], menu_attr[], menu_big[], menu_grp[], menu_brk[];
 extern const char menu_bigchars[];
@@ -50,8 +50,8 @@ void menu_deco_begin(void)
 {
     chr_copy(BANK_SWAP, menu_font2, 0x0600, 1024);       /* (données en banque 13) */
     chr_copy(BANK_SWAP, menu_deco, 0x0A00, 128);
-    chr_copy(BANK_SWAP, menu_brk, 0x0A80, 64);        /* traits du tableau ($A8-$AB) */
-    chr_copy(BANK_SWAP, menu_grp, 0x0AC0, 64);        /* accolades des groupes ($AC-$AF) */
+    chr_copy(BANK_SWAP, menu_brk, 0x0A80, 96);        /* traits du tableau ($A8-$AD) */
+    chr_copy(BANK_SWAP, menu_grp, 0x0AE0, 64);        /* accolades des groupes ($AE-$B1) */
     if (!bg_dirty) bg_dirty = 2;   /* tuiles des menus seulement : rétablies avant le match (load_court) */
 }
 
@@ -166,7 +166,7 @@ u8 __fastcall__ grp_tile(u8 i)
     if (i >= nvis || !(g = grp_of[vis[i]])) return 0;
     up = (u8)(i && grp_of[vis[i - 1]] == g);
     dn = (u8)(i + 1 < nvis && grp_of[vis[i + 1]] == g);
-    return (u8)(0xAC + (up ? (dn ? 1 : 2) : (dn ? 0 : 3)));
+    return (u8)(0xAE + (up ? (dn ? 1 : 2) : (dn ? 0 : 3)));
 }
 
 /* attributs de l'écran (tables de tools/gen_menu.py) : deco_kind 0 (texte,

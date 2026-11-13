@@ -55,7 +55,7 @@ DECO = [
 ]
 deco = b''.join(tile(r) for r in DECO)
 
-# accolades des groupes de lignes des réglages ($AC-$AF) : or (2) et ombre (1), en marge gauche
+# accolades des groupes de lignes des réglages ($AE-$B1) : or (2) et ombre (1), en marge gauche
 GRP = [
     ["00000000", "00000000", "00000000", "00002222", "00002111", "00002100", "00002100", "00002100"],   # début
     ["00002100"] * 8,                                                                                   # milieu
@@ -64,12 +64,14 @@ GRP = [
 ]
 grp = b''.join(tile(r) for r in GRP)
 
-# traits du tableau des tournois ($A8-$AB) : or (2) et ombre (1)
+# traits du tableau des tournois ($A8-$AD) : or (2) et ombre (1)
 BRK = [
     ["00000000", "00000000", "00000000", "22222222", "11111111", "00000000", "00000000", "00000000"],   # horizontal
     ["00000000", "00000000", "00000000", "22221000", "11121000", "00021000", "00021000", "00021000"],   # coin (gauche, bas)
     ["00021000"] * 8,                                                                                   # vertical
     ["00021000", "00021000", "00021000", "22222222", "11111111", "00000000", "00000000", "00000000"],   # jonction (haut, gauche, droite)
+    ["00021000", "00021000", "00021000", "22221000", "11111000", "00000000", "00000000", "00000000"],   # coin (gauche, haut)
+    ["00021000", "00021000", "00021000", "00022222", "00021111", "00021000", "00021000", "00021000"],   # départ (verticale, droite)
 ]
 brk = b''.join(tile(r) for r in BRK)
 
@@ -124,7 +126,7 @@ def arr(name, data):
 
 
 L = ['/* Fichier généré par tools/gen_menu.py — ne pas modifier. */',
-     '/* Habillage des menus : police surlignée ($60-$9F), ornements dorés ($A0-$A7), traits du tableau ($A8-$AB), accolades ($AC-$AF), attributs, banque 13. */', '']
+     '/* Habillage des menus : police surlignée ($60-$9F), ornements dorés ($A0-$A7), traits du tableau ($A8-$AD), accolades ($AE-$B1), attributs, banque 13. */', '']
 L += arr('menu_font2', font2) + [''] + arr('menu_deco', deco) + [''] + arr('menu_grp', grp) + [''] + arr('menu_brk', brk) + ['']
 L += arr('menu_attr', b''.join(attrs(k, r) for k, r in ATTR)) + ['']
 
