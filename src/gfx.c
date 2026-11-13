@@ -285,7 +285,7 @@ void chr_reload(void)
 
 /* les tuiles des personnages ont été remplacées (portraits des réglages) :
    rechargées au prochain people_tiles() */
-void people_dirty(void) { chr_nude = 0xFF; }
+void people_dirty(void) { chr_nude = 0xFE; }
 
 /* portrait 32 x 24 (4 x 3 sprites, tuiles base à base + 11), retourné si
    attr a le bit $40 */
@@ -304,7 +304,9 @@ void spr_port(u8 x, u8 y, u8 base, u8 attr)
 void people_tiles(u8 nude)
 {
     if (nude == chr_nude) return;
-    if (nude) {
+    if (!nude && chr_nude == 0xFE) {          /* seulement les tuiles des portraits et vignettes */
+        chr_copy(BANK_CHR, chr_data + 0x1100, 0x1100, 992);
+    } else if (nude) {
         chr_copy(BANK_NUDE, nude_people, 0x1100, people_bytes);
     } else {
         chr_copy(BANK_CHR, chr_data + 0x1100, 0x1100, people_bytes);

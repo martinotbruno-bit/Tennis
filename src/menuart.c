@@ -20,6 +20,7 @@
 #include "comp.h"
 #include "stats.h"
 #include "assets_vs.h"
+#include "audio.h"
 
 #pragma static-locals(off)
 
@@ -307,6 +308,40 @@ static void vs_pal(u8 side)
         pal_buf[b + 7] = (u8)(O >= 0x10 ? O : O + 0x10);
     }
 }
+/* palettes définitives de l'affiche (les deux bustes, fond de la surface) */
+static void vs_pals(void)
+{
+    u8 k = surf_bk[cfg.surface < 6 ? cfg.surface : 0];
+    vs_pal(1);                  /* (le côté droit d'abord : vs_pal passe par la palette 1) */
+    vs_pal(0);
+    pal_buf[0] = pal_buf[4] = pal_buf[8] = pal_buf[12] = pal_buf[16] = k;
+    pal_dirty = 1;
+}
+/* palettes d'un côté (b = 0 gauche, 8 droite) toutes à la couleur c */
+static void vs_fill(u8 b, u8 c)
+{
+    pal_buf[b + 1] = pal_buf[b + 2] = pal_buf[b + 3] = c;
+    pal_buf[b + 5] = pal_buf[b + 6] = pal_buf[b + 7] = c;
+}
+/* Entrée de l'affiche (t = 0 à 48 trames) : écran vide ; le buste gauche
+   jaillit d'un éclair blanc, en silhouette sombre, puis prend ses couleurs ;
+   de même le buste droit ; enfin « CONTRE » s'inscrit sur un flash. Le texte
+   de chaque côté apparaît avec son buste (mêmes palettes). */
+u8 __fastcall__ vs_anim(u8 t)
+{
+    vs_pals();
+    if (t < 8) vs_fill(0, pal_buf[0]);
+    else if (t < 11) vs_fill(0, 0x30);
+    else if (t < 15) vs_fill(0, 0x0F);
+    if (t < 20) vs_fill(8, pal_buf[0]);
+    else if (t < 23) vs_fill(8, 0x30);
+    else if (t < 27) vs_fill(8, 0x0F);
+    if (t == 8 || t == 20) sfx_hit(3);
+    if (t == 32) { vbuf_text(13, 11, "CONTRE", 6); sfx_menu_ok(); }
+    if (t >= 32 && t < 35) pal_buf[0] = 0x30;          /* flash */
+    return 0;
+}
+
 void vs_build(void)
 {
     u8 i, k = surf_bk[cfg.surface < 6 ? cfg.surface : 0];
@@ -321,9 +356,6 @@ void vs_build(void)
     vs_side(1);
     vram_adr(0x23C0);
     for (i = 0; i < 64; ++i) vram_put(vs_at[i]);
-    vs_pal(1);                  /* (le côté droit d'abord : vs_pal passe par la palette 1) */
-    vs_pal(0);
-    pal_buf[0] = pal_buf[4] = pal_buf[8] = pal_buf[12] = pal_buf[16] = k;
-    pal_dirty = 1;
+    vs_pals();
     bg_dirty = 1;               /* tuiles du décor remplacées : rétablies ensuite */
 }

@@ -40,7 +40,13 @@ const CFG = { CTRL: 2, LEVEL: 10, GAMES: 17, REPLAYS: 19 };
 function boot() { const e = new Emu(rom); e.run(40); e.tap('START', 1, 1, 0); e.run(4); e.tap('START', 1, 1, 0); e.run(40); return e; }
 const scr = (e) => e.peek('scr_state');
 const app = (e) => e.peek('app_state');
-function toMenu(e) { e.tap('START'); e.run(10); }
+// (attend le titre, puis l'écran des réglages : la durée des transitions varie)
+function toMenu(e) {
+  for (let i = 0; i < 30 && e.peek('scr_state') !== 0; i++) e.run(1);
+  e.tap('START');
+  for (let i = 0; i < 60 && e.peek('scr_state') !== 1; i++) e.run(1);
+  e.run(3);
+}
 // ligne du menu où se trouve une option (la liste dépend du mode)
 function rowOf(e, o) { for (let i = 0; i < e.peek('nvis'); i++) if (e.peek('vis', i) === o) return i; return -1; }
 function setOpts(e, opts) { for (const [k, v] of Object.entries(opts)) e.poke('opt_val', v, O[k]); }
@@ -290,7 +296,7 @@ console.log('Menu de configuration');
   check(e.peek('opt_val', O.MODE) === MODE.COMP && e.peek('nvis') === 15, 'mode compétition : lignes adaptées');
   e.tap('RIGHT'); e.run(5);
   check(e.peek('opt_val', O.MODE) === MODE.TRAIN && e.peek('nvis') === 10, 'mode entraînement : lignes adaptées');
-  e.tap('B'); e.run(5);
+  e.tap('B'); e.run(10);   // (les tuiles des personnages, remplacées par les portraits, sont rechargées)
   check(scr(e) === SS.TITLE, 'B revient au titre');
 }
 
@@ -521,8 +527,8 @@ console.log('Compétitions');
   const h = m.text(2, 24, 28).trim(), h4 = m.text(2, 27, 28).trim();
   m.poke('cursor', rowOf(m, O.P1)); m.run(8);
   check(rowOf(m, O.ENV) < 0 && rowOf(m, O.COND) < 0 && rowOf(m, O.SURF) < 0, 'menu du Grand Martinot : ni lieu, ni conditions, ni surface (imposés)');
-  check(h.startsWith('4 TOURNOIS DE 16') && h4.includes('CHELEM') && m.text(3, 24, 5) === 'STYLE' && m.text(2, 25, 8) === 'HAUT/BAS',
-    `menu : explication de la compétition (« ${h} »), puis style et aide`);
+  check(h.startsWith('4 TOURNOIS DE 16') && h4.includes('CHELEM') && m.text(2, 24, 7) === 'STYLE :' && m.text(2, 26, 13) === 'GAUCHE/DROITE',
+    `menu : explication de la compétition (« ${h} »), puis style du joueur et touches`);
 }
 {
   // le Martinworld Tour : 7 tournois de 8 (quarts, demis, finale), un par surface

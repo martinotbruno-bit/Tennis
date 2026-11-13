@@ -578,6 +578,8 @@ static void vs_team(u8 t, u8 x)
     if (cfg.doubles && cfg.ctrl[t + 2] == CTRL_PAD2) txt_at(x, 22, "+ MANETTE 2");
     else if (cfg.ctrl[t] == CTRL_CPU) txt_at(x, 22, style_name[char_style[cfg.chr[t]]]);
 }
+static u16 brk_t;            /* (aussi : temps de l'entrée de l'affiche VS) */
+u8 __fastcall__ vs_anim(u8 t);
 static void present_screen(void)
 {
     u8 vs = (u8)(cfg.env != ENV_NUDE);       /* (au club nudiste : la présentation d'origine) */
@@ -598,8 +600,8 @@ static void present_screen(void)
     } else txt_at(3, 1, cfg.doubles ? "MATCH DE DOUBLE" : "MATCH AMICAL");
     if (vs) {
         vs_team(0, 2);
-        txt_at(13, 11, "CONTRE");
-        vs_team(1, 18);
+        vs_team(1, 18);           /* (« CONTRE » : écrit par l'entrée animée, vs_anim) */
+        brk_t = 0; far_call(BANK_PODIUM, (void *)vs_anim, 0);
         if (cfg.env == ENV_MARGAUX) txt_at(2, 3, "BIENVENUE AU COURT MARGAUX !");
         txt_at(2, 24, surf_name[cfg.surface]);
         txt_at(18, 24, env_name[cfg.env]);
@@ -859,7 +861,6 @@ static void set_table(u8 y)
 }
 
 /* Fin d'un set : récapitulatif, puis reprise du match (A, ou après 10 s) */
-static u16 brk_t;
 static void setbreak_screen(void)
 {
     u8 n;
@@ -1101,6 +1102,7 @@ void screens_tick(void)
             go_match(); break;
         }
         if (pad1_new & PAD_B) { sfx_menu_back(); if (last_mode == MODE_COMP) comp_screen(); else menu_screen(); break; }
+        if (cfg.env != ENV_NUDE && brk_t < 48 && !fade_lvl) far_call(BANK_PODIUM, (void *)vs_anim, (u8)++brk_t);   /* (après le fondu) */
         present_sprites();
         break;
     case SS_COMP:
