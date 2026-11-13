@@ -916,10 +916,10 @@ static void results_screen(void)
     pal_set_player(1, cfg.chr[1]);
     deco("RESULTAT", 0, 24);
     txt_off = 0x40;                              /* en or */
-    txt_at(8, 5, "VICTOIRE DE");
-    txt_at(20, 5, char_name[cfg.chr[w]]);
+    txt_at(8, 4, "VICTOIRE DE");
+    txt_at(20, 4, char_name[cfg.chr[w]]);
     txt_off = 0;
-    set_table(2);
+    set_table(6);                       /* (rangées 6 à 8 : sous le titre, version 2.69 ; rangées 2 à 4 avant, sous les lettres du titre) */
     /* colonnes de 4 lettres (MARGAUX : « MARG ») */
     team_label(cfg.chr[0], 255, b); txt_at(19, 9, b);
     team_label(cfg.chr[1], 255, b); txt_at(25, 9, b);
@@ -944,11 +944,12 @@ static void results_sprites(void)
 {
     u8 w = sc_winner, joy = (u8)((frame_cnt >> 4) & 1 ? POSE_JOY : POSE_SERVE);
     spr_begin();
-    spr_person(60, 64, cfg.chr[w], 1, joy, 0, w);
-    spr_person(196, 64, cfg.chr[w ^ 1], 1, POSE_SAD, 0, (u8)(w ^ 1));
+    /* sous les statistiques (rangées 20 à 23, libres), loin du tableau des sets */
+    spr_person(60, 188, cfg.chr[w], 1, joy, 0, w);
+    spr_person(196, 188, cfg.chr[w ^ 1], 1, POSE_SAD, 0, (u8)(w ^ 1));
     if (cfg.doubles) {
-        spr_person(80, 64, cfg.chr[w + 2], 1, joy, 1, w);
-        spr_person(216, 64, cfg.chr[(w ^ 1) + 2], 1, POSE_SAD, 1, (u8)(w ^ 1));
+        spr_person(84, 188, cfg.chr[w + 2], 1, joy, 1, w);
+        spr_person(220, 188, cfg.chr[(w ^ 1) + 2], 1, POSE_SAD, 1, (u8)(w ^ 1));
     }
     spr_end();
 }

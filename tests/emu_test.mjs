@@ -199,7 +199,7 @@ function playComp(type, opts, wins) {
     toMatch(e);
     if (app(e) !== AS.MATCH) break;
     // victoire forcée du joueur pour parcourir la compétition
-    e.poke('sc_winner', wins(matches) ? 0 : 1); e.poke('sc_over', 1); e.poke('ms', 4); e.poke('ms_timer', 2);
+    e.poke('sc_winner', wins(matches) ? 0 : 1); e.poke('sc_over', 1); e.poke('ms', 4); e.poke('hl_fin', 1); e.poke('ms_timer', 2);
     runUntil(e, () => app(e) === AS.SCREENS, 60); e.run(20);
     matches++;
     e.tap('A'); e.run(40);
@@ -418,6 +418,19 @@ console.log('Ralenti : gros plan et zoom');
   runUntil(g, () => g.peek('hl_mode') === 1 && g.peek('hl_t') === 30, 60 * 60 * 6);
   g.tap('A'); runUntil(g, () => g.peek('hl_mode') === 0, 120); g.run(10);   /* (retour au court : une quinzaine de trames de rechargement) */
   check(g.peek('hl_mode') === 0 && g.peek('ctrl_swap') === 0 && g.peek('ms') !== 5, `A pendant le gros plan : retour au court, fin du ralenti (ms ${g.peek('ms')}, mode ${g.peek('hl_mode')}, t ${g.peek('hl_t')})`);
+  // fin d'un vrai double (2.69) : portrait du vainqueur en pied, puis gros plan
+  // de son partenaire, « VICTOIRE ! », puis les résultats
+  {
+    const d = boot(); startWith(d, { MODE: 1, TYPE: 1, FMT: 3, REPLAY: 0 }); allCpu(d);
+    runUntil(d, () => d.peek('hl_mode') === 3, 60 * 60 * 30, () => { if (d.peek('cer') >= 4) d.poke('cer_skip', 1); });
+    const w = d.peek('sc_winner'), np = d.peek('npl');
+    runUntil(d, () => d.peek('hl_t') === 40, 100); const a = d.peek('hl_sp');
+    const tx = []; for (let i = 0; i < 15 && d.peek('hl_txt', i); i++) tx.push(d.peek('hl_txt', i));
+    runUntil(d, () => d.peek('hl_t') === 120, 200); const b = d.peek('hl_sp');
+    runUntil(d, () => scr(d) === SS.RESULTS, 400);
+    check(np === 4 && a === w && b === w + 2 && String.fromCharCode(...tx) === 'VICTOIRE !' && scr(d) === SS.RESULTS,
+      `double : portrait du vainqueur, puis gros plan de son partenaire (« ${String.fromCharCode(...tx)} »), puis les résultats`);
+  }
   // club nudiste : ni gros plan ni zoom
   const n = boot(); startWith(n, { FMT: 3, ENV: 3 }); allCpu(n);
   let rep = 0, hl = 0, pm = 0;
@@ -601,7 +614,7 @@ console.log('Compétitions');
     const seen = [];
     for (let m = 0; m < 5; m++) {
       seen.push(toMatch(h).mus);
-      h.poke('sc_winner', 0); h.poke('sc_over', 1); h.poke('ms', 4); h.poke('ms_timer', 2);
+      h.poke('sc_winner', 0); h.poke('sc_over', 1); h.poke('ms', 4); h.poke('hl_fin', 1); h.poke('ms_timer', 2);
       runUntil(h, () => app(h) === AS.SCREENS, 60); runUntil(h, () => scr(h) === SS.RESULTS && litScr(h), 120);
       h.tap('A'); runUntil(h, () => scr(h) !== SS.RESULTS && litScr(h), 120);
     }
@@ -645,7 +658,7 @@ console.log('Compétitions');
     const an = toMatch(h);
     seen.push(an.mus); if (an.mus) { ranks.push(an.rank); names.push(an.name); }
     surfs.push(h.peek('cfg', 14));
-    h.poke('sc_winner', 1); h.poke('sc_over', 1); h.poke('ms', 4); h.poke('ms_timer', 2);
+    h.poke('sc_winner', 1); h.poke('sc_over', 1); h.poke('ms', 4); h.poke('hl_fin', 1); h.poke('ms_timer', 2);
     runUntil(h, () => app(h) === AS.SCREENS, 60); runUntil(h, () => scr(h) === SS.RESULTS && litScr(h), 120);
     h.tap('A'); runUntil(h, () => scr(h) !== SS.RESULTS && litScr(h), 120);
   }
@@ -671,7 +684,7 @@ console.log('Compétitions');
     const r = boot(); startWith(r, { MODE: MODE.COMP, COMP: 6, FMT: 3, P1: 16 }); skipIntro(r);
     for (let m = 0; m < 4; m++) {
       toMatch(r);
-      r.poke('sc_winner', 0); r.poke('sc_over', 1); r.poke('ms', 4); r.poke('ms_timer', 2);
+      r.poke('sc_winner', 0); r.poke('sc_over', 1); r.poke('ms', 4); r.poke('hl_fin', 1); r.poke('ms_timer', 2);
       runUntil(r, () => app(r) === AS.SCREENS, 60); r.run(20); r.tap('A'); r.run(40); skipIntro(r);
     }
     const rc = r.text(10, 22, 15).replace(/ /g, '');
@@ -778,7 +791,7 @@ console.log('Code de reprise');
 {
   const e = boot(); startWith(e, { MODE: MODE.COMP, COMP: 2, P1: 6, SURF: 4, ENV: 1, COND: 2 });
   toMatch(e);
-  e.poke('sc_winner', 0); e.poke('sc_over', 1); e.poke('ms', 4); e.poke('ms_timer', 2);
+  e.poke('sc_winner', 0); e.poke('sc_over', 1); e.poke('ms', 4); e.poke('hl_fin', 1); e.poke('ms_timer', 2);
   runUntil(e, () => app(e) === AS.SCREENS, 60); e.run(20); e.tap('A'); e.run(40);
   const code = e.text(10, 22, 15).replace(/ /g, '');
   const want = ['c_type', 'c_stage', 'c_seed', 'c_results', 'c_surf', 'c_env', 'c_cond'].map(n => e.peek(n));
@@ -903,7 +916,7 @@ console.log('Compétition en double à deux joueurs humains');
   const x0 = e.peekS16('plx', 4); e.down('RIGHT', 2); e.run(20); e.up('RIGHT', 2);
   check(e.peekS16('plx', 4) !== x0, 'la manette 2 déplace le partenaire');
   // victoire forcée puis reprise par code sur une autre console
-  e.poke('sc_winner', 0); e.poke('sc_over', 1); e.poke('ms', 4); e.poke('ms_timer', 2);
+  e.poke('sc_winner', 0); e.poke('sc_over', 1); e.poke('ms', 4); e.poke('hl_fin', 1); e.poke('ms_timer', 2);
   runUntil(e, () => app(e) === AS.SCREENS, 60); e.run(20); e.tap('A'); e.run(40);
   const code = e.text(10, 22, 15).replace(/ /g, '');
   const f = boot(); f.tap('UP'); f.tap('A'); f.run(10);
@@ -929,7 +942,7 @@ console.log('Vitesse du jeu, coups gagnants, smash sauté, musiques');
     // fin de match : ms_timer décompte chaque trame logique ; le CPU (équipe 0)
     // bat un humain (équipe 1) : pas de fête, qui fausserait la mesure
     e.nes.cpu.mem[e.addr('cfg') + CFG.CTRL + 1] = 0; e.poke('sc_winner', 0);
-    e.poke('ms', 4); e.poke('ms_timer', 250); e.run(120);
+    e.poke('ms', 4); e.poke('hl_fin', 1); e.poke('ms_timer', 250); e.run(120);
     return 250 - e.peek('ms_timer');
   };
   const r0 = rate(0), r1 = rate(1), r2 = rate(2);
@@ -1048,7 +1061,7 @@ console.log('Vitesse du jeu, coups gagnants, smash sauté, musiques');
   check(scr(e) === SS.COMP && e.peek('music_cur') !== 6, 'quart de finale : pas de thème de finale');
   for (let m = 0; m < 2; m++) {   // tournoi à 8 : quart puis demi gagnés
     toMatch(e);
-    e.poke('sc_winner', 0); e.poke('sc_over', 1); e.poke('ms', 4); e.poke('ms_timer', 2);
+    e.poke('sc_winner', 0); e.poke('sc_over', 1); e.poke('ms', 4); e.poke('hl_fin', 1); e.poke('ms_timer', 2);
     runUntil(e, () => app(e) === AS.SCREENS, 60); e.run(20); e.tap('A'); e.run(40);
   }
   check(scr(e) === SS.COMP && e.text(3, 5, 6) === 'FINALE' && e.peek('music_cur') === 6, 'écran de la finale : thème de la finale');
@@ -1685,7 +1698,7 @@ console.log('Victoire : sauts de joie et confettis');
   const confetti = boot().peek('confetti_tile');
   // le joueur humain (équipe 0) gagne : confettis et bonds du vainqueur
   const e = boot(); startWith(e, { MODE: MODE.P1 }); e.run(60);
-  e.poke('sc_winner', 0); e.poke('ms_timer', 160); e.poke('ms', 4); e.run(2);
+  e.poke('sc_winner', 0); e.poke('ms_timer', 160); e.poke('ms', 4); e.poke('hl_fin', 1); e.run(2);
   let conf = 0, ys = new Set();
   for (let n = 0; n < 40; n++) {
     e.run(1);
@@ -1703,7 +1716,7 @@ console.log('Victoire : sauts de joie et confettis');
   check(dur('mus_vict_mel') === 160 && dur('mus_vict_bass') === 160, `fanfare de victoire : ${dur('mus_vict_mel')}/${dur('mus_vict_bass')} trames (durée de la fête)`);
   // feux d'artifice : 3 gerbes de 4 étoiles qui s'écartent
   const g = boot(); startWith(g, { MODE: MODE.P1 }); g.run(60);
-  g.poke('sc_winner', 0); g.poke('ms_timer', 160); g.poke('ms', 4);
+  g.poke('sc_winner', 0); g.poke('ms_timer', 160); g.poke('ms', 4); g.poke('hl_fin', 1);
   let bursts = 0, prev = 0;
   for (let n = 0; n < 158; n++) {
     g.run(1);
@@ -1715,11 +1728,11 @@ console.log('Victoire : sauts de joie et confettis');
   // double à 4 joueurs (cas le plus chargé) : aucune trame perdue pendant la fête
   const d = boot(); startWith(d, { MODE: MODE.P2, TYPE: 1, FMT: 3 }); allCpu(d);
   runUntil(d, () => d.peek('ms') === 0, 200);
-  d.poke('sc_winner', 0); d.poke('ms', 4); d.poke('ms_timer', 250); d.run(120);
+  d.poke('sc_winner', 0); d.poke('ms', 4); d.poke('hl_fin', 1); d.poke('ms_timer', 250); d.run(120);
   check(250 - d.peek('ms_timer') >= 118, `fête en double : ${250 - d.peek('ms_timer')} trames logiques sur 120 (au plus 1 perdue, invisible)`);
   // le CPU bat le joueur humain : pas de fête
   const f = boot(); startWith(f, { MODE: MODE.P1 }); f.run(60);
-  f.poke('sc_winner', 1); f.poke('ms_timer', 160); f.poke('ms', 4); f.run(10);
+  f.poke('sc_winner', 1); f.poke('ms_timer', 160); f.poke('ms', 4); f.poke('hl_fin', 1); f.run(10);
   check(!oamTiles(f).has(confetti), 'défaite contre le CPU : pas de confettis');
 }
 }
@@ -1888,7 +1901,7 @@ console.log('Son sur console réelle : balayage des carrés');
   e.run(40); e.tap('START', 1, 1, 0); e.run(4); e.tap('START', 1, 1, 0); e.run(60);   // « ARE YOU SURE? » (bourdon grave)
   toMenu(e); e.tap('START'); e.run(30); e.tap('A');
   runUntil(e, () => app(e) === AS.MATCH, 300); allCpu(e); e.run(1500);
-  e.poke('sc_winner', 0); e.poke('ms_timer', 160); e.poke('ms', 4); e.run(170);   // feux d'artifice
+  e.poke('sc_winner', 0); e.poke('ms_timer', 160); e.poke('ms', 4); e.poke('hl_fin', 1); e.run(170);   // feux d'artifice
   check(bad.length === 0, `aucune note coupée par l'unité de balayage sur console réelle${bad.length ? ' (périodes ' + [...new Set(bad)].join(', ') + ')' : ''}`);
 }
 }
@@ -2149,7 +2162,8 @@ console.log('Séquences animées du match');
     e.cerSkip = false; e.poke('cer_skip', 0);
     const w = e.peek('sc_winner'), n = e.peek('npl');
     let kneel = false, supine = false, racket = false, shake = false, close = false, salute = false, frames = 0;
-    for (let f = 0; f < 900 && app(e) === AS.MATCH; f++) {
+    let portrait = false, txt = '', first = -1, second = -1;
+    for (let f = 0; f < 1100 && app(e) === AS.MATCH; f++) {
       e.run(1); frames++;
       const c = e.peek('cer');
       if (c === 7) {
@@ -2161,9 +2175,20 @@ console.log('Séquences animées du match');
         close = Math.abs(pos(e, 0)[0] - pos(e, 1)[0]) <= 16 && Math.abs(pos(e, 0)[1] - 132) <= 12 && Math.abs(pos(e, 1)[1] - 132) <= 12;
       }
       if (c === 10 && (e.peek('pose_force', 0) & 0x80)) salute = true;
+      // portrait du vainqueur (2.69) : en pied puis gros plan, son nom
+      if (e.peek('hl_mode') === 3) {
+        portrait = true;
+        const t = e.peek('hl_t');
+        if (t === 40) { const a = []; for (let i = 0; i < 15 && e.peek('hl_txt', i); i++) a.push(e.peek('hl_txt', i)); txt = String.fromCharCode(...a); first = e.peek('hl_sp'); }
+        if (t === 120) second = e.peek('hl_sp');
+      }
     }
     check(kneel && supine && racket, `${dbl ? 'double' : 'simple'} : balle de match, vainqueur à genoux poings levés, puis allongé, raquette lâchée`);
-    check(shake && close && salute && app(e) !== AS.MATCH && frames < 700, `${dbl ? 'double' : 'simple'} : poignée de main au filet, salut à l'arbitre, puis les résultats (${frames} trames)`);
+    check(shake && close && salute && app(e) !== AS.MATCH && frames < 950, `${dbl ? 'double' : 'simple'} : poignée de main au filet, salut à l'arbitre, portrait du vainqueur, puis les résultats (${frames} trames)`);
+    e.run(60);
+    const four = n === 4, want = four ? 'VICTOIRE !' : (e.text(20, 4, 8).match(/^[A-Z]+/) || [''])[0] + ' GAGNE !';
+    check(portrait && first === w && second === (four ? w + 2 : w) && txt === want && scr(e) === SS.RESULTS && e.peek('ctrl_swap') === 0,
+      `${dbl ? 'double' : 'simple'} : portrait du vainqueur (« ${txt} »), en pied puis gros plan${four ? ' du partenaire' : ''}, puis les résultats [${portrait},${first},${second},${w},« ${want} »,${scr(e)},${e.peek('ctrl_swap')}]`);
   }
 }
 }
@@ -2210,7 +2235,7 @@ for (const type of [5, 6]) {
     e.tap('A'); runUntil(e, () => app(e) === AS.MATCH || (scr(e) === 10 && litScr(e)), 120);
     if (app(e) !== AS.MATCH) { e.tap('A'); runUntil(e, () => app(e) === AS.MATCH, 120); }   /* image du tournoi */
     e.run(30);
-    e.poke('sc_winner', 0); e.poke('sc_over', 1); e.poke('ms', 4); e.poke('ms_timer', 2);
+    e.poke('sc_winner', 0); e.poke('sc_over', 1); e.poke('ms', 4); e.poke('hl_fin', 1); e.poke('ms_timer', 2);
     runUntil(e, () => app(e) === AS.SCREENS, 60); e.run(20); e.tap('A'); e.run(40); skipIntro(e);
   }
   const ok = seen.length >= 4 && seen.every(x => x[0] === 'F' ? x.endsWith('3:5 SETS') : x.endsWith('2:3 SETS'));

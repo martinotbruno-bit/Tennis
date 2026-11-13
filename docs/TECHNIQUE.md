@@ -338,6 +338,12 @@ Le dessin des personnages est commun aux vues de face et de dos (rangées de tui
 - **IA** (`ai_update`, banque 0) : à partir de Normal, après le lob et l'amortie, croisé court avec une probabilité 90/256 si l'adversaire est au filet, 20/256 sinon.
 - **Réglages** : première rangée `MY0` = 4 + (18 − `nvis`) / 2 (screens.c ; même calcul dans `menu_marks`) ; `menu_soft` réécrit les 18 rangées ; portraits en y = `MY0` × 8 − 30, entre 7 et 16. Tests : `menuY(e, i)`.
 
+### Version 2.69 : portrait du vainqueur, plongeon, écran des résultats
+
+- **Portrait du vainqueur** (`final_tick`, highlight.c, `hl_mode` 3) : à la fin d'un match (mode match, hors démonstration et club nudiste), quand `match_tick` rendrait 1 (`match_end`, game.c, une fois par match : `hl_fin`), la séquence prend la main : flash, `TZ_VICTORY` (en pied, bras levés) du vainqueur en travelling éclair, confettis, ovation, « NOM GAGNE ! » (double : « VICTOIRE ! ») ; puis `TZ_VICTORY_Z` (gros plan ; en double, le partenaire) qui tremble ; 160 trames ; A ou START passe (après 20 trames). Fin : fondu, `chr_reload`, puis l'écran des résultats. `match_draw` ne dessine rien tant que `hl_mode` vaut 1 à 3. Les tests qui forcent la fin d'un match posent `hl_fin` (comme `cer_skip`).
+- **Plongeon** : une frappe faite pendant un plongeon (`dive_t`) est notée 4 ; le gros plan du ralenti montre alors l'image de glissade (`TZ_SLIDE`), la balle arrive au ras du sol.
+- **Écran des résultats** : le tableau des sets passait sous les lettres du titre (rangées 2 à 4, défaut ancien) : « VICTOIRE DE » rangée 4, tableau rangées 6 à 8 ; les joueurs (joie, déception) descendent sous les statistiques (y 188).
+
 ### Version 2.68 : filet qui tremble en perspective ; gros plan du service, du smash et du revers
 
 - **Image `smash`** (`gen_teaser.py`, pose `smash` : raquette au-dessus de la tête et en avant, bras libre replié, buste cambré ; échelle 0,86, en pied ; homme, femme, fillette ; `TZ_SMASH`, repères `TZ_SMASH_RACKET_X/Y`). Images rangées par le générateur dans les banques libres, dont la nouvelle banque 17 (`assets_tz17.c`).

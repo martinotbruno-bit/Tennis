@@ -295,7 +295,7 @@ static void closeup_tick(void)
     ++hl_t;
     if (hl_t < 12) {                     /* image figée */
         if (hl_t == 9) { flash(0x30); sfx_perfect(); }
-        if (hl_t == 11) cut_build(hl_sk == 3 ? TZ_BACKHAND : hl_sk ? TZ_SMASH : TZ_IMPACT);   /* revers ; service, smash : raquette au-dessus de la tête (2.68) */
+        if (hl_t == 11) cut_build(hl_sk == 4 ? TZ_SLIDE : hl_sk == 3 ? TZ_BACKHAND : hl_sk ? TZ_SMASH : TZ_IMPACT);   /* plongeon : la glissade */   /* revers ; service, smash : raquette au-dessus de la tête (2.68) */
         return;
     }
     hl_c = (u8)(hl_t - 11);             /* temps du plan */
@@ -310,7 +310,8 @@ static void closeup_tick(void)
            service et smash (elle tombe d'en haut, repart vers le bas) */
         if (hl_c >= 8 && hl_c < 22) {
             k = (u8)(22 - hl_c);
-            if (hl_sk == 3) { SPR(TZ_BACKHAND_RACKET_X - k * 9, TZ_BACKHAND_RACKET_Y - 4 + k * 5, ball_base + 8, 3); }   /* revers : de la gauche */
+            if (hl_sk == 4) { SPR(TZ_SLIDE_RACKET_X - k * 9, TZ_SLIDE_RACKET_Y - 4 + k * 3, ball_base + 8, 3); }   /* plongeon : de la gauche, au ras du sol */
+            else if (hl_sk == 3) { SPR(TZ_BACKHAND_RACKET_X - k * 9, TZ_BACKHAND_RACKET_Y - 4 + k * 5, ball_base + 8, 3); }   /* revers : de la gauche */
             else if (hl_sk) { if ((s16)(TZ_SMASH_RACKET_Y - 4) - (s16)(k * 7) >= 0) SPR(TZ_SMASH_RACKET_X + k * 4, TZ_SMASH_RACKET_Y - 4 - k * 7, ball_base + 8, 3); }   /* (au-dessus du cadre : cachée) */
             else { SPR(TZ_IMPACT_RACKET_X + k * 9, TZ_IMPACT_RACKET_Y - 4 + k * 5, ball_base + 8, 3); }
         } else if (hl_c == 22) {
@@ -319,7 +320,8 @@ static void closeup_tick(void)
             for (i = 0; i < 3; ++i) {
                 k = (u8)((hl_c - 22) * 10 - i * 6);
                 if (k >= 40) continue;
-                if (hl_sk == 3) { SPR(TZ_BACKHAND_RACKET_X - 4 + k, TZ_BACKHAND_RACKET_Y - 8 - (k >> 1), ball_base + 8, 3); }
+                if (hl_sk == 4) { SPR(TZ_SLIDE_RACKET_X - 4 - k, TZ_SLIDE_RACKET_Y - 8 - k, ball_base + 8, 3); }   /* (relevée vers le haut) */
+                else if (hl_sk == 3) { SPR(TZ_BACKHAND_RACKET_X - 4 + k, TZ_BACKHAND_RACKET_Y - 8 - (k >> 1), ball_base + 8, 3); }
                 else if (hl_sk) { SPR(TZ_SMASH_RACKET_X - k, TZ_SMASH_RACKET_Y + k + (k >> 1), ball_base + 8, 3); }
                 else { SPR(TZ_IMPACT_RACKET_X + 4 - k, TZ_IMPACT_RACKET_Y - 8 - (k >> 1), ball_base + 8, 3); }
             }
@@ -507,8 +509,62 @@ static void zoom_tick(void)
     if (hl_c >= 80) back_to_court();
 }
 
+/* ---------------------------------------------------------------------- */
+/* Fin du match (hl_mode 3, version 2.69) : portrait du vainqueur avant     */
+/* l'écran des résultats : en pied, bras levés, sous les confettis, son    */
+/* nom (« ALEX GAGNE ! » ; en double « VICTOIRE ! »), puis gros plan du    */
+/* visage (en double : son partenaire). L'écran des résultats se construit */
+/* ensuite : pas de retour au court.                                       */
+/* ---------------------------------------------------------------------- */
+/* fin : tuiles d'origine (l'image a remplacé la police et les décors),
+   écran coupé ; l'écran des résultats se construit ensuite */
+static void final_end(void)
+{
+    fade_skip = 0;
+    ppu_off();                          /* (fondu au noir) */
+    scroll_x = 0; scroll_y = 0; scroll_nt = 0;
+    chr_reload();
+    bg_dirty = 0; swap_on = 0;
+    hl_mode = 0; hl_t = 0;
+}
+static void final_tick(void)
+{
+    u8 i, w = sc_winner;
+    if (hl_t == 0) {
+        const char *nm = char_name[cfg.chr[w]];
+        if (cfg.doubles) nm = "VICTOIRE";
+        for (i = 0; nm[i] && i < 8; ++i) hl_txt[i] = nm[i];
+        if (!cfg.doubles) { const char *g = " GAGNE !"; u8 k = 0; while ((hl_txt[i] = g[k]) != 0) { ++i; ++k; } }
+        else { hl_txt[i++] = ' '; hl_txt[i++] = '!'; hl_txt[i] = 0; }
+        hl_sp = w;
+        flash(0x30);
+    }
+    ++hl_t;
+    if (hl_t == 3) cut_build(TZ_VICTORY);
+    if (hl_t == 80) { flash(0x30); sfx_winner(); }
+    if (hl_t == 82) { if (cfg.doubles) hl_sp = (u8)(w + 2); cut_build(TZ_VICTORY_Z); hl_shake = 6; }
+    if (hl_t < 4) return;
+    if (hl_t == 4 || hl_t == 84) sfx_crowd(7);
+    if (hl_shake) { scroll_y = (u8)((hl_t & 1) ? hl_shake : 0); if ((hl_t & 3) == 0) --hl_shake; } else scroll_y = 0;
+    /* plan en pied : arrivée en travelling éclair ; gros plan : fixe */
+    hl_c = (u8)(hl_t - 3);
+    hl_cam = (hl_t < 82 && hl_c < 6) ? -(s16)whip_in[hl_c] : 0;
+    scroll_x = (u8)hl_cam; scroll_nt = (u8)((hl_cam >> 8) & 1);
+    spr_begin();
+    for (i = 0; i < 12; ++i)
+        spr1((u8)(i * 21 + 6), (u8)(((hl_t * (1 + (i & 1)) + i * 23) & 0xBF) + 8), confetti_tile, (u8)(i & 3));
+    if (hl_t >= 14) label_draw(12, (u8)((hl_t - 14) >> 1));
+    spr_end();
+    if (hl_t >= 160) final_end();
+}
+
 void hl_tick(void)
 {
+    if (hl_mode == 3) {
+        if (hl_t > 20 && (pad1_new & (PAD_A | PAD_START))) { final_end(); return; }
+        final_tick();
+        return;
+    }
     if (pad1_new & (PAD_A | PAD_B | PAD_START)) {   /* passer : fin du ralenti */
         back_to_court();
         rp_done = 1; hl_sok = hl_sbok = 0; hl_t = 0;

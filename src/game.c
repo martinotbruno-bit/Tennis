@@ -420,7 +420,7 @@ static void do_hit(u8 p, u8 pad, u8 btn, u8 power, u8 spread)
     hitter_p = p;
     hit_now = 1;
     b_serve = 0;
-    HL_HIT(p, (u8)(last_shot == SH_SMASH ? 1 : dx < 0 ? 3 : 0));   /* 1 smash, 3 revers (balle à gauche du joueur), 0 coup droit */
+    HL_HIT(p, (u8)(dive_t[p] ? 4 : last_shot == SH_SMASH ? 1 : dx < 0 ? 3 : 0));   /* 4 plongeon, 1 smash, 3 revers (balle à gauche du joueur), 0 coup droit */
     ++rally_hits;
     pl_hit[p] = 1;
     pl_flip[p] = (u8)(dx < 0);
@@ -908,9 +908,22 @@ static void ai_update(u8 p)
 /* ====================================================================== */
 
 /* ====================================================================== */
+/* fin du match : portrait du vainqueur (highlight.c, hl_mode 3, version
+   2.69) avant l'écran des résultats ; 1 : passer aux résultats */
+u8 hl_fin;                       /* portrait du vainqueur déjà montré (les tests le posent pour passer) */
+static u8 match_end(void)
+{
+    if (!hl_fin) {
+        hl_fin = 1;
+        if (cfg.mode == GM_MATCH && !cfg.demo && cfg.env != ENV_NUDE) { hl_mode = 3; return 0; }
+    }
+    return 1;
+}
+
 void match_start(void)
 {
     u8 i;
+    hl_fin = 0;
     npl = (u8)(cfg.doubles ? 4 : 2);
     rules_init(cfg.sets_to_win, cfg.games_per_set, (u8)(cfg.mode == GM_MATCH ? (rand8() & 1) : 1));
     for (i = 0; i < 2; ++i) {
@@ -1044,6 +1057,9 @@ u8 match_tick(void)
 {
     u8 p, ctrl, pad, pressed;
 
+    /* portrait du vainqueur (fin du match, banque 15), puis les résultats */
+    if (hl_mode == 3) { bank_call(BANK_HL, hl_tick); return (u8)(hl_mode ? 0 : 1); }
+
     /* démonstration : un bouton rend la main */
     if (cfg.demo && (pad1_new & (PAD_A | PAD_START))) { match_quit = 2; return 1; }
 
@@ -1076,7 +1092,7 @@ u8 match_tick(void)
         if (ms == MS_OVER) {
             if (ms_timer > 1) --ms_timer;
             if (win_party()) fw_sound(ms_timer);
-            if (!cer) return 1;
+            if (!cer) return match_end();
         } else if (!cer) ms_timer = 30;          /* le serveur prend son temps */
         if (msg_timer) { if (--msg_timer == 0) { hud_dirty = 1; if (recap_pend) score_recap(); } }
         if (hud_dirty) bank_call(BANK_EXTRAS, hud_update);
@@ -1143,7 +1159,7 @@ u8 match_tick(void)
             if (brk_pend) { brk_pend = 0; return 2; }      /* fin de set : écran récapitulatif */
         }
     } else if (ms == MS_OVER) {
-        if (--ms_timer == 0) return 1;
+        if (--ms_timer == 0) return match_end();
         if (win_party()) fw_sound(ms_timer);
     }
 
@@ -1199,7 +1215,7 @@ void match_draw(void)
     /* trame de frappe (calcul de trajectoire coûteux) : on garde les sprites
        de la trame précédente, ce qui évite tout ralentissement ; pendant un
        ralenti, c'est rp_play qui dessine */
-    if (hit_now || ms == MS_REPLAY) return;
+    if (hit_now || ms == MS_REPLAY || hl_mode) return;   /* (portrait du vainqueur : la banque 15 dessine) */
     party = win_party();
     /* tri par profondeur : le joueur le plus bas à l'écran passe devant ;
        positions à l'écran en octets (draw_order, assembleur, version 2.66) */

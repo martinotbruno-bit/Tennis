@@ -1,10 +1,16 @@
-# Royal Martinot — Rapport de réalisation (version 2.68)
+# Royal Martinot — Rapport de réalisation (version 2.69)
 
 Comme l'exige le CDC (§ 17.5), ce rapport distingue ce qui est **réalisé**, **testé**, **validé sur matériel réel**, **validé uniquement en émulation**, **dépendant d'une extension**, et les **limitations restantes**.
 
 > **Validation matérielle : aucune.** Aucun test n'a été fait sur console réelle (NES, Famicom, PAL, cartouche MMC1). Toutes les validations ont eu lieu en émulation (jsnes) et par des tests unitaires sur PC. Les critères « vérifié sur console physique » (CDC § 2.1, 15.4, 16.A) **ne sont pas remplis**. Ce point ne peut pas être traité dans l'environnement de développement utilisé.
 
 ## 1. Évolutions
+
+### Version 2.69 (travail en autonomie)
+
+| Demande | Réalisation |
+|---|---|
+| Améliorer d'autres choses, au choix, en tirant parti de la nouvelle cartouche | **Portrait du vainqueur** en fin de match : avant les résultats, le vainqueur en grand, à ses couleurs (images haute définition), en pied bras levés sous les confettis avec son nom, puis en gros plan (en double, son partenaire) ; A passe. **Plongeon** : le gros plan du ralenti montre l'image de glissade quand le point est gagné sur un plongeon. **Écran des résultats** : le tableau des sets passait sous les lettres du titre (défaut ancien) ; mise en page reprise, joueurs sous les statistiques. Image : `docs/vainqueur_269.png`. Tests : portrait en simple et en vrai double |
 
 ### Version 2.68
 
@@ -589,7 +595,7 @@ Pour loger ce contenu, la cartouche passe de NROM (32 Ko) à **MMC1** : 128 Ko d
 | Relecture des textes (`check_texts.py`) | 0 problème |
 | Contraste (`contrast.py 25`) | 0 paire sous ΔE 25 (personnages, courts, balle, tenues) |
 | Profil CPU, double, 6 000 trames | 27 trames d'échange en dépassement (0,45 %), sans défaut d'image |
-| Compilation | Reproductible : SHA-256 `2c7ffec98eec8f77fb2c6c348195374b23ac0b19a45392af806dcafd372c1f84` sur deux compilations propres |
+| Compilation | Reproductible : SHA-256 `69d9e8034ae2f525ca607531dc6367342b6bbec31fe796d75ccf843d16eda308` sur deux compilations propres |
 
 ## 3. Conformité par section du CDC
 

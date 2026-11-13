@@ -159,6 +159,7 @@ Le lancer reste visible quelle que soit votre position, y compris quand vous ser
   - **gros plan de la frappe décisive** : l'image se fige, flash, puis le joueur qui a gagné le point apparaît en grand, à ses couleurs, en pleine frappe (coup droit, revers à deux mains, ou raquette au-dessus de la tête sur un service ou un smash, depuis la version 2.68) (la caméra arrive en travelling, la balle frappe le tamis et repart en traînée, le nom du coup s'inscrit lettre par lettre : ACE, COUP GAGNANT, SMASH, LOB GAGNANT…), puis en gros plan, bras levés, sous les confettis ;
   - **arrêt sur image zoomé au rebond** : de retour au ralenti, au moment où la balle touche le sol, un viseur se resserre sur le point d'impact, puis l'image est agrandie deux fois (court, lignes, joueurs proches et balle) : on voit si la balle est sur la ligne, avec BONNE ! ou DEHORS ! ;
   - si la frappe décisive est plus ancienne que les trames rejouées (long lob, long échange conclu par une faute), le gros plan ouvre le ralenti. Au club nudiste, le ralenti reste simple.
+- À la fin du match, avant les résultats, le **vainqueur** apparaît en grand, à ses couleurs : en pied, bras levés sous les confettis, avec son nom (« MAYA GAGNE ! » ; en double « VICTOIRE ! »), puis en gros plan (en double, son partenaire). A ou START passe.
 - **En fin de match** :
   - le vainqueur célèbre et le perdant baisse la tête ;
   - l'écran de résultats donne les statistiques : points gagnés, aces, doubles fautes, coups gagnants, fautes, pourcentage de premières balles, plus long échange ;
