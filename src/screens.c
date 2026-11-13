@@ -876,16 +876,18 @@ static void setbreak_screen(void)
     u8 n;
     char b[5];
     screen_begin();
+    deco("FIN DE SET", 0, 24);          /* (titre et cadre comme les autres écrans, version 2.69) */
     n = sets_done();
     b[0] = (char)('0' + n); b[1] = 0;
-    txt_at(8, 2, "FIN DU");
-    txt_at(15, 2, b);
-    txt_at(16, 2, n == 1 ? "ER SET" : "E SET");
+    txt_off = 0x40;                     /* en or : « 1ER SET POUR ALEX » */
+    txt_at(8, 4, b);
+    txt_at(9, 4, n == 1 ? "ER SET" : "E SET");
     /* vainqueur du set : celui qui a le plus de jeux dans le dernier set */
     n = (u8)(sc_hist[n - 1][1] > sc_hist[n - 1][0]);
-    txt_at(8, 3, "POUR");
+    txt_at(16, 4, "POUR");
     if (cfg.doubles) team_label(cfg.chr[n], cfg.chr[n + 2], line); else team_label(cfg.chr[n], 255, line);
-    txt_at(13, 3, line);
+    txt_at(21, 4, line);
+    txt_off = 0;
     set_table(6);
     team_label(cfg.chr[0], 255, b); txt_at(19, 11, b);
     team_label(cfg.chr[1], 255, b); txt_at(25, 11, b);

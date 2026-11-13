@@ -1561,7 +1561,7 @@ console.log('Récapitulatif du score');
   }, 60 * 60 * 4);
   e.run(30);
   const tx = (x, y, n) => e.text(x, y, n).replace(/\0/g, ' ');
-  check(scr(e) === SS.SETBREAK && tx(8, 2, 14) === 'FIN DU 1ER SET' && tx(8, 6, 4) === 'SETS', 'fin du 1er set : écran récapitulatif (tableau des sets, statistiques)');
+  check(scr(e) === SS.SETBREAK && tx(8, 4, 12) === '1ER SET POUR' && tx(8, 6, 4) === 'SETS', 'fin du 1er set : écran récapitulatif (titre, tableau des sets, statistiques)');
   const l0 = tx(8, 7, 9), l1 = tx(8, 8, 9);
   check(/^[A-Z]{4}\s+\d/.test(l0) && /^[A-Z]{4}\s+\d/.test(l1), `tableau des sets : « ${l0.trim()} » / « ${l1.trim()} »`);
   check(e.peek('music_cur') === 8, 'petite musique sur l\'écran de fin de set');
