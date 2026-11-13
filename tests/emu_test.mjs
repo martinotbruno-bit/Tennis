@@ -908,7 +908,7 @@ console.log('Vitesse du jeu, coups gagnants, smash sauté, musiques');
   e.run(40);
   check(e.peek('pl_jump', 0) === 0, 'puis retombe');
   // une balle à 52 px reste hors de portée d'un CPU de niveau normal
-  const f = boot(); startWith(f, { FMT: 3, LEVEL: 1 }); allCpu(f);
+  const f = boot(); startWith(f, { FMT: 0, LEVEL: 1 }); allCpu(f);   // (un set : assez de services)
   runUntil(f, () => f.peek('ms') === 0, 200);
   const g16 = (n, v, o = 0) => { f.poke(n, v & 255, o); f.poke(n, (v >> 8) & 255, o + 1); };
   f.poke('ms', 2); f.poke('b_live', 1); f.poke('b_vis', 1); f.poke('b_serve', 0); f.poke('bounces', 0);
@@ -1303,11 +1303,12 @@ console.log('Margaux jouable et fatigue');
 
 {
   // service faux : bip du juge électronique, comme une balle dehors
-  const e = boot(); startWith(e, { FMT: 3 }); allCpu(e);
+  // (un set complet : en format rapide, il arrive qu'aucun service ne soit faux)
+  const e = boot(); startWith(e, { FMT: 0 }); allCpu(e);
   const mm = e.nes.mmap, w = mm.write.bind(mm); let beep = false;
   mm.write = (a, v) => { if (a === 0x4002 && v === 0x5C) beep = true; return w(a, v); };
   let faults = 0, beeps = 0, prev = e.peek('ms');
-  for (let f = 0; f < 60 * 60 * 6 && faults < 3; f++) {
+  for (let f = 0; f < 60 * 60 * 12 && faults < 3 && app(e) === AS.MATCH; f++) {
     beep = false; const srv = e.peek('b_serve'); e.run(1);
     const ms = e.peek('ms');
     if (prev !== 3 && ms === 3 && srv && e.peek('rally_hits') <= 1 && e.peek('ump_arm')) { faults++; if (beep) beeps++; }
@@ -1338,7 +1339,7 @@ console.log('Service canon');
   const c = res.find(([, r]) => r.canon)[1], n = res.find(([k, r]) => !r.canon && k === hits[0] - 3)[1];
   check(c.vy > n.vy * 1.4 && c.msg === 'SERVICE CANON' && c.ok === 1 && c.tried === 1, `service canon plus rapide (${c.vy} contre ${n.vy}), annoncé et compté`);
   // le CPU Normal ne le réussit jamais
-  const f = boot(); startWith(f, { FMT: 3, LEVEL: 1 }); allCpu(f);
+  const f = boot(); startWith(f, { FMT: 0, LEVEL: 1 }); allCpu(f);   // (un set : assez de services)
   let cpu = 0, serves = 0, prev = 0;
   runUntil(f, () => { const m = f.peek('ms'); if (m === 2 && prev === 1) { serves++; cpu += f.peek('srv_canon'); } prev = m; return serves >= 40 || app(f) !== AS.MATCH; }, 60 * 60 * 10);
   check(serves >= 20 && cpu === 0, `CPU Normal : aucun service canon sur ${serves} services`);

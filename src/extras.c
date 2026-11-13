@@ -195,6 +195,10 @@ static u8 pose_ok(u8 k)
 static void swap_tick(void)
 {
     u8 want = (u8)(ms == MS_TOSS || ms == MS_RALLY || ms == MS_REPLAY ? 2 : 1), k;
+    /* point fini pendant un revers : le jeu R reste tant que le geste dure
+       (version 2.61 ; poses 22 à 26) */
+    if (want == 1 && ms == MS_DEAD)
+        for (k = 0; k < npl; ++k) if ((u8)((pose_now[k] & 31) - 22) < 5) want = 2;
     /* séquences animées (cer.c) : jeu F ; en fin de match, après la fête
        habituelle (jeu C) */
     /* (dès la 2e trame de la séquence : à la 1re, la pose d'avant est encore dessinée) */
