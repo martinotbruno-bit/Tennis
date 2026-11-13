@@ -116,6 +116,16 @@ def encode_tile(t):
             if v & 2: hi[y] |= 0x80 >> x
     return bytes(lo) + bytes(hi)
 
+def tz_pack(b):
+    """tuile compressée pour tz_unpack (crt0.s) : masque de 16 bits (bit i à 1 :
+    l'octet i répète le précédent, 0 avant le premier), puis les octets nouveaux"""
+    m, out, prev = 0, bytearray(), 0
+    for i, v in enumerate(b):
+        if v == prev: m |= 1 << i
+        else: out.append(v)
+        prev = v
+    return bytes([m & 255, m >> 8]) + bytes(out)
+
 def tkey(t):
     return tuple(tuple(r) for r in t)
 
@@ -1617,10 +1627,10 @@ def persp_d(ys):
     u = (216 - ys) / PERSP_K
     return u / (1 - PERSP_A * u)
 def persp_inv(xs, ys):
-    # échelle horizontale constante sur chaque rangée de tuiles (8 px) : les
-    # lignes obliques ne décalent d'un pixel qu'aux frontières de tuiles (la
-    # pente est de moins d'un pixel par rangée), d'où peu de tuiles nouvelles
-    sc = 1 / (1 + PERSP_A * persp_d((ys // 8) * 8 + 4))
+    # échelle horizontale propre à chaque ligne de pixels (version 2.64 ; avant :
+    # constante sur chaque rangée de tuiles, les lignes obliques avançaient par
+    # marches de 8 px)
+    sc = 1 / (1 + PERSP_A * persp_d(ys))
     return 128.5 + (xs - 128.5) / sc, 216 - 168 * persp_d(ys)   # (centre 128,5 : le court à plat est symétrique autour de la colonne 128, version 2.62)
 def persp_net(w):
     """filet redessiné à sa place en perspective, avec ses mailles régulières
@@ -1695,7 +1705,7 @@ def persp_lines(w):
         fix[X] = m
     for ys in range(32, 240):
         Y = persp_inv(128, ys + 0.5)[1]
-        sc = 1 / (1 + PERSP_A * persp_d((ys // 8) * 8 + 4))
+        sc = 1 / (1 + PERSP_A * persp_d(ys + 0.5))
         for (X, y0, y1) in verts:
             if y0 <= Y < y1 + 1:
                 xs = int(round(128.5 + (X + 0.5 - 128.5) * sc - 0.5))
@@ -1707,7 +1717,7 @@ def persp_lines(w):
 
 KEEP = set(range(0x60)) | set(crowd_idx) | set(cheer_idx) | set(crowdb_idx) | set(cheerb_idx) | \
        set(crowd_idx3) | set(crowd_idx4) | set(SIGN_IDX) | set(SIGN2_IDX) | set(NET_IDX)
-persp_rles, persp_tiles, persp_ps = [], [], []
+persp_rles, persp_tiles, persp_ps, persp_flags = [], [], [], []
 
 # Tribunes en perspective : la rambarde suit l'inclinaison des lignes de côté
 # (point X = 31 ou 224 projeté, échelle constante par rangée de tuiles, pas de
@@ -1726,6 +1736,7 @@ def size_of_row(ty):
     if sc >= 0.895: return 1             # 'small'
     return 2                             # 'tiny' : foule lointaine
 PERSP_FAM = {0: 'A', 1: 'B', 2: 'B', 5: 'B'}   # lieux avec du public animé
+PERSP_NOTXT = {ord(c) for c in '"$&[\\]^'}       # signes absents de tous les textes du jeu (vérifié par tools/check_texts.py)
 
 def persp_row_scale(ty):
     return 1 / (1 + PERSP_A * persp_d(ty * 8 + 4))
@@ -1877,7 +1888,25 @@ def persp_build(e):
             tiles[(ty, tx)] = tile_at(w, ty, tx)
     known = {tkey(bg_tiles[k]): k for k in range(256) if bg_tiles[k] is not None}
     final_known = {known[tkey(t)] for t in tiles.values() if tkey(t) in known}
-    keep = KEEP | set(nt[:128]) | final_known
+    ref = set(nt[:128]) | final_known
+    flags = 0
+    if e in PERSP_FAM:
+        # (version 2.64) seules les tuiles vraiment affichées pendant le match
+        # sont gardées : tuiles 0 à 3 (vide, blocs pleins ; la 4, ancienne flèche des
+        # menus, ne sert plus), police
+        # (sauf les signes absents de tous les textes), filet, décor, « bras
+        # levés » de l'ola (tuile + 4) ; les panneaux et les spectateurs de la
+        # vue à plat absents de ce court sont libres, et le jeu ne les charge
+        # plus (persp_flags : bit 0 panneaux 1, bit 1 panneaux 2, bit 2
+        # spectateurs du stade, bit 3 spectateurs du club et de la salle)
+        keep = set(range(4)) | (set(range(0x20, 0x60)) - PERSP_NOTXT) | set(NET_IDX) | ref
+        keep |= {t + 4 for t in ref if 5 <= t <= 8 or 13 <= t <= 16}
+        for bit, grp in enumerate((SIGN_IDX, SIGN2_IDX, crowd_idx, crowdb_idx)):
+            if set(grp) & ref: keep |= set(grp)
+            else: flags |= 1 << bit
+    else:
+        keep = KEEP | ref
+    persp_build.flags = flags
     cand = [k for k in range(256) if k not in keep]
     new = {}
     fam = PERSP_FAM.get(e)
@@ -1919,10 +1948,11 @@ for e in range(6):
             continue
     else:
         sys.exit('perspective : plus de place pour les tuiles (lieu %d)' % e)
-    print('perspective, lieu %d : %d tuiles nouvelles, %d places restantes, rambarde au pas de %d px' % (e, len(new), len(cand), PERSP_STEP))
+    print('perspective, lieu %d : %d tuiles nouvelles, %d places restantes, rambarde au pas de %d px, tuiles libérées %d' % (e, len(new), len(cand), PERSP_STEP, persp_build.flags))
     persp_rles.append(bytes(nt))   # (RLE à l'écriture)
     persp_tiles.append(sorted(new.values()))
     persp_ps.append(ps if ps else [0] * 12)
+    persp_flags.append(persp_build.flags)
 proj_tab = bytearray(512)
 for Y in range(256):
     d = (216 - Y) / 168
@@ -2046,7 +2076,7 @@ src.append(c_array('crowdb_norm', b''.join(encode_tile(t) for t in CROWDB)))
 src.append(c_array('crowdb_up', b''.join(encode_tile(t) for t in CROWDB_UP)))
 src.append(c_array('crowd_up', b''.join(encode_tile(t) for t in CROWD_UP)))
 src.append(c_array('crowd_norm', b''.join(encode_tile(t) for t in CROWD)))
-src.append(c_array('crowd_cheer', b''.join(encode_tile(t) for t in CHEER)))
+# (non lu par le jeu : tuiles fixes de la table) src.append(c_array('crowd_cheer', b''.join(encode_tile(t) for t in CHEER)))
 # jeu de tuiles par phase : poses de chaque jeu, pose de secours tant que le
 # jeu n'est pas chargé, place et taille de la zone partagée
 POSE_FALLBACK = {7: 0, 15: 0, 16: 6, 17: 0, 18: 0, 22: 8, 23: 12, 24: 4, 25: 8, 26: 12,
@@ -2103,7 +2133,7 @@ src = ['/* Fichier généré par tools/gen_assets.py — ne pas modifier. */',
        '#include "assets.h"', '']
 for e in range(6):
     src.append(c_array('persp_rle%d' % e, rle(persp_rles[e])))
-    src.append(c_array('persp_chr%d' % e, b''.join(encode_tile(t) for _, t in persp_tiles[e])))
+    src.append(c_array('persp_chr%d' % e, b''.join(tz_pack(encode_tile(t)) for _, t in persp_tiles[e])))   # (compressées, tz_unpack)
 for e in range(6):
     src.append(c_array('persp_slot%d' % e, bytes([k for k, _ in persp_tiles[e]])))
     src.append(c_array('persp_ps%d' % e, bytes(persp_ps[e])))   # petits spectateurs : 6 places, puis 6 « bras levés »
@@ -2121,6 +2151,8 @@ src.append('const unsigned char * const persp_chr[7] = { %s, persp_chr1 };' % ',
 src.append('const unsigned char * const persp_slot[7] = { %s, persp_slot1 };' % ', '.join('persp_slot%d' % e for e in range(6)))
 src.append('const unsigned char * const persp_ps[7] = { %s, persp_ps1 };' % ', '.join('persp_ps%d' % e for e in range(6)))
 src.append('const unsigned char persp_ntile[7] = { %s, %d };' % (', '.join(str(len(t)) for t in persp_tiles), len(persp_tiles[1])))
+src.append('/* tuiles libérées : 1 panneaux 1, 2 panneaux 2, 4 public du stade, 8 public du club et de la salle (à ne pas charger) */')
+src.append('const unsigned char persp_flags[7] = { %s, %d };' % (', '.join(str(f) for f in persp_flags), persp_flags[1]))
 with open(os.path.join(ROOT, 'src', 'assets_persp3.c'), 'w') as f:
     f.write('\n'.join(src) + '\n')
 court_rle = court_rles[0]

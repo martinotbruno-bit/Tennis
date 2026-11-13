@@ -1834,6 +1834,33 @@ console.log('Son sur console réelle : balayage des carrés');
 if (sec('Vue en perspective (option VUE)')) {
 console.log('Vue en perspective (option VUE)');
 {
+  // lignes fines (2.64) : les tuiles des lignes prennent la place des panneaux et
+  // du public de la vue à plat absents du court ; le jeu ne doit jamais les
+  // réécrire (regard du public, ola, panneaux) pendant le match
+  let bad = [];
+  for (const env of [0, 1, 2, 5, 6]) {
+    const g = boot(); toMenu(g); setOpts(g, { VIEW: 1, ENV: env, FMT: 3 }); g.tap('START');
+    runUntil(g, () => scr(g) === SS.PRESENT, 120); g.run(40); g.tap('A');
+    runUntil(g, () => app(g) === AS.MATCH, 300); allCpu(g); g.run(20);
+    for (let k = 0; k < 6; k++) { g.poke('crowd_timer', 60); g.run(150); }
+    // tuiles attendues : données de la ROM (banque 11, compressées pour tz_unpack)
+    const v = env === 6 ? 1 : env, rb = (b, sym, off) => g.nes.rom.rom[b][g.addr(sym) - 0x8000 + off];
+    const nt = rb(3, 'persp_ntile', env), vm = g.nes.ppu.vramMem, ps = rb(11, 'persp_ps' + v, 0);
+    let p = 0, n = 0;
+    for (let i = 0; i < nt; i++) {
+      const slot = rb(11, 'persp_slot' + v, i), m = rb(11, 'persp_chr' + v, p) | (rb(11, 'persp_chr' + v, p + 1) << 8);
+      p += 2; let prev = 0, ok = true;
+      for (let j = 0; j < 16; j++) {
+        if (!((m >> j) & 1)) prev = rb(11, 'persp_chr' + v, p++);
+        if (vm[slot * 16 + j] !== prev) ok = false;
+      }
+      if (!ok && !(ps && slot >= ps && slot < ps + 24)) n++;     /* (petits spectateurs : animés, regard vers le haut) */
+    }
+    if (n || app(g) !== AS.MATCH || !g.peek('persp')) bad.push(env + ':' + n + '/' + nt + (g.peek('persp') ? '' : ' (pas en perspective)'));
+  }
+  check(bad.length === 0, `perspective, 5 lieux : tuiles du court jamais réécrites pendant le match (ola, public, panneaux) ${bad.join(' ')}`);
+}
+{
   // menu : ligne VUE, à plat par défaut
   const m = boot(); toMenu(m);
   const r = rowOf(m, 24);

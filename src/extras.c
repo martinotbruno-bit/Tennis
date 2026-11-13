@@ -217,7 +217,10 @@ static void swap_tick(void)
 }
 
 #pragma bss-name(push, "WBSS")
-static u8 ps_idx[12];                /* perspective : places des petits spectateurs, puis bras levés */
+static u8 ps_idx[12];
+#pragma bss-name(push, "WBSS")
+static u8 persp_free;               /* persp_flags du lieu (perspective), 0 à plat */
+#pragma bss-name(pop)                /* perspective : places des petits spectateurs, puis bras levés */
 #pragma bss-name(pop)
 
 void load_court(void)
@@ -231,16 +234,19 @@ void load_court(void)
         u8 i, n = persp_ntile[cfg.env];
         const u8 *ch = persp_chr[cfg.env];
         bank_read(BANK_PERSP, proj_ram, persp_slot[cfg.env], n);   /* places (tampon : tables) */
-        for (i = 0; i < n; ++i) chr_copy(BANK_PERSP, ch + (i << 4), (u16)proj_ram[i] << 4, 16);
+        tz_bank = BANK_PERSP; tz_src = ch;   /* tuiles compressées (version 2.64) */
+        for (i = 0; i < n; ++i) { vram_adr((u16)proj_ram[i] << 4); tz_n = 1; tz_unpack(tz_src); }
         vram_adr(0x2000);
         bank_unrle(BANK_PERSP, persp_rle[cfg.env]);
         bank_read(BANK_PERSP, ps_idx, persp_ps[cfg.env], 12);
+        persp_free = persp_flags[cfg.env];       /* tuiles prises par les lignes fines : ne pas les charger */
         bank_read(BANK_PERSP, proj_ram, proj_tab, 512 + 640);
         bg_dirty = 1;
         persp = 1;
     } else {
         bank_unrle(BANK_COURTS, court_nt_rle[cfg.env]);
         persp = 0;
+        persp_free = 0;
     }
     people_tiles(nude);
     swap_nude = nude;
@@ -248,8 +254,8 @@ void load_court(void)
     /* panneaux à côté du score, dans 8 tuiles distinctes inutilisées sur leur
        court (choisies par l'outil de génération : public d'un autre lieu) ;
        ailleurs, on rétablit leur dessin d'origine */
-    tiles_load(sign_idx, 8, cfg.env == ENV_MARGAUX ? sign_chr : sign_orig);
-    tiles_load(sign2_idx, 8, nude ? sign2_chr : sign2_orig);
+    if (!(persp_free & 1)) tiles_load(sign_idx, 8, cfg.env == ENV_MARGAUX ? sign_chr : sign_orig);
+    if (!(persp_free & 2)) tiles_load(sign2_idx, 8, nude ? sign2_chr : sign2_orig);
     /* filet au repos (au cas où on aurait quitté un match pendant qu'il tremblait) */
     tiles_load(net_idx, 2, net_norm);
     /* arbitre de chaise (une princesse au court Margaux) : têtes et buste
@@ -317,10 +323,14 @@ static void crowd_load(void)
             for (c = 0; c < 6; ++c) st_map[r * 12 + s * 6 + c] = PPU_DATA;
         }
     for (c = 0; c < 6; ++c) {
-        vram_adr((u16)crowd_idx[c] << 4);
-        for (r = 0; r < 16; ++r) vram_put(crowd_norm[c * 16 + r]);
-        vram_adr((u16)crowdb_idx[c] << 4);
-        for (r = 0; r < 16; ++r) vram_put(crowdb_norm[c * 16 + r]);
+        if (!(persp_free & 4)) {
+            vram_adr((u16)crowd_idx[c] << 4);
+            for (r = 0; r < 16; ++r) vram_put(crowd_norm[c * 16 + r]);
+        }
+        if (!(persp_free & 8)) {
+            vram_adr((u16)crowdb_idx[c] << 4);
+            for (r = 0; r < 16; ++r) vram_put(crowdb_norm[c * 16 + r]);
+        }
         cr_cur[c] = 0;
     }
     memset(cr_cur + 6, 0, 12);
@@ -410,7 +420,8 @@ void crowd_tick(void)
             for (k = 0; k < n; ++k)
                 if (cr_cur[k] != m) {
                     u8 ok;
-                    if (k < 6)
+                    if (k < 6 && (persp_free & (a ? 4 : 8))) ok = 1;   /* (ces spectateurs ne sont pas sur ce court) */
+                    else if (k < 6)
                         ok = vbuf_raw((u16)(a ? crowd_idx : crowdb_idx)[k] << 4,
                                       (a ? (m ? crowd_up : crowd_norm) : (m ? crowdb_up : crowdb_norm)) + (k << 4), 16);
                     else      /* petits spectateurs (perspective) */

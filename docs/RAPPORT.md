@@ -1,10 +1,18 @@
-# Royal Martinot — Rapport de réalisation (version 2.63)
+# Royal Martinot — Rapport de réalisation (version 2.64)
 
 Comme l'exige le CDC (§ 17.5), ce rapport distingue ce qui est **réalisé**, **testé**, **validé sur matériel réel**, **validé uniquement en émulation**, **dépendant d'une extension**, et les **limitations restantes**.
 
 > **Validation matérielle : aucune.** Aucun test n'a été fait sur console réelle (NES, Famicom, PAL, cartouche MMC1). Toutes les validations ont eu lieu en émulation (jsnes) et par des tests unitaires sur PC. Les critères « vérifié sur console physique » (CDC § 2.1, 15.4, 16.A) **ne sont pas remplis**. Ce point ne peut pas être traité dans l'environnement de développement utilisé.
 
 ## 1. Évolutions
+
+### Version 2.64
+
+| Demande | Réalisation |
+|---|---|
+| La MMC3 change-t-elle quelque chose à la perspective ? | Non, pas en elle-même : le court en perspective était dessiné comme avant ; seul l'écran VS utilisait l'interruption par ligne |
+| Plus de tuiles pour le court en perspective, « le plus fin possible » | Mesure d'abord : la perspective calculait l'échelle une fois par rangée de tuiles, les lignes obliques avançaient par marches de 8 lignes. Au pixel près, il fallait 112 à 146 tuiles nouvelles par lieu ; il en manquait jusqu'à 32 (club). Pas besoin de changer de carte : pendant le match en perspective, les panneaux et les spectateurs de la vue à plat que le court n'affiche pas ne sont plus chargés, ce qui libère leurs tuiles (et 7 signes de la police jamais écrits, l'ancienne flèche des menus). Les 6 lieux (et le parc) ont maintenant des lignes au pixel près, et la rambarde des tribunes aussi. Les tuiles sont compressées pour tenir dans la banque 11. Image avant / après : `docs/perspective_264.png` |
+| (vérification) | Test ajouté : dans 5 lieux, après 900 trames de match et 6 olas, les tuiles du court sont identiques aux données de la ROM ; un programme volontairement fautif est détecté. Guide sur console : ligne 10.17 |
 
 ### Version 2.63
 
@@ -549,7 +557,7 @@ Pour loger ce contenu, la cartouche passe de NROM (32 Ko) à **MMC1** : 128 Ko d
 | Relecture des textes (`check_texts.py`) | 0 problème |
 | Contraste (`contrast.py 25`) | 0 paire sous ΔE 25 (personnages, courts, balle, tenues) |
 | Profil CPU, double, 6 000 trames | 27 trames d'échange en dépassement (0,45 %), sans défaut d'image |
-| Compilation | Reproductible : SHA-256 `b30c1d747bfba3b736e33e2b712e2957e872a4230c808c784f8861cb96770a2d` sur deux compilations propres |
+| Compilation | Reproductible : SHA-256 `f927cac6bba91f61d59b7ff8d7abf8eb6f9fe92df45d37581d5b1a1158faff7f` sur deux compilations propres |
 
 ## 3. Conformité par section du CDC
 

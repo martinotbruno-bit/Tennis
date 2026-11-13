@@ -35,15 +35,15 @@ extern const unsigned char net_norm[32], net_shk[32];   /* au repos / secouées 
 extern const unsigned char nude_people[];      /* people_bytes octets */
 extern const unsigned char crowd_idx[6];
 extern const unsigned char crowd_norm[96];
-extern const unsigned char crowd_cheer[96];
-extern const unsigned char cheer_idx[6];       /* ola : spectateurs bras levés (tuiles propres) */
+
+
 extern const unsigned char crowd_up[96];       /* spectateurs qui regardent vers le haut du court */
 /* jeu B (club, salle ; palette 3) */
-extern const unsigned char crowdb_idx[6], cheerb_idx[6], crowdb_norm[96], crowdb_up[96];
+extern const unsigned char crowdb_idx[6], crowdb_norm[96], crowdb_up[96];
 /* vue en perspective : places des tuiles (banque 3), courts et tuiles
    (banque 11), tables de projection y' et échelle x 128 par y à plat (banque 11) */
 extern const unsigned char * const persp_rle[7], * const persp_chr[7], * const persp_slot[7];
-extern const unsigned char persp_ntile[7];
+extern const unsigned char persp_ntile[7], persp_flags[7];
 extern const unsigned char * const persp_ps[7];   /* spectateurs de la perspective : 1re des 24 places (banque 11) */
 extern const unsigned char small_normA[192], small_upA[192], small_normB[192], small_upB[192];   /* 3 tailles x 4 dessins */
 extern const unsigned char proj_tab[512 + 640];   /* y', m (signé), puis produits v x |m| / 128 */

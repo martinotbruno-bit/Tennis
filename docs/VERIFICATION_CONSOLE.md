@@ -1,6 +1,6 @@
 # Royal Martinot — Liste de vérification sur vraie console
 
-Le jeu a été testé uniquement sur émulateur. Cette liste sert à le vérifier pas à pas sur une vraie NES ou Famicom. Cochez chaque case et notez ce qui ne va pas, si possible avec une photo de l'écran. Comptez environ une heure et quart pour l'ensemble. Version du guide : 2.63.
+Le jeu a été testé uniquement sur émulateur. Cette liste sert à le vérifier pas à pas sur une vraie NES ou Famicom. Cochez chaque case et notez ce qui ne va pas, si possible avec une photo de l'écran. Comptez environ une heure et quart pour l'ensemble. Version du guide : 2.64.
 
 ## 0. Matériel
 
@@ -152,6 +152,7 @@ Pour chaque ligne, lancez un match et regardez l'écran pendant une dizaine de s
 | 10.14 | Sauvegarde, en passant d'une version précédente à la 2.61 (même fichier de sauvegarde) | Palmarès et réglages conservés | ☐ |
 | 10.15 | Allumer plusieurs fois de suite, et appuyer sur RESET à divers moments (titre, menu, match) | Démarrage toujours correct (cartouche MMC3 : l'état des banques à l'allumage est quelconque, le jeu le règle lui-même) | ☐ |
 | 10.16 | Affiche VS, avant un match (version 2.63) | Les deux bustes glissent depuis les bords, l'un une ligne sur deux, l'autre sur les lignes restantes, se rejoignent, puis un éclair blanc ; aucune ligne déchirée ni décalée au-dessus du haut des bustes (titre) ni sous leur bas (noms) ; la musique et les touches répondent pendant l'entrée. Appuyer sur B ou A pendant la glissade : l'écran suivant est normal | ☐ |
+| 10.17 | Vue en perspective, dans chaque lieu (version 2.64) | Lignes de côté obliques régulières, sans marche ni trou ; panneaux à côté du score présents là où ils l'étaient ; pendant une ola et quand la balle change de moitié du court, aucune ligne du court ne se transforme en morceau de spectateur ou de panneau | ☐ |
 
 ## 11. Ce qu'il faut renvoyer
 
