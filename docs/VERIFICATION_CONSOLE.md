@@ -1,6 +1,6 @@
 # Royal Martinot — Liste de vérification sur vraie console
 
-Le jeu a été testé uniquement sur émulateur. Cette liste sert à le vérifier pas à pas sur une vraie NES ou Famicom. Cochez chaque case et notez ce qui ne va pas, si possible avec une photo de l'écran. Comptez environ une heure pour l'ensemble.
+Le jeu a été testé uniquement sur émulateur. Cette liste sert à le vérifier pas à pas sur une vraie NES ou Famicom. Cochez chaque case et notez ce qui ne va pas, si possible avec une photo de l'écran. Comptez environ une heure et quart pour l'ensemble. Version du guide : 2.61.
 
 ## 0. Matériel
 
@@ -34,8 +34,8 @@ Le jeu a été testé uniquement sur émulateur. Cette liste sert à le vérifie
 | 2.0 | Changements d'écran | Fondu au noir puis retour progressif, sans image brouillée ni trait horizontal ; la musique ne s'interrompt pas et ne prend aucun retard | ☐ |
 | 2.0 b | Au menu, changer de MODE plusieurs fois, puis de personnage | Les lignes se réécrivent sans éclair noir ni trait horizontal ; en 1 JOUEUR CONTRE CPU, pas de ligne JEU ; en 2 JOUEURS ADVERSAIRES, ligne JEU (simple ou double) | ☐ |
 | 2.1 | Ouvrir le mode d'emploi, parcourir les 8 pages | Aucune ligne coupée ; GAUCHE/DROITE change de page | ☐ |
-| 2.2 | JOUER > configuration | Lignes lisibles ; le personnage animé est à droite du titre et ne masque aucun texte | ☐ |
-| 2.3 | Mode COMPETITION, type PERSONNALISE, jeu DOUBLE | 19 lignes, puis STYLE et l'aide en bas, sans chevauchement | ☐ |
+| 2.2 | JOUER > configuration | Lignes lisibles, liste centrée entre les deux filets dorés ; les portraits des joueurs encadrent le titre, entiers (cheveux non coupés en haut de l'écran) et sans morceau manquant quand la balle curseur rebondit | ☐ |
+| 2.3 | Mode COMPETITION, type PERSONNALISE, jeu DOUBLE | Toutes les lignes tiennent entre les filets, puis l'aide en bas (2 lignes d'explication, 2 lignes de touches), sans chevauchement ; le portrait du partenaire s'affiche à droite | ☐ |
 | 2.4 | JOUEUR 1 : faire défiler jusqu'à MARGAUX | MARGAUX apparaît après INES : cheveux longs, blonds et bouclés, tenue rose clair | ☐ |
 | 2.5 | LIEU : COURT MARGAUX | La valse « boîte à musique » remplace le thème du titre, sans notes hachées | ☐ |
 | 2.5 b | Match au court Margaux | L'arbitre est une princesse : couronne, robe rose, baguette dorée à étoile ; elle tend sa baguette sur une faute et la lève sur un let | ☐ |
@@ -132,7 +132,26 @@ Pour chaque ligne, lancez un match et regardez l'écran pendant une dizaine de s
 - [ ] Laisser tourner la démo **30 minutes** (elle alterne simple et double) : ni blocage, ni image brouillée, ni son coincé.
 - [ ] Jouer un match en **5 sets** jusqu'au bout.
 
-## 10. Ce qu'il faut renvoyer
+## 10. Nouveautés des versions 2.57 à 2.61
+
+| # | Vérification | Attendu | OK ? |
+|---|---|---|---|
+| 10.1 | Allumer plusieurs fois | Le fond des menus change d'une fois à l'autre : brun (terre battue), vert (gazon), bleu (dur) ou bordeaux (moquette) ; textes et titres dorés toujours lisibles, aussi sur le brun | ☐ |
+| 10.2 | Écran titre | La grosse balle est posée sur un court en perspective (lignes blanches), sans trait jaune horizontal | ☐ |
+| 10.3 | Réglages : HAUT/BAS, GAUCHE/DROITE | Sons distincts : bip au déplacement, glissando qui monte ou descend quand la valeur change, note qui descend au retour (B) ; en bas, deux lignes expliquent la ligne choisie | ☐ |
+| 10.4 | Réglages : LIEU | Petite vignette du lieu devant sa valeur (stade, arbres, salle, parasol, cœur, château, arbres d'automne), sans clignotement | ☐ |
+| 10.5 | Affiche VS avant un match | Après le fondu, le buste gauche jaillit d'un éclair blanc, passe en silhouette noire puis en couleurs, puis le droit ; « CONTRE » s'inscrit sur un flash. Yeux et contours sombres pour tous les personnages, Margaux blonde, Papi avec son visage | ☐ |
+| 10.6 | Écran d'un tournoi (après un ou deux matchs) | Tableau à traits dorés, vainqueurs au milieu de leurs deux joueurs, votre joueur en or ; médailles or, argent, bronze bien distinctes dans les classements | ☐ |
+| 10.7 | Palmarès, page 2 | Une médaille devant chaque podium | ☐ |
+| 10.8 | Lob (B + HAUT) : relâché vite, puis bouton tenu ; depuis le fond, puis depuis l'intérieur du court | Court puis long ; haut et lent depuis le fond, plus bas et plus vif de l'intérieur ; l'ordinateur Expert recule parfois pour le smasher | ☐ |
+| 10.9 | Croisé court (A + BAS) : relâché vite, puis bouton tenu | Angle plus prudent, puis plus fermé, près de la ligne ; l'ordinateur joue aussi ce coup | ☐ |
+| 10.10 | Changement de côté après un beau point (ralenti) | Les chaises n'apparaissent qu'après le ralenti, jamais pendant ; aucune pose déformée au départ vers les chaises | ☐ |
+| 10.11 | Fluidité en simple (à plat et en perspective) | Plus d'à-coups pendant l'échange ; un très bref à-coup peut subsister à la fin d'un point (affichage du score) | ☐ |
+| 10.12 | Vue en perspective | Les deux poteaux du filet sont placés de la même façon | ☐ |
+| 10.13 | Bande-annonce du Grand Martinot | Yeux et contours sombres sur tous les plans (sauf Margaux, dont les yeux restent de la couleur sombre du fond) | ☐ |
+| 10.14 | Sauvegarde, en passant d'une version précédente à la 2.61 (même fichier de sauvegarde) | Palmarès et réglages conservés | ☐ |
+
+## 11. Ce qu'il faut renvoyer
 
 Pour chaque case non cochée :
 1. le numéro de la ligne (par exemple 4.6) ;
