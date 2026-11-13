@@ -43,6 +43,7 @@ char deco_str[24];        /* titre à écrire (copié par screens.c) */
 u8 deco_kind, deco_row;   /* type d'écran (attributs) ; rangée du filet du bas */
 static u8 dt_map[24];
 static u8 vs_row[VS_W], vs_at[64];
+static const u8 *vs_map1;      /* plan du buste droit (recopié à la fin de la glissade) */
 static char pb[8];
 #pragma bss-name(pop)
 
@@ -305,13 +306,14 @@ static void vs_side(u8 side)
         else { chr = f ? vs_fr_chr : vs_mr_chr; map = f ? vs_fr_map : vs_mr_map; ab = f ? vs_fr_ab : vs_mr_ab; n = f ? VS_FR_N : VS_MR_N; }
     }
     tz_bank = VS_BANK;
+    if (side) vs_map1 = map;
     if (side == 0) {
         vram_adr(0x0600); tz_n = (u8)(n > 64 ? 64 : n); tz_unpack(chr);
         if (n > 64) { vram_adr(0x0010); tz_n = (u8)(n - 64); tz_unpack(tz_src); }
     } else { vram_adr(0x0A00); tz_n = n; tz_unpack(chr); }
     for (r = 0; r < VS_H; ++r) {
         bank_read(VS_BANK, vs_row, map + r * VS_W, VS_W);
-        vram_adr(NTADR(side ? 20 : 0, 4 + r));
+        vram_adr(NTADR(side ? 20 : 0, 4 + r) + (side ? 0x400 : 0));   /* buste droit : écran 1 (glissade) */
         for (i = 0; i < VS_W; ++i) {
             v = vs_row[i];
             if (v) { --v; v = (u8)(side ? 0xA0 + v : v < 64 ? 0x60 + v : 0x01 + v - 64); }
@@ -362,20 +364,31 @@ static void vs_fill(u8 b, u8 c)
     pal_buf[b + 1] = pal_buf[b + 2] = pal_buf[b + 3] = c;
     pal_buf[b + 5] = pal_buf[b + 6] = pal_buf[b + 7] = c;
 }
-/* Entrée de l'affiche (t = 0 à 48 trames) : écran vide ; le buste gauche
-   jaillit d'un éclair blanc, en silhouette sombre, puis prend ses couleurs ;
-   de même le buste droit ; enfin « CONTRE » s'inscrit sur un flash. Le texte
-   de chaque côté apparaît avec son buste (mêmes palettes). */
+/* Entrée de l'affiche (t = 0 à 48 trames) : les deux bustes glissent depuis
+   les bords (interruption par ligne de la MMC3, src/crt0.s : lignes paires
+   pour le buste gauche, impaires pour le droit) et se rejoignent à t = 23 ;
+   le buste droit est alors recopié dans l'écran 0 (3 appels), la séparation
+   des lignes s'arrête et un éclair blanc marque la rencontre. Enfin
+   « CONTRE » s'inscrit sur un flash. */
+static const u8 vs_slide[24] = {
+    96, 88, 81, 74, 67, 61, 55, 49, 43, 38, 33, 29,
+    24, 20, 17, 13, 11,  8,  6,  4,  2,  1,  1,  0 };
 u8 __fastcall__ vs_anim(u8 t)
 {
+    u8 r;
     vs_pals();
-    if (t < 8) vs_fill(0, pal_buf[0]);
-    else if (t < 11) vs_fill(0, 0x30);
-    else if (t < 15) vs_fill(0, 0x0F);
-    if (t < 20) vs_fill(8, pal_buf[0]);
-    else if (t < 23) vs_fill(8, 0x30);
-    else if (t < 27) vs_fill(8, 0x0F);
-    if (t == 8 || t == 20) sfx_hit(3);
+    if (t < 24) split_start(vs_slide[t]);
+    else if (t < 27) {
+        split_start(0);
+        for (r = (u8)((t - 24) * 6); r < VS_H && r < (u8)((t - 23) * 6); ++r) {
+            u8 i, v;
+            bank_read(VS_BANK, vs_row, vs_map1 + r * VS_W, VS_W);
+            for (i = 0; i < VS_W; ++i) { v = vs_row[i]; if (v) vs_row[i] = (u8)(0x9F + v); }
+            vbuf_raw(NTADR(20, 4 + r), vs_row, VS_W);
+        }
+    } else if (t == 27) split_stop();
+    if (t == 27 || t == 28) { vs_fill(0, 0x30); vs_fill(8, 0x30); }   /* éclair blanc : les deux bustes réunis */
+    if (t == 27) sfx_hit(3);
     if (t == 32) { vbuf_text(13, 11, "CONTRE", 6); sfx_menu_ok(); }
     if (t >= 32 && t < 35) pal_buf[0] = 0x30;          /* flash */
     return 0;
@@ -391,9 +404,12 @@ void vs_build(void)
     u8 tr = (u8)(l1 && !l0 ? 0x55 : 0xFF);
     if (l0 && l1) tl = tr = (u8)(cfg.chr[0] == 19 ? 0x55 : 0xFF);     /* Papi contre Margaux : la tenue blanche de Papi */
     for (i = 0; i < 64; ++i) vs_at[i] = (i & 7) < 4 ? tl : tr;
+    vram_adr(0x2400); vram_fill(0, 0x3C0);     /* écran 1 : le buste droit seul (glissade) */
     vs_side(0);
     vs_side(1);
     vram_adr(0x23C0);
+    for (i = 0; i < 64; ++i) vram_put(vs_at[i]);
+    vram_adr(0x27C0);                           /* attributs de l'écran 1 */
     for (i = 0; i < 64; ++i) vram_put(vs_at[i]);
     vs_pals();
     bg_dirty = 1;               /* tuiles du décor remplacées : rétablies ensuite */

@@ -12,7 +12,7 @@
 .export _wait_frame, _pad_poll, _ppu_off, _ppu_on, _vram_adr, _vram_put
 .export _swap_put, _vram_fill, _vram_unrle, _rand8, _rand_seed
 .export _scroll_y, _scroll_nt, _mirror_h, _scroll_x, _tz_bank, _tz_n, _tz_unpack, _tz_copy, _tz_src
-.export _chr_data
+.export _chr_data, _split_start, _split_stop, _split_o
 .export _spr1, _spr_meta, _spr_end, _oam_i, _spr_rot, _set_bank, _cur_bank, _bank_call, _far_call, _rp_record
 .import _bx, _by, _bz, _b_vis, _plx, _ply, _pose_cache, _flip_cache
 .import _rp_buf, _rp_head, _rp_count, _swp_dst
@@ -55,6 +55,9 @@ MMC3_DATA = $8001
 MMC3_MIRR = $A000
 MMC3_PRAM = $A001
 MMC3_IRQD = $E000
+MMC3_IRQL = $C000
+MMC3_IRQR = $C001
+MMC3_IRQE = $E001
 
 .segment "OAM"
 _oam_buf:   .res 256
@@ -101,6 +104,13 @@ _cur_bank:  .res 1      ; banque commutable actuellement en $8000
 call_vec:   .res 2      ; adresse appelée par _bank_call / _far_call
 far_arg:    .res 2      ; argument (A/X) puis résultat de _far_call
 _region_cnt:.res 2      ; nombre de boucles entre deux VBlank (détection NTSC/PAL)
+
+.segment "WBSS"
+split_on: .res 1
+_split_o:
+split_o:  .res 1
+split_c:  .res 1
+split_n:  .res 1
 
 .segment "BSS"
 _pal_buf:   .res 32
@@ -336,6 +346,19 @@ nmi:
     lda #0
     sta _nmi_ready
 @skip:
+    ; affiche VS : interruption à la fin de la ligne 30 (MMC3), à chaque
+    ; trame, même quand le thread principal n'a pas fini la sienne
+    lda split_on
+    beq @nosplit
+    lda _ppu_mask
+    and #$18
+    beq @nosplit
+    lda #31
+    sta MMC3_IRQL       ; (jsnes : compteur ; MMC3 : valeur de recharge)
+    sta MMC3_IRQR       ; (jsnes : recharge ; MMC3 : rechargement)
+    sta MMC3_IRQD       ; acquitte
+    sta MMC3_IRQE
+@nosplit:
     ; son : à chaque trame, rendu coupé compris (après le travail du VBlank) ;
     ; en 50 Hz, une mise à jour de plus toutes les 5 trames (tempo du 60 Hz)
     jsr _audio_tick
@@ -355,8 +378,90 @@ nmi:
     pla
     tax
     pla
-irq:
     rti
+
+; -------------------------------------------------------------------------
+; Interruption par ligne (MMC3), affiche VS : les deux bustes glissent depuis
+; les bords. Ils occupent les mêmes lignes (rangées 4 à 17, lignes 32 à 143) :
+; un seul défilement par ligne ne peut pas les écarter l'un de l'autre. Les
+; lignes paires montrent donc l'écran 0 (buste gauche seul) décalé de +o, les
+; impaires l'écran 1 (buste droit seul) décalé de -o ; l'œil fond les deux.
+; Une écriture de défilement faite pendant la ligne L vaut pour la ligne L+1
+; (copie à la colonne 257) : l'interruption tombe à la fin de la ligne 30.
+; Une paire de lignes dure 227 cycles (2 x 113,67), à quelques cycles près :
+; chaque écriture a une fenêtre d'une ligne entière.
+; -------------------------------------------------------------------------
+irq:
+    pha
+    txa
+    pha
+    tya
+    pha
+    sta MMC3_IRQD       ; acquitte (une seule par trame)
+    ldx split_o         ; X : défilement des lignes paires (+o)
+    txa
+    eor #$FF
+    clc
+    adc #1
+    tay                 ; Y : lignes impaires (256 - o)
+    lda #CTRL_VAL
+    cpx #0
+    bne :+
+    ora #1              ; o = 0 : écran 1 sans décalage
+:   sta split_c
+    lda #56
+    sta split_n
+@pair:
+    bit PPUSTATUS       ; (remet à zéro le double accès de $2005)
+    lda #CTRL_VAL
+    sta PPUCTRL
+    stx PPUSCROLL       ; 14
+    lda #14             ; 99
+@d1:
+    sec
+    sbc #1
+    bne @d1
+    bit PPUSTATUS
+    lda split_c
+    sta PPUCTRL
+    sty PPUSCROLL       ; 16
+    lda #12             ; 85 + 4
+@d2:
+    sec
+    sbc #1
+    bne @d2
+    nop
+    nop
+    dec split_n
+    bne @pair           ; 9 : 227 en tout
+    bit PPUSTATUS       ; ligne 144 et suivantes : défilement normal
+    lda #CTRL_VAL
+    ora _scroll_nt
+    sta PPUCTRL
+    lda _scroll_x
+    sta PPUSCROLL
+    bit PPUSTATUS       ; (double accès remis à zéro pour le thread principal)
+    pla
+    tay
+    pla
+    tax
+    pla
+    rti
+
+; void split_start(u8 o) : glissade active, décalage o (0..255)
+_split_start:
+    sta split_o
+    lda #1
+    sta split_on
+    cli
+    rts
+; void split_stop(void)
+_split_stop:
+    sei
+    lda #0
+    sta split_on
+    sta MMC3_IRQD
+    rts
 
 ; void wait_frame(void) : publie la trame et attend la NMI suivante
 _wait_frame:
@@ -399,6 +504,7 @@ _ppu_off:
     bcc @step
     sta _fade_lvl
 @cut:
+    jsr _split_stop     ; (glissade de l'affiche VS : interruption coupée)
     lda #0
     sta _ppu_mask
     jsr _wait_frame

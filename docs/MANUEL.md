@@ -170,7 +170,7 @@ Le lancer reste visible quelle que soit votre position, y compris quand vous ser
 
 ### L'affiche du match (version 2.57)
 
-Avant chaque match, une affiche **VS** (depuis la version 2.58, les bustes apparaissent l'un après l'autre dans un éclair, en silhouette puis en couleurs, et « CONTRE » s'inscrit sur un flash) : les deux joueurs en buste, bras croisés, face à face (dessinés en grand, à leurs couleurs), « CONTRE » au centre, sur un fond de la couleur de la surface (les femmes avec une ombre douce sous la poitrine, Margaux en fillette) ; sous chaque buste, le nom, la manette ou le niveau et le style ; en bas, la surface, le lieu, les conditions et le format. Au club nudiste, la présentation reste celle d'origine.
+Avant chaque match, une affiche **VS** (depuis la version 2.63, les deux bustes glissent depuis les bords de l'écran, en lignes entrelacées, se rejoignent sur un éclair blanc, puis « CONTRE » s'inscrit sur un flash) : les deux joueurs en buste, bras croisés, face à face (dessinés en grand, à leurs couleurs), « CONTRE » au centre, sur un fond de la couleur de la surface (les femmes avec une ombre douce sous la poitrine, Margaux en fillette) ; sous chaque buste, le nom, la manette ou le niveau et le style ; en bas, la surface, le lieu, les conditions et le format. Au club nudiste, la présentation reste celle d'origine.
 
 ### La bande-annonce (version 2.56)
 

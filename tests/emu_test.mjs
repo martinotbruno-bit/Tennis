@@ -398,6 +398,23 @@ console.log('Présentation et pause');
   e.tap('DOWN'); e.tap('A'); e.run(10);
   check(app(e) === AS.SCREENS && scr(e) === SS.MENU, 'QUITTER ramène au menu');
 }
+{
+  // affiche VS (2.63) : glissade des bustes par l'interruption par ligne de la MMC3
+  const e = boot(); toMenu(e); e.tap('START');
+  for (let i = 0; i < 80 && !(e.peek('split_on') && e.peek('split_o') > 20 && e.peek('split_o') < 60); i++) e.run(1);
+  e.run(1);
+  const fb = e.frameBuf, bg = fb[100 * 256 + 128];
+  const cnt = (y, x0, x1) => { let n = 0; for (let x = x0; x < x1; x++) if (fb[y * 256 + x] !== bg) n++; return n; };
+  let ev = 0, od = 0, evR = 0, odR = 0;
+  for (let y = 32; y < 144; y += 2) { ev += cnt(y, 8, 100); od += cnt(y + 1, 8, 100); evR += cnt(y, 156, 248); odR += cnt(y + 1, 156, 248); }
+  check(e.peek('split_on') === 1 && ev > 500 && od === 0 && odR > 500 && evR === 0,
+    `glissade : buste gauche sur les lignes paires, droit sur les impaires (${ev}/${od}, ${odR}/${evR})`);
+  e.run(40);
+  let gap = 0; for (let y = 40; y < 140; y++) if (cnt(y, 0, 100) === 0 && cnt(y + 1, 0, 100) > 0 && cnt(y - 1, 0, 100) > 0) gap++;
+  check(e.peek('split_on') === 0 && e.nes.cpu.F_INTERRUPT === 1 && gap === 0, `fin de l'entrée : interruption coupée, bustes pleins (${gap} lignes vides)`);
+  const f = boot(); toMenu(f); f.tap('START'); f.run(12); f.tap('B'); f.run(40);
+  check(scr(f) === SS.MENU && f.peek('split_on') === 0 && f.nes.cpu.F_INTERRUPT === 1, 'B pendant la glissade : retour au menu, interruption coupée');
+}
 
 }
 if (sec('Service : lancer visible pour le joueur du haut')) {

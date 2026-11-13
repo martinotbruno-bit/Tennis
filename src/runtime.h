@@ -77,6 +77,8 @@ void spr_end(void);
 void wait_frame(void);
 void pad_poll(void);
 void ppu_off(void);
+void __fastcall__ split_start(u8 o);   /* MMC3 : glissade de l'affiche VS (lignes 32-143), décalage o */
+void split_stop(void);
 void ppu_on(void);
 void __fastcall__ vram_adr(u16 adr);
 void __fastcall__ vram_put(u8 v);
