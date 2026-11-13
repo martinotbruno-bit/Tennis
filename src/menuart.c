@@ -189,11 +189,14 @@ static void vs_side(u8 side)
     u8 c = cfg.chr[side], f = char_female[c], r, i, v, n;
     const u8 *chr, *map, *ab;
     if (f && c == 16) f = 2;                            /* Margaux : silhouette de fillette */
+    if (c == 19) f = 3;                                 /* Papi : cheveux gris (palettes à part) */
     if (side == 0) {
-        if (f == 2) { chr = vs_gl_chr; map = vs_gl_map; ab = vs_gl_ab; n = VS_GL_N; }
+        if (f == 3) { chr = vs_pl_chr; map = vs_pl_map; ab = vs_pl_ab; n = VS_PL_N; }
+        else if (f == 2) { chr = vs_gl_chr; map = vs_gl_map; ab = vs_gl_ab; n = VS_GL_N; }
         else { chr = f ? vs_fl_chr : vs_ml_chr; map = f ? vs_fl_map : vs_ml_map; ab = f ? vs_fl_ab : vs_ml_ab; n = f ? VS_FL_N : VS_ML_N; }
     } else {
-        if (f == 2) { chr = vs_gr_chr; map = vs_gr_map; ab = vs_gr_ab; n = VS_GR_N; }
+        if (f == 3) { chr = vs_pr_chr; map = vs_pr_map; ab = vs_pr_ab; n = VS_PR_N; }
+        else if (f == 2) { chr = vs_gr_chr; map = vs_gr_map; ab = vs_gr_ab; n = VS_GR_N; }
         else { chr = f ? vs_fr_chr : vs_mr_chr; map = f ? vs_fr_map : vs_mr_map; ab = f ? vs_fr_ab : vs_mr_ab; n = f ? VS_FR_N : VS_MR_N; }
     }
     tz_bank = VS_BANK;
@@ -232,7 +235,7 @@ static void vs_pal(u8 side)
     pal_buf[b + 5] = (u8)((D & 0x30) >= 0x20 ? 0x07 : D);             /* B : sombre (ombre du texte : noir si cheveux clairs), tenue, blanc */
     pal_buf[b + 3] = pal_buf[b + 6];                                  /* tenue (aussi dans A : bras croisés) */
     pal_buf[b + 7] = 0x30;
-    if (cfg.chr[side] == 16) {      /* Margaux : A (noir, peau, cheveux blonds), B (noir, peau, tenue) */
+    if (cfg.chr[side] == 16 || cfg.chr[side] == 19) {   /* Margaux, Papi : A (noir, peau, cheveux clairs), B (noir, peau, tenue) */
         pal_buf[b + 1] = pal_buf[b + 5] = 0x0F;
         pal_buf[b + 3] = D;
         pal_buf[b + 6] = pal_buf[b + 2];
@@ -244,8 +247,10 @@ void vs_build(void)
     u8 i, k = surf_bk[cfg.surface < 6 ? cfg.surface : 0];
     /* texte : moitié gauche palette 1, moitié droite palette 3 (blanc) */
     /* (Margaux n'a pas de blanc : son texte prend la palette blanche de l'autre côté) */
-    u8 tl = (u8)(cfg.chr[0] == 16 && cfg.chr[1] != 16 ? 0xFF : 0x55);
-    u8 tr = (u8)(cfg.chr[1] == 16 && cfg.chr[0] != 16 ? 0x55 : 0xFF);
+    u8 l0 = (u8)(cfg.chr[0] == 16 || cfg.chr[0] == 19), l1 = (u8)(cfg.chr[1] == 16 || cfg.chr[1] == 19);
+    u8 tl = (u8)(l0 && !l1 ? 0xFF : 0x55);
+    u8 tr = (u8)(l1 && !l0 ? 0x55 : 0xFF);
+    if (l0 && l1) tl = tr = (u8)(cfg.chr[0] == 19 ? 0x55 : 0xFF);     /* Papi contre Margaux : la tenue blanche de Papi */
     for (i = 0; i < 64; ++i) vs_at[i] = (i & 7) < 4 ? tl : tr;
     vs_side(0);
     vs_side(1);

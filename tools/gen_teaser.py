@@ -803,7 +803,7 @@ def main():
 
 # ------------------------------------------------------------------ export
 # banques libres (octets disponibles, marge comprise)
-BANKS = [(9, 13600), (12, 11900), (4, 12200), (10, 9400), (2, 7900), (7, 6800), (6, 5800)]
+BANKS = [(9, 13600), (12, 11900), (4, 12200), (10, 7600), (2, 7900), (7, 6800), (6, 5800)]
 
 
 def pack(chr_):
@@ -919,6 +919,9 @@ def vs_render(female, mirror, k=1.38):
     global VS_LINE
     f = Fig(W, H, k, 80 - (W / 2) / k, 36.0 if female else 32.5)   # homme plus grand : tête entière dans le cadre
     VS_LINE = True
+    light = female in (2, 3)        # cheveux clairs (Margaux, Papi) : palettes à part
+    if female == 3:
+        female = 0
     body(f, skeleton(POSES['bust']['s'], female), female, 'focus', racket_hand='X', racket_dir=0, racket_len=50)
     VS_LINE = False
     f.outline()
@@ -927,8 +930,8 @@ def vs_render(female, mirror, k=1.38):
     f.cls[cut:, :] = 0; f.pid[cut:, :] = 0
     # contours et yeux : couleur sombre (la couleur 0 est celle du fond de l'écran)
     pals = VS_PALS
-    if female == 2:
-        # Margaux, cheveux blonds : les cheveux (classe 6 ici) ne partagent pas la
+    if light:
+        # Margaux (blonde), Papi (gris) : les cheveux (classe 6 ici) ne partagent pas la
         # couleur des contours. Palettes A (noir, peau, cheveux), B (noir, peau, tenue)
         f.cls[f.cls == 6] = 1
         f.cls[f.cls == 2] = 1
@@ -962,7 +965,7 @@ def vs_render(female, mirror, k=1.38):
 
 def vs_export():
     arts = {}
-    for female in (0, 1, 2):
+    for female in (0, 1, 2, 3):
         for mirror in (0, 1):
             arts[(female, mirror)] = vs_render(female, mirror)
     L = ['/* Fichier généré par tools/gen_teaser.py — ne pas modifier. */',
@@ -971,7 +974,7 @@ def vs_export():
          '#define VS_BANK %d' % VS_BANK, '#define VS_W %d' % VS_W, '#define VS_H %d' % VS_H]
     tot = 0
     for (female, mirror), a in arts.items():
-        nm = 'vs_%s%s' % ('mfg'[female], 'r' if mirror else 'l')
+        nm = 'vs_%s%s' % ('mfgp'[female], 'r' if mirror else 'l')
         chr_ = pack(b''.join(a['tiles']))
         L += arr_c(nm + '_chr', chr_) + arr_c(nm + '_map', bytes(a['nt'])) + arr_c(nm + '_ab', bytes(a['ab'])) + ['']
         H += ['extern const unsigned char %s_chr[], %s_map[], %s_ab[];' % (nm, nm, nm), '#define %s_N %d' % (nm.upper(), len(a['tiles']))]

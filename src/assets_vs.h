@@ -15,3 +15,7 @@ extern const unsigned char vs_gl_chr[], vs_gl_map[], vs_gl_ab[];
 #define VS_GL_N 74
 extern const unsigned char vs_gr_chr[], vs_gr_map[], vs_gr_ab[];
 #define VS_GR_N 74
+extern const unsigned char vs_pl_chr[], vs_pl_map[], vs_pl_ab[];
+#define VS_PL_N 76
+extern const unsigned char vs_pr_chr[], vs_pr_map[], vs_pr_ab[];
+#define VS_PR_N 76
