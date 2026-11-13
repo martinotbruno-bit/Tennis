@@ -21,7 +21,8 @@ pj_m:    .res 1
 pj_lo:   .res 1
 pj_hi:   .res 1
 .segment "CODE"
-.export _spr_person
+.export _spr_person, _spr_person_v
+.export _pv_x = px, _pv_y = py, _pv_c = pc, _pv_front = pfront, _pv_pose = ppose, _pv_flip = pflip, _pj_sg = pj_sg
 .export _run_x, _run_y, _run_dir, _run_pose
 .import _row1_ovr, _view_x
 .import _spr_meta, _oam_buf
@@ -57,6 +58,7 @@ pfront: .res 1
 ppose:  .res 1
 pflip:  .res 1
 ppal:   .res 1
+pv_mode: .res 1         ; 1 : appel par spr_person_v
 ptile:  .res 1
 pt1:    .res 1
 pt2:    .res 1
@@ -78,6 +80,22 @@ PROF_SIT  = 12                                 ; image 4 de prof_map : assis de 
 
 ; void __fastcall__ spr_person(s16 x, s16 y, u8 c, u8 front, u8 pose, u8 flip, u8 pal)
 ; pile : (sp)+0 flip, +1 pose, +2 front, +3 c, +4/5 y, +6/7 x ; pal dans A
+; void spr_person_v(void) : même chose, paramètres déjà posés par l'appelant
+; (pv_x, pv_y, pv_c, pv_front, pv_pose, pv_flip, pj_sg) : évite 8 octets
+; poussés puis relus sur la pile C pour chaque joueur, à chaque trame
+; (match_draw, version 2.66)
+_spr_person_v:
+    lda #1
+    sta pv_mode
+    lda pj_sg
+    and #1
+    sta ppal
+    ldx pj_sg
+    lda pfront
+    eor _view_x,x
+    sta pfront
+    jmp spr_person_common
+
 _spr_person:
     sta pj_sg               ; indice du joueur (0..3) : position projetée gardée
     and #1                  ; pour son ombre (match_fx) ; palette = indice & 1
@@ -109,6 +127,7 @@ _spr_person:
     lda (sp),y
     sta px+1
 
+spr_person_common:
     ; vue en perspective : position projetée (x, y à plat bornés à 0..255)
     lda _persp
     beq @flat
@@ -470,7 +489,12 @@ _spr_person:
     ora #$20
     sta _oam_buf+2,x
 @end:
-    jmp incsp8              ; 8 octets d'arguments sur la pile (x, y : 2 octets chacun ; c, front, pose, flip : 1)
+    lda pv_mode
+    beq :+
+    lda #0
+    sta pv_mode
+    rts                     ; (spr_person_v : rien sur la pile)
+:   jmp incsp8              ; 8 octets d'arguments sur la pile (x, y : 2 octets chacun ; c, front, pose, flip : 1)
 
 ; ---------------------------------------------------------------------------
 ; void win_fx(void) : fête de victoire. Pendant « JEU, SET ET MATCH ! »

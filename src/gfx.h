@@ -25,6 +25,12 @@ void spr_begin(void);
 void spr_end(void);
 void __fastcall__ spr1(u8 x, u8 y, u8 tile, u8 attr);
 void __fastcall__ spr_person(s16 x, s16 y, u8 character, u8 front, u8 pose, u8 flip, u8 pal);   /* sprp.s */
+/* même chose, paramètres posés d'avance (moins coûteux, match_draw) ; pj_sg :
+   indice du joueur (palette = indice & 1) */
+extern s16 pv_x, pv_y;
+extern u8 pv_c, pv_front, pv_pose, pv_flip, pj_sg;
+#pragma zpsym("pj_sg")
+void spr_person_v(void);
 void __fastcall__ spr_ball(u8 x, s16 sy, u8 shy, u8 zpx);   /* sprp.s */
 
 /* poses des personnages */

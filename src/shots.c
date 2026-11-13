@@ -222,6 +222,9 @@ void dive_try(void)
     /* balle encore loin en profondeur (plus de 13 trames à 4 px) : rien à
        décider, sans parcourir la boucle */
     if (y > py + 56 * FP || y < py - 60 * FP) return;
+    /* balle qui s'éloigne du joueur (pas encore à portée) : elle n'y
+       arrivera pas, inutile de suivre sa course (version 2.66) */
+    if ((y <= py - 14 * FP && bvy <= 0) || (y >= py + 9 * FP && bvy >= 0)) return;
     for (n = 0; ; ++n) {
         if (n > 12) return;
         if (y > py - 14 * FP && y < py + 9 * FP) break; /* frappable en profondeur (can_hit) */

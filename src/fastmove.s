@@ -166,3 +166,140 @@ _move_toward:
         lda (sp),y
         sta _ply+1,x
         jmp incsp5
+
+; ---------------------------------------------------------------------------
+; void draw_order(void) (version 2.66) : pour match_draw, position à l'écran
+; de chaque joueur (dr_xs, dr_ys = (v << 2) >> 8, octet) et ordre de dessin
+; (dr_ord : du plus bas à l'écran au plus haut, tri par insertion stable).
+; En C, ces deux boucles coûtaient environ 1 500 cycles par trame en double.
+.export _draw_order, _dr_ord, _dr_xs, _dr_ys
+.import _npl
+
+.segment "WBSS"
+_dr_ord: .res 4
+_dr_xs:  .res 4
+_dr_ys:  .res 4
+
+.segment "CODE"
+_draw_order:
+        ldx #0
+@pos:   txa
+        sta _dr_ord,x
+        asl a
+        tay
+        lda _ply,y              ; y : bits 6 à 13
+        lsr a
+        lsr a
+        lsr a
+        lsr a
+        lsr a
+        lsr a
+        sta tmp1
+        lda _ply+1,y
+        asl a
+        asl a
+        ora tmp1
+        sta _dr_ys,x
+        lda _plx,y              ; x : idem
+        lsr a
+        lsr a
+        lsr a
+        lsr a
+        lsr a
+        lsr a
+        sta tmp1
+        lda _plx+1,y
+        asl a
+        asl a
+        ora tmp1
+        sta _dr_xs,x
+        inx
+        cpx _npl
+        bne @pos
+        ; tri : i = 1 .. npl - 1
+        ldy #1
+@outer: cpy _npl
+        bcs @done
+        lda _dr_ord,y
+        sta tmp2                ; k
+        tax
+        lda _dr_ys,x
+        sta tmp3                ; ys[k]
+        tya
+        tax                     ; j = i
+@inner: txa
+        beq @put
+        lda _dr_ord-1,x         ; ord[j - 1]
+        sta tmp1
+        stx ptr1                ; (j)
+        tax
+        lda _dr_ys,x
+        ldx ptr1
+        cmp tmp3                ; ys[ord[j-1]] < ys[k] ?
+        bcs @put
+        lda tmp1
+        sta _dr_ord,x           ; ord[j] = ord[j - 1]
+        dex
+        jmp @inner
+@put:   lda tmp2
+        sta _dr_ord,x
+        iny
+        bne @outer
+@done:  rts
+
+; ---------------------------------------------------------------------------
+; u8 vbuf_raw(u16 adr, const u8 *data, u8 len) (version 2.66 ; en C avant,
+; environ 60 cycles par octet, ici 14) : ajoute [adr, len, données] au tampon
+; VRAM de la trame ; 0 si le budget de la trame (VBUF_MAX) serait dépassé.
+; Pile C : data (sp+0), adr (sp+2) ; len dans A.
+.export _vbuf_raw
+.import _vram_buf, incsp4
+.importzp _vram_len
+VBUF_MAX = 96
+
+_vbuf_raw:
+        sta tmp1                ; len
+        clc
+        adc _vram_len
+        bcs @full
+        adc #4
+        bcs @full
+        cmp #VBUF_MAX + 1
+        bcs @full
+        ldy #0
+        lda (sp),y
+        sta ptr1
+        iny
+        lda (sp),y
+        sta ptr1+1              ; data
+        ldx _vram_len
+        iny
+        iny
+        lda (sp),y              ; adr (octet haut)
+        sta _vram_buf,x
+        dey
+        lda (sp),y
+        sta _vram_buf+1,x
+        lda tmp1
+        sta _vram_buf+2,x
+        inx
+        inx
+        inx
+        ldy #0
+        lda tmp1
+        beq @end
+@cp:    lda (ptr1),y
+        sta _vram_buf,x
+        inx
+        iny
+        cpy tmp1
+        bne @cp
+@end:   lda #$FF
+        sta _vram_buf,x
+        stx _vram_len
+        lda #1
+        ldx #0
+        jmp incsp4
+@full:  lda #0
+        tax
+        jmp incsp4

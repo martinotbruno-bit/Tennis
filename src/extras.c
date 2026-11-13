@@ -725,6 +725,7 @@ void train_event(void)
 /* banque fixe pour faire la place des échantillons DPCM.)                  */
 /* ---------------------------------------------------------------------- */
 #define PXU(v) ((u8)(((u16)(v) << 2) >> 8))      /* pixels, valeur positive */
+extern u8 dr_xs[4], dr_ys[4];                   /* match_draw (draw_order, fastmove.s) */
 extern u8 perf_t, perf_x, perf_y, tired, pl_jump[4];
 #pragma bss-name(push, "WBSS")
 static u8 fx_t, fx_x, fx_y, fx_kind, fx_bounces, fx_hits, mk_t;
@@ -766,7 +767,8 @@ void match_fx(void)
     for (i = 0; i < npl; ++i) {
         if (cfg.mode == GM_TRAIN && i == 1 && cfg.ex != EX_STATIC) continue;   /* lanceur invisible */
         /* perspective : x projeté par spr_person, y du sol lu dans la table */
-        if (persp) { qx = psh_x[i]; qy = proj_ram[PXU(ply[i])]; } else { qx = PXU(plx[i]); qy = PXU(ply[i]); }
+        /* (positions à l'écran déjà calculées par draw_order, match_draw) */
+        if (persp) { qx = psh_x[i]; qy = proj_ram[dr_ys[i]]; } else { qx = dr_xs[i]; qy = dr_ys[i]; }
         spr1((u8)(qx - 3), qy, 5, 2);   /* sous les pieds, décalée vers la droite */
     }
     /* repère d'atterrissage (lent) : 30 trames après chaque frappe vers un

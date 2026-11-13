@@ -751,6 +751,10 @@ static u8 responsible(u8 p)
     return (u8)(dp < dm);
 }
 
+#pragma bss-name(push, "WBSS")
+static s8 ai_bias[2];          /* décalage vers le côté où l'adversaire joue le plus */
+static u8 ai_bias_n[2];        /* nombre de frappes observées lors du calcul */
+#pragma bss-name(pop)
 static void ai_update(u8 p)
 {
     u8 t = (u8)(p & 1);
@@ -881,10 +885,15 @@ static void ai_update(u8 p)
         else tx = CENTER_X + ((PX(bx) - CENTER_X) >> 2);
         /* IA adaptative : se décaler vers le côté où l'humain joue le plus (±16 px) */
         if (lv >= 1 && ad_n[o] >= 6) {
-            s16 bias = (s16)(((s16)ad_r[o] - (s16)ad_l[o]) * 24) / (s16)ad_n[o];
-            if (bias > 16) bias = 16;
-            if (bias < -16) bias = -16;
-            tx += bias;
+            /* (multiplication et division recalculées seulement quand le
+               nombre de frappes observées change, version 2.66) */
+            if (ai_bias_n[o] != ad_n[o]) {
+                s16 bias = (s16)(((s16)ad_r[o] - (s16)ad_l[o]) * 24) / (s16)ad_n[o];
+                if (bias > 16) bias = 16;
+                if (bias < -16) bias = -16;
+                ai_bias[o] = (s8)bias; ai_bias_n[o] = ad_n[o];
+            }
+            tx += ai_bias[o];
         }
         if (ai_net[p]) ty = PX(net_y(side));
         else ty = PX(base_y(side, (s8)sty_deep[char_style[cfg.chr[p]]]));
@@ -915,6 +924,7 @@ void match_start(void)
         st_first_in[i] = st_first_tot[i] = 0;
         srv_slot[i] = 0;
         ad_l[i] = ad_r[i] = ad_net[i] = ad_n[i] = 0;
+        ai_bias_n[i] = 0xFF;
     }
     for (i = 0; i < 4; ++i) { pl_flip[i] = 0; plx[i] = 128 * FP; ply[i] = 0; pose_cache[i] = 0; }
     st_longest = 0;
@@ -1172,23 +1182,23 @@ static u8 rel_pad(u8 p, u8 pad)
 
 
 
+extern u8 dr_ord[4], dr_xs[4], dr_ys[4];
+void draw_order(void);   /* fastmove.s */
 void match_draw(void)
 {
-    u8 ord[4], ys[4], i, j, k, p, party;   /* j sert aussi au saut */
+    u8 i, j, k, p, party;   /* j sert aussi au saut */
+#define ord dr_ord
+#define ys dr_ys
+#define xs dr_xs
     s16 sy;
     /* trame de frappe (calcul de trajectoire coûteux) : on garde les sprites
        de la trame précédente, ce qui évite tout ralentissement ; pendant un
        ralenti, c'est rp_play qui dessine */
     if (hit_now || ms == MS_REPLAY) return;
     party = win_party();
-    /* tri par profondeur : le joueur le plus bas à l'écran passe devant */
-    /* clés sur 8 bits (y en pixels, toujours positif) : comparaisons rapides */
-    for (i = 0; i < npl; ++i) { ord[i] = i; ys[i] = (u8)(((u16)ply[i] << 2) >> 8); }
-    for (i = 1; i < npl; ++i) {
-        k = ord[i];
-        for (j = i; j > 0 && ys[ord[j - 1]] < ys[k]; --j) ord[j] = ord[j - 1];
-        ord[j] = k;
-    }
+    /* tri par profondeur : le joueur le plus bas à l'écran passe devant ;
+       positions à l'écran en octets (draw_order, assembleur, version 2.66) */
+    draw_order();
     /* au moins 3 joueurs sur une même bande de 24 px (double) : plus de 8
        sprites par ligne possibles ; on fait tourner l'ordre des sprites pour
        qu'aucun ne disparaisse (rotation seulement quand c'est nécessaire) */
@@ -1223,7 +1233,10 @@ void match_draw(void)
         /* victoire : le vainqueur sautille de joie (un bond toutes les 16 trames) */
         if (party && (u8)(p & 1) == sc_winner && pose_force[p] == 0xFF) j = hop_h[ms_timer & 15];
         if (POSE_LOW(k & 31)) j -= 4;          /* à genoux, assis : 4 px plus bas */
-        spr_person((u8)(((u16)plx[p] << 2) >> 8), (s16)(ys[p] - (s8)j), cfg.chr[p], side_of(p), k, flip_cache[p], p);   /* palette p & 1 */
+        pv_x = xs[p];
+        pv_y = (s16)ys[p] - (s8)j;
+        pv_c = cfg.chr[p]; pv_front = side_of(p); pv_pose = k; pv_flip = flip_cache[p]; pj_sg = p;
+        spr_person_v();                           /* palette p & 1 */
     }
     if (cer) bank_call(BANK_SWAP, cer_draw);    /* pièce, chaises, raquette lâchée */
     bank_call(BANK_EXTRAS, match_fx);   /* ombres, poussière, arbitre, repère */
@@ -1231,3 +1244,6 @@ void match_draw(void)
     if (cfg.cond == COND_RAIN) bank_call(BANK_EXTRAS, rain_draw);
     spr_end();
 }
+#undef ord
+#undef ys
+#undef xs

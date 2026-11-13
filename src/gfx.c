@@ -203,18 +203,7 @@ void vbuf_text(u8 x, u8 y, const char *s, u8 len)
     vram_len = i;
 }
 
-u8 vbuf_raw(u16 adr, const u8 *data, u8 len)
-{
-    u8 i = vram_len;
-    if ((u16)i + len + 4 > VBUF_MAX) return 0;
-    vram_buf[i++] = (u8)(adr >> 8);
-    vram_buf[i++] = (u8)adr;
-    vram_buf[i++] = len;
-    while (len--) vram_buf[i++] = *data++;
-    vram_buf[i] = 0xFF;
-    vram_len = i;
-    return 1;
-}
+/* vbuf_raw : en assembleur (fastmove.s, version 2.66) */
 
 void num3(char *out, u16 v)
 {
