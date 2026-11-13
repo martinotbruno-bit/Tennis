@@ -95,6 +95,14 @@ void main(void)
     for (;;) {
         wait_frame();
         pad_poll();
+        /* hasard : hors du match, le générateur avance à chaque trame et
+           chaque appui y mêle l'instant où il a lieu ; le temps passé dans
+           les menus, jamais le même, rend le tirage au sort, le premier
+           serveur et les échanges imprévisibles d'une partie à l'autre */
+        if (app_state != AS_MATCH) {
+            rand8();
+            if (pad1_new | pad2_new) rand_seed ^= frame_cnt;
+        }
         /* vitesse du jeu (match) : « lent » saute une trame logique sur 4,
            « rapide » en ajoute une toutes les 4 trames ; les appuis de la
            trame sautée sont gardés pour la suivante */

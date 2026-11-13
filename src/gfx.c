@@ -158,10 +158,12 @@ void spr_begin(void) { oam_i = spr_rot; }
    coûteuse de chaque trame. Les tableaux de course y sont définis. */
 extern u8 run_dir[NCHARS];
 
+u8 txt_off;     /* 0, ou $40 : variante surlignée de la police ($60-$9F, menus) */
 void txt_at(u8 x, u8 y, const char *s)
 {
+    u8 c;
     vram_adr(NTADR(x, y));
-    while (*s) vram_put((u8)*s++);
+    while ((c = (u8)*s++)) vram_put((u8)(c > ' ' && c < 0x60 ? c + txt_off : c));
 }
 
 void vbuf_reset(void)
@@ -179,7 +181,8 @@ void vbuf_text(u8 x, u8 y, const char *s, u8 len)
     vram_buf[i++] = (u8)a;
     vram_buf[i++] = len;
     while (len--) {
-        vram_buf[i++] = (u8)(*s ? *s++ : ' ');
+        u8 c = (u8)(*s ? *s++ : ' ');
+        vram_buf[i++] = (u8)(c > ' ' && c < 0x60 ? c + txt_off : c);
     }
     vram_buf[i] = 0xFF;
     vram_len = i;

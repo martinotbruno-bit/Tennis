@@ -31,6 +31,8 @@ extern u16 region_cnt;
 #pragma zpsym("region_cnt")
 extern u8 frame_cnt;
 #pragma zpsym("frame_cnt")
+extern u8 rand_seed;               /* générateur (poids faible) */
+#pragma zpsym("rand_seed")
 extern u8 pal_dirty;
 #pragma zpsym("pal_dirty")
 extern u8 ppu_mask;
