@@ -284,6 +284,7 @@ static void title_screen(void)
     if (!opts_loaded) {
         /* derniers réglages du menu (cartouche à pile), bornés par sécurité */
         opts_loaded = 1;
+        menu_bk_pick();          /* fond des menus : une surface au hasard, à chaque allumage */
         if (far_call(BANK_COMP, (void *)so_load, 0)) {
             for (i = 0; i < NOPT; ++i) if (opt_val[i] >= opt_max[i]) opt_val[i] = 0;
             if (opt_val[O_ENV] == ENV_NUDE && (!nude_unlocked || opt_val[O_P1] == 16 || opt_val[O_P2] == 16)) opt_val[O_ENV] = 0;

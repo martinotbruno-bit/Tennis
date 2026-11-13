@@ -69,6 +69,8 @@ void txt_at(u8 x, u8 y, const char *s);
 /* texte via le tampon NMI (rendu actif) ; len octets, complétés par des espaces */
 void vbuf_text(u8 x, u8 y, const char *s, u8 len);
 extern u8 txt_off;
+extern u8 menu_bk;
+void menu_bk_pick(void);
 void people_dirty(void);
 void spr_port(u8 x, u8 y, u8 base, u8 attr);      /* 0, ou $40 : variante surlignée de la police (txt_at, vbuf_text) */
 /* écriture brute via le tampon NMI (motifs de tuiles, etc.) ; 0 si plein */

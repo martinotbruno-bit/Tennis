@@ -124,6 +124,17 @@ void pal_set_court(u8 s, u8 cond, u8 env)
     pal_dirty = 1;
 }
 
+/* fond des menus (version 2.59) : tiré au hasard à l'allumage parmi les
+   couleurs des surfaces (terre battue, gazon, dur, moquette), comme le fond
+   de l'affiche VS */
+#pragma bss-name (push, "WBSS")
+u8 menu_bk;
+#pragma bss-name (pop)
+void menu_bk_pick(void)
+{
+    static const u8 bk[4] = { 0x07, 0x0A, 0x02, 0x05 };
+    menu_bk = bk[rand8() & 3];
+}
 void pal_set_menu(void)
 {
     /* fond vert sombre (gazon) ; ombre du texte noire (couleur 1), texte surligné
@@ -132,10 +143,11 @@ void pal_set_menu(void)
     static const u8 mp[16] = { 0x0A, 0x0F, 0x28, 0x30,  0x0A, 0x0F, 0x28, 0x3C,
                                0x0A, 0x0F, 0x30, 0x28,  0x0A, 0x07, 0x38, 0x28 };
     u8 i;
-    for (i = 0; i < 16; ++i) pal_buf[i] = mp[i];
+    for (i = 0; i < 16; ++i) pal_buf[i] = (i & 3) ? mp[i] : menu_bk;
+    if (menu_bk == 0x07) pal_buf[13] = 0x0F;          /* fond terre battue : ombre de l'or en noir */
     pal_buf[16 + 8] = 0x0F; pal_buf[16 + 9] = 0x38; pal_buf[16 + 10] = 0x00; pal_buf[16 + 11] = 0x30;
     pal_buf[16 + 12] = 0x0F; pal_buf[16 + 13] = 0x30; pal_buf[16 + 14] = 0x21; pal_buf[16 + 15] = 0x28;
-    pal_buf[16] = pal_buf[20] = 0x0A;
+    pal_buf[16] = pal_buf[20] = menu_bk;
     pal_dirty = 1;
 }
 
