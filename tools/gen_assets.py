@@ -1647,7 +1647,7 @@ def persp_net(w):
         for x in range(x0n + 2, x1n + 3):
             if (x + y) % 2 == 0 and (y == ny + 1 or x % 4 < 2):
                 w[y][x] = 3
-    for px in (x0n - 2, x1n - 2):                      # poteaux
+    for px in (x0n - 2, x1n):                          # poteaux, symétriques (juste à l'extérieur du filet)
         for y in range(ny - 11, ny + 2):
             for x in range(px, px + 3):
                 w[y][x] = 3
