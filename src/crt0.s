@@ -389,7 +389,10 @@ nmi:
 ; Une écriture de défilement faite pendant la ligne L vaut pour la ligne L+1
 ; (copie à la colonne 257) : l'interruption tombe à la fin de la ligne 30.
 ; Une paire de lignes dure 227 cycles (2 x 113,67), à quelques cycles près :
-; chaque écriture a une fenêtre d'une ligne entière.
+; chaque écriture a une fenêtre d'une ligne entière. Le décalage o est un
+; multiple de 8 (vs_slide) : le décalage fin, qui prend effet aussitôt au
+; milieu de la ligne, reste à 0 ; seule la colonne de départ change, copiée
+; à la colonne 257 (aucune déchirure, ni au titre au-dessus, version 2.65).
 ; -------------------------------------------------------------------------
 irq:
     pha

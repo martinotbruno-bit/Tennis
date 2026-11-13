@@ -1,10 +1,19 @@
-# Royal Martinot — Rapport de réalisation (version 2.64)
+# Royal Martinot — Rapport de réalisation (version 2.65)
 
 Comme l'exige le CDC (§ 17.5), ce rapport distingue ce qui est **réalisé**, **testé**, **validé sur matériel réel**, **validé uniquement en émulation**, **dépendant d'une extension**, et les **limitations restantes**.
 
 > **Validation matérielle : aucune.** Aucun test n'a été fait sur console réelle (NES, Famicom, PAL, cartouche MMC1). Toutes les validations ont eu lieu en émulation (jsnes) et par des tests unitaires sur PC. Les critères « vérifié sur console physique » (CDC § 2.1, 15.4, 16.A) **ne sont pas remplis**. Ce point ne peut pas être traité dans l'environnement de développement utilisé.
 
 ## 1. Évolutions
+
+### Version 2.65
+
+| Demande | Réalisation |
+|---|---|
+| Pendant la glissade, le portrait de droite est instable | Cause : sur la vraie NES (et les émulateurs précis), le décalage fin (0 à 7 px) écrit par l'interruption s'applique aussitôt, au milieu de la ligne en cours ; comme il différait entre lignes paires et impaires, la moitié droite de chaque ligne prenait le décalage de la ligne suivante : le buste droit tremblait (l'émulateur des tests ne le reproduit pas). La glissade avance maintenant par pas de 8 px (décalage fin toujours nul : rien ne change au milieu d'une ligne, ni sur les bustes ni sur le titre au-dessus), avec freinage en fin de course. Test ajouté |
+| Il subsiste des problèmes d'alignement | Au filet, une correction héritée des lignes à marches de 8 lignes forçait la ligne sur une même colonne 24 lignes au-dessus du filet : marche trop courte (8 lignes au lieu de 16). Retirée : les lignes sont à leur place exacte au pixel près, marches régulières de part et d'autre du filet. Les sprites (joueurs, balle) sont projetés ligne par ligne avec la même formule que les lignes du court |
+| Terrain parfaitement symétrique ? | Les lignes du court l'étaient. Restaient : la rambarde des tribunes (x 31 à gauche, 224 à droite, soit 97 et 96 px de l'axe du court, colonne 128) dans les deux vues, et à plat, la sangle du filet (2 px) et le reflet du poteau droit (côté intérieur). Rambarde droite en x 225, sangle de 3 px, reflets côté extérieur. Mesure sur les 6 lieux, dans les deux vues : 0 pixel blanc non symétrique, rambardes symétriques ; seuls diffèrent les décors (spectateurs tirés au hasard, textes des panneaux). Image : `docs/symetrie_265.png` |
+| (place) | Pour garder la rambarde au pixel près au club et au parc, 7 signes de la police jamais écrits pendant un match (`# % ( ) ; < =`) et les blocs 1 à 3 libèrent leur tuile pendant le match en perspective ; le générateur vérifie à chaque compilation qu'aucun texte du match ne les emploie |
 
 ### Version 2.64
 
@@ -557,7 +566,7 @@ Pour loger ce contenu, la cartouche passe de NROM (32 Ko) à **MMC1** : 128 Ko d
 | Relecture des textes (`check_texts.py`) | 0 problème |
 | Contraste (`contrast.py 25`) | 0 paire sous ΔE 25 (personnages, courts, balle, tenues) |
 | Profil CPU, double, 6 000 trames | 27 trames d'échange en dépassement (0,45 %), sans défaut d'image |
-| Compilation | Reproductible : SHA-256 `f927cac6bba91f61d59b7ff8d7abf8eb6f9fe92df45d37581d5b1a1158faff7f` sur deux compilations propres |
+| Compilation | Reproductible : SHA-256 `46b2bbd2a31e17694bc3aba1d2596abb6fa812e342e0fe0040ba9b8b66d2fbfa` sur deux compilations propres |
 
 ## 3. Conformité par section du CDC
 

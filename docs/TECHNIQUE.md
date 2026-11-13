@@ -338,6 +338,13 @@ Le dessin des personnages est commun aux vues de face et de dos (rangées de tui
 - **IA** (`ai_update`, banque 0) : à partir de Normal, après le lob et l'amortie, croisé court avec une probabilité 90/256 si l'adversaire est au filet, 20/256 sinon.
 - **Réglages** : première rangée `MY0` = 4 + (18 − `nvis`) / 2 (screens.c ; même calcul dans `menu_marks`) ; `menu_soft` réécrit les 18 rangées ; portraits en y = `MY0` × 8 − 30, entre 7 et 16. Tests : `menuY(e, i)`.
 
+### Version 2.65 : glissade stable, symétrie, lignes au filet
+
+- **Glissade VS** : `vs_slide` ne contient que des multiples de 8. Le décalage fin X (registre x du PPU) est mis à jour aussitôt par l'écriture de $2005, au milieu de la ligne ; seuls la colonne de départ (t) et le bit d'écran sont copiés à la colonne 257. Avec un décalage fin toujours nul, les écritures de l'interruption (vers la colonne 150 de chaque ligne) ne changent rien à la ligne en cours. Test : décalages relevés pendant l'entrée, tous multiples de 8.
+- **Lignes au filet** : `PERSP_NETFIX = False` (gen_assets.py) : plus d'alignement forcé des lignes de côté de part et d'autre du filet (marche d'un pixel derrière le filet, à sa place exacte).
+- **Symétrie** (axe : colonne 128) : rambarde droite en x 225 (à plat, `draw_court`, la colonne 224 devient abords ; en perspective, `persp_rail` projette 225 ; `persp_sides` efface les colonnes 0 et 1 de la dernière tuile quand le décor glisse) ; sangle du filet à plat de 3 px (127-129), reflet des poteaux côté extérieur.
+- **Tuiles libres en perspective** : `PERSP_NOTXT` = `" $ & [ \ ] ^ # % ( ) ; < =` ; `_persp_check_texts` arrête la génération si un texte d'un module du match (hors écrans de menu) en contient un. Blocs pleins 1 à 3 libres s'ils ne sont pas dans le décor du court.
+
 ### Version 2.64 : lignes fines en perspective
 
 - **Échelle par ligne de pixels** (`persp_inv`, `persp_lines`, gen_assets.py) : l'échelle horizontale est calculée pour chaque ligne de l'image, et non plus une fois par rangée de tuiles. Les lignes obliques du court avancent d'un pixel dès que la projection le demande (toutes les 2 à 3 lignes de pixels pour les lignes de côté), au lieu de marches de 8 lignes. Il faut 112 à 146 tuiles nouvelles par lieu (70 à 104 avant).

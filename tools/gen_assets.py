@@ -198,14 +198,15 @@ def draw_net(b, rect, shake=False):
     rect(x0n, NET_Y - 7 + hs, x1n, NET_Y - 6 + hs, 2)       # bande blanche
     if hs:
         rect(x0n, NET_Y - 7, x1n, NET_Y - 7, 1)              # (affaissée)
-    rect(CENTER_X - 1, NET_Y - 5, CENTER_X, NET_Y, 2)        # sangle centrale
+    rect(CENTER_X - 1, NET_Y - 5, CENTER_X + 1, NET_Y, 2)    # sangle centrale (3 px, centrée sur la colonne 128, version 2.65)
     for y in (NET_Y + 1, NET_Y + 2):                         # ombre portée
         for x in range(x0n + 2, x1n + 3):
             if (x + y) % 2 == 0 and (y == NET_Y + 1 or x % 4 < 2):
                 b[y][x] = 3
     for px in (DBL_L - 6, DBL_R + 4):                        # poteaux (aux bouts du filet)
         rect(px, NET_Y - 11, px + 2, NET_Y + 1, 3)
-        rect(px, NET_Y - 10, px, NET_Y, 2)                   # reflet
+        rx = px if px < 128 else px + 2                      # reflet côté extérieur (symétrique, version 2.65)
+        rect(rx, NET_Y - 10, rx, NET_Y, 2)
         rect(px, NET_Y - 11, px + 2, NET_Y - 11, 2)          # tête
 
 # Chaise d'arbitre classique, dessinée dans le décor de chaque court, au
@@ -384,9 +385,12 @@ def draw_court(env=0):
                         for xx in range(8):
                             b[row*8+yy][xo+col*8+xx] = pat[yy][xx]
         # rambarde (pas de barrière au club nudiste : simple haie basse)
-        bx = 31 if side == 0 else 224
+        # (version 2.65 : à droite en x 225, symétrique de x 31 par rapport à
+        # l'axe du court, colonne 128 ; la colonne 224 devient abords)
+        bx = 31 if side == 0 else 225
         for y in range(32, 240):
             b[y][bx] = 3 if env != 3 else (3 if y % 4 < 2 else 1)
+            if side: b[y][224] = 0
     # chaise d'arbitre (palette 3, voir court_attr)
     for y in range(32):
         for x in range(16):
@@ -1622,6 +1626,7 @@ assert next_spr <= 256, "trop de tuiles de sprites (%d)" % next_spr
 # table d'origine est rétablie hors du match.
 # --------------------------------------------------------------------------
 PERSP_A = 1 / 0.85 - 1
+PERSP_NETFIX = False      # alignement forcé des lignes au filet (utile avec les marches de 8 lignes, avant la 2.64)
 PERSP_K = 168 * (1 + PERSP_A)
 def persp_d(ys):
     u = (216 - ys) / PERSP_K
@@ -1691,7 +1696,10 @@ def persp_lines(w):
     ny = round(216 - PERSP_K * 0.5 / (1 + PERSP_A * 0.5))
     t = ny // 8
     fix = {}
-    for (X, y0, y1) in verts[:4]:
+    # (version 2.65 : plus de correction ; les lignes sont au pixel près, la
+    # marche d'un pixel qui tombe derrière le filet est à sa place exacte,
+    # les marches restent régulières de part et d'autre du filet)
+    for (X, y0, y1) in (verts[:4] if PERSP_NETFIX else ()):
         b = lx(X, t + 1)
         if lx(X, t - 2) == b: continue
         m = {t: b, t - 1: b, t - 2: b}
@@ -1736,14 +1744,28 @@ def size_of_row(ty):
     if sc >= 0.895: return 1             # 'small'
     return 2                             # 'tiny' : foule lointaine
 PERSP_FAM = {0: 'A', 1: 'B', 2: 'B', 5: 'B'}   # lieux avec du public animé
-PERSP_NOTXT = {ord(c) for c in '"$&[\\]^'}       # signes absents de tous les textes du jeu (vérifié par tools/check_texts.py)
+PERSP_NOTXT = {ord(c) for c in '"$&[\\]^#%();<='}   # signes jamais écrits pendant un match (vérifié ci-dessous)
+def _persp_check_texts():
+    """les signes de PERSP_NOTXT ne doivent apparaître dans aucun texte des
+    modules du match (seuls les écrans de menu, qui rechargent la police, les
+    emploient) : sinon leur tuile, prise par une ligne du court, s'afficherait"""
+    import glob, re as _re
+    menus = {'screens.c', 'menuart.c', 'manual.c', 'comp.c', 'intro.c', 'credits.c', 'podium.c', 'teaser.c'}
+    for f in glob.glob(os.path.join(ROOT, 'src', '*.c')):
+        b = os.path.basename(f)
+        if b in menus or b.startswith('assets') or b == 'music_data.c': continue
+        t = _re.sub(r'/\*.*?\*/', '', open(f, encoding='utf-8', errors='replace').read(), flags=_re.S)
+        for m in _re.finditer(r'"((?:[^"\\\n]|\\.)*)"|\'(.)\'', t):
+            bad = {c for c in (m.group(1) or m.group(2) or '') if ord(c) in PERSP_NOTXT}
+            if bad: sys.exit('perspective : %s utilise %r pendant le match (PERSP_NOTXT)' % (b, ''.join(sorted(bad))))
+_persp_check_texts()
 
 def persp_row_scale(ty):
     return 1 / (1 + PERSP_A * persp_d(ty * 8 + 4))
 PERSP_STEP = 1
 def persp_rail(ty, side):
     sc = persp_row_scale(ty)
-    x = 128 + ((31 if side == 0 else 224) - 128) * sc
+    x = 128 + ((31 if side == 0 else 225) - 128) * sc   # (symétrique autour de la colonne 128)
     if PERSP_STEP == 1:
         return round(x)
     return 2 * round(x / 2) + (1 if side == 0 else 0)   # gauche : impair (31, 33...) ; droite : pair
@@ -1790,7 +1812,7 @@ def persp_sides(e, bmp, w):
                 return [[filler(x, y) for x in range(8)] for y in range(8)]
             ia = 2 if e == 2 else 3                       # salle : ajout entre gradins et panneaux
             shift = (not crowd_row and e != 4) or e == 2  # décor sans public : glissé vers le court
-            if shift and nins == 0 and xr == (31 if side == 0 else 224):
+            if shift and nins == 0 and xr == (31 if side == 0 else 225):
                 seq = outer[:]                            # comme à plat
                 nins = -1
             elif shift and nins >= 1:
@@ -1798,9 +1820,9 @@ def persp_sides(e, bmp, w):
                 # du club nudiste) glisse vers le court ; du fond est ajouté
                 # côté écran, la rambarde d'origine devient du fond
                 last = [r[:] for r in outer[3]]
-                rx = 7 if side == 0 else 0
-                for y in range(8):
-                    last[y][rx] = filler((3 * 8 + rx) if side == 0 else (224 + rx), ty * 8 + y)
+                for rx in ((7,) if side == 0 else (0, 1)):   # (à droite : abords en x 224, rambarde en 225)
+                    for y in range(8):
+                        last[y][rx] = filler((3 * 8 + rx) if side == 0 else (224 + rx), ty * 8 + y)
                 fill = [[[filler(x, y) for x in range(8)] for y in range(8)] for _ in range(nins - 1)]
                 if e == 2:
                     # salle : les gradins restent au bord de l'écran (palette 3,
@@ -1892,14 +1914,15 @@ def persp_build(e):
     flags = 0
     if e in PERSP_FAM:
         # (version 2.64) seules les tuiles vraiment affichées pendant le match
-        # sont gardées : tuiles 0 à 3 (vide, blocs pleins ; la 4, ancienne flèche des
-        # menus, ne sert plus), police
+        # sont gardées : tuile 0 (vide) ; les blocs pleins 1 à 3 (cadres des menus)
+        # et la 4 (ancienne flèche des menus) ne servent pas pendant le match, sauf
+        # s'ils sont dans le décor du court ; police
         # (sauf les signes absents de tous les textes), filet, décor, « bras
         # levés » de l'ola (tuile + 4) ; les panneaux et les spectateurs de la
         # vue à plat absents de ce court sont libres, et le jeu ne les charge
         # plus (persp_flags : bit 0 panneaux 1, bit 1 panneaux 2, bit 2
         # spectateurs du stade, bit 3 spectateurs du club et de la salle)
-        keep = set(range(4)) | (set(range(0x20, 0x60)) - PERSP_NOTXT) | set(NET_IDX) | ref
+        keep = {0} | (set(range(0x20, 0x60)) - PERSP_NOTXT) | set(NET_IDX) | ref
         keep |= {t + 4 for t in ref if 5 <= t <= 8 or 13 <= t <= 16}
         for bit, grp in enumerate((SIGN_IDX, SIGN2_IDX, crowd_idx, crowdb_idx)):
             if set(grp) & ref: keep |= set(grp)

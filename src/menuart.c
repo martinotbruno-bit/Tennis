@@ -370,9 +370,15 @@ static void vs_fill(u8 b, u8 c)
    le buste droit est alors recopié dans l'écran 0 (3 appels), la séparation
    des lignes s'arrête et un éclair blanc marque la rencontre. Enfin
    « CONTRE » s'inscrit sur un flash. */
+/* décalage par pas de 8 px (version 2.65) : sur la vraie NES, le décalage
+   fin (0 à 7 px) écrit par l'interruption s'applique aussitôt, au milieu de
+   la ligne en cours ; s'il différait d'une ligne à l'autre, la moitié droite
+   de chaque ligne (le buste droit) tremblait. Avec un multiple de 8, il reste
+   à 0 : seule la colonne de départ change, et elle n'est prise qu'à la fin
+   de la ligne. Freinage : les derniers pas durent plusieurs trames. */
 static const u8 vs_slide[24] = {
-    96, 88, 81, 74, 67, 61, 55, 49, 43, 38, 33, 29,
-    24, 20, 17, 13, 11,  8,  6,  4,  2,  1,  1,  0 };
+    96, 88, 80, 72, 64, 56, 48, 40, 40, 32, 32, 24,
+    24, 24, 16, 16, 16, 16,  8,  8,  8,  8,  8,  0 };
 u8 __fastcall__ vs_anim(u8 t)
 {
     u8 r;

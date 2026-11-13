@@ -409,7 +409,8 @@ console.log('Présentation et pause');
   for (let y = 32; y < 144; y += 2) { ev += cnt(y, 8, 100); od += cnt(y + 1, 8, 100); evR += cnt(y, 156, 248); odR += cnt(y + 1, 156, 248); }
   check(e.peek('split_on') === 1 && ev > 500 && od === 0 && odR > 500 && evR === 0,
     `glissade : buste gauche sur les lignes paires, droit sur les impaires (${ev}/${od}, ${odR}/${evR})`);
-  e.run(40);
+  const os = new Set(); for (let i = 0; i < 40; i++) { e.run(1); if (e.peek('split_on')) os.add(e.peek('split_o')); }
+  check([...os].every((o) => o % 8 === 0) && os.size >= 4, `glissade par pas de 8 px (décalage fin toujours nul : rien ne bouge en cours de ligne) : ${[...os].join(' ')}`);
   let gap = 0; for (let y = 40; y < 140; y++) if (cnt(y, 0, 100) === 0 && cnt(y + 1, 0, 100) > 0 && cnt(y - 1, 0, 100) > 0) gap++;
   check(e.peek('split_on') === 0 && e.nes.cpu.F_INTERRUPT === 1 && gap === 0, `fin de l'entrée : interruption coupée, bustes pleins (${gap} lignes vides)`);
   const f = boot(); toMenu(f); f.tap('START'); f.run(12); f.tap('B'); f.run(40);
