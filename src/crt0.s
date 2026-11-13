@@ -12,7 +12,7 @@
 .export _wait_frame, _pad_poll, _ppu_off, _ppu_on, _vram_adr, _vram_put
 .export _swap_put, _vram_fill, _vram_unrle, _rand8, _rand_seed
 .export _scroll_y, _scroll_nt, _mirror_h, _scroll_x, _tz_bank, _tz_n, _tz_unpack, _tz_copy, _tz_src
-.export _chr_data, _split_start, _split_stop, _split_o
+.export _chr_data, _split_start, _split_stop, _split_o, _ctrl_swap, _rp_seq
 .export _spr1, _spr_meta, _spr_end, _oam_i, _spr_rot, _set_bank, _cur_bank, _bank_call, _far_call, _rp_record
 .import _bx, _by, _bz, _b_vis, _plx, _ply, _pose_cache, _flip_cache
 .import _rp_buf, _rp_head, _rp_count, _swp_dst
@@ -38,7 +38,7 @@ CTRL_VAL  = %10001000
 
 .segment "HEADER"
     .byte "NES", $1A
-    .byte 16            ; 16 x 16 Ko PRG (256 Ko)
+    .byte 32            ; 32 x 16 Ko PRG (512 Ko, version 2.67)
     .byte 0             ; 0 = CHR-RAM (8 Ko)
     .byte $42           ; mapper 4 (MMC3), PRG-RAM sauvegardée par pile (version 2.62 ; MMC1 avant)
     .byte $00
@@ -106,6 +106,8 @@ far_arg:    .res 2      ; argument (A/X) puis résultat de _far_call
 _region_cnt:.res 2      ; nombre de boucles entre deux VBlank (détection NTSC/PAL)
 
 .segment "WBSS"
+_rp_seq:    .res 2      ; trames enregistrées (rp_record)
+_ctrl_swap: .res 1      ; tables de tuiles échangées (highlight.c, version 2.67)
 split_on: .res 1
 _split_o:
 split_o:  .res 1
@@ -339,6 +341,7 @@ nmi:
     lda _scroll_y
     sta PPUSCROLL
     lda #CTRL_VAL
+    eor _ctrl_swap      ; ($18 : fond en $1000, sprites en $0000 : zoom du ralenti)
     ora _scroll_nt
     sta PPUCTRL
     lda _ppu_mask
@@ -932,9 +935,9 @@ _spr_end:
     rts
 
 ; void __fastcall__ set_bank(u8 bank) : banque commutable en $8000
-; (bit 4 = 0 : PRG-RAM activée)
+; (banques 0 à 30 : 512 Ko, version 2.67)
 _set_bank:
-    and #$0F
+    and #$1F
     cmp _cur_bank
     beq @same           ; déjà en place : rien à écrire
     sta _cur_bank
@@ -1114,7 +1117,10 @@ _rp_record:
     bne :+
     ldx #0
 :   stx _rp_head
-    lda _rp_count
+    inc _rp_seq         ; trames enregistrées depuis le démarrage (repères du ralenti, 2.67)
+    bne :+
+    inc _rp_seq+1
+:   lda _rp_count
     cmp #RP_LEN
     bcs :+
     inc _rp_count
@@ -1197,6 +1203,22 @@ BANK_STUB "STUB11"
 BANK_STUB "STUB12"
 BANK_STUB "STUB13"
 BANK_STUB "STUB14"
+BANK_STUB "STUB15"
+BANK_STUB "STUB16"
+BANK_STUB "STUB17"
+BANK_STUB "STUB18"
+BANK_STUB "STUB19"
+BANK_STUB "STUB20"
+BANK_STUB "STUB21"
+BANK_STUB "STUB22"
+BANK_STUB "STUB23"
+BANK_STUB "STUB24"
+BANK_STUB "STUB25"
+BANK_STUB "STUB26"
+BANK_STUB "STUB27"
+BANK_STUB "STUB28"
+BANK_STUB "STUB29"
+BANK_STUB "STUB30"
 
 .segment "BANK2"
 _chr_data:

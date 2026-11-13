@@ -19,6 +19,7 @@
 #define BANK_SWAP 13     /* jeux de tuiles par phase (célébrations, revers) */
 #define BANK_GMI 14      /* écrans d'annonce du Grand Martinot */
 #define BANK_COURTS 12   /* tables de noms des courts (vue à plat) */
+#define BANK_HL     15   /* ralenti : gros plan et arrêt sur image zoomé (highlight.c), récapitulatif du score */
 
 /* état de l'application (lu par la boucle principale, banque fixe) */
 #define AS_SCREENS 0

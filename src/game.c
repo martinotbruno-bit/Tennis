@@ -145,6 +145,16 @@ static u8 receiver_p(void)
 /* ====================================================================== */
 /* Fin d'échange                                                           */
 /* ====================================================================== */
+/* Repères du ralenti (version 2.67) : fonctions et données en banque 15
+   (highlight.c) ; le premier rebond de chaque balle est noté ici */
+extern u16 hl_bf, rp_seq;
+extern u8 hl_bi, hl_bx, hl_by, hl_bin, hl_bok, hl_w, hl_sok, hl_sbok;
+extern const char *hl_ptxt;
+extern u8 rp_head;
+u16 __fastcall__ hl_hit(u16 pk);
+void hl_select(void);
+#define HL_HIT(p, k) far_call(BANK_HL, (void *)hl_hit, (u16)((p) | ((k) << 8)))
+#define HL_SELECT(w, t) { hl_w = (w); hl_ptxt = (t); bank_call(BANK_HL, hl_select); }   /* (t en RAM : msg1) */
 static void point_over(u8 winner, u8 reason)
 {
     /* reason : 0 normal, 1 faute adverse (filet/dehors), 2 coup gagnant */
@@ -165,8 +175,8 @@ static void point_over(u8 winner, u8 reason)
     }
     if (reason == 2) {
         ++st_winners[winner];
-        if (rally_hits == 1) { ++st_aces[winner]; set_msg("ACE !", "", 70); }
-        else set_msg(win_label(last_shot, hit_pass, hit_jump), "", 70);
+        if (rally_hits == 1) { ++st_aces[winner]; set_msg("ACE !", "", 70); HL_SELECT(winner, msg1); }
+        else { set_msg(win_label(last_shot, hit_pass, hit_jump), "", 70); HL_SELECT(winner, msg1); }
         sfx_winner();   /* carillon bref (canal des bruitages) */
         sfx_crowd(7);
         crowd_timer = 64;
@@ -176,7 +186,7 @@ static void point_over(u8 winner, u8 reason)
         ++st_errors[winner ^ 1];
         sfx_crowd(2);
     }
-    if (rally_hits >= 12) { set_msg("QUEL ECHANGE !", "", 70); sfx_crowd(7); crowd_timer = 64; rp_pending = 1; }
+    if (rally_hits >= 12) { set_msg("QUEL ECHANGE !", "", 70); sfx_crowd(7); crowd_timer = 64; rp_pending = 1; HL_SELECT(winner, msg1); }
     if (!cfg.replays || cfg.demo) rp_pending = 0;
     if (rp_pending) ms_timer = 110;
 }
@@ -243,6 +253,9 @@ static void ball_bounce(void)
     if (!b_live) { ++bounces; return; }
 
     if (bounces == 0) {
+        /* repère du ralenti : premier rebond de cette balle */
+        hl_bi = rp_head; hl_bf = rp_seq; hl_bx = (u8)x; hl_by = (u8)y; hl_bok = 1;
+        hl_bin = (u8)(half == side_of(recv) && (b_serve ? in_service_box() : !(x < l || x > r || y < TOP_BASE || y > BOT_BASE)));
         if (half != side_of(recv)) {
             /* la balle n'a pas passé le filet */
             if (b_serve) { serve_fault("FILET"); return; }
@@ -355,31 +368,11 @@ u8 can_hit(u8 p);
 /* nom d'équipe sur 4 lettres : banque fixe (gamefix.c) */
 void team_name(u8 t, char *out);
 u8 recap_pend, brk_pend;          /* récapitulatif du score à afficher / fin de set */
-/* ---------------------------------------------------------------------- */
-/* Récapitulatif du score : une ligne par équipe, « ALEX 6 3 2 », sets    */
-/* terminés puis jeux du set en cours (14 caractères pour 5 sets).        */
-/* ---------------------------------------------------------------------- */
-void score_line(u8 t, char *out)
-{
-    u8 i, k = 4;
-    team_name(t, out);
-    for (i = 0; i < sc_set_no && i < MAX_SETS; ++i) { out[k++] = ' '; out[k++] = (char)('0' + sc_hist[i][t]); }
-    if (!sc_over && k < 14) { out[k++] = ' '; out[k++] = (char)('0' + sc_games[t]); }
-    out[k] = 0;                     /* les deux lignes ont la même longueur : centrées ensemble */
-}
-
-/* bandeau : le score set par set pendant 2 secondes */
-#pragma bss-name(push, "WBSS")
-static char recap_a[16], recap_b[16];
-#pragma bss-name(pop)
-void score_recap(void)
-{
-    char *a = recap_a, *b = recap_b;
-    score_line(0, a);
-    score_line(1, b);
-    set_msg(a, b, 120);
-    recap_pend = 0;
-}
+/* récapitulatif du score (score_line, score_recap) : banque 15 (highlight.c, version 2.67) */
+void score_recap(void);
+extern u8 hl_mode;                 /* 1 : gros plan, 2 : zoom en cours (highlight.c) */
+void hl_tick(void);
+#define score_recap() bank_call(BANK_HL, score_recap)
 
 u8 __fastcall__ serve_fb(s16 vz);             /* banque 13 (shots.c) */
 
@@ -427,6 +420,7 @@ static void do_hit(u8 p, u8 pad, u8 btn, u8 power, u8 spread)
     hitter_p = p;
     hit_now = 1;
     b_serve = 0;
+    HL_HIT(p, (u8)(last_shot == SH_SMASH));
     ++rally_hits;
     pl_hit[p] = 1;
     pl_flip[p] = (u8)(dx < 0);
@@ -557,6 +551,7 @@ static void serve_hit(u8 p, u8 pad, u8 btn, u8 quality, u8 spread)
     hitter_p = p;
     b_serve = 1;
     rally_hits = 1;
+    HL_HIT(p, 2 | 0x80);            /* (service : début du point, bit 7) */
     if (faults == 0) ++st_first_tot[t];
     launch(tx, ty, T, grav);
     ms = MS_RALLY;
@@ -961,6 +956,14 @@ static void court_load(void)
     pal_set_player(1, cfg.chr[1]);
 }
 
+/* Retour au court après un gros plan ou un zoom du ralenti (highlight.c,
+   banque 15, version 2.67) : écran du court reconstruit, rendu coupé */
+void court_reload(void)
+{
+    court_load();
+    hud_dirty = 1;
+}
+
 /* Reprise après l'écran de fin de set : le score des sets dans le bandeau */
 void match_resume(void)
 {
@@ -1058,8 +1061,10 @@ u8 match_tick(void)
 
     /* ralenti : la banque des extras rejoue les dernières trames enregistrées */
     if (ms == MS_REPLAY) {
+        /* mise en valeur du point (gros plan, zoom) : banque 15 */
+        if (hl_mode) { bank_call(BANK_HL, hl_tick); return 0; }
         bank_call(BANK_EXTRAS, rp_play);
-        if (rp_done) { ms = MS_DEAD; ms_timer = 1; msg_timer = 1; rp_pending = 0; }
+        if (rp_done) { ms = MS_DEAD; ms_timer = 1; msg_timer = 1; rp_pending = 0; hl_sok = hl_sbok = 0; }   /* (repères non atteints : oubliés) */
         if (msg_timer && --msg_timer == 0) hud_dirty = 1;
         if (hud_dirty) bank_call(BANK_EXTRAS, hud_update);
         return 0;

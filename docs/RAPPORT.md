@@ -1,10 +1,18 @@
-# Royal Martinot — Rapport de réalisation (version 2.66)
+# Royal Martinot — Rapport de réalisation (version 2.67)
 
 Comme l'exige le CDC (§ 17.5), ce rapport distingue ce qui est **réalisé**, **testé**, **validé sur matériel réel**, **validé uniquement en émulation**, **dépendant d'une extension**, et les **limitations restantes**.
 
 > **Validation matérielle : aucune.** Aucun test n'a été fait sur console réelle (NES, Famicom, PAL, cartouche MMC1). Toutes les validations ont eu lieu en émulation (jsnes) et par des tests unitaires sur PC. Les critères « vérifié sur console physique » (CDC § 2.1, 15.4, 16.A) **ne sont pas remplis**. Ce point ne peut pas être traité dans l'environnement de développement utilisé.
 
 ## 1. Évolutions
+
+### Version 2.67
+
+| Demande | Réalisation |
+|---|---|
+| Un zoom bien étudié au moment du ralenti pour mettre en valeur le point (choix : gros plan et arrêt sur image zoomé) | La NES ne sait pas agrandir l'image : les deux effets sont préparés pendant de courts flashs blancs. **Gros plan** : à la frappe décisive (dernière frappe de l'équipe gagnante), l'image se fige, flash, puis plan moyen en grand du joueur en pleine frappe, à ses couleurs (images haute définition de la bande-annonce : homme, femme, fillette), arrivée de caméra en travelling, balle qui frappe le tamis (flash) et repart en traînée, titre du coup lettre par lettre ; puis gros plan bras levés sous les confettis ; environ 2 s. **Zoom** : au rebond qui a conclu le point, un viseur se resserre sur le point d'impact, puis l'image est agrandie deux fois, calculée pendant le flash (tuiles du court et sprites de la trame figée lus dans la mémoire du PPU et agrandis) : lignes nettes, joueurs proches et balle agrandis, BONNE ! ou DEHORS ! ; environ 1,6 s. Puis retour au court à l'identique et suite du ralenti. A passe la séquence. Frappe décisive plus ancienne que le ralenti : le gros plan l'ouvre. Club nudiste : ralenti simple. Images : `docs/ralenti_267.png` |
+| (moyens) | Cartouche portée à 512 Ko (la MMC3 le permet) ; nouvelle banque 15 (mise en valeur, récapitulatif du score sorti de la banque 0, pleine) ; repères des frappes et des rebonds datés par un compteur des trames enregistrées (le tampon du ralenti est circulaire) ; tables de tuiles échangées pendant le zoom |
+| (vérification) | Section de tests ajoutée (à plat et en perspective : ordre des séquences, écran du court identique au retour, tables de tuiles rétablies, A, club nudiste) ; tests des matchs complets et de l'IA adaptés à la durée des ralentis ; 350 vérifications, 0 échec. Guide sur console : ligne 10.18 |
 
 ### Version 2.66
 
@@ -573,7 +581,7 @@ Pour loger ce contenu, la cartouche passe de NROM (32 Ko) à **MMC1** : 128 Ko d
 | Relecture des textes (`check_texts.py`) | 0 problème |
 | Contraste (`contrast.py 25`) | 0 paire sous ΔE 25 (personnages, courts, balle, tenues) |
 | Profil CPU, double, 6 000 trames | 27 trames d'échange en dépassement (0,45 %), sans défaut d'image |
-| Compilation | Reproductible : SHA-256 `ed098835a40ba5448fa1de63bfb0dfb387595c5b02cf7606077cc8f7652c3dd6` sur deux compilations propres |
+| Compilation | Reproductible : SHA-256 `eefb381d45b13deeb4b76e49cfaeaeb185f8a67532e8db2e4d81c607b797b533` sur deux compilations propres |
 
 ## 3. Conformité par section du CDC
 

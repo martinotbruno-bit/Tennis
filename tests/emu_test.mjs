@@ -134,11 +134,14 @@ function fullMatch(label, opts, maxFrames, extra) {
     if (m === 5 && prevMs !== 5) replays++;
     prevMs = m;
     // blocage = ni l'état du match, ni la balle, ni les joueurs ne changent
-    const sig = m + ',' + e.peek16('bx') + ',' + e.peek16('by') + ',' + e.peek16('plx') + ',' + e.peek16('plx', 2);
+    // (pendant le ralenti et sa mise en valeur, l'image bouge : sprites et temps de la séquence)
+    const sig = m + ',' + e.peek16('bx') + ',' + e.peek16('by') + ',' + e.peek16('plx') + ',' + e.peek16('plx', 2)
+      + (m === 5 ? ',' + e.peek('hl_t') + ',' + e.nes.cpu.mem[0x200] + ',' + e.nes.cpu.mem[0x203] + ',' + e.nes.cpu.mem[0x204] : '');
     if (sig === lastMs) { same++; worst = Math.max(worst, same); } else { same = 0; lastMs = sig; }
     // (pendant la construction d'un écran, la pile C contient l'argument de
     // screens_enter : contrôle seulement pendant le match)
-    if ((e.frames & 255) === 0 && app(e) === AS.MATCH && !spOk(e)) spGood = false;
+    // (ni pendant un gros plan ou un zoom du ralenti : leurs constructions durent plusieurs trames)
+    if ((e.frames & 255) === 0 && app(e) === AS.MATCH && !e.peek('hl_mode') && !spOk(e)) spGood = false;
     return app(e) === AS.SCREENS;
   }, maxFrames);
   e.run(60);   // l'écran de résultats se construit sur quelques trames
@@ -295,9 +298,9 @@ console.log('Démarrage et cartouche MMC3');
   check(e.text(10, 16, 5) === 'JOUER', 'menu du titre affiché');
   // cartouche MMC3 (version 2.62) : en-tête, et banque de 16 Ko n = blocs de 8 Ko 2n ($8000) et 2n + 1 ($A000)
   const fs = await import('fs'); const hdr = fs.readFileSync(rom).subarray(0, 8);
-  check(hdr[4] === 16 && hdr[5] === 0 && ((hdr[6] >> 4) | (hdr[7] & 0xF0)) === 4 && (hdr[6] & 2) === 2, `en-tête : MMC3 (mapper 4), 256 Ko, CHR-RAM, sauvegarde (${[...hdr].map(b => b.toString(16)).join(' ')})`);
+  check(hdr[4] === 32 && hdr[5] === 0 && ((hdr[6] >> 4) | (hdr[7] & 0xF0)) === 4 && (hdr[6] & 2) === 2, `en-tête : MMC3 (mapper 4), 512 Ko, CHR-RAM, sauvegarde (${[...hdr].map(b => b.toString(16)).join(' ')})`);
   let okb = true;
-  for (const b of [1, 4, 9, 13]) {
+  for (const b of [1, 4, 9, 13, 20, 30]) {
     e.nes.cpu.mem[e.addr('cur_bank')] = 0;
     // set_bank(b) appelé comme par le jeu : on écrit les registres comme lui
     e.nes.mmap.write(0x8000, 6); e.nes.mmap.write(0x8001, b * 2); e.nes.mmap.write(0x8000, 7); e.nes.mmap.write(0x8001, b * 2 + 1);
@@ -383,6 +386,44 @@ console.log('Court Margaux');
   check(e.peek('crowd_timer') === 0, 'coeurs, fleurs et étoiles scintillent puis se reposent');
 }
 
+}
+if (sec('Ralenti : gros plan et zoom')) {
+console.log('Ralenti : gros plan et zoom');
+{
+  // version 2.67 : pendant le ralenti, gros plan de la frappe décisive puis
+  // arrêt sur image zoomé (x 2) au rebond ; retour au court à l'identique
+  const court = (e) => { const vm = e.nes.ppu.vramMem, o = []; for (let ty = 4; ty < 30; ty++) for (let tx = 6; tx < 26; tx++) { const t = vm[0x2000 + ty * 32 + tx]; o.push(t, ...vm.slice(t * 16, t * 16 + 16)); } return o.join(','); };
+  for (const view of [0, 1]) {
+    const e = boot(); startWith(e, { FMT: 3, VIEW: view }); allCpu(e);
+    let ref = null, seq = [], zoomOk = false, closeOk = false, back = [], f;
+    for (f = 0; f < 60 * 60 * 6 && back.length < 2; f++) {
+      const m0 = e.peek('hl_mode');
+      e.run(1);
+      const m = e.peek('hl_mode');
+      if (e.peek('ms') === 5 && !m && !m0 && ref === null) ref = court(e);
+      if (m && !m0) seq.push(m);
+      if (m === 1 && e.peek('hl_t') === 40) closeOk = e.nes.ppu.vramMem[0x2000 + 15 * 32 + 16] !== 0 && e.peek('ctrl_swap') === 0;
+      if (m === 2 && e.peek('hl_t') === 40) {
+        const used = new Set(e.nes.ppu.vramMem.slice(0x2000, 0x23C0));
+        zoomOk = e.peek('ctrl_swap') === 0x18 && used.size > 4 && used.size < 256;
+      }
+      if (!m && m0) { e.run(1); back.push(court(e) === ref && e.peek('ctrl_swap') === 0); }
+      if (e.peek('ms') !== 5) ref = null;
+    }
+    check(seq[0] === 1 && seq[1] === 2 && closeOk && zoomOk, `${view ? 'perspective' : 'à plat'} : gros plan de la frappe décisive, puis zoom x 2 au rebond (${seq.join(',')})`);
+    check(back.length === 2 && back.every(Boolean), `${view ? 'perspective' : 'à plat'} : retour au court à l'identique après chaque séquence (${back.join(',')})`);
+  }
+  // A pendant le gros plan : la séquence et le ralenti s'arrêtent
+  const g = boot(); startWith(g, { FMT: 3 }); allCpu(g);
+  runUntil(g, () => g.peek('hl_mode') === 1 && g.peek('hl_t') === 30, 60 * 60 * 6);
+  g.tap('A'); runUntil(g, () => g.peek('hl_mode') === 0, 120); g.run(10);   /* (retour au court : une quinzaine de trames de rechargement) */
+  check(g.peek('hl_mode') === 0 && g.peek('ctrl_swap') === 0 && g.peek('ms') !== 5, `A pendant le gros plan : retour au court, fin du ralenti (ms ${g.peek('ms')}, mode ${g.peek('hl_mode')}, t ${g.peek('hl_t')})`);
+  // club nudiste : ni gros plan ni zoom
+  const n = boot(); startWith(n, { FMT: 3, ENV: 3 }); allCpu(n);
+  let rep = 0, hl = 0, pm = 0;
+  for (let f = 0; f < 60 * 60 * 4; f++) { n.run(1); const m = n.peek('ms'); if (m === 5 && pm !== 5) rep++; if (n.peek('hl_mode')) hl++; pm = m; }
+  check(rep > 0 && hl === 0, `club nudiste : ralentis (${rep}) sans gros plan ni zoom`);
+}
 }
 if (sec('Présentation et pause')) {
 console.log('Présentation et pause');
@@ -1795,7 +1836,7 @@ console.log('IA : tactique selon le score');
   const e = boot(); startWith(e, { FMT: 0 }); allCpu(e);
   runUntil(e, () => e.peek('ms') === 2, 600);
   e.poke('sc_games', 1, 0); e.poke('sc_games', 4, 1);
-  runUntil(e, () => e.peek('ms') === 3, 3000); runUntil(e, () => e.peek('ms') === 0, 400);
+  runUntil(e, () => e.peek('ms') === 3, 3000); runUntil(e, () => e.peek('ms') === 0, 1500);   /* (ralenti mis en valeur : plus long, 2.67) */
   const g0 = e.peek('sc_games', 0), g1 = e.peek('sc_games', 1);
   const pw = (t) => { const v = e.peek('tac_pow', t); return v > 127 ? v - 256 : v; };
   const mg = (t) => { const v = e.peek('tac_margin', t); return v > 127 ? v - 256 : v; };
@@ -1838,7 +1879,7 @@ console.log('Vue en perspective (option VUE)');
   // ralentissements (2.66) : double en perspective, 4 joueurs de l'ordinateur ;
   // une trame est en retard si le programme n'attend pas déjà la suivante
   // (1 056 sur 15 000 mesurées en 2.66, 2 942 en 2.63)
-  const g = boot(); toMenu(g); setOpts(g, { MODE: 1, TYPE: 1, VIEW: 1, FMT: 3 }); g.tap('START');
+  const g = boot(); toMenu(g); setOpts(g, { MODE: 1, TYPE: 1, VIEW: 1, FMT: 3, REPLAY: 0 }); g.tap('START');   /* (sans ralentis : le jeu seul) */
   runUntil(g, () => scr(g) === SS.PRESENT, 120); g.run(40); g.tap('A');
   runUntil(g, () => app(g) === AS.MATCH, 300); allCpu(g);
   const wf = g.addr('wait_frame'); let late = 0, n = 0;
@@ -2060,7 +2101,8 @@ console.log('Séquences animées du match');
   }
   {
     // changement de côté (ordinateur contre ordinateur) : chaises, puis l'autre côté
-    const e = boot(); startWith(e, { FMT: 3, SURF: 1 }); allCpu(e); e.run(20); e.cerSkip = false;
+    // (sans ralentis : avec un ralenti, les chaises n'arrivent qu'après lui)
+    const e = boot(); startWith(e, { FMT: 3, SURF: 1, REPLAY: 0 }); allCpu(e); e.run(20); e.cerSkip = false;
     // les chaises apparaissent dès la fin de l'échange qui amène le changement de côté
     runUntil(e, () => e.peek('cer') === 0xFD || e.peek('cer') === 4, 60 * 120);
     e.run(2);

@@ -464,7 +464,10 @@ void crowd_tick(void)
 u8 rp_buf[RP_LEN][16];
 #pragma bss-name(pop)
 u8 rp_head, rp_count;
-static u8 rp_pos, rp_left, rp_slow;
+static u8 rp_pos, rp_slow;
+u8 rp_left;                     /* (lu par hl_check, banque 15) */
+void hl_check(void);
+extern u8 hl_mode, hl_sok, hl_si, hl_sbok, hl_sbi;   /* repères du ralenti (game.c, highlight.c) */
 
 /* rp_record() : en assembleur dans la banque fixe (crt0.s), appelée à chaque trame */
 
@@ -474,6 +477,7 @@ void rp_start(void)
     rp_pos = (u8)(rp_head >= rp_left ? rp_head - rp_left : rp_head + RP_LEN - rp_left);
     rp_slow = 0;
     rp_done = (u8)(rp_left == 0);
+    bank_call(BANK_HL, hl_check);   /* repères dans les trames rejouées (banque 15) */
 }
 
 void rp_play(void)
@@ -504,6 +508,10 @@ void rp_play(void)
     /* demi-vitesse : chaque trame enregistrée est montrée deux fois */
     rp_slow ^= 1;
     if (!rp_slow) {
+        /* mise en valeur (version 2.67) : à la trame de la frappe décisive,
+           gros plan ; à celle du rebond, arrêt sur image zoomé (banque 15) */
+        if (hl_sok && rp_pos == hl_si) { hl_sok = 0; hl_mode = 1; }
+        else if (hl_sbok && rp_pos == hl_sbi) { hl_sbok = 0; hl_mode = 2; }
         if (++rp_pos == RP_LEN) rp_pos = 0;
         if (--rp_left == 0) { rp_done = 1; rp_count = 0; }
     }
