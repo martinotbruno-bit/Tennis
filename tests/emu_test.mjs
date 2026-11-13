@@ -71,6 +71,8 @@ function toMenu(e) {
   e.run(Math.max(10 - n, 2));
 }
 // ligne du menu où se trouve une option (la liste dépend du mode)
+// rangée de la ligne i des réglages (liste centrée, version 2.60)
+const menuY = (e, i) => 4 + ((18 - e.peek('nvis')) >> 1) + i;
 function rowOf(e, o) { for (let i = 0; i < e.peek('nvis'); i++) if (e.peek('vis', i) === o) return i; return -1; }
 function setOpts(e, opts) { for (const [k, v] of Object.entries(opts)) e.poke('opt_val', v, O[k]); }
 // depuis le titre : configure et lance (présentation -> A si nécessaire)
@@ -328,7 +330,7 @@ if (sec('Mode en équipe (double)')) {
 console.log('Mode en équipe (double)');
 {
   const e = boot(); toMenu(e); setOpts(e, { MODE: MODE.TEAM, TYPE: 0, CPART: 1 }); e.tap('B'); e.run(5); toMenu(e);
-  check(e.peek('nvis') === 15 && e.text(3, 7, 10) === 'PARTENAIRE' && e.text(3, 8, 8) === 'JOUE PAR', 'pas de ligne JEU ; lignes PARTENAIRE et JOUE PAR');
+  check(e.peek('nvis') === 15 && e.text(3, menuY(e, 3), 10) === 'PARTENAIRE' && e.text(3, menuY(e, 4), 8) === 'JOUE PAR', 'pas de ligne JEU ; lignes PARTENAIRE et JOUE PAR');
   e.tap('START'); runUntil(e, () => scr(e) === SS.PRESENT && litScr(e), 90);
   check(e.text(3, 1, 15) === 'MATCH DE DOUBLE' && e.text(2, 22, 11) === '+ MANETTE 2', 'toujours un double, manette 2 partenaire');
   e.tap('A'); e.run(30);
@@ -735,7 +737,7 @@ console.log('Compétition en double, levée de coupe et club nudiste');
   let envs = new Set();
   e.poke('cursor', rowOf(e, O.ENV));
   const names = new Set();
-  for (let i = 0; i < 8; i++) { e.tap('RIGHT'); e.run(3); envs.add(e.peek('opt_val', O.ENV)); names.add(e.text(16, 4 + rowOf(e, O.ENV), 7).replace(/[\0<>]/g, ' ').trim()); }
+  for (let i = 0; i < 8; i++) { e.tap('RIGHT'); e.run(3); envs.add(e.peek('opt_val', O.ENV)); names.add(e.text(16, menuY(e, rowOf(e, O.ENV)), 7).replace(/[\0<>]/g, ' ').trim()); }
   check(!envs.has(3) && envs.size === 6, `lieu « club nudiste » absent avant déblocage (6 lieux proposés : ${[...names].join(', ')})`);
   check(envs.has(5) && envs.has(6) && names.has('CHATEAU') && names.has('PARC'), 'nouveaux lieux : CHATEAU et PARC');
 }
@@ -1111,7 +1113,7 @@ console.log('Finitions : ralentis, IA, effets, son, réglages mémorisés');
   e.poke('cursor', row(O.SOUND)); e.tap('RIGHT'); e.run(5);
   check(e.peek('snd_mode') === 1 && e.peek16('mel_ptr') === 0, 'SON : bruitages seuls, musique arrêtée');
   e.tap('RIGHT'); e.run(5);
-  check(e.peek('snd_mode') === 2 && e.text(16, 4 + row(O.SOUND), 5) === 'AUCUN', 'SON : aucun');
+  check(e.peek('snd_mode') === 2 && e.text(16, menuY(e, row(O.SOUND)), 5) === 'AUCUN', 'SON : aucun');
   e.tap('LEFT'); e.tap('LEFT'); e.run(5);
   check(e.peek('snd_mode') === 0 && e.peek16('mel_ptr') !== 0, 'SON : musique relancée');
   setOpts(e, { P1: 5, SURF: 3, GSPEED: 2, SOUND: 1, ENV: 4 }); e.tap('START'); e.run(30);
@@ -1133,20 +1135,20 @@ console.log('Margaux jouable et fatigue');
   // 1 joueur contre CPU : toujours en simple (le double avec partenaire CPU
   // est le mode en équipe) ; la ligne JEU n'existe qu'à 2 joueurs adversaires
   const t = boot(); toMenu(t);
-  check(t.peek('opt_val', O.MODE) === MODE.P1 && t.text(3, 6, 8) === 'JOUEUR 1', '1 joueur contre CPU : pas de ligne JEU (simple seulement)');
+  check(t.peek('opt_val', O.MODE) === MODE.P1 && t.text(3, menuY(t, 2), 8) === 'JOUEUR 1', '1 joueur contre CPU : pas de ligne JEU (simple seulement)');
   t.poke('cursor', 1); t.tap('RIGHT');
-  let dark = 0; for (let n = 0; n < 12; n++) { t.run(1); if (!t.nes.ppu.f_bgVisibility) dark++; }
-  check(t.peek('opt_val', O.MODE) === MODE.P2 && t.text(3, 6, 3) === 'JEU' && dark === 0, `2 joueurs adversaires : ligne JEU ; menu redessiné sans couper l'écran (${dark} trame(s) noire(s))`);
-  t.tap('LEFT'); t.run(12);
-  check(t.text(3, 6, 8) === 'JOUEUR 1' && t.text(3, 4 + t.peek('nvis'), 13).replace(/[\0 ]/g, '') === '', 'retour à 1 joueur : lignes réécrites, ancienne ligne en trop effacée');
+  let dark = 0; for (let n = 0; n < 20; n++) { t.run(1); if (!t.nes.ppu.f_bgVisibility) dark++; }
+  check(t.peek('opt_val', O.MODE) === MODE.P2 && t.text(3, menuY(t, 2), 3) === 'JEU' && dark === 0, `2 joueurs adversaires : ligne JEU ; menu redessiné sans couper l'écran (${dark} trame(s) noire(s))`);
+  t.tap('LEFT'); t.run(20);
+  check(t.text(3, menuY(t, 2), 8) === 'JOUEUR 1' && t.text(3, menuY(t, t.peek('nvis')), 13).replace(/[\0 ]/g, '') === '' && t.text(3, menuY(t, -1), 13).replace(/[\0 ]/g, '') === '', 'retour à 1 joueur : lignes réécrites et recentrées, anciennes lignes effacées');
   const u = boot(); startWith(u, { MODE: MODE.P1, TYPE: 1 });
   check(app(u) === AS.MATCH && u.peek('npl') === 2, `1 joueur contre CPU avec un ancien réglage « double » : match en simple (${u.peek('npl')} joueurs)`);
   // Margaux (personnage 16) : menu, présentation, code de reprise
   const e = boot(); toMenu(e);
   e.poke('cursor', rowOf(e, O.P1)); e.poke('opt_val', 15, O.P1); e.tap('RIGHT'); e.run(5);
-  check(e.peek('opt_val', O.P1) === 16 && e.text(16, 4 + rowOf(e, O.P1), 7) === 'MARGAUX', 'MARGAUX sélectionnable (17e personnage)');
+  check(e.peek('opt_val', O.P1) === 16 && e.text(16, menuY(e, rowOf(e, O.P1)), 7) === 'MARGAUX', 'MARGAUX sélectionnable (17e personnage)');
   const nn = [];
-  for (let k = 0; k < 4; k++) { e.tap('RIGHT'); e.run(5); nn.push(e.text(16, 4 + rowOf(e, O.P1), 5).replace(/[\0<>]/g, ' ').trim()); }
+  for (let k = 0; k < 4; k++) { e.tap('RIGHT'); e.run(5); nn.push(e.text(16, menuY(e, rowOf(e, O.P1)), 5).replace(/[\0<>]/g, ' ').trim()); }
   check(nn.join(',') === 'MAX,LOLA,PAPI,TITOU', `nouveaux personnages après Margaux : ${nn.join(', ')}`);
   e.tap('RIGHT'); e.run(5);
   check(e.peek('opt_val', O.P1) === 0, 'retour au premier personnage après TITOU');

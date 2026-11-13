@@ -318,6 +318,9 @@ static void title_screen(void)
 
 /* ---------------------------------------------------------------------- */
 /* Configuration                                                           */
+/* liste des réglages centrée verticalement entre les filets (rangées 4 à
+   21) : première rangée selon le nombre de lignes (version 2.60) */
+#define MY0 ((u8)(4 + ((u8)(18 - nvis) >> 1)))
 static u8 rd_row, rd_n;
 static u8 hl_cur = 0xFF;      /* ligne affichée surlignée ($FF : aucune) */
 static void menu_draw_row(u8 i, u8 direct)
@@ -325,14 +328,14 @@ static void menu_draw_row(u8 i, u8 direct)
     txt_off = (u8)(i == cursor ? 0x40 : 0);   /* ligne choisie : police surlignée */
     pad_text(opt_text(vis[i]), 15);
     if (direct) {
-        if (vis[i] == O_P2 && (opt_val[O_MODE] == MODE_COMP || opt_val[O_MODE] == MODE_2P_TEAM)) txt_at(3, (u8)(4 + i), "PARTENAIRE");
-        else txt_at(3, (u8)(4 + i), opt_label[vis[i]]);
-        txt_at(16, (u8)(4 + i), line);
-        vram_adr(NTADR(2, 4 + i)); vram_put((u8)far_call(BANK_PODIUM, (void *)grp_tile, i));
+        if (vis[i] == O_P2 && (opt_val[O_MODE] == MODE_COMP || opt_val[O_MODE] == MODE_2P_TEAM)) txt_at(3, (u8)(MY0 + i), "PARTENAIRE");
+        else txt_at(3, (u8)(MY0 + i), opt_label[vis[i]]);
+        txt_at(16, (u8)(MY0 + i), line);
+        vram_adr(NTADR(2, MY0 + i)); vram_put((u8)far_call(BANK_PODIUM, (void *)grp_tile, i));
         if (i == cursor) hl_cur = i;
     }
     else {
-        vbuf_text(16, (u8)(4 + i), line, 15);
+        vbuf_text(16, (u8)(MY0 + i), line, 15);
         if (i == cursor) hl_cur = 0xFF;     /* valeur changée : flèches redessinées */
     }
     txt_off = 0;
@@ -345,15 +348,15 @@ static u8 menu_hl_row(u8 i, u8 on)
     if (vram_len + 50 > VBUF_MAX) return 0;
     txt_off = (u8)(on ? 0x40 : 0);
     pad_text(vis[i] == O_P2 && (opt_val[O_MODE] == MODE_COMP || opt_val[O_MODE] == MODE_2P_TEAM) ? (const char *)"PARTENAIRE" : (const char *)opt_label[vis[i]], 13);
-    vbuf_text(3, (u8)(4 + i), line, 13);
+    vbuf_text(3, (u8)(MY0 + i), line, 13);
     pad_text(opt_text(vis[i]), 15);
-    vbuf_text(16, (u8)(4 + i), line, 15);
+    vbuf_text(16, (u8)(MY0 + i), line, 15);
     txt_off = 0;
     if (vis[i] != O_START) {
         u8 n = 15;
         while (n && line[n - 1] == ' ') --n;             /* fin de la valeur */
-        line[0] = ar[on][0]; vbuf_text(15, (u8)(4 + i), line, 1);
-        line[0] = ar[on][1]; vbuf_text((u8)(16 + n), (u8)(4 + i), line, 1);
+        line[0] = ar[on][0]; vbuf_text(15, (u8)(MY0 + i), line, 1);
+        line[0] = ar[on][1]; vbuf_text((u8)(16 + n), (u8)(MY0 + i), line, 1);
     }
     return 1;
 }
@@ -374,26 +377,27 @@ static void menu_soft(void)
     build_visible();
     hl_cur = 0xFF;              /* toutes les lignes sont réécrites : surlignage ensuite */
     if (cursor >= nvis) cursor = 0;
-    rd_n = old > nvis ? old : nvis;
+    (void)old;
+    rd_n = 18;                  /* (la liste se recentre : toutes les rangées 4 à 21) */
     rd_row = 0;
 }
 static void menu_soft_tick(void)
 {
     u8 i;
     while (rd_row < rd_n && vram_len + 40 <= VBUF_MAX) {
-        i = rd_row++;
+        i = (u8)(4 + rd_row++ - MY0);       /* rangée : 3 + rd_row */
         if (i < nvis) {
             pad_text(vis[i] == O_P2 && (opt_val[O_MODE] == MODE_COMP || opt_val[O_MODE] == MODE_2P_TEAM) ? (const char *)"PARTENAIRE" : (const char *)opt_label[vis[i]], 13);
-            vbuf_text(3, (u8)(4 + i), line, 13);
+            vbuf_text(3, (u8)(3 + rd_row), line, 13);
             pad_text(opt_text(vis[i]), 15);
         } else {
             pad_text("", 13);
-            vbuf_text(3, (u8)(4 + i), line, 13);
+            vbuf_text(3, (u8)(3 + rd_row), line, 13);
             pad_text("", 15);
         }
-        vbuf_text(16, (u8)(4 + i), line, 15);
-        line[0] = ' '; vbuf_text(15, (u8)(4 + i), line, 1); vbuf_text(31, (u8)(4 + i), line, 1);
-        line[0] = (char)far_call(BANK_PODIUM, (void *)grp_tile, i); vbuf_text(2, (u8)(4 + i), line, 1);
+        vbuf_text(16, (u8)(3 + rd_row), line, 15);
+        line[0] = ' '; vbuf_text(15, (u8)(3 + rd_row), line, 1); vbuf_text(31, (u8)(3 + rd_row), line, 1);
+        line[0] = (char)(i < nvis ? far_call(BANK_PODIUM, (void *)grp_tile, i) : 0); vbuf_text(2, (u8)(3 + rd_row), line, 1);
     }
 }
 
@@ -446,16 +450,19 @@ static u8 __fastcall__ port_base(u8 c) { return (u8)(c == 19 ? 0x34 : !char_fema
 static void menu_sprites(void)
 {
     static const u8 bounce[8] = { 0, 1, 2, 3, 3, 2, 1, 0 };
+    register u8 i;               /* (page zéro : la RAM est pleine) */
     menu_hl_tick();
     spr_begin();
     /* balle qui rebondit (sur la première ligne, sans monter : elle
        croiserait le bas des portraits, 9 sprites sur une même ligne) */
-    spr1(9, (u8)(4 * 8 + cursor * 8 - 1 - (cursor ? bounce[(frame_cnt >> 2) & 7] : 0)), (u8)(ball_base + 8), 3);
+    spr1(9, (u8)(MY0 * 8 + cursor * 8 - 1 - (cursor || MY0 > 5 ? bounce[(frame_cnt >> 2) & 7] : 0)), (u8)(ball_base + 8), 3);
     bank_call(BANK_PODIUM, menu_marks);      /* pastille de la surface, vignette du lieu */
     /* portraits des joueurs, de part et d'autre du titre (tuiles $10 homme, $1C femme, $28 Margaux, $34 Papi) */
-    spr_port(16, 7, port_base(opt_val[O_P1]), 0);
+    /* portraits : plus bas quand la liste laisse de la place au-dessus d'elle */
+    i = (u8)(MY0 * 8 - 30); if (i > 16) i = 16; if (i < 7) i = 7;
+    spr_port(16, i, port_base(opt_val[O_P1]), 0);
     if (opt_val[O_MODE] <= MODE_2P_TEAM || opt_val[O_MODE] == MODE_DEMO || (opt_val[O_MODE] == MODE_COMP && opt_val[O_TYPE]))
-        spr_port(208, 7, port_base(opt_val[O_P2]), 0x41);       /* (compétition en double : le partenaire) */
+        spr_port(208, i, port_base(opt_val[O_P2]), 0x41);       /* (compétition en double : le partenaire) */
     spr_end();
 }
 

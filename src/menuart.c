@@ -140,7 +140,7 @@ void menu_marks(void)
     u8 k, y, e;
     const u8 *c;
     for (k = 0; k < nvis; ++k) {
-        y = (u8)(4 * 8 + k * 8 - 1);
+        y = (u8)((4 + ((u8)(18 - nvis) >> 1)) * 8 + k * 8 - 1);   /* (liste centrée, comme screens.c) */
         if (vis[k] == 6) {              /* SURFACE */
             c = sc[opt_val[6] < 6 ? opt_val[6] : 0];
             if (pal_buf[25] != c[0]) { pal_buf[25] = c[0]; pal_buf[26] = c[1]; pal_buf[27] = c[2]; pal_dirty = 1; }
