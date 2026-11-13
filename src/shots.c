@@ -145,7 +145,7 @@ void shot_select(void)
         T = (u8)(iabs(PX(by) - NET_Y) >> 3);
         depth = (s16)(22 - T); speed = 40; grav = 5; bspin = SPIN_DROP; spread += T; last_shot = SH_DROP;
     } else if (sh_btn == PAD_B) {                          /* coupé */
-        depth = 66; speed = 36; grav = 4; bspin = SPIN_SLICE; last_shot = SH_SLICE;
+        depth = 66; speed = 36; grav = 5; bspin = SPIN_SLICE; last_shot = SH_SLICE;   /* (gravité 5, 4 avant la 2.61 : passe plus haut au-dessus du filet) */
     } else if (pad & PAD_UP) {                             /* à plat : tendue, rapide, risquée */
         depth = 78; speed = (u8)(54 + power); grav = 4; spread += 7; last_shot = SH_FLAT; flat = 1;
     } else if (pad & PAD_DOWN) {                           /* croisé court : en angle, carré de service */

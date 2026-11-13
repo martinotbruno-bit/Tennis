@@ -827,7 +827,7 @@ static void ai_update(u8 p)
             /* choix tactiques selon le niveau et le style du personnage */
             if (lv >= 1 && iabs(oy - NET_Y) < 50 && rand8() < lobp) {
                 btn = PAD_B; pad |= PAD_UP;                     /* lob sur le volleyeur */
-            } else if (lv >= 1 && iabs(oy - NET_Y) > 90 && rand8() < (u8)(sty_drop[sty] >> (2 - lv))) {
+            } else if (lv >= 1 && iabs(oy - NET_Y) > 90 && iabs(PX(ply[p]) - NET_Y) < 70 && rand8() < (u8)(sty_drop[sty] >> (2 - lv))) {   /* (de l'intérieur du court seulement, version 2.61) */
                 btn = PAD_B; pad |= PAD_DOWN;                   /* amortie */
             } else if (lv >= 1 && rand8() < (u8)(iabs(oy - NET_Y) < 50 ? 90 : 20)) {
                 pad |= PAD_DOWN;                                /* croisé court : passing sur le volleyeur, ou pour sortir l'adversaire du court */
