@@ -2,7 +2,7 @@
 
 Comme l'exige le CDC (§ 17.5), ce rapport distingue ce qui est **réalisé**, **testé**, **validé sur matériel réel**, **validé uniquement en émulation**, **dépendant d'une extension**, et les **limitations restantes**.
 
-> **Validation matérielle : aucune.** Aucun test n'a été fait sur console réelle (NES, Famicom, PAL, cartouche MMC1). Toutes les validations ont eu lieu en émulation (jsnes) et par des tests unitaires sur PC. Les critères « vérifié sur console physique » (CDC § 2.1, 15.4, 16.A) **ne sont pas remplis**. Ce point ne peut pas être traité dans l'environnement de développement utilisé.
+> **Validation matérielle : aucune.** Aucun test n'a été fait sur console réelle (NES, Famicom, PAL, cartouche MMC3). Toutes les validations ont eu lieu en émulation (jsnes ; depuis la version 2.69, aussi FCEUX pour les effets sensibles) et par des tests unitaires sur PC. Les critères « vérifié sur console physique » (CDC § 2.1, 15.4, 16.A) **ne sont pas remplis**. Ce point ne peut pas être traité dans l'environnement de développement utilisé.
 
 ## 1. Évolutions
 
@@ -11,6 +11,7 @@ Comme l'exige le CDC (§ 17.5), ce rapport distingue ce qui est **réalisé**, *
 | Demande | Réalisation |
 |---|---|
 | Améliorer d'autres choses, au choix, en tirant parti de la nouvelle cartouche | **Portrait du vainqueur** en fin de match : avant les résultats, le vainqueur en grand, à ses couleurs (images haute définition), en pied bras levés sous les confettis avec son nom, puis en gros plan (en double, son partenaire) ; A passe. **Plongeon** : le gros plan du ralenti montre l'image de glissade quand le point est gagné sur un plongeon. **Écran des résultats** : le tableau des sets passait sous les lettres du titre (défaut ancien) ; mise en page reprise, joueurs sous les statistiques. Image : `docs/vainqueur_269.png`. Tests : portrait en simple et en vrai double |
+| (fiabilité) | Second émulateur, plus précis que jsnes : FCEUX (moteur PPU au point près), piloté par script (`tools/fceux_check.py`). Il confirme la glissade de l'affiche VS (lignes paires et impaires), le gros plan, le zoom ×2 et le retour au court, à plat et en perspective, ainsi que le démarrage de la cartouche MMC3 de 512 Ko. Ce n'est pas une console, mais c'est une validation indépendante |
 | (zoom du rebond) | La trace de la balle n'apparaissait pas (plus de 8 sprites sur sa ligne) et la balle agrandie, plus large que le point jugé, chevauchait la ligne d'une balle annoncée dehors. Désormais : trace nette, centrée sur le point jugé par l'arbitre, joueurs seuls agrandis. Image : `docs/trace_269.png` |
 
 ### Version 2.68
