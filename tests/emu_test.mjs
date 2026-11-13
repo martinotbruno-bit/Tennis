@@ -1835,6 +1835,17 @@ console.log('Son sur console réelle : balayage des carrés');
 if (sec('Vue en perspective (option VUE)')) {
 console.log('Vue en perspective (option VUE)');
 {
+  // ralentissements (2.66) : double en perspective, 4 joueurs de l'ordinateur ;
+  // une trame est en retard si le programme n'attend pas déjà la suivante
+  // (1 056 sur 15 000 mesurées en 2.66, 2 942 en 2.63)
+  const g = boot(); toMenu(g); setOpts(g, { MODE: 1, TYPE: 1, VIEW: 1, FMT: 3 }); g.tap('START');
+  runUntil(g, () => scr(g) === SS.PRESENT, 120); g.run(40); g.tap('A');
+  runUntil(g, () => app(g) === AS.MATCH, 300); allCpu(g);
+  const wf = g.addr('wait_frame'); let late = 0, n = 0;
+  for (let f = 0; f < 3000 && app(g) === AS.MATCH; f++) { g.run(1); n++; const pc = g.nes.cpu.REG_PC + 1; if (pc < wf || pc > wf + 16) late++; }
+  check(n === 3000 && g.peek('npl') === 4 && g.peek('persp') === 1 && late * 100 < n * 11, `double en perspective : ${late} trames en retard sur ${n} (moins de 11 %)`);
+}
+{
   // lignes fines (2.64) : les tuiles des lignes prennent la place des panneaux et
   // du public de la vue à plat absents du court ; le jeu ne doit jamais les
   // réécrire (regard du public, ola, panneaux) pendant le match

@@ -338,6 +338,24 @@ Le dessin des personnages est commun aux vues de face et de dos (rangées de tui
 - **IA** (`ai_update`, banque 0) : à partir de Normal, après le lob et l'amortie, croisé court avec une probabilité 90/256 si l'adversaire est au filet, 20/256 sinon.
 - **Réglages** : première rangée `MY0` = 4 + (18 − `nvis`) / 2 (screens.c ; même calcul dans `menu_marks`) ; `menu_soft` réécrit les 18 rangées ; portraits en y = `MY0` × 8 − 30, entre 7 et 16. Tests : `menuY(e, i)`.
 
+### Version 2.66 : ralentissements
+
+Mesure (`lag`, 15 000 trames, 4 joueurs de l'ordinateur ; une trame est en retard quand le programme n'attend pas déjà la suivante) :
+
+| Configuration | 2.63 | 2.66 |
+|---|---|---|
+| Simple à plat | 83 | 83 |
+| Simple en perspective | 220 | 81 |
+| Double à plat | 1 802 | 698 |
+| Double en perspective | 2 942 | 1 056 |
+
+- **`spr_person_v`** (sprp.s) : entrée de `spr_person` sans arguments sur la pile C ; `match_draw` pose `pv_x`, `pv_y`, `pv_c`, `pv_front`, `pv_pose`, `pv_flip`, `pj_sg` (variables de `spr_person`, exportées) ; `pv_mode` fait finir par `rts` au lieu de `incsp8`.
+- **`draw_order`** (fastmove.s) : positions à l'écran (`dr_xs`, `dr_ys` : (v << 2) >> 8 en octets) et ordre de dessin `dr_ord` (tri par insertion stable, du plus bas au plus haut) ; `match_fx` réutilise `dr_xs` / `dr_ys` pour les ombres.
+- **`vbuf_raw`** (fastmove.s) : en assembleur (environ 14 cycles par octet au lieu de 60) ; même contrat (0 si le budget `VBUF_MAX` serait dépassé).
+- **`dive_try`** : sortie immédiate si la balle s'éloigne du joueur.
+- **IA** : le décalage vers le côté préféré de l'adversaire (multiplication et division 16 bits) n'est recalculé que quand `ad_n` change (`ai_bias`, `ai_bias_n`).
+- **Test** (section « Vue en perspective ») : double en perspective, 3 000 trames : moins de 11 % de trames en retard (2.66 : environ 9 % ; 2.63 : 24 %, refusé).
+
 ### Version 2.65 : glissade stable, symétrie, lignes au filet
 
 - **Glissade VS** : `vs_slide` ne contient que des multiples de 8. Le décalage fin X (registre x du PPU) est mis à jour aussitôt par l'écriture de $2005, au milieu de la ligne ; seuls la colonne de départ (t) et le bit d'écran sont copiés à la colonne 257. Avec un décalage fin toujours nul, les écritures de l'interruption (vers la colonne 150 de chaque ligne) ne changent rien à la ligne en cours. Test : décalages relevés pendant l'entrée, tous multiples de 8.

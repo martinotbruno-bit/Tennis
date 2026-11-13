@@ -1,10 +1,17 @@
-# Royal Martinot — Rapport de réalisation (version 2.65)
+# Royal Martinot — Rapport de réalisation (version 2.66)
 
 Comme l'exige le CDC (§ 17.5), ce rapport distingue ce qui est **réalisé**, **testé**, **validé sur matériel réel**, **validé uniquement en émulation**, **dépendant d'une extension**, et les **limitations restantes**.
 
 > **Validation matérielle : aucune.** Aucun test n'a été fait sur console réelle (NES, Famicom, PAL, cartouche MMC1). Toutes les validations ont eu lieu en émulation (jsnes) et par des tests unitaires sur PC. Les critères « vérifié sur console physique » (CDC § 2.1, 15.4, 16.A) **ne sont pas remplis**. Ce point ne peut pas être traité dans l'environnement de développement utilisé.
 
 ## 1. Évolutions
+
+### Version 2.66
+
+| Demande | Réalisation |
+|---|---|
+| Suite des travaux MMC3 | Les effets par bande pendant le match apporteraient peu (le court remplit l'écran et ne défile pas) ; choix : réduire les ralentissements |
+| Ralentissements | Mesure sur 15 000 trames, 4 joueurs de l'ordinateur (trames en retard) : double à plat 1 802 → 698 (12 % → 4,7 %), double en perspective 2 942 → 1 056 (20 % → 7 %), simple en perspective 220 → 81 (comme à plat). Moyens : affichage des joueurs appelé sans passer les paramètres par la pile du C, tri par profondeur et positions à l'écran en assembleur, copie vers le tampon d'affichage en assembleur (4 fois plus rapide), ombres réutilisant les positions déjà calculées, plongeon de l'ordinateur ignoré quand la balle s'éloigne, calcul de l'IA adaptative mis en cache. Test ajouté : double en perspective sous 11 % de trames en retard (la 2.63, à 24 %, échoue) |
 
 ### Version 2.65
 
@@ -566,7 +573,7 @@ Pour loger ce contenu, la cartouche passe de NROM (32 Ko) à **MMC1** : 128 Ko d
 | Relecture des textes (`check_texts.py`) | 0 problème |
 | Contraste (`contrast.py 25`) | 0 paire sous ΔE 25 (personnages, courts, balle, tenues) |
 | Profil CPU, double, 6 000 trames | 27 trames d'échange en dépassement (0,45 %), sans défaut d'image |
-| Compilation | Reproductible : SHA-256 `46b2bbd2a31e17694bc3aba1d2596abb6fa812e342e0fe0040ba9b8b66d2fbfa` sur deux compilations propres |
+| Compilation | Reproductible : SHA-256 `ed098835a40ba5448fa1de63bfb0dfb387595c5b02cf7606077cc8f7652c3dd6` sur deux compilations propres |
 
 ## 3. Conformité par section du CDC
 
