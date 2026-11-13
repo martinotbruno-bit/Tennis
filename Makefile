@@ -20,7 +20,7 @@ BANK8 = podium menuart assets_menu
 BANK9 = credits assets_tz9
 BANK10 = music_data assets_tz10
 BANK11 = assets_persp
-BANK12 = assets_courts12 assets_tz12
+BANK12 = assets_courts12 assets_tz12 assets_menu12
 BANK13 = assets_swap shots cer
 BANK14 = assets_gm gmintro
 CSRC = $(FIXED) $(BANK0) $(BANK1) $(BANK2) $(BANK3) $(BANK4) $(BANK5) $(BANK6) $(BANK7) $(BANK8) $(BANK9) $(BANK10) $(BANK11) $(BANK12) $(BANK13) $(BANK14)
@@ -33,7 +33,7 @@ src/assets_gm.c src/assets_gm2.c: tools/gen_gm.py
 	python3 tools/gen_gm.py
 	python3 tools/gen_assets.py
 
-src/assets_menu.c: tools/gen_menu.py assets/tiles.chr
+src/assets_menu.c src/assets_menu12.c: tools/gen_menu.py assets/tiles.chr
 	python3 tools/gen_menu.py
 
 src/assets_tz.h src/assets_tz2.c src/assets_tz4.c src/assets_tz9.c src/assets_tz10.c src/assets_tz12.c: tools/gen_teaser.py

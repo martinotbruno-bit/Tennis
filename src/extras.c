@@ -211,6 +211,7 @@ static u8 ps_idx[12];                /* perspective : places des petits spectate
 void load_court(void)
 {
     u8 nude = (u8)(cfg.env == ENV_NUDE);
+    if (bg_dirty) { chr_copy(BANK_CHR, chr_data, 0x0000, 4096); bg_dirty = 0; vram_adr(0x2000); }   /* tuiles des menus : courts d'origine */
     if (cfg.view) {
         /* vue en perspective : tuiles du court déformé (à la place de tuiles
            inutilisées sur ce lieu), puis le court, puis les tables de

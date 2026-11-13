@@ -57,7 +57,8 @@ class Emu {
   // texte affiché à l'écran (table des noms $2000)
   text(x, y, len) {
     let t = '';
-    for (let i = 0; i < len; i++) t += String.fromCharCode(this.nes.ppu.vramMem[0x2000 + y * 32 + x + i]);
+    // police surlignée des menus ($60-$9F) : lue comme le texte normal
+    for (let i = 0; i < len; i++) { const c = this.nes.ppu.vramMem[0x2000 + y * 32 + x + i]; t += String.fromCharCode(c >= 0x61 && c < 0xA0 ? c - 0x40 : c); }
     return t;
   }
   screenshot(file) {

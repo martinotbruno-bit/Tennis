@@ -637,28 +637,32 @@ static void comp_screen(void)
 {
     u8 o;
     screen_begin();
-    if (c_type >= CT_GRAND) gs_title(1);
-    else { txt_at(3, 1, "ROYAL MARTINOT"); txt_at(18, 1, cname(c_type)); }
+    deco(c_type == CT_GRAND ? (const char *)"GRAND MARTINOT" : c_type == CT_WORLD ? (const char *)"MARTINWORLD" : cname(c_type), 0, 24);
     COMP(comp_stage_name, 0);
-    txt_at(3, 3, comp_l1);
-    txt_at(3, 4, comp_l2);
+    txt_off = 0x40; txt_at(3, 5, comp_l1); txt_off = 0;   /* en or */
+    txt_at(3, 6, comp_l2);
+    COMP(comp_path, 7);
     o = COMP(comp_opponent, 0);
     team_label(c_pl[0], c_pl2[0], line);
-    txt_at(3, 6, line);
-    txt_at(9, 6, "CONTRE");
+    txt_off = 0x40; txt_at(3, 9, line); txt_off = 0;
+    txt_at(9, 9, "CONTRE");
     team_label(c_pl[o], c_pl2[o], line);
-    txt_at(16, 6, line);
-    txt_at(3, 7, "ADVERSAIRE :");
-    txt_at(16, 7, level_name[COMP(comp_level, 0)]);
-    txt_at(3, 8, surf_name[COMP(comp_surface, 0)]);
-    txt_at(17, 8, env_name[c_env]);
-    COMP(comp_draw_table, 10);
+    txt_at(16, 9, line);
+    txt_at(3, 10, "ADVERSAIRE :");
+    txt_at(16, 10, level_name[COMP(comp_level, 0)]);
+    txt_at(3, 11, surf_name[COMP(comp_surface, 0)]);
+    txt_at(17, 11, env_name[c_env]);
+    COMP(comp_draw_table, 13);
     make_code();
-    txt_at(3, 21, "CODE :");
-    vram_adr(NTADR(10, 21));
+    txt_at(3, 22, "CODE :");
+    vram_adr(NTADR(10, 22));
     for (o = 0; o < PW_LEN; ++o) { vram_put((u8)code_buf[o]); if (o == 3 || o == 7) vram_put(' '); }
     if (c_dbl) txt_at(3, 23, c_hum2 ? "DOUBLE A 2 JOUEURS" : "COMPETITION EN DOUBLE");
     txt_at(3, 25, "A : JOUER   B : MENU");
+    {   /* médailles des 3 premiers (classements) : or, argent, bronze */
+        static const u8 med[9] = { 0x38, 0x28, 0x30,  0x30, 0x10, 0x20,  0x37, 0x17, 0x27 };
+        for (o = 0; o < 9; ++o) pal_buf[17 + (o / 3) * 4 + o % 3] = med[o];
+    }
     ppu_on();
     if (is_final()) { if (music_cur != MUS_FINAL) music_play(MUS_FINAL); }
     else if (music_cur == MUS_FINAL) music_play(MUS_NONE);
@@ -1069,6 +1073,11 @@ void screens_tick(void)
         present_sprites();
         break;
     case SS_COMP:
+        if (c_type == CT_LEAGUE || c_type == CT_SEASON || c_type >= CT_GRAND) {
+            spr_begin();
+            for (i = 0; i < 3; ++i) spr1(c_type == CT_LEAGUE ? 12 : 4, (u8)((14 + i) * 8 - 1), (u8)(ball_base + 8), i);
+            spr_end();
+        }
         if (pad1_new & (PAD_A | PAD_START)) { comp_cfg(); present_screen(); break; }
         if (pad1_new & PAD_B) menu_screen();
         break;

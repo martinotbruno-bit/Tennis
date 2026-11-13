@@ -35,6 +35,7 @@ u8 __fastcall__ comp_surface(u8 unused);
 u8 __fastcall__ comp_level(u8 unused);
 u8 __fastcall__ comp_record(u8 won);
 u8 __fastcall__ comp_stage_name(u8 unused); /* remplit comp_l1 / comp_l2 */
+u8 __fastcall__ comp_path(u8 y);            /* parcours du tournoi, tour en cours surligné */
 u8 __fastcall__ comp_draw_table(u8 y);
 u8 __fastcall__ comp_podium(u8 unused);    /* remplit c_pod (compétition gagnée) */
 u8 __fastcall__ comp_desc(u8 k);

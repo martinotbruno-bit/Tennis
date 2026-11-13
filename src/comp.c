@@ -471,8 +471,12 @@ static void num5(char *o, u16 v)
 static void ent_at(u8 i, u8 x, u8 y)
 {
     team_label(c_pl[i], c_pl2[i], nb);
+    txt_off = (u8)(i == 0 ? 0x40 : 0);      /* le joueur : surligné (or) */
     txt_at(x, y, nb);
+    txt_off = 0;
 }
+/* en-tête de tableau, en or */
+static void head_at(u8 x, u8 y, const char *s) { txt_off = 0x40; txt_at(x, y, s); txt_off = 0; }
 
 static const char * const ko_round_name[4] = { "FINALE", "DEMI-FINALE", "QUART DE FINALE", "HUITIEME DE FINALE" };
 static void copy_txt(char *d, const char *s) { while (*s) *d++ = *s++; *d = 0; }
@@ -520,7 +524,7 @@ u8 __fastcall__ comp_draw_table(u8 y)
     case CT_GROUPS:
         if (c_stage < 3) {
             groups_wins(c_stage);
-            txt_at(3, y, "POULE A      POULE B");
+            head_at(3, y, "POULE A      POULE B");
             for (i = 0; i < 4; ++i) {
                 ent_at(i, 3, (u8)(y + 1 + i));
                 num2(line, wins[i]); line[2] = 'V'; line[3] = 0; txt_at(9, (u8)(y + 1 + i), line);
@@ -529,7 +533,7 @@ u8 __fastcall__ comp_draw_table(u8 y)
             }
         } else {
             groups_semis();
-            txt_at(3, y, "DEMI-FINALES");
+            head_at(3, y, "DEMI-FINALES");
             for (i = 0; i < 2; ++i) {
                 ent_at(sf_a[i], 3, (u8)(y + 1 + i));
                 txt_at(9, (u8)(y + 1 + i), "-");
@@ -540,7 +544,7 @@ u8 __fastcall__ comp_draw_table(u8 y)
     case CT_LEAGUE:
         league_wins(c_stage);
         rank_by(0, 6, 0);
-        txt_at(3, y, "CLASSEMENT   VICTOIRES");
+        head_at(3, y, "CLASSEMENT   VICTOIRES");
         for (i = 0; i < 6; ++i) {
             line[0] = (char)('1' + i); line[1] = '.'; line[2] = 0;
             txt_at(3, (u8)(y + 1 + i), line);
@@ -557,7 +561,7 @@ u8 __fastcall__ comp_draw_table(u8 y)
         a = ev_of(); if (a > nev()) a = nev();
         season_points(a);
         rank_by(0, c_n, 1);
-        txt_at(3, y, "CLASSEMENT   POINTS");
+        head_at(3, y, "CLASSEMENT   POINTS");
         for (i = 0; i < 8; ++i) {
             b = i;
             if (i == 7 && c_n == 16) for (n = 7; n < 16; ++n) if (order[n] == 0) b = n;
@@ -571,7 +575,7 @@ u8 __fastcall__ comp_draw_table(u8 y)
     default:
         ko_run(0, 3, c_stage);
         n = (u8)(c_n >> c_stage);
-        txt_at(3, y, "TABLEAU");
+        head_at(3, y, "TABLEAU");
         for (i = 0; i < (u8)(n >> 1); ++i) {
             a = ko_cur[i * 2]; b = ko_cur[i * 2 + 1];
             ent_at(a, 3, (u8)(y + 1 + i));
@@ -579,6 +583,32 @@ u8 __fastcall__ comp_draw_table(u8 y)
             ent_at(b, 11, (u8)(y + 1 + i));
         }
         break;
+    }
+    return 0;
+}
+
+/* parcours : les tours du tournoi en cours, celui à jouer surligné (rien
+   en poules ni en championnat) */
+u8 __fastcall__ comp_path(u8 y)
+{
+    static const char * const rn[4] = { "FINALE", "DEMI", "QUART", "8E" };
+    u8 n, r, i, x = 3, k;
+    const char *t;
+    switch (c_type) {
+    case CT_GROUPS: case CT_LEAGUE: return 0;
+    case CT_SEASON: n = 3; r = (u8)(c_stage % 3); break;
+    case CT_GRAND: case CT_WORLD: n = nrounds(); r = rd_of(); break;
+    default: n = nrounds(); r = c_stage; break;
+    }
+    if (n > 4) return 0;
+    for (i = 0; i < n; ++i) {
+        t = rn[n - 1 - i];
+        txt_off = (u8)(i == r ? 0x40 : 0);
+        txt_at(x, y, t);
+        txt_off = 0;
+        for (k = 0; t[k]; ++k) ;
+        x = (u8)(x + k);
+        if (i + 1 < n) { txt_at((u8)(x + 1), y, ">"); x = (u8)(x + 3); }
     }
     return 0;
 }

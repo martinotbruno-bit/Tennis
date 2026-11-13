@@ -266,7 +266,11 @@ void chr_borrow_restore(void)
 {
     persp = 0;
     bank_call(BANK_EXTRAS, swap_restore);   /* célébrations, tenues normales (si besoin) */
-    if (bg_dirty) { chr_copy(BANK_CHR, chr_data, 0x0000, 4096); bg_dirty = 0; }
+    /* 2 : seules les tuiles des menus ont changé ($60-$FB) : il suffit de
+       rétablir le logo ($CE-$FB), le reste est réécrit par chaque menu */
+    if (bg_dirty == 2) chr_copy(BANK_CHR, chr_data + 0xCE0, 0x0CE0, 0x320);
+    else if (bg_dirty) chr_copy(BANK_CHR, chr_data, 0x0000, 4096);
+    bg_dirty = 0;
     chr_copy(BANK_CHR, chr_data + 0x1000 + ((u16)trophy_tile << 4), 0x1000 + ((u16)trophy_tile << 4), 64);
     chr_copy(BANK_CHR, chr_data + 0x1000 + (11 << 4), 0x1000 + (11 << 4), 48);   /* arbitre (princesse au court Margaux) */
 }

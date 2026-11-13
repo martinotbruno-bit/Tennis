@@ -30,14 +30,15 @@
 #define T_STAR   0xA4
 #define T_TITLE  0xA8      /* lettres doublées : 4 tuiles chacune, jusqu'à $FB */
 
-extern const u8 menu_font2[], menu_deco[];
+extern const u8 menu_font2[], menu_deco[], menu_attr[], menu_big[];
+extern const char menu_bigchars[];
 extern u8 bg_dirty;
 extern u8 pal_page;
 
 #pragma bss-name(push, "SAVEDATA")
 char deco_str[24];        /* titre à écrire (copié par screens.c) */
 u8 deco_kind, deco_row;   /* type d'écran (attributs) ; rangée du filet du bas */
-static u8 dt_buf[16], dt_map[24];
+static u8 dt_map[24];
 static char pb[8];
 #pragma bss-name(pop)
 
@@ -45,7 +46,7 @@ void menu_deco_begin(void)
 {
     chr_copy(BANK_PODIUM, menu_font2, 0x0600, 1024);
     chr_copy(BANK_PODIUM, menu_deco, 0x0A00, 128);
-    bg_dirty = 1;               /* tuiles des courts : rétablies avant le match */
+    if (!bg_dirty) bg_dirty = 2;   /* tuiles des menus seulement : rétablies avant le match (load_court) */
 }
 
 /* filet doré, des colonnes x0 à x1, losange au milieu */
@@ -59,10 +60,11 @@ static void filet(u8 y, u8 x0, u8 x1)
 
 /* titre : lettres doublées (une lettre = 2 x 2 tuiles, l'espace = 1 colonne),
    centré aux rangées 1 et 2 ; trop long (plus de 30 colonnes) : texte simple
-   en or, rangée 2 */
+   en or, rangée 2. Les lettres doublées viennent toutes faites de la banque
+   12 (menu_big, tools/gen_menu.py) : copie rapide */
 void deco_title(void)
 {
-    u8 k, i, b, r, n = 0, w = 0, ch, x, v, o;
+    u8 k, i, n = 0, w = 0, ch, x, v, r;
     for (k = 0; deco_str[k]; ++k) w = (u8)(w + (deco_str[k] == ' ' ? 1 : 2));
     if (w > 30) {
         txt_at((u8)((32 - k) >> 1), 2, deco_str);
@@ -76,25 +78,10 @@ void deco_title(void)
         if (ch == ' ') continue;
         for (i = 0; i < k; ++i) if ((u8)deco_str[i] == ch) { dt_map[k] = dt_map[i]; break; }
         if (dt_map[k] != 0xFF) continue;
+        for (i = 0; menu_bigchars[i] && (u8)menu_bigchars[i] != ch; ++i) ;
+        if (!menu_bigchars[i]) continue;                  /* caractère absent : blanc */
         dt_map[k] = n;
-        vram_adr((u16)ch << 4);
-        dt_buf[0] = PPU_DATA;                  /* lecture à vide */
-        for (i = 0; i < 16; ++i) dt_buf[i] = PPU_DATA;
-        vram_adr((u16)(T_TITLE + n * 4) << 4);
-        for (b = 0; b < 4; ++b) {
-            u8 half = (u8)((b & 1) ? 0 : 4), top = (u8)((b & 2) ? 4 : 0);
-            for (i = 0; i < 2; ++i)
-                for (r = 0; r < 8; ++r) {
-                    v = dt_buf[i * 8 + top + (r >> 1)];
-                    v = (u8)(half ? v >> 4 : v & 15);
-                    o = 0;
-                    if (v & 8) o |= 0xC0;
-                    if (v & 4) o |= 0x30;
-                    if (v & 2) o |= 0x0C;
-                    if (v & 1) o |= 0x03;
-                    vram_put(o);
-                }
-        }
+        chr_copy(BANK_COURTS, menu_big + (u16)i * 64, (u16)(T_TITLE + n * 4) << 4, 64);
         ++n;
     }
     x = (u8)((32 - w) >> 1);
@@ -102,6 +89,7 @@ void deco_title(void)
         vram_adr(NTADR(x, 1 + r));
         for (k = 0; deco_str[k]; ++k) {
             if (deco_str[k] == ' ') { vram_put(0); continue; }
+            if (dt_map[k] == 0xFF) { vram_put(0); vram_put(0); continue; }
             v = (u8)(T_TITLE + dt_map[k] * 4 + r * 2);
             vram_put(v); vram_put((u8)(v + 1));
         }
@@ -111,28 +99,13 @@ void deco_title(void)
     vram_adr(NTADR(30, 1)); vram_put(T_STAR);
 }
 
-/* attributs de l'écran : rangées 0-3 en or ; deco_kind 1 (configuration) :
-   rangées 4-21, libellés (colonnes 0-15) palette 1, valeurs palette 2 ;
-   filet du bas (deco_row, 0 : aucun) en or ; le reste en palette 0 */
+/* attributs de l'écran (tables de tools/gen_menu.py) : deco_kind 0 (texte,
+   filet du bas rangée 24) ou 1 (configuration, filet rangée 22) */
 void deco_filet(void) { filet(deco_row, 1, 30); }
 void deco_frame(void)
 {
-    u8 ay, ax, q, by, bx, p, v;
     if (deco_row) filet(deco_row, 1, 30);
-    vram_adr(0x23C0);
-    for (ay = 0; ay < 8; ++ay)
-        for (ax = 0; ax < 8; ++ax) {
-            v = 0;
-            for (q = 0; q < 4; ++q) {
-                by = (u8)(ay * 2 + (q >> 1)); bx = (u8)(ax * 2 + (q & 1));   /* bloc de 16 x 16 */
-                p = 0;
-                if (by < 2) p = 3;
-                else if (deco_row && by == (deco_row >> 1)) p = 3;
-                else if (deco_kind == 1 && by < 11) p = (u8)(bx < 8 ? 1 : 2);
-                v |= (u8)(p << (q * 2));
-            }
-            vram_put(v);
-        }
+    chr_copy(BANK_PODIUM, menu_attr + (deco_kind ? 64 : 0), 0x23C0, 64);
 }
 
 /* ---------------------------------------------------------------------- */
