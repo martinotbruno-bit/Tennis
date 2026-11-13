@@ -32,7 +32,11 @@ Ce manuel est aussi intégré au jeu : à l'écran titre, choisissez **MODE D'EM
 
 Sans action pendant 20 secondes, une démonstration démarre (alternativement en simple et en double). **A** ou **START** rend la main.
 
-## 2. Configuration
+Depuis la version 2.57, les menus sont habillés : fond vert gazon, titres en grandes lettres dorées entre des filets dorés, reflet qui passe sur le logo et la balle, petite balle qui sautille devant l'entrée choisie ; chaque écran glisse vers sa place en s'ouvrant.
+
+## 2. Configuration (écran RÉGLAGES)
+
+Les libellés sont en bleu pâle, les valeurs en jaune ; la ligne choisie s'allume (libellé en or, valeur en blanc, flèches **<** **>** autour de la valeur) et une balle rebondit devant elle. Une pastille de la couleur de la surface accompagne la ligne SURFACE ; les deux joueurs choisis encadrent le titre.
 
 **HAUT/BAS** choisit une ligne, **GAUCHE/DROITE** change la valeur. **START** lance la partie, **B** revient au titre. Les lignes affichées dépendent du mode. Tout le contenu est disponible dès le départ.
 
@@ -161,6 +165,10 @@ Le lancer reste visible quelle que soit votre position, y compris quand vous ser
 - **Changement de côté** : dès la fin de l'échange, les chaises apparaissent près de l'arbitre ; les joueurs s'y rendent et s'assoient, de profil, tournés vers le court, serviette autour du cou, et boivent à la gourde pendant que le score s'affiche ; puis ils rejoignent l'autre côté du court en passant à côté du poteau du filet. À la fin d'un set, l'écran de fin de set reste comme avant.
 - **Balle de match** : le vainqueur fête d'abord le point comme d'habitude, puis tombe à genoux, poings levés, et s'allonge sur le dos, raquette lâchée près de lui. Ensuite, tous vont au filet se serrer la main, puis se tournent vers l'arbitre pour le saluer.
 - **A** ou **START** passe chacune de ces séquences.
+
+### L'affiche du match (version 2.57)
+
+Avant chaque match, une affiche **VS** : les deux joueurs en buste, bras croisés, face à face (dessinés en grand, à leurs couleurs), « CONTRE » au centre, sur un fond de la couleur de la surface ; sous chaque buste, le nom, la manette ou le niveau et le style ; en bas, la surface, le lieu, les conditions et le format. Au club nudiste, la présentation reste celle d'origine.
 
 ### La bande-annonce (version 2.56)
 

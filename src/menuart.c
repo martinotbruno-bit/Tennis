@@ -180,9 +180,9 @@ void palmares_build(void)
 /* ---------------------------------------------------------------------- */
 /* Affiche VS (présentation du match) : bustes face à face, bras croisés,
    joueur 1 (ou équipe 1) à gauche, joueur 2 à droite (en miroir), tournés
-   l'un vers l'autre. Chaque buste a 2 palettes : A (sombre, peau ombrée,
-   peau), B (tenue ombrée, tenue, blanc) ; le texte blanc s'écrit dans les
-   blocs B. Tuiles : gauche $60-$9F puis $01-$1F, droite $A0-$FF. Rendu coupé. */
+   l'un vers l'autre. Chaque buste a 2 palettes : A (sombre, peau, tenue :
+   visage, bras croisés sur la tenue), B (sombre, tenue, blanc) ; le texte
+   blanc, ombré de sombre, s'écrit dans les blocs B. Tuiles : gauche $60-$9F puis $01-$1F, droite $A0-$FF. Rendu coupé. */
 static const u8 surf_bk[6] = { 0x07, 0x0A, 0x02, 0x05, 0x08, 0x0C };   /* fond : couleur de la surface */
 static void vs_side(u8 side)
 {
@@ -221,9 +221,10 @@ static void vs_pal(u8 side)
     pal_set_player(61, cfg.chr[side]);       /* (palette 1 du décor : peau, tenue, sombre) */
     S = pal_buf[5]; O = pal_buf[6]; D = pal_buf[7];
     pal_buf[b + 1] = D;
-    if (S >= 0x10) { pal_buf[b + 3] = S; pal_buf[b + 2] = (u8)(S - 0x10); } else { pal_buf[b + 3] = (u8)(S + 0x10); pal_buf[b + 2] = S; }
-    if (O >= 0x10) { pal_buf[b + 6] = O; pal_buf[b + 5] = (u8)(O - 0x10); } else { pal_buf[b + 6] = (u8)(O + 0x10); pal_buf[b + 5] = O; }
-    if (O == 0x30) pal_buf[b + 5] = 0x10;
+    pal_buf[b + 2] = (u8)(S >= 0x10 ? S : S + 0x10);                 /* peau (éclairée) */
+    pal_buf[b + 6] = (u8)(O >= 0x10 ? O : O + 0x10);                  /* tenue */
+    pal_buf[b + 5] = (u8)((D & 0x30) >= 0x20 ? 0x0F : D);             /* B : sombre (ombre du texte : noir si cheveux clairs), tenue, blanc */
+    pal_buf[b + 3] = pal_buf[b + 6];                                  /* tenue (aussi dans A : bras croisés) */
     pal_buf[b + 7] = 0x30;
 }
 void vs_build(void)

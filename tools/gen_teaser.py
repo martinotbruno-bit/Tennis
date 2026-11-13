@@ -249,7 +249,7 @@ def body(f, j, female, face, front=('armR', 'legL'), racket_hand='L', racket_dir
             def side(sh_, hp_, sx):
                 P_ = lambda t, dx: (lerp(sh_, hp_, t)[0] + sx * dx, lerp(sh_, hp_, t)[1])
                 return [P_(0.13, -0.5), P_(0.22, 3.2), P_(0.31, 4.4), P_(0.4, 3.0), P_(0.5, 0.0),
-                        P_(0.6, -2.0), P_(0.7, -2.0), P_(0.8, 1.5), (hp_[0] + sx * 9.6, hp_[1] - 8), (hp_[0] + sx * 10.5, hp_[1] - 3)]
+                        P_(0.58, -3.4), P_(0.68, -4.0), P_(0.8, 1.0), (hp_[0] + sx * 9.6, hp_[1] - 8), (hp_[0] + sx * 10.5, hp_[1] - 3)]
             # bretelles : elles montent jusqu'en haut de l'épaule, le long de sa pente, jusqu'au cou
             pts = [(shL[0] + 0.5, shL[1] - 4.8), (nk[0] - 6.6, nk[1] - 2.9), (nk[0] - 4.0, nk[1] - 1.6),
                    (nk[0] - 3.6, nk[1] + 7), (nk[0], nk[1] + 9), (nk[0] + 3.6, nk[1] + 7),
@@ -628,9 +628,14 @@ PALS = {1: (1, 2, 5), 2: (3, 4, 5), 3: (1, 3, 6)}
 PALS_Z = {0: (1, 5, 6), 1: (1, 2, 5), 2: (3, 4, 5), 3: (1, 2, 3)}       # plans rapprochés : P0 = peau, sombre, blanc
 
 
+COST_X = {}      # surcharges (affiche VS)
+
+
 def cost(a, b):
     if a == b:
         return 0
+    if (a, b) in COST_X:
+        return COST_X[(a, b)]
     if b == 0:
         return COST.get((a, 0), 6)
     return COST.get((a, b), 9)
@@ -874,7 +879,9 @@ POSES['bust'] = dict(
            order=['legL', 'legR', 'torso', 'armR', 'armL', 'head']),
     face='focus', hand='X', rdir=0, rlen=50)
 VS_W, VS_H = 12, 14                    # tuiles
-VS_PALS = {0: (5, 2, 1), 1: (4, 3, 6)}  # A : (sombre, peau ombrée, peau) ; B : (tenue ombrée, tenue, blanc)
+VS_PALS = {0: (5, 1, 3), 1: (5, 3, 6)}  # A : (sombre, peau, tenue) ; B : (sombre, tenue, blanc : texte blanc ombré de sombre)
+# la peau ne devient jamais blanche ; le blanc des yeux se fond dans la peau
+VS_COST = {(1, 6): 12, (2, 6): 12, (6, 1): 1, (6, 3): 6, (4, 3): 1}
 VS_MAX = 95
 VS_BANK = 10
 
@@ -884,9 +891,14 @@ def vs_render(female, mirror, k=1.38):
     f = Fig(W, H, k, 80 - (W / 2) / k, 36.0)
     body(f, skeleton(POSES['bust']['s'], female), female, 'focus', racket_hand='X', racket_dir=0, racket_len=50)
     f.outline()
+    # coupé au-dessus de l'ourlet du polo (ni short ni bas du vêtement)
+    cut = VS_H * 8 - 10
+    f.cls[cut:, :] = 0; f.pid[cut:, :] = 0
     if mirror:
         f.cls = np.ascontiguousarray(np.fliplr(f.cls)); f.pid = np.ascontiguousarray(np.fliplr(f.pid))
+    COST_X.clear(); COST_X.update(VS_COST)
     idx, attr = quantize(f, VS_PALS)
+    COST_X.clear()
     tiles, tmap, nt = [], {}, []
     for ty in range(VS_H):
         for tx in range(VS_W):
@@ -946,8 +958,8 @@ def vs_preview(arts, dst):
         for side, key, c, x0 in ((0, la, cl, 0), (1, ra, cr, 160)):
             a = arts[key]
             sl, sd, ol, od = shades(*c)
-            pa = {1: PAL[c[2]], 2: PAL[sd], 3: PAL[sl]}
-            pb = {1: PAL[od], 2: PAL[ol], 3: PAL[0x30]}
+            pa = {1: PAL[c[2]], 2: PAL[sl], 3: PAL[ol]}
+            pb = {1: PAL[c[2]], 2: PAL[ol], 3: PAL[0x30]}
             for y in range(VS_H * 8):
                 for x in range(VS_W * 8):
                     v = a['idx'][y, x]

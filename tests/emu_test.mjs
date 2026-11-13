@@ -159,9 +159,9 @@ function playComp(type, opts, wins) {
   skipIntro(e);
   let matches = 0, code = '';
   const CN = ['TOURNOI', 'POULES', 'CHAMPIONNAT', 'SAISON', 'PERSONNALISE', 'GRAND MARTINOT', 'MARTINWORLD'][type];
-  check(scr(e) === SS.COMP && (type === 5 ? e.text(3, 1, 17) === 'LE GRAND MARTINOT' : type === 6 ? e.text(3, 1, 16) === 'MARTINWORLD TOUR' : e.text(18, 1, CN.length) === CN), `${CN} : écran d'étape (titre lisible)`);
+  check(scr(e) === SS.COMP && e.peek('c_type') === type && e.text(3, 5, 3).trim() !== '' && e.nes.ppu.vramMem[0x2000 + 32 + 16] !== 0, `${CN} : écran d'étape (titre lisible)`);
   while (scr(e) === SS.COMP && matches < 24) {
-    if (matches === 1) code = e.text(10, 21, 15).replace(/ /g, '');
+    if (matches === 1) code = e.text(10, 22, 15).replace(/ /g, '');
     toMatch(e);
     if (app(e) !== AS.MATCH) break;
     // victoire forcée du joueur pour parcourir la compétition
@@ -300,8 +300,8 @@ console.log('Mode en équipe (double)');
 {
   const e = boot(); toMenu(e); setOpts(e, { MODE: MODE.TEAM, TYPE: 0, CPART: 1 }); e.tap('B'); e.run(5); toMenu(e);
   check(e.peek('nvis') === 15 && e.text(3, 7, 10) === 'PARTENAIRE' && e.text(3, 8, 8) === 'JOUE PAR', 'pas de ligne JEU ; lignes PARTENAIRE et JOUE PAR');
-  e.tap('START'); e.run(15);
-  check(e.text(4, 4, 15) === 'MATCH DE DOUBLE' && e.text(18, 11, 11) === '+ MANETTE 2', 'toujours un double, manette 2 partenaire');
+  e.tap('START'); runUntil(e, () => scr(e) === SS.PRESENT && litScr(e), 90);
+  check(e.text(3, 1, 15) === 'MATCH DE DOUBLE' && e.text(2, 22, 11) === '+ MANETTE 2', 'toujours un double, manette 2 partenaire');
   e.tap('A'); e.run(30);
   const c = e.addr('cfg');
   check(e.nes.cpu.mem[c + 1] === 1 && e.nes.cpu.mem[c + 2] === 0 && e.nes.cpu.mem[c + 4] === 1 && e.nes.cpu.mem[c + 3] === 2,
@@ -309,7 +309,7 @@ console.log('Mode en équipe (double)');
   check(e.nes.cpu.mem[c + 8] === e.peek('opt_val', O.P2), 'PARTENAIRE = personnage de la manette 2');
 }
 {
-  const e = boot(); toMenu(e); setOpts(e, { MODE: MODE.TEAM, CPART: 0 }); e.tap('START'); e.run(15); e.tap('A'); e.run(30);
+  const e = boot(); toMenu(e); setOpts(e, { MODE: MODE.TEAM, CPART: 0 }); e.tap('START'); runUntil(e, () => scr(e) === SS.PRESENT && litScr(e), 90); e.tap('A'); e.run(30);
   const c = e.addr('cfg');
   check(e.nes.cpu.mem[c + 1] === 1 && e.nes.cpu.mem[c + 2] === 0 && e.nes.cpu.mem[c + 4] === 2,
     'partenaire joué par l\'ordinateur (JOUE PAR : CPU)');
@@ -323,8 +323,8 @@ console.log('Court Margaux');
   e.poke('cursor', rowOf(e, O.ENV));
   const seen = new Set(); for (let i = 0; i < 6; i++) { e.tap('RIGHT'); seen.add(e.peek('opt_val', O.ENV)); }
   check(seen.has(4) && !seen.has(3), 'court Margaux proposé d\'emblée (club nudiste toujours verrouillé)');
-  setOpts(e, { ENV: 4 }); e.tap('START'); e.run(15);
-  check(e.text(4, 24, 22) === 'BIENVENUE SUR LE COURT', 'présentation du court Margaux');
+  setOpts(e, { ENV: 4 }); e.tap('START'); runUntil(e, () => scr(e) === SS.PRESENT && litScr(e), 90);
+  check(e.text(3, 3, 26) === 'BIENVENUE AU COURT MARGAUX', 'présentation du court Margaux');
   e.tap('A'); e.run(30);
   // petit panneau dans le bandeau, à droite du score de gauche (rangées 2-3, colonnes 5 à 8) :
   // ses 8 tuiles, chargées en CHR-RAM à la place du public du club nudiste ; zone des annonces libre
@@ -345,7 +345,7 @@ if (sec('Présentation et pause')) {
 console.log('Présentation et pause');
 {
   const e = boot(); toMenu(e); e.tap('START'); e.run(10);
-  check(scr(e) === SS.PRESENT && e.text(4, 4, 12) === 'MATCH AMICAL', "présentation avant le match");
+  check(scr(e) === SS.PRESENT && e.text(3, 1, 12) === 'MATCH AMICAL', "présentation avant le match");
   e.tap('A'); e.run(30);
   check(app(e) === AS.MATCH && e.peek('cur_bank') === 0, 'A lance le match (banque 0)');
   e.tap('START');
@@ -447,9 +447,9 @@ console.log('Revanche et palmarès');
   const lit = (st) => runUntil(e, () => scr(e) === st && e.peek('ppu_mask') !== 0 && e.peek('fade_lvl') === 0, 120);
   e.tap('B'); lit(SS.MENU); e.tap('B'); lit(SS.TITLE);
   e.tap('DOWN'); e.tap('DOWN'); e.tap('A'); lit(SS.PALMARES); e.run(2);
-  check(scr(e) === SS.PALMARES && e.text(3, 4, 5) === 'JOUES', 'écran palmarès');
+  check(scr(e) === SS.PALMARES && e.text(3, 6, 5) === 'JOUES', 'écran palmarès');
   e.tap('RIGHT'); e.run(8); e.tap('RIGHT'); e.run(8);
-  check(e.text(3, 3, 12) === "RECORDS D'EN", "page des records d'entraînement");
+  check(e.text(3, 5, 12) === "RECORDS D'EN", "page des records d'entraînement");
 }
 
 }
@@ -484,10 +484,10 @@ console.log('Compétitions');
   const g = boot(); startWith(g, { MODE: MODE.COMP, COMP: 5, FMT: 3, ENV: 2, COND: 2 });
   // l'écran d'étape d'abord (plus d'image juste après la bande-annonce)
   runUntil(g, () => litScr(g), 90);
-  check(scr(g) === SS.COMP && g.text(3, 3, 18) === "OPEN D'AUGUSTRALIE", "Grand Martinot : l'écran d'étape directement après la bande-annonce");
+  check(scr(g) === SS.COMP && g.text(3, 5, 18) === "OPEN D'AUGUSTRALIE", "Grand Martinot : l'écran d'étape directement après la bande-annonce");
   check(g.peek('c_env') === 0 && g.peek('c_cond') === 0, 'Grand Martinot : toujours au stade, de jour (lieu et conditions imposés)');
-  check(scr(g) === SS.COMP && g.peek('c_n') === 16 && g.text(3, 3, 18) === "OPEN D'AUGUSTRALIE" && g.text(3, 4, 18) === 'HUITIEME DE FINALE',
-    `Grand Martinot : 16 joueurs, « ${g.text(3, 3, 18)} », ${g.text(3, 4, 18)}`);
+  check(scr(g) === SS.COMP && g.peek('c_n') === 16 && g.text(3, 5, 18) === "OPEN D'AUGUSTRALIE" && g.text(3, 6, 18) === 'HUITIEME DE FINALE',
+    `Grand Martinot : 16 joueurs, « ${g.text(3, 5, 18)} », ${g.text(3, 6, 18)}`);
   const names = new Set(); for (let i = 0; i < 16; i++) names.add(g.peek('c_pl', i));
   check(names.size === 16, `Grand Martinot : 16 joueurs différents`);
   // présentation du match, puis l'image du tournoi (fanfare), puis le match
@@ -529,7 +529,7 @@ console.log('Compétitions');
   const g = boot(); startWith(g, { MODE: MODE.COMP, COMP: 6, FMT: 3, ENV: 3, COND: 2, SURF: 4 });
   const row = (e, y) => e.text(0, y, 32).replace(/\0/g, ' ').trim();
   runUntil(g, () => litScr(g), 90);
-  check(g.peek('c_env') === 0 && g.peek('c_cond') === 0 && g.peek('c_n') === 8 && g.text(3, 1, 16) === 'MARTINWORLD TOUR',
+  check(g.peek('c_env') === 0 && g.peek('c_cond') === 0 && g.peek('c_n') === 8 && g.peek('c_type') === 6,
     'Martinworld Tour : 8 joueurs, au stade, de jour');
   {
     const ga = toMatch(g);
@@ -572,7 +572,7 @@ console.log('Compétitions');
       r.poke('sc_winner', 0); r.poke('sc_over', 1); r.poke('ms', 4); r.poke('ms_timer', 2);
       runUntil(r, () => app(r) === AS.SCREENS, 60); r.run(20); r.tap('A'); r.run(40); skipIntro(r);
     }
-    const rc = r.text(10, 21, 15).replace(/ /g, '');
+    const rc = r.text(10, 22, 15).replace(/ /g, '');
     const want = ['c_type', 'c_stage', 'c_seed', 'c_n'].map(n => r.peek(n)).concat([r.peek16('c_gres')]);
     const f = boot(); f.tap('UP'); f.tap('A'); f.run(10);
     const AL = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -584,7 +584,7 @@ console.log('Compétitions');
     f.tap('START'); f.run(40); skipIntro(f);
     const got = ['c_type', 'c_stage', 'c_seed', 'c_n'].map(n => f.peek(n)).concat([f.peek16('c_gres')]);
     check(scr(f) === SS.COMP && JSON.stringify(got) === JSON.stringify(want) && want[1] === 4 && want[4] === 3
-      && f.text(3, 3, 18) === 'MARGAUX-LES-NEIGES' && f.peek('c_pl', 0) === 16,
+      && f.text(3, 5, 18) === 'MARGAUX-LES-NEIGES' && f.peek('c_pl', 0) === 16,
       `Martinworld Tour : code ${rc} relu (Margaux-les-Neiges, demi-finale, ${JSON.stringify(got)})`);
   }
   // menu : explication ; ni lieu, ni conditions, ni surface
@@ -621,7 +621,7 @@ console.log('Compétitions');
       if (d0 !== exp) okz = false; } }
   check(okz, 'podium : agrandissement exact (pixel doublé, sans décalage de lecture)');
   e.tap('A'); runUntil(e, () => scr(e) === SS.TITLE && e.peek('ppu_mask') !== 0, 200); e.run(10);
-  const rom2 = e.nes.rom.rom[2]; let diff = 0; for (let i = 0; i < 8192; i++) if (chr[i] !== rom2[i]) diff++;
+  const rom2 = e.nes.rom.rom[2]; let diff = 0; for (let i = 0; i < 8192; i++) if (chr[i] !== rom2[i] && !(i >= 0x600 && i < 0xCE0)) diff++;   // ($60-$CD : tuiles des menus)
   check(scr(e) === SS.TITLE && diff === 0, `retour au titre : motifs d'origine rétablis (${diff} octet(s) différent(s))`);
 }
 {
@@ -675,10 +675,10 @@ if (sec('Code de reprise')) {
 console.log('Code de reprise');
 {
   const e = boot(); startWith(e, { MODE: MODE.COMP, COMP: 2, P1: 6, SURF: 4, ENV: 1, COND: 2 });
-  e.tap('A'); e.run(5); e.tap('A'); e.run(30);
+  toMatch(e);
   e.poke('sc_winner', 0); e.poke('sc_over', 1); e.poke('ms', 4); e.poke('ms_timer', 2);
   runUntil(e, () => app(e) === AS.SCREENS, 60); e.run(20); e.tap('A'); e.run(40);
-  const code = e.text(10, 21, 15).replace(/ /g, '');
+  const code = e.text(10, 22, 15).replace(/ /g, '');
   const want = ['c_type', 'c_stage', 'c_seed', 'c_results', 'c_surf', 'c_env', 'c_cond'].map(n => e.peek(n));
   const f = boot(); f.tap('UP'); f.tap('A'); f.run(10);
   check(scr(f) === SS.CODE, 'saisie du code depuis le titre');
@@ -691,7 +691,7 @@ console.log('Code de reprise');
   f.tap('START'); f.run(40);
   const got = ['c_type', 'c_stage', 'c_seed', 'c_results', 'c_surf', 'c_env', 'c_cond'].map(n => f.peek(n));
   check(scr(f) === SS.COMP && JSON.stringify(got) === JSON.stringify(want), `code ${code} : championnat restauré (journée 2)`);
-  check(f.text(16, 6, 5) === e.text(16, 6, 5), "même adversaire après reprise");
+  check(f.text(16, 9, 5) === e.text(16, 9, 5), "même adversaire après reprise");
   const g = boot(); g.tap('UP'); g.tap('A'); g.run(10); g.tap('START'); g.run(10);
   check(scr(g) === SS.CODE, 'code invalide refusé');
 }
@@ -706,7 +706,7 @@ console.log('Compétition en double, levée de coupe et club nudiste');
   let envs = new Set();
   e.poke('cursor', rowOf(e, O.ENV));
   const names = new Set();
-  for (let i = 0; i < 8; i++) { e.tap('RIGHT'); e.run(3); envs.add(e.peek('opt_val', O.ENV)); names.add(e.text(16, 4 + rowOf(e, O.ENV), 7).replace(/\0/g, ' ').trim()); }
+  for (let i = 0; i < 8; i++) { e.tap('RIGHT'); e.run(3); envs.add(e.peek('opt_val', O.ENV)); names.add(e.text(16, 4 + rowOf(e, O.ENV), 7).replace(/[\0<>]/g, ' ').trim()); }
   check(!envs.has(3) && envs.size === 6, `lieu « club nudiste » absent avant déblocage (6 lieux proposés : ${[...names].join(', ')})`);
   check(envs.has(5) && envs.has(6) && names.has('CHATEAU') && names.has('PARC'), 'nouveaux lieux : CHATEAU et PARC');
 }
@@ -772,7 +772,7 @@ console.log('Compétition en double, levée de coupe et club nudiste');
   const { e } = playComp(4, { CSIZE: 0 }, () => true);
   // retour au titre après le podium (CHR-RAM rechargée : ~47 trames)
   e.tap('A'); runUntil(e, () => scr(e) === SS.TITLE && e.peek('ppu_mask') !== 0, 200); e.run(10); toMenu(e); setOpts(e, { MODE: MODE.COMP, COMP: 0 }); e.tap('START'); e.run(40);
-  const code = e.text(10, 21, 15).replace(/ /g, '');
+  const code = e.text(10, 22, 15).replace(/ /g, '');
   check(e.peek('c_trophies') === 1, 'les trophées se cumulent d\'une compétition à l\'autre');
   const f = boot(); f.tap('UP'); f.tap('A'); f.run(10);
   const AL = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -791,8 +791,8 @@ console.log('Compétition en double à deux joueurs humains');
 {
   const e = boot(); startWith(e, { MODE: MODE.COMP, COMP: 2, TYPE: 1, P2: 3, CPART: 1 });
   check(scr(e) === SS.COMP && e.text(3, 23, 18) === 'DOUBLE A 2 JOUEURS', 'championnat en double à 2 joueurs');
-  e.tap('A'); e.run(10);
-  check(e.text(18, 11, 11) === '+ MANETTE 2', 'présentation : partenaire à la manette 2');
+  e.tap('A'); runUntil(e, () => scr(e) === SS.PRESENT && litScr(e), 90);
+  check(e.text(2, 22, 11) === '+ MANETTE 2', 'présentation : partenaire à la manette 2');
   e.tap('A'); e.run(40);
   const c = e.addr('cfg');
   check(app(e) === AS.MATCH && e.nes.cpu.mem[c + 2] === 0 && e.nes.cpu.mem[c + 4] === 1 && e.nes.cpu.mem[c + 3] === 2 && e.nes.cpu.mem[c + 5] === 2,
@@ -803,7 +803,7 @@ console.log('Compétition en double à deux joueurs humains');
   // victoire forcée puis reprise par code sur une autre console
   e.poke('sc_winner', 0); e.poke('sc_over', 1); e.poke('ms', 4); e.poke('ms_timer', 2);
   runUntil(e, () => app(e) === AS.SCREENS, 60); e.run(20); e.tap('A'); e.run(40);
-  const code = e.text(10, 21, 15).replace(/ /g, '');
+  const code = e.text(10, 22, 15).replace(/ /g, '');
   const f = boot(); f.tap('UP'); f.tap('A'); f.run(10);
   const AL = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
   for (let i = 0; i < 13; i++) {
@@ -945,12 +945,12 @@ console.log('Vitesse du jeu, coups gagnants, smash sauté, musiques');
   const e = boot(); startWith(e, { MODE: MODE.COMP, COMP: 0, FMT: 3 });
   check(scr(e) === SS.COMP && e.peek('music_cur') !== 6, 'quart de finale : pas de thème de finale');
   for (let m = 0; m < 2; m++) {   // tournoi à 8 : quart puis demi gagnés
-    e.tap('A'); e.run(5); e.tap('A'); e.run(30);
+    toMatch(e);
     e.poke('sc_winner', 0); e.poke('sc_over', 1); e.poke('ms', 4); e.poke('ms_timer', 2);
     runUntil(e, () => app(e) === AS.SCREENS, 60); e.run(20); e.tap('A'); e.run(40);
   }
-  check(scr(e) === SS.COMP && e.text(3, 3, 6) === 'FINALE' && e.peek('music_cur') === 6, 'écran de la finale : thème de la finale');
-  e.tap('A'); e.run(10);
+  check(scr(e) === SS.COMP && e.text(3, 5, 6) === 'FINALE' && e.peek('music_cur') === 6, 'écran de la finale : thème de la finale');
+  e.tap('A'); runUntil(e, () => scr(e) === SS.PRESENT && litScr(e), 90);
   check(scr(e) === SS.PRESENT && e.peek('music_cur') === 6, 'présentation de la finale : le thème continue');
   e.tap('A'); runUntil(e, () => app(e) === AS.MATCH, 60);
   check(app(e) === AS.MATCH && e.peek('music_cur') === 0, 'finale : silence pendant le match');
@@ -1116,16 +1116,16 @@ console.log('Margaux jouable et fatigue');
   e.poke('cursor', rowOf(e, O.P1)); e.poke('opt_val', 15, O.P1); e.tap('RIGHT'); e.run(5);
   check(e.peek('opt_val', O.P1) === 16 && e.text(16, 4 + rowOf(e, O.P1), 7) === 'MARGAUX', 'MARGAUX sélectionnable (17e personnage)');
   const nn = [];
-  for (let k = 0; k < 4; k++) { e.tap('RIGHT'); e.run(5); nn.push(e.text(16, 4 + rowOf(e, O.P1), 5).replace(/\0/g, ' ').trim()); }
+  for (let k = 0; k < 4; k++) { e.tap('RIGHT'); e.run(5); nn.push(e.text(16, 4 + rowOf(e, O.P1), 5).replace(/[\0<>]/g, ' ').trim()); }
   check(nn.join(',') === 'MAX,LOLA,PAPI,TITOU', `nouveaux personnages après Margaux : ${nn.join(', ')}`);
   e.tap('RIGHT'); e.run(5);
   check(e.peek('opt_val', O.P1) === 0, 'retour au premier personnage après TITOU');
   const g = boot(); toMenu(g); setOpts(g, { MODE: MODE.P2, P1: 16, TYPE: 1, P2: 3 }); g.tap('START'); g.run(30);
-  check(scr(g) === SS.PRESENT && g.text(6, 10, 7) === 'MARGAUX' && g.text(6, 11, 1) === '+' && g.text(8, 11, 3) !== '   ',
-    `présentation en double : MARGAUX, partenaire sur la ligne suivante (${g.text(6, 11, 6).replace(/\0/g, " ")})`);
+  check(scr(g) === SS.PRESENT && g.text(2, 19, 7) === 'MARGAUX' && g.text(2, 20, 1) === '+' && g.text(4, 20, 3) !== '   ',
+    `présentation en double : MARGAUX, partenaire sur la ligne suivante (${g.text(2, 20, 6).replace(/\0/g, " ")})`);
   const c = boot(); startWith(c, { MODE: MODE.COMP, COMP: 0, FMT: 3, P1: 16, TYPE: 1, P2: 7 });
-  const code = c.text(10, 21, 15).replace(/ /g, '');
-  check(scr(c) === SS.COMP && c.text(3, 6, 5) === 'MX/EM', `équipe abrégée « MX/EM » (pas de confusion avec MAYA « MA ») ; code ${code}`);
+  const code = c.text(10, 22, 15).replace(/ /g, '');
+  check(scr(c) === SS.COMP && c.text(3, 9, 5) === 'MX/EM', `équipe abrégée « MX/EM » (pas de confusion avec MAYA « MA ») ; code ${code}`);
   const h = boot(); h.tap('UP'); h.tap('A'); h.run(10);
   const AL = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
   for (let i = 0; i < 13; i++) { const n = AL.indexOf(code[i]); for (let k = 0; k < n; k++) h.tap('UP', 1, 1, 1); if (i < 12) h.tap('RIGHT', 1, 1, 1); }
@@ -1809,7 +1809,7 @@ console.log('Vue en perspective (option VUE)');
   check(xp > xf + 5, `projection : joueur du fond plus près du centre en perspective (x ${xp} contre ${xf} à plat)`);
   // retour aux menus : motifs d'origine rétablis, projection coupée
   f.tap('START'); f.run(5); f.tap('DOWN'); f.tap('A'); runUntil(f, () => app(f) === AS.SCREENS, 200); f.run(40);
-  const rom2 = f.nes.rom.rom[2]; let d2 = 0; for (let i = 0; i < 4096; i++) if (f.nes.ppu.vramMem[i] !== rom2[i]) d2++;
+  const rom2 = f.nes.rom.rom[2]; let d2 = 0; for (let i = 0; i < 4096; i++) if (f.nes.ppu.vramMem[i] !== rom2[i] && !(i >= 0x600 && i < 0xCE0)) d2++;   // ($60-$CD : tuiles des menus)
   check(f.peek('persp') === 0 && d2 === 0, `hors du match : tuiles de décor d'origine rétablies (${d2} octet(s) différent(s)), projection coupée`);
   // match complet en perspective (double, château)
   const d = boot(); toMenu(d); setOpts(d, { MODE: MODE.P2, TYPE: 1, ENV: 5, FMT: 3 }); d.poke('opt_val', 1, 24); d.tap('START'); d.run(30); d.tap('A');
@@ -2038,9 +2038,9 @@ for (const type of [5, 6]) {
   const e = boot(); startWith(e, { MODE: MODE.COMP, COMP: type, FMT: 0 }); skipIntro(e);
   const seen = [];
   for (let m = 0; m < 8 && scr(e) === SS.COMP; m++) {
-    const fin = e.text(0, 4, 32).replace(/\0/g, ' ').trim() === 'FINALE';
+    const fin = e.text(0, 6, 32).replace(/\0/g, ' ').trim() === 'FINALE';
     e.tap('A'); runUntil(e, () => scr(e) === SS.PRESENT, 60); e.run(3);
-    seen.push(`${fin ? 'F' : '-'}${e.peek('cfg', 16)}:${e.text(17, 22, 6).trim()}`);
+    seen.push(`${fin ? 'F' : '-'}${e.peek('cfg', 16)}:${e.text(18, 25, 6).trim()}`);
     e.tap('A'); runUntil(e, () => app(e) === AS.MATCH || (scr(e) === 10 && litScr(e)), 120);
     if (app(e) !== AS.MATCH) { e.tap('A'); runUntil(e, () => app(e) === AS.MATCH, 120); }   /* image du tournoi */
     e.run(30);
