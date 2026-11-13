@@ -330,6 +330,12 @@ Le dessin des personnages est commun aux vues de face et de dos (rangées de tui
 - **Chaises** : `cer_watch` (banque 13) n'affiche pas les chaises tant que `rp_pending` (ralenti prévu ou en cours).
 - **Aide des réglages** : touches « HAUT/BAS: LIGNE  <>: VALEUR » et « START : JOUER   B : RETOUR » (`comp_help`, banque 5).
 
+### Version 2.60 : coups de A, réglages centrés
+
+- **Lifté** (`shot_select`, banque 13) : profondeur 62 si armé < 4, sinon 70 ; gravité 7 + armé / 8. **Croisé court** : armé borné à 24 (T) ; vitesse 34 + T / 4 ; `hit_margin` = 14 − T / 3 (distance à la ligne de côté, lue par `do_hit`) ; armé transmis divisé par 2 (imprécision). Smash dans l'angle : `hit_margin` = 8. `hit_margin` n'est plus statique (game.c).
+- **IA** (`ai_update`, banque 0) : à partir de Normal, après le lob et l'amortie, croisé court avec une probabilité 90/256 si l'adversaire est au filet, 20/256 sinon.
+- **Réglages** : première rangée `MY0` = 4 + (18 − `nvis`) / 2 (screens.c ; même calcul dans `menu_marks`) ; `menu_soft` réécrit les 18 rangées ; portraits en y = `MY0` × 8 − 30, entre 7 et 16. Tests : `menuY(e, i)`.
+
 ### Bande-annonce (`src/teaser.c`, banque 7, version 2.56)
 
 `start_comp` (screens.c) lance `teaser_build` pour le Grand Martinot et le Martinworld Tour (`SS_TEASER`) ; `teaser_tick` à chaque trame ; à la fin (`teaser_done`), `chr_reload` puis `comp_next` (annonce du 1er tournoi).

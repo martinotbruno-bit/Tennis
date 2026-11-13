@@ -1,10 +1,17 @@
-# Royal Martinot — Rapport de réalisation (version 2.59)
+# Royal Martinot — Rapport de réalisation (version 2.60)
 
 Comme l'exige le CDC (§ 17.5), ce rapport distingue ce qui est **réalisé**, **testé**, **validé sur matériel réel**, **validé uniquement en émulation**, **dépendant d'une extension**, et les **limitations restantes**.
 
 > **Validation matérielle : aucune.** Aucun test n'a été fait sur console réelle (NES, Famicom, PAL, cartouche MMC1). Toutes les validations ont eu lieu en émulation (jsnes) et par des tests unitaires sur PC. Les critères « vérifié sur console physique » (CDC § 2.1, 15.4, 16.A) **ne sont pas remplis**. Ce point ne peut pas être traité dans l'environnement de développement utilisé.
 
 ## 1. Évolutions
+
+### Version 2.60
+
+| Demande | Réalisation |
+|---|---|
+| Avis sur les coups de A et le croisé court ; faire la mesure, puis tous les ajustements | **Mesure** sur des matchs entre ordinateurs (Normal, Expert ; 5 paires de personnages) : points gagnés directement et fautes par type de coup. Le coup à plat ne domine pas (Normal : 5 % gagnants, 50 % fautes ; Expert : 2 %, 20 %) : inchangé. **Lifté** : relâché aussitôt, plus court (62 au lieu de 70) et plus sûr ; armé, plus bombé et plus lifté (gravité 7 à 11). **Croisé court** : l'armé ferme l'angle (14 px de la ligne de côté relâché vite, 6 px bouton tenu) au lieu d'accélérer, et ajoute moitié moins d'imprécision. **L'ordinateur joue le croisé court** (Normal, Expert) : passing contre un volleyeur, parfois pour sortir un adversaire du fond. Smash dans l'angle court : angle propre. Après : croisé court 8 % gagnants, 24 % fautes (Normal), 5 % et 16 % (Expert) ; fautes du lifté 15 → 13 % (Normal), 16 → 14 % (Expert) |
+| Centrer le pavé des réglages et réajuster les visages selon la place libre | Liste centrée verticalement entre les filets (rangées 4 à 21, selon le nombre de lignes) ; portraits abaissés dans la place libre, épaules sous le filet du titre ; la balle curseur rebondit de nouveau sur la première ligne quand la liste ne touche plus les portraits |
 
 ### Version 2.59
 

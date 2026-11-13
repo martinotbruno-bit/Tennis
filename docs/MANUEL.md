@@ -36,7 +36,7 @@ Depuis la version 2.57, les menus sont habillés : fond vert gazon, titres en gr
 
 ## 2. Configuration (écran RÉGLAGES)
 
-Les libellés sont en bleu pâle, les valeurs en jaune ; la ligne choisie s'allume (libellé en or, valeur en blanc, flèches **<** **>** autour de la valeur) et une balle rebondit devant elle. Une pastille de la couleur de la surface accompagne la ligne SURFACE ; les deux joueurs choisis encadrent le titre.
+La liste est centrée entre les deux filets dorés. Les libellés sont en bleu pâle, les valeurs en jaune ; la ligne choisie s'allume (libellé en or, valeur en blanc, flèches **<** **>** autour de la valeur) et une balle rebondit devant elle. Une pastille de la couleur de la surface accompagne la ligne SURFACE ; les deux joueurs choisis encadrent le titre.
 
 Depuis la version 2.59, le fond des menus change à chaque allumage : terre battue, gazon, dur ou moquette. Depuis la version 2.58 : en bas de l'écran, deux lignes expliquent la **ligne choisie** et sa valeur (pour un joueur : son style de jeu) ; une **accolade dorée** dans la marge réunit les lignes de chaque groupe (partie, joueurs, match, options) ; les **portraits** des joueurs choisis encadrent le titre ; une **vignette** illustre le lieu choisi. Un petit son monte ou descend quand une valeur change, et une note descend quand on revient avec B.
 
@@ -87,10 +87,10 @@ Avant chaque match, un **écran de présentation** rappelle l'épreuve, les joue
 | Commande | Action |
 |---|---|
 | Croix | Se déplacer sur toute sa moitié de court |
-| **A** (maintenir puis relâcher) | Frappe liftée. Plus vous armez longtemps avant l'impact, plus la frappe est forte (et risquée) |
+| **A** (maintenir puis relâcher) | Frappe liftée. Plus vous armez longtemps avant l'impact, plus la frappe est forte, bombée et liftée (rebond plus haut), et plus elle est risquée ; relâchée aussitôt, elle tombe un peu plus court, plus sûre |
 | **B** | Coup coupé (slice) : balle basse et lente |
 | **A** + HAUT | Frappe à plat : tendue, longue et très rapide, mais moins précise. Mal placé, elle part dans le filet ou dehors |
-| **A** + BAS | Croisé court : en angle, dans le carré de service près de la ligne de côté, avec du lift. Idéal pour sortir l'adversaire du court ou passer un joueur au filet ; risque de sortir sur le côté |
+| **A** + BAS | Croisé court : en angle, dans le carré de service, avec du lift. Idéal pour sortir l'adversaire du court ou passer un joueur au filet. L'armé ferme l'angle : relâché vite, la balle passe à bonne distance de la ligne de côté (prudent) ; bouton tenu, elle rase la ligne, plus dure à rattraper mais plus risquée. L'ordinateur (à partir de Normal) le joue aussi |
 | **B** + HAUT | Lob. Relâché vite : **lob court**, plus sûr mais smashable ; bouton tenu : **lob long**, près de la ligne de fond (risque de faute). Depuis le fond du court, le lob part très haut et lent (défensif) ; depuis l'intérieur du court, plus bas et plus vif (lob d'attaque) |
 | **B** + BAS | Amortie |
 | GAUCHE / DROITE à l'impact | Viser le long d'une ligne ; sans direction, le coup part croisé |
