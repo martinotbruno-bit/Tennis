@@ -146,32 +146,8 @@ u8 can_hit(u8 p)
 
 /* timing_msg, serve_fb et perfect_hit : banque 13 (shots.c), version 2.52 */
 
-/* ---------------------------------------------------------------------- */
-/* Récapitulatif du score : une ligne par équipe, « ALEX 6 3 2 », sets    */
-/* terminés puis jeux du set en cours (14 caractères pour 5 sets).        */
-/* ---------------------------------------------------------------------- */
-extern u8 recap_pend;
-void score_line(u8 t, char *out)
-{
-    u8 i, k = 4;
-    team_name(t, out);
-    for (i = 0; i < sc_set_no && i < MAX_SETS; ++i) { out[k++] = ' '; out[k++] = (char)('0' + sc_hist[i][t]); }
-    if (!sc_over && k < 14) { out[k++] = ' '; out[k++] = (char)('0' + sc_games[t]); }
-    out[k] = 0;                     /* les deux lignes ont la même longueur : centrées ensemble */
-}
-
-/* bandeau : le score set par set pendant 2 secondes */
-#pragma bss-name(push, "WBSS")
-static char recap_a[16], recap_b[16];
-#pragma bss-name(pop)
-void score_recap(void)
-{
-    char *a = recap_a, *b = recap_b;
-    score_line(0, a);
-    score_line(1, b);
-    set_msg(a, b, 120);
-    recap_pend = 0;
-}
+/* Récapitulatif du score (score_line, score_recap) : banque 0 (game.c),
+   version 2.59 (place en banque fixe) */
 
 /* Feux d'artifice (fête de victoire sur le court, levée de coupe). t est un
    compte à rebours (ms_timer sur le court) : chaque fusée siffle en montant
@@ -210,8 +186,3 @@ void fw_draw(u8 t, u8 dy)
 
 /* poses des joueurs : poses_all (banque 3, extras.c) */
 
-/* tables du moteur (banque 0, pleine) : rebond et frottement par surface,
-   hauteur des petits sauts */
-const u8 surf_rest[6] = { 196, 150, 176, 160, 214, 116 };
-const u8 surf_fric[6] = { 200, 244, 226, 236, 170, 253 };
-const u8 hop_h[16] = { 0, 1, 3, 5, 6, 7, 7, 7, 8, 7, 7, 7, 6, 5, 3, 1 };

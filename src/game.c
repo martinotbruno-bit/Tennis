@@ -94,7 +94,8 @@ char msg1[16], msg2[16];
 
 
 /* surfaces : restitution et adhérence au rebond (sur 256) */
-extern const u8 surf_rest[6], surf_fric[6];          /* gamefix.c (banque fixe : place) */
+static const u8 surf_rest[6] = { 196, 150, 176, 160, 214, 116 };
+static const u8 surf_fric[6] = { 200, 244, 226, 236, 170, 253 };
 /* IA : vitesse (FP/trame), délai de réaction, dispersion, marge visée */
 /* vitesses (FP/trame) ; ≤ 127 car doublées en double (ai_x2) */
 /* réglages v2.3 : Normal rendu plus abordable (retour de test joueur) */
@@ -351,8 +352,35 @@ static void ball_update(void)
 /* ====================================================================== */
 /* can_hit : banque fixe (gamefix.c) */
 u8 can_hit(u8 p);
-void score_recap(void);
+/* nom d'équipe sur 4 lettres : banque fixe (gamefix.c) */
+void team_name(u8 t, char *out);
 u8 recap_pend, brk_pend;          /* récapitulatif du score à afficher / fin de set */
+/* ---------------------------------------------------------------------- */
+/* Récapitulatif du score : une ligne par équipe, « ALEX 6 3 2 », sets    */
+/* terminés puis jeux du set en cours (14 caractères pour 5 sets).        */
+/* ---------------------------------------------------------------------- */
+void score_line(u8 t, char *out)
+{
+    u8 i, k = 4;
+    team_name(t, out);
+    for (i = 0; i < sc_set_no && i < MAX_SETS; ++i) { out[k++] = ' '; out[k++] = (char)('0' + sc_hist[i][t]); }
+    if (!sc_over && k < 14) { out[k++] = ' '; out[k++] = (char)('0' + sc_games[t]); }
+    out[k] = 0;                     /* les deux lignes ont la même longueur : centrées ensemble */
+}
+
+/* bandeau : le score set par set pendant 2 secondes */
+#pragma bss-name(push, "WBSS")
+static char recap_a[16], recap_b[16];
+#pragma bss-name(pop)
+void score_recap(void)
+{
+    char *a = recap_a, *b = recap_b;
+    score_line(0, a);
+    score_line(1, b);
+    set_msg(a, b, 120);
+    recap_pend = 0;
+}
+
 u8 __fastcall__ serve_fb(s16 vz);             /* banque 13 (shots.c) */
 
 /* pad : directions maintenues ; btn : PAD_A ou PAD_B ; power 0..32 */
@@ -545,19 +573,8 @@ static void serve_hit(u8 p, u8 pad, u8 btn, u8 quality, u8 spread)
 /* ====================================================================== */
 /* Déplacements                                                            */
 /* ====================================================================== */
-static void move_toward(u8 p, s16 tx, s16 ty, u8 speed)
-{
-    s16 dx = tx - plx[p], dy = ty - ply[p];
-    s16 sx = speed, sy = speed;
-    pl_moving[p] = 0;
-    if (iabs(dx) > 2 * FP && iabs(dy) > 2 * FP) { sx = (s16)(((u16)speed + ((u16)speed << 1)) >> 2);   /* x 3/4 sans multiplication */ sy = sx; }
-    if (dx > sx) { plx[p] += sx; pl_moving[p] = 1; }
-    else if (dx < -sx) { plx[p] -= sx; pl_moving[p] = 1; }
-    else plx[p] = tx;
-    if (dy > sy) { ply[p] += sy; pl_moving[p] = 1; }
-    else if (dy < -sy) { ply[p] -= sy; pl_moving[p] = 1; }
-    else ply[p] = ty;
-}
+/* déplacement vers (tx, ty) : en assembleur, banque fixe (src/fastmove.s, version 2.59) */
+void move_toward(u8 p, s16 tx, s16 ty, u8 speed);
 
 static void clamp_player(u8 p)
 {
@@ -883,8 +900,6 @@ static void ai_update(u8 p)
 /* Score : deux panneaux dans les coins supérieurs, au-dessus des tribunes */
 /* (les joueurs n'y vont jamais) ; messages au centre du bandeau.          */
 /* ====================================================================== */
-/* nom d'équipe sur 4 lettres : banque fixe (gamefix.c) */
-void team_name(u8 t, char *out);
 
 /* ====================================================================== */
 void match_start(void)
@@ -1135,7 +1150,7 @@ u8 match_tick(void)
 
 /* fête de victoire : quand un humain gagne (ou en démonstration), comme
    pour la musique de victoire */
-extern const u8 hop_h[16];                           /* gamefix.c */
+static const u8 hop_h[16] = { 0, 1, 3, 5, 6, 7, 7, 7, 8, 7, 7, 7, 6, 5, 3, 1 };
 static u8 win_party(void)
 {
     return (u8)(ms == MS_OVER && !(cfg.ctrl[sc_winner] == CTRL_CPU && cfg.ctrl[sc_winner ^ 1] != CTRL_CPU));

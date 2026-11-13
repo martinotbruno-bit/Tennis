@@ -24,7 +24,7 @@ BANK12 = assets_courts12 assets_tz12 assets_menu12
 BANK13 = assets_swap shots cer assets_port assets_menu
 BANK14 = assets_gm gmintro assets_help
 CSRC = $(FIXED) $(BANK0) $(BANK1) $(BANK2) $(BANK3) $(BANK4) $(BANK5) $(BANK6) $(BANK7) $(BANK8) $(BANK9) $(BANK10) $(BANK11) $(BANK12) $(BANK13) $(BANK14)
-OBJS = $(BUILD)/crt0.o $(BUILD)/sprp.o $(BUILD)/poses.o $(BUILD)/slip.o $(BUILD)/dpcm.o $(addprefix $(BUILD)/,$(addsuffix .o,$(CSRC)))
+OBJS = $(BUILD)/crt0.o $(BUILD)/sprp.o $(BUILD)/poses.o $(BUILD)/slip.o $(BUILD)/dpcm.o $(BUILD)/fastmove.o $(addprefix $(BUILD)/,$(addsuffix .o,$(CSRC)))
 
 all: $(ROM)
 
@@ -76,6 +76,9 @@ $(BUILD)/poses.o: src/poses.s | $(BUILD)
 	$(CA65) -t nes -g -o $@ src/poses.s
 $(BUILD)/slip.o: src/slip.s | $(BUILD)
 	$(CA65) -t nes -g -o $@ src/slip.s
+
+$(BUILD)/fastmove.o: src/fastmove.s | $(BUILD)
+	$(CA65) -t nes -g -o $@ src/fastmove.s
 
 $(BUILD)/dpcm.o: src/dpcm.s | $(BUILD)
 	$(CA65) -t nes -g -o $@ src/dpcm.s
