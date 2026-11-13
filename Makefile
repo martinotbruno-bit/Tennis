@@ -16,7 +16,7 @@ BANK2 = assets_tz2
 BANK4 = manual assets_tz4
 BANK6 = assets_nude assets_gm2
 BANK7 = intro teaser
-BANK8 = podium
+BANK8 = podium menuart assets_menu
 BANK9 = credits assets_tz9
 BANK10 = music_data assets_tz10
 BANK11 = assets_persp
@@ -32,6 +32,9 @@ assets/tiles.chr src/assets_data.c src/assets_court.c src/assets_nude.c src/asse
 src/assets_gm.c src/assets_gm2.c: tools/gen_gm.py
 	python3 tools/gen_gm.py
 	python3 tools/gen_assets.py
+
+src/assets_menu.c: tools/gen_menu.py assets/tiles.chr
+	python3 tools/gen_menu.py
 
 src/assets_tz.h src/assets_tz2.c src/assets_tz4.c src/assets_tz9.c src/assets_tz10.c src/assets_tz12.c: tools/gen_teaser.py
 	python3 tools/gen_teaser.py

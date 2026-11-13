@@ -219,6 +219,9 @@ static u8 is_final(void)
     return (u8)((comp_l1[0] == 'F' && comp_l1[6] == 0) || (comp_l2[0] == 'F' && comp_l2[6] == 0));
 }
 
+void menu_deco_begin(void); void deco_title(void); void deco_frame(void); void deco_filet(void); void palmares_build(void);
+extern char deco_str[24];
+extern u8 deco_kind, deco_row;
 static void screen_begin(void)
 {
     ppu_off();
@@ -227,7 +230,18 @@ static void screen_begin(void)
     chr_borrow_restore();            /* arbitre du match : coupe d'origine */
     clear_screen();
     pal_set_menu();
+    bank_call(BANK_PODIUM, menu_deco_begin);   /* police surlignée, ornements dorés */
     spr_begin(); spr_end();
+}
+/* habillage : titre en lettres doublées (rangées 1-2) et filet, attributs
+   de l'écran (kind : 0 texte, 1 configuration), filet du bas (rangée row) */
+static void deco(const char *title, u8 kind, u8 row)
+{
+    u8 i = 0;
+    while ((deco_str[i] = title[i]) != 0) ++i;
+    deco_kind = kind; deco_row = row;
+    bank_call(BANK_PODIUM, deco_title);
+    bank_call(BANK_PODIUM, deco_frame);
 }
 
 static void set_attr_rows(u8 y0, u8 y1, u8 pal)
@@ -286,6 +300,11 @@ static void title_screen(void)
     }
     set_attr_rows(8, 11, 2);
     txt_at(4, 13, "PLATINUM DIAMOND EDITION");
+    set_attr_rows(12, 15, 3);
+    set_attr_rows(24, 27, 3);
+    deco_row = 15; bank_call(BANK_PODIUM, deco_filet);
+    deco_row = 23; bank_call(BANK_PODIUM, deco_filet);
+    pal_buf[9] = 0x27; pal_buf[10] = 0x28; pal_buf[11] = 0x30;   /* logo et balle : couleurs d'origine */
     for (i = 0; i < 4; ++i) txt_at(10, (u8)(16 + i * 2), title_items[i]);
     txt_at(4, 25, "HAUT/BAS PUIS A - START");
     txt_at(4, 27, "(C) 2026 BRUNO MARTINOT");
@@ -297,25 +316,61 @@ static void title_screen(void)
 
 /* ---------------------------------------------------------------------- */
 /* Configuration                                                           */
+static u8 rd_row, rd_n;
+static u8 hl_cur = 0xFF;      /* ligne affichée surlignée ($FF : aucune) */
 static void menu_draw_row(u8 i, u8 direct)
 {
+    txt_off = (u8)(i == cursor ? 0x40 : 0);   /* ligne choisie : police surlignée */
     pad_text(opt_text(vis[i]), 15);
     if (direct) {
         if (vis[i] == O_P2 && (opt_val[O_MODE] == MODE_COMP || opt_val[O_MODE] == MODE_2P_TEAM)) txt_at(3, (u8)(4 + i), "PARTENAIRE");
         else txt_at(3, (u8)(4 + i), opt_label[vis[i]]);
         txt_at(16, (u8)(4 + i), line);
+        if (i == cursor) hl_cur = i;
     }
-    else vbuf_text(16, (u8)(4 + i), line, 15);
+    else {
+        vbuf_text(16, (u8)(4 + i), line, 15);
+        if (i == cursor) hl_cur = 0xFF;     /* valeur changée : flèches redessinées */
+    }
+    txt_off = 0;
+}
+/* ligne i : libellé et valeur, surlignés (on) avec des flèches autour de la
+   valeur, ou normaux ; par le tampon VRAM (0 : pas de place cette trame) */
+static u8 menu_hl_row(u8 i, u8 on)
+{
+    static const char ar[2][2] = { { ' ', ' ' }, { '<', '>' } };
+    if (vram_len + 50 > VBUF_MAX) return 0;
+    txt_off = (u8)(on ? 0x40 : 0);
+    pad_text(vis[i] == O_P2 && (opt_val[O_MODE] == MODE_COMP || opt_val[O_MODE] == MODE_2P_TEAM) ? (const char *)"PARTENAIRE" : (const char *)opt_label[vis[i]], 13);
+    vbuf_text(3, (u8)(4 + i), line, 13);
+    pad_text(opt_text(vis[i]), 15);
+    vbuf_text(16, (u8)(4 + i), line, 15);
+    txt_off = 0;
+    if (vis[i] != O_START) {
+        u8 n = 15;
+        while (n && line[n - 1] == ' ') --n;             /* fin de la valeur */
+        line[0] = ar[on][0]; vbuf_text(15, (u8)(4 + i), line, 1);
+        line[0] = ar[on][1]; vbuf_text((u8)(16 + n), (u8)(4 + i), line, 1);
+    }
+    return 1;
+}
+/* le surlignage suit le curseur (après la réécriture des lignes) */
+static void menu_hl_tick(void)
+{
+    if (rd_row < rd_n) return;
+    if (hl_cur != cursor && hl_cur != 0xFF) { if (hl_cur < nvis && !menu_hl_row(hl_cur, 0)) return; hl_cur = 0xFF; }
+    if (hl_cur == 0xFF && menu_hl_row(cursor, 1)) hl_cur = cursor;
 }
 
 /* Changement de mode (ou de compétition, d'exercice) : la liste des lignes
    change. Au lieu de couper l'écran pour tout reconstruire (éclair noir), on
    réécrit les lignes par le tampon VRAM, deux par trame environ. */
-static u8 rd_row, rd_n;
 static void menu_soft(void)
 {
     u8 old = nvis;
     build_visible();
+    hl_cur = 0xFF;              /* toutes les lignes sont réécrites : surlignage ensuite */
+    if (cursor >= nvis) cursor = 0;
     rd_n = old > nvis ? old : nvis;
     rd_row = 0;
 }
@@ -334,6 +389,7 @@ static void menu_soft_tick(void)
             pad_text("", 15);
         }
         vbuf_text(16, (u8)(4 + i), line, 15);
+        line[0] = ' '; vbuf_text(15, (u8)(4 + i), line, 1); vbuf_text(31, (u8)(4 + i), line, 1);
     }
 }
 
@@ -377,7 +433,7 @@ static void menu_screen(void)
     build_visible();
     rd_row = rd_n = 0;
     screen_begin();
-    txt_at(9, 1, "CONFIGURATION");
+    deco("REGLAGES", 1, 22);
     for (i = 0; i < nvis; ++i) menu_draw_row(i, 1);
     info_k = 0xFF; info_row = 4;
     menu_style_line(1);
@@ -391,11 +447,13 @@ static void menu_screen(void)
 
 static void menu_sprites(void)
 {
+    static const u8 bounce[8] = { 0, 1, 2, 3, 3, 2, 1, 0 };
+    menu_hl_tick();
     spr_begin();
-    spr1(8, (u8)(4 * 8 + cursor * 8), 3, 3);
-    spr_person(212, 31, opt_val[O_P1], 1, (u8)((frame_cnt >> 5) & 1 ? POSE_IDLE : POSE_JOY), 0, 0);
+    spr1(9, (u8)(4 * 8 + cursor * 8 - 1 - bounce[(frame_cnt >> 2) & 7]), (u8)(ball_base + 8), 3);   /* balle qui rebondit */
+    spr_person(28, 29, opt_val[O_P1], 1, (u8)((frame_cnt >> 5) & 1 ? POSE_IDLE : POSE_JOY), 0, 0);
     if (opt_val[O_MODE] <= MODE_2P_TEAM || opt_val[O_MODE] == MODE_DEMO)
-        spr_person(236, 31, opt_val[O_P2], 1, (u8)((frame_cnt >> 5) & 1 ? POSE_JOY : POSE_IDLE), 1, 1);
+        spr_person(220, 29, opt_val[O_P2], 1, (u8)((frame_cnt >> 5) & 1 ? POSE_JOY : POSE_IDLE), 1, 1);
     spr_end();
 }
 
@@ -876,72 +934,14 @@ static void training_results(void)
 
 /* ---------------------------------------------------------------------- */
 /* Palmarès (CDC 12.1-12.2)                                                */
-static u8 pal_page, pal_confirm;
-static void u16_at(u8 x, u8 y, u16 v)
-{
-    char b[6];
-    u8 i = 5;
-    b[5] = 0;
-    do { b[--i] = (char)('0' + v % 10); v /= 10; } while (v && i);
-    while (i) b[--i] = ' ';
-    txt_at(x, y, b);
-}
-
+u8 pal_page;                 /* (lu par menuart.c) */
+static u8 pal_confirm;
 static void palmares_screen(void)
 {
-    u8 i;
-    u16 t;
     SV(sv_check);
     screen_begin();
-    txt_at(10, 1, "PALMARES");
-    if (pal_page == 0) {
-        txt_at(3, 3, "MATCHS        SIMPLE DOUBLE");
-        txt_at(3, 4, "JOUES"); u16_at(15, 4, sv.played[0]); u16_at(22, 4, sv.played[1]);
-        txt_at(3, 5, "GAGNES"); u16_at(15, 5, sv.won[0]); u16_at(22, 5, sv.won[1]);
-        txt_at(3, 6, "PERDUS"); u16_at(15, 6, (u16)(sv.played[0] - sv.won[0])); u16_at(22, 6, (u16)(sv.played[1] - sv.won[1]));
-        txt_at(3, 8, "POINTS GAGNES"); u16_at(22, 8, sv.pts_w);
-        txt_at(3, 9, "POINTS PERDUS"); u16_at(22, 9, sv.pts_l);
-        txt_at(3, 10, "ACES"); u16_at(22, 10, sv.aces);
-        txt_at(3, 11, "DOUBLES FAUTES"); u16_at(22, 11, sv.dfaults);
-        txt_at(3, 12, "COUPS GAGNANTS"); u16_at(22, 12, sv.winners);
-        txt_at(3, 13, "FAUTES"); u16_at(22, 13, sv.errors);
-        t = sv.fs_tot ? (u16)(((unsigned long)sv.fs_in * 100) / sv.fs_tot) : 0;
-        txt_at(3, 14, "1ERES BALLES %"); u16_at(22, 14, t);
-        txt_at(3, 16, "TITRES"); u16_at(22, 16, sv.titles);
-        txt_at(3, 17, "COMPETITIONS"); u16_at(22, 17, sv.comps);
-        txt_at(3, 18, "RECORD ECHANGE"); u16_at(22, 18, sv.best_rally);
-        txt_at(3, 19, "RECORD ACES/MATCH"); u16_at(22, 19, sv.best_aces);
-        /* nombre et pourcentage de réussite */
-        txt_at(20, 20, "NB     %");
-        txt_at(3, 21, "SERVICES CANON"); u16_at(17, 21, sx.ok);
-        u16_at(23, 21, sx.tried ? (u16)(((unsigned long)sx.ok * 100) / sx.tried) : 0);
-        txt_at(3, 22, "COUPS PARFAITS"); u16_at(17, 22, sx.pok);
-        u16_at(23, 22, sx.ptry ? (u16)(((unsigned long)sx.pok * 100) / sx.ptry) : 0);
-    } else if (pal_page == 1) {
-        txt_at(3, 3, "MEILLEURS RESULTATS");
-        for (i = 0; i < NCT; ++i) {
-            txt_at(3, (u8)(5 + i), cname(i));
-            t = i < 5 ? sv.comp_best[i] : sw_best[i - 4];
-            if (t) txt_at(17, (u8)(5 + i), rank_txt[t > 5 ? 5 : t]);
-            else txt_at(17, (u8)(5 + i), "-");
-        }
-        txt_at(3, 12, "HISTORIQUE");
-        for (i = 0; i < sv.hist_n && i < 8; ++i) {
-            txt_at(3, (u8)(13 + i), cname(sv.hist[i][0]));
-            team_label(sv.hist[i][2], 255, line); txt_at(16, (u8)(13 + i), line);
-            line[0] = (char)('0' + sv.hist[i][1]); line[1] = 'E'; line[2] = 0;
-            txt_at(22, (u8)(13 + i), sv.hist[i][1] == 1 ? "1ER" : line);
-        }
-    } else {
-        txt_at(3, 3, "RECORDS D'ENTRAINEMENT");
-        for (i = 0; i < NEX; ++i) {
-            txt_at(3, (u8)(5 + i), ex_name[i]);
-            u16_at(20, (u8)(5 + i), sv.best_train[i]);
-        }
-    }
-    txt_at(2, 24, "GAUCHE/DROITE : PAGE");
-    txt_at(2, 25, "B : RETOUR");
-    txt_at(2, 26, "SELECT X2 : TOUT EFFACER");
+    deco("PALMARES", 0, 24);
+    bank_call(BANK_PODIUM, palmares_build);
     ppu_on();
     scr_state = SS_PALMARES;
 }
