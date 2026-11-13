@@ -2,7 +2,28 @@
 // Usage : node emu_test.mjs ../build/royal_martinot.nes
 import { Emu } from './emu.mjs';
 
-const rom = process.argv[2] ?? '../build/royal_martinot.nes';
+const ARGS = process.argv.slice(2);
+const rom = ARGS.find(a => !a.startsWith('--')) ?? '../build/royal_martinot.nes';
+// Sélection des sections (voir tests/run_tests.mjs) :
+//   --only=bande,plongeon   sections dont le nom contient l'un de ces mots
+//   --sections=0,4,7        sections par numéro (exécution en parallèle)
+//   --list                  liste des sections, sans rien exécuter
+const opt = (k) => { const a = ARGS.find(x => x.startsWith('--' + k + '=')); return a ? a.slice(k.length + 3) : null; };
+const ONLY = (opt('only') ?? '').toLowerCase().split(',').map(t => t.trim()).filter(Boolean);
+const SECTIONS = opt('sections') !== null ? new Set(opt('sections').split(',').filter(Boolean).map(Number)) : null;
+const LIST = ARGS.includes('--list');
+const MARK = !!process.env.TEST_MARKS;              // repères pour run_tests.mjs
+let secIdx = -1, secT0 = 0;
+function secEnd() { if (MARK && secT0) console.log(`\u00a7T ${secIdx} ${((Date.now() - secT0) / 1000).toFixed(1)}`); secT0 = 0; }
+function sec(name) {
+  secEnd();
+  ++secIdx;
+  if (LIST) { console.log(`${secIdx}\t${name}`); return false; }
+  const n = name.toLowerCase();
+  const run = (!SECTIONS || SECTIONS.has(secIdx)) && (!ONLY.length || ONLY.some(t => n.includes(t)));
+  if (run) { if (MARK) console.log(`\u00a7S ${secIdx}`); secT0 = Date.now(); }
+  return run;
+}
 let fails = 0, passes = 0;
 function check(cond, msg) {
   if (cond) { passes++; console.log('  ok   ' + msg); }
@@ -72,6 +93,75 @@ function botStep(e, btns = ['A']) {
   }
 }
 
+// utilitaires partagés par plusieurs sections
+function fullMatch(label, opts, maxFrames, extra) {
+  const e = boot(); startWith(e, opts); allCpu(e);
+  if (extra) extra(e);
+  let lastMs = '', prevMs = -1, same = 0, worst = 0, spGood = true, replays = 0;
+  const ok = runUntil(e, () => {
+    const m = e.peek('ms');
+    if (m === 5 && prevMs !== 5) replays++;
+    prevMs = m;
+    // blocage = ni l'état du match, ni la balle, ni les joueurs ne changent
+    const sig = m + ',' + e.peek16('bx') + ',' + e.peek16('by') + ',' + e.peek16('plx') + ',' + e.peek16('plx', 2);
+    if (sig === lastMs) { same++; worst = Math.max(worst, same); } else { same = 0; lastMs = sig; }
+    // (pendant la construction d'un écran, la pile C contient l'argument de
+    // screens_enter : contrôle seulement pendant le match)
+    if ((e.frames & 255) === 0 && app(e) === AS.MATCH && !spOk(e)) spGood = false;
+    return app(e) === AS.SCREENS;
+  }, maxFrames);
+  e.run(60);   // l'écran de résultats se construit sur quelques trames
+  const pts = e.peek('st_points', 0) + e.peek('st_points', 1);
+  check(ok && scr(e) === SS.RESULTS, `${label} : match terminé en ${(e.frames / 3600).toFixed(1)} min (${pts} points)`);
+  const g = [e.peek('sc_hist', 0), e.peek('sc_hist', 1)];
+  check(e.peek('sc_over') === 1 && Math.max(...g) >= e.peek('cfg', CFG.GAMES) && Math.abs(g[0] - g[1]) >= 1,
+    `${label} : score final valide (${g[0]}-${g[1]})`);
+  check(worst < 600 && spGood && spOk(e), `${label} : ni blocage (immobilité max ${worst} trames) ni pile corrompue`);
+  return { e, replays };
+}
+
+const SURF = ['terre', 'gazon', 'dur', 'moquette', 'plage', 'glace'];
+
+const ENV = ['stade', 'club', 'salle'];
+
+const COND = ['jour', 'nuit', 'pluie'];
+
+let totalReplays = 0;
+
+const EXN = ['frappes', 'déplacements', 'régularité', 'précision', 'volée', 'service', 'joueur fixe', 'personnalisé', 'tutoriel'];
+
+const litScr = (e) => e.peek('ppu_mask') !== 0 && e.peek('fade_lvl') === 0;
+
+const skipIntro = (e) => {
+  runUntil(e, () => litScr(e), 90);
+  if (scr(e) === 10) { e.tap('A'); runUntil(e, () => scr(e) !== 10 && litScr(e), 120); }
+};
+
+function playComp(type, opts, wins) {
+  const e = boot(); startWith(e, Object.assign({ MODE: MODE.COMP, COMP: type, FMT: 3 }, opts));
+  skipIntro(e);
+  let matches = 0, code = '';
+  const CN = ['TOURNOI', 'POULES', 'CHAMPIONNAT', 'SAISON', 'PERSONNALISE', 'GRAND MARTINOT', 'MARTINWORLD'][type];
+  check(scr(e) === SS.COMP && (type === 5 ? e.text(3, 1, 17) === 'LE GRAND MARTINOT' : type === 6 ? e.text(3, 1, 16) === 'MARTINWORLD TOUR' : e.text(18, 1, CN.length) === CN), `${CN} : écran d'étape (titre lisible)`);
+  while (scr(e) === SS.COMP && matches < 24) {
+    if (matches === 1) code = e.text(10, 21, 15).replace(/ /g, '');
+    e.tap('A'); runUntil(e, () => scr(e) === SS.PRESENT, 60); e.run(3); e.tap('A'); e.run(30);
+    if (app(e) !== AS.MATCH) break;
+    // victoire forcée du joueur pour parcourir la compétition
+    e.poke('sc_winner', wins(matches) ? 0 : 1); e.poke('sc_over', 1); e.poke('ms', 4); e.poke('ms_timer', 2);
+    runUntil(e, () => app(e) === AS.SCREENS, 60); e.run(20);
+    matches++;
+    e.tap('A'); e.run(40);
+    skipIntro(e);
+  }
+  return { e, matches, code };
+}
+
+const oamTiles = (e) => { const t = new Set(); for (let i = 0; i < 64; i++) { const y = e.peek('oam_buf', i * 4); if (y < 0xEF) t.add(e.peek('oam_buf', i * 4 + 1)); } return t; };
+
+const msgText = (e) => { let t = ''; for (let i = 0; i < 14; i++) t += String.fromCharCode(e.peek('msg1', i)); return t.trim(); };
+
+if (sec('Générique de lancement')) {
 console.log('Générique de lancement');
 {
   const e = new Emu(rom); e.run(100);
@@ -140,6 +230,8 @@ console.log('Générique de lancement');
   check(bad === 0, `générique, menus, transitions : palette toujours écrite hors de l'affichage (${bad} écriture(s) fautive(s))`);
 }
 
+}
+if (sec('Démarrage et cartouche MMC1')) {
 console.log('Démarrage et cartouche MMC1');
 {
   const e = boot();
@@ -155,6 +247,8 @@ console.log('Démarrage et cartouche MMC1');
   check(e.text(10, 16, 5) === 'JOUER', 'menu du titre affiché');
 }
 
+}
+if (sec("Mode d'emploi")) {
 console.log("Mode d'emploi");
 {
   const e = boot();
@@ -169,6 +263,8 @@ console.log("Mode d'emploi");
   check(app(e) === AS.SCREENS && scr(e) === SS.TITLE, 'B revient au titre');
 }
 
+}
+if (sec('Menu de configuration')) {
 console.log('Menu de configuration');
 {
   const e = boot(); toMenu(e);
@@ -181,6 +277,8 @@ console.log('Menu de configuration');
   check(scr(e) === SS.TITLE, 'B revient au titre');
 }
 
+}
+if (sec('Mode en équipe (double)')) {
 console.log('Mode en équipe (double)');
 {
   const e = boot(); toMenu(e); setOpts(e, { MODE: MODE.TEAM, TYPE: 0, CPART: 1 }); e.tap('B'); e.run(5); toMenu(e);
@@ -200,6 +298,8 @@ console.log('Mode en équipe (double)');
     'partenaire joué par l\'ordinateur (JOUE PAR : CPU)');
 }
 
+}
+if (sec('Court Margaux')) {
 console.log('Court Margaux');
 {
   const e = boot(); toMenu(e);
@@ -223,6 +323,8 @@ console.log('Court Margaux');
   check(e.peek('crowd_timer') === 0, 'coeurs, fleurs et étoiles scintillent puis se reposent');
 }
 
+}
+if (sec('Présentation et pause')) {
 console.log('Présentation et pause');
 {
   const e = boot(); toMenu(e); e.tap('START'); e.run(10);
@@ -237,6 +339,8 @@ console.log('Présentation et pause');
   check(app(e) === AS.SCREENS && scr(e) === SS.MENU, 'QUITTER ramène au menu');
 }
 
+}
+if (sec('Service : lancer visible pour le joueur du haut')) {
 console.log('Service : lancer visible pour le joueur du haut');
 {
   const e = boot(); startWith(e, { MODE: MODE.P2 });
@@ -253,6 +357,8 @@ console.log('Service : lancer visible pour le joueur du haut');
   check(e.peek('hitter') === 1, 'le serveur du haut est bien le frappeur');
 }
 
+}
+if (sec('Balle ratée : elle sort de l\'écran')) {
 console.log('Balle ratée : elle sort de l\'écran');
 {
   const e = boot(); startWith(e, {});
@@ -270,6 +376,8 @@ console.log('Balle ratée : elle sort de l\'écran');
   check(gone && maxY > 236, `la balle ratée continue jusqu'au bas de l'écran puis disparaît (y max ${maxY.toFixed(0)})`);
 }
 
+}
+if (sec('Filet effleuré au service (let)')) {
 console.log('Filet effleuré au service (let)');
 {
   const e = boot(); startWith(e, {});
@@ -287,37 +395,10 @@ console.log('Filet effleuré au service (let)');
   check(e.peek('end_reason') === 3 && e.peek('faults') === 0, 'service à remettre (LET), pas de faute');
 }
 
-function fullMatch(label, opts, maxFrames, extra) {
-  const e = boot(); startWith(e, opts); allCpu(e);
-  if (extra) extra(e);
-  let lastMs = '', prevMs = -1, same = 0, worst = 0, spGood = true, replays = 0;
-  const ok = runUntil(e, () => {
-    const m = e.peek('ms');
-    if (m === 5 && prevMs !== 5) replays++;
-    prevMs = m;
-    // blocage = ni l'état du match, ni la balle, ni les joueurs ne changent
-    const sig = m + ',' + e.peek16('bx') + ',' + e.peek16('by') + ',' + e.peek16('plx') + ',' + e.peek16('plx', 2);
-    if (sig === lastMs) { same++; worst = Math.max(worst, same); } else { same = 0; lastMs = sig; }
-    // (pendant la construction d'un écran, la pile C contient l'argument de
-    // screens_enter : contrôle seulement pendant le match)
-    if ((e.frames & 255) === 0 && app(e) === AS.MATCH && !spOk(e)) spGood = false;
-    return app(e) === AS.SCREENS;
-  }, maxFrames);
-  e.run(60);   // l'écran de résultats se construit sur quelques trames
-  const pts = e.peek('st_points', 0) + e.peek('st_points', 1);
-  check(ok && scr(e) === SS.RESULTS, `${label} : match terminé en ${(e.frames / 3600).toFixed(1)} min (${pts} points)`);
-  const g = [e.peek('sc_hist', 0), e.peek('sc_hist', 1)];
-  check(e.peek('sc_over') === 1 && Math.max(...g) >= e.peek('cfg', CFG.GAMES) && Math.abs(g[0] - g[1]) >= 1,
-    `${label} : score final valide (${g[0]}-${g[1]})`);
-  check(worst < 600 && spGood && spOk(e), `${label} : ni blocage (immobilité max ${worst} trames) ni pile corrompue`);
-  return { e, replays };
-}
 
+}
+if (sec('Matchs complets CPU contre CPU (format rapide)')) {
 console.log('Matchs complets CPU contre CPU (format rapide)');
-const SURF = ['terre', 'gazon', 'dur', 'moquette', 'plage', 'glace'];
-const ENV = ['stade', 'club', 'salle'];
-const COND = ['jour', 'nuit', 'pluie'];
-let totalReplays = 0;
 for (let s = 0; s < 6; s++) {
   const r = fullMatch(`simple ${SURF[s]}/${ENV[s % 3]}/${COND[(s + 1) % 3]}`,
     { FMT: 3, SURF: s, ENV: s % 3, COND: (s + 1) % 3, LEVEL: s % 3, P2: (s + 4) % 10 }, 60 * 60 * 25);
@@ -329,6 +410,8 @@ for (let s = 0; s < 6; s++) {
 }
 check(totalReplays > 0, `ralentis déclenchés sur les beaux points (${totalReplays})`);
 
+}
+if (sec('Revanche et palmarès')) {
 console.log('Revanche et palmarès');
 {
   const e = boot(); startWith(e, { FMT: 3 });
@@ -352,8 +435,9 @@ console.log('Revanche et palmarès');
   check(e.text(3, 3, 12) === "RECORDS D'EN", "page des records d'entraînement");
 }
 
+}
+if (sec('Entraînement : 9 exercices')) {
 console.log('Entraînement : 9 exercices');
-const EXN = ['frappes', 'déplacements', 'régularité', 'précision', 'volée', 'service', 'joueur fixe', 'personnalisé', 'tutoriel'];
 for (let ex = 0; ex < 9; ex++) {
   const e = boot(); startWith(e, { MODE: MODE.TRAIN, EX: ex, COUNT: 0 });
   let tut = [ ['A'], ['B', 'DOWN'], ['B', 'UP'], ['A', 'LEFT'] ];
@@ -373,32 +457,10 @@ for (let ex = 0; ex < 9; ex++) {
     `${EXN[ex]} : exercice terminé (${e.peek('tr_score')} pts / ${e.peek('tr_total')})`);
 }
 
+}
+if (sec('Compétitions')) {
 console.log('Compétitions');
 // Grand Martinot : écran d'annonce d'un tournoi (état 10) avant son écran d'étape
-const litScr = (e) => e.peek('ppu_mask') !== 0 && e.peek('fade_lvl') === 0;
-const skipIntro = (e) => {
-  runUntil(e, () => litScr(e), 90);
-  if (scr(e) === 10) { e.tap('A'); runUntil(e, () => scr(e) !== 10 && litScr(e), 120); }
-};
-function playComp(type, opts, wins) {
-  const e = boot(); startWith(e, Object.assign({ MODE: MODE.COMP, COMP: type, FMT: 3 }, opts));
-  skipIntro(e);
-  let matches = 0, code = '';
-  const CN = ['TOURNOI', 'POULES', 'CHAMPIONNAT', 'SAISON', 'PERSONNALISE', 'GRAND MARTINOT', 'MARTINWORLD'][type];
-  check(scr(e) === SS.COMP && (type === 5 ? e.text(3, 1, 17) === 'LE GRAND MARTINOT' : type === 6 ? e.text(3, 1, 16) === 'MARTINWORLD TOUR' : e.text(18, 1, CN.length) === CN), `${CN} : écran d'étape (titre lisible)`);
-  while (scr(e) === SS.COMP && matches < 24) {
-    if (matches === 1) code = e.text(10, 21, 15).replace(/ /g, '');
-    e.tap('A'); runUntil(e, () => scr(e) === SS.PRESENT, 60); e.run(3); e.tap('A'); e.run(30);
-    if (app(e) !== AS.MATCH) break;
-    // victoire forcée du joueur pour parcourir la compétition
-    e.poke('sc_winner', wins(matches) ? 0 : 1); e.poke('sc_over', 1); e.poke('ms', 4); e.poke('ms_timer', 2);
-    runUntil(e, () => app(e) === AS.SCREENS, 60); e.run(20);
-    matches++;
-    e.tap('A'); e.run(40);
-    skipIntro(e);
-  }
-  return { e, matches, code };
-}
 {
   // le Grand Martinot : 4 tournois de 16 (huitièmes, quarts, demis, finale),
   // dur, terre battue, gazon, dur ; les 16 matchs gagnés : Grand Chelem
@@ -593,6 +655,8 @@ function playComp(type, opts, wins) {
   check(matches === 2 && e.peek('c_rank') === 1, 'personnalisé (4 joueurs, progressif, surfaces variées)');
 }
 
+}
+if (sec('Code de reprise')) {
 console.log('Code de reprise');
 {
   const e = boot(); startWith(e, { MODE: MODE.COMP, COMP: 2, P1: 6, SURF: 4, ENV: 1, COND: 2 });
@@ -617,6 +681,8 @@ console.log('Code de reprise');
   check(scr(g) === SS.CODE, 'code invalide refusé');
 }
 
+}
+if (sec('Compétition en double, levée de coupe et club nudiste')) {
 console.log('Compétition en double, levée de coupe et club nudiste');
 {
   const e = boot();
@@ -704,6 +770,8 @@ console.log('Compétition en double, levée de coupe et club nudiste');
   check(scr(f) === SS.COMP && f.peek('nude_unlocked') === 1, `code ${code} (1 trophée) : club nudiste débloqué`);
 }
 
+}
+if (sec('Compétition en double à deux joueurs humains')) {
 console.log('Compétition en double à deux joueurs humains');
 {
   const e = boot(); startWith(e, { MODE: MODE.COMP, COMP: 2, TYPE: 1, P2: 3, CPART: 1 });
@@ -733,6 +801,8 @@ console.log('Compétition en double à deux joueurs humains');
     `code ${code} : double à 2 joueurs restauré`);
 }
 
+}
+if (sec('Vitesse du jeu, coups gagnants, smash sauté, musiques')) {
 console.log('Vitesse du jeu, coups gagnants, smash sauté, musiques');
 {
   // vitesse : nombre de trames logiques du match pour 120 trames affichées
@@ -871,9 +941,9 @@ console.log('Vitesse du jeu, coups gagnants, smash sauté, musiques');
   check(app(e) === AS.MATCH && e.peek('music_cur') === 0, 'finale : silence pendant le match');
 }
 
+}
+if (sec('Finitions : ralentis, IA, effets, son, réglages mémorisés')) {
 console.log('Finitions : ralentis, IA, effets, son, réglages mémorisés');
-const oamTiles = (e) => { const t = new Set(); for (let i = 0; i < 64; i++) { const y = e.peek('oam_buf', i * 4); if (y < 0xEF) t.add(e.peek('oam_buf', i * 4 + 1)); } return t; };
-const msgText = (e) => { let t = ''; for (let i = 0; i < 14; i++) t += String.fromCharCode(e.peek('msg1', i)); return t.trim(); };
 {
   // annonces du club nudiste : jamais plus de 14 caractères (bandeau)
   const fs = await import('fs');
@@ -1011,6 +1081,8 @@ const msgText = (e) => { let t = ''; for (let i = 0; i < 14; i++) t += String.fr
   check(f.peek16('sv', 4) === e.peek16('sv', 4), 'palmarès conservé à côté des réglages');
 }
 
+}
+if (sec('Margaux jouable et fatigue')) {
 console.log('Margaux jouable et fatigue');
 {
   // 1 joueur contre CPU : toujours en simple (le double avec partenaire CPU
@@ -1196,6 +1268,8 @@ console.log('Margaux jouable et fatigue');
   }
   check(faults > 0 && beeps === faults, `service faux : bip (${beeps}/${faults})`);
 }
+}
+if (sec('Service canon')) {
 console.log('Service canon');
 {
   // frappe A k trames après le lancer : seules 2 trames consécutives (le sommet) donnent un service canon
@@ -1223,6 +1297,8 @@ console.log('Service canon');
   check(serves >= 20 && cpu === 0, `CPU Normal : aucun service canon sur ${serves} services`);
 }
 
+}
+if (sec('Frappe parfaite')) {
 console.log('Frappe parfaite');
 {
   // balle qui arrive sur le joueur du bas après rebond ; A maintenu puis relâché k trames avant
@@ -1290,6 +1366,8 @@ console.log('Frappe parfaite');
   check(!collee.perf && !ext.perf && collee.hit && ext.hit, 'balle collée au corps ou en extension : frappe normale');
 }
 
+}
+if (sec('Entraînement : retour sur le timing')) {
 console.log('Entraînement : retour sur le timing');
 {
   const msg2 = (e) => { let t = ''; for (let i = 0; i < 14; i++) t += String.fromCharCode(e.peek('msg2', i)); return t.replace(/\0/g, ' ').trim(); };
@@ -1322,6 +1400,8 @@ console.log('Entraînement : retour sur le timing');
     `coup droit : « ${a} », « ${b} », « ${c} », « ${d} »`);
 }
 
+}
+if (sec('Fondus entre les écrans')) {
 console.log('Fondus entre les écrans');
 {
   const e = boot(); e.run(20);
@@ -1333,6 +1413,8 @@ console.log('Fondus entre les écrans');
   check(max === 64 && last === 0 && steps.size >= 4 && scr(e) === SS.MENU, `fondu au noir puis retour progressif (${[...new Set(seen)].join(' > ')})`);
 }
 
+}
+if (sec('Récapitulatif du score')) {
 console.log('Récapitulatif du score');
 {
   // match en 3 sets ; on avance le score à 5-0 pour atteindre vite la fin du 1er set
@@ -1366,6 +1448,8 @@ console.log('Récapitulatif du score');
   check(after !== '', `après un jeu : « ${after} »`);
 }
 
+}
+if (sec('Bandeau devant le joueur du haut')) {
 console.log('Bandeau devant le joueur du haut');
 {
   const e = boot(); startWith(e, { FMT: 3 }); allCpu(e);
@@ -1386,6 +1470,8 @@ console.log('Bandeau devant le joueur du haut');
   check(ok && !bad, 'joueur du haut au service : sa tête passe derrière le texte du bandeau, le reste du sprite devant le court');
 }
 
+}
+if (sec('Panneaux : tuiles empruntées rétablies')) {
 console.log('Panneaux : tuiles empruntées rétablies');
 {
   // club nudiste, puis stade dans la même partie : les tuiles du panneau retrouvent leur dessin
@@ -1402,6 +1488,8 @@ console.log('Panneaux : tuiles empruntées rétablies');
   check(atNude && app(e) === AS.MATCH && chr('sign2_orig'), 'club nudiste puis stade : décor d\'origine rétabli');
 }
 
+}
+if (sec('Filet qui tremble')) {
 console.log('Filet qui tremble');
 {
   const e = boot(); startWith(e, { FMT: 3 }); allCpu(e);
@@ -1425,6 +1513,8 @@ console.log('Filet qui tremble');
   check(shaken && rest && e.peek('net_shake') === 0, 'balle dans le filet : les mailles tremblent puis reviennent au repos');
 }
 
+}
+if (sec('Rotation des sprites (double)')) {
 console.log('Rotation des sprites (double)');
 {
   // 4 joueurs près du filet : jusqu'à 12 sprites sur une ligne. Avec la rotation, chaque
@@ -1450,6 +1540,8 @@ console.log('Rotation des sprites (double)');
   check(g.peek('spr_rot') === 0, 'simple : ordre des sprites fixe (pas de rotation inutile)');
 }
 
+}
+if (sec('Victoire : sauts de joie et confettis')) {
 console.log('Victoire : sauts de joie et confettis');
 {
   const confetti = boot().peek('confetti_tile');
@@ -1492,6 +1584,8 @@ console.log('Victoire : sauts de joie et confettis');
   f.poke('sc_winner', 1); f.poke('ms_timer', 160); f.poke('ms', 4); f.run(10);
   check(!oamTiles(f).has(confetti), 'défaite contre le CPU : pas de confettis');
 }
+}
+if (sec('Balle : couleur, ombre, rebond, effet, filet')) {
 console.log('Balle : couleur, ombre, rebond, effet, filet');
 {
   const ballSpr = (e) => { const r = []; for (let i = 0; i < 64; i++) { const y = e.peek('oam_buf', i * 4); if (y < 0xEF) r.push({ t: e.peek('oam_buf', i * 4 + 1), a: e.peek('oam_buf', i * 4 + 2) & 3, x: e.peek('oam_buf', i * 4 + 3), y: y + 1 }); } return r; };
@@ -1533,6 +1627,8 @@ console.log('Balle : couleur, ombre, rebond, effet, filet');
   setBall(e, 140, 136, 4, 0, 0, 0); e.run(3); const front = ballSpr(e).some((q) => q.t >= base && q.t < base + 4);
   check(behind && front, 'balle derrière le filet vue à travers les mailles (camp du haut), devant dans le camp du bas');
 }
+}
+if (sec('Animation des joueurs')) {
 console.log('Animation des joueurs');
 {
   // tuiles : réserve commune (rangées partagées), versions normale et au naturel de même taille
@@ -1611,6 +1707,8 @@ console.log('Animation des joueurs');
   let found = false; for (let i = 0; i < 160 * 16; i += 16) if ((e.nes.cpu.mem[rb + i + 6] & 31) <= 21) found = true;
   check(found, 'ralentis : poses sur 5 bits');
 }
+}
+if (sec('IA : tactique selon le score')) {
 console.log('IA : tactique selon le score');
 {
   // mené de 3 jeux : le CPU prend des risques ; devant : il joue placé ;
@@ -1632,6 +1730,8 @@ console.log('IA : tactique selon le score');
   const s2 = e.peek('sc_server'), bp = e.peek('sc_points', s2 ^ 1) >= 3 && e.peek('sc_points', s2 ^ 1) > e.peek('sc_points', s2);
   check(!bp || e.peek('tac_safe', s2) === 1, `balle de break contre le serveur : première balle assurée (${bp ? 'balle de break' : 'situation passée'})`);
 }
+}
+if (sec('Son sur console réelle : balayage des carrés')) {
 console.log('Son sur console réelle : balayage des carrés');
 {
   // Sur la vraie NES, l'unité de balayage d'un canal carré coupe la note si
@@ -1652,6 +1752,8 @@ console.log('Son sur console réelle : balayage des carrés');
   e.poke('sc_winner', 0); e.poke('ms_timer', 160); e.poke('ms', 4); e.run(170);   // feux d'artifice
   check(bad.length === 0, `aucune note coupée par l'unité de balayage sur console réelle${bad.length ? ' (périodes ' + [...new Set(bad)].join(', ') + ')' : ''}`);
 }
+}
+if (sec('Vue en perspective (option VUE)')) {
 console.log('Vue en perspective (option VUE)');
 {
   // menu : ligne VUE, à plat par défaut
@@ -1700,6 +1802,8 @@ console.log('Vue en perspective (option VUE)');
   const done = runUntil(d, () => app(d) === AS.SCREENS, 60 * 60 * 25); d.run(30);
   check(done && d.peek('persp') === 0, 'match complet en perspective (double, château), projection coupée ensuite');
 }
+}
+if (sec('Plongeon')) {
 console.log('Plongeon');
 {
   // Le plongeon part AVANT la frappe ; il se décide au lâcher du bouton :
@@ -1784,6 +1888,8 @@ console.log('Plongeon');
   }
   check(dives >= 5 && touched * 4 >= dives * 3 && outDive === 0, `ordinateur : ${dives} plongeons, ${touched} balles touchées, ${outDive} sur une balle qui sort`);
 }
+}
+if (sec('Séquences animées du match')) {
 console.log('Séquences animées du match');
 {
   // entrée des joueurs (tunnel, salut, tirage au sort), changement de côté
@@ -1879,6 +1985,8 @@ console.log('Séquences animées du match');
     check(shake && close && salute && app(e) !== AS.MATCH && frames < 700, `${dbl ? 'double' : 'simple'} : poignée de main au filet, salut à l'arbitre, puis les résultats (${frames} trames)`);
   }
 }
+}
+if (sec('Bras devant le buste : vue de dos')) {
 console.log('Bras devant le buste : vue de dos');
 {
   // gestes où un bras passe devant le buste : de face, le bras est visible ;
@@ -1907,6 +2015,8 @@ console.log('Bras devant le buste : vue de dos');
   check(back >= 5 && backOk === back && front >= 5 && frontOk === front,
     `vu de dos : buste « bras caché » chargé à la volée (${backOk}/${back}) ; vu de face : bras visible (${frontOk}/${front})`);
 }
+}
+if (sec('Format du Grand Martinot et du Martinworld Tour')) {
 console.log('Format du Grand Martinot et du Martinworld Tour');
 for (const type of [5, 6]) {
   // 3 sets, et la finale de chaque tournoi en 5 sets ; ligne FORMAT absente du menu
@@ -1924,6 +2034,8 @@ for (const type of [5, 6]) {
   const m = boot(); toMenu(m); setOpts(m, { MODE: MODE.COMP, COMP: type }); m.tap('B'); m.run(30); toMenu(m); m.run(10);
   check(ok && rowOf(m, O.FMT) < 0, `${type === 5 ? 'Grand Martinot' : 'Martinworld Tour'} : 3 sets, finales en 5 sets, FORMAT imposé (${seen.join(' ')})`);
 }
+}
+if (sec('Bande-annonce du Grand Martinot et du Martinworld Tour')) {
 console.log('Bande-annonce du Grand Martinot et du Martinworld Tour');
 for (const type of [5, 6]) {
   // au lancement : 4 plans en gros plan, puis le titre, sur le riff de rock ;
@@ -1953,6 +2065,8 @@ for (const type of [5, 6]) {
   runUntil(a, () => scr(a) === 11, 120); a.run(20); a.tap('A'); runUntil(a, () => scr(a) === 10, 60);
   check(scr(a) === 10, `${name} : A passe la bande-annonce`);
 }
+}
+if (sec('Cérémonies de fin de compétition')) {
 console.log('Cérémonies de fin de compétition');
 {
   // compétition classique gagnée : remise des médailles (3e, 2e, puis 1er
@@ -1993,6 +2107,8 @@ for (const type of [5, 6]) {
   e.tap('A'); runUntil(e, () => app(e) === 4, 180);
   check(app(e) === 4, `${name} : puis le générique de fin`);
 }
+}
+if (sec('Revers et jeu de tuiles par phase')) {
 console.log('Revers et jeu de tuiles par phase');
 {
   // match CPU : préparation, impact et fin du revers à deux mains ; le jeu
@@ -2018,6 +2134,8 @@ console.log('Revers et jeu de tuiles par phase');
   let d = 0; for (let i = 0; i < 34 * 16; i++) if (e.nes.ppu.vramMem[base + i] !== rom2[base + i]) d++;
   check(d === 0, `écrans : tuiles des célébrations rétablies (${d} octet(s) différent(s))`);
 }
+}
+if (sec('Dérapages selon la surface')) {
 console.log('Dérapages selon la surface');
 {
   // le joueur court 12 trames vers la droite puis lâche la croix
@@ -2037,11 +2155,16 @@ console.log('Dérapages selon la surface');
   check(s.glide === 0 && s.start < g.start - 1 && s.fx > 0, `sable : départ lourd (${s.start.toFixed(1)} px en 2 trames contre ${g.start.toFixed(1)}), arrêt net, gerbe`);
   check(i.glide > 3 && i.glide < 10 && i.start < g.start - 1 && i.fx > 0, `glace : départ progressif, glissade de ${i.glide.toFixed(1)} px, éclats`);
 }
+}
+if (sec('Compensation 50 Hz (PAL)')) {
 console.log('Compensation 50 Hz (PAL)');
 {
   const e = boot(); e.poke('is_pal', 1); startWith(e, { FMT: 3 }); allCpu(e);
   check(runUntil(e, () => app(e) === AS.SCREENS, 60 * 60 * 25), 'match complet en mode 50 Hz');
 }
 
+}
+secEnd();
+if (LIST) process.exit(0);
 console.log(`\n${passes} vérifications réussies, ${fails} échec(s) ; pile contrôlée ${spChecks} fois`);
 process.exit(fails ? 1 : 0);

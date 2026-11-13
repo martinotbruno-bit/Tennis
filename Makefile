@@ -89,9 +89,14 @@ test: $(ROM)
 	python3 tools/contrast.py 25
 	gcc -Wall -Wextra -o $(BUILD)/rules_test tests/rules_test.c src/rules.c && $(BUILD)/rules_test
 	gcc -Wall -Wextra -O2 -o $(BUILD)/password_test tests/password_test.c src/password.c && $(BUILD)/password_test
-	cd tests && npm install --silent --no-audit --no-fund && node emu_test.mjs ../$(ROM)
+	cd tests && npm install --silent --no-audit --no-fund && node run_tests.mjs ../$(ROM)
+
+# contrôle rapide d'une modification localisée : sections dont le nom contient
+# l'un des mots de T (ex. make test-only T=bande-annonce,plongeon)
+test-only: $(ROM)
+	cd tests && node run_tests.mjs ../$(ROM) --only=$(T)
 
 clean:
 	rm -rf $(BUILD)
 
-.PHONY: all test clean
+.PHONY: all test test-only clean
