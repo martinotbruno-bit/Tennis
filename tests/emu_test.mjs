@@ -436,6 +436,11 @@ console.log('Ralenti : gros plan et zoom');
   let rep = 0, hl = 0, pm = 0;
   for (let f = 0; f < 60 * 60 * 4; f++) { n.run(1); const m = n.peek('ms'); if (m === 5 && pm !== 5) rep++; if (n.peek('hl_mode')) hl++; pm = m; }
   check(rep > 0 && hl === 0, `club nudiste : ralentis (${rep}) sans gros plan ni zoom`);
+  // réglage RALENTIS « OUI, SIMPLE » (2.69) : ralentis sans gros plan ni zoom
+  const q = boot(); startWith(q, { FMT: 3, REPLAY: 2 }); allCpu(q);
+  let rq = 0, hq = 0, pq = 0;
+  for (let f = 0; f < 60 * 60 * 4; f++) { q.run(1); const m = q.peek('ms'); if (m === 5 && pq !== 5) rq++; if (q.peek('hl_mode')) hq++; pq = m; }
+  check(rq > 0 && hq === 0, `RALENTIS « OUI, SIMPLE » : ralentis (${rq}) sans gros plan ni zoom`);
 }
 }
 if (sec('Présentation et pause')) {

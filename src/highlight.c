@@ -95,7 +95,7 @@ static u8 hl_fresh(u16 f)
 }
 void hl_check(void)
 {
-    if (cfg.env == ENV_NUDE) { hl_sok = hl_sbok = 0; return; }   /* (club nudiste : ni gros plan habillé, ni sprites agrandis) */
+    if (cfg.env == ENV_NUDE || cfg.replays == 2) { hl_sok = hl_sbok = 0; return; }   /* (club nudiste ; réglage « OUI, SIMPLE ») */   /* (club nudiste : ni gros plan habillé, ni sprites agrandis) */
     /* frappe décisive plus ancienne que le ralenti (lob, long échange
        conclu par une faute adverse) : le gros plan ouvre le ralenti (son
        image ne dépend pas de la trame) */

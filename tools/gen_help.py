@@ -41,7 +41,8 @@ H = {
          ("TROIS SETS GAGNANTS :", "LE GRAND FORMAT."),
          ("SETS DE 4 JEUX :", "UN MATCH EXPRESS.")],
  'REPLAY': [("PAS DE RALENTI.", ""),
-            ("RALENTI AUTOMATIQUE APRES", "LES PLUS BEAUX POINTS.")],
+            ("RALENTI TELE : GROS PLAN DU", "COUP, ZOOM SUR LE REBOND."),
+            ("RALENTI SIMPLE, SANS GROS", "PLAN NI ZOOM (PLUS COURT).")],
  'COMP': [("", "")],     # (explication en 4 lignes, banque 5)
  'CSIZE': [("TOURNOI A 4 JOUEURS :", "DEMI-FINALE ET FINALE."),
            ("TOURNOI A 8 JOUEURS :", "QUART, DEMI ET FINALE.")],

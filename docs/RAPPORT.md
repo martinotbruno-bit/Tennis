@@ -11,6 +11,7 @@ Comme l'exige le CDC (§ 17.5), ce rapport distingue ce qui est **réalisé**, *
 | Demande | Réalisation |
 |---|---|
 | Améliorer d'autres choses, au choix, en tirant parti de la nouvelle cartouche | **Portrait du vainqueur** en fin de match : avant les résultats, le vainqueur en grand, à ses couleurs (images haute définition), en pied bras levés sous les confettis avec son nom, puis en gros plan (en double, son partenaire) ; A passe. **Plongeon** : le gros plan du ralenti montre l'image de glissade quand le point est gagné sur un plongeon. **Écran des résultats** : le tableau des sets passait sous les lettres du titre (défaut ancien) ; mise en page reprise, joueurs sous les statistiques. Image : `docs/vainqueur_269.png`. Tests : portrait en simple et en vrai double |
+| (réglage) | La ligne RALENTIS propose trois choix : NON ; OUI, TELE (gros plan et zoom) ; OUI, SIMPLE (le ralenti seul, plus court, pour qui trouve la mise en scène longue). Image : `docs/reglage_ralentis_269.png`. Test ajouté |
 | (écrans) | Écran de fin de set harmonisé avec les autres (titre doré, cadre, « 1ER SET POUR ALEX » en or). Image : `docs/fin_de_set_269.png` |
 | (fiabilité) | Second émulateur, plus précis que jsnes : FCEUX (moteur PPU au point près), piloté par script (`tools/fceux_check.py`). Il confirme la glissade de l'affiche VS (lignes paires et impaires), le gros plan, le zoom ×2 et le retour au court, à plat et en perspective, ainsi que le démarrage de la cartouche MMC3 de 512 Ko. Ce n'est pas une console, mais c'est une validation indépendante |
 | (zoom du rebond) | La trace de la balle n'apparaissait pas (plus de 8 sprites sur sa ligne) et la balle agrandie, plus large que le point jugé, chevauchait la ligne d'une balle annoncée dehors. Désormais : trace nette, centrée sur le point jugé par l'arbitre, joueurs seuls agrandis. Image : `docs/trace_269.png` |
@@ -598,7 +599,7 @@ Pour loger ce contenu, la cartouche passe de NROM (32 Ko) à **MMC1** : 128 Ko d
 | Relecture des textes (`check_texts.py`) | 0 problème |
 | Contraste (`contrast.py 25`) | 0 paire sous ΔE 25 (personnages, courts, balle, tenues) |
 | Profil CPU, double, 6 000 trames | 27 trames d'échange en dépassement (0,45 %), sans défaut d'image |
-| Compilation | Reproductible : SHA-256 `591e0879428ce5351281b49fafd629f238c85de273779be4aa07cd5665fc0331` sur deux compilations propres |
+| Compilation | Reproductible : SHA-256 `1fac00f16836c2468f71032536a2b45384ccb457d18c5773ab87544cea42a5d5` sur deux compilations propres |
 
 ## 3. Conformité par section du CDC
 

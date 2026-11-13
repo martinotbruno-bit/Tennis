@@ -67,7 +67,7 @@ u8 scr_state;
 #define NMODES       6
 
 u8 opt_val[NOPT] = { 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 2, 1, 0, 1, 0, 1, 0, 1, 0 };
-static const u8 opt_max[NOPT] = { 1, NMODES, 2, NCHARS, NCHARS, 3, NSURF, NENV, 3, 4, 2, NCT, 2, 2, 2, NEX, 4, 3, 3, 3, 2, 3, 3, 2, 2 };
+static const u8 opt_max[NOPT] = { 1, NMODES, 2, NCHARS, NCHARS, 3, NSURF, NENV, 3, 4, 3, NCT, 2, 2, 2, NEX, 4, 3, 3, 3, 2, 3, 3, 2, 2 };
 static const char * const opt_label[NOPT] = {
     "COMMENCER", "MODE", "JEU", "JOUEUR 1", "JOUEUR 2", "NIVEAU CPU", "SURFACE", "LIEU",
     "CONDITIONS", "FORMAT", "RALENTIS", "COMPETITION", "JOUEURS", "ADVERSAIRES", "SURFACES",
@@ -179,7 +179,7 @@ static const char *opt_text(u8 o)
         if (opt_val[O_ENV] == ENV_HALL && v == COND_RAIN) return "PLUIE > JOUR";
         return cond_name[v];
     case O_FMT:    return fmt_name[v];
-    case O_REPLAY: return v ? "OUI" : "NON";
+    case O_REPLAY: return v == 0 ? "NON" : v == 1 ? "OUI, TELE" : "OUI, SIMPLE";   /* (2.69 : 1 avec gros plan et zoom) */
     case O_COMP:   return cname(v);
     case O_CSIZE:  return v ? "8" : "4";
     case O_CPROG:  return v ? "PROGRESSIFS" : "NIVEAU FIXE";
