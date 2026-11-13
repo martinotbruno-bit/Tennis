@@ -42,7 +42,7 @@ static void attr_rows(u8 y0, u8 y1, u8 pal)
 /* --- lettre « N » du logo en sprites (pour la faire tomber) ------------- */
 /* Les 4 tuiles de la lettre sont copiées dans la table des sprites, à la
    place des tuiles de la coupe (inutilisée ici), restaurées à la fin. */
-#pragma bss-name(push, "WBSS")
+#pragma bss-name(push, "SAVEDATA")    /* (version 2.61 : zone de sauvegarde libre, hors du bloc sauvegardé ; libère la RAM de travail) */
 static u8 cup_save[64];
 static u8 tilebuf[16];
 #pragma bss-name(pop)

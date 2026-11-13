@@ -109,7 +109,9 @@ void hud_update(void)
 /* ---------------------------------------------------------------------- */
 /* Pluie : gouttes animées ; une sur deux par trame (8 sprites par ligne) */
 #define NRAIN 10
+#pragma bss-name(push, "WBSS")       /* (version 2.61 : la RAM interne est pleine) */
 static u8 rain_x[NRAIN], rain_y[NRAIN];
+#pragma bss-name(pop)
 void rain_tick(void)
 {
     u8 p;

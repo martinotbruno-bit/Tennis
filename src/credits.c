@@ -86,7 +86,7 @@ static const Line lines[] = {
 /* arrêt quand la dernière ligne est au milieu de l'écran */
 #define T_STOP ((u16)(NLINES - 1 + FIRST - 7) * 16)
 
-#pragma bss-name(push, "WBSS")
+#pragma bss-name(push, "SAVEDATA")    /* (version 2.61 : zone de sauvegarde libre, hors du bloc sauvegardé ; libère la RAM de travail) */
 static u16 tpos;                         /* défilement total, en pixels */
 static u8 at[2][64];                     /* attributs des deux écrans */
 static u8 halt, wait_t;
