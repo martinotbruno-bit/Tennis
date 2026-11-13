@@ -32,7 +32,7 @@ function check(cond, msg) {
 const AS = { SCREENS: 0, MATCH: 1, MANUAL: 2 };
 const SS = { TITLE: 0, MENU: 1, RESULTS: 2, PRESENT: 3, COMP: 4, CODE: 5, PALMARES: 6, TRAIN_RES: 7, COMP_END: 8, SETBREAK: 9 };
 const O = { MODE: 1, TYPE: 2, P1: 3, P2: 4, LEVEL: 5, SURF: 6, ENV: 7, COND: 8, FMT: 9, REPLAY: 10, COMP: 11,
-            CSIZE: 12, CPROG: 13, CVAR: 14, EX: 15, SIDE: 16, SPEED: 17, SPIN: 18, COUNT: 19, CPART: 20, GSPEED: 21, SOUND: 22, FATIG: 23 };
+            CSIZE: 12, CPROG: 13, CVAR: 14, EX: 15, SIDE: 16, SPEED: 17, SPIN: 18, COUNT: 19, CPART: 20, GSPEED: 21, SOUND: 22, FATIG: 23, VIEW: 24 };
 const MODE = { P1: 0, P2: 1, TEAM: 2, COMP: 3, TRAIN: 4, DEMO: 5 };
 const CFG = { CTRL: 2, LEVEL: 10, GAMES: 17, REPLAYS: 19 };
 
@@ -2181,6 +2181,19 @@ console.log('Revers et jeu de tuiles par phase');
   }
   check([22, 23, 24].every((k) => seen.has(k)) && bad === 0 && onR > 0 && onC > 0,
     `revers à deux mains (préparation, impact, fin) ; jamais une pose sans ses tuiles (${bad}) ; jeux chargés selon la phase`);
+  // double en perspective (4 joueurs) : jamais une pose sans ses tuiles, y
+  // compris le rebond de balle avant le service (version 2.62)
+  {
+    const d = boot(); startWith(d, { FMT: 3, TYPE: 1, MODE: MODE.P2, VIEW: 1 }); allCpu(d);
+    let bad4 = 0, pm = 0;
+    for (let f = 0; f < 12000 && app(d) === AS.MATCH; f++) {
+      d.run(1);
+      const sw = d.peek('swap_on'), ms = d.peek('ms');
+      if (ms !== 5 && pm !== 5) for (let p = 0; p < 4; p++) { const k = d.peek('pose_now', p) & 31; if (set(k) && set(k) !== sw) bad4++; }
+      pm = ms;
+    }
+    check(bad4 === 0, `double en perspective : jamais une pose sans ses tuiles (${bad4})`);
+  }
   runUntil(e, () => app(e) === AS.SCREENS, 60 * 60 * 25); e.run(60);
   const base = 0x1000 + e.peek('swap_base') * 16, rom2 = e.nes.rom.rom[2];
   let d = 0; for (let i = 0; i < 34 * 16; i++) if (e.nes.ppu.vramMem[base + i] !== rom2[base + i]) d++;
