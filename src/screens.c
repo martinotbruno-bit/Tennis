@@ -219,7 +219,7 @@ static u8 is_final(void)
     return (u8)((comp_l1[0] == 'F' && comp_l1[6] == 0) || (comp_l2[0] == 'F' && comp_l2[6] == 0));
 }
 
-u8 __fastcall__ grp_tile(u8 i); void port_load(void); void menu_marks(void); u8 __fastcall__ port_pal(u8 a);
+u8 __fastcall__ grp_tile(u8 i); void port_load(void); void palmares_sprites(void); void menu_marks(void); u8 __fastcall__ port_pal(u8 a);
 void menu_deco_begin(void); void deco_title(void); void deco_frame(void); void deco_filet(void); void palmares_build(void);
 extern char deco_str[24];
 extern u8 deco_kind, deco_row;
@@ -1154,7 +1154,8 @@ void screens_tick(void)
             if (++pal_confirm == 2) { SV(sv_clear); pal_confirm = 0; fade_skip = 1; palmares_screen(); sfx_fault(); }
             else { vbuf_reset(); vbuf_text(2, 22, "SELECT ENCORE : EFFACER", 24); }
         }
-        if (pad1_new & PAD_B) { sfx_menu_back(); title_screen(); }
+        if (pad1_new & PAD_B) { sfx_menu_back(); title_screen(); break; }
+        bank_call(BANK_PODIUM, palmares_sprites);
         break;
     }
 }

@@ -573,15 +573,27 @@ u8 __fastcall__ comp_draw_table(u8 y)
         }
         break;
     default:
-        ko_run(0, 3, c_stage);
-        n = (u8)(c_n >> c_stage);
+        /* tableau à élimination (version 2.58) : les inscrits à gauche, un
+           par rangée ; chaque match relie deux noms par un trait doré
+           (coin, verticale, jonction) jusqu'au vainqueur, écrit sur la
+           rangée du second ; tours joués seulement (c_stage) */
         head_at(3, y, "TABLEAU");
-        for (i = 0; i < (u8)(n >> 1); ++i) {
-            a = ko_cur[i * 2]; b = ko_cur[i * 2 + 1];
-            ent_at(a, 3, (u8)(y + 1 + i));
-            txt_at(9, (u8)(y + 1 + i), "-");
-            ent_at(b, 11, (u8)(y + 1 + i));
+        n = c_n;
+        for (b = 0; n > 1; ++b, n >>= 1) {            /* tour b : n inscrits */
+            ko_run(0, 3, b);
+            a = (u8)(2 + b * 6);                      /* colonne des noms du tour */
+            for (i = 0; i < n; ++i) {
+                if (b <= c_stage) ent_at(ko_cur[i], a, (u8)(y + 1 + (i << b) + (1 << b) - 1));
+                if (i & 1) {
+                    u8 r0 = (u8)(y + 1 + ((i - 1) << b) + (1 << b) - 1), r1 = (u8)(r0 + (1 << b)), r;
+                    vram_adr(NTADR(a + 5, r0)); vram_put(0xA9);           /* coin */
+                    for (r = (u8)(r0 + 1); r < r1; ++r) { vram_adr(NTADR(a + 5, r)); vram_put(0xAA); }
+                    vram_adr(NTADR(a + 5, r1)); vram_put(0xAB);           /* jonction vers le vainqueur */
+                }
+            }
         }
+        ko_run(0, 3, b);                              /* vainqueur */
+        if (b <= c_stage) ent_at(ko_cur[0], (u8)(2 + b * 6), (u8)(y + c_n));
         break;
     }
     return 0;

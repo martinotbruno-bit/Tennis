@@ -3,7 +3,8 @@
  * Tuiles du décor libres pendant les menus (celles des courts, rétablies
  * avant le match par chr_borrow_restore, bg_dirty) :
  *   $60-$9F police surlignée (tools/gen_menu.py), $A0-$A7 ornements dorés,
- *   $A8-$FB lettres doublées des titres (fabriquées à chaque écran).
+ *   $A8-$AB traits du tableau des tournois, $AC-$AF accolades des réglages,
+ *   $B0-$FB lettres doublées des titres (fabriquées à chaque écran).
  * Palettes du décor (pal_set_menu) : 0 texte blanc, 1 libellés bleu pâle,
  * 2 valeurs jaunes, 3 or ; couleur 2 de chaque palette : texte surligné.
  *
@@ -30,9 +31,9 @@
 #define T_LEND   0xA2
 #define T_REND   0xA3
 #define T_STAR   0xA4
-#define T_TITLE  0xA8      /* lettres doublées : 4 tuiles chacune, jusqu'à $FB */
+#define T_TITLE  0xB0      /* lettres doublées : 4 tuiles chacune, jusqu'à $FB (19 lettres distinctes) */
 
-extern const u8 menu_font2[], menu_deco[], menu_attr[], menu_big[], menu_grp[];
+extern const u8 menu_font2[], menu_deco[], menu_attr[], menu_big[], menu_grp[], menu_brk[];
 extern const char menu_bigchars[];
 extern u8 bg_dirty;
 extern u8 pal_page;
@@ -49,7 +50,8 @@ void menu_deco_begin(void)
 {
     chr_copy(BANK_SWAP, menu_font2, 0x0600, 1024);       /* (données en banque 13) */
     chr_copy(BANK_SWAP, menu_deco, 0x0A00, 128);
-    chr_copy(BANK_SWAP, menu_grp, 0x0C00, 64);        /* accolades des groupes ($C0-$C3) */
+    chr_copy(BANK_SWAP, menu_brk, 0x0A80, 64);        /* traits du tableau ($A8-$AB) */
+    chr_copy(BANK_SWAP, menu_grp, 0x0AC0, 64);        /* accolades des groupes ($AC-$AF) */
     if (!bg_dirty) bg_dirty = 2;   /* tuiles des menus seulement : rétablies avant le match (load_court) */
 }
 
@@ -164,7 +166,7 @@ u8 __fastcall__ grp_tile(u8 i)
     if (i >= nvis || !(g = grp_of[vis[i]])) return 0;
     up = (u8)(i && grp_of[vis[i - 1]] == g);
     dn = (u8)(i + 1 < nvis && grp_of[vis[i + 1]] == g);
-    return (u8)(0xC0 + (up ? (dn ? 1 : 2) : (dn ? 0 : 3)));
+    return (u8)(0xAC + (up ? (dn ? 1 : 2) : (dn ? 0 : 3)));
 }
 
 /* attributs de l'écran (tables de tools/gen_menu.py) : deco_kind 0 (texte,
@@ -238,9 +240,32 @@ void palmares_build(void)
             u16_at(20, (u8)(7 + i), sv.best_train[i]);
         }
     }
+    {   /* médailles (sprites, palmares_sprites) : or, argent, bronze */
+        static const u8 med[9] = { 0x28, 0x18, 0x38,  0x10, 0x00, 0x30,  0x17, 0x07, 0x27 };
+        for (i = 0; i < 9; ++i) pal_buf[17 + (i / 3) * 4 + i % 3] = med[i];
+    }
     txt_at(2, 25, "GAUCHE/DROITE : PAGE");
     txt_at(2, 26, "B : RETOUR");
     txt_at(2, 27, "SELECT X2 : TOUT EFFACER");
+}
+
+/* page des résultats : une médaille devant chaque meilleur résultat et
+   chaque compétition de l'historique terminée sur le podium (1er, 2e, 3e) */
+void palmares_sprites(void)
+{
+    u8 i, t;
+    spr_begin();
+    if (pal_page == 1) {
+        for (i = 0; i < NCT; ++i) {
+            t = (u8)(i < 5 ? sv.comp_best[i] : sw_best[i - 4]);
+            if (t >= 1 && t <= 3) spr1(9, (u8)((6 + i) * 8 - 1), (u8)(ball_base + 8), (u8)(t - 1));
+        }
+        for (i = 0; i < sv.hist_n && i < 8; ++i) {
+            t = sv.hist[i][1];
+            if (t >= 1 && t <= 3) spr1(9, (u8)((15 + i) * 8 - 1), (u8)(ball_base + 8), (u8)(t - 1));
+        }
+    }
+    spr_end();
 }
 
 /* ---------------------------------------------------------------------- */

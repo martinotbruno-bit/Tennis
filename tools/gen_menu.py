@@ -55,8 +55,7 @@ DECO = [
 ]
 deco = b''.join(tile(r) for r in DECO)
 
-# accolades des groupes de lignes des réglages ($C0-$C3, écran RÉGLAGES :
-# son titre n'utilise que $A8-$BF) : or (2) et ombre (1), en marge gauche
+# accolades des groupes de lignes des réglages ($AC-$AF) : or (2) et ombre (1), en marge gauche
 GRP = [
     ["00000000", "00000000", "00000000", "00002222", "00002111", "00002100", "00002100", "00002100"],   # début
     ["00002100"] * 8,                                                                                   # milieu
@@ -64,6 +63,15 @@ GRP = [
     ["00000000", "00000000", "00000000", "00022222", "00011111", "00000000", "00000000", "00000000"],   # ligne seule
 ]
 grp = b''.join(tile(r) for r in GRP)
+
+# traits du tableau des tournois ($A8-$AB) : or (2) et ombre (1)
+BRK = [
+    ["00000000", "00000000", "00000000", "22222222", "11111111", "00000000", "00000000", "00000000"],   # horizontal
+    ["00000000", "00000000", "00000000", "22221000", "11121000", "00021000", "00021000", "00021000"],   # coin (gauche, bas)
+    ["00021000"] * 8,                                                                                   # vertical
+    ["00021000", "00021000", "00021000", "22222222", "11111111", "00000000", "00000000", "00000000"],   # jonction (haut, gauche, droite)
+]
+brk = b''.join(tile(r) for r in BRK)
 
 
 # lettres doublées des titres : 4 tuiles par caractère (haut-gauche,
@@ -116,8 +124,8 @@ def arr(name, data):
 
 
 L = ['/* Fichier généré par tools/gen_menu.py — ne pas modifier. */',
-     '/* Habillage des menus : police surlignée ($60-$9F), ornements dorés ($A0-$A7), accolades ($C0-$C3), attributs, banque 13. */', '']
-L += arr('menu_font2', font2) + [''] + arr('menu_deco', deco) + [''] + arr('menu_grp', grp) + ['']
+     '/* Habillage des menus : police surlignée ($60-$9F), ornements dorés ($A0-$A7), traits du tableau ($A8-$AB), accolades ($AC-$AF), attributs, banque 13. */', '']
+L += arr('menu_font2', font2) + [''] + arr('menu_deco', deco) + [''] + arr('menu_grp', grp) + [''] + arr('menu_brk', brk) + ['']
 L += arr('menu_attr', b''.join(attrs(k, r) for k, r in ATTR)) + ['']
 open(os.path.join(ROOT, 'src', 'assets_menu.c'), 'w').write('\n'.join(L))
 # caractères des lettres doublées : lus directement par menuart.c (banque 8)
