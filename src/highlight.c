@@ -347,7 +347,12 @@ static void closeup_tick(void)
 /* Arrêt sur image zoomé                                                   */
 /* ---------------------------------------------------------------------- */
 static const u8 t_corner[16] = { 0xF0, 0x80, 0x80, 0x80, 0, 0, 0, 0,  0xF0, 0x80, 0x80, 0x80, 0, 0, 0, 0 };
-static const u8 t_mark[16] =   { 0x00, 0x3C, 0x7E, 0xFF, 0xFF, 0x7E, 0x3C, 0x00,  0x00, 0x00, 0x3C, 0x7E, 0x7E, 0x3C, 0x00, 0x00 };
+/* trace de la balle (2.69) : ellipse de 6 x 4 px centrée sur le point de
+   rebond (le centre de la balle, celui que juge l'arbitre), intérieur de la
+   couleur de la balle (couleur 1), contour sombre (couleur 2) ; la balle
+   agrandie n'est pas dessinée : plus large que le point jugé, elle
+   chevaucherait la ligne d'une balle dehors */
+static const u8 t_mark[16] =   { 0x00, 0x3C, 0x3C, 0x00, 0x00, 0x00, 0x00, 0x00,  0x3C, 0x42, 0x42, 0x3C, 0x00, 0x00, 0x00, 0x00 };
 #define T_CORNER (swap_base + 20)
 #define T_MARK   (swap_base + 21)
 static u8 zx, zy, zwx, zwy;            /* point visé dans l'image agrandie ; coin de la fenêtre (px) */
@@ -371,7 +376,7 @@ static void zoom_build(void)
        tête), sans les coins du réticule (emplacements 60 à 63) */
     for (i = 0; i < 60 && ns < ZS; ++i) {
         u8 y = oam_buf[i * 4], x = oam_buf[i * 4 + 3];
-        if (y >= 0xEF) continue;
+        if (y >= 0xEF || (oam_buf[i * 4 + 2] & 2)) continue;   /* (seulement les joueurs, palettes 0 et 1 : ni ombres ni poussière, ni la balle : la trace la remplace) */
         ++y;
         if ((u8)(x - zwx) >= 124 || x < zwx || (u8)(y - zwy) >= 116 || y < zwy) continue;
         zb_sx[ns] = (u8)(x - zwx); zb_sy[ns] = (u8)(y - zwy);
@@ -462,6 +467,7 @@ static void zoom_build(void)
     ctrl_swap = 0x18;
     scroll_x = 0; scroll_y = 0; scroll_nt = 0;
     pal_buf[16 + 9] = 0x0F; pal_buf[16 + 10] = 0x0F; pal_buf[16 + 11] = 0x30;
+    pal_buf[16 + 14] = 0x0F;            /* trace : contour sombre (couleur 2 de la palette de la balle) */
     flash(hl_bk);
     ppu_on();
 }
@@ -493,13 +499,14 @@ static void zoom_tick(void)
        on les écrit aux emplacements 52 à 63) */
     ob = 208;
     for (i = 0; i < 12; ++i) oam_buf[ob + i * 4] = 0xFF;
-    if ((hl_c & 8) || hl_c > 48) {
-        oam_buf[ob] = (u8)(zy - 5); oam_buf[ob + 1] = hl_n; oam_buf[ob + 2] = 3; oam_buf[ob + 3] = (u8)(zx - 4);
+    if (hl_c >= 4) {                    /* trace : centrée sur le point de rebond */
+        oam_buf[ob] = (u8)(zy - 3);     /* (y de l'OAM : une ligne plus haut) */
+        oam_buf[ob + 1] = hl_n; oam_buf[ob + 2] = 3; oam_buf[ob + 3] = (u8)(zx - 4);
     }
     if (hl_c > 10) {
         /* titre sur une partie unie du court, loin du point visé */
         u8 x = (u8)(128 - lbl_n * 4), ly = (u8)(zy > 120 ? 79 : 159);
-        for (i = 0, k = 1; zl[i] && k < 12; ++i, x += 8) {
+        for (i = 0, k = 2; zl[i] && k < 12; ++i, x += 8) {
             if (zl[i] == ' ') continue;
             oam_buf[ob + k * 4] = ly; oam_buf[ob + k * 4 + 1] = (u8)(hl_n + 1 + i);
             oam_buf[ob + k * 4 + 2] = 2; oam_buf[ob + k * 4 + 3] = x;
