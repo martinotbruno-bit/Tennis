@@ -54,6 +54,8 @@ extern u8 scroll_x, tz_bank, tz_n;  /* défilement horizontal ; tz_unpack (bande
 #pragma zpsym("scroll_x")
 #pragma zpsym("tz_bank")
 #pragma zpsym("tz_n")
+extern const u8 *tz_src;            /* tz_unpack : suite des données (pour continuer) */
+#pragma zpsym("tz_src")
 void __fastcall__ tz_unpack(const u8 *src);   /* tuiles compressées -> PPU (rendu coupé) */
 void __fastcall__ tz_copy(const u8 *src);     /* tz_n octets (0 : 256) d'une banque -> PPU */
 void __fastcall__ mirror_h(u8 h);   /* 1 : écrans empilés (MMC1 horizontal) ; rendu coupé */

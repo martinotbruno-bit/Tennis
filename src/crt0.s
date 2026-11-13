@@ -11,7 +11,7 @@
 .export _pad1, _pad2, _pad1_new, _pad2_new, _region_cnt
 .export _wait_frame, _pad_poll, _ppu_off, _ppu_on, _vram_adr, _vram_put
 .export _swap_put, _vram_fill, _vram_unrle, _rand8, _rand_seed
-.export _scroll_y, _scroll_nt, _mirror_h, _scroll_x, _tz_bank, _tz_n, _tz_unpack, _tz_copy
+.export _scroll_y, _scroll_nt, _mirror_h, _scroll_x, _tz_bank, _tz_n, _tz_unpack, _tz_copy, _tz_src
 .export _chr_data
 .export _spr1, _spr_meta, _spr_end, _oam_i, _spr_rot, _set_bank, _cur_bank, _bank_call, _far_call, _rp_record
 .import _bx, _by, _bz, _b_vis, _plx, _ply, _pose_cache, _flip_cache
@@ -84,6 +84,7 @@ _scroll_nt: .res 1      ; écran de nametable (0 ou 2 : bit 1 de PPUCTRL)
 _scroll_x:  .res 1      ; défilement horizontal (bande-annonce : travellings)
 _tz_bank:   .res 1      ; tz_unpack : banque des tuiles compressées
 _tz_n:      .res 1      ; tz_unpack : nombre de tuiles
+_tz_src:
 tz_src:     .res 2
 tz_m:       .res 2
 tz_prev:    .res 1

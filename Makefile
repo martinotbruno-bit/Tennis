@@ -18,7 +18,7 @@ BANK6 = assets_nude assets_gm2
 BANK7 = intro teaser
 BANK8 = podium menuart assets_menu
 BANK9 = credits assets_tz9
-BANK10 = music_data assets_tz10
+BANK10 = music_data assets_tz10 assets_vs
 BANK11 = assets_persp
 BANK12 = assets_courts12 assets_tz12 assets_menu12
 BANK13 = assets_swap shots cer
@@ -36,7 +36,7 @@ src/assets_gm.c src/assets_gm2.c: tools/gen_gm.py
 src/assets_menu.c src/assets_menu12.c: tools/gen_menu.py assets/tiles.chr
 	python3 tools/gen_menu.py
 
-src/assets_tz.h src/assets_tz2.c src/assets_tz4.c src/assets_tz9.c src/assets_tz10.c src/assets_tz12.c: tools/gen_teaser.py
+src/assets_vs.c src/assets_vs.h src/assets_tz.h src/assets_tz2.c src/assets_tz4.c src/assets_tz9.c src/assets_tz10.c src/assets_tz12.c: tools/gen_teaser.py
 	python3 tools/gen_teaser.py
 
 src/music_data.c: tools/gen_music.py tools/music_src.c
@@ -76,7 +76,7 @@ $(BUILD)/slip.o: src/slip.s | $(BUILD)
 $(BUILD)/dpcm.o: src/dpcm.s | $(BUILD)
 	$(CA65) -t nes -g -o $@ src/dpcm.s
 
-$(BUILD)/%.s: src/%.c src/*.h src/assets_data.c src/assets_court.c src/assets_nude.c src/assets_persp.c src/assets_persp3.c src/assets_courts12.c src/assets_swap.c src/assets_gm.c src/assets_gm2.c src/assets_tz.h | $(BUILD)
+$(BUILD)/%.s: src/%.c src/*.h src/assets_data.c src/assets_court.c src/assets_nude.c src/assets_persp.c src/assets_persp3.c src/assets_courts12.c src/assets_swap.c src/assets_gm.c src/assets_gm2.c src/assets_tz.h src/assets_vs.h | $(BUILD)
 	$(CC65) $(CFLAGS) $(SEGS) -o $@ $<
 
 $(BUILD)/%.o: $(BUILD)/%.s

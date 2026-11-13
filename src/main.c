@@ -57,7 +57,11 @@ static void logic_tick(void)
 {
     u8 r;
     /* fondu d'ouverture : un cran plus clair toutes les 2 trames */
-    if (fade_lvl && ppu_mask && !(frame_cnt & 1)) { fade_lvl = (u8)(fade_lvl - 16); pal_dirty = 1; }
+    if (fade_lvl && ppu_mask && !(frame_cnt & 1)) {
+        fade_lvl = (u8)(fade_lvl - 16); pal_dirty = 1;
+        /* menus : l'écran glisse vers sa place pendant qu'il s'éclaire */
+        if (app_state == AS_SCREENS) scroll_y = (u8)(fade_lvl >> 2);
+    }
     /* le son avance dans la NMI (audio_tick), à chaque trame */
     switch (app_state) {
     case AS_MATCH:

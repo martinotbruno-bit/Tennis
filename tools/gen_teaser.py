@@ -864,9 +864,103 @@ def export(out):
     return used
 
 
+# ------------------------------------------------------------------ affiche VS
+# présentation du match : bustes face à face, bras croisés, 2 palettes par
+# joueur (A : sombre, peau ombrée, peau ; B : tenue ombrée, tenue, blanc ;
+# le texte blanc de l'écran s'écrit dans les blocs B)
+POSES['bust'] = dict(
+    s=dict(pelvis=(80, 118), torso=-90, legL=(97, 94, 165), legR=(83, 86, 15),
+           armL=(98, -12), armR=(82, 192), tilt=0.0, turn=1.2,
+           order=['legL', 'legR', 'torso', 'armR', 'armL', 'head']),
+    face='focus', hand='X', rdir=0, rlen=50)
+VS_W, VS_H = 12, 14                    # tuiles
+VS_PALS = {0: (5, 2, 1), 1: (4, 3, 6)}  # A : (sombre, peau ombrée, peau) ; B : (tenue ombrée, tenue, blanc)
+VS_MAX = 95
+VS_BANK = 10
+
+
+def vs_render(female, mirror, k=1.38):
+    W, H = VS_W * 8, VS_H * 8
+    f = Fig(W, H, k, 80 - (W / 2) / k, 36.0)
+    body(f, skeleton(POSES['bust']['s'], female), female, 'focus', racket_hand='X', racket_dir=0, racket_len=50)
+    f.outline()
+    if mirror:
+        f.cls = np.ascontiguousarray(np.fliplr(f.cls)); f.pid = np.ascontiguousarray(np.fliplr(f.pid))
+    idx, attr = quantize(f, VS_PALS)
+    tiles, tmap, nt = [], {}, []
+    for ty in range(VS_H):
+        for tx in range(VS_W):
+            t = tile_bytes(idx, tx, ty)
+            if not any(t):
+                nt.append(0); continue
+            if t not in tmap:
+                tmap[t] = len(tiles); tiles.append(t)
+            nt.append(1 + tmap[t])
+    assert len(tiles) <= VS_MAX, ('buste', female, mirror, len(tiles))
+    # attributs : 1 bit par bloc 16 x 16 (B), 6 x 7 blocs
+    ab = []
+    for by in range(VS_H // 2):
+        for bx in range(VS_W // 2):
+            a_ = attr[by, bx]
+            ab.append(1 if a_ == 1 else 0)
+    return dict(tiles=tiles, nt=nt, ab=ab, idx=idx, attr=attr)
+
+
+def vs_export():
+    arts = {}
+    for female in (0, 1):
+        for mirror in (0, 1):
+            arts[(female, mirror)] = vs_render(female, mirror)
+    L = ['/* Fichier généré par tools/gen_teaser.py — ne pas modifier. */',
+         '/* Affiche VS : bustes des joueurs (gauche, droite en miroir ; homme, femme), banque %d. */' % VS_BANK, '']
+    H = ['/* Fichier généré par tools/gen_teaser.py — ne pas modifier. */', '',
+         '#define VS_BANK %d' % VS_BANK, '#define VS_W %d' % VS_W, '#define VS_H %d' % VS_H]
+    tot = 0
+    for (female, mirror), a in arts.items():
+        nm = 'vs_%s%s' % ('f' if female else 'm', 'r' if mirror else 'l')
+        chr_ = pack(b''.join(a['tiles']))
+        L += arr_c(nm + '_chr', chr_) + arr_c(nm + '_map', bytes(a['nt'])) + arr_c(nm + '_ab', bytes(a['ab'])) + ['']
+        H += ['extern const unsigned char %s_chr[], %s_map[], %s_ab[];' % (nm, nm, nm), '#define %s_N %d' % (nm.upper(), len(a['tiles']))]
+        tot += len(chr_) + len(a['nt']) + len(a['ab'])
+        print('buste %s : %d tuiles' % (nm, len(a['tiles'])))
+    open(os.path.join(ROOT, 'src', 'assets_vs.c'), 'w').write('\n'.join(L))
+    open(os.path.join(ROOT, 'src', 'assets_vs.h'), 'w').write('\n'.join(H) + '\n')
+    print('affiche VS : %d octets' % tot)
+    return arts
+
+
+def arr_c(name, data):
+    lines = ['const unsigned char %s[%d] = {' % (name, len(data))]
+    for i in range(0, len(data), 16):
+        lines.append('  ' + ','.join('0x%02X' % v for v in data[i:i + 16]) + ',')
+    lines.append('};')
+    return lines
+
+
+def vs_preview(arts, dst):
+    from PIL import Image as I
+    sheet = I.new('RGB', (256 * 2, 112), (0, 0, 0))
+    combos = [((0, 0), (1, 1), (0x27, 0x30, 0x0F), (0x37, 0x35, 0x0F)), ((1, 0), (0, 1), (0x17, 0x1C, 0x0F), (0x07, 0x27, 0x0F))]
+    for i, (la, ra, cl, cr) in enumerate(combos):
+        im = I.new('RGB', (256, 112), PAL[0x07])
+        for side, key, c, x0 in ((0, la, cl, 0), (1, ra, cr, 160)):
+            a = arts[key]
+            sl, sd, ol, od = shades(*c)
+            pa = {1: PAL[c[2]], 2: PAL[sd], 3: PAL[sl]}
+            pb = {1: PAL[od], 2: PAL[ol], 3: PAL[0x30]}
+            for y in range(VS_H * 8):
+                for x in range(VS_W * 8):
+                    v = a['idx'][y, x]
+                    if v:
+                        im.putpixel((x0 + x, y), (pb if a['attr'][y // 16, x // 16] == 1 else pa)[v])
+        sheet.paste(im, (i * 256, 0))
+    sheet.resize((sheet.width * 3, sheet.height * 3), I.NEAREST).save(dst)
+
+
 if __name__ == '__main__':
     out, sheet = main()
     export(out)
+    vs_preview(vs_export(), os.path.join(ROOT, 'assets', 'preview_vs.png'))
     cols = len(sheet[0])
     w, h = sheet[0][0].size
     big = Image.new('RGB', (w * cols, h * len(sheet)))

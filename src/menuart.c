@@ -19,6 +19,7 @@
 #include "game.h"
 #include "comp.h"
 #include "stats.h"
+#include "assets_vs.h"
 
 #pragma static-locals(off)
 
@@ -39,6 +40,7 @@ extern u8 pal_page;
 char deco_str[24];        /* titre à écrire (copié par screens.c) */
 u8 deco_kind, deco_row;   /* type d'écran (attributs) ; rangée du filet du bas */
 static u8 dt_map[24];
+static u8 vs_row[VS_W], vs_at[64];
 static char pb[8];
 #pragma bss-name(pop)
 
@@ -173,4 +175,69 @@ void palmares_build(void)
     txt_at(2, 25, "GAUCHE/DROITE : PAGE");
     txt_at(2, 26, "B : RETOUR");
     txt_at(2, 27, "SELECT X2 : TOUT EFFACER");
+}
+
+/* ---------------------------------------------------------------------- */
+/* Affiche VS (présentation du match) : bustes face à face, bras croisés,
+   joueur 1 (ou équipe 1) à gauche, joueur 2 à droite (en miroir), tournés
+   l'un vers l'autre. Chaque buste a 2 palettes : A (sombre, peau ombrée,
+   peau), B (tenue ombrée, tenue, blanc) ; le texte blanc s'écrit dans les
+   blocs B. Tuiles : gauche $60-$9F puis $01-$1F, droite $A0-$FF. Rendu coupé. */
+static const u8 surf_bk[6] = { 0x07, 0x0A, 0x02, 0x05, 0x08, 0x0C };   /* fond : couleur de la surface */
+static void vs_side(u8 side)
+{
+    u8 c = cfg.chr[side], f = char_female[c], r, i, v, n;
+    const u8 *chr, *map, *ab;
+    if (side == 0) { chr = f ? vs_fl_chr : vs_ml_chr; map = f ? vs_fl_map : vs_ml_map; ab = f ? vs_fl_ab : vs_ml_ab; n = f ? VS_FL_N : VS_ML_N; }
+    else { chr = f ? vs_fr_chr : vs_mr_chr; map = f ? vs_fr_map : vs_mr_map; ab = f ? vs_fr_ab : vs_mr_ab; n = f ? VS_FR_N : VS_MR_N; }
+    tz_bank = VS_BANK;
+    if (side == 0) {
+        vram_adr(0x0600); tz_n = (u8)(n > 64 ? 64 : n); tz_unpack(chr);
+        if (n > 64) { vram_adr(0x0010); tz_n = (u8)(n - 64); tz_unpack(tz_src); }
+    } else { vram_adr(0x0A00); tz_n = n; tz_unpack(chr); }
+    for (r = 0; r < VS_H; ++r) {
+        bank_read(VS_BANK, vs_row, map + r * VS_W, VS_W);
+        vram_adr(NTADR(side ? 20 : 0, 4 + r));
+        for (i = 0; i < VS_W; ++i) {
+            v = vs_row[i];
+            if (v) { --v; v = (u8)(side ? 0xA0 + v : v < 64 ? 0x60 + v : 0x01 + v - 64); }
+            vram_put(v);
+        }
+    }
+    /* attributs des blocs du buste (6 x 7 blocs, rangées de blocs 2 à 8) */
+    for (r = 0; r < VS_H / 2; ++r) {
+        bank_read(VS_BANK, vs_row, ab + r * 6, 6);
+        for (i = 0; i < 6; ++i) {
+            u8 bx = (u8)(side ? 10 + i : i), by = (u8)(2 + r), q = (u8)(((by & 1) << 1) | (bx & 1)), a = (u8)((by >> 1) * 8 + (bx >> 1));
+            u8 p = (u8)((side ? 2 : 0) + (vs_row[i] ? 1 : 0));
+            vs_at[a] = (u8)((vs_at[a] & (u8)~(3 << (q * 2))) | (p << (q * 2)));
+        }
+    }
+}
+/* palettes du joueur (couleurs de char_pal) : A et B */
+static void vs_pal(u8 side)
+{
+    u8 b = (u8)(side * 8), S, O, D;
+    pal_set_player(61, cfg.chr[side]);       /* (palette 1 du décor : peau, tenue, sombre) */
+    S = pal_buf[5]; O = pal_buf[6]; D = pal_buf[7];
+    pal_buf[b + 1] = D;
+    if (S >= 0x10) { pal_buf[b + 3] = S; pal_buf[b + 2] = (u8)(S - 0x10); } else { pal_buf[b + 3] = (u8)(S + 0x10); pal_buf[b + 2] = S; }
+    if (O >= 0x10) { pal_buf[b + 6] = O; pal_buf[b + 5] = (u8)(O - 0x10); } else { pal_buf[b + 6] = (u8)(O + 0x10); pal_buf[b + 5] = O; }
+    if (O == 0x30) pal_buf[b + 5] = 0x10;
+    pal_buf[b + 7] = 0x30;
+}
+void vs_build(void)
+{
+    u8 i, k = surf_bk[cfg.surface < 6 ? cfg.surface : 0];
+    /* texte : moitié gauche palette 1, moitié droite palette 3 (blanc) */
+    for (i = 0; i < 64; ++i) vs_at[i] = (u8)((i & 7) < 4 ? 0x55 : 0xFF);
+    vs_side(0);
+    vs_side(1);
+    vram_adr(0x23C0);
+    for (i = 0; i < 64; ++i) vram_put(vs_at[i]);
+    vs_pal(1);                  /* (le côté droit d'abord : vs_pal passe par la palette 1) */
+    vs_pal(0);
+    pal_buf[0] = pal_buf[4] = pal_buf[8] = pal_buf[12] = pal_buf[16] = k;
+    pal_dirty = 1;
+    bg_dirty = 1;               /* tuiles du décor remplacées : rétablies ensuite */
 }

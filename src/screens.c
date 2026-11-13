@@ -303,7 +303,7 @@ static void title_screen(void)
     set_attr_rows(12, 15, 3);
     set_attr_rows(24, 27, 3);
     deco_row = 15; bank_call(BANK_PODIUM, deco_filet);
-    deco_row = 23; bank_call(BANK_PODIUM, deco_filet);
+    deco_row = 24; bank_call(BANK_PODIUM, deco_filet);
     pal_buf[9] = 0x27; pal_buf[10] = 0x28; pal_buf[11] = 0x30;   /* logo et balle : couleurs d'origine */
     for (i = 0; i < 4; ++i) txt_at(10, (u8)(16 + i * 2), title_items[i]);
     txt_at(4, 25, "HAUT/BAS PUIS A - START");
@@ -451,6 +451,16 @@ static void menu_sprites(void)
     menu_hl_tick();
     spr_begin();
     spr1(9, (u8)(4 * 8 + cursor * 8 - 1 - bounce[(frame_cnt >> 2) & 7]), (u8)(ball_base + 8), 3);   /* balle qui rebondit */
+    {   /* pastille de la couleur de la surface, devant sa valeur */
+        static const u8 sc[6][3] = { { 0x27, 0x17, 0x37 }, { 0x3A, 0x2A, 0x30 }, { 0x21, 0x11, 0x31 },
+                                     { 0x24, 0x14, 0x34 }, { 0x38, 0x28, 0x30 }, { 0x31, 0x21, 0x30 } };
+        u8 k;
+        for (k = 0; k < nvis; ++k) if (vis[k] == O_SURF) {
+            const u8 *c = sc[opt_val[O_SURF] < 6 ? opt_val[O_SURF] : 0];
+            if (pal_buf[25] != c[0]) { pal_buf[25] = c[0]; pal_buf[26] = c[1]; pal_buf[27] = c[2]; pal_dirty = 1; }
+            spr1(110, (u8)(4 * 8 + k * 8 - 1), (u8)(ball_base + 8), 2);
+        }
+    }
     spr_person(28, 29, opt_val[O_P1], 1, (u8)((frame_cnt >> 5) & 1 ? POSE_IDLE : POSE_JOY), 0, 0);
     if (opt_val[O_MODE] <= MODE_2P_TEAM || opt_val[O_MODE] == MODE_DEMO)
         spr_person(220, 29, opt_val[O_P2], 1, (u8)((frame_cnt >> 5) & 1 ? POSE_JOY : POSE_IDLE), 1, 1);
@@ -568,34 +578,53 @@ static void team_line(u8 t, u8 y)
     else if (cfg.ctrl[t] == CTRL_CPU) txt_at(18, (u8)(y + 1), style_name[char_style[cfg.chr[t]]]);
 }
 
+void vs_build(void);
+/* affiche VS : nom, partenaire, manette ou niveau et style, sous chaque buste */
+static void vs_team(u8 t, u8 x)
+{
+    txt_at(x, 19, char_name[cfg.chr[t]]);
+    if (cfg.doubles) { txt_at(x, 20, "+"); txt_at((u8)(x + 2), 20, char_name[cfg.chr[t + 2]]); }
+    if (cfg.ctrl[t] == CTRL_CPU) txt_at(x, 21, level_name[cfg.level[t]]);
+    else txt_at(x, 21, cfg.ctrl[t] == CTRL_PAD1 ? "MANETTE 1" : "MANETTE 2");
+    if (cfg.doubles && cfg.ctrl[t + 2] == CTRL_PAD2) txt_at(x, 22, "+ MANETTE 2");
+    else if (cfg.ctrl[t] == CTRL_CPU) txt_at(x, 22, style_name[char_style[cfg.chr[t]]]);
+}
 static void present_screen(void)
 {
+    u8 vs = (u8)(cfg.env != ENV_NUDE);       /* (au club nudiste : la présentation d'origine) */
     screen_begin();
     people_tiles((u8)(cfg.env == ENV_NUDE));
     pal_set_player(0, cfg.chr[0]);
     pal_set_player(1, cfg.chr[1]);
+    if (vs) bank_call(BANK_PODIUM, vs_build);
     if (cfg.env == ENV_NUDE) {
         txt_at(4, 24, "CLUB NUDISTE LES BRONZES");
         txt_at(4, 25, "TENUE EXIGEE : AUCUNE");
     }
-    if (cfg.env == ENV_MARGAUX) {
-        txt_at(4, 24, "BIENVENUE SUR LE COURT");
-        txt_at(4, 25, "DE MARGAUX ! @ @ @");
-    }
-    txt_at(9, 2, "ROYAL MARTINOT");
     if (last_mode == MODE_COMP) {
-        txt_at(4, 4, cname(c_type));
+        COMP(comp_cname, c_type); txt_at(3, 1, comp_l2);
         COMP(comp_stage_name, 0);
-        txt_at(4, 5, comp_l1);
-        txt_at(4, 6, comp_l2);
-    } else txt_at(4, 4, cfg.doubles ? "MATCH DE DOUBLE" : "MATCH AMICAL");
-    team_line(0, 10);
-    txt_at(14, 13, "CONTRE");
-    team_line(1, 16);
-    txt_at(4, 21, surf_name[cfg.surface]);
-    txt_at(17, 21, env_name[cfg.env]);
-    txt_at(4, 22, cond_name[cfg.cond]);
-    txt_at(17, 22, fmt_name[cfg.games_per_set == 4 ? 3 : cfg.sets_to_win - 1]);   /* format réel du match */
+        txt_at(3, 2, comp_l1);
+        txt_at(3, 3, comp_l2);
+    } else txt_at(3, 1, cfg.doubles ? "MATCH DE DOUBLE" : "MATCH AMICAL");
+    if (vs) {
+        vs_team(0, 2);
+        txt_at(13, 11, "CONTRE");
+        vs_team(1, 18);
+        if (cfg.env == ENV_MARGAUX) txt_at(3, 3, "BIENVENUE SUR LE COURT DE MARGAUX");
+        txt_at(2, 24, surf_name[cfg.surface]);
+        txt_at(18, 24, env_name[cfg.env]);
+        txt_at(2, 25, cond_name[cfg.cond]);
+        txt_at(18, 25, fmt_name[cfg.games_per_set == 4 ? 3 : cfg.sets_to_win - 1]);   /* format réel du match */
+    } else {
+        team_line(0, 10);
+        txt_at(14, 13, "CONTRE");
+        team_line(1, 16);
+        txt_at(4, 21, surf_name[cfg.surface]);
+        txt_at(17, 21, env_name[cfg.env]);
+        txt_at(4, 22, cond_name[cfg.cond]);
+        txt_at(17, 22, fmt_name[cfg.games_per_set == 4 ? 3 : cfg.sets_to_win - 1]);
+    }
     txt_at(4, 27, "A : JOUER   B : RETOUR");
     ppu_on();
     if (last_mode == MODE_COMP && is_final()) music_play(MUS_FINAL);
@@ -607,6 +636,7 @@ static void present_sprites(void)
 {
     /* double : les partenaires à côté, sans recouvrir les noms (colonne 6) */
     u8 x = (u8)(cfg.doubles ? 22 : 30);
+    if (cfg.env != ENV_NUDE) return;          /* affiche VS : les bustes, sans sprites */
     spr_begin();
     spr_person(x, 98, cfg.chr[0], 1, POSE_JOY, 0, 0);
     spr_person(x, 146, cfg.chr[1], 1, POSE_JOY, 1, 1);
@@ -753,6 +783,7 @@ static void code_screen(void)
 {
     u8 i;
     screen_begin();
+    deco("REPRISE", 0, 24);
     txt_at(7, 4, "CODE DE REPRISE");
     for (i = 0; i < PW_LEN; ++i) code_buf[i] = 'A';
     code_buf[PW_LEN] = 0;
@@ -883,8 +914,11 @@ static void results_screen(void)
     people_tiles((u8)(cfg.env == ENV_NUDE));
     pal_set_player(0, cfg.chr[0]);
     pal_set_player(1, cfg.chr[1]);
-    txt_at(8, 1, "VICTOIRE DE");
-    txt_at(20, 1, char_name[cfg.chr[w]]);
+    deco("RESULTAT", 0, 24);
+    txt_off = 0x40;                              /* en or */
+    txt_at(8, 5, "VICTOIRE DE");
+    txt_at(20, 5, char_name[cfg.chr[w]]);
+    txt_off = 0;
     set_table(2);
     /* colonnes de 4 lettres (MARGAUX : « MARG ») */
     team_label(cfg.chr[0], 255, b); txt_at(19, 9, b);
@@ -923,6 +957,7 @@ static void training_results(void)
 {
     char b[4];
     screen_begin();
+    deco("ENTRAINEMENT", 0, 24);
     txt_at(8, 4, "FIN DE L'EXERCICE");
     txt_at(6, 7, ex_name[cfg.ex]);
     txt_at(6, 10, cfg.ex == EX_STREAK ? "MEILLEURE SERIE :" : "POINTS :");
@@ -994,8 +1029,17 @@ void screens_tick(void)
             break;
         }
         spr_begin();
-        spr1(64, (u8)((16 + title_cur * 2) * 8), 3, 3);
+        spr1(64, (u8)((16 + title_cur * 2) * 8 - 1 - ((frame_cnt >> 3) & 1)), (u8)(ball_base + 8), 3);   /* balle qui sautille */
         spr_end();
+        {   /* reflet qui passe sur le logo et la balle ; scintillement de l'édition */
+            static const u8 glint[8] = { 0x28, 0x38, 0x30, 0x30, 0x38, 0x28, 0x28, 0x28 };
+            u8 t = (u8)(frame_cnt & 127);
+            if ((t & 3) == 0) {
+                pal_buf[10] = t < 32 ? glint[t >> 2] : 0x28;
+                pal_buf[15] = (u8)((frame_cnt & 32) ? 0x38 : 0x28);
+                pal_dirty = 1;
+            }
+        }
         if ((frame_cnt & 3) == 0 && ++idle > 300) {    /* démo automatique après 20 s */
             idle = 0;
             setup_cfg(MODE_DEMO);
