@@ -324,7 +324,7 @@ console.log('Court Margaux');
   const seen = new Set(); for (let i = 0; i < 6; i++) { e.tap('RIGHT'); seen.add(e.peek('opt_val', O.ENV)); }
   check(seen.has(4) && !seen.has(3), 'court Margaux proposé d\'emblée (club nudiste toujours verrouillé)');
   setOpts(e, { ENV: 4 }); e.tap('START'); runUntil(e, () => scr(e) === SS.PRESENT && litScr(e), 90);
-  check(e.text(3, 3, 26) === 'BIENVENUE AU COURT MARGAUX', 'présentation du court Margaux');
+  check(e.text(2, 3, 26) === 'BIENVENUE AU COURT MARGAUX', 'présentation du court Margaux');
   e.tap('A'); e.run(30);
   // petit panneau dans le bandeau, à droite du score de gauche (rangées 2-3, colonnes 5 à 8) :
   // ses 8 tuiles, chargées en CHR-RAM à la place du public du club nudiste ; zone des annonces libre

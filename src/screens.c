@@ -611,7 +611,7 @@ static void present_screen(void)
         vs_team(0, 2);
         txt_at(13, 11, "CONTRE");
         vs_team(1, 18);
-        if (cfg.env == ENV_MARGAUX) txt_at(3, 3, "BIENVENUE AU COURT MARGAUX !");
+        if (cfg.env == ENV_MARGAUX) txt_at(2, 3, "BIENVENUE AU COURT MARGAUX !");
         txt_at(2, 24, surf_name[cfg.surface]);
         txt_at(18, 24, env_name[cfg.env]);
         txt_at(2, 25, cond_name[cfg.cond]);
