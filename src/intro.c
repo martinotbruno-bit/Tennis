@@ -70,6 +70,7 @@ static void scene(u8 n)
     ppu_off();                       /* fondu au noir automatique */
     clear_screen();
     pal_set_menu();
+    pal_buf[0] = pal_buf[4] = pal_buf[8] = pal_buf[12] = pal_buf[16] = pal_buf[20] = 0x0F;   /* générique : fond noir */
     spr_begin(); spr_end();
     switch (n) {
     case 0:

@@ -18,6 +18,7 @@ Comme l'exige le CDC (§ 17.5), ce rapport distingue ce qui est **réalisé**, *
 | Laisser paraître la forme de la poitrine des femmes, en particulier dans le VS ; puis moins marquée, plus fondue | Sur l'affiche VS, **ombre tramée** sous chaque sein (dessous et côté) : la forme se devine sans trait appuyé. **Margaux**, présentée comme une enfant, a une **silhouette de fillette** au buste droit (affiche VS et bande-annonce) |
 | Le haut de la tête des hommes semblait coupé | Buste des hommes descendu dans le cadre : la tête est entière |
 | La couleur des yeux est celle du fond de l'écran ; pour tous ? ; un personnage sans visage ; Papi pas centré pareil | Les yeux et contours prenaient la couleur 0, celle du fond (vert sur gazon) : ils prennent désormais la couleur sombre des cheveux, pour les **21 personnages**. **Margaux** (blonde) et **Papi** (cheveux gris, dont le visage disparaissait) ont leurs propres palettes : A (noir, peau, cheveux), B (noir, peau, tenue), le texte de leur côté prenant la palette blanche de l'autre côté. Buste de Papi cadré comme celui des autres hommes. Message du court Margaux recentré (il dépassait la colonne 30) |
+| Le générique de début doit rester sur fond noir | Il prenait le fond vert des nouveaux menus : il garde son fond noir |
 
 ### Version 2.56
 
@@ -482,7 +483,7 @@ Pour loger ce contenu, la cartouche passe de NROM (32 Ko) à **MMC1** : 128 Ko d
 | Relecture des textes (`check_texts.py`) | 0 problème |
 | Contraste (`contrast.py 25`) | 0 paire sous ΔE 25 (personnages, courts, balle, tenues) |
 | Profil CPU, double, 6 000 trames | 27 trames d'échange en dépassement (0,45 %), sans défaut d'image |
-| Compilation | Reproductible : SHA-256 `23f87a8bd43a37a4ca524c99f9f25989da71bcfe01a82c89f5bb0b3adbb4dbe7` sur deux compilations propres |
+| Compilation | Reproductible : SHA-256 `1f01d41972ca08faac1de2ee9a7c91313d9aae7fc7ae74e4e3909ccede329b7d` sur deux compilations propres |
 
 ## 3. Conformité par section du CDC
 
