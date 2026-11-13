@@ -11,6 +11,8 @@
 
 ## 2. Choix de la cartouche
 
+> Depuis la version 2.62, la cartouche est une **MMC3** (mapper 4, carte TGROM) ; ce chapitre décrit le choix initial du MMC1.
+
 La version 1.0 tenait en NROM-256 (32 Ko, plein à 87 %). Il a fallu plus de place pour le contenu manquant du CDC :
 - mode d'emploi intégré ;
 - compétitions ;
@@ -335,6 +337,16 @@ Le dessin des personnages est commun aux vues de face et de dos (rangées de tui
 - **Lifté** (`shot_select`, banque 13) : profondeur 62 si armé < 4, sinon 70 ; gravité 7 + armé / 8. **Croisé court** : armé borné à 24 (T) ; vitesse 34 + T / 4 ; `hit_margin` = 14 − T / 3 (distance à la ligne de côté, lue par `do_hit`) ; armé transmis divisé par 2 (imprécision). Smash dans l'angle : `hit_margin` = 8. `hit_margin` n'est plus statique (game.c).
 - **IA** (`ai_update`, banque 0) : à partir de Normal, après le lob et l'amortie, croisé court avec une probabilité 90/256 si l'adversaire est au filet, 20/256 sinon.
 - **Réglages** : première rangée `MY0` = 4 + (18 − `nvis`) / 2 (screens.c ; même calcul dans `menu_marks`) ; `menu_soft` réécrit les 18 rangées ; portraits en y = `MY0` × 8 − 30, entre 7 et 16. Tests : `menuY(e, i)`.
+
+### Version 2.62 : cartouche MMC3
+
+- **Carte** : mapper 4 (`cfg/mmc3.cfg`), 256 Ko de programme, CHR-RAM de 8 Ko, PRG-RAM de 8 Ko sauvegardée. Mode PRG 0 : $8000 (R6) et $A000 (R7) commutables, $C000-$FFFF fixes (blocs 30 et 31 = ancienne banque 15).
+- **`set_bank(n)`** (crt0.s) : R6 = 2n, R7 = 2n + 1 ; ne touche ni X ni Y ; rien n'est écrit si `cur_bank` vaut déjà n (`cur_bank` est mis à 0 par l'amorçage).
+- **Amorçage** (segment `BOOT`, dans les 8 derniers Ko, seuls fixes à l'allumage) : mode 0, banque 0, puis `reset` ; registres CHR R0-R5 à l'identité, miroir vertical, PRG-RAM activée, IRQ coupée. Les programmes STUBn des banques (MMC1) sont inertes.
+- **Miroir** : `mirror_h(h)` écrit $A000 (0 vertical, 1 horizontal).
+- **Tests** : en-tête MMC3 et banques de 16 Ko en deux blocs de 8 Ko (section « Démarrage et cartouche MMC3 »).
+- **Sprites** (`swap_tick`, extras.c) : un jeu de tuiles (célébrations / rebond avant le service : 7, 15-18 ; revers : 22-26) reste chargé tant qu'un joueur en montre une pose.
+- **Perspective** (`gen_assets.py`) : projection et lignes centrées sur 128,5 ; sangle de 3 px ; reflet des poteaux côté extérieur.
 
 ### Version 2.61 : mémoire, volée croisée, bande-annonce, coups de B
 

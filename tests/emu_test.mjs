@@ -279,8 +279,8 @@ console.log('Générique de lancement');
 }
 
 }
-if (sec('Démarrage et cartouche MMC1')) {
-console.log('Démarrage et cartouche MMC1');
+if (sec('Démarrage et cartouche MMC3')) {
+console.log('Démarrage et cartouche MMC3');
 {
   const e = boot();
   check(app(e) === AS.SCREENS && scr(e) === SS.TITLE, 'écran titre affiché');
@@ -293,6 +293,18 @@ console.log('Démarrage et cartouche MMC1');
   const v = e.nes.ppu.vramMem; let nz = 0; for (let i = 0; i < 16; i++) nz += v[0x41 * 16 + i];
   check(nz > 0, 'police chargée en CHR-RAM depuis la banque 2');
   check(e.text(10, 16, 5) === 'JOUER', 'menu du titre affiché');
+  // cartouche MMC3 (version 2.62) : en-tête, et banque de 16 Ko n = blocs de 8 Ko 2n ($8000) et 2n + 1 ($A000)
+  const fs = await import('fs'); const hdr = fs.readFileSync(rom).subarray(0, 8);
+  check(hdr[4] === 16 && hdr[5] === 0 && ((hdr[6] >> 4) | (hdr[7] & 0xF0)) === 4 && (hdr[6] & 2) === 2, `en-tête : MMC3 (mapper 4), 256 Ko, CHR-RAM, sauvegarde (${[...hdr].map(b => b.toString(16)).join(' ')})`);
+  let okb = true;
+  for (const b of [1, 4, 9, 13]) {
+    e.nes.cpu.mem[e.addr('cur_bank')] = 0;
+    // set_bank(b) appelé comme par le jeu : on écrit les registres comme lui
+    e.nes.mmap.write(0x8000, 6); e.nes.mmap.write(0x8001, b * 2); e.nes.mmap.write(0x8000, 7); e.nes.mmap.write(0x8001, b * 2 + 1);
+    const bank = e.nes.rom.rom[b];
+    for (const off of [0x0000, 0x1FF0, 0x2000, 0x3F00]) if (e.nes.mmap.load(0x8000 + off) !== bank[off]) okb = false;
+  }
+  check(okb, 'banques de 16 Ko en deux blocs de 8 Ko ($8000, $A000)');
 }
 
 }
@@ -1704,7 +1716,8 @@ console.log('Animation des joueurs');
     return m === 999 ? null : m - py;
   };
   let last = [-1, -1], still = [0, 0], prev = [0, 0];
-  for (let f = 0; f < 60 * 60 * 3; f++) {
+  // (jusqu'à 6 min si aucune volée ni amortie : depuis la 2.61, le CPU ne joue l'amortie que de l'intérieur du court)
+  for (let f = 0; f < 60 * 60 * 3 || (f < 60 * 60 * 6 && !poses.has(13) && !poses.has(14)); f++) {
     e.run(1);
     for (let p = 0; p < 2; p++) {
       const k = e.peek('pose_cache', p) & 31;

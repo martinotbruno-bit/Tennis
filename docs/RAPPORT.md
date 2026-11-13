@@ -1,10 +1,18 @@
-# Royal Martinot — Rapport de réalisation (version 2.61)
+# Royal Martinot — Rapport de réalisation (version 2.62)
 
 Comme l'exige le CDC (§ 17.5), ce rapport distingue ce qui est **réalisé**, **testé**, **validé sur matériel réel**, **validé uniquement en émulation**, **dépendant d'une extension**, et les **limitations restantes**.
 
 > **Validation matérielle : aucune.** Aucun test n'a été fait sur console réelle (NES, Famicom, PAL, cartouche MMC1). Toutes les validations ont eu lieu en émulation (jsnes) et par des tests unitaires sur PC. Les critères « vérifié sur console physique » (CDC § 2.1, 15.4, 16.A) **ne sont pas remplis**. Ce point ne peut pas être traité dans l'environnement de développement utilisé.
 
 ## 1. Évolutions
+
+### Version 2.62
+
+| Demande | Réalisation |
+|---|---|
+| Défauts de sprites : en plein échange, le joueur semble s'agiter dans tous les sens | Mesures : pas d'oscillation de position ni de rafale de poses ; en revanche, en double surtout, des poses montrées sans leurs tuiles (rebond de balle avant le service au moment du lancer, fin de revers après le point) : 126 trames sur un match en double en perspective en 2.58, 28 en 2.61. Désormais, un jeu de tuiles reste chargé tant qu'un joueur en montre une pose : 0 dans les 4 configurations (simple, double, à plat, perspective) ; test ajouté (double en perspective) |
+| Symétrie du terrain en perspective | La projection resserrait le court autour de x = 128 alors que le court à plat est symétrique autour de 128,5 (ligne médiane sur la colonne 128) : lignes de simple à 47 et 46 px du centre, etc. Projection recentrée, sangle du filet sur 3 px, poteaux en miroir (reflet côté extérieur), restes du filet à plat effacés au-dessus des poteaux : 0 rangée asymétrique dans les 6 lieux |
+| Passer en cartouche MMC3 (étape 1 : à l'identique) | Mapper 4 (TGROM : 256 Ko de programme, 8 Ko de CHR-RAM, 8 Ko de PRG-RAM sauvegardée). Organisation inchangée : chaque banque de 16 Ko devient deux blocs de 8 Ko ($8000 R6 = 2n, $A000 R7 = 2n + 1), la banque 15 reste fixe en $C000-$FFFF. Amorçage dans les 8 derniers Ko (seuls sûrs à l'allumage). Le changement de banque n'est pas plus rapide sur MMC3 dans cette organisation (4 écritures, environ 43 cycles contre 33) : il est sauté si la banque est déjà en place ; double : 11,5 % de trames en retard (10,8 % sur MMC1). L'apport de la MMC3 viendra des étapes suivantes (interruption par ligne, banques de tuiles) |
 
 ### Version 2.61
 
@@ -532,7 +540,7 @@ Pour loger ce contenu, la cartouche passe de NROM (32 Ko) à **MMC1** : 128 Ko d
 | Relecture des textes (`check_texts.py`) | 0 problème |
 | Contraste (`contrast.py 25`) | 0 paire sous ΔE 25 (personnages, courts, balle, tenues) |
 | Profil CPU, double, 6 000 trames | 27 trames d'échange en dépassement (0,45 %), sans défaut d'image |
-| Compilation | Reproductible : SHA-256 `cc3d6f4654a683308a01d49c2c1a67b79c658954db533ecb5e71235bc1e8aded` sur deux compilations propres |
+| Compilation | Reproductible : SHA-256 `79b582474e5424d638db876b6812290cba0f250a7452280aa922ee8474f2eda5` sur deux compilations propres |
 
 ## 3. Conformité par section du CDC
 

@@ -40,23 +40,21 @@ CTRL_VAL  = %10001000
     .byte "NES", $1A
     .byte 16            ; 16 x 16 Ko PRG (256 Ko)
     .byte 0             ; 0 = CHR-RAM (8 Ko)
-    .byte $12           ; mapper 1 (MMC1), PRG-RAM sauvegardée par pile
+    .byte $42           ; mapper 4 (MMC3), PRG-RAM sauvegardée par pile (version 2.62 ; MMC1 avant)
     .byte $00
     .byte $00           ; 8 Ko de PRG-RAM
     .res 7, 0
 
-; Écriture série dans un registre MMC1 (5 bits, poids faible d'abord)
-.macro MMC1_WRITE addr
-    sta addr
-    lsr a
-    sta addr
-    lsr a
-    sta addr
-    lsr a
-    sta addr
-    lsr a
-    sta addr
-.endmacro
+; MMC3 (version 2.62) : banques de programme de 8 Ko. Mode 0 : $8000 (R6)
+; et $A000 (R7) commutables, $C000-$FFFF fixes (les deux dernières, soit
+; l'ancienne banque 15 de 16 Ko). Une banque n de 16 Ko = R6 2n, R7 2n + 1 :
+; l'organisation de la ROM ne change pas. CHR-RAM de 8 Ko : registres R0-R5
+; à l'identité (mode CHR 0).
+MMC3_SEL  = $8000
+MMC3_DATA = $8001
+MMC3_MIRR = $A000
+MMC3_PRAM = $A001
+MMC3_IRQD = $E000
 
 .segment "OAM"
 _oam_buf:   .res 256
@@ -111,8 +109,6 @@ _pal_buf:   .res 32
 reset:
     sei
     cld
-    ldx #$FF
-    stx $8000           ; réinitialise le MMC1 (mode : dernière banque fixe en $C000)
     ldx #$40
     stx JOY2            ; désactive l'IRQ de trame de l'APU
     ldx #$FF
@@ -161,13 +157,20 @@ reset:
     stx _region_cnt
     sty _region_cnt+1
 
-    ; MMC1 : miroir vertical, $8000 commutable, CHR 8 Ko ; banque 0
-    lda #$0E
-    MMC1_WRITE $8000
+    ; MMC3 : miroir vertical, PRG-RAM activée, IRQ coupée, CHR à l'identité
     lda #0
-    MMC1_WRITE $A000
-    lda #0
-    MMC1_WRITE $C000
+    sta MMC3_MIRR
+    lda #$80
+    sta MMC3_PRAM
+    sta MMC3_IRQD
+    ldx #0
+@chrreg:
+    stx MMC3_SEL
+    lda chr_regs,x
+    sta MMC3_DATA
+    inx
+    cpx #6
+    bne @chrreg
     lda #2
     jsr _set_bank       ; banque 2 : motifs graphiques
     ; copie des 8 Ko de motifs dans la CHR-RAM
@@ -468,13 +471,12 @@ _tz_copy:
     pla
     jmp _set_bank
 
-; void __fastcall__ mirror_h(u8 h) : miroir MMC1 horizontal (1, écrans
+; void __fastcall__ mirror_h(u8 h) : miroir horizontal (1, écrans
 ; empilés : défilement vertical du générique de fin) ou vertical (0, normal).
 ; Rendu coupé uniquement.
 _mirror_h:
     and #1
-    ora #$0E
-    MMC1_WRITE $8000
+    sta MMC3_MIRR       ; MMC3 : 0 vertical, 1 horizontal
     rts
 
 ; void ppu_on(void) : active fond + sprites (y compris colonne de gauche)
@@ -824,8 +826,22 @@ _spr_end:
 ; (bit 4 = 0 : PRG-RAM activée)
 _set_bank:
     and #$0F
+    cmp _cur_bank
+    beq @same           ; déjà en place : rien à écrire
     sta _cur_bank
-    MMC1_WRITE $E000
+    asl a               ; banque de 16 Ko n : blocs de 8 Ko 2n et 2n + 1
+    pha                 ; (X et Y préservés, comme avant)
+    lda #6
+    sta MMC3_SEL
+    pla
+    sta MMC3_DATA       ; $8000
+    ora #1
+    pha
+    lda #7
+    sta MMC3_SEL
+    pla
+    sta MMC3_DATA       ; $A000
+@same:
     rts
 
 ; void __fastcall__ bank_call(u8 bank, void (*fn)(void))
@@ -1014,20 +1030,47 @@ _rand8:
     sei
     ldx #$FF
     txs
-    stx $8000
+    nop
+    nop
+    nop
+    jmp boot
+    .word nmi, boot, irq
+
+; Amorçage MMC3 : à la mise sous tension, seuls les 8 derniers Ko ($E000)
+; sont sûrs ; on fixe le mode 0 (dernières banques en $C000-$FFFF) et la
+; banque 0 en $8000, puis le démarrage habituel.
+.segment "BOOT"
+boot:
+    sei
+    cld
+    ldx #$FF
+    txs
+    lda #6
+    sta MMC3_SEL        ; mode 0 (bits 6-7 à 0), registre R6
+    lda #0
+    sta MMC3_DATA
+    lda #7
+    sta MMC3_SEL
+    lda #1
+    sta MMC3_DATA
+    lda #0
+    sta _cur_bank       ; (la RAM est quelconque à l'allumage : set_bank compare avec elle)
     jmp reset
-    .word nmi, reset, irq
+; registres CHR R0-R5 : 2 Ko $0000, 2 Ko $0800, 1 Ko $1000 à $1C00 (identité)
+chr_regs: .byte 0, 2, 4, 5, 6, 7
 
 ; Programmes de démarrage des banques commutables : si une de ces banques
-; occupe $C000 à la mise sous tension, elle réinitialise le MMC1 (ce qui fixe
-; la dernière banque, la 15, en $C000) puis saute au vrai démarrage.
+; occupait $C000 à la mise sous tension (MMC1). Avec la MMC3, $E000-$FFFF est
+; toujours la dernière banque : ces programmes ne servent plus (gardés inertes).
 .macro BANK_STUB seg
 .segment seg
     sei
     ldx #$FF
     txs
-    stx $8000
-    jmp reset
+    nop
+    nop
+    nop
+    jmp $FFF0
     .word $FFF0, $FFF0, $FFF0
 .endmacro
 BANK_STUB "STUB0"

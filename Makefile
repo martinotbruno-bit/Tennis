@@ -89,8 +89,8 @@ $(BUILD)/%.s: src/%.c src/*.h src/assets_data.c src/assets_court.c src/assets_nu
 $(BUILD)/%.o: $(BUILD)/%.s
 	$(CA65) -t nes -g -o $@ $<
 
-$(ROM): $(OBJS) cfg/mmc1.cfg
-	$(LD65) -C cfg/mmc1.cfg -o $@ -m $(BUILD)/royal_martinot.map -Ln $(BUILD)/royal_martinot.lbl --dbgfile $(BUILD)/royal_martinot.dbg $(OBJS) nes.lib
+$(ROM): $(OBJS) cfg/mmc3.cfg
+	$(LD65) -C cfg/mmc3.cfg -o $@ -m $(BUILD)/royal_martinot.map -Ln $(BUILD)/royal_martinot.lbl --dbgfile $(BUILD)/royal_martinot.dbg $(OBJS) nes.lib
 	@python3 tools/rom_report.py $(BUILD)/royal_martinot.map $@
 
 # tests unitaires natifs (règles, codes) + tests sur émulateur

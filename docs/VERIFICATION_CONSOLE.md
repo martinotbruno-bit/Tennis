@@ -1,12 +1,12 @@
 # Royal Martinot — Liste de vérification sur vraie console
 
-Le jeu a été testé uniquement sur émulateur. Cette liste sert à le vérifier pas à pas sur une vraie NES ou Famicom. Cochez chaque case et notez ce qui ne va pas, si possible avec une photo de l'écran. Comptez environ une heure et quart pour l'ensemble. Version du guide : 2.61.
+Le jeu a été testé uniquement sur émulateur. Cette liste sert à le vérifier pas à pas sur une vraie NES ou Famicom. Cochez chaque case et notez ce qui ne va pas, si possible avec une photo de l'écran. Comptez environ une heure et quart pour l'ensemble. Version du guide : 2.62.
 
 ## 0. Matériel
 
 - [ ] Une console : NES (Europe = PAL, États-Unis = NTSC), Famicom (Japon, NTSC), ou un clone Dendy (PAL).
-- [ ] Une cartouche flash compatible **MMC1** (mapper 1), par exemple de la gamme EverDrive N8 ou PowerPak. Elle doit gérer :
-  - **256 Ko** de programme (mapper 1, SNROM) ;
+- [ ] Une cartouche flash compatible **MMC3** (mapper 4), par exemple de la gamme EverDrive N8 ou PowerPak (depuis la version 2.62 ; MMC1 avant). Elle doit gérer :
+  - **256 Ko** de programme (mapper 4, carte TGROM ou équivalent) ;
   - 8 Ko de **CHR-RAM** (pas de CHR-ROM) ;
   - 8 Ko de RAM de sauvegarde.
 - [ ] Le fichier `dist/royal_martinot.nes`, copié sur la carte mémoire de la cartouche.
@@ -19,7 +19,7 @@ Le jeu a été testé uniquement sur émulateur. Cette liste sert à le vérifie
 
 | # | Vérification | Attendu | OK ? |
 |---|---|---|---|
-| 1.1 | Allumer la console | Le générique démarre (« BRUNO MARTINOT PRESENTS », fanfare aux notes bien tenues, sans raté aux changements de scène), barre à 117 %, mentions légales, lettre N tombée puis remise par le stagiaire, puis l'écran titre « ROYAL MARTINOT » après une trentaine de secondes ; sans image brouillée | ☐ |
+| 1.1 | Allumer la console (cartouche réglée en mapper 4 si elle le demande) | Le générique démarre (« BRUNO MARTINOT PRESENTS », fanfare aux notes bien tenues, sans raté aux changements de scène), barre à 117 %, mentions légales, lettre N tombée puis remise par le stagiaire, puis l'écran titre « ROYAL MARTINOT » après une trentaine de secondes ; sans image brouillée | ☐ |
 | 1.1 b | Allumer, puis appuyer deux fois sur un bouton | Au 1er appui : « ARE YOU SURE? THIS IS VERY PRESTIGIOUS. » ; au 2e : « FINE. » puis l'écran titre | ☐ |
 | 1.2 | Musique du titre | Polka jouée en boucle, sans trou, grésillement ni note bloquée ; elle continue sans repartir au début en passant au menu | ☐ |
 | 1.3 | HAUT/BAS dans le titre | L'étoile passe d'une ligne à l'autre avec un petit « bip » | ☐ |
@@ -150,6 +150,7 @@ Pour chaque ligne, lancez un match et regardez l'écran pendant une dizaine de s
 | 10.12 | Vue en perspective | Les deux poteaux du filet sont placés de la même façon | ☐ |
 | 10.13 | Bande-annonce du Grand Martinot | Yeux et contours sombres sur tous les plans (sauf Margaux, dont les yeux restent de la couleur sombre du fond) | ☐ |
 | 10.14 | Sauvegarde, en passant d'une version précédente à la 2.61 (même fichier de sauvegarde) | Palmarès et réglages conservés | ☐ |
+| 10.15 | Allumer plusieurs fois de suite, et appuyer sur RESET à divers moments (titre, menu, match) | Démarrage toujours correct (cartouche MMC3 : l'état des banques à l'allumage est quelconque, le jeu le règle lui-même) | ☐ |
 
 ## 11. Ce qu'il faut renvoyer
 
