@@ -61,7 +61,7 @@ $0200-$02FF  tampon OAM
 $0300-$037F  tampon VRAM (96 octets envoyés au plus par trame : budget VBlank)
 $0400-$06FF  variables du moteur (742 / 768 octets)
 $0700-$07FF  pile de paramètres C
-$6000-$77FF  RAM de cartouche : écrans, compétitions, tampon des ralentis, aide des menus (6 142 / 6 144)
+$6000-$77FF  RAM de cartouche : écrans, compétitions, tampon des ralentis, aide des menus, fond des menus (6 144 / 6 144)
 $7800-$7FFF  palmarès (sauvegardé si la cartouche a une pile ; signature + somme de contrôle)
 ```
 
@@ -321,6 +321,14 @@ Le dessin des personnages est commun aux vues de face et de dos (rangées de tui
 - **Écran titre** : `title_court` copie les tuiles du court ($60, à la place de la police surlignée) et sa carte (rangées 8 à 13), attributs des rangées 12-13 en palette 2.
 - **Sons** : `sfx_menu_val(droite)` (glissando) et `sfx_menu_back`.
 - **Tests** : `seedHook` (emu_test.mjs) fixe `rand_seed` la trame qui suit l'appui lançant un match (A sur la présentation, START sur les réglages) : les matchs des tests sont reproductibles malgré la durée variable des menus.
+
+### Version 2.59 : lob, trames en retard, fond des menus
+
+- **Lob** (`shot_select`, banque 13) : profondeur 60 + min(armé, 22) ; vitesse 19 si le frappeur est à 80 px ou plus du filet (lob défensif, plus haut), 31 à moins de 60 px (lob d'attaque), 24 sinon ; gravité 6, lift. `perfect_hit` accepte le lob : lob parfait = profondeur + 4, écart 1, sans gain de vitesse. IA (`predict`, banque 0) : un joueur au filet fait demi-tour sur un lob s'il est Expert et `ai_err & 1` (une fois sur deux) ; la prédiction ordinaire (point de chute + 12 trames) le mène derrière le rebond.
+- **Trames en retard** : `dive_try` (banque 13) sort tout de suite si la balle est à plus de 56 px (devant) ou 60 px (derrière) en profondeur, ne décide pour l'ordinateur qu'une trame sur deux, et sa boucle utilise des variables `register` (page zéro). L'ola (`crowd_tick`, banque 3) écrit une rangée par trame. Mesure : `PC` hors de `wait_frame` à la fin d'une trame.
+- **Fond des menus** : `menu_bk` (RAM de cartouche, dernier octet libre) tiré par `menu_bk_pick` au premier écran titre parmi $07, $0A, $02, $05 ; `pal_set_menu` l'utilise pour les couleurs 0 ; ombre des lettres dorées en noir sur $07.
+- **Chaises** : `cer_watch` (banque 13) n'affiche pas les chaises tant que `rp_pending` (ralenti prévu ou en cours).
+- **Banque 0** : `surf_rest`, `surf_fric` et `hop_h` sont en banque fixe (gamefix.c).
 
 ### Bande-annonce (`src/teaser.c`, banque 7, version 2.56)
 

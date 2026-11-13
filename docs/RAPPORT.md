@@ -1,10 +1,26 @@
-# Royal Martinot — Rapport de réalisation (version 2.58)
+# Royal Martinot — Rapport de réalisation (version 2.59)
 
 Comme l'exige le CDC (§ 17.5), ce rapport distingue ce qui est **réalisé**, **testé**, **validé sur matériel réel**, **validé uniquement en émulation**, **dépendant d'une extension**, et les **limitations restantes**.
 
 > **Validation matérielle : aucune.** Aucun test n'a été fait sur console réelle (NES, Famicom, PAL, cartouche MMC1). Toutes les validations ont eu lieu en émulation (jsnes) et par des tests unitaires sur PC. Les critères « vérifié sur console physique » (CDC § 2.1, 15.4, 16.A) **ne sont pas remplis**. Ce point ne peut pas être traité dans l'environnement de développement utilisé.
 
 ## 1. Évolutions
+
+### Version 2.59
+
+| Demande | Réalisation |
+|---|---|
+| Améliorer le lob | **Longueur selon l'armé** (relâché vite : lob court, smashable ; bouton tenu : près de la ligne de fond, risque de faute ; l'ordinateur dose selon son niveau). **Trajectoire selon la position** : du fond, lob défensif très haut et lent ; de l'intérieur du court, lob d'attaque plus bas et plus vif. **Lob parfait** (même fenêtre que la frappe parfaite) : précis et plus profond. **L'Expert recule** une fois sur deux sur un lob (smash s'il est court, sinon rattrapage après le rebond) ; Facile et Normal restent au filet. Mesure sur des matchs Hugo (tactique) contre Nina (filet) : lobs gagnants contre Normal 34 % (33 % avant), contre Expert 16 % (32 % avant) |
+| En compétition en double, une seule vignette de joueur | Le portrait du partenaire s'affiche à droite du titre des réglages |
+| Le jeu ralentit par moments, même en simple | Mesure des trames en retard (le jeu n'a pas fini avant l'image suivante), défaut déjà présent en 2.57. Profil : la décision de plongeon de l'IA (parcours de la trajectoire à chaque trame) et l'ola (deux rangées la même trame). Plongeon : test rapide de la profondeur, une trame sur deux, boucle en page zéro ; ola : une rangée par trame. Simple à plat : 274 trames en retard sur 15 000 avant, 127 après (pendant l'échange : 98 avant, 16 après) ; perspective : 576 avant, 424 après. Double : inchangé (environ 20 %, IA des 4 joueurs) |
+| Au changement de côté, les chaises seulement après le ralenti, pas dessus | Les chaises n'apparaissent plus pendant l'attente du ralenti ni pendant celui-ci (mesure, ralenti forcé à chaque point : 175 trames avec chaises avant, 0 après) |
+| Trait jaune horizontal au niveau de la balle (écran titre), qui ressemble au filet | Filet retiré du court de l'écran titre (lignes blanches seules) |
+| En perspective, le poteau du filet n'est pas aligné pareil des deux côtés | Poteaux symétriques (le droit était 4 px plus près du court) |
+| L'image est abîmée côté droit, à l'épaule de la seconde joueuse, quand la balle curseur rebondit | Sur la première ligne des réglages, la balle croisait le bas des portraits : 9 sprites sur une ligne, la NES en affiche 8. Sur cette ligne, la balle ne monte plus |
+| Une autre teinte de fond, discrète ; puis : plusieurs couleurs au hasard au chargement (terre battue, gazon, dur, moquette) | Le fond des menus est tiré au hasard à chaque allumage parmi les couleurs des quatre surfaces (celles de l'affiche VS) ; sur fond terre battue, l'ombre des lettres dorées passe en noir |
+| Le choix du personnage a-t-il une importance à la manette ? | Non : seuls l'apparence et les gestes changent ; le style de jeu ne concerne que l'ordinateur (précisé dans le manuel) |
+
+Mémoire : la RAM de cartouche est pleine (6 144 octets sur 6 144) et la banque 0 presque (les tables de rebond et de saut ont été déplacées en banque fixe).
 
 ### Version 2.58
 

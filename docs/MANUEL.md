@@ -21,7 +21,7 @@ Ce manuel est aussi intégré au jeu : à l'écran titre, choisissez **MODE D'EM
 
 ## 1. Écran titre
 
-**HAUT/BAS** choisit une entrée et **A** la valide. **START** ouvre directement la configuration. La grosse balle du titre est posée sur un court en perspective.
+**HAUT/BAS** choisit une entrée et **A** la valide. **START** ouvre directement la configuration. La grosse balle du titre est posée sur un court en perspective (lignes blanches).
 
 | Entrée | Rôle |
 |---|---|
@@ -38,7 +38,7 @@ Depuis la version 2.57, les menus sont habillés : fond vert gazon, titres en gr
 
 Les libellés sont en bleu pâle, les valeurs en jaune ; la ligne choisie s'allume (libellé en or, valeur en blanc, flèches **<** **>** autour de la valeur) et une balle rebondit devant elle. Une pastille de la couleur de la surface accompagne la ligne SURFACE ; les deux joueurs choisis encadrent le titre.
 
-Depuis la version 2.58 : en bas de l'écran, deux lignes expliquent la **ligne choisie** et sa valeur (pour un joueur : son style de jeu) ; une **accolade dorée** dans la marge réunit les lignes de chaque groupe (partie, joueurs, match, options) ; les **portraits** des joueurs choisis encadrent le titre ; une **vignette** illustre le lieu choisi. Un petit son monte ou descend quand une valeur change, et une note descend quand on revient avec B.
+Depuis la version 2.59, le fond des menus change à chaque allumage : terre battue, gazon, dur ou moquette. Depuis la version 2.58 : en bas de l'écran, deux lignes expliquent la **ligne choisie** et sa valeur (pour un joueur : son style de jeu) ; une **accolade dorée** dans la marge réunit les lignes de chaque groupe (partie, joueurs, match, options) ; les **portraits** des joueurs choisis encadrent le titre ; une **vignette** illustre le lieu choisi. Un petit son monte ou descend quand une valeur change, et une note descend quand on revient avec B.
 
 **HAUT/BAS** choisit une ligne, **GAUCHE/DROITE** change la valeur. **START** lance la partie, **B** revient au titre. Les lignes affichées dépendent du mode. Tout le contenu est disponible dès le départ.
 
@@ -64,7 +64,7 @@ Selon le mode, d'autres lignes apparaissent :
 - **Compétition** : type de compétition et, pour le tournoi personnalisé, le nombre de joueurs, la progression des adversaires et la variété des surfaces ;
 - **Entraînement** : l'exercice et, pour l'exercice personnalisé, le côté, la vitesse, l'effet et le nombre de balles.
 
-La ligne **STYLE** indique le style de jeu de l'adversaire choisi.
+Le style de jeu ne concerne que les personnages joués par l'ordinateur. Pour un joueur à la manette, le personnage ne change que l'apparence (couleurs, silhouette, gestes de fête) : vitesse, puissance et coups sont les mêmes pour tous.
 
 | Personnage | Style |
 |---|---|
@@ -91,7 +91,7 @@ Avant chaque match, un **écran de présentation** rappelle l'épreuve, les joue
 | **B** | Coup coupé (slice) : balle basse et lente |
 | **A** + HAUT | Frappe à plat : tendue, longue et très rapide, mais moins précise. Mal placé, elle part dans le filet ou dehors |
 | **A** + BAS | Croisé court : en angle, dans le carré de service près de la ligne de côté, avec du lift. Idéal pour sortir l'adversaire du court ou passer un joueur au filet ; risque de sortir sur le côté |
-| **B** + HAUT | Lob |
+| **B** + HAUT | Lob. Relâché vite : **lob court**, plus sûr mais smashable ; bouton tenu : **lob long**, près de la ligne de fond (risque de faute). Depuis le fond du court, le lob part très haut et lent (défensif) ; depuis l'intérieur du court, plus bas et plus vif (lob d'attaque) |
 | **B** + BAS | Amortie |
 | GAUCHE / DROITE à l'impact | Viser le long d'une ligne ; sans direction, le coup part croisé |
 | **START** | Pause : CONTINUER ou QUITTER (HAUT/BAS puis A). SELECT quitte directement |
@@ -105,7 +105,7 @@ Le type de coup dépend aussi de la situation :
 - balle avant le rebond, au-dessus de la tête (plus de 24 px de haut) : **smash**. A : smash à plat ; A + HAUT : vers la ligne de fond ; A + BAS : dans l'angle court. B : smash coupé, plus lent ; B + BAS : smash amorti, qui surprend l'adversaire resté au fond. Plus vous armez (bouton tenu), plus le smash est fort, mais moins il est précis ;
 - balle très haute (lob un peu court), si vous êtes dans les deux tiers avant de votre moitié de court : **smash sauté**, le joueur saute et frappe plus fort et plus à plat (le CPU Expert sait aussi le faire) ;
 - balle loin du corps : frappe en extension, moins précise ;
-- **frappe parfaite** (lifté, à plat, coupé ou croisé court, après le rebond) : la balle passe **à côté du corps**, ni collée ni en extension, et vous avez **relâché le bouton juste avant** qu'elle n'arrive (fenêtre de 3 images, 1/20 de seconde). La balle part environ 40 % plus vite, presque sans écart, avec un « tchak » sec et un petit éclat blanc près de la raquette. Si ce coup est gagnant, le bandeau annonce « COUP PARFAIT ! ». Si vous gardez le bouton enfoncé jusqu'à l'impact, la frappe reste normale. Ordre de grandeur pour un adulte : 15 à 20 % de vos coups au début, 30 à 40 % avec l'habitude. Le palmarès donne votre pourcentage.
+- **frappe parfaite** (lifté, à plat, coupé, croisé court ou lob, après le rebond) : la balle passe **à côté du corps**, ni collée ni en extension, et vous avez **relâché le bouton juste avant** qu'elle n'arrive (fenêtre de 3 images, 1/20 de seconde). La balle part environ 40 % plus vite (le lob parfait, lui, part aussi lent mais tombe plus loin et pile où vous visez), presque sans écart, avec un « tchak » sec et un petit éclat blanc près de la raquette. Si ce coup est gagnant, le bandeau annonce « COUP PARFAIT ! ». Si vous gardez le bouton enfoncé jusqu'à l'impact, la frappe reste normale. Ordre de grandeur pour un adulte : 15 à 20 % de vos coups au début, 30 à 40 % avec l'habitude. Le palmarès donne votre pourcentage.
 
 ### Au service
 
@@ -305,5 +305,5 @@ Le déblocage est gardé dans le palmarès (définitivement si la cartouche a un
 - Placez-vous **à côté** de la trajectoire, pas dessus : la balle doit passer à portée de raquette.
 - Armez tôt sur les balles lentes ; sur les balles rapides, une frappe courte suffit.
 - Viser les lignes avec beaucoup de puissance augmente le risque de faute.
-- Contre un volleyeur (Nina, Lina) : le **lob**. Contre un défenseur au fond (Omar, Maya) : l'**amortie**.
+- Contre un volleyeur (Nina, Lina) : le **lob**, bien long. L'ordinateur Expert recule parfois sur le lob pour le smasher ou le rattraper après le rebond ; Facile et Normal restent au filet. Contre un défenseur au fond (Omar, Maya) : l'**amortie**.
 - L'ordinateur s'adapte : s'il voit que vous visez toujours le même côté, il s'y place à l'avance. Si vous montez souvent au filet, il lobe davantage. Variez votre jeu.
