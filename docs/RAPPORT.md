@@ -1,10 +1,21 @@
-# Royal Martinot — Rapport de réalisation (version 2.60)
+# Royal Martinot — Rapport de réalisation (version 2.61)
 
 Comme l'exige le CDC (§ 17.5), ce rapport distingue ce qui est **réalisé**, **testé**, **validé sur matériel réel**, **validé uniquement en émulation**, **dépendant d'une extension**, et les **limitations restantes**.
 
 > **Validation matérielle : aucune.** Aucun test n'a été fait sur console réelle (NES, Famicom, PAL, cartouche MMC1). Toutes les validations ont eu lieu en émulation (jsnes) et par des tests unitaires sur PC. Les critères « vérifié sur console physique » (CDC § 2.1, 15.4, 16.A) **ne sont pas remplis**. Ce point ne peut pas être traité dans l'environnement de développement utilisé.
 
 ## 1. Évolutions
+
+### Version 2.61
+
+| Demande | Réalisation |
+|---|---|
+| Faire tout : réorganiser la mémoire | Les variables du générique de lancement, du podium et du générique de fin vont dans la zone de sauvegarde libre ($7800-$7FFF, hors des blocs sauvegardés, dont les adresses ne changent pas : palmarès et réglages conservés) ; les gouttes de pluie passent en RAM de cartouche. Libre : RAM interne 28 octets (8 avant), RAM de cartouche 373 (0 avant), zone de sauvegarde 1,2 Ko |
+| Croisé court en volée | Il garde sa longueur (28 au lieu de 20) et part plus vite que les autres volées : il ne fait plus double emploi avec l'amortie de volée |
+| Yeux de la bande-annonce | Contours et yeux dans la couleur sombre (cheveux) au lieu de celle du fond, sur toutes les images sauf un gros plan qui dépasserait 246 tuiles et les images de Margaux (blonde) ; cheveux de Papi en gris foncé dans la bande-annonce |
+| Mesure et ajustement des coups de B | Coupé un peu plus haut au-dessus du filet ; l'ordinateur ne joue plus l'amortie du fond du court. Fautes du coupé : Normal 11 → 6 %, Expert 22 → 15 % ; amortie de l'ordinateur, plus rare : gagnantes / fautes Normal 32 / 48 % → 67 / 17 %, Expert 9 / 51 % → 40 / 24 % |
+| Ralentissements restants | Mesure : simple à plat 83 trames en retard sur 15 000, perspective 163, double environ 9 % (22 % au départ). Le reste : dessin du score en une trame à la fin des points (bref, isolé) et, en double, l'affichage des 4 joueurs et l'IA (il faudrait les réécrire en assembleur) |
+| Validation sur vraie console | Impossible dans l'environnement de développement ; guide `docs/VERIFICATION_CONSOLE.md` mis à jour (version 2.61, section 10 : nouveautés 2.57 à 2.61) |
 
 ### Version 2.60
 

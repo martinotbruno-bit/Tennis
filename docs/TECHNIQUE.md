@@ -61,7 +61,7 @@ $0200-$02FF  tampon OAM
 $0300-$037F  tampon VRAM (96 octets envoyés au plus par trame : budget VBlank)
 $0400-$06FF  variables du moteur (742 / 768 octets)
 $0700-$07FF  pile de paramètres C
-$6000-$77FF  RAM de cartouche : écrans, compétitions, tampon des ralentis, aide des menus, fond des menus (6 144 / 6 144)
+$6000-$77FF  RAM de cartouche : écrans, compétitions, tampon des ralentis, aide des menus, fond des menus (5 771 / 6 144)
 $7800-$7FFF  palmarès (sauvegardé si la cartouche a une pile ; signature + somme de contrôle)
 ```
 
@@ -335,6 +335,13 @@ Le dessin des personnages est commun aux vues de face et de dos (rangées de tui
 - **Lifté** (`shot_select`, banque 13) : profondeur 62 si armé < 4, sinon 70 ; gravité 7 + armé / 8. **Croisé court** : armé borné à 24 (T) ; vitesse 34 + T / 4 ; `hit_margin` = 14 − T / 3 (distance à la ligne de côté, lue par `do_hit`) ; armé transmis divisé par 2 (imprécision). Smash dans l'angle : `hit_margin` = 8. `hit_margin` n'est plus statique (game.c).
 - **IA** (`ai_update`, banque 0) : à partir de Normal, après le lob et l'amortie, croisé court avec une probabilité 90/256 si l'adversaire est au filet, 20/256 sinon.
 - **Réglages** : première rangée `MY0` = 4 + (18 − `nvis`) / 2 (screens.c ; même calcul dans `menu_marks`) ; `menu_soft` réécrit les 18 rangées ; portraits en y = `MY0` × 8 − 30, entre 7 et 16. Tests : `menuY(e, i)`.
+
+### Version 2.61 : mémoire, volée croisée, bande-annonce, coups de B
+
+- **Mémoire** : `intro.c`, `podium.c` et `credits.c` (modules liés après `stats.c`) rangent leurs variables dans `SAVEDATA`, après les blocs sauvegardés, qui gardent leurs adresses (`sv` $7800, `sw_best` $7851, `so` $7855, `sx` $7870, `sw_view` $787B). Ces variables ne sont pas remises à zéro au démarrage : elles sont toutes initialisées avant usage. Pluie (`rain_x`, `rain_y`) en `WBSS`.
+- **Volée** (`shot_select`) : croisé court en volée, profondeur − 2 (au lieu de − 10), vitesse plafonnée à 48.
+- **Bande-annonce** (`gen_teaser.py`, `render`) : classe 0 (contours, yeux) des personnages → classe 5 (sombre), sauf fillette ; si l'image dépasse 246 tuiles, rendu d'origine. `teaser.c` : D = $00 si $10 (Papi). Budget de la banque 12 : 11 500.
+- **Coups de B** : coupé, gravité 5 ; IA : amortie seulement si le frappeur est à moins de 70 px du filet.
 
 ### Bande-annonce (`src/teaser.c`, banque 7, version 2.56)
 
