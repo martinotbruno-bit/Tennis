@@ -690,7 +690,7 @@ static void comp_screen(void)
     if (c_dbl) txt_at(3, 23, c_hum2 ? "DOUBLE A 2 JOUEURS" : "COMPETITION EN DOUBLE");
     txt_at(3, 25, "A : JOUER   B : MENU");
     {   /* médailles des 3 premiers (classements) : or, argent, bronze */
-        static const u8 med[9] = { 0x38, 0x28, 0x30,  0x30, 0x10, 0x20,  0x37, 0x17, 0x27 };
+        static const u8 med[9] = { 0x28, 0x18, 0x38,  0x10, 0x00, 0x30,  0x17, 0x07, 0x27 };   /* (couleur 1 : disque, 3 : reflet) */
         for (o = 0; o < 9; ++o) pal_buf[17 + (o / 3) * 4 + o % 3] = med[o];
     }
     ppu_on();
