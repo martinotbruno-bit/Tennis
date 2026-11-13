@@ -149,6 +149,10 @@ void sfx_whistle(void)    { pulse1(0x45, 0xB1, 100); }
 void sfx_crowd(u8 s)      { noise((u8)(0x08 + (s & 7)), 0x02, 2, 40); }
 void sfx_menu_move(void)  { pulse1(0x81, 0x08, 240); }
 void sfx_menu_ok(void)    { pulse1(0x82, 0x89, 180); }
+/* changer une valeur : petit glissando vers l'aigu (droite) ou le grave
+   (gauche) ; retour : note qui descend, plus longue */
+void sfx_menu_val(u8 right) { pulse1(0x41, (u8)(right ? 0x9A : 0x92), (u16)(right ? 320 : 220)); }
+void sfx_menu_back(void)  { pulse1(0x83, 0xA3, 200); }
 void sfx_toss(void)       { pulse1(0x81, 0x8B, 400); }
 /* pas : bruit sourd très bref à faible volume constant, jamais par-dessus un
    rebond, une frappe ou le public */

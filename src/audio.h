@@ -11,6 +11,8 @@ void sfx_whistle(void);
 void sfx_crowd(u8 strength);      /* réaction du public */
 void sfx_menu_move(void);
 void sfx_menu_ok(void);
+void sfx_menu_val(u8 right);
+void sfx_menu_back(void);
 void sfx_toss(void);
 void sfx_step(void);               /* bruit de pas discret */
 void sfx_perfect(void);            /* « tchak » sec de la frappe parfaite */

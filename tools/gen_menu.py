@@ -55,6 +55,16 @@ DECO = [
 ]
 deco = b''.join(tile(r) for r in DECO)
 
+# accolades des groupes de lignes des réglages ($C0-$C3, écran RÉGLAGES :
+# son titre n'utilise que $A8-$BF) : or (2) et ombre (1), en marge gauche
+GRP = [
+    ["00000000", "00000000", "00000000", "00002222", "00002111", "00002100", "00002100", "00002100"],   # début
+    ["00002100"] * 8,                                                                                   # milieu
+    ["00002100", "00002100", "00002100", "00002222", "00001111", "00000000", "00000000", "00000000"],   # fin
+    ["00000000", "00000000", "00000000", "00022222", "00011111", "00000000", "00000000", "00000000"],   # ligne seule
+]
+grp = b''.join(tile(r) for r in GRP)
+
 
 # lettres doublées des titres : 4 tuiles par caractère (haut-gauche,
 # haut-droite, bas-gauche, bas-droite), pour ' - 0-9 A-Z
@@ -107,7 +117,7 @@ def arr(name, data):
 
 L = ['/* Fichier généré par tools/gen_menu.py — ne pas modifier. */',
      '/* Habillage des menus : police surlignée ($60-$9F) et ornements dorés ($A0-$A7), banque 8. */', '']
-L += arr('menu_font2', font2) + [''] + arr('menu_deco', deco) + ['']
+L += arr('menu_font2', font2) + [''] + arr('menu_deco', deco) + [''] + arr('menu_grp', grp) + ['']
 L += arr('menu_attr', b''.join(attrs(k, r) for k, r in ATTR)) + ['']
 L += ['const char menu_bigchars[] = "%s";' % BIG_CHARS, '']
 open(os.path.join(ROOT, 'src', 'assets_menu.c'), 'w').write('\n'.join(L))

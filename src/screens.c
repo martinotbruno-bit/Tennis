@@ -105,7 +105,7 @@ static void comp_next(void)
     gm_ev = COMP(comp_gm_intro, 0);
     comp_screen();
 }
-static u8 vis[NOPT];
+u8 vis[NOPT];        /* (lu par menuart.c : accolades des groupes) */
 u8 nvis, cursor;     /* non statiques : lus par les tests */
 static u8 last_mode, demo_dbl;
 static u16 idle;
@@ -219,6 +219,7 @@ static u8 is_final(void)
     return (u8)((comp_l1[0] == 'F' && comp_l1[6] == 0) || (comp_l2[0] == 'F' && comp_l2[6] == 0));
 }
 
+u8 __fastcall__ grp_tile(u8 i);
 void menu_deco_begin(void); void deco_title(void); void deco_frame(void); void deco_filet(void); void palmares_build(void);
 extern char deco_str[24];
 extern u8 deco_kind, deco_row;
@@ -326,6 +327,7 @@ static void menu_draw_row(u8 i, u8 direct)
         if (vis[i] == O_P2 && (opt_val[O_MODE] == MODE_COMP || opt_val[O_MODE] == MODE_2P_TEAM)) txt_at(3, (u8)(4 + i), "PARTENAIRE");
         else txt_at(3, (u8)(4 + i), opt_label[vis[i]]);
         txt_at(16, (u8)(4 + i), line);
+        vram_adr(NTADR(2, 4 + i)); vram_put((u8)far_call(BANK_PODIUM, (void *)grp_tile, i));
         if (i == cursor) hl_cur = i;
     }
     else {
@@ -390,39 +392,33 @@ static void menu_soft_tick(void)
         }
         vbuf_text(16, (u8)(4 + i), line, 15);
         line[0] = ' '; vbuf_text(15, (u8)(4 + i), line, 1); vbuf_text(31, (u8)(4 + i), line, 1);
+        line[0] = (char)far_call(BANK_PODIUM, (void *)grp_tile, i); vbuf_text(2, (u8)(4 + i), line, 1);
     }
 }
 
-/* Bas du menu (rangées 24 à 27) : style de l'adversaire et aide des
-   touches ; en mode compétition, curseur sur la ligne COMPETITION :
-   explication de la compétition choisie (comp_desc, banque 5). Redessiné
-   une ligne par trame (budget VBlank) quand ce qu'il faut montrer change. */
-static u8 info_k, info_row;          /* réglés par menu_screen */
-static void menu_style_line(u8 direct)
+/* Bas du menu (rangées 24 à 27) : aide de la ligne choisie (2 lignes,
+   selon sa valeur ; joueurs : leur style), puis les touches ; sur la ligne
+   COMPETITION : explication de la compétition en 4 lignes (comp_desc,
+   banque 5). Redessiné une ligne par trame (budget VBlank) quand la ligne
+   ou la valeur change. */
+extern u8 help_o, help_v;
+u8 __fastcall__ menu_help(u8 r);
+#pragma bss-name (push, "WBSS")
+static u8 info_o, info_v, info_row;
+#pragma bss-name (pop)
+static void info_line(u8 r)
 {
-    u8 c = opt_val[O_MODE] == MODE_COMP || opt_val[O_MODE] == MODE_TRAIN ? opt_val[O_P1] : opt_val[O_P2];
-    if (info_k != 0xFF) return;          /* explication affichée */
-    pad_text(style_name[char_style[c]], 14);
-    if (direct) { txt_at(3, 24, "STYLE"); txt_at(9, 24, line); }
-    else vbuf_text(9, 24, line, 14);
+    if (info_o == O_COMP) COMP(comp_desc, (u8)(info_v * 4 + r));
+    else if (r < 2) { help_o = info_o; help_v = info_v; (void)far_call(BANK_GMI, (void *)menu_help, r); }
+    else COMP(comp_desc, (u8)(NCT * 4 + r));          /* touches */
 }
 static void menu_info_tick(void)
 {
-    u8 want = (u8)(opt_val[O_MODE] == MODE_COMP && vis[cursor] == O_COMP ? opt_val[O_COMP] : 0xFF);
-    if (want != info_k) { info_k = want; info_row = 0; }
+    u8 o = vis[cursor];
+    if (o != info_o || opt_val[o] != info_v) { info_o = o; info_v = opt_val[o]; info_row = 0; }
     while (info_row < 4 && vram_len + 32 <= VBUF_MAX) {
-        if (info_k != 0xFF) {
-            COMP(comp_desc, (u8)(info_k * 4 + info_row));
-            vbuf_text(2, (u8)(24 + info_row), comp_l1, 28);
-        } else if (info_row == 0) {
-            pad_text(" STYLE", 28);
-            vbuf_text(2, 24, line, 28);
-            info_k = 0xFF;
-            menu_style_line(0);
-        } else {
-            COMP(comp_desc, (u8)(NCT * 4 + info_row));      /* aide des touches */
-            vbuf_text(2, (u8)(24 + info_row), comp_l1, 28);
-        }
+        info_line(info_row);
+        vbuf_text(2, (u8)(24 + info_row), comp_l1, 28);
         ++info_row;
     }
 }
@@ -435,9 +431,8 @@ static void menu_screen(void)
     screen_begin();
     deco("REGLAGES", 1, 22);
     for (i = 0; i < nvis; ++i) menu_draw_row(i, 1);
-    info_k = 0xFF; info_row = 4;
-    menu_style_line(1);
-    for (i = 1; i < 4; ++i) { COMP(comp_desc, (u8)(NCT * 4 + i)); txt_at(2, (u8)(24 + i), comp_l1); }
+    info_o = vis[cursor]; info_v = opt_val[info_o];
+    for (info_row = 0; info_row < 4; ++info_row) { info_line(info_row); txt_at(2, (u8)(24 + info_row), comp_l1); }
     pal_set_player(0, opt_val[O_P1]);
     pal_set_player(1, opt_val[O_P2]);
     ppu_on();
@@ -809,7 +804,7 @@ static void code_tick(void)
     if ((pad1_new & PAD_LEFT) && code_pos > 0) --code_pos;
     vbuf_reset();
     vbuf_text(9, 10, code_buf, PW_LEN);
-    if (pad1_new & PAD_B) { title_screen(); return; }
+    if (pad1_new & PAD_B) { sfx_menu_back(); title_screen(); return; }
     if (pad1_new & PAD_START) {
         pw_s = code_buf; pw_p = &pw;
         if ((u8)far_call(BANK_COMP, (void *)pw_dec_far, 0)) {
@@ -1065,11 +1060,10 @@ void screens_tick(void)
             if ((o == O_P1 || o == O_P2) && v == 16 && opt_val[O_ENV] == ENV_NUDE)
                 v = (u8)((pad1_new & PAD_RIGHT) ? 0 : 15);
             opt_val[o] = v;
-            sfx_menu_move();
+            sfx_menu_val((u8)(pad1_new & PAD_RIGHT));
             if (o == O_MODE || o == O_COMP || o == O_EX || (o == O_TYPE && opt_val[O_MODE] == MODE_COMP)) {
                 vbuf_reset();
                 menu_soft();
-                menu_style_line(0);
                 break;
             }
             vbuf_reset();
@@ -1079,11 +1073,10 @@ void screens_tick(void)
             if (o == O_ENV || o == O_COND) {
                 for (i = 0; i < nvis; ++i) if (vis[i] == O_COND) menu_draw_row(i, 0);
             }
-            menu_style_line(0);
             if (o == O_P1) pal_set_player(0, v);
             if (o == O_P2) pal_set_player(1, v);
         }
-        if (pad1_new & PAD_B) { title_screen(); break; }
+        if (pad1_new & PAD_B) { sfx_menu_back(); title_screen(); break; }
         if ((pad1_new & PAD_START) || ((pad1_new & PAD_A) && o == O_START)) {
             sfx_menu_ok();
             (void)far_call(BANK_COMP, (void *)so_save, 0);   /* mémorise les réglages */
@@ -1113,7 +1106,7 @@ void screens_tick(void)
             }
             go_match(); break;
         }
-        if (pad1_new & PAD_B) { if (last_mode == MODE_COMP) comp_screen(); else menu_screen(); break; }
+        if (pad1_new & PAD_B) { sfx_menu_back(); if (last_mode == MODE_COMP) comp_screen(); else menu_screen(); break; }
         present_sprites();
         break;
     case SS_COMP:
@@ -1123,7 +1116,7 @@ void screens_tick(void)
             spr_end();
         }
         if (pad1_new & (PAD_A | PAD_START)) { comp_cfg(); present_screen(); break; }
-        if (pad1_new & PAD_B) menu_screen();
+        if (pad1_new & PAD_B) { sfx_menu_back(); menu_screen(); }
         break;
     case SS_SETBREAK:
         /* n'importe quel bouton (manette 1 ou 2) ferme l'écran aussitôt,
@@ -1148,12 +1141,12 @@ void screens_tick(void)
             else { setup_cfg(last_mode); go_match(); }
             break;
         }
-        if ((pad1_new & PAD_B) && last_mode != MODE_COMP) { menu_screen(); break; }
+        if ((pad1_new & PAD_B) && last_mode != MODE_COMP) { sfx_menu_back(); menu_screen(); break; }
         results_sprites();
         break;
     case SS_TRAIN_RES:
         if (pad1_new & PAD_A) { setup_cfg(MODE_TRAIN); go_match(); }
-        if (pad1_new & PAD_B) menu_screen();
+        if (pad1_new & PAD_B) { sfx_menu_back(); menu_screen(); }
         break;
     case SS_CODE:
         code_tick();
@@ -1165,7 +1158,7 @@ void screens_tick(void)
             if (++pal_confirm == 2) { SV(sv_clear); pal_confirm = 0; fade_skip = 1; palmares_screen(); sfx_fault(); }
             else { vbuf_reset(); vbuf_text(2, 22, "SELECT ENCORE : EFFACER", 24); }
         }
-        if (pad1_new & PAD_B) title_screen();
+        if (pad1_new & PAD_B) { sfx_menu_back(); title_screen(); }
         break;
     }
 }

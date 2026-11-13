@@ -425,6 +425,9 @@ def body(f, j, female, face, front=('armR', 'legL'), racket_hand='L', racket_dir
     return ret
 
 
+NO_MOUTH = False
+
+
 def face_features(f, x, y, face, hid, tilt=0.0, female=False, hs=1.0):
     """yeux (blanc, iris, paupière, cils), sourcils, nez, bouche (lèvres)
     selon l'expression : concentration, effort, joie, colère. Pupilles et
@@ -459,7 +462,9 @@ def face_features(f, x, y, face, hid, tilt=0.0, female=False, hs=1.0):
             eye(sx, look=-0.9, lid=0.25)
             brow(sx, -3.2, -3.9)
         nose()
-        if female:
+        if NO_MOUTH:
+            pass                    # (portraits des réglages : pas de bouche)
+        elif female:
             P(line([R(-2.6, 8.9), R(0, 9.3), R(2.6, 8.9)], 0.7), 0)
             P(f.m_ell(R(0, 10.0), 2.2, 0.8, tilt), 2)                                    # lèvre inférieure
         else:
@@ -986,6 +991,49 @@ def vs_export():
     return arts
 
 
+# portraits des réglages (version 2.58) : tête et épaules, 32 x 32 pixels,
+# en sprites 4 x 4 (couleurs du joueur : 1 peau, 2 tenue, 3 sombre ; 0
+# transparent) ; homme, femme, fillette (Margaux). Banque 13.
+PORT_K = 0.8
+def port_render(female):
+    W = H = 32
+    f = Fig(W, H, PORT_K, 80 - (W / 2) / PORT_K, (36.0 + 1.5) if female else (32.5 - 1.5))
+    global NO_MOUTH
+    NO_MOUTH = True
+    body(f, skeleton(POSES['bust']['s'], female), female, 'focus', racket_hand='X', racket_dir=0, racket_len=50)
+    NO_MOUTH = False
+    f.outline()
+    cmap = {0: 3, 5: 3, 1: 1, 2: 1, 6: 1, 3: 2, 4: 2}
+    idx = np.zeros((H, W), np.uint8)
+    for y in range(H):
+        for x in range(W):
+            if f.pid[y, x] > 0:
+                idx[y, x] = cmap[int(f.cls[y, x])]
+    tiles = b''.join(tile_bytes(idx, tx, ty) for ty in range(4) for tx in range(4))
+    return idx, tiles
+
+
+def port_export():
+    data = b''
+    prev = []
+    for female in (0, 1, 2):
+        idx, t = port_render(female)
+        data += t; prev.append(idx)
+    L = ['/* Fichier généré par tools/gen_teaser.py — ne pas modifier. */',
+         '/* Portraits des réglages : homme, femme, fillette (16 tuiles de sprites chacun), banque 13. */', '']
+    L += arr_c('port_chr', data) + ['']
+    open(os.path.join(ROOT, 'src', 'assets_port.c'), 'w').write('\n'.join(L))
+    pal = {1: (240, 188, 60), 2: (60, 90, 200), 3: (20, 20, 20)}
+    im = Image.new('RGB', (3 * 36, 32), (0, 100, 0))
+    for i, idx in enumerate(prev):
+        for y in range(32):
+            for x in range(32):
+                if idx[y, x]:
+                    im.putpixel((i * 36 + x, y), pal[int(idx[y, x])])
+    im.resize((im.width * 6, im.height * 6), Image.NEAREST).save(os.path.join(ROOT, 'assets', 'preview_portraits.png'))
+    print('portraits : %d octets' % len(data))
+
+
 def arr_c(name, data):
     lines = ['const unsigned char %s[%d] = {' % (name, len(data))]
     for i in range(0, len(data), 16):
@@ -1018,6 +1066,7 @@ if __name__ == '__main__':
     out, sheet = main()
     export(out)
     vs_preview(vs_export(), os.path.join(ROOT, 'assets', 'preview_vs.png'))
+    port_export()
     cols = len(sheet[0])
     w, h = sheet[0][0].size
     big = Image.new('RGB', (w * cols, h * len(sheet)))

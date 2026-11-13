@@ -634,7 +634,7 @@ static const char * const comp_help[NCT * 4 + 4] = {
     /* personnalisé */ "VOTRE TOURNOI : 4 OU 8", "JOUEURS, ADVERSAIRES DE", "NIVEAU FIXE OU PROGRESSIF,", "SURFACE FIXE OU VARIEE.",
     /* Grand Martinot */ "4 TOURNOIS DE 16 JOUEURS :", "AUGUSTRALIE, DEBOGARROS,", "MARTINBLEDON, US OPAUL.", "POINTS. 4 TITRES : CHELEM !",
     /* Martinworld Tour */ "7 TOURNOIS DE 8, UN PAR", "SURFACE : DUR, GLACE, TERRE,", "GAZON, PLAGE, DUR, MOQUETTE.", "POINTS. 7 TITRES : CHELEM !",
-    /* aide des touches du menu (k = NCT x 4 + 1 à 3) */ "", "HAUT/BAS : CHOISIR", "GAUCHE/DROITE : MODIFIER", "START : JOUER   B : RETOUR",
+    /* aide des touches du menu (k = NCT x 4 + 2 et 3) */ "", "", "GAUCHE/DROITE : MODIFIER", "START : JOUER   B : RETOUR",
 };
 /* Grand Martinot : tournoi à annoncer (premier tour, pas encore annoncé à
    cette étape), sinon $FF */

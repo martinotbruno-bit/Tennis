@@ -1,0 +1,182 @@
+/* Fichier généré par tools/gen_help.py — ne pas modifier. */
+/* Aide des réglages : deux lignes pour la ligne choisie (banque 14). */
+
+#include "runtime.h"
+#include "gfx.h"
+#include "comp.h"
+
+#pragma bss-name ("WBSS")      /* (RAM de cartouche, variables locales comprises : la RAM interne est pleine) */
+u8 help_o, help_v;           /* ligne (option) et valeur à expliquer */
+
+static const char * const help_s[147] = {
+    "LANCE LA PARTIE AVEC CES",
+    "REGLAGES (OU START).",
+    "VOUS CONTRE L'ORDINATEUR,",
+    "EN SIMPLE.",
+    "DEUX JOUEURS FACE A FACE ;",
+    "EN DOUBLE : PARTENAIRES CPU.",
+    "EN DOUBLE CONTRE 2 CPU, AVEC",
+    "UN PARTENAIRE (CPU OU J2).",
+    "TOURNOI, POULES, SAISON ET",
+    "GRANDS CHELEMS MARTINOT.",
+    "EXERCICES POUR PROGRESSER :",
+    "FRAPPES, SERVICE, VOLEE...",
+    "L'ORDINATEUR JOUE SEUL.",
+    "A OU START REND LA MAIN.",
+    "UN JOUEUR DE CHAQUE COTE.",
+    "",
+    "DEUX CONTRE DEUX : LES",
+    "COULOIRS SONT EN JEU.",
+    "ADVERSAIRE LENT, QUI FAIT",
+    "DES FAUTES : POUR DEBUTER.",
+    "ADVERSAIRE SOLIDE ET",
+    "EQUILIBRE.",
+    "ADVERSAIRE RAPIDE ET PRECIS,",
+    "TRES PEU DE FAUTES.",
+    "REBOND HAUT, BALLE LENTE :",
+    "ON GLISSE SUR LA TERRE.",
+    "REBOND BAS, BALLE QUI FUSE :",
+    "AVANTAGE AU SERVICE-VOLEE.",
+    "LE COMPROMIS : NI LENT,",
+    "NI RAPIDE.",
+    "RAPIDE ET ASSEZ BAS.",
+    "",
+    "SABLE : BALLE TRES LENTE,",
+    "REBOND TRES HAUT.",
+    "BALLE AU RAS DU SOL ; LES",
+    "JOUEURS GLISSENT !",
+    "TRIBUNES PLEINES, GRANDE",
+    "AMBIANCE.",
+    "COURT EN PLEIN AIR, ENTOURE",
+    "D'ARBRES.",
+    "COURT COUVERT : JAMAIS",
+    "DE PLUIE.",
+    "LE CLUB NUDISTE : LE BONUS",
+    "DEBLOQUE.",
+    "COURT ROSE, COEURS, FLEURS",
+    "ET ETOILES.",
+    "MURS DE PIERRE, BANNIERES",
+    "ROYALES ET TORCHES.",
+    "ARBRES AUX COULEURS DE",
+    "L'AUTOMNE.",
+    "EN PLEIN JOUR.",
+    "",
+    "MATCH EN NOCTURNE,",
+    "DECOR ASSOMBRI.",
+    "GOUTTES, REBONDS PLUS BAS,",
+    "BALLE QUI GLISSE.",
+    "UN SET GAGNANT :",
+    "UN MATCH COURT.",
+    "DEUX SETS GAGNANTS.",
+    "",
+    "TROIS SETS GAGNANTS :",
+    "LE GRAND FORMAT.",
+    "SETS DE 4 JEUX :",
+    "UN MATCH EXPRESS.",
+    "PAS DE RALENTI.",
+    "",
+    "RALENTI AUTOMATIQUE APRES",
+    "LES PLUS BEAUX POINTS.",
+    "",
+    "",
+    "TOURNOI A 4 JOUEURS :",
+    "DEMI-FINALE ET FINALE.",
+    "TOURNOI A 8 JOUEURS :",
+    "QUART, DEMI ET FINALE.",
+    "TOUS LES ADVERSAIRES ONT",
+    "LE NIVEAU CHOISI.",
+    "ADVERSAIRES DE PLUS EN PLUS",
+    "FORTS A CHAQUE TOUR.",
+    "LA MEME SURFACE A CHAQUE",
+    "TOUR.",
+    "UNE SURFACE DIFFERENTE A",
+    "CHAQUE TOUR.",
+    "20 BALLES : 1 POINT DANS LE",
+    "COURT, 2 DANS L'ETOILE.",
+    "BALLES ALTERNEES DANS LES",
+    "DEUX COINS : COUREZ !",
+    "LA PLUS LONGUE SERIE SANS",
+    "FAUTE (JUSQU'A 50).",
+    "SEULE LA ZONE DESIGNEE",
+    "RAPPORTE DES POINTS.",
+    "VOUS ETES AU FILET : BALLES",
+    "TENDUES A VOLLEYER.",
+    "20 SERVICES : BONUS A",
+    "L'EXTERIEUR OU AU T.",
+    "ECHANGES CONTRE UN JOUEUR",
+    "IMMOBILE, RENVOI AU CENTRE.",
+    "CHOISISSEZ COTE, VITESSE,",
+    "EFFET ET NOMBRE DE BALLES.",
+    "LECON GUIDEE : FRAPPER,",
+    "AMORTIE, LOB, VISER, SERVIR.",
+    "LES BALLES ARRIVENT SUR",
+    "VOTRE COUP DROIT.",
+    "LES BALLES ARRIVENT SUR",
+    "VOTRE REVERS.",
+    "UNE BALLE EN COUP DROIT,",
+    "UNE EN REVERS.",
+    "COUP DROIT OU REVERS,",
+    "AU HASARD.",
+    "VITESSE DES BALLES",
+    "ENVOYEES.",
+    "EFFET DES BALLES ENVOYEES :",
+    "LIFTE, COUPE OU LOB.",
+    "NOMBRE DE BALLES DE",
+    "L'EXERCICE.",
+    "VOTRE PARTENAIRE EST JOUE",
+    "PAR L'ORDINATEUR.",
+    "UN AMI JOUE VOTRE",
+    "PARTENAIRE (MANETTE 2).",
+    "75 % : POUR DEBUTER ; UNE",
+    "CROIX MONTRE LE REBOND.",
+    "VITESSE NORMALE.",
+    "",
+    "125 % : POUR LES EXPERTS.",
+    "",
+    "MUSIQUE DES MENUS ET",
+    "BRUITAGES.",
+    "BRUITAGES SEULS, SANS",
+    "MUSIQUE.",
+    "SILENCE COMPLET.",
+    "",
+    "LES JOUEURS NE SE FATIGUENT",
+    "JAMAIS.",
+    "APRES 10 FRAPPES, LES",
+    "JOUEURS RALENTISSENT.",
+    "LA VUE D'ORIGINE, VUE",
+    "DU DESSUS.",
+    "LE COURT SE RESSERRE AU",
+    "FOND, VU DES GRADINS.",
+    "BON PARTOUT, SANS FAIBLESSE.",
+    "LONGS ECHANGES DU FOND.",
+    "FRAPPES FORTES ET LOURDES.",
+    "SERVICE-VOLEE : MONTE VITE.",
+    "DEFEND, ATTEND LA FAUTE.",
+    "PREND LA BALLE TOT, ATTAQUE.",
+    "LOBS ET AMORTIES.",
+    "VISE LES LIGNES, PRECIS.",
+    "VARIE TOUT : AMORTIES, LOBS.",
+};
+static const u8 help_first[25] = { 0, 1, 7, 255, 255, 9, 12, 18, 25, 28, 32, 34, 35, 37, 39, 41, 50, 54, 55, 56, 57, 59, 62, 65, 67 };
+static const u8 help_n[25] = { 1, 6, 2, 0, 0, 3, 6, 7, 3, 4, 2, 1, 2, 2, 2, 9, 4, 1, 1, 1, 2, 3, 3, 2, 2 };
+
+/* remplit comp_l1 (28 caractères) avec la ligne r (0, 1) de l'aide */
+u8 __fastcall__ menu_help(u8 r)
+{
+    register const char *t, *u;     /* (variables en page zéro : aucune RAM fixe) */
+    register u8 i, k;
+    u = ""; i = 0; k = help_first[help_o];
+    if (k == 255) {             /* joueur : son style */
+        if (r == 0) { t = "STYLE : "; u = style_name[char_style[help_v]]; }
+        else t = help_s[138 + char_style[help_v]];
+    } else {
+        if (help_n[help_o] > 1) k += help_v;
+        t = help_s[k * 2 + r];
+    }
+    while (*t) comp_l1[i++] = *t++;
+    while (*u && i < 28) comp_l1[i++] = *u++;
+    while (i && comp_l1[i - 1] == ' ') --i;     /* (noms de surface complétés d'espaces) */
+    while (i < 28) comp_l1[i++] = ' ';
+    comp_l1[28] = 0;
+    return 0;
+}

@@ -31,7 +31,7 @@
 #define T_STAR   0xA4
 #define T_TITLE  0xA8      /* lettres doublées : 4 tuiles chacune, jusqu'à $FB */
 
-extern const u8 menu_font2[], menu_deco[], menu_attr[], menu_big[];
+extern const u8 menu_font2[], menu_deco[], menu_attr[], menu_big[], menu_grp[];
 extern const char menu_bigchars[];
 extern u8 bg_dirty;
 extern u8 pal_page;
@@ -48,6 +48,7 @@ void menu_deco_begin(void)
 {
     chr_copy(BANK_PODIUM, menu_font2, 0x0600, 1024);
     chr_copy(BANK_PODIUM, menu_deco, 0x0A00, 128);
+    chr_copy(BANK_PODIUM, menu_grp, 0x0C00, 64);        /* accolades des groupes ($C0-$C3) */
     if (!bg_dirty) bg_dirty = 2;   /* tuiles des menus seulement : rétablies avant le match (load_court) */
 }
 
@@ -99,6 +100,20 @@ void deco_title(void)
     filet(3, 1, 30);
     vram_adr(NTADR(1, 1)); vram_put(T_STAR);
     vram_adr(NTADR(30, 1)); vram_put(T_STAR);
+}
+
+/* Réglages : accolade dorée en marge (colonne 2) qui réunit les lignes d'un
+   même groupe : partie (mode, compétition, exercice), joueurs, match (lieu,
+   conditions, format...), options (vue, son). Tuile de la ligne i. */
+extern u8 vis[], nvis;
+static const u8 grp_of[25] = { 0, 1, 2, 2, 2, 2, 3, 3, 3, 3, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 3, 4, 3, 4 };
+u8 __fastcall__ grp_tile(u8 i)
+{
+    u8 g, up, dn;
+    if (i >= nvis || !(g = grp_of[vis[i]])) return 0;
+    up = (u8)(i && grp_of[vis[i - 1]] == g);
+    dn = (u8)(i + 1 < nvis && grp_of[vis[i + 1]] == g);
+    return (u8)(0xC0 + (up ? (dn ? 1 : 2) : (dn ? 0 : 3)));
 }
 
 /* attributs de l'écran (tables de tools/gen_menu.py) : deco_kind 0 (texte,
