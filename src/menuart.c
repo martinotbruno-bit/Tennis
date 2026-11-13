@@ -188,8 +188,14 @@ static void vs_side(u8 side)
 {
     u8 c = cfg.chr[side], f = char_female[c], r, i, v, n;
     const u8 *chr, *map, *ab;
-    if (side == 0) { chr = f ? vs_fl_chr : vs_ml_chr; map = f ? vs_fl_map : vs_ml_map; ab = f ? vs_fl_ab : vs_ml_ab; n = f ? VS_FL_N : VS_ML_N; }
-    else { chr = f ? vs_fr_chr : vs_mr_chr; map = f ? vs_fr_map : vs_mr_map; ab = f ? vs_fr_ab : vs_mr_ab; n = f ? VS_FR_N : VS_MR_N; }
+    if (f && c == 16) f = 2;                            /* Margaux : silhouette de fillette */
+    if (side == 0) {
+        if (f == 2) { chr = vs_gl_chr; map = vs_gl_map; ab = vs_gl_ab; n = VS_GL_N; }
+        else { chr = f ? vs_fl_chr : vs_ml_chr; map = f ? vs_fl_map : vs_ml_map; ab = f ? vs_fl_ab : vs_ml_ab; n = f ? VS_FL_N : VS_ML_N; }
+    } else {
+        if (f == 2) { chr = vs_gr_chr; map = vs_gr_map; ab = vs_gr_ab; n = VS_GR_N; }
+        else { chr = f ? vs_fr_chr : vs_mr_chr; map = f ? vs_fr_map : vs_mr_map; ab = f ? vs_fr_ab : vs_mr_ab; n = f ? VS_FR_N : VS_MR_N; }
+    }
     tz_bank = VS_BANK;
     if (side == 0) {
         vram_adr(0x0600); tz_n = (u8)(n > 64 ? 64 : n); tz_unpack(chr);

@@ -100,7 +100,7 @@ static void cut_build(void)
     ts_shot = cut_shot[ts_cut];
     col = shot_col[ts_shot];
     ts_c = ts_shot == 0 || ts_shot == 2 ? c_pl[0] : c_pl[ts_shot == 1 ? 1 : 2];
-    a = &tz_art[cut_art[ts_cut]][char_female[ts_c] ? 1 : 0];
+    a = &tz_art[cut_art[ts_cut]][char_female[ts_c] ? (ts_c == 16 ? 2 : 1) : 0];   /* 2 : Margaux, fillette */
     z = a->zoom;
     pal_buf[0] = pal_buf[16] = cut_whip[ts_cut] ? col[0] : 0x30;   /* éclair blanc du zoom */
     pal_dirty = 1;

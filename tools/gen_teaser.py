@@ -248,6 +248,9 @@ def body(f, j, female, face, front=('armR', 'legL'), racket_hand='L', racket_dir
             # profil en courbe douce : aisselle, poitrine, dessous de poitrine, taille, hanche
             def side(sh_, hp_, sx):
                 P_ = lambda t, dx: (lerp(sh_, hp_, t)[0] + sx * dx, lerp(sh_, hp_, t)[1])
+                if female == 2:     # fillette : buste droit
+                    return [P_(0.13, -0.5), P_(0.25, 0.5), P_(0.4, 0.3), P_(0.6, -1.0), P_(0.8, 0.5),
+                            (hp_[0] + sx * 8, hp_[1] - 7), (hp_[0] + sx * 8, hp_[1] - 2)]
                 return [P_(0.13, -0.5), P_(0.22, 3.2), P_(0.31, 4.4), P_(0.4, 3.0), P_(0.5, 0.0),
                         P_(0.6, -2.0), P_(0.7, -2.0), P_(0.8, 0.5), (hp_[0] + sx * 7.5, hp_[1] - 7), (hp_[0] + sx * 8, hp_[1] - 2)]
             # bretelles : elles montent jusqu'en haut de l'épaule, le long de sa pente, jusqu'au cou
@@ -257,14 +260,20 @@ def body(f, j, female, face, front=('armR', 'legL'), racket_hand='L', racket_dir
             pts += side(shR, hpR, 1) + list(reversed(side(shL, hpL, -1))) + [(shL[0] - 1, shL[1] + 3)]
             tid = f.part(f.m_poly(pts), O, o, sh=(4, 2))
             # poitrine : volume rond, ombre douce sous chaque sein et sur le côté
+            # (pas pour la fillette, female == 2 : Margaux)
             bx = abs(hpR[0] - hpL[0]) * 0.27
             by = lerp(lerp(shL, shR, 0.5), lerp(hpL, hpR, 0.5), 0.26)[1]
-            for sx in (-1, 1):
+            for sx in ((-1, 1) if female == 1 else ()):
                 c_ = (nk[0] + sx * bx, by)
                 e_ = f.m_ell(c_, bx * 1.18, 7.2)
                 low = ~f.m_poly([(c_[0] - 20, c_[1] - 20), (c_[0] + 20, c_[1] - 20), (c_[0] + 20, c_[1] + 1.5), (c_[0] - 20, c_[1] + 1.5)])
                 mid = ~f.m_poly([(nk[0] - 1.6, c_[1] - 20), (nk[0] + 1.6, c_[1] - 20), (nk[0] + 1.6, c_[1] + 20), (nk[0] - 1.6, c_[1] + 20)])
-                f.paint(e_ & ~shift_mask(f, (0, 2.2), e_) & low & mid, 4, within=[tid])   # ombre douce sous le sein
+                if VS_LINE:     # affiche VS : contour arrondi (côté et dessous du sein), lisible en gros plan
+                    ring = e_ & ~f.m_ell((c_[0], c_[1] - 0.4), bx * 1.18 - 1.15, 7.2 - 1.15)
+                    half = ~f.m_poly([(c_[0] - 20, c_[1] - 20), (c_[0] + 20, c_[1] - 20), (c_[0] + 20, c_[1] - 2.5), (c_[0] - 20, c_[1] - 2.5)])
+                    f.paint(ring & half & mid, 0, within=[tid])
+                else:
+                    f.paint(e_ & ~shift_mask(f, (0, 2.2), e_) & low & mid, 4, within=[tid])   # ombre douce sous le sein
             ret['dress'] = tid
             return
         # short ample : jambes droites, plus larges que la cuisse, ourlet net
@@ -777,23 +786,23 @@ def main():
     out = {}
     sheet = []
     for name, pose, k, cen, zoom in SHOTS:
-        for female in (0, 1):
+        for female in (0, 1, 2):
             f, r = render(pose, female, k, cen)
             res = build(f, zoom)
             res['r'] = r
             out[(name, female)] = res
             print('%-10s %s : %3d tuiles, colonnes %d-%d, rangées %d-%d' % (
-                name, 'F' if female else 'H', len(res['tiles']), res['x0'], res['x1'] - 1, res['y0'], res['y1'] - 1))
-            if not female:
+                name, 'HFG'[female], len(res['tiles']), res['x0'], res['x1'] - 1, res['y0'], res['y1'] - 1))
+            if female == 0:
                 sheet.append([preview(res, c) for c in SAMPLES[:2]])
-            else:
+            elif female == 1:
                 sheet[-1] += [preview(res, c) for c in SAMPLES[2:]]
     return out, sheet
 
 
 # ------------------------------------------------------------------ export
 # banques libres (octets disponibles, marge comprise)
-BANKS = [(9, 13600), (12, 11900), (4, 12200), (10, 11400), (2, 7900)]
+BANKS = [(9, 13600), (12, 11900), (4, 12200), (10, 9400), (2, 7900), (7, 6800), (6, 5800)]
 
 
 def pack(chr_):
@@ -814,7 +823,7 @@ def pack(chr_):
 def export(out):
     blobs, arts = [], {}
     for name, pose, k, cen, zoom in SHOTS:
-        for female in (0, 1):
+        for female in (0, 1, 2):
             res = out[(name, female)]
             chr_ = pack(b''.join(res['tiles']))
             mp = bytes(res['nt'][y][x] for y in range(res['y0'], res['y1']) for x in range(res['x0'], res['x1']))
@@ -823,7 +832,7 @@ def export(out):
             if same:
                 arts[(name, female)] = same[0]
                 continue
-            blobs.append(dict(key=key, size=len(chr_) + len(mp) + 64, id='%s_%s' % (name, 'f' if female else 'm'), res=res))
+            blobs.append(dict(key=key, size=len(chr_) + len(mp) + 64, id='%s_%s' % (name, 'mfg'[female]), res=res))
             arts[(name, female)] = len(blobs) - 1
     # rangement : la plus grosse d'abord, dans la banque la moins remplie qui l'accepte
     free = {b: n for b, n in BANKS}
@@ -859,14 +868,14 @@ def export(out):
     for i, n in enumerate(names):
         H.append('#define TZ_%s %d' % (n.upper(), i))
     H.append('#define TZ_N %d' % len(names))
-    H.append('static const tz_art_t tz_art[TZ_N][2] = {')
+    H.append('static const tz_art_t tz_art[TZ_N][3] = {   /* homme, femme, fillette (Margaux) */')
     for name, pose, k, cen, zoom in SHOTS:
         row = []
-        for female in (0, 1):
+        for female in (0, 1, 2):
             b = blobs[arts[(name, female)]]; r = b['res']
             row.append('{ %d, %d, %d, %d, %d, %d, %d, tz_chr_%s, tz_map_%s, tz_at_%s }' % (
                 b['bank'], len(r['tiles']), r['x0'], r['x1'] - r['x0'], r['y0'], r['y1'] - r['y0'], 1 if zoom else 0, b['id'], b['id'], b['id']))
-        H.append('    { %s,\n      %s },' % tuple(row))
+        H.append('    { %s,\n      %s,\n      %s },' % tuple(row))
     H.append('};')
     # repères (pixels de l'écran) : centre du tamis, pied qui glisse, visage
     for name in names:
@@ -889,6 +898,7 @@ def export(out):
 # présentation du match : bustes face à face, bras croisés, 2 palettes par
 # joueur (A : sombre, peau ombrée, peau ; B : tenue ombrée, tenue, blanc ;
 # le texte blanc de l'écran s'écrit dans les blocs B)
+VS_LINE = False
 POSES['bust'] = dict(
     s=dict(pelvis=(80, 118), torso=-90, legL=(97, 94, 165), legR=(83, 86, 15),
            armL=(98, -12), armR=(82, 192), tilt=0.0, turn=1.2,
@@ -904,8 +914,11 @@ VS_BANK = 10
 
 def vs_render(female, mirror, k=1.38):
     W, H = VS_W * 8, VS_H * 8
+    global VS_LINE
     f = Fig(W, H, k, 80 - (W / 2) / k, 36.0)
+    VS_LINE = True
     body(f, skeleton(POSES['bust']['s'], female), female, 'focus', racket_hand='X', racket_dir=0, racket_len=50)
+    VS_LINE = False
     f.outline()
     # coupé au-dessus de l'ourlet du polo (ni short ni bas du vêtement)
     cut = VS_H * 8 - 10
@@ -936,7 +949,7 @@ def vs_render(female, mirror, k=1.38):
 
 def vs_export():
     arts = {}
-    for female in (0, 1):
+    for female in (0, 1, 2):
         for mirror in (0, 1):
             arts[(female, mirror)] = vs_render(female, mirror)
     L = ['/* Fichier généré par tools/gen_teaser.py — ne pas modifier. */',
@@ -945,7 +958,7 @@ def vs_export():
          '#define VS_BANK %d' % VS_BANK, '#define VS_W %d' % VS_W, '#define VS_H %d' % VS_H]
     tot = 0
     for (female, mirror), a in arts.items():
-        nm = 'vs_%s%s' % ('f' if female else 'm', 'r' if mirror else 'l')
+        nm = 'vs_%s%s' % ('mfg'[female], 'r' if mirror else 'l')
         chr_ = pack(b''.join(a['tiles']))
         L += arr_c(nm + '_chr', chr_) + arr_c(nm + '_map', bytes(a['nt'])) + arr_c(nm + '_ab', bytes(a['ab'])) + ['']
         H += ['extern const unsigned char %s_chr[], %s_map[], %s_ab[];' % (nm, nm, nm), '#define %s_N %d' % (nm.upper(), len(a['tiles']))]
