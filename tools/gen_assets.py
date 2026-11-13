@@ -1632,8 +1632,11 @@ def persp_net(w):
     # les abords hors du court : sinon la couleur du court débordait jusqu'aux
     # poteaux, à hauteur du filet), sans les lignes
     base = [1 if w[ny + 6][x] == 2 else w[ny + 6][x] for x in range(256)]
-    for y in range(ny - 12, ny + 4):                   # efface le filet déformé (jusqu'au-dessus des têtes de poteaux)
+    for y in range(ny - 9, ny + 4):                    # efface le filet déformé
         for x in range(32, 224):
+            w[y][x] = base[x]
+    for y in range(ny - 12, ny - 9):                   # au-dessus : seulement autour des poteaux (restes du filet à plat), pas les lignes de côté
+        for x in list(range(x0n - 8, x0n + 5)) + list(range(x1n - 4, x1n + 9)):
             w[y][x] = base[x]
     for y in range(ny - 5, ny):
         for x in range(x0n, x1n + 1):
