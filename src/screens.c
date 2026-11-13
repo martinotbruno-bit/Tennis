@@ -837,12 +837,20 @@ static void code_tick(void)
 /* Résultats                                                               */
 static void stat_row(u8 y, const char *label, u8 a, u8 b)
 {
-    char n[3];
-    n[2] = 0;
+    char n[4];
+    u8 t, v;
+    n[3] = 0;
     txt_at(2, y, label);
-    num2(n, a); txt_at(20, y, n);
-    num2(n, b); txt_at(26, y, n);
+    /* jusqu'à 3 chiffres (100 % de premières balles, plus de 99 points en 5 sets) */
+    for (t = 0; t < 2; ++t) {
+        v = t ? b : a;
+        n[0] = (char)(v >= 100 ? '0' + v / 100 : ' ');
+        num2(n + 1, v);
+        txt_at((u8)(19 + t * 6), y, n);
+    }
 }
+
+u16 __fastcall__ hl_vmax_row(u16 y);                 /* (highlight.c, banque 15) */
 
 static u8 pct(u8 a, u8 b) { return b ? (u8)(((u16)a * 100) / b) : 0; }
 
@@ -898,9 +906,10 @@ static void setbreak_screen(void)
     stat_row(17, "FAUTES", st_errors[0], st_errors[1]);
     stat_row(18, "SERVICES CANON", st_canon[0], st_canon[1]);
     stat_row(19, "COUPS PARFAITS", st_perf[0], st_perf[1]);
-    txt_at(2, 21, "AU SERVICE :");
+    far_call(BANK_HL, (void *)hl_vmax_row, 20);
+    txt_at(2, 22, "AU SERVICE :");
     if (cfg.doubles) team_label(cfg.chr[sc_server], cfg.chr[sc_server + 2], line); else team_label(cfg.chr[sc_server], 255, line);
-    txt_at(15, 21, line);
+    txt_at(15, 22, line);
     txt_at(4, 25, "UN BOUTON : REPRENDRE");
     ppu_on();
     music_play(MUS_BREAK);              /* petit interlude, coupé à la reprise */
@@ -935,6 +944,7 @@ static void results_screen(void)
     txt_at(2, 17, "ECHANGE LE PLUS LONG"); txt_at(26, 17, b);
     stat_row(18, "SERVICES CANON", st_canon[0], st_canon[1]);
     stat_row(19, "COUPS PARFAITS", st_perf[0], st_perf[1]);
+    far_call(BANK_HL, (void *)hl_vmax_row, 20);
     if (last_mode == MODE_COMP) txt_at(4, 25, "A : CONTINUER");
     else txt_at(4, 25, "A : REVANCHE   B : MENU");
     ppu_on();

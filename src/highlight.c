@@ -83,6 +83,41 @@ u16 __fastcall__ hl_hit(u16 pk)
     hl_bok = 0;                     /* nouvelle balle : pas encore de rebond */
     return 0;
 }
+/* ace (2.70) : « ACE ! » et la vitesse du service, comme à la télévision :
+   environ 140 km/h coupé, 170 à plat, 210 canon (1,375 x la vitesse de la
+   balle + 80, à quelques km/h près) */
+u8 hl_spd, hl_srv;     /* vitesse du service (puis km/h - 80), équipe au service */
+u8 st_vmax[2];         /* service le plus rapide de chaque équipe (km/h - 80, 0 : aucun) */
+static char ace_b[10];
+/* à chaque service (game.c) : vitesse convertie en km/h façon télé, et record du match */
+void hl_serve(void)
+{
+    hl_spd = (u8)(hl_spd + (hl_spd >> 2) + (hl_spd >> 3) + (rand8() & 7));
+    if (hl_spd > st_vmax[hl_srv]) st_vmax[hl_srv] = hl_spd;
+}
+/* ligne « SERVICE MAX KM/H » des écrans de statistiques (screens.c), « --- » sans service */
+u16 __fastcall__ hl_vmax_row(u16 y)
+{
+    u8 t;
+    u16 k;
+    char n[4];
+    txt_at(2, (u8)y, "SERVICE MAX KM/H");
+    n[3] = 0;
+    for (t = 0; t < 2; ++t) {
+        k = (u16)st_vmax[t] + 80;
+        if (st_vmax[t]) { n[0] = (char)('0' + k / 100); n[1] = (char)('0' + (k / 10) % 10); n[2] = (char)('0' + k % 10); }
+        else n[0] = n[1] = n[2] = '-';
+        txt_at((u8)(19 + t * 6), (u8)y, n);
+    }
+    return 0;
+}
+void hl_ace_msg(void)
+{
+    u16 k = (u16)hl_spd + 80;
+    ace_b[0] = (char)('0' + k / 100); ace_b[1] = (char)('0' + (k / 10) % 10); ace_b[2] = (char)('0' + k % 10);
+    ace_b[3] = ' '; ace_b[4] = 'K'; ace_b[5] = 'M'; ace_b[6] = '/'; ace_b[7] = 'H'; ace_b[8] = 0;
+    set_msg("ACE !", ace_b, 90);
+}
 /* début du ralenti : les repères ne valent que s'ils sont dans les trames
    rejouées (tampon circulaire de 160 trames : un indice plus ancien a été
    réutilisé par une trame récente) */

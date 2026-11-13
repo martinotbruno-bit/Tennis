@@ -441,6 +441,21 @@ console.log('Ralenti : gros plan et zoom');
   let rq = 0, hq = 0, pq = 0;
   for (let f = 0; f < 60 * 60 * 4; f++) { q.run(1); const m = q.peek('ms'); if (m === 5 && pq !== 5) rq++; if (q.peek('hl_mode')) hq++; pq = m; }
   check(rq > 0 && hq === 0, `RALENTIS « OUI, SIMPLE » : ralentis (${rq}) sans gros plan ni zoom`);
+  // ace (2.70) : vitesse du service affichée façon télé, « ACE ! / xxx KM/H »
+  {
+    const a = boot(); startWith(a, { FMT: 3 });
+    const tx = (s) => String.fromCharCode(...Array.from({ length: 14 }, (_, i) => a.peek(s, i)).filter(v => v)).trim();
+    let m2 = '';
+    for (let f = 0; f < 60 * 60 * 3 && !m2; f++) {
+      if (a.peek('ms') === 0 && a.peek('sc_server') === 0) { a.tap('A'); a.run(14); a.tap('A'); }
+      if (a.peek('ms') === 2) { a.poke('plx', 0, 2); a.poke('plx', 5, 3); }   /* receveur tenu loin de la balle */
+      a.run(1);
+      if (tx('msg1') === 'ACE !') m2 = tx('msg2');
+    }
+    const k = parseInt(m2, 10), vm = a.peek('st_vmax', 0) + 80;
+    check(/^\d{3} KM\/H$/.test(m2) && k >= 100 && k <= 260, `ace : vitesse du service affichée (« ${m2} »)`);
+    check(vm >= k && vm <= 260, `service le plus rapide du match retenu pour les statistiques (${vm} km/h)`);
+  }
 }
 }
 if (sec('Présentation et pause')) {

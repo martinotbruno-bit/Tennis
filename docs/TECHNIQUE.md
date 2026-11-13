@@ -338,6 +338,11 @@ Le dessin des personnages est commun aux vues de face et de dos (rangées de tui
 - **IA** (`ai_update`, banque 0) : à partir de Normal, après le lob et l'amortie, croisé court avec une probabilité 90/256 si l'adversaire est au filet, 20/256 sinon.
 - **Réglages** : première rangée `MY0` = 4 + (18 − `nvis`) / 2 (screens.c ; même calcul dans `menu_marks`) ; `menu_soft` réécrit les 18 rangées ; portraits en y = `MY0` × 8 − 30, entre 7 et 16. Tests : `menuY(e, i)`.
 
+### Version 2.70 : vitesse du service
+
+- **Vitesse** : `serve_hit` (game.c) pose `hl_spd` = vitesse du service (44 coupé, 64 à plat, 96 canon) et `hl_srv` = équipe, puis `bank_call(BANK_HL, hl_serve)` : `hl_spd` devient km/h − 80 = v + v/4 + v/8 + (0 à 7, au hasard), et `st_vmax[équipe]` garde le maximum (remis à 0 au début du match). Sur un ace, `hl_ace_msg` affiche « ACE ! » / « xxx KM/H ».
+- **Statistiques** : `hl_vmax_row` (banque 15, appelée par `far_call` depuis screens.c, rangée 20) écrit SERVICE MAX KM/H, ou « --- ». `stat_row` écrit jusqu'à 3 chiffres (colonnes 19 à 21 et 25 à 27). Écran de fin de set : « AU SERVICE » descend en rangée 22.
+
 ### Version 2.69 : portrait du vainqueur, plongeon, écran des résultats
 
 - **Second émulateur** (`tools/fceux_check.py`) : FCEUX 2.6 (nouveau moteur PPU, `--newppu 1`, au point près), piloté par un programme Lua sans écran (`xvfb-run`), vérifie ce que jsnes rend mal : la glissade de l'affiche VS (buste gauche seulement sur les lignes paires, droit seulement sur les impaires) et, à plat et en perspective, un ralenti avec son gros plan puis son zoom, et le retour au court (images dans `build/fceux`). Résultat en 2.69 : conforme.

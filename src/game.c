@@ -150,6 +150,9 @@ static u8 receiver_p(void)
 extern u16 hl_bf, rp_seq;
 extern u8 hl_bi, hl_bx, hl_by, hl_bin, hl_bok, hl_w, hl_sok, hl_sbok;
 extern const char *hl_ptxt;
+extern u8 hl_spd, hl_srv, st_vmax[2];
+void hl_ace_msg(void);
+void hl_serve(void);
 extern u8 rp_head;
 u16 __fastcall__ hl_hit(u16 pk);
 void hl_select(void);
@@ -175,7 +178,7 @@ static void point_over(u8 winner, u8 reason)
     }
     if (reason == 2) {
         ++st_winners[winner];
-        if (rally_hits == 1) { ++st_aces[winner]; set_msg("ACE !", "", 70); HL_SELECT(winner, msg1); }
+        if (rally_hits == 1) { ++st_aces[winner]; bank_call(BANK_HL, hl_ace_msg); HL_SELECT(winner, msg1); }   /* « ACE ! » et la vitesse du service */
         else { set_msg(win_label(last_shot, hit_pass, hit_jump), "", 70); HL_SELECT(winner, msg1); }
         sfx_winner();   /* carillon bref (canal des bruitages) */
         sfx_crowd(7);
@@ -554,6 +557,8 @@ static void serve_hit(u8 p, u8 pad, u8 btn, u8 quality, u8 spread)
     HL_HIT(p, 2 | 0x80);            /* (service : début du point, bit 7) */
     if (faults == 0) ++st_first_tot[t];
     launch(tx, ty, T, grav);
+    hl_spd = speed; hl_srv = t;     /* vitesse du service : km/h (annoncés sur un ace) et record du match, highlight.c */
+    bank_call(BANK_HL, hl_serve);
     ms = MS_RALLY;
     pl_state[p] = ST_SWING;
     pl_timer[p] = 12;
@@ -929,7 +934,7 @@ void match_start(void)
     for (i = 0; i < 2; ++i) {
         st_points[i] = st_aces[i] = st_dfaults[i] = st_winners[i] = st_errors[i] = 0;
         st_canon[i] = st_ctry[i] = st_perf[i] = st_ptry[i] = 0;
-        st_first_in[i] = st_first_tot[i] = 0;
+        st_first_in[i] = st_first_tot[i] = st_vmax[i] = 0;
         srv_slot[i] = 0;
         ad_l[i] = ad_r[i] = ad_net[i] = ad_n[i] = 0;
         ai_bias_n[i] = 0xFF;

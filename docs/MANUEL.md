@@ -142,7 +142,7 @@ Le lancer reste visible quelle que soit votre position, y compris quand vous ser
     - ligne 1 : le nom ;
     - ligne 2 : les jeux gagnés dans le set en cours (« J 3 »), suivis de `*` si ce joueur sert ;
     - ligne 3 : les points du jeu en cours (0, 15, 30, 40, AV), suivis d'un rond plein par set gagné.
-- Les **annonces** de l'arbitre s'affichent au centre du bandeau : faute, let, égalité, avantage, balle de set ou de match, jeu décisif, changement de côté, ace, coup gagnant…
+- Les **annonces** de l'arbitre s'affichent au centre du bandeau : faute, let, égalité, avantage, balle de set ou de match, jeu décisif, changement de côté, ace, coup gagnant… Sur un ace, la **vitesse du service** s'affiche sous « ACE ! », comme à la télévision (par exemple « 174 KM/H » ; depuis la version 2.70).
 - Les **coups gagnants** sont nommés : SMASH SAUTÉ, SMASH, AMORTIE, LOB GAGNANT, VOLÉE GAGNANTE, PASSING (adversaire au filet) ou COUP GAGNANT, avec un bref « ting » ; sans autre son ajouté et toujours sans musique pendant le match.
 - **Bruitages** : le geste de raquette fait un souffle, la frappe un « pok » avec du corps (plus grave quand elle est forte), une balle dehors ou un service faux déclenche le « bip » du juge électronique. Le public n'est plus coupé par un simple rebond.
 - **Son** : les musiques jouent à 4 voix (mélodie, basse, harmonie et percussions). L'arbitre annonce de vive voix « **Out!** » sur une balle dehors, « **Fault!** » sur un service faux et « **Let!** » sur un let ; au court Margaux, la princesse arbitre a une petite voix aiguë. Chaque frappe fait un vrai « pok ».
@@ -162,7 +162,7 @@ Le lancer reste visible quelle que soit votre position, y compris quand vous ser
 - À la fin du match, avant les résultats, le **vainqueur** apparaît en grand, à ses couleurs : en pied, bras levés sous les confettis, avec son nom (« MAYA GAGNE ! » ; en double « VICTOIRE ! »), puis en gros plan (en double, son partenaire). A ou START passe.
 - **En fin de match** :
   - le vainqueur célèbre et le perdant baisse la tête ;
-  - l'écran de résultats donne les statistiques : points gagnés, aces, doubles fautes, coups gagnants, fautes, pourcentage de premières balles, plus long échange ;
+  - l'écran de résultats donne les statistiques : points gagnés, aces, doubles fautes, coups gagnants, fautes, pourcentage de premières balles, plus long échange, services canon, coups parfaits et, depuis la version 2.70, le service le plus rapide de chacun (SERVICE MAX KM/H) ;
   - **A** relance une revanche, **B** revient au menu.
 
 ### Les moments du match (version 2.52)

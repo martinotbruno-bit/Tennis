@@ -1,10 +1,17 @@
-# Royal Martinot — Rapport de réalisation (version 2.69)
+# Royal Martinot — Rapport de réalisation (version 2.70)
 
 Comme l'exige le CDC (§ 17.5), ce rapport distingue ce qui est **réalisé**, **testé**, **validé sur matériel réel**, **validé uniquement en émulation**, **dépendant d'une extension**, et les **limitations restantes**.
 
 > **Validation matérielle : aucune.** Aucun test n'a été fait sur console réelle (NES, Famicom, PAL, cartouche MMC3). Toutes les validations ont eu lieu en émulation (jsnes ; depuis la version 2.69, aussi FCEUX pour les effets sensibles) et par des tests unitaires sur PC. Les critères « vérifié sur console physique » (CDC § 2.1, 15.4, 16.A) **ne sont pas remplis**. Ce point ne peut pas être traité dans l'environnement de développement utilisé.
 
 ## 1. Évolutions
+
+### Version 2.70 (travail en autonomie)
+
+| Demande | Réalisation |
+|---|---|
+| Améliorer d'autres choses, au choix | **Vitesse du service, comme à la télévision** : sur un ace, l'annonce devient « ACE ! » avec la vitesse en dessous (par exemple « 174 KM/H » ; service coupé vers 140, à plat vers 175, canon vers 215). Les écrans de fin de set et de résultats ont une nouvelle ligne SERVICE MAX KM/H (service le plus rapide de chaque joueur ou équipe pendant le match, « --- » sans service). Images : `docs/ace_270.png`, `docs/stats_270.png`. Tests ajoutés |
+| (défaut ancien) | Les statistiques n'avaient que 2 chiffres : 100 % de premières balles s'affichait « 00 », et plus de 99 points gagnés (match en 5 sets) perdait la centaine. Elles ont maintenant jusqu'à 3 chiffres, alignés à droite |
 
 ### Version 2.69 (travail en autonomie)
 
