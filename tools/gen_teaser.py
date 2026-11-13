@@ -917,7 +917,7 @@ VS_BANK = 10
 def vs_render(female, mirror, k=1.38):
     W, H = VS_W * 8, VS_H * 8
     global VS_LINE
-    f = Fig(W, H, k, 80 - (W / 2) / k, 36.0 if female else 32.5)   # homme plus grand : tête entière dans le cadre
+    f = Fig(W, H, k, 80 - (W / 2) / k, 36.0 if female in (1, 2) else 32.5)   # homme plus grand : tête entière dans le cadre
     VS_LINE = True
     light = female in (2, 3)        # cheveux clairs (Margaux, Papi) : palettes à part
     if female == 3:
