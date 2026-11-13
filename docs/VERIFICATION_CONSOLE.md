@@ -1,6 +1,6 @@
 # Royal Martinot — Liste de vérification sur vraie console
 
-Le jeu a été testé uniquement sur émulateur. Cette liste sert à le vérifier pas à pas sur une vraie NES ou Famicom. Cochez chaque case et notez ce qui ne va pas, si possible avec une photo de l'écran. Comptez environ une heure et quart pour l'ensemble. Version du guide : 2.67.
+Le jeu a été testé uniquement sur émulateur. Cette liste sert à le vérifier pas à pas sur une vraie NES ou Famicom. Cochez chaque case et notez ce qui ne va pas, si possible avec une photo de l'écran. Comptez environ une heure et quart pour l'ensemble. Version du guide : 2.68.
 
 ## 0. Matériel
 
@@ -154,6 +154,7 @@ Pour chaque ligne, lancez un match et regardez l'écran pendant une dizaine de s
 | 10.16 | Affiche VS, avant un match (version 2.63, 2.65) | Les deux bustes glissent depuis les bords, l'un une ligne sur deux, l'autre sur les lignes restantes, se rejoignent, puis un éclair blanc ; aucun des deux ne tremble ni ne se dédouble horizontalement ; aucune ligne déchirée ni décalée au-dessus du haut des bustes (titre) ni sous leur bas (noms) ; la musique et les touches répondent pendant l'entrée. Appuyer sur B ou A pendant la glissade : l'écran suivant est normal | ☐ |
 | 10.17 | Vue en perspective, dans chaque lieu (version 2.64, 2.65) | Lignes de côté obliques régulières, sans marche ni trou, y compris de part et d'autre du filet ; court, filet et rambardes symétriques (aussi à plat) ; panneaux à côté du score présents là où ils l'étaient ; pendant une ola et quand la balle change de moitié du court, aucune ligne du court ne se transforme en morceau de spectateur ou de panneau | ☐ |
 | 10.18 | Ralenti après un beau point (version 2.67 ; cartouche de 512 Ko) | Gros plan du joueur en pleine frappe, puis bras levés ; de retour au ralenti, viseur sur le rebond puis image agrandie deux fois, nette (lignes, joueurs, balle), avec BONNE ! ou DEHORS ! ; retour au court sans tuiles abîmées (public, lignes, panneaux, score) ; A passe la séquence ; aucun écran figé plus d'une demi-seconde | ☐ |
+| 10.19 | Vue en perspective, balle dans le filet (version 2.68) | Le filet tremble (bande qui s'affaisse d'un pixel, mailles qui bougent) sur toute sa largeur, sans marche à l'endroit des lignes, puis revient exactement comme avant | ☐ |
 
 ## 11. Ce qu'il faut renvoyer
 

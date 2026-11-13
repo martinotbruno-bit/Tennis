@@ -516,3 +516,37 @@ void hl_tick(void)
     if (hl_mode == 1) closeup_tick(); else zoom_tick();
     if (!hl_mode) hl_t = 0;
 }
+
+/* ---------------------------------------------------------------------- */
+/* Filet qui tremble en perspective (version 2.68)                         */
+/* Le générateur liste, pour chaque lieu, les tuiles dont le dessin change */
+/* quand le filet est secoué (banque 16 : nombre, puis numéro, dessin au   */
+/* repos, dessin secoué). Le filet s'affaisse tant que net_shake > 6, puis  */
+/* revient ; chaque changement est écrit par le tampon VRAM, sur une ou     */
+/* plusieurs trames (budget du VBlank), tuile après tuile.                  */
+/* ---------------------------------------------------------------------- */
+#define BANK_PNET 16
+extern const unsigned char * const persp_net[7];
+extern u8 net_shake, net_state;
+#pragma bss-name(push, "WBSS")
+static u8 pn_pos, pn_buf[17];
+#pragma bss-name(pop)
+void pnet_tick(void)
+{
+    const u8 *p;
+    u8 n, want = (u8)(net_shake > 6);
+    if (want != net_state) {
+        bank_read(BANK_PNET, &p, &persp_net[cfg.env], 2);
+        bank_read(BANK_PNET, &n, p, 1);
+        while (pn_pos < n) {
+            const u8 *q = p + 1 + (u16)pn_pos * 33;
+            bank_read(BANK_PNET, pn_buf, q, 1);
+            bank_read(BANK_PNET, pn_buf + 1, q + 1 + (want ? 16 : 0), 16);
+            if (!vbuf_raw((u16)pn_buf[0] << 4, pn_buf + 1, 16)) break;   /* budget de la trame : la suite à la suivante */
+            ++pn_pos;
+        }
+        if (pn_pos >= n) { net_state = want; pn_pos = 0; }
+    }
+    /* (le filet revient au repos avant la fin du tremblement) */
+    if (net_shake > 1 || net_state == 0) --net_shake;
+}

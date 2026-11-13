@@ -1637,9 +1637,13 @@ def persp_inv(xs, ys):
     # marches de 8 px)
     sc = 1 / (1 + PERSP_A * persp_d(ys))
     return 128.5 + (xs - 128.5) / sc, 216 - 168 * persp_d(ys)   # (centre 128,5 : le court à plat est symétrique autour de la colonne 128, version 2.62)
-def persp_net(w):
+def persp_net(w, shake=False):
     """filet redessiné à sa place en perspective, avec ses mailles régulières
-    (déformées, elles donnaient une tuile différente par colonne)"""
+    (déformées, elles donnaient une tuile différente par colonne). shake
+    (version 2.68) : mailles décalées de 2 px et bande affaissée d'un pixel,
+    comme le filet à plat quand la balle le touche"""
+    vs = 2 if shake else 0
+    hs = 1 if shake else 0
     ny = round(216 - PERSP_K * 0.5 / (1 + PERSP_A * 0.5))
     sc = 1 / (1 + PERSP_A * 0.5)
     x0n, x1n = round(128 + (DBL_L - 6 - 128) * sc), round(128 + (DBL_R + 6 - 128) * sc)
@@ -1655,10 +1659,11 @@ def persp_net(w):
             w[y][x] = base[x]
     for y in range(ny - 5, ny):
         for x in range(x0n, x1n + 1):
-            w[y][x] = 3 if (x % 4 == 0 or (y - ny) % 2 == 0) else base[x]
+            w[y][x] = 3 if (x % 4 == vs or (y - ny + hs) % 2 == 0) else base[x]
     for x in range(x0n, x1n + 1):
         w[ny][x] = 3                                   # câble du bas
-        w[ny - 7][x] = 2; w[ny - 6][x] = 2             # bande blanche
+        w[ny - 7 + hs][x] = 2; w[ny - 6 + hs][x] = 2   # bande blanche
+        if hs: w[ny - 7][x] = base[x]                  # (affaissée)
     for y in range(ny - 5, ny + 1):
         w[y][127] = 2; w[y][128] = 2; w[y][129] = 2    # sangle centrale (3 px : centrée sur la ligne médiane)
     for y in (ny + 1, ny + 2):                         # ombre portée
@@ -1725,7 +1730,7 @@ def persp_lines(w):
 
 KEEP = set(range(0x60)) | set(crowd_idx) | set(cheer_idx) | set(crowdb_idx) | set(cheerb_idx) | \
        set(crowd_idx3) | set(crowd_idx4) | set(SIGN_IDX) | set(SIGN2_IDX) | set(NET_IDX)
-persp_rles, persp_tiles, persp_ps, persp_flags = [], [], [], []
+persp_rles, persp_tiles, persp_ps, persp_flags, persp_nets = [], [], [], [], []
 
 # Tribunes en perspective : la rambarde suit l'inclinaison des lignes de côté
 # (point X = 31 ou 224 projeté, échelle constante par rangée de tuiles, pas de
@@ -1960,6 +1965,24 @@ def persp_build(e):
                 if not cand: raise OverflowError
                 new[k] = (cand.pop(0), [list(r) for r in t])
             nt[ty * 32 + tx] = new[k][0]
+    # filet qui tremble (version 2.68) : chaque tuile de l'écran dont le
+    # dessin change quand le filet est secoué (bande, mailles, croisements des
+    # lignes, sangle, bords), si toutes ses places à l'écran changent de la
+    # même façon ; net_tick (pnet_tick, banque 15) échange leurs dessins
+    ws = [row[:] for row in w]
+    persp_net(ws, True)
+    alt = {}
+    for ty in range(4, 30):
+        for tx in range(32):
+            alt.setdefault(nt[ty * 32 + tx], set()).add(tkey(tile_at(ws, ty, tx)))
+    persp_build.net = []
+    for t, v in sorted(alt.items()):
+        if len(v) != 1: continue                       # (dessin secoué différent selon la place : immobile)
+        shk = [list(r) for r in next(iter(v))]
+        ty, tx = next((y, x) for y in range(4, 30) for x in range(32) if nt[y * 32 + x] == t)
+        norm = tile_at(w, ty, tx)
+        if tkey(norm) != tkey(shk): persp_build.net.append((t, norm, shk))
+    assert 8 <= len(persp_build.net) <= 24, ('filet secoué', e, len(persp_build.net))
     return nt, new, ps, cand
 
 for e in range(6):
@@ -1976,6 +1999,7 @@ for e in range(6):
     persp_tiles.append(sorted(new.values()))
     persp_ps.append(ps if ps else [0] * 12)
     persp_flags.append(persp_build.flags)
+    persp_nets.append(persp_build.net)
 proj_tab = bytearray(512)
 for Y in range(256):
     d = (216 - Y) / 168
@@ -2178,6 +2202,18 @@ src.append('/* tuiles libérées : 1 panneaux 1, 2 panneaux 2, 4 public du stade
 src.append('const unsigned char persp_flags[7] = { %s, %d };' % (', '.join(str(f) for f in persp_flags), persp_flags[1]))
 with open(os.path.join(ROOT, 'src', 'assets_persp3.c'), 'w') as f:
     f.write('\n'.join(src) + '\n')
+# filet qui tremble en perspective (banque 16, lu par pnet_tick, banque 15) :
+# par lieu, le nombre de tuiles, puis pour chacune son numéro, son dessin au
+# repos et son dessin secoué
+src = ['/* Fichier généré par tools/gen_assets.py — ne pas modifier. */',
+       '/* Vue en perspective : filet qui tremble (banque 16, version 2.68). */', '']
+for e in range(6):
+    n = persp_nets[e]
+    src.append(c_array('persp_net%d' % e, bytes([len(n)]) + b''.join(bytes([t]) + encode_tile(a) + encode_tile(b) for t, a, b in n)))
+src.append('const unsigned char * const persp_net[7] = { %s, persp_net1 };   /* 6 : le parc reprend le club */' % ', '.join('persp_net%d' % e for e in range(6)))
+with open(os.path.join(ROOT, 'src', 'assets_pnet.c'), 'w') as f:
+    f.write('\n'.join(src) + '\n')
+print('perspective : tuiles du filet qui tremble par lieu', [len(n) for n in persp_nets])
 court_rle = court_rles[0]
 
 used_bg = sum(1 for t in bg_tiles if t is not None)

@@ -24,7 +24,7 @@ BANK12 = assets_courts12 assets_tz12 assets_menu12
 BANK13 = assets_swap shots cer assets_port assets_menu
 BANK14 = assets_gm gmintro assets_help
 BANK15 = highlight
-BANK16 =
+BANK16 = assets_pnet
 BANK17 =
 BANK18 =
 BANK19 =
@@ -34,7 +34,7 @@ OBJS = $(BUILD)/crt0.o $(BUILD)/sprp.o $(BUILD)/poses.o $(BUILD)/slip.o $(BUILD)
 
 all: $(ROM)
 
-assets/tiles.chr src/assets_data.c src/assets_court.c src/assets_nude.c src/assets_persp.c src/assets_persp3.c src/assets_courts12.c src/assets_swap.c: tools/gen_assets.py
+assets/tiles.chr src/assets_data.c src/assets_court.c src/assets_nude.c src/assets_persp.c src/assets_persp3.c src/assets_pnet.c src/assets_courts12.c src/assets_swap.c: tools/gen_assets.py
 src/assets_gm.c src/assets_gm2.c: tools/gen_gm.py
 	python3 tools/gen_gm.py
 	python3 tools/gen_assets.py

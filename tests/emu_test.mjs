@@ -1631,6 +1631,25 @@ console.log('Filet qui tremble');
   let rest = true; for (let b = 0; b < 16; b++) if (e.nes.ppu.vramMem[ni * 16 + b] !== rb('net_norm', b)) rest = false;
   check(shaken && rest && e.peek('net_shake') === 0, 'balle dans le filet : les mailles tremblent puis reviennent au repos');
 }
+{
+  // perspective (2.68) : les tuiles du filet listées par le générateur (banque
+  // 16) prennent leur dessin secoué, puis reviennent au repos, dans 5 lieux
+  let bad = [];
+  for (const env of [0, 1, 2, 4, 5]) {
+    const e = boot(); startWith(e, { FMT: 3, VIEW: 1, ENV: env }); allCpu(e);
+    runUntil(e, () => e.peek('ms') === 0, 300);
+    const rb = (off) => e.nes.rom.rom[16][off];
+    const tab = e.addr('persp_net') - 0x8000, ptr = rb(tab + env * 2) | (rb(tab + env * 2 + 1) << 8);
+    const base = ptr - 0x8000, n = rb(base), vm = e.nes.ppu.vramMem;
+    const state = (k) => { let ok = 0; for (let i = 0; i < n; i++) { const t = rb(base + 1 + i * 33); let same = true; for (let b = 0; b < 16; b++) if (vm[t * 16 + b] !== rb(base + 2 + i * 33 + k * 16 + b)) same = false; if (same) ok++; } return ok; };
+    const rest0 = state(0);
+    e.poke('net_shake', 14);
+    let shaken = 0; for (let f = 0; f < 16; f++) { e.run(1); shaken = Math.max(shaken, state(1)); }
+    e.run(4);
+    if (rest0 !== n || shaken !== n || state(0) !== n || e.peek('net_shake') !== 0) bad.push(`${env}:${rest0}/${shaken}/${state(0)}/${n}`);
+  }
+  check(bad.length === 0, `perspective : le filet tremble (toutes ses tuiles secouées), puis revient au repos, dans 5 lieux ${bad.join(' ')}`);
+}
 
 }
 if (sec('Rotation des sprites (double)')) {
@@ -1896,6 +1915,7 @@ console.log('Vue en perspective (option VUE)');
     runUntil(g, () => scr(g) === SS.PRESENT, 120); g.run(40); g.tap('A');
     runUntil(g, () => app(g) === AS.MATCH, 300); allCpu(g); g.run(20);
     for (let k = 0; k < 6; k++) { g.poke('crowd_timer', 60); g.run(150); }
+    runUntil(g, () => !g.peek('net_shake'), 60);   /* (filet au repos : en tremblant, ses tuiles sont secouées, 2.68) */
     // tuiles attendues : données de la ROM (banque 11, compressées pour tz_unpack)
     const v = env === 6 ? 1 : env, rb = (b, sym, off) => g.nes.rom.rom[b][g.addr(sym) - 0x8000 + off];
     const nt = rb(3, 'persp_ntile', env), vm = g.nes.ppu.vramMem, ps = rb(11, 'persp_ps' + v, 0);

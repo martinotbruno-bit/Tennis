@@ -278,9 +278,11 @@ void load_court(void)
 /* Filet qui tremble quand la balle le touche : les tuiles des mailles
    alternent entre dessin « secoué » et « au repos » (net_shake : 14 -> 0) */
 u8 net_shake, net_state;
+void pnet_tick(void);              /* banque 15 : filet en perspective (version 2.68) */
 void net_tick(void)
 {
     u8 want = (u8)(net_shake > 1 && ((net_shake >> 2) & 1));
+    if (persp) { bank_call(BANK_HL, pnet_tick); return; }
     if (want != net_state) {
         const u8 *s = want ? net_shk : net_norm;
         if (!vbuf_raw((u16)net_idx[0] << 4, s, 16)) return;      /* budget VBlank : trame suivante */
