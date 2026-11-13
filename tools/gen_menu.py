@@ -116,11 +116,14 @@ def arr(name, data):
 
 
 L = ['/* Fichier généré par tools/gen_menu.py — ne pas modifier. */',
-     '/* Habillage des menus : police surlignée ($60-$9F) et ornements dorés ($A0-$A7), banque 8. */', '']
+     '/* Habillage des menus : police surlignée ($60-$9F), ornements dorés ($A0-$A7), accolades ($C0-$C3), attributs, banque 13. */', '']
 L += arr('menu_font2', font2) + [''] + arr('menu_deco', deco) + [''] + arr('menu_grp', grp) + ['']
 L += arr('menu_attr', b''.join(attrs(k, r) for k, r in ATTR)) + ['']
-L += ['const char menu_bigchars[] = "%s";' % BIG_CHARS, '']
 open(os.path.join(ROOT, 'src', 'assets_menu.c'), 'w').write('\n'.join(L))
+# caractères des lettres doublées : lus directement par menuart.c (banque 8)
+open(os.path.join(ROOT, 'src', 'assets_menu8.c'), 'w').write('\n'.join([
+    '/* Fichier généré par tools/gen_menu.py — ne pas modifier. */', '',
+    'const char menu_bigchars[] = "%s";' % BIG_CHARS, '']))
 # lettres doublées : banque 12 (place libre)
 L2 = ['/* Fichier généré par tools/gen_menu.py — ne pas modifier. */',
       '/* Lettres doublées des titres des menus (4 tuiles par caractère), banque 12. */', '']

@@ -283,6 +283,24 @@ void chr_reload(void)
     chr_nude = 0;
 }
 
+/* les tuiles des personnages ont été remplacées (portraits des réglages) :
+   rechargées au prochain people_tiles() */
+void people_dirty(void) { chr_nude = 0xFF; }
+
+/* portrait 32 x 24 (4 x 3 sprites, tuiles base à base + 11), retourné si
+   attr a le bit $40 */
+#pragma static-locals(push, off)      /* (pile : la RAM fixe est pleine) */
+void spr_port(u8 x, u8 y, u8 base, u8 attr)
+{
+    u8 r, c, t;
+    for (r = 0; r < 3; ++r)
+        for (c = 0; c < 4; ++c) {
+            t = (u8)(base + r * 4 + ((attr & 0x40) ? 3 - c : c));
+            spr1((u8)(x + c * 8), (u8)(y + r * 8), t, attr);
+        }
+}
+#pragma static-locals(pop)
+
 void people_tiles(u8 nude)
 {
     if (nude == chr_nude) return;

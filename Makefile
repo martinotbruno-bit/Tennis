@@ -16,12 +16,12 @@ BANK2 = assets_tz2
 BANK4 = manual assets_tz4
 BANK6 = assets_nude assets_gm2 assets_tz6
 BANK7 = intro teaser assets_tz7
-BANK8 = podium menuart assets_menu
+BANK8 = podium menuart assets_menu8
 BANK9 = credits assets_tz9
 BANK10 = music_data assets_tz10 assets_vs
 BANK11 = assets_persp
 BANK12 = assets_courts12 assets_tz12 assets_menu12
-BANK13 = assets_swap shots cer assets_port
+BANK13 = assets_swap shots cer assets_port assets_menu
 BANK14 = assets_gm gmintro assets_help
 CSRC = $(FIXED) $(BANK0) $(BANK1) $(BANK2) $(BANK3) $(BANK4) $(BANK5) $(BANK6) $(BANK7) $(BANK8) $(BANK9) $(BANK10) $(BANK11) $(BANK12) $(BANK13) $(BANK14)
 OBJS = $(BUILD)/crt0.o $(BUILD)/sprp.o $(BUILD)/poses.o $(BUILD)/slip.o $(BUILD)/dpcm.o $(addprefix $(BUILD)/,$(addsuffix .o,$(CSRC)))
@@ -33,12 +33,14 @@ src/assets_gm.c src/assets_gm2.c: tools/gen_gm.py
 	python3 tools/gen_gm.py
 	python3 tools/gen_assets.py
 
-src/assets_menu.c src/assets_menu12.c: tools/gen_menu.py assets/tiles.chr
+src/assets_menu.c src/assets_menu8.c src/assets_menu12.c: tools/gen_menu.py assets/tiles.chr
 	python3 tools/gen_menu.py
+src/assets_port.c: tools/gen_port.py
+	python3 tools/gen_port.py
 src/assets_help.c: tools/gen_help.py
 	python3 tools/gen_help.py
 
-src/assets_vs.c src/assets_vs.h src/assets_tz.h src/assets_tz2.c src/assets_tz4.c src/assets_tz9.c src/assets_tz10.c src/assets_tz12.c src/assets_tz6.c src/assets_tz7.c src/assets_port.c: tools/gen_teaser.py
+src/assets_vs.c src/assets_vs.h src/assets_tz.h src/assets_tz2.c src/assets_tz4.c src/assets_tz9.c src/assets_tz10.c src/assets_tz12.c src/assets_tz6.c src/assets_tz7.c: tools/gen_teaser.py
 	python3 tools/gen_teaser.py
 
 src/music_data.c: tools/gen_music.py tools/music_src.c

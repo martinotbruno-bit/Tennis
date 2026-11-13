@@ -219,7 +219,7 @@ static u8 is_final(void)
     return (u8)((comp_l1[0] == 'F' && comp_l1[6] == 0) || (comp_l2[0] == 'F' && comp_l2[6] == 0));
 }
 
-u8 __fastcall__ grp_tile(u8 i);
+u8 __fastcall__ grp_tile(u8 i); void port_load(void); void menu_marks(void); u8 __fastcall__ port_pal(u8 a);
 void menu_deco_begin(void); void deco_title(void); void deco_frame(void); void deco_filet(void); void palmares_build(void);
 extern char deco_str[24];
 extern u8 deco_kind, deco_row;
@@ -430,35 +430,29 @@ static void menu_screen(void)
     rd_row = rd_n = 0;
     screen_begin();
     deco("REGLAGES", 1, 22);
+    bank_call(BANK_PODIUM, port_load);
     for (i = 0; i < nvis; ++i) menu_draw_row(i, 1);
     info_o = vis[cursor]; info_v = opt_val[info_o];
     for (info_row = 0; info_row < 4; ++info_row) { info_line(info_row); txt_at(2, (u8)(24 + info_row), comp_l1); }
-    pal_set_player(0, opt_val[O_P1]);
-    pal_set_player(1, opt_val[O_P2]);
+    far_call(BANK_PODIUM, (void *)port_pal, opt_val[O_P1]);
+    far_call(BANK_PODIUM, (void *)port_pal, (u8)(32 + opt_val[O_P2]));
     ppu_on();
     scr_state = SS_MENU;
     menu_music();
 }
 
+static u8 __fastcall__ port_base(u8 c) { return (u8)(c == 19 ? 0x34 : !char_female[c] ? 0x10 : c == 16 ? 0x28 : 0x1C); }
 static void menu_sprites(void)
 {
     static const u8 bounce[8] = { 0, 1, 2, 3, 3, 2, 1, 0 };
     menu_hl_tick();
     spr_begin();
     spr1(9, (u8)(4 * 8 + cursor * 8 - 1 - bounce[(frame_cnt >> 2) & 7]), (u8)(ball_base + 8), 3);   /* balle qui rebondit */
-    {   /* pastille de la couleur de la surface, devant sa valeur */
-        static const u8 sc[6][3] = { { 0x27, 0x17, 0x37 }, { 0x3A, 0x2A, 0x30 }, { 0x21, 0x11, 0x31 },
-                                     { 0x24, 0x14, 0x34 }, { 0x38, 0x28, 0x30 }, { 0x31, 0x21, 0x30 } };
-        u8 k;
-        for (k = 0; k < nvis; ++k) if (vis[k] == O_SURF) {
-            const u8 *c = sc[opt_val[O_SURF] < 6 ? opt_val[O_SURF] : 0];
-            if (pal_buf[25] != c[0]) { pal_buf[25] = c[0]; pal_buf[26] = c[1]; pal_buf[27] = c[2]; pal_dirty = 1; }
-            spr1(110, (u8)(4 * 8 + k * 8 - 1), (u8)(ball_base + 8), 2);
-        }
-    }
-    spr_person(28, 29, opt_val[O_P1], 1, (u8)((frame_cnt >> 5) & 1 ? POSE_IDLE : POSE_JOY), 0, 0);
+    bank_call(BANK_PODIUM, menu_marks);      /* pastille de la surface, vignette du lieu */
+    /* portraits des joueurs, de part et d'autre du titre (tuiles $10 homme, $1C femme, $28 Margaux, $34 Papi) */
+    spr_port(16, 7, port_base(opt_val[O_P1]), 0);
     if (opt_val[O_MODE] <= MODE_2P_TEAM || opt_val[O_MODE] == MODE_DEMO)
-        spr_person(220, 29, opt_val[O_P2], 1, (u8)((frame_cnt >> 5) & 1 ? POSE_JOY : POSE_IDLE), 1, 1);
+        spr_port(208, 7, port_base(opt_val[O_P2]), 0x41);
     spr_end();
 }
 
@@ -1073,8 +1067,8 @@ void screens_tick(void)
             if (o == O_ENV || o == O_COND) {
                 for (i = 0; i < nvis; ++i) if (vis[i] == O_COND) menu_draw_row(i, 0);
             }
-            if (o == O_P1) pal_set_player(0, v);
-            if (o == O_P2) pal_set_player(1, v);
+            if (o == O_P1) far_call(BANK_PODIUM, (void *)port_pal, v);
+            if (o == O_P2) far_call(BANK_PODIUM, (void *)port_pal, (u8)(32 + v));
         }
         if (pad1_new & PAD_B) { sfx_menu_back(); title_screen(); break; }
         if ((pad1_new & PAD_START) || ((pad1_new & PAD_A) && o == O_START)) {

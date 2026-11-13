@@ -46,9 +46,9 @@ static char pb[8];
 
 void menu_deco_begin(void)
 {
-    chr_copy(BANK_PODIUM, menu_font2, 0x0600, 1024);
-    chr_copy(BANK_PODIUM, menu_deco, 0x0A00, 128);
-    chr_copy(BANK_PODIUM, menu_grp, 0x0C00, 64);        /* accolades des groupes ($C0-$C3) */
+    chr_copy(BANK_SWAP, menu_font2, 0x0600, 1024);       /* (données en banque 13) */
+    chr_copy(BANK_SWAP, menu_deco, 0x0A00, 128);
+    chr_copy(BANK_SWAP, menu_grp, 0x0C00, 64);        /* accolades des groupes ($C0-$C3) */
     if (!bg_dirty) bg_dirty = 2;   /* tuiles des menus seulement : rétablies avant le match (load_court) */
 }
 
@@ -102,10 +102,60 @@ void deco_title(void)
     vram_adr(NTADR(30, 1)); vram_put(T_STAR);
 }
 
+/* Réglages : portraits des joueurs (homme, femme, fillette : tools/gen_port.py,
+   banque 13) à la place des tuiles des personnages ($10-$3F), rechargées
+   ensuite (people_dirty) */
+extern const u8 port_chr[];
+void port_load(void)
+{
+    chr_copy(BANK_SWAP, port_chr, 0x1100, 992);     /* et vignettes des lieux ($40-$4D) */
+    people_dirty();
+}
+
+/* palette du portrait (arg = emplacement x 32 + personnage) : celle du
+   joueur ; cheveux clairs (Margaux, Papi) : cheveux en couleur 2, contours
+   et yeux noirs */
+u8 __fastcall__ port_pal(u8 a)
+{
+    u8 c = (u8)(a & 31), b = (u8)(16 + (a >> 5) * 4);
+    pal_set_player((u8)(a >> 5), c);
+    if (c == 16) pal_buf[b + 2] = 0x38;
+    if (c == 16 || c == 19) pal_buf[b + 3] = 0x0F;
+    return 0;
+}
+
+/* Réglages : pastille de la couleur de la surface et vignette du lieu
+   (16 x 8, palette de sprite 3 : blanc, couleur du lieu, or), devant leur
+   valeur */
+extern u8 opt_val[], vis[], nvis;
+extern const unsigned char ball_base;
+void menu_marks(void)
+{
+    static const u8 sc[6][3] = { { 0x27, 0x17, 0x37 }, { 0x3A, 0x2A, 0x30 }, { 0x21, 0x11, 0x31 },
+                                 { 0x24, 0x14, 0x34 }, { 0x38, 0x28, 0x30 }, { 0x31, 0x21, 0x30 } };
+    static const u8 ec[7] = { 0x2A, 0x2A, 0x10, 0x16, 0x35, 0x10, 0x27 };
+    u8 k, y, e;
+    const u8 *c;
+    for (k = 0; k < nvis; ++k) {
+        y = (u8)(4 * 8 + k * 8 - 1);
+        if (vis[k] == 6) {              /* SURFACE */
+            c = sc[opt_val[6] < 6 ? opt_val[6] : 0];
+            if (pal_buf[25] != c[0]) { pal_buf[25] = c[0]; pal_buf[26] = c[1]; pal_buf[27] = c[2]; pal_dirty = 1; }
+            spr1(110, y, (u8)(ball_base + 8), 2);
+        }
+        if (vis[k] == 7) {              /* LIEU */
+            e = (u8)(opt_val[7] < 7 ? opt_val[7] : 0);
+            if (pal_buf[30] != ec[e]) { pal_buf[30] = ec[e]; pal_dirty = 1; }
+            spr1(104, y, (u8)(0x40 + e * 2), 3);
+            spr1(112, y, (u8)(0x41 + e * 2), 3);
+        }
+    }
+}
+
 /* Réglages : accolade dorée en marge (colonne 2) qui réunit les lignes d'un
    même groupe : partie (mode, compétition, exercice), joueurs, match (lieu,
    conditions, format...), options (vue, son). Tuile de la ligne i. */
-extern u8 vis[], nvis;
+
 static const u8 grp_of[25] = { 0, 1, 2, 2, 2, 2, 3, 3, 3, 3, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 3, 4, 3, 4 };
 u8 __fastcall__ grp_tile(u8 i)
 {
@@ -122,7 +172,7 @@ void deco_filet(void) { filet(deco_row, 1, 30); }
 void deco_frame(void)
 {
     if (deco_row) filet(deco_row, 1, 30);
-    chr_copy(BANK_PODIUM, menu_attr + (deco_kind ? 64 : 0), 0x23C0, 64);
+    chr_copy(BANK_SWAP, menu_attr + (deco_kind ? 64 : 0), 0x23C0, 64);
 }
 
 /* ---------------------------------------------------------------------- */

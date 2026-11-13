@@ -68,7 +68,9 @@ void __fastcall__ spr_ball(u8 x, s16 sy, u8 shy, u8 zpx);   /* sprp.s */
 void txt_at(u8 x, u8 y, const char *s);
 /* texte via le tampon NMI (rendu actif) ; len octets, complétés par des espaces */
 void vbuf_text(u8 x, u8 y, const char *s, u8 len);
-extern u8 txt_off;      /* 0, ou $40 : variante surlignée de la police (txt_at, vbuf_text) */
+extern u8 txt_off;
+void people_dirty(void);
+void spr_port(u8 x, u8 y, u8 base, u8 attr);      /* 0, ou $40 : variante surlignée de la police (txt_at, vbuf_text) */
 /* écriture brute via le tampon NMI (motifs de tuiles, etc.) ; 0 si plein */
 u8 vbuf_raw(u16 adr, const u8 *data, u8 len);
 void vbuf_reset(void);
