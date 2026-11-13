@@ -197,15 +197,24 @@ void dive_try(void)
 {
     static const u8 ai_spd[3] = { 74, 86, 110 };     /* comme ai_speed (game.c) */
     static const u8 dive_p[3] = { 40, 120, 220 };
+    /* boucle de prédiction en page zéro (variables register : rapides et
+       sans RAM fixe) ; appelée à chaque trame pour l'ordinateur quand la
+       balle arrive loin de lui, elle coûtait près de 4 000 cycles sur la
+       pile C (version 2.59) */
+    register s16 x, y, py;
     u8 p = sh_p, n, lv, ok = 0;
-    s16 x = bx, y = by, d, a, run, reach;
+    s16 d, a, run, reach;
     sh_short = 0;
     if (ms != MS_RALLY || !b_live || hitter == (u8)(p & 1) || bounces > 1 || dive_t[p] || pl_jump[p]) return;
     if ((b_serve && bounces == 0) || bz > 36 * FP) return;
+    if (sh_pad == 0xFF && ((frame_cnt ^ p) & 1)) return;   /* ordinateur : une trame sur deux */
+    x = bx; y = by; py = ply[p];
+    /* balle encore loin en profondeur (plus de 13 trames à 4 px) : rien à
+       décider, sans parcourir la boucle */
+    if (y > py + 56 * FP || y < py - 60 * FP) return;
     for (n = 0; ; ++n) {
         if (n > 12) return;
-        d = y - ply[p];
-        if (d > -14 * FP && d < 9 * FP) break;          /* frappable en profondeur (can_hit) */
+        if (y > py - 14 * FP && y < py + 9 * FP) break; /* frappable en profondeur (can_hit) */
         x += bvx; y += bvy;
     }
     d = PX(x) - PX(plx[p]);

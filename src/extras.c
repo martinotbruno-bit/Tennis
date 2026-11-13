@@ -378,11 +378,16 @@ void crowd_tick(void)
         if (crowd_timer > cr_prev_t) { ola_on = 1; ola_o = 0; }
         if (crowd_timer) --crowd_timer;
         cr_prev_t = crowd_timer;
-        if (ola_on && !(frame_cnt & 1)) {
-            m = 1;
-            if (ola_o < 26) m = ola_row(ola_o, 1);
-            if (m && ola_o >= 3) m = ola_row((u8)(ola_o - 3), 0);
-            if (m && ++ola_o == 29) ola_on = 0;
+        /* une rangée par trame (version 2.59 : les deux la même trame
+           faisaient déborder la trame) : trame paire, la rangée qui se
+           lève ; impaire, celle qui se rassoit, puis on avance */
+        if (ola_on) {
+            if (!(frame_cnt & 1)) { if (ola_o < 26) (void)ola_row(ola_o, 1); }
+            else {
+                m = 1;
+                if (ola_o >= 3) m = ola_row((u8)(ola_o - 3), 0);
+                if (m && ++ola_o == 29) ola_on = 0;
+            }
         }
         /* le public suit la balle du regard */
         if (b_vis) {
