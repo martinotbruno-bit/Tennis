@@ -229,15 +229,24 @@ static void vs_pal(u8 side)
     pal_buf[b + 1] = D;
     pal_buf[b + 2] = (u8)(S >= 0x10 ? S : S + 0x10);                 /* peau (éclairée) */
     pal_buf[b + 6] = (u8)(O >= 0x10 ? O : O + 0x10);                  /* tenue */
-    pal_buf[b + 5] = (u8)((D & 0x30) >= 0x20 ? 0x0F : D);             /* B : sombre (ombre du texte : noir si cheveux clairs), tenue, blanc */
+    pal_buf[b + 5] = (u8)((D & 0x30) >= 0x20 ? 0x07 : D);             /* B : sombre (ombre du texte : noir si cheveux clairs), tenue, blanc */
     pal_buf[b + 3] = pal_buf[b + 6];                                  /* tenue (aussi dans A : bras croisés) */
     pal_buf[b + 7] = 0x30;
+    if (cfg.chr[side] == 16) {      /* Margaux : A (noir, peau, cheveux blonds), B (noir, peau, tenue) */
+        pal_buf[b + 1] = pal_buf[b + 5] = 0x0F;
+        pal_buf[b + 3] = D;
+        pal_buf[b + 6] = pal_buf[b + 2];
+        pal_buf[b + 7] = (u8)(O >= 0x10 ? O : O + 0x10);
+    }
 }
 void vs_build(void)
 {
     u8 i, k = surf_bk[cfg.surface < 6 ? cfg.surface : 0];
     /* texte : moitié gauche palette 1, moitié droite palette 3 (blanc) */
-    for (i = 0; i < 64; ++i) vs_at[i] = (u8)((i & 7) < 4 ? 0x55 : 0xFF);
+    /* (Margaux n'a pas de blanc : son texte prend la palette blanche de l'autre côté) */
+    u8 tl = (u8)(cfg.chr[0] == 16 && cfg.chr[1] != 16 ? 0xFF : 0x55);
+    u8 tr = (u8)(cfg.chr[1] == 16 && cfg.chr[0] != 16 ? 0x55 : 0xFF);
+    for (i = 0; i < 64; ++i) vs_at[i] = (i & 7) < 4 ? tl : tr;
     vs_side(0);
     vs_side(1);
     vram_adr(0x23C0);

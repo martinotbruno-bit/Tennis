@@ -906,6 +906,7 @@ POSES['bust'] = dict(
            order=['legL', 'legR', 'torso', 'armR', 'armL', 'head']),
     face='focus', hand='X', rdir=0, rlen=50)
 VS_W, VS_H = 12, 14                    # tuiles
+VS_PALS_G = {0: (5, 1, 6), 1: (5, 1, 3)}  # Margaux : A (noir, peau, cheveux) ; B (noir, peau, tenue)
 VS_PALS = {0: (5, 1, 3), 1: (5, 3, 6)}  # A : (sombre, peau, tenue) ; B : (sombre, tenue, blanc : texte blanc ombré de sombre)
 # la peau ne devient jamais blanche ; le blanc des yeux se fond dans la peau
 VS_COST = {(1, 6): 12, (2, 6): 12, (6, 1): 1, (6, 3): 6, (4, 3): 1}
@@ -924,10 +925,21 @@ def vs_render(female, mirror, k=1.38):
     # coupé au-dessus de l'ourlet du polo (ni short ni bas du vêtement)
     cut = VS_H * 8 - 10
     f.cls[cut:, :] = 0; f.pid[cut:, :] = 0
+    # contours et yeux : couleur sombre (la couleur 0 est celle du fond de l'écran)
+    pals = VS_PALS
+    if female == 2:
+        # Margaux, cheveux blonds : les cheveux (classe 6 ici) ne partagent pas la
+        # couleur des contours. Palettes A (noir, peau, cheveux), B (noir, peau, tenue)
+        f.cls[f.cls == 6] = 1
+        f.cls[f.cls == 2] = 1
+        f.cls[f.cls == 4] = 3
+        f.cls[f.cls == 5] = 6
+        pals = VS_PALS_G
+    f.cls[(f.cls == 0) & (f.pid > 0)] = 5
     if mirror:
         f.cls = np.ascontiguousarray(np.fliplr(f.cls)); f.pid = np.ascontiguousarray(np.fliplr(f.pid))
     COST_X.clear(); COST_X.update(VS_COST)
-    idx, attr = quantize(f, VS_PALS)
+    idx, attr = quantize(f, pals)
     COST_X.clear()
     tiles, tmap, nt = [], {}, []
     for ty in range(VS_H):

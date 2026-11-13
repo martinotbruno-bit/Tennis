@@ -8,10 +8,10 @@ extern const unsigned char vs_ml_chr[], vs_ml_map[], vs_ml_ab[];
 extern const unsigned char vs_mr_chr[], vs_mr_map[], vs_mr_ab[];
 #define VS_MR_N 82
 extern const unsigned char vs_fl_chr[], vs_fl_map[], vs_fl_ab[];
-#define VS_FL_N 73
+#define VS_FL_N 76
 extern const unsigned char vs_fr_chr[], vs_fr_map[], vs_fr_ab[];
-#define VS_FR_N 73
+#define VS_FR_N 76
 extern const unsigned char vs_gl_chr[], vs_gl_map[], vs_gl_ab[];
-#define VS_GL_N 71
+#define VS_GL_N 74
 extern const unsigned char vs_gr_chr[], vs_gr_map[], vs_gr_ab[];
-#define VS_GR_N 71
+#define VS_GR_N 74
