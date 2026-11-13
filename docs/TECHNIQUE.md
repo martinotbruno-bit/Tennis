@@ -325,10 +325,10 @@ Le dessin des personnages est commun aux vues de face et de dos (rangées de tui
 ### Version 2.59 : lob, trames en retard, fond des menus
 
 - **Lob** (`shot_select`, banque 13) : profondeur 60 + min(armé, 22) ; vitesse 19 si le frappeur est à 80 px ou plus du filet (lob défensif, plus haut), 31 à moins de 60 px (lob d'attaque), 24 sinon ; gravité 6, lift. `perfect_hit` accepte le lob : lob parfait = profondeur + 4, écart 1, sans gain de vitesse. IA (`predict`, banque 0) : un joueur au filet fait demi-tour sur un lob s'il est Expert et `ai_err & 1` (une fois sur deux) ; la prédiction ordinaire (point de chute + 12 trames) le mène derrière le rebond.
-- **Trames en retard** : `dive_try` (banque 13) sort tout de suite si la balle est à plus de 56 px (devant) ou 60 px (derrière) en profondeur, ne décide pour l'ordinateur qu'une trame sur deux, et sa boucle utilise des variables `register` (page zéro). L'ola (`crowd_tick`, banque 3) écrit une rangée par trame. Mesure : `PC` hors de `wait_frame` à la fin d'une trame.
+- **Trames en retard** : `dive_try` (banque 13) sort tout de suite si la balle est à plus de 56 px (devant) ou 60 px (derrière) en profondeur, ne décide pour l'ordinateur qu'une trame sur deux (sur quatre en double), et sa boucle utilise des variables `register` (page zéro). L'ola (`crowd_tick`, banque 3) écrit une rangée par trame. `move_toward` est en assembleur (`src/fastmove.s`, banque fixe). Hauteur du saut : table `jump_h` (j² / 16). `can_hit` teste la profondeur avant la largeur. `score_line` et `score_recap` sont passés en banque 0. Mesure : `PC` hors de `wait_frame` à la fin d'une trame ; profil par fonction (cycles des trames en retard, routines de la bibliothèque C imputées à leur appelant).
 - **Fond des menus** : `menu_bk` (RAM de cartouche, dernier octet libre) tiré par `menu_bk_pick` au premier écran titre parmi $07, $0A, $02, $05 ; `pal_set_menu` l'utilise pour les couleurs 0 ; ombre des lettres dorées en noir sur $07.
 - **Chaises** : `cer_watch` (banque 13) n'affiche pas les chaises tant que `rp_pending` (ralenti prévu ou en cours).
-- **Banque 0** : `surf_rest`, `surf_fric` et `hop_h` sont en banque fixe (gamefix.c).
+- **Aide des réglages** : touches « HAUT/BAS: LIGNE  <>: VALEUR » et « START : JOUER   B : RETOUR » (`comp_help`, banque 5).
 
 ### Bande-annonce (`src/teaser.c`, banque 7, version 2.56)
 
