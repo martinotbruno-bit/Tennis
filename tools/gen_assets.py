@@ -1621,7 +1621,7 @@ def persp_inv(xs, ys):
     # lignes obliques ne décalent d'un pixel qu'aux frontières de tuiles (la
     # pente est de moins d'un pixel par rangée), d'où peu de tuiles nouvelles
     sc = 1 / (1 + PERSP_A * persp_d((ys // 8) * 8 + 4))
-    return 128 + (xs - 128) / sc, 216 - 168 * persp_d(ys)
+    return 128.5 + (xs - 128.5) / sc, 216 - 168 * persp_d(ys)   # (centre 128,5 : le court à plat est symétrique autour de la colonne 128, version 2.62)
 def persp_net(w):
     """filet redessiné à sa place en perspective, avec ses mailles régulières
     (déformées, elles donnaient une tuile différente par colonne)"""
@@ -1632,7 +1632,7 @@ def persp_net(w):
     # les abords hors du court : sinon la couleur du court débordait jusqu'aux
     # poteaux, à hauteur du filet), sans les lignes
     base = [1 if w[ny + 6][x] == 2 else w[ny + 6][x] for x in range(256)]
-    for y in range(ny - 9, ny + 4):                    # efface le filet déformé
+    for y in range(ny - 12, ny + 4):                   # efface le filet déformé (jusqu'au-dessus des têtes de poteaux)
         for x in range(32, 224):
             w[y][x] = base[x]
     for y in range(ny - 5, ny):
@@ -1642,7 +1642,7 @@ def persp_net(w):
         w[ny][x] = 3                                   # câble du bas
         w[ny - 7][x] = 2; w[ny - 6][x] = 2             # bande blanche
     for y in range(ny - 5, ny + 1):
-        w[y][127] = 2; w[y][128] = 2                   # sangle centrale
+        w[y][127] = 2; w[y][128] = 2; w[y][129] = 2    # sangle centrale (3 px : centrée sur la ligne médiane)
     for y in (ny + 1, ny + 2):                         # ombre portée
         for x in range(x0n + 2, x1n + 3):
             if (x + y) % 2 == 0 and (y == ny + 1 or x % 4 < 2):
@@ -1652,7 +1652,7 @@ def persp_net(w):
             for x in range(px, px + 3):
                 w[y][x] = 3
         for y in range(ny - 10, ny + 1):
-            w[y][px] = 2
+            w[y][px if px < 128 else px + 2] = 2       # reflet côté extérieur : poteaux en miroir
         for x in range(px, px + 3):
             w[ny - 11][x] = 2
 
@@ -1668,7 +1668,7 @@ def persp_lines(w):
     verts += [(CENTER_X, TOP_SERV, BOT_SERV), (CENTER_X, TOP_BASE + 1, TOP_BASE + 3), (CENTER_X, BOT_BASE - 3, BOT_BASE - 1)]
     def lx(X, ty):
         sc = 1 / (1 + PERSP_A * persp_d(ty * 8 + 4))
-        return int(round(128 + (X + 0.5 - 128) * sc - 0.5))
+        return int(round(128.5 + (X + 0.5 - 128.5) * sc - 0.5))
     # Au filet, chaque ligne doit ressortir là où elle entre : la rangée de
     # tuiles visible au-dessus (t - 2) et celle au-dessous (t + 1) du filet
     # (rangée t) prennent la même colonne. Sinon, la marche d'un pixel tombe
@@ -1695,7 +1695,7 @@ def persp_lines(w):
         sc = 1 / (1 + PERSP_A * persp_d((ys // 8) * 8 + 4))
         for (X, y0, y1) in verts:
             if y0 <= Y < y1 + 1:
-                xs = int(round(128 + (X + 0.5 - 128) * sc - 0.5))
+                xs = int(round(128.5 + (X + 0.5 - 128.5) * sc - 0.5))
                 f = fix.get(X, {}).get(ys // 8)
                 if f is not None and f != xs:
                     w[ys][xs] = w[ys][xs + (2 if f < xs else -2)]   # efface la ligne échantillonnée
