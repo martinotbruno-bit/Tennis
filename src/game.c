@@ -94,8 +94,7 @@ char msg1[16], msg2[16];
 
 
 /* surfaces : restitution et adhérence au rebond (sur 256) */
-static const u8 surf_rest[6] = { 196, 150, 176, 160, 214, 116 };
-static const u8 surf_fric[6] = { 200, 244, 226, 236, 170, 253 };
+extern const u8 surf_rest[6], surf_fric[6];          /* gamefix.c (banque fixe : place) */
 /* IA : vitesse (FP/trame), délai de réaction, dispersion, marge visée */
 /* vitesses (FP/trame) ; ≤ 127 car doublées en double (ai_x2) */
 /* réglages v2.3 : Normal rendu plus abordable (retour de test joueur) */
@@ -697,8 +696,9 @@ static void predict(u8 p)
         pred_y = land_y + PX((bvy << 3) + (bvy << 2));
         /* joueur au filet : interception de volée ; sur un lob (version
            2.59), il fait demi-tour vers le point de chute, pour le jouer
-           après le rebond (Normal, Expert ; Facile reste au filet) */
-        if (iabs(PX(ply[p]) - NET_Y) < 46 && !b_serve && !(last_shot == SH_LOB && cfg.level[p])) {
+           après le rebond (Expert, une fois sur deux : il se fait aussi
+           surprendre ; Facile et Normal restent au filet) */
+        if (iabs(PX(ply[p]) - NET_Y) < 46 && !b_serve && !(last_shot == SH_LOB && cfg.level[p] == 2 && (ai_err[p] & 1))) {
             pred_y = PX(ply[p]);
             if ((bvy >> 2) != 0) pred_x = PX(bx) + ((pred_y - PX(by)) * (bvx >> 2)) / (bvy >> 2);
         }
@@ -1135,7 +1135,7 @@ u8 match_tick(void)
 
 /* fête de victoire : quand un humain gagne (ou en démonstration), comme
    pour la musique de victoire */
-static const u8 hop_h[16] = { 0, 1, 3, 5, 6, 7, 7, 7, 8, 7, 7, 7, 6, 5, 3, 1 };
+extern const u8 hop_h[16];                           /* gamefix.c */
 static u8 win_party(void)
 {
     return (u8)(ms == MS_OVER && !(cfg.ctrl[sc_winner] == CTRL_CPU && cfg.ctrl[sc_winner ^ 1] != CTRL_CPU));

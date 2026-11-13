@@ -209,3 +209,9 @@ void fw_draw(u8 t, u8 dy)
    (Déplacées depuis la banque du moteur, qui était pleine.) */
 
 /* poses des joueurs : poses_all (banque 3, extras.c) */
+
+/* tables du moteur (banque 0, pleine) : rebond et frottement par surface,
+   hauteur des petits sauts */
+const u8 surf_rest[6] = { 196, 150, 176, 160, 214, 116 };
+const u8 surf_fric[6] = { 200, 244, 226, 236, 170, 253 };
+const u8 hop_h[16] = { 0, 1, 3, 5, 6, 7, 7, 7, 8, 7, 7, 7, 6, 5, 3, 1 };
