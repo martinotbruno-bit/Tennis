@@ -15,6 +15,7 @@ Comme l'exige le CDC (§ 17.5), ce rapport distingue ce qui est **réalisé**, *
 | Yeux de la bande-annonce | Contours et yeux dans la couleur sombre (cheveux) au lieu de celle du fond, sur toutes les images sauf un gros plan qui dépasserait 246 tuiles et les images de Margaux (blonde) ; cheveux de Papi en gris foncé dans la bande-annonce |
 | Mesure et ajustement des coups de B | Coupé un peu plus haut au-dessus du filet ; l'ordinateur ne joue plus l'amortie du fond du court. Fautes du coupé : Normal 11 → 6 %, Expert 22 → 15 % ; amortie de l'ordinateur, plus rare : gagnantes / fautes Normal 32 / 48 % → 67 / 17 %, Expert 9 / 51 % → 40 / 24 % |
 | Ralentissements restants | Mesure : simple à plat 83 trames en retard sur 15 000, perspective 163, double environ 9 % (22 % au départ). Le reste : dessin du score en une trame à la fin des points (bref, isolé) et, en double, l'affichage des 4 joueurs et l'IA (il faudrait les réécrire en assembleur) |
+| (défaut trouvé par les tests) | Point fini pendant un revers : le jeu de tuiles du revers est gardé tant que le geste dure (sinon, une trame avec une pose sans ses tuiles) |
 | Validation sur vraie console | Impossible dans l'environnement de développement ; guide `docs/VERIFICATION_CONSOLE.md` mis à jour (version 2.61, section 10 : nouveautés 2.57 à 2.61) |
 
 ### Version 2.60
@@ -531,7 +532,7 @@ Pour loger ce contenu, la cartouche passe de NROM (32 Ko) à **MMC1** : 128 Ko d
 | Relecture des textes (`check_texts.py`) | 0 problème |
 | Contraste (`contrast.py 25`) | 0 paire sous ΔE 25 (personnages, courts, balle, tenues) |
 | Profil CPU, double, 6 000 trames | 27 trames d'échange en dépassement (0,45 %), sans défaut d'image |
-| Compilation | Reproductible : SHA-256 `a25d763e9f13c7d53f6ca08cc16175b13977ed326750bcf5d43bb77c41ae202f` sur deux compilations propres |
+| Compilation | Reproductible : SHA-256 `cc3d6f4654a683308a01d49c2c1a67b79c658954db533ecb5e71235bc1e8aded` sur deux compilations propres |
 
 ## 3. Conformité par section du CDC
 
