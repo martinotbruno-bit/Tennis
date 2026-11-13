@@ -249,6 +249,20 @@ void palmares_build(void)
     txt_at(2, 27, "SELECT X2 : TOUT EFFACER");
 }
 
+/* écran titre : court en perspective (lignes blanches, filet doré) aux
+   rangées 8 à 13, autour de la grosse balle ; rangées 12-13 en palette 2
+   (blanc), 14-15 en palette 3 (or : l'édition, rangée 14) */
+extern const u8 menu_court_chr[], menu_court_map[];
+extern const unsigned int menu_court_len;
+void title_court(void)
+{
+    u8 i;
+    chr_copy(BANK_SWAP, menu_court_chr, 0x0600, menu_court_len);
+    chr_copy(BANK_SWAP, menu_court_map, NTADR(0, 8), 192);
+    vram_adr(0x23C0 + 3 * 8);
+    for (i = 0; i < 8; ++i) vram_put(0xFA);
+}
+
 /* page des résultats : une médaille devant chaque meilleur résultat et
    chaque compétition de l'historique terminée sur le podium (1er, 2e, 3e) */
 void palmares_sprites(void)

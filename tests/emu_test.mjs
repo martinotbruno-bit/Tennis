@@ -687,7 +687,7 @@ console.log('Compétitions');
   check(app(e) === 4 && seen.size === want.length && scr0.has(0) && scr0.has(2),
     `générique de fin : défilement sur 2 écrans empilés, ${seen.size}/${want.length} textes vus (${[...seen].join(', ')})`);
   e.run(80); e.tap('A'); runUntil(e, () => scr(e) === SS.TITLE && app(e) === 0 && e.peek('ppu_mask') !== 0, 200); e.run(10);
-  check(scr(e) === SS.TITLE && e.peek('scroll_y') === 0 && e.peek('scroll_nt') === 0 && e.text(4, 13, 24) === 'PLATINUM DIAMOND EDITION',
+  check(scr(e) === SS.TITLE && e.peek('scroll_y') === 0 && e.peek('scroll_nt') === 0 && e.text(4, 14, 24) === 'PLATINUM DIAMOND EDITION',
     'fin du générique : A ramène à l\'écran titre, défilement et miroir rétablis');
 }
 {

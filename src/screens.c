@@ -219,7 +219,7 @@ static u8 is_final(void)
     return (u8)((comp_l1[0] == 'F' && comp_l1[6] == 0) || (comp_l2[0] == 'F' && comp_l2[6] == 0));
 }
 
-u8 __fastcall__ grp_tile(u8 i); void port_load(void); void palmares_sprites(void); void menu_marks(void); u8 __fastcall__ port_pal(u8 a);
+u8 __fastcall__ grp_tile(u8 i); void port_load(void); void title_court(void); void palmares_sprites(void); void menu_marks(void); u8 __fastcall__ port_pal(u8 a);
 void menu_deco_begin(void); void deco_title(void); void deco_frame(void); void deco_filet(void); void palmares_build(void);
 extern char deco_str[24];
 extern u8 deco_kind, deco_row;
@@ -293,6 +293,7 @@ static void title_screen(void)
     screen_begin();
     set_attr_rows(0, 7, 2);
     draw_logo(2);
+    bank_call(BANK_PODIUM, title_court);      /* court en perspective (rangées 8-13), sous la balle */
     txt_at(6, 7, "GRAND SLAM PRESTIGE");
     for (i = 0; i < 4; ++i) {
         vram_adr(NTADR(14, 8 + i));
@@ -300,8 +301,7 @@ static void title_screen(void)
         vram_put(bigball_tiles[i * 4 + 2]); vram_put(bigball_tiles[i * 4 + 3]);
     }
     set_attr_rows(8, 11, 2);
-    txt_at(4, 13, "PLATINUM DIAMOND EDITION");
-    set_attr_rows(12, 15, 3);
+    txt_at(4, 14, "PLATINUM DIAMOND EDITION");
     set_attr_rows(24, 27, 3);
     deco_row = 15; bank_call(BANK_PODIUM, deco_filet);
     deco_row = 24; bank_call(BANK_PODIUM, deco_filet);

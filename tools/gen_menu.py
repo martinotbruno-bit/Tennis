@@ -127,11 +127,54 @@ L = ['/* Fichier généré par tools/gen_menu.py — ne pas modifier. */',
      '/* Habillage des menus : police surlignée ($60-$9F), ornements dorés ($A0-$A7), traits du tableau ($A8-$AB), accolades ($AC-$AF), attributs, banque 13. */', '']
 L += arr('menu_font2', font2) + [''] + arr('menu_deco', deco) + [''] + arr('menu_grp', grp) + [''] + arr('menu_brk', brk) + ['']
 L += arr('menu_attr', b''.join(attrs(k, r) for k, r in ATTR)) + ['']
+
+# court en perspective de l'écran titre (version 2.58) : lignes blanches
+# (couleur 3) et filet doré (2) sur le fond vert, rangées 8 à 13 ; la grosse
+# balle se pose devant. Tuiles à partir de $60 (police surlignée, inutile
+# sur l'écran titre) ; carte de 6 x 32 tuiles.
+from PIL import ImageDraw
+CW, CH = 256, 48
+cim = Image.new('L', (CW, CH), 0)
+cd = ImageDraw.Draw(cim)
+YF, YN = 2, 46
+def cx(u, y):
+    t = (y - YF) / (YN - YF)
+    return 128 + u * (34 + (102 - 34) * t)
+def cy(z, a=0.55):
+    return YF + (YN - YF) * (z * (1 + a)) / (1 + a * z)
+for u in (-1, 1, -0.78, 0.78):
+    cd.line([(cx(u, YF), YF), (cx(u, YN), YN)], fill=3)
+for y in (YF, YN):
+    cd.line([(cx(-1, y), y), (cx(1, y), y)], fill=3)
+for z in (0.25, 0.75):
+    cd.line([(cx(-0.78, cy(z)), cy(z)), (cx(0.78, cy(z)), cy(z))], fill=3)
+cd.line([(cx(0, cy(0.25)), cy(0.25)), (cx(0, cy(0.75)), cy(0.75))], fill=3)
+yn_ = cy(0.5)
+cd.line([(cx(-1.08, yn_), yn_), (cx(1.08, yn_), yn_)], fill=2)
+for u in (-1.08, 1.08):
+    cd.line([(cx(u, yn_), yn_ - 5), (cx(u, yn_), yn_)], fill=2)
+cpx = cim.load()
+court_t, court_map = [], []
+for ty in range(6):
+    for tx in range(32):
+        rows = [''.join(str(cpx[tx * 8 + x, ty * 8 + y]) for x in range(8)) for y in range(8)]
+        if all(r == '00000000' for r in rows):
+            court_map.append(0)
+            continue
+        t = tile(rows)
+        if t not in court_t:
+            court_t.append(t)
+        court_map.append(0x60 + court_t.index(t))
+assert len(court_t) <= 64, len(court_t)
+L += arr('menu_court_chr', b''.join(court_t)) + ['']
+L += arr('menu_court_map', bytes(court_map)) + ['']
+
 open(os.path.join(ROOT, 'src', 'assets_menu.c'), 'w').write('\n'.join(L))
 # caractères des lettres doublées : lus directement par menuart.c (banque 8)
 open(os.path.join(ROOT, 'src', 'assets_menu8.c'), 'w').write('\n'.join([
     '/* Fichier généré par tools/gen_menu.py — ne pas modifier. */', '',
-    'const char menu_bigchars[] = "%s";' % BIG_CHARS, '']))
+    'const char menu_bigchars[] = "%s";' % BIG_CHARS,
+    'const unsigned int menu_court_len = %d;     /* octets des tuiles du court de l\'écran titre */' % (len(court_t) * 16), '']))
 # lettres doublées : banque 12 (place libre)
 L2 = ['/* Fichier généré par tools/gen_menu.py — ne pas modifier. */',
       '/* Lettres doublées des titres des menus (4 tuiles par caractère), banque 12. */', '']
