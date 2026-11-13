@@ -371,10 +371,21 @@ def body(f, j, female, face, front=('armR', 'legL'), racket_hand='L', racket_dir
             hair = f.m_ell(R(0, -5.6), 11.6, 9.4, tilt) & ~f.m_ell(R(turn * 0.6, 3.2), 9.8, 8.2, tilt)
             hair |= f.m_poly([R(-9.5, -5), R(-1, -9), R(6, -6.5), R(1.5, -4.2), R(-5, -2.2)])        # frange de côté
         else:
-            hair = f.m_ell(R(0, -5.4), 11.1, 8.8, tilt) & ~f.m_ell(R(turn * 0.6, 3), 10.3, 8.4, tilt)
-            hair |= f.m_poly([R(-10.6, -3), R(-9.6, 2.6), R(-8.7, -2.5)]) | f.m_poly([R(10.6, -3), R(9.6, 2.6), R(8.7, -2.5)])
+            # coupe courte de joueur : côtés courts (pattes, oreilles dégagées),
+            # volume sur le dessus coiffé vers le haut, frange en mèches
+            top = f.m_ell(R(0, -6.2), 10.6, 8.6, tilt) & ~f.m_ell(R(turn * 0.6, 2.6), 10.2, 8.2, tilt)
+            quiff = f.m_poly([R(-9.5, -8), R(-7, -13.2), R(-3.5, -14.6), R(0.5, -15.6), R(4.5, -15.0),
+                              R(8, -13.4), R(10, -10.5), R(10.3, -7), R(-10.3, -7)])
+            fringe = f.m_poly([R(-9.4, -6.5), R(-7.5, -2.6), R(-6.2, -4.6), R(-4.4, -2.0), R(-2.6, -4.4),
+                               R(-0.6, -1.8), R(1.2, -4.2), R(3.2, -2.2), R(4.8, -4.6), R(7, -3.0), R(9.4, -6.5)])
+            sides = f.m_poly([R(-10.4, -5), R(-9.9, 1.8), R(-9.0, 1.8), R(-8.8, -3.2)]) | f.m_poly([R(10.4, -5), R(9.9, 1.8), R(9.0, 1.8), R(8.8, -3.2)])
+            hair = top | quiff | fringe | sides
         hr = f.part(hair, D, None, group=hid)
-        f.paint(f.m_line([R(-3.5, -12.5), R(-2.5, -8.5)], 0.6), 0, within=[hr])          # raie
+        if female:
+            f.paint(f.m_line([R(-3.5, -12.5), R(-2.5, -8.5)], 0.6), 0, within=[hr])          # raie
+        else:
+            for pts in (((-6, -11.5), (-4.6, -9.5), (-4.2, -7)), ((-1, -13.5), (0.4, -11.2), (0.6, -8.5)), ((4, -12.5), (5.2, -10.4), (5.2, -8))):
+                f.paint(f.m_line([R(*q) for q in pts], 0.5), 0, within=[hr])             # mèches
         ex, ey = R(turn, 1)
         ret['face'] = (ex, ey)
         face_features(f, ex, ey, face, hid, tilt, female, hs)
