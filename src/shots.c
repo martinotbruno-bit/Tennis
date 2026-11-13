@@ -63,7 +63,7 @@ u8 __fastcall__ serve_fb(s16 vz)
 u8 perfect_hit(u8 p, s16 dx)
 {
     u8 t = (u8)(p & 1), r = 0;
-    if (bounces == 0 || (last_shot != SH_DRIVE && last_shot != SH_FLAT && last_shot != SH_SLICE && last_shot != SH_SHORT)) return 0;
+    if (bounces == 0 || (last_shot != SH_DRIVE && last_shot != SH_FLAT && last_shot != SH_SLICE && last_shot != SH_SHORT && last_shot != SH_LOB)) return 0;
     if (cfg.ctrl[p] != CTRL_CPU) ++st_ptry[t];
     /* balle à côté du corps : ni collée (< 5 px), ni en extension (> 14 px) ;
        la frappe part dès que la balle entre dans la zone, sa position en
@@ -126,7 +126,16 @@ void shot_select(void)
         }
         sfx_crowd(5);
     } else if (sh_btn == PAD_B && (pad & PAD_UP)) {        /* lob */
-        depth = 74; speed = 24; grav = 6; bspin = SPIN_TOP; last_shot = SH_LOB;
+        /* version 2.59 : longueur selon l'armé (relâché vite : lob court,
+           smashable ; bouton tenu : près de la ligne de fond, risque de
+           faute) ; trajectoire selon la position : du fond, lob défensif
+           très haut et lent ; de l'intérieur du court, lob d'attaque plus
+           bas et plus vif */
+        T = (u8)(power > 22 ? 22 : power);
+        depth = (s16)(60 + T);
+        T = (u8)iabs(PX(ply[p]) - NET_Y);
+        speed = (u8)(T >= 80 ? 19 : T < 60 ? 31 : 24);
+        grav = 6; bspin = SPIN_TOP; last_shot = SH_LOB;
     } else if (sh_btn == PAD_B && (pad & PAD_DOWN)) {      /* amortie */
         /* amortie : trajectoire basse et vive juste au-dessus du filet, puis la
            balle « meurt » au rebond (effet SPIN_DROP) ; plus elle est jouée
@@ -150,10 +159,11 @@ void shot_select(void)
         if (speed > T) speed = T;
         if (last_shot == SH_DRIVE || last_shot == SH_FLAT) last_shot = SH_VOLLEY;
     }
-    /* frappe parfaite (lifté, à plat, coupé, croisé court ; banque fixe) :
+    /* frappe parfaite (lifté, à plat, coupé, croisé court, lob ; banque fixe) :
        +37,5 % de vitesse, presque sans écart */
     hit_perf = perfect_hit(p, sh_dx);
-    if (hit_perf) { speed = (u8)(speed + (speed >> 2) + (speed >> 3)); spread = 1; power = 0; }
+    if (hit_perf && last_shot == SH_LOB) { depth += 4; spread = 1; power = 0; }   /* lob parfait : précis, profond */
+    else if (hit_perf) { speed = (u8)(speed + (speed >> 2) + (speed >> 3)); spread = 1; power = 0; }
     /* fatigue (long échange) : faute de jambes, on frappe plus fort pour
        conclure, mais moins précis : jusqu'à +23 % de vitesse et + 5 d'écart
        (tired 0..10) ; la frappe parfaite reste précise */

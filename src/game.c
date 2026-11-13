@@ -695,8 +695,10 @@ static void predict(u8 p)
         /* x 12 = x 8 + x 4 : décalages au lieu de multiplications */
         pred_x = land_x + PX((bvx << 3) + (bvx << 2));
         pred_y = land_y + PX((bvy << 3) + (bvy << 2));
-        /* joueur au filet : interception de volée */
-        if (iabs(PX(ply[p]) - NET_Y) < 46 && !b_serve) {
+        /* joueur au filet : interception de volée ; sur un lob (version
+           2.59), il fait demi-tour vers le point de chute, pour le jouer
+           après le rebond (Normal, Expert ; Facile reste au filet) */
+        if (iabs(PX(ply[p]) - NET_Y) < 46 && !b_serve && !(last_shot == SH_LOB && cfg.level[p])) {
             pred_y = PX(ply[p]);
             if ((bvy >> 2) != 0) pred_x = PX(bx) + ((pred_y - PX(by)) * (bvx >> 2)) / (bvy >> 2);
         }
