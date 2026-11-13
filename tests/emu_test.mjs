@@ -1806,9 +1806,9 @@ console.log('Vue en perspective (option VUE)');
   // menu : ligne VUE, à plat par défaut
   const m = boot(); toMenu(m);
   const r = rowOf(m, 24);
-  check(r > 0 && m.text(3, 4 + r, 3) === 'VUE' && m.text(16, 4 + r, 6) === 'A PLAT', 'menu : ligne VUE (à plat par défaut)');
+  check(r > 0 && m.text(3, menuY(m, r), 3) === 'VUE' && m.text(16, menuY(m, r), 6) === 'A PLAT', 'menu : ligne VUE (à plat par défaut)');
   m.poke('cursor', r); m.tap('RIGHT'); m.run(5);
-  check(m.peek('opt_val', 24) === 1 && m.text(16, 4 + r, 11) === 'PERSPECTIVE', 'menu : VUE PERSPECTIVE');
+  check(m.peek('opt_val', 24) === 1 && m.text(16, menuY(m, r), 11) === 'PERSPECTIVE', 'menu : VUE PERSPECTIVE');
   // match en perspective : court déformé, tuiles chargées, projection
   const e = boot(); startWith(e, { FMT: 3, ENV: 0 }); e.poke('opt_val', 1, 24);
   const f = boot(); toMenu(f); f.poke('opt_val', 1, 24); f.poke('opt_val', 3, O.FMT); f.tap('START'); f.run(30); f.tap('A');
