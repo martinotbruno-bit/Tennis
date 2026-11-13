@@ -61,7 +61,7 @@ $0200-$02FF  tampon OAM
 $0300-$037F  tampon VRAM (96 octets envoyés au plus par trame : budget VBlank)
 $0400-$06FF  variables du moteur (742 / 768 octets)
 $0700-$07FF  pile de paramètres C
-$6000-$77FF  RAM de cartouche : écrans, compétitions, tampon des ralentis (4 003 / 6 144)
+$6000-$77FF  RAM de cartouche : écrans, compétitions, tampon des ralentis, aide des menus (6 142 / 6 144)
 $7800-$7FFF  palmarès (sauvegardé si la cartouche a une pile ; signature + somme de contrôle)
 ```
 
@@ -308,6 +308,19 @@ Le dessin des personnages est commun aux vues de face et de dos (rangées de tui
 **Affiche VS** (`vs_build`) : bustes générés par `tools/gen_teaser.py` (pose bras croisés, version en miroir pour la droite, homme et femme ; `src/assets_vs.c`, banque 10), 2 palettes par buste (A : sombre, peau, tenue ; B : tenue ombrée, tenue, blanc, où s'écrit le texte blanc). Contours et yeux en couleur sombre (la couleur 0 est le fond). Variantes : `vs_g*` (Margaux, fillette) et `vs_p*` (Papi) aux cheveux clairs, avec leurs palettes A (noir, peau, cheveux) et B (noir, peau, tenue) ; leur texte prend la palette blanche de l'autre côté. Les images de la bande-annonce ont une 3e variante (fillette, `tz_art[TZ_N][3]`) et occupent aussi les banques 6 et 7. Tuiles : gauche $60-$9F puis $01-$1F (`tz_unpack` reprend où il s'était arrêté, `tz_src`), droite $A0-$FF. Fond : couleur de la surface.
 
 **Écran titre** : reflet (couleur 2 de la palette du logo) toutes les 128 trames, scintillement de l'édition. **Ouverture des menus** : pendant le fondu d'ouverture, `scroll_y` = `fade_lvl` / 4 (main.c) : l'écran glisse vers sa place.
+
+### Menus, version 2.58
+
+- **Tuiles des menus** : $A8-$AB traits du tableau des tournois, $AC-$AF accolades des réglages, $B0-$FB lettres doublées des titres (19 lettres distinctes au plus). Les données (police surlignée, ornements, traits, accolades, attributs, court de l'écran titre) sont en banque 13 (`assets_menu.c`) ; `menu_bigchars` et la taille du court restent en banque 8 (`assets_menu8.c`), lus directement.
+- **Aide des réglages** (`tools/gen_help.py` → `assets_help.c`, banque 14) : `menu_help` remplit `comp_l1` avec la ligne 0 ou 1 de l'aide de `help_o` / `help_v` ; `menu_info_tick` (screens.c) redessine les rangées 24 à 27 par le tampon VRAM quand la ligne ou sa valeur change. Variables en RAM de cartouche (la RAM interne est pleine ; `menu_help` utilise des variables `register`).
+- **Accolades** : `grp_tile` (banque 8) donne la tuile de la ligne i selon le groupe de sa ligne et de ses voisines.
+- **Portraits** (`tools/gen_port.py` → `assets_port.c`, banque 13) : 4 dessins de 4 x 3 sprites (homme, femme, Margaux, Papi) et 7 vignettes de lieu (2 sprites), copiés par `port_load` à la place des tuiles des personnages ($10-$4D) ; `people_dirty` les fait rétablir (992 octets) au prochain `people_tiles`. `spr_port` (banque fixe) affiche un portrait, retourné à droite ; `port_pal` règle sa palette ; `menu_marks` affiche la pastille de surface et la vignette du lieu (palette 3, couleur 2 propre au lieu).
+- **Affiche VS** : `vs_anim(t)` (banque 8), appelée à chaque trame après le fondu (`brk_t`, 48 trames) : palettes de chaque côté au fond, en blanc puis en noir avant les couleurs (`vs_pals`) ; « CONTRE » écrit à t = 32 avec un flash du fond.
+- **Tableau à élimination** (`comp_draw_table`, banque 5) : pour chaque tour b, `ko_run(0, 3, b)` donne les inscrits ; noms en colonne 2 + 6b, rangée 1 + i·2^b + 2^b − 1 ; coin, verticales et jonction en colonne + 5.
+- **Palmarès** : `palmares_sprites` (banque 8) met une médaille (sprite de la balle, palettes or, argent, bronze) devant les rangs 1 à 3.
+- **Écran titre** : `title_court` copie les tuiles du court ($60, à la place de la police surlignée) et sa carte (rangées 8 à 13), attributs des rangées 12-13 en palette 2.
+- **Sons** : `sfx_menu_val(droite)` (glissando) et `sfx_menu_back`.
+- **Tests** : `seedHook` (emu_test.mjs) fixe `rand_seed` la trame qui suit l'appui lançant un match (A sur la présentation, START sur les réglages) : les matchs des tests sont reproductibles malgré la durée variable des menus.
 
 ### Bande-annonce (`src/teaser.c`, banque 7, version 2.56)
 

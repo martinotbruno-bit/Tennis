@@ -21,7 +21,7 @@ Ce manuel est aussi intégré au jeu : à l'écran titre, choisissez **MODE D'EM
 
 ## 1. Écran titre
 
-**HAUT/BAS** choisit une entrée et **A** la valide. **START** ouvre directement la configuration.
+**HAUT/BAS** choisit une entrée et **A** la valide. **START** ouvre directement la configuration. La grosse balle du titre est posée sur un court en perspective.
 
 | Entrée | Rôle |
 |---|---|
@@ -37,6 +37,8 @@ Depuis la version 2.57, les menus sont habillés : fond vert gazon, titres en gr
 ## 2. Configuration (écran RÉGLAGES)
 
 Les libellés sont en bleu pâle, les valeurs en jaune ; la ligne choisie s'allume (libellé en or, valeur en blanc, flèches **<** **>** autour de la valeur) et une balle rebondit devant elle. Une pastille de la couleur de la surface accompagne la ligne SURFACE ; les deux joueurs choisis encadrent le titre.
+
+Depuis la version 2.58 : en bas de l'écran, deux lignes expliquent la **ligne choisie** et sa valeur (pour un joueur : son style de jeu) ; une **accolade dorée** dans la marge réunit les lignes de chaque groupe (partie, joueurs, match, options) ; les **portraits** des joueurs choisis encadrent le titre ; une **vignette** illustre le lieu choisi. Un petit son monte ou descend quand une valeur change, et une note descend quand on revient avec B.
 
 **HAUT/BAS** choisit une ligne, **GAUCHE/DROITE** change la valeur. **START** lance la partie, **B** revient au titre. Les lignes affichées dépendent du mode. Tout le contenu est disponible dès le départ.
 
@@ -168,7 +170,7 @@ Le lancer reste visible quelle que soit votre position, y compris quand vous ser
 
 ### L'affiche du match (version 2.57)
 
-Avant chaque match, une affiche **VS** : les deux joueurs en buste, bras croisés, face à face (dessinés en grand, à leurs couleurs), « CONTRE » au centre, sur un fond de la couleur de la surface (les femmes avec une ombre douce sous la poitrine, Margaux en fillette) ; sous chaque buste, le nom, la manette ou le niveau et le style ; en bas, la surface, le lieu, les conditions et le format. Au club nudiste, la présentation reste celle d'origine.
+Avant chaque match, une affiche **VS** (depuis la version 2.58, les bustes apparaissent l'un après l'autre dans un éclair, en silhouette puis en couleurs, et « CONTRE » s'inscrit sur un flash) : les deux joueurs en buste, bras croisés, face à face (dessinés en grand, à leurs couleurs), « CONTRE » au centre, sur un fond de la couleur de la surface (les femmes avec une ombre douce sous la poitrine, Margaux en fillette) ; sous chaque buste, le nom, la manette ou le niveau et le style ; en bas, la surface, le lieu, les conditions et le format. Au club nudiste, la présentation reste celle d'origine.
 
 ### La bande-annonce (version 2.56)
 
@@ -227,7 +229,7 @@ Toutes les compétitions se jouent **en simple ou en double** (ligne JEU) :
 
 Quand vous gagnez une compétition, vous montez sur le **podium**, au centre de l'écran et sur le court de la compétition. Vous êtes sur la plus haute marche, le finaliste (ou le 2e du classement) à gauche, le 3e à droite, tous **en grand**. La coupe géante est brandie au-dessus de votre tête sous une pluie de confettis, sur la fanfare de victoire, pendant que **5 feux d'artifice** éclatent. Les noms sont écrits sous les marches. En double, vous montez à deux sur la plus haute marche ; pour les autres équipes, seul le capitaine monte, et le nom de l'équipe est écrit dessous. Ensuite, place au calme : l'écran reste affiché jusqu'à A.
 
-L'écran d'étape montre le prochain adversaire (niveau, surface), le tableau ou le classement, et le **code de reprise**. Les matchs entre joueurs CPU sont simulés selon leur niveau.
+L'écran d'étape montre le prochain adversaire (niveau, surface), le tableau ou le classement, et le **code de reprise**. Dans un tournoi à élimination, le **tableau** relie les joueurs par des traits dorés jusqu'au vainqueur de chaque tour déjà joué ; votre joueur est en or. Les matchs entre joueurs CPU sont simulés selon leur niveau.
 
 ### Entraînement
 
@@ -275,7 +277,7 @@ Une somme de contrôle de 12 bits détecte les erreurs de recopie.
 
 Le palmarès comporte 3 pages (GAUCHE/DROITE) :
 - **Statistiques** : matchs joués, gagnés et perdus en simple et en double ; points, aces, doubles fautes, coups gagnants, fautes, pourcentage de premières balles ; titres et compétitions disputées ; records (plus long échange, aces en un match).
-- **Résultats** : meilleur résultat par type de compétition et historique des 8 dernières.
+- **Résultats** : meilleur résultat par type de compétition et historique des 8 dernières ; une médaille d'or, d'argent ou de bronze marque chaque podium.
 - **Records d'entraînement** : meilleur score par exercice.
 
 Seuls les matchs où la manette 1 joue sont comptés ; en double, ce sont les statistiques de son équipe (donc aussi celles de la manette 2 si elle joue le partenaire). Pour tout effacer, appuyez deux fois sur **SELECT**.

@@ -1,10 +1,20 @@
-# Royal Martinot — Rapport de réalisation (version 2.57)
+# Royal Martinot — Rapport de réalisation (version 2.58)
 
 Comme l'exige le CDC (§ 17.5), ce rapport distingue ce qui est **réalisé**, **testé**, **validé sur matériel réel**, **validé uniquement en émulation**, **dépendant d'une extension**, et les **limitations restantes**.
 
 > **Validation matérielle : aucune.** Aucun test n'a été fait sur console réelle (NES, Famicom, PAL, cartouche MMC1). Toutes les validations ont eu lieu en émulation (jsnes) et par des tests unitaires sur PC. Les critères « vérifié sur console physique » (CDC § 2.1, 15.4, 16.A) **ne sont pas remplis**. Ce point ne peut pas être traité dans l'environnement de développement utilisé.
 
 ## 1. Évolutions
+
+### Version 2.58
+
+| Demande | Réalisation |
+|---|---|
+| Améliorer encore les menus : faire toutes les propositions | **Sons de navigation** : petit glissando vers l'aigu (droite) ou le grave (gauche) quand une valeur change, note descendante au retour (B). **Aide de la ligne choisie** dans les réglages : deux lignes en bas de l'écran, selon la ligne et sa valeur (147 textes : modes, surfaces, lieux, formats, exercices… ; joueurs : leur style et ce qu'il veut dire), puis les touches ; sur la ligne COMPETITION, l'explication en 4 lignes est conservée. **Groupes** : une accolade dorée en marge réunit les lignes de la partie, des joueurs, du match et des options, sans rangée de plus. **Portraits** des joueurs (tête et épaules, 32 x 24, dessinés au pixel, à leurs couleurs ; Margaux et Papi aux cheveux clairs avec contours noirs) de part et d'autre du titre des réglages. **Vignette du lieu** (stade, club, salle, club nudiste, court Margaux, château, parc) devant sa valeur. **Entrée de l'affiche VS** : après le fondu, chaque buste jaillit d'un éclair blanc, passe en silhouette puis prend ses couleurs (gauche, puis droite), et « CONTRE » s'inscrit sur un flash. **Tableau à élimination** graphique pour les tournois (inscrits, traits dorés, vainqueur de chaque tour, joueur en or). **Palmarès** : médaille or, argent ou bronze devant chaque meilleur résultat et chaque compétition de l'historique terminée sur le podium. **Écran titre** : court en perspective (lignes blanches, filet doré) sous la grosse balle |
+| Pas de bouche, puis : je veux une bouche (portraits) | Les portraits ont une bouche bien visible, au-dessus du menton |
+| Papi n'est pas centré pareil (affiche VS) | Buste de Papi cadré comme celui des autres hommes |
+
+La glissade des bustes de l'affiche VS depuis les bords n'est pas possible proprement sur NES (un seul plan de décor, qui défile d'un bloc) : elle est remplacée par l'apparition en éclair et silhouette. Tests : le hasard du jeu dépend des trames ; une trame de plus dans un menu changeait les matchs des tests. La graine est désormais fixée à l'appui qui lance chaque match de test (matchs reproductibles), et `toMenu` attend l'écran des réglages.
 
 ### Version 2.57
 
