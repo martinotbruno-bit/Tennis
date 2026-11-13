@@ -125,10 +125,12 @@ u8 can_hit(u8 p)
     if (bounces > 1) return 0;
     if ((PX(by) < NET_Y ? 1 : 0) != (u8)((t & 1) ^ sc_swap)) return 0;
     if (b_serve && bounces == 0) return 0;      /* le retour se joue après rebond */
-    dx = PX(bx) - PX(plx[p]);
+    /* zone de frappe généreuse : les balles un peu loin partent quand même
+       (la profondeur d'abord : le plus souvent, elle suffit à conclure) */
     dy = PX(by) - PX(ply[p]);
-    /* zone de frappe généreuse : les balles un peu loin partent quand même */
-    if (dx < -24 || dx > 24 || dy < -15 || dy > 10) return 0;
+    if (dy < -15 || dy > 10) return 0;
+    dx = PX(bx) - PX(plx[p]);
+    if (dx < -24 || dx > 24) return 0;
     if (bz > 40 * FP) {
         /* balle très haute : smash sauté (joueurs humains et CPU expert),
            avant le rebond et hors du fond du court */

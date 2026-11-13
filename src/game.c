@@ -1150,6 +1150,7 @@ u8 match_tick(void)
 
 /* fête de victoire : quand un humain gagne (ou en démonstration), comme
    pour la musique de victoire */
+static const u8 jump_h[16] = { 0, 0, 0, 0, 1, 1, 2, 3, 4, 5, 6, 7, 9, 10, 12, 14 };   /* j² / 16 */
 static const u8 hop_h[16] = { 0, 1, 3, 5, 6, 7, 7, 7, 8, 7, 7, 7, 6, 5, 3, 1 };
 static u8 win_party(void)
 {
@@ -1216,7 +1217,7 @@ void match_draw(void)
         k = pose_now[p];
         pose_cache[p] = (u8)((k & 31) | ((j >> 2) << 6));
         if (cfg.mode == GM_TRAIN && p == 1 && cfg.ex != EX_STATIC) continue;   /* lanceur invisible */
-        j = (u8)((j * j) >> 4);
+        j = jump_h[j < 16 ? j : 15];              /* j² / 16 (table : pas de multiplication) */
         /* victoire : le vainqueur sautille de joie (un bond toutes les 16 trames) */
         if (party && (u8)(p & 1) == sc_winner && pose_force[p] == 0xFF) j = hop_h[ms_timer & 15];
         if (POSE_LOW(k & 31)) j -= 4;          /* à genoux, assis : 4 px plus bas */
