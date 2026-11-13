@@ -194,12 +194,13 @@ static u8 change_next(u8 w)
     if (g >= sc_games_per_set && g >= sc_games[o] + 2) return 0;
     return (u8)((g + sc_games[o]) & 1);
 }
-/* à chaque trame (swap_tick) : les chaises apparaissent dès la fin de
-   l'échange qui amène un changement de côté */
+/* à chaque trame (swap_tick) : les chaises apparaissent à la fin de
+   l'échange qui amène un changement de côté ; s'il y a un ralenti,
+   seulement après lui (version 2.59 : ni avant ni pendant le ralenti) */
 void cer_watch(void)
 {
     if (cer == CER_CHAIRS && ms != MS_DEAD) cer = 0;
-    if (cer || ms != MS_DEAD || cfg.mode != GM_MATCH || cfg.demo || end_reason != 2) return;
+    if (cer || ms != MS_DEAD || rp_pending || cfg.mode != GM_MATCH || cfg.demo || end_reason != 2) return;
     if (change_next(pending_winner)) cer = CER_CHAIRS;
 }
 

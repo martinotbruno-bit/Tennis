@@ -447,12 +447,14 @@ static void menu_sprites(void)
     static const u8 bounce[8] = { 0, 1, 2, 3, 3, 2, 1, 0 };
     menu_hl_tick();
     spr_begin();
-    spr1(9, (u8)(4 * 8 + cursor * 8 - 1 - bounce[(frame_cnt >> 2) & 7]), (u8)(ball_base + 8), 3);   /* balle qui rebondit */
+    /* balle qui rebondit (sur la première ligne, sans monter : elle
+       croiserait le bas des portraits, 9 sprites sur une même ligne) */
+    spr1(9, (u8)(4 * 8 + cursor * 8 - 1 - (cursor ? bounce[(frame_cnt >> 2) & 7] : 0)), (u8)(ball_base + 8), 3);
     bank_call(BANK_PODIUM, menu_marks);      /* pastille de la surface, vignette du lieu */
     /* portraits des joueurs, de part et d'autre du titre (tuiles $10 homme, $1C femme, $28 Margaux, $34 Papi) */
     spr_port(16, 7, port_base(opt_val[O_P1]), 0);
-    if (opt_val[O_MODE] <= MODE_2P_TEAM || opt_val[O_MODE] == MODE_DEMO)
-        spr_port(208, 7, port_base(opt_val[O_P2]), 0x41);
+    if (opt_val[O_MODE] <= MODE_2P_TEAM || opt_val[O_MODE] == MODE_DEMO || (opt_val[O_MODE] == MODE_COMP && opt_val[O_TYPE]))
+        spr_port(208, 7, port_base(opt_val[O_P2]), 0x41);       /* (compétition en double : le partenaire) */
     spr_end();
 }
 

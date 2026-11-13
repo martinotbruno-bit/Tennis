@@ -131,7 +131,7 @@ L += arr('menu_font2', font2) + [''] + arr('menu_deco', deco) + [''] + arr('menu
 L += arr('menu_attr', b''.join(attrs(k, r) for k, r in ATTR)) + ['']
 
 # court en perspective de l'écran titre (version 2.58) : lignes blanches
-# (couleur 3) et filet doré (2) sur le fond vert, rangées 8 à 13 ; la grosse
+# (couleur 3) sur le fond vert, sans filet (il passait sous la balle comme un trait), rangées 8 à 13 ; la grosse
 # balle se pose devant. Tuiles à partir de $60 (police surlignée, inutile
 # sur l'écran titre) ; carte de 6 x 32 tuiles.
 from PIL import ImageDraw
@@ -151,10 +151,6 @@ for y in (YF, YN):
 for z in (0.25, 0.75):
     cd.line([(cx(-0.78, cy(z)), cy(z)), (cx(0.78, cy(z)), cy(z))], fill=3)
 cd.line([(cx(0, cy(0.25)), cy(0.25)), (cx(0, cy(0.75)), cy(0.75))], fill=3)
-yn_ = cy(0.5)
-cd.line([(cx(-1.08, yn_), yn_), (cx(1.08, yn_), yn_)], fill=2)
-for u in (-1.08, 1.08):
-    cd.line([(cx(u, yn_), yn_ - 5), (cx(u, yn_), yn_)], fill=2)
 cpx = cim.load()
 court_t, court_map = [], []
 for ty in range(6):

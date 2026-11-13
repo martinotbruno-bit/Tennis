@@ -249,7 +249,7 @@ void palmares_build(void)
     txt_at(2, 27, "SELECT X2 : TOUT EFFACER");
 }
 
-/* écran titre : court en perspective (lignes blanches, filet doré) aux
+/* écran titre : court en perspective (lignes blanches) aux
    rangées 8 à 13, autour de la grosse balle ; rangées 12-13 en palette 2
    (blanc), 14-15 en palette 3 (or : l'édition, rangée 14) */
 extern const u8 menu_court_chr[], menu_court_map[];
