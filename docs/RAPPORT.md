@@ -19,6 +19,7 @@ Comme l'exige le CDC (§ 17.5), ce rapport distingue ce qui est **réalisé**, *
 | L'image est abîmée côté droit, à l'épaule de la seconde joueuse, quand la balle curseur rebondit | Sur la première ligne des réglages, la balle croisait le bas des portraits : 9 sprites sur une ligne, la NES en affiche 8. Sur cette ligne, la balle ne monte plus |
 | Une autre teinte de fond, discrète ; puis : plusieurs couleurs au hasard au chargement (terre battue, gazon, dur, moquette) | Le fond des menus est tiré au hasard à chaque allumage parmi les couleurs des quatre surfaces (celles de l'affiche VS) ; sur fond terre battue, l'ombre des lettres dorées passe en noir |
 | Remettre « HAUT/BAS » dans l'aide des réglages | Touches sur deux lignes : « HAUT/BAS: LIGNE  <>: VALEUR » et « START : JOUER   B : RETOUR » ; l'explication de la ligne choisie reste sur deux lignes |
+| (défaut trouvé par les tests) | Au changement de côté qui suit un ralenti, la pose de fête du gagnant pouvait être montrée une trame sans ses tuiles : pose d'attente forcée, jeu de tuiles des séquences chargé dès la 2e trame |
 | Le choix du personnage a-t-il une importance à la manette ? | Non : seuls l'apparence et les gestes changent ; le style de jeu ne concerne que l'ordinateur (précisé dans le manuel) |
 
 Mémoire : la RAM de cartouche est pleine (6 144 octets sur 6 144) la banque fixe presque (le récapitulatif du score est passé en banque 0, libérée par `move_toward` en assembleur).
@@ -512,7 +513,7 @@ Pour loger ce contenu, la cartouche passe de NROM (32 Ko) à **MMC1** : 128 Ko d
 | Relecture des textes (`check_texts.py`) | 0 problème |
 | Contraste (`contrast.py 25`) | 0 paire sous ΔE 25 (personnages, courts, balle, tenues) |
 | Profil CPU, double, 6 000 trames | 27 trames d'échange en dépassement (0,45 %), sans défaut d'image |
-| Compilation | Reproductible : SHA-256 `503cc85f5cbb0be6ae638d8cf3cef25892e6345190374d09464aa337a1dfe6f9` sur deux compilations propres |
+| Compilation | Reproductible : SHA-256 `a3bdfaaf804031c6057bf9c38d2b0194982d88f6dd21ccd0ff9d4109ceecc48a` sur deux compilations propres |
 
 ## 3. Conformité par section du CDC
 
