@@ -56,7 +56,7 @@ void set_msg(const char *a, const char *b, u8 t);
 void launch(s16 tx, s16 ty, u8 T, u8 grav);
 const char *win_label(u8 shot, u8 pass, u8 jump);
 void match_fx(void);
-static u8 hit_margin;
+u8 hit_margin;          /* (lu et réglé aussi par shot_select : angle du croisé court) */
 static s16 pcache_x[4], pcache_y[4];   /* prédictions IA en cache */
 s8 ai_err[4];                          /* erreur d'anticipation tirée à chaque frappe */
 static s16 ai_gx[4], ai_gy[4];         /* destination courante de l'IA (FP) */
@@ -409,7 +409,7 @@ static void do_hit(u8 p, u8 pad, u8 btn, u8 power, u8 spread)
     if (depth < 30 && !(pad & (PAD_LEFT | PAD_RIGHT))) tx = PX(plx[p]);
     /* croisé court : près de la ligne de côté (croisé, sauf direction) */
     if (last_shot == SH_SHORT || sh_short)
-        tx = ((pad & PAD_LEFT) || (!(pad & PAD_RIGHT) && PX(plx[p]) > CENTER_X)) ? l + 6 : r - 6;
+        tx = ((pad & PAD_LEFT) || (!(pad & PAD_RIGHT) && PX(plx[p]) > CENTER_X)) ? l + hit_margin : r - hit_margin;   /* angle : shot_select */
     spread = (u8)(spread + (power >> 2));
     if (spread > 100) spread = 100;
     tx += rnd_spread(spread);
@@ -829,6 +829,8 @@ static void ai_update(u8 p)
                 btn = PAD_B; pad |= PAD_UP;                     /* lob sur le volleyeur */
             } else if (lv >= 1 && iabs(oy - NET_Y) > 90 && rand8() < (u8)(sty_drop[sty] >> (2 - lv))) {
                 btn = PAD_B; pad |= PAD_DOWN;                   /* amortie */
+            } else if (lv >= 1 && rand8() < (u8)(iabs(oy - NET_Y) < 50 ? 90 : 20)) {
+                pad |= PAD_DOWN;                                /* croisé court : passing sur le volleyeur, ou pour sortir l'adversaire du court */
             } else if (rand8() < sty_slice[sty]) {
                 btn = PAD_B;                                    /* coupé de variation */
             } else if (sty_pow[sty] > 4 && (rand8() & 3) == 0) {

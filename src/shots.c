@@ -100,6 +100,7 @@ u8 perfect_hit(u8 p, s16 dx)
 }
 
 
+extern u8 hit_margin;              /* game.c : angle des coups le long des lignes */
 void shot_select(void)
 {
     u8 p = sh_p, pad = sh_pad, power = sh_power, spread = sh_spread, speed, grav, T;
@@ -120,7 +121,7 @@ void shot_select(void)
             depth = 62; speed = 80; grav = 10; spread += 4;
             if (hit_jump) { depth = 56; speed = 96; grav = 12; spread += 4; }
             if (pad & PAD_UP) { depth += 12; spread += 2; }          /* vers la ligne de fond */
-            else if (pad & PAD_DOWN) { depth = 34; sh_short = 1; spread += 2; }   /* angle court */
+            else if (pad & PAD_DOWN) { depth = 34; sh_short = 1; spread += 2; hit_margin = 8; }   /* angle court */
             speed = (u8)(speed + (power >> 1));                      /* armé : plus fort... */
             spread = (u8)(spread + (power >> 2));                    /* ...et plus risqué */
         }
@@ -148,9 +149,17 @@ void shot_select(void)
     } else if (pad & PAD_UP) {                             /* à plat : tendue, rapide, risquée */
         depth = 78; speed = (u8)(54 + power); grav = 4; spread += 7; last_shot = SH_FLAT; flat = 1;
     } else if (pad & PAD_DOWN) {                           /* croisé court : en angle, carré de service */
-        depth = 30; speed = (u8)(34 + (power >> 1)); grav = 9; bspin = SPIN_TOP; spread += 3; last_shot = SH_SHORT;
+        /* version 2.60 : l'armé ferme l'angle (relâché vite : 14 px de la
+           ligne de côté, prudent ; bouton tenu : 6 px, dur à rattraper mais
+           risqué) plutôt que d'accélérer ; il ajoute peu d'imprécision */
+        T = (u8)(power > 24 ? 24 : power);
+        depth = 30; speed = (u8)(34 + (T >> 2)); grav = 9; bspin = SPIN_TOP; spread += 3; last_shot = SH_SHORT;
+        hit_margin = (u8)(14 - T / 3);
+        power = (u8)(T >> 1);
     } else {                                               /* lifté */
-        depth = 70; speed = (u8)(40 + power); grav = 7; bspin = SPIN_TOP; last_shot = SH_DRIVE;
+        /* version 2.60 : relâché aussitôt, lifté plus court et sûr ; armé,
+           plus de lift (trajectoire plus bombée, rebond plus haut) */
+        depth = power < 4 ? 62 : 70; speed = (u8)(40 + power); grav = (u8)(7 + (power >> 3)); bspin = SPIN_TOP; last_shot = SH_DRIVE;
     }
     if (volley && !smash) {
         if (last_shot == SH_DROP) depth = (s16)(depth - 6);      /* volée de toucher : meurt près du filet */
