@@ -624,7 +624,7 @@ SHOTS = [
 ]
 
 
-def render(pose, female, k, center):
+def render(pose, female, k, center, dark=True):
     P = POSES[pose]
     W, H = 256, GROUND_ROW * 8
     cx, cy = center if center else (90, None)
@@ -635,6 +635,10 @@ def render(pose, female, k, center):
     f = Fig(W, H, k, cx - 128 / k, oy)
     r = body(f, skeleton(P['s'], female), female, P['face'], racket_hand=P['hand'], racket_dir=P['rdir'], racket_len=P['rlen'])
     f.outline()
+    # contours et yeux dans la couleur sombre (version 2.61), et non dans
+    # celle du fond ; sauf Margaux (cheveux blonds : ses yeux seraient jaunes)
+    if female != 2 and dark:
+        f.cls[(f.cls == 0) & (f.pid > 0)] = 5
     f.leg_ids = [r[k_] for k_ in ('legL', 'legR') if k_ in r]
     f.joints = skeleton(P['s'], female)
     r = {key: f.T(v) for key, v in r.items() if isinstance(v, tuple)}
@@ -789,7 +793,12 @@ def main():
     for name, pose, k, cen, zoom in SHOTS:
         for female in (0, 1, 2):
             f, r = render(pose, female, k, cen)
-            res = build(f, zoom)
+            try:
+                res = build(f, zoom)
+            except AssertionError:      # trop de tuiles différentes : contours dans la couleur du fond
+                f, r = render(pose, female, k, cen, dark=False)
+                res = build(f, zoom)
+                print('  (%s %d : contours dans la couleur du fond, faute de tuiles)' % (name, female))
             res['r'] = r
             out[(name, female)] = res
             print('%-10s %s : %3d tuiles, colonnes %d-%d, rangées %d-%d' % (
@@ -803,7 +812,7 @@ def main():
 
 # ------------------------------------------------------------------ export
 # banques libres (octets disponibles, marge comprise)
-BANKS = [(9, 13600), (12, 11900), (4, 12200), (10, 7600), (2, 7900), (7, 6800), (6, 5800)]
+BANKS = [(9, 13600), (12, 11500), (4, 12200), (10, 7600), (2, 7900), (7, 6800), (6, 5800)]
 
 
 def pack(chr_):

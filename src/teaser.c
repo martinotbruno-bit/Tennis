@@ -138,6 +138,7 @@ static void cut_build(void)
     if (S >= 0x10) { pal_buf[5] = S; pal_buf[6] = (u8)(S - 0x10); } else { pal_buf[5] = (u8)(S + 0x10); pal_buf[6] = S; }
     if (O >= 0x10) { pal_buf[9] = O; pal_buf[10] = (u8)(O - 0x10); } else { pal_buf[9] = (u8)(O + 0x10); pal_buf[10] = O; }
     if (O == 0x30) pal_buf[10] = 0x10;
+    if (D == 0x10) D = 0x00;           /* cheveux gris clair (Papi) : gris foncé, les contours et les yeux en sont faits */
     pal_buf[7] = pal_buf[11] = D;
     pal_buf[13] = pal_buf[5]; pal_buf[14] = pal_buf[9]; pal_buf[15] = 0x30;
     if (z) { pal_buf[1] = pal_buf[5]; pal_buf[2] = D; pal_buf[3] = 0x30; pal_buf[14] = pal_buf[6]; pal_buf[15] = pal_buf[9]; }
