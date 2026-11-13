@@ -606,7 +606,7 @@ Pour loger ce contenu, la cartouche passe de NROM (32 Ko) à **MMC1** : 128 Ko d
 | Relecture des textes (`check_texts.py`) | 0 problème |
 | Contraste (`contrast.py 25`) | 0 paire sous ΔE 25 (personnages, courts, balle, tenues) |
 | Profil CPU, double, 6 000 trames | 27 trames d'échange en dépassement (0,45 %), sans défaut d'image |
-| Compilation | Reproductible : SHA-256 `1fac00f16836c2468f71032536a2b45384ccb457d18c5773ab87544cea42a5d5` sur deux compilations propres |
+| Compilation | Reproductible : SHA-256 `ee8e5071adc3551d3253e1edf4e25ca8233f69299fab9914376e7193528b9b0b` sur deux compilations propres |
 
 ## 3. Conformité par section du CDC
 
