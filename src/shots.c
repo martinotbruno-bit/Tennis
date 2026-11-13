@@ -163,8 +163,9 @@ void shot_select(void)
     }
     if (volley && !smash) {
         if (last_shot == SH_DROP) depth = (s16)(depth - 6);      /* volée de toucher : meurt près du filet */
+        else if (last_shot == SH_SHORT) depth = (s16)(depth - 2); /* volée croisée courte : franche, en angle (version 2.61) */
         else depth = (s16)(depth - 10);
-        T = (u8)(flat && power >= 16 ? 52 : 42);                 /* volée à plat appuyée : plus vive */
+        T = (u8)(flat && power >= 16 ? 52 : last_shot == SH_SHORT ? 48 : 42);   /* volée à plat appuyée, volée croisée : plus vives */
         if (speed > T) speed = T;
         if (last_shot == SH_DRIVE || last_shot == SH_FLAT) last_shot = SH_VOLLEY;
     }
