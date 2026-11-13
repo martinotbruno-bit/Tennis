@@ -249,7 +249,7 @@ def body(f, j, female, face, front=('armR', 'legL'), racket_hand='L', racket_dir
             def side(sh_, hp_, sx):
                 P_ = lambda t, dx: (lerp(sh_, hp_, t)[0] + sx * dx, lerp(sh_, hp_, t)[1])
                 return [P_(0.13, -0.5), P_(0.22, 3.2), P_(0.31, 4.4), P_(0.4, 3.0), P_(0.5, 0.0),
-                        P_(0.58, -3.4), P_(0.68, -4.0), P_(0.8, 1.0), (hp_[0] + sx * 9.6, hp_[1] - 8), (hp_[0] + sx * 10.5, hp_[1] - 3)]
+                        P_(0.6, -2.0), P_(0.7, -2.0), P_(0.8, 0.5), (hp_[0] + sx * 7.5, hp_[1] - 7), (hp_[0] + sx * 8, hp_[1] - 2)]
             # bretelles : elles montent jusqu'en haut de l'épaule, le long de sa pente, jusqu'au cou
             pts = [(shL[0] + 0.5, shL[1] - 4.8), (nk[0] - 6.6, nk[1] - 2.9), (nk[0] - 4.0, nk[1] - 1.6),
                    (nk[0] - 3.6, nk[1] + 7), (nk[0], nk[1] + 9), (nk[0] + 3.6, nk[1] + 7),
@@ -288,8 +288,8 @@ def body(f, j, female, face, front=('armR', 'legL'), racket_hand='L', racket_dir
         # polo, porté par-dessus le short
         top_l = (shL[0] - 2, shL[1] - 5); top_r = (shR[0] + 2, shR[1] - 5)
         pts = [top_l, (nk[0] - 6, nk[1] - 1), (nk[0] + 6, nk[1] - 1), top_r, (shR[0] + 5, shR[1] + 2),
-               (ch_r[0] + 2, ch_r[1]), (wr[0] + 1, wr[1]), (hpR[0] + 6, hpR[1] - 6),
-               (hpL[0] - 6, hpL[1] - 6), (wl[0] - 1, wl[1]), (ch_l[0] - 2, ch_l[1]), (shL[0] - 5, shL[1] + 2)]
+               (ch_r[0] + 2, ch_r[1]), (wr[0] + 2, wr[1]), (hpR[0] + 12, hpR[1] - 10), (hpR[0] + 12.5, hpR[1] - 5),
+               (hpL[0] - 12.5, hpL[1] - 5), (hpL[0] - 12, hpL[1] - 10), (wl[0] - 2, wl[1]), (ch_l[0] - 2, ch_l[1]), (shL[0] - 5, shL[1] + 2)]
         tm = f.m_poly(pts)
         tid = f.part(tm, O, o, sh=(5, 2))
         f.paint(tm & ~shift_mask(f, (0, -1.5), tm) & shift_mask(f, (0, 8), tm) | (tm & ~shift_mask(f, (0, -1.5), tm) & ~shift_mask(f, (0, 30), tm)), 4, within=[tid])   # ourlet du polo
@@ -312,18 +312,23 @@ def body(f, j, female, face, front=('armR', 'legL'), racket_hand='L', racket_dir
         # elle couvre les hanches et le haut des cuisses, sans fente
         kl, kr = j['knL'], j['knR']
         hl, hr = lerp(hpL, kl, 0.4), lerp(hpR, kr, 0.4)
-        top_l = lerp(wl, hpL, 0.5); top_r = lerp(wr, hpR, 0.5)
+        top_l = lerp(wl, hpL, 0.12); top_r = lerp(wr, hpR, 0.12)
         dl = (hl[0] - hpL[0], hl[1] - hpL[1]); Ll = math.hypot(*dl) or 1; nl = (dl[1] / Ll, -dl[0] / Ll)
         dr = (hr[0] - hpR[0], hr[1] - hpR[1]); Lr = math.hypot(*dr) or 1; nr = (-dr[1] / Lr, dr[0] / Lr)
         if nl[0] > 0: nl = (-nl[0], -nl[1])
         if nr[0] < 0: nr = (-nr[0], -nr[1])
-        hem_l = (hl[0] + nl[0] * 13, hl[1] + nl[1] * 13 + 1)
-        hem_r = (hr[0] + nr[0] * 13, hr[1] + nr[1] * 13 + 1)
-        sk = hull([(top_l[0] + 2, top_l[1]), (top_r[0] - 2, top_r[1]),
-                   (hpL[0] - 10, hpL[1]), (hpR[0] + 10, hpR[1]), hem_l, hem_r,
-                   (hl[0] - nl[0] * 6, hl[1] + 4), (hr[0] - nr[0] * 6, hr[1] + 4)]
-                  + [(hp_[0] + math.cos(math.radians(a_)) * 10, hp_[1] + math.sin(math.radians(a_)) * 10)
-                     for hp_ in (hpL, hpR) for a_ in range(-30, 211, 30)])
+        hem_l = (hl[0] + nl[0] * 16, hl[1] + nl[1] * 16 + 1)
+        hem_r = (hr[0] + nr[0] * 16, hr[1] + nr[1] * 16 + 1)
+        # profil arrondi : la jupe s'évase vite sous la taille puis plus
+        # doucement jusqu'à l'ourlet (pas d'angle droit en haut sur les côtés)
+        prof = []
+        for (A, B) in (((top_l[0] + 2, top_l[1]), hem_l), ((top_r[0] - 2, top_r[1]), hem_r)):
+            for fr in (0.1, 0.25, 0.42, 0.6, 0.8):
+                prof.append((A[0] + (B[0] - A[0]) * fr ** 0.7, A[1] + (B[1] - A[1]) * fr))
+        sk = hull([(top_l[0] + 2, top_l[1]), (top_r[0] - 2, top_r[1]), hem_l, hem_r,
+                   (hl[0] - nl[0] * 6, hl[1] + 4), (hr[0] - nr[0] * 6, hr[1] + 4)] + prof
+                  + [(hp_[0] + math.cos(math.radians(a_)) * 8.5, hp_[1] + math.sin(math.radians(a_)) * 8.5)
+                     for hp_ in (hpL, hpR) for a_ in range(0, 181, 30)])
         sm = f.m_poly(sk)
         sid = f.part(sm, O, o, sh=(3, 1), group=tid)
         # plis : du haut de la jupe vers l'ourlet, en éventail
