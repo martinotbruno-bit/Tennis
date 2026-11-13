@@ -462,8 +462,8 @@ def face_features(f, x, y, face, hid, tilt=0.0, female=False, hs=1.0):
             eye(sx, look=-0.9, lid=0.25)
             brow(sx, -3.2, -3.9)
         nose()
-        if NO_MOUTH:
-            pass                    # (portraits des réglages : pas de bouche)
+        if NO_MOUTH:                # portraits des réglages (petits) : bouche plus marquée
+            P(line([R(-2.6, 7.4), R(0, 7.8), R(2.6, 7.4)], 1.0), 0)
         elif female:
             P(line([R(-2.6, 8.9), R(0, 9.3), R(2.6, 8.9)], 0.7), 0)
             P(f.m_ell(R(0, 10.0), 2.2, 0.8, tilt), 2)                                    # lèvre inférieure
