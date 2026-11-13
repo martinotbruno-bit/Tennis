@@ -338,7 +338,11 @@ Le dessin des personnages est commun aux vues de face et de dos (rangées de tui
 - **IA** (`ai_update`, banque 0) : à partir de Normal, après le lob et l'amortie, croisé court avec une probabilité 90/256 si l'adversaire est au filet, 20/256 sinon.
 - **Réglages** : première rangée `MY0` = 4 + (18 − `nvis`) / 2 (screens.c ; même calcul dans `menu_marks`) ; `menu_soft` réécrit les 18 rangées ; portraits en y = `MY0` × 8 − 30, entre 7 et 16. Tests : `menuY(e, i)`.
 
-### Version 2.68 : filet qui tremble en perspective
+### Version 2.68 : filet qui tremble en perspective ; gros plan du service et du smash
+
+- **Image `smash`** (`gen_teaser.py`, pose `smash` : raquette au-dessus de la tête et en avant, bras libre replié, buste cambré ; échelle 0,86, en pied ; homme, femme, fillette ; `TZ_SMASH`, repères `TZ_SMASH_RACKET_X/Y`). Images rangées par le générateur dans les banques libres, dont la nouvelle banque 17 (`assets_tz17.c`).
+- **Gros plan** : `hl_sk` (1 smash, 2 service) choisit `TZ_SMASH`, sinon `TZ_IMPACT` ; sur le smash et le service, la balle tombe d'en haut sur le tamis (cachée tant qu'elle est au-dessus du cadre) et repart vers le bas. Titre en haut de l'écran (y 12 et 22), sous la marge rognée par les téléviseurs.
+
 
 - **Générateur** (`persp_net(w, shake)`, `persp_build`) : le filet en perspective est redessiné secoué (mailles décalées de 2 px, bande affaissée d'un pixel, comme `draw_net` à plat). Toute tuile de l'écran dont le dessin change est retenue si toutes ses places changent de la même façon (sinon elle reste immobile) : 15 tuiles par lieu (bande, mailles, croisements des lignes, sangle, bords). `src/assets_pnet.c` (banque 16) : par lieu, le nombre, puis pour chaque tuile son numéro, son dessin au repos et son dessin secoué (33 octets) ; `persp_net[7]` (le parc reprend le club).
 - **Jeu** : `net_tick` (banque 3) passe la main à `pnet_tick` (banque 15) en perspective : le filet est affaissé tant que `net_shake` > 6, puis revient ; les tuiles sont écrites par le tampon VRAM (`vbuf_raw`, lues dans la banque 16 par `bank_read`), sur une ou plusieurs trames selon le budget ; `net_shake` ne s'achève qu'une fois le filet revenu au repos.

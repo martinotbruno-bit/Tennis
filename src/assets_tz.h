@@ -64,6 +64,15 @@ extern const unsigned char tz_at_angry_z_f[];
 extern const unsigned char tz_chr_angry_z_g[];
 extern const unsigned char tz_map_angry_z_g[];
 extern const unsigned char tz_at_angry_z_g[];
+extern const unsigned char tz_chr_smash_m[];
+extern const unsigned char tz_map_smash_m[];
+extern const unsigned char tz_at_smash_m[];
+extern const unsigned char tz_chr_smash_f[];
+extern const unsigned char tz_map_smash_f[];
+extern const unsigned char tz_at_smash_f[];
+extern const unsigned char tz_chr_smash_g[];
+extern const unsigned char tz_map_smash_g[];
+extern const unsigned char tz_at_smash_g[];
 
 typedef struct { unsigned char bank, ntile, x0, w, y0, h, zoom; const unsigned char *chr, *map, *at; } tz_art_t;
 
@@ -74,29 +83,33 @@ typedef struct { unsigned char bank, ntile, x0, w, y0, h, zoom; const unsigned c
 #define TZ_VICTORY_Z 4
 #define TZ_ANGRY 5
 #define TZ_ANGRY_Z 6
-#define TZ_N 7
+#define TZ_SMASH 7
+#define TZ_N 8
 static const tz_art_t tz_art[TZ_N][3] = {   /* homme, femme, fillette (Margaux) */
-    { { 2, 209, 0, 30, 2, 26, 0, tz_chr_impact_m, tz_map_impact_m, tz_at_impact_m },
-      { 4, 217, 0, 30, 2, 26, 0, tz_chr_impact_f, tz_map_impact_f, tz_at_impact_f },
-      { 4, 192, 0, 30, 2, 26, 0, tz_chr_impact_g, tz_map_impact_g, tz_at_impact_g } },
-    { { 10, 194, 2, 30, 2, 26, 0, tz_chr_slide_m, tz_map_slide_m, tz_at_slide_m },
-      { 7, 182, 2, 30, 4, 24, 0, tz_chr_slide_f, tz_map_slide_f, tz_at_slide_f },
-      { 2, 168, 2, 30, 4, 24, 0, tz_chr_slide_g, tz_map_slide_g, tz_at_slide_g } },
-    { { 4, 232, 0, 32, 0, 28, 0, tz_chr_slide_z_m, tz_map_slide_z_m, tz_at_slide_z_m },
-      { 9, 227, 0, 32, 0, 28, 0, tz_chr_slide_z_f, tz_map_slide_z_f, tz_at_slide_z_f },
-      { 9, 206, 0, 32, 0, 28, 0, tz_chr_slide_z_g, tz_map_slide_z_g, tz_at_slide_z_g } },
-    { { 4, 158, 4, 20, 0, 28, 0, tz_chr_victory_m, tz_map_victory_m, tz_at_victory_m },
-      { 7, 152, 4, 18, 0, 28, 0, tz_chr_victory_f, tz_map_victory_f, tz_at_victory_f },
-      { 12, 136, 4, 18, 0, 28, 0, tz_chr_victory_g, tz_map_victory_g, tz_at_victory_g } },
-    { { 9, 216, 0, 30, 0, 28, 1, tz_chr_victory_z_m, tz_map_victory_z_m, tz_at_victory_z_m },
-      { 12, 213, 0, 28, 0, 28, 1, tz_chr_victory_z_f, tz_map_victory_z_f, tz_at_victory_z_f },
-      { 6, 192, 0, 28, 0, 28, 1, tz_chr_victory_z_g, tz_map_victory_z_g, tz_at_victory_z_g } },
-    { { 9, 168, 8, 16, 4, 24, 0, tz_chr_angry_m, tz_map_angry_m, tz_at_angry_m },
-      { 6, 153, 8, 16, 4, 24, 0, tz_chr_angry_f, tz_map_angry_f, tz_at_angry_f },
-      { 2, 139, 8, 16, 4, 24, 0, tz_chr_angry_g, tz_map_angry_g, tz_at_angry_g } },
-    { { 12, 244, 0, 32, 0, 28, 1, tz_chr_angry_z_m, tz_map_angry_z_m, tz_at_angry_z_m },
-      { 12, 192, 4, 26, 4, 24, 1, tz_chr_angry_z_f, tz_map_angry_z_f, tz_at_angry_z_f },
-      { 10, 184, 4, 26, 4, 24, 1, tz_chr_angry_z_g, tz_map_angry_z_g, tz_at_angry_z_g } },
+    { { 17, 209, 0, 30, 2, 26, 0, tz_chr_impact_m, tz_map_impact_m, tz_at_impact_m },
+      { 12, 217, 0, 30, 2, 26, 0, tz_chr_impact_f, tz_map_impact_f, tz_at_impact_f },
+      { 10, 192, 0, 30, 2, 26, 0, tz_chr_impact_g, tz_map_impact_g, tz_at_impact_g } },
+    { { 4, 194, 2, 30, 2, 26, 0, tz_chr_slide_m, tz_map_slide_m, tz_at_slide_m },
+      { 2, 182, 2, 30, 4, 24, 0, tz_chr_slide_f, tz_map_slide_f, tz_at_slide_f },
+      { 7, 168, 2, 30, 4, 24, 0, tz_chr_slide_g, tz_map_slide_g, tz_at_slide_g } },
+    { { 9, 232, 0, 32, 0, 28, 0, tz_chr_slide_z_m, tz_map_slide_z_m, tz_at_slide_z_m },
+      { 17, 227, 0, 32, 0, 28, 0, tz_chr_slide_z_f, tz_map_slide_z_f, tz_at_slide_z_f },
+      { 12, 206, 0, 32, 0, 28, 0, tz_chr_slide_z_g, tz_map_slide_z_g, tz_at_slide_z_g } },
+    { { 2, 158, 4, 20, 0, 28, 0, tz_chr_victory_m, tz_map_victory_m, tz_at_victory_m },
+      { 6, 152, 4, 18, 0, 28, 0, tz_chr_victory_f, tz_map_victory_f, tz_at_victory_f },
+      { 17, 136, 4, 18, 0, 28, 0, tz_chr_victory_g, tz_map_victory_g, tz_at_victory_g } },
+    { { 4, 216, 0, 30, 0, 28, 1, tz_chr_victory_z_m, tz_map_victory_z_m, tz_at_victory_z_m },
+      { 17, 213, 0, 28, 0, 28, 1, tz_chr_victory_z_f, tz_map_victory_z_f, tz_at_victory_z_f },
+      { 9, 192, 0, 28, 0, 28, 1, tz_chr_victory_z_g, tz_map_victory_z_g, tz_at_victory_z_g } },
+    { { 12, 168, 8, 16, 4, 24, 0, tz_chr_angry_m, tz_map_angry_m, tz_at_angry_m },
+      { 9, 153, 8, 16, 4, 24, 0, tz_chr_angry_f, tz_map_angry_f, tz_at_angry_f },
+      { 7, 139, 8, 16, 4, 24, 0, tz_chr_angry_g, tz_map_angry_g, tz_at_angry_g } },
+    { { 9, 244, 0, 32, 0, 28, 1, tz_chr_angry_z_m, tz_map_angry_z_m, tz_at_angry_z_m },
+      { 17, 192, 4, 26, 4, 24, 1, tz_chr_angry_z_f, tz_map_angry_z_f, tz_at_angry_z_f },
+      { 4, 184, 4, 26, 4, 24, 1, tz_chr_angry_z_g, tz_map_angry_z_g, tz_at_angry_z_g } },
+    { { 10, 126, 6, 16, 2, 26, 0, tz_chr_smash_m, tz_map_smash_m, tz_at_smash_m },
+      { 4, 113, 8, 14, 2, 26, 0, tz_chr_smash_f, tz_map_smash_f, tz_at_smash_f },
+      { 12, 105, 8, 14, 2, 26, 0, tz_chr_smash_g, tz_map_smash_g, tz_at_smash_g } },
 };
 #define TZ_IMPACT_RACKET_X 13
 #define TZ_IMPACT_RACKET_Y 52
@@ -154,5 +167,13 @@ static const tz_art_t tz_art[TZ_N][3] = {   /* homme, femme, fillette (Margaux) 
 #define TZ_ANGRY_Z_FACE_Y 59
 #define TZ_ANGRY_Z_RACKET_TIP_X 15
 #define TZ_ANGRY_Z_RACKET_TIP_Y 239
+#define TZ_SMASH_RACKET_X 70
+#define TZ_SMASH_RACKET_Y 32
+#define TZ_SMASH_FOOTR_X 169
+#define TZ_SMASH_FOOTR_Y 222
+#define TZ_SMASH_FACE_X 113
+#define TZ_SMASH_FACE_Y 88
+#define TZ_SMASH_RACKET_TIP_X 63
+#define TZ_SMASH_RACKET_TIP_Y 21
 #define TZ_GROUND_ROW 28
 #define TZ_FIRST_TILE 1

@@ -25,7 +25,7 @@ BANK13 = assets_swap shots cer assets_port assets_menu
 BANK14 = assets_gm gmintro assets_help
 BANK15 = highlight
 BANK16 = assets_pnet
-BANK17 =
+BANK17 = assets_tz17
 BANK18 =
 BANK19 =
 BANK20 =
@@ -46,7 +46,7 @@ src/assets_port.c: tools/gen_port.py
 src/assets_help.c: tools/gen_help.py
 	python3 tools/gen_help.py
 
-src/assets_vs.c src/assets_vs.h src/assets_tz.h src/assets_tz2.c src/assets_tz4.c src/assets_tz9.c src/assets_tz10.c src/assets_tz12.c src/assets_tz6.c src/assets_tz7.c: tools/gen_teaser.py
+src/assets_vs.c src/assets_vs.h src/assets_tz.h src/assets_tz2.c src/assets_tz4.c src/assets_tz9.c src/assets_tz10.c src/assets_tz12.c src/assets_tz6.c src/assets_tz7.c src/assets_tz17.c: tools/gen_teaser.py
 	python3 tools/gen_teaser.py
 
 src/music_data.c: tools/gen_music.py tools/music_src.c

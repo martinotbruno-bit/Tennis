@@ -611,6 +611,15 @@ POSES['angry'] = dict(
            order=['legR', 'legL', 'torso', 'armR', 'racket', 'armL', 'head']),
     face='angry', hand='L', rdir=100, rlen=50)
 
+# 5. smash (et service) : raquette au-dessus de la tête, bras libre pointé
+#    vers la balle, buste cambré, jambe arrière sur la pointe (version 2.68,
+#    gros plan du ralenti)
+POSES['smash'] = dict(
+    s=dict(pelvis=(96, 118), torso=-104, legL=(110, 98, 170), legR=(70, 80, 15),
+           armL=(-118, -104), armR=(52, 160), tilt=-0.08, turn=-0.7, head_bend=-14,
+           order=['legR', 'legL', 'torso', 'armR', 'head', 'armL', 'racket']),
+    face='focus', hand='L', rdir=-122, rlen=50)
+
 # plans : (nom, pose, échelle, (x, y) de base visé au centre ; None : pieds au sol)
 # zoom : True si le visage est assez grand pour sa palette (peau, sombre, blanc)
 SHOTS = [
@@ -621,6 +630,7 @@ SHOTS = [
     ('victory_z', 'victory', 2.0, (80, 62), True),   # zoom : buste et visage
     ('angry', 'angry', 1.12, None, False),           # raquette au sol, en pied
     ('angry_z', 'angry', 3.4, (83, 70), True),       # zoom : le visage qui crie
+    ('smash', 'smash', 0.86, (92, None), False),      # smash et service, en pied (ralenti, 2.68)
 ]
 
 
@@ -812,7 +822,7 @@ def main():
 
 # ------------------------------------------------------------------ export
 # banques libres (octets disponibles, marge comprise)
-BANKS = [(9, 13600), (12, 11500), (4, 12200), (10, 7600), (2, 7900), (7, 6800), (6, 5800)]
+BANKS = [(9, 13600), (12, 11500), (4, 12200), (10, 7600), (2, 7900), (7, 6800), (6, 5800), (17, 16000)]
 
 
 def pack(chr_):

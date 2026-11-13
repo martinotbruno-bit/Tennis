@@ -295,7 +295,7 @@ static void closeup_tick(void)
     ++hl_t;
     if (hl_t < 12) {                     /* image figée */
         if (hl_t == 9) { flash(0x30); sfx_perfect(); }
-        if (hl_t == 11) cut_build(TZ_IMPACT);
+        if (hl_t == 11) cut_build(hl_sk ? TZ_SMASH : TZ_IMPACT);   /* service, smash : raquette au-dessus de la tête (2.68) */
         return;
     }
     hl_c = (u8)(hl_t - 11);             /* temps du plan */
@@ -305,20 +305,25 @@ static void closeup_tick(void)
         hl_cam = hl_c < 6 ? -(s16)whip_in[hl_c] : (s16)(hl_c >> 2);
         scroll_x = (u8)hl_cam; scroll_nt = (u8)((hl_cam >> 8) & 1);
         if ((hl_c & 3) == 0 && hl_c > 2) flash(0x01);
-        /* la balle arrive sur le tamis, impact (flash), traînée */
+        /* la balle arrive sur le tamis, impact (flash), traînée : coup droit
+           (elle arrive de la droite, repart vers la gauche en montant) ;
+           service et smash (elle tombe d'en haut, repart vers le bas) */
         if (hl_c >= 8 && hl_c < 22) {
             k = (u8)(22 - hl_c);
-            SPR(TZ_IMPACT_RACKET_X + k * 9, TZ_IMPACT_RACKET_Y - 4 + k * 5, ball_base + 8, 3);
+            if (hl_sk) { if ((s16)(TZ_SMASH_RACKET_Y - 4) - (s16)(k * 7) >= 0) SPR(TZ_SMASH_RACKET_X + k * 4, TZ_SMASH_RACKET_Y - 4 - k * 7, ball_base + 8, 3); }   /* (au-dessus du cadre : cachée) */
+            else { SPR(TZ_IMPACT_RACKET_X + k * 9, TZ_IMPACT_RACKET_Y - 4 + k * 5, ball_base + 8, 3); }
         } else if (hl_c == 22) {
             flash(0x30); sfx_hit(3);
         } else if (hl_c > 22 && hl_c < 34) {
             for (i = 0; i < 3; ++i) {
                 k = (u8)((hl_c - 22) * 10 - i * 6);
-                if (k < 40) SPR(TZ_IMPACT_RACKET_X + 4 - k, TZ_IMPACT_RACKET_Y - 8 - (k >> 1), ball_base + 8, 3);
+                if (k >= 40) continue;
+                if (hl_sk) { SPR(TZ_SMASH_RACKET_X - k, TZ_SMASH_RACKET_Y + k + (k >> 1), ball_base + 8, 3); }
+                else { SPR(TZ_IMPACT_RACKET_X + 4 - k, TZ_IMPACT_RACKET_Y - 8 - (k >> 1), ball_base + 8, 3); }
             }
         }
         /* titre, lettre par lettre */
-        if (hl_c >= 26) label_draw(206, (u8)((hl_c - 26) >> 1));
+        if (hl_c >= 26) label_draw(12, (u8)((hl_c - 26) >> 1));   /* (en haut : libre dans les deux images, sous la marge des téléviseurs) */
         if (hl_c == 26) sfx_crowd(7);
         spr_end();
         if (hl_t == 69) { flash(0x30); sfx_winner(); }
