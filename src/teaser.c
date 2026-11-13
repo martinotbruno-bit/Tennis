@@ -322,5 +322,5 @@ void teaser_tick(void)
         sfx_crowd(7);
     }
     spr_end();
-    if (ts_t >= 150) teaser_done = 1;
+    if (ts_t >= 210) teaser_done = 1;      /* le titre reste affiché une seconde après le sous-titre complet */
 }

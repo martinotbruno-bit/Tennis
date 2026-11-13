@@ -100,13 +100,10 @@ static void comp_screen(void);
 static void screen_begin(void);
 static void comp_next(void)
 {
-    u8 e = COMP(comp_gm_intro, 0);
-    if (e == 0xFF) { comp_screen(); return; }
-    gm_ev = e;
-    screen_begin();
-    bank_call(BANK_GMI, gm_intro_build);
-    ppu_on();
-    scr_state = SS_GMI;
+    /* l'image du tournoi (premier tour) s'affiche juste avant le début du
+       match, après sa présentation (gm_ev : $FF = aucune) */
+    gm_ev = COMP(comp_gm_intro, 0);
+    comp_screen();
 }
 static u8 vis[NOPT];
 u8 nvis, cursor;     /* non statiques : lus par les tests */
@@ -1055,14 +1052,19 @@ void screens_tick(void)
         break;
     case SS_TEASER:
         bank_call(BANK_INTRO, teaser_tick);
-        if (teaser_done) { ppu_off(); chr_reload(); comp_next(); }   /* tuiles d'origine, puis l'annonce du 1er tournoi */
+        if (teaser_done) { ppu_off(); chr_reload(); comp_next(); }   /* tuiles d'origine, puis l'écran de la compétition */
         break;
     case SS_GMI:
         bank_call(BANK_GMI, gm_intro_tick);
-        if (pad1_new & (PAD_A | PAD_START)) { sfx_menu_ok(); comp_screen(); }
+        if (pad1_new & (PAD_A | PAD_START)) { sfx_menu_ok(); gm_ev = 0xFF; ppu_off(); chr_reload(); go_match(); }
         break;
     case SS_PRESENT:
-        if (pad1_new & (PAD_A | PAD_START)) { go_match(); break; }
+        if (pad1_new & (PAD_A | PAD_START)) {
+            if (last_mode == MODE_COMP && gm_ev != 0xFF) {   /* l'image du tournoi, puis le match */
+                screen_begin(); bank_call(BANK_GMI, gm_intro_build); ppu_on(); scr_state = SS_GMI; break;
+            }
+            go_match(); break;
+        }
         if (pad1_new & PAD_B) { if (last_mode == MODE_COMP) comp_screen(); else menu_screen(); break; }
         present_sprites();
         break;

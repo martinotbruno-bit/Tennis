@@ -137,6 +137,23 @@ const skipIntro = (e) => {
   if (scr(e) === 10) { e.tap('A'); runUntil(e, () => scr(e) !== 10 && litScr(e), 120); }
 };
 
+// de l'écran d'étape au match : présentation, A, puis (premier tour d'un
+// tournoi du Grand Martinot) l'image du tournoi, juste avant le match, A.
+// Renvoie la fanfare et les textes de l'image (0 / '' sans image).
+function toMatch(e) {
+  const row = (y) => e.text(0, y, 32).replace(/\0/g, ' ').trim();
+  e.tap('A'); runUntil(e, () => scr(e) === SS.PRESENT, 60); e.run(3); e.tap('A');
+  runUntil(e, () => app(e) === AS.MATCH || (scr(e) === 10 && litScr(e)), 120);
+  const ann = { mus: 0, name: '', rank: '', head: '', tiles: 0 };
+  if (app(e) !== AS.MATCH && scr(e) === 10) {
+    const rom2 = e.nes.rom.rom[2];
+    for (let i = 0x600; i < 0x1000; i++) if (e.nes.ppu.vramMem[i] !== rom2[i]) ann.tiles++;
+    Object.assign(ann, { mus: e.peek('music_cur'), name: row(4), rank: row(23), head: row(2) });
+    e.tap('A'); runUntil(e, () => app(e) === AS.MATCH, 120);
+  }
+  e.run(30);
+  return ann;
+}
 function playComp(type, opts, wins) {
   const e = boot(); startWith(e, Object.assign({ MODE: MODE.COMP, COMP: type, FMT: 3 }, opts));
   skipIntro(e);
@@ -145,7 +162,7 @@ function playComp(type, opts, wins) {
   check(scr(e) === SS.COMP && (type === 5 ? e.text(3, 1, 17) === 'LE GRAND MARTINOT' : type === 6 ? e.text(3, 1, 16) === 'MARTINWORLD TOUR' : e.text(18, 1, CN.length) === CN), `${CN} : écran d'étape (titre lisible)`);
   while (scr(e) === SS.COMP && matches < 24) {
     if (matches === 1) code = e.text(10, 21, 15).replace(/ /g, '');
-    e.tap('A'); runUntil(e, () => scr(e) === SS.PRESENT, 60); e.run(3); e.tap('A'); e.run(30);
+    toMatch(e);
     if (app(e) !== AS.MATCH) break;
     // victoire forcée du joueur pour parcourir la compétition
     e.poke('sc_winner', wins(matches) ? 0 : 1); e.poke('sc_over', 1); e.poke('ms', 4); e.poke('ms_timer', 2);
@@ -465,30 +482,28 @@ console.log('Compétitions');
   // le Grand Martinot : 4 tournois de 16 (huitièmes, quarts, demis, finale),
   // dur, terre battue, gazon, dur ; les 16 matchs gagnés : Grand Chelem
   const g = boot(); startWith(g, { MODE: MODE.COMP, COMP: 5, FMT: 3, ENV: 2, COND: 2 });
-  // écran d'annonce : image (tuiles $60 et suivantes), nom, fanfare ; puis l'écran d'étape, décor rétabli
-  const rom2 = g.nes.rom.rom[2];
-  let tiles = 0; for (let i = 0x600; i < 0x1000; i++) if (g.nes.ppu.vramMem[i] !== rom2[i]) tiles++;
-  check(scr(g) === 10 && g.peek('music_cur') === 11 && g.text(7, 4, 18) === "OPEN D'AUGUSTRALIE" && tiles > 500,
-    `Grand Martinot : annonce de l'Open d'Augustralie (image, fanfare ${g.peek('music_cur')})`);
-  runUntil(g, () => litScr(g), 90); g.tap('A'); runUntil(g, () => scr(g) === SS.COMP && litScr(g), 120);
-  let back = 0; for (let i = 0x600; i < 0x1000; i++) if (g.nes.ppu.vramMem[i] !== rom2[i]) back++;
-  check(scr(g) === SS.COMP && back === 0, `Grand Martinot : écran d'étape ensuite, décor rétabli (${back} octet(s))`);
+  // l'écran d'étape d'abord (plus d'image juste après la bande-annonce)
+  runUntil(g, () => litScr(g), 90);
+  check(scr(g) === SS.COMP && g.text(3, 3, 18) === "OPEN D'AUGUSTRALIE", "Grand Martinot : l'écran d'étape directement après la bande-annonce");
   check(g.peek('c_env') === 0 && g.peek('c_cond') === 0, 'Grand Martinot : toujours au stade, de jour (lieu et conditions imposés)');
   check(scr(g) === SS.COMP && g.peek('c_n') === 16 && g.text(3, 3, 18) === "OPEN D'AUGUSTRALIE" && g.text(3, 4, 18) === 'HUITIEME DE FINALE',
     `Grand Martinot : 16 joueurs, « ${g.text(3, 3, 18)} », ${g.text(3, 4, 18)}`);
   const names = new Set(); for (let i = 0; i < 16; i++) names.add(g.peek('c_pl', i));
   check(names.size === 16, `Grand Martinot : 16 joueurs différents`);
+  // présentation du match, puis l'image du tournoi (fanfare), puis le match
+  const ga = toMatch(g);
+  check(ga.mus === 11 && ga.name === "OPEN D'AUGUSTRALIE" && ga.tiles > 500 && app(g) === AS.MATCH,
+    `Grand Martinot : image de l'Open d'Augustralie (fanfare ${ga.mus}, ${ga.tiles} octets d'image) juste avant le match, puis le match`);
   {
     const h = boot(); startWith(h, { MODE: MODE.COMP, COMP: 5, FMT: 3 }); skipIntro(h);
     const seen = [];
     for (let m = 0; m < 5; m++) {
-      h.tap('A'); runUntil(h, () => scr(h) === SS.PRESENT, 60); h.run(3); h.tap('A'); h.run(30);
+      seen.push(toMatch(h).mus);
       h.poke('sc_winner', 0); h.poke('sc_over', 1); h.poke('ms', 4); h.poke('ms_timer', 2);
       runUntil(h, () => app(h) === AS.SCREENS, 60); runUntil(h, () => scr(h) === SS.RESULTS && litScr(h), 120);
       h.tap('A'); runUntil(h, () => scr(h) !== SS.RESULTS && litScr(h), 120);
-      seen.push(scr(h) === 10 ? h.peek('music_cur') : 0); skipIntro(h);
     }
-    check(seen.join(',') === '0,0,0,12,0', `annonce au premier tour de chaque tournoi seulement (Debogarros après 4 victoires : ${seen})`);
+    check(seen.join(',') === '11,0,0,0,12', `image au premier match de chaque tournoi seulement (Debogarros au 5e match : ${seen})`);
   }
   const { e, matches } = playComp(5, {}, () => true);
   for (let k = 0; k < 5 && scr(e) !== SS.COMP_END; k++) { e.tap('A'); e.run(60); }
@@ -513,20 +528,20 @@ console.log('Compétitions');
   // le Martinworld Tour : 7 tournois de 8 (quarts, demis, finale), un par surface
   const g = boot(); startWith(g, { MODE: MODE.COMP, COMP: 6, FMT: 3, ENV: 3, COND: 2, SURF: 4 });
   const row = (e, y) => e.text(0, y, 32).replace(/\0/g, ' ').trim();
-  check(scr(g) === 10 && g.peek('music_cur') === 11 && row(g, 4) === "OPEN D'AUGUSTRALIE" && row(g, 2) === 'MARTINWORLD TOUR'
-    && row(g, 23) === 'TOURNOI 1/7 : DUR', `Martinworld Tour : annonce du 1er tournoi (« ${row(g, 23)} »)`);
-  runUntil(g, () => litScr(g), 90); g.tap('A'); runUntil(g, () => scr(g) === SS.COMP && litScr(g), 120);
+  runUntil(g, () => litScr(g), 90);
   check(g.peek('c_env') === 0 && g.peek('c_cond') === 0 && g.peek('c_n') === 8 && g.text(3, 1, 16) === 'MARTINWORLD TOUR',
     'Martinworld Tour : 8 joueurs, au stade, de jour');
+  {
+    const ga = toMatch(g);
+    check(ga.mus === 11 && ga.name === "OPEN D'AUGUSTRALIE" && ga.head === 'MARTINWORLD TOUR' && ga.rank === 'TOURNOI 1/7 : DUR' && app(g) === AS.MATCH,
+      `Martinworld Tour : image du 1er tournoi juste avant le match (« ${ga.rank} »)`);
+  }
   // chaque tournoi : annonce (image, fanfare, rang), surface, nom ; une défaite au 1er tour à chaque fois
   const h = boot(); startWith(h, { MODE: MODE.COMP, COMP: 6, FMT: 3 });
   const seen = [], surfs = [], names = [], ranks = [];
   for (let m = 0; m < 7; m++) {
-    if (scr(h) === 10) {
-      seen.push(h.peek('music_cur')); ranks.push(row(h, 23)); names.push(row(h, 4));
-      runUntil(h, () => litScr(h), 90); h.tap('A'); runUntil(h, () => scr(h) === SS.COMP && litScr(h), 120);
-    } else seen.push(0);
-    h.tap('A'); runUntil(h, () => scr(h) === SS.PRESENT, 60); h.run(3); h.tap('A'); h.run(30);
+    const an = toMatch(h);
+    seen.push(an.mus); if (an.mus) { ranks.push(an.rank); names.push(an.name); }
     surfs.push(h.peek('cfg', 14));
     h.poke('sc_winner', 1); h.poke('sc_over', 1); h.poke('ms', 4); h.poke('ms_timer', 2);
     runUntil(h, () => app(h) === AS.SCREENS, 60); runUntil(h, () => scr(h) === SS.RESULTS && litScr(h), 120);
@@ -553,7 +568,7 @@ console.log('Compétitions');
   {
     const r = boot(); startWith(r, { MODE: MODE.COMP, COMP: 6, FMT: 3, P1: 16 }); skipIntro(r);
     for (let m = 0; m < 4; m++) {
-      r.tap('A'); runUntil(r, () => scr(r) === SS.PRESENT, 60); r.run(3); r.tap('A'); r.run(30);
+      toMatch(r);
       r.poke('sc_winner', 0); r.poke('sc_over', 1); r.poke('ms', 4); r.poke('ms_timer', 2);
       runUntil(r, () => app(r) === AS.SCREENS, 60); r.run(20); r.tap('A'); r.run(40); skipIntro(r);
     }
@@ -2026,7 +2041,9 @@ for (const type of [5, 6]) {
     const fin = e.text(0, 4, 32).replace(/\0/g, ' ').trim() === 'FINALE';
     e.tap('A'); runUntil(e, () => scr(e) === SS.PRESENT, 60); e.run(3);
     seen.push(`${fin ? 'F' : '-'}${e.peek('cfg', 16)}:${e.text(17, 22, 6).trim()}`);
-    e.tap('A'); e.run(30);
+    e.tap('A'); runUntil(e, () => app(e) === AS.MATCH || (scr(e) === 10 && litScr(e)), 120);
+    if (app(e) !== AS.MATCH) { e.tap('A'); runUntil(e, () => app(e) === AS.MATCH, 120); }   /* image du tournoi */
+    e.run(30);
     e.poke('sc_winner', 0); e.poke('sc_over', 1); e.poke('ms', 4); e.poke('ms_timer', 2);
     runUntil(e, () => app(e) === AS.SCREENS, 60); e.run(20); e.tap('A'); e.run(40); skipIntro(e);
   }
@@ -2039,7 +2056,7 @@ if (sec('Bande-annonce du Grand Martinot et du Martinworld Tour')) {
 console.log('Bande-annonce du Grand Martinot et du Martinworld Tour');
 for (const type of [5, 6]) {
   // au lancement : 4 plans en gros plan, puis le titre, sur le riff de rock ;
-  // environ 6 secondes ; puis l'annonce du premier tournoi
+  // environ 7 secondes (titre tenu une seconde de plus) ; puis l'écran de la compétition
   const e = boot(); e.cerSkip = false; toMenu(e); setOpts(e, { MODE: MODE.COMP, COMP: type, FMT: 3 }); e.tap('START');
   runUntil(e, () => scr(e) === 11, 120);
   const t0 = e.frames, cuts = new Set(); let rock = false, big = 0, cam = false, title = '', dur = 0;
@@ -2057,13 +2074,13 @@ for (const type of [5, 6]) {
     if (!dur && e.peek('teaser_done')) dur = (e.frames - t0) / 60;
     return false;
   }, 700);
-  runUntil(e, () => scr(e) === 10 && litScr(e), 120);
+  runUntil(e, () => scr(e) === SS.COMP && litScr(e), 120);
   const name = type === 5 ? 'Grand Martinot' : 'Martinworld Tour';
-  check(cuts.size === 8 && rock && big > 140 && cam && dur > 5.5 && dur < 7 && title.includes('TOURNOIS') && scr(e) === 10,
-    `${name} : bande-annonce (7 plans en haute définition jusqu'à ${big} tuiles, travellings, riff de rock, ${dur.toFixed(1)} s, « ${title} »), puis l'annonce du 1er tournoi`);
+  check(cuts.size === 8 && rock && big > 140 && cam && dur > 6.5 && dur < 8 && title.includes('TOURNOIS') && scr(e) === SS.COMP,
+    `${name} : bande-annonce (7 plans en haute définition jusqu'à ${big} tuiles, travellings, riff de rock, ${dur.toFixed(1)} s, titre tenu une seconde de plus, « ${title} »), puis l'écran de la compétition`);
   const a = boot(); a.cerSkip = false; toMenu(a); setOpts(a, { MODE: MODE.COMP, COMP: type, FMT: 3 }); a.tap('START');
-  runUntil(a, () => scr(a) === 11, 120); a.run(20); a.tap('A'); runUntil(a, () => scr(a) === 10, 60);
-  check(scr(a) === 10, `${name} : A passe la bande-annonce`);
+  runUntil(a, () => scr(a) === 11, 120); a.run(20); a.tap('A'); runUntil(a, () => scr(a) === SS.COMP, 60);
+  check(scr(a) === SS.COMP, `${name} : A passe la bande-annonce`);
 }
 }
 if (sec('Cérémonies de fin de compétition')) {
