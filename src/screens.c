@@ -56,7 +56,8 @@ u8 scr_state;
 #define O_SOUND  22   /* son : tout, bruitages seuls, aucun */
 #define O_FATIG  23   /* fatigue dans les très longs échanges */
 #define O_VIEW   24   /* vue : à plat, perspective */
-#define NOPT     25
+#define O_CAREER 25   /* carrière (2.72, compétitions en simple) */
+#define NOPT     26
 
 #define MODE_1P      0
 #define MODE_2P      1
@@ -66,12 +67,12 @@ u8 scr_state;
 #define MODE_DEMO    5
 #define NMODES       6
 
-u8 opt_val[NOPT] = { 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 2, 1, 0, 1, 0, 1, 0, 1, 0 };
-static const u8 opt_max[NOPT] = { 1, NMODES, 2, NCHARS, NCHARS, 3, NSURF, NENV, 4, 4, 3, NCT, 2, 2, 2, NEX, 4, 3, 3, 3, 2, 3, 3, 2, 2 };
+u8 opt_val[NOPT] = { 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 2, 1, 0, 1, 0, 1, 0, 1, 0, 0 };
+static const u8 opt_max[NOPT] = { 1, NMODES, 2, NCHARS, NCHARS, 3, NSURF, NENV, 4, 4, 3, NCT, 2, 2, 2, NEX, 4, 3, 3, 3, 2, 3, 3, 2, 2, 2 };
 static const char * const opt_label[NOPT] = {
     "COMMENCER", "MODE", "JEU", "JOUEUR 1", "JOUEUR 2", "NIVEAU CPU", "SURFACE", "LIEU",
     "CONDITIONS", "FORMAT", "RALENTIS", "COMPETITION", "JOUEURS", "ADVERSAIRES", "SURFACES",
-    "EXERCICE", "COTE", "VITESSE", "EFFET", "BALLES", "JOUE PAR", "VITESSE JEU", "SON", "FATIGUE", "VUE" };
+    "EXERCICE", "COTE", "VITESSE", "EFFET", "BALLES", "JOUE PAR", "VITESSE JEU", "SON", "FATIGUE", "VUE", "CARRIERE" };
 static const char * const mode_name[NMODES] = {
     "1 JOUEUR VS CPU", "2 J. ADVERSAIRES", "EN EQUIPE", "COMPETITION", "ENTRAINEMENT", "DEMO CPU" };
 static const char * const cond_name[4] = { "JOUR", "NUIT", "PLUIE", "CREPUSCULE" };
@@ -122,6 +123,7 @@ static void build_visible(void)
     if (m == MODE_COMP) {
         add_opt(O_COMP);
         if (opt_val[O_COMP] == CT_CUSTOM) { add_opt(O_CSIZE); add_opt(O_CPROG); add_opt(O_CVAR); }
+        else if (!opt_val[O_TYPE]) add_opt(O_CAREER);   /* (2.72) */
         add_opt(O_TYPE);
         add_opt(O_P1);
         if (opt_val[O_TYPE]) { add_opt(O_P2); add_opt(O_CPART); }   /* partenaire */
@@ -194,7 +196,8 @@ static const char *opt_text(u8 o)
     case O_CPART:  return v ? "MANETTE 2" : "CPU";
     case O_GSPEED: return gspeed_name[v];
     case O_SOUND:  return sound_name[v];
-    case O_FATIG:  return v ? "OUI" : "NON";
+    case O_FATIG:
+    case O_CAREER: return v ? "OUI" : "NON";
     case O_VIEW:   return v ? "PERSPECTIVE" : "A PLAT";
     }
     return "";
@@ -580,16 +583,7 @@ static void team_line(u8 t, u8 y)
 }
 
 void vs_build(void);
-/* affiche VS : nom, partenaire, manette ou niveau et style, sous chaque buste */
-static void vs_team(u8 t, u8 x)
-{
-    txt_at(x, 19, char_name[cfg.chr[t]]);
-    if (cfg.doubles) { txt_at(x, 20, "+"); txt_at((u8)(x + 2), 20, char_name[cfg.chr[t + 2]]); }
-    if (cfg.ctrl[t] == CTRL_CPU) txt_at(x, 21, level_name[cfg.level[t]]);
-    else txt_at(x, 21, cfg.ctrl[t] == CTRL_PAD1 ? "MANETTE 1" : "MANETTE 2");
-    if (cfg.doubles && cfg.ctrl[t + 2] == CTRL_PAD2) txt_at(x, 22, "+ MANETTE 2");
-    else if (cfg.ctrl[t] == CTRL_CPU) txt_at(x, 22, style_name[char_style[cfg.chr[t]]]);
-}
+void vs_texts(void); void fiche_tick(void); u16 __fastcall__ car_end_text(u16 y);   /* career.c, banque 19 */
 static u16 brk_t;            /* (aussi : temps de l'entrée de l'affiche VS) */
 u8 __fastcall__ vs_anim(u8 t);
 static void present_screen(void)
@@ -611,14 +605,8 @@ static void present_screen(void)
         txt_at(3, 3, comp_l2);
     } else txt_at(3, 1, cfg.doubles ? "MATCH DE DOUBLE" : "MATCH AMICAL");
     if (vs) {
-        vs_team(0, 2);
-        vs_team(1, 18);           /* (« CONTRE » : écrit par l'entrée animée, vs_anim) */
-        brk_t = 0; far_call(BANK_PODIUM, (void *)vs_anim, 0);
-        if (cfg.env == ENV_MARGAUX) txt_at(2, 3, "BIENVENUE AU COURT MARGAUX !");
-        txt_at(2, 24, surf_name[cfg.surface]);
-        txt_at(18, 24, env_name[cfg.env]);
-        txt_at(2, 25, cond_name[cfg.cond]);
-        txt_at(18, 25, fmt_name[cfg.games_per_set == 4 ? 3 : cfg.sets_to_win - 1]);   /* format réel du match */
+        bank_call(BANK_CAR, vs_texts);   /* noms, manette ou niveau, style, conditions ; fiche des joueurs (career.c, 2.72) */
+        brk_t = 0; far_call(BANK_PODIUM, (void *)vs_anim, 0);   /* (« CONTRE » : écrit par l'entrée animée) */
     } else {
         team_line(0, 10);
         txt_at(14, 13, "CONTRE");
@@ -710,12 +698,14 @@ extern u8 pod_busy;             /* podium.c : cérémonie du Grand Martinot en c
 static void comp_end_screen(void)
 {
     char b[6];
+    SV(sv_comp_end);                    /* (avant l'écran : les points de la carrière, 2.72) */
     screen_begin();
     was_unlocked = nude_unlocked;
     if (c_rank == 1) {
         nude_unlocked = 1;
         pod_new = (u8)!was_unlocked;
         bank_call(BANK_PODIUM, podium_build);
+        far_call(BANK_CAR, (void *)car_end_text, pod_new ? 6 : 7);   /* (sous les trophées ; rangée 7 : « MODE NUDISTE DEBLOQUE ! ») */
     } else {
         pal_set_player(0, c_pl[0]);
         if (c_type >= CT_GRAND) gs_title(2);
@@ -735,9 +725,9 @@ static void comp_end_screen(void)
         num2(b, c_trophies); b[2] = 0;
         txt_at(16, 21, b);
         txt_at(5, 26, "A : RETOUR AU TITRE");
+        far_call(BANK_CAR, (void *)car_end_text, 23);
     }
     ppu_on();
-    SV(sv_comp_end);
     music_play(c_rank == 1 ? MUS_VICTORY : MUS_DEFEAT);
     if (c_rank == 1) sfx_crowd(7);
     c_active = 0;
@@ -1129,6 +1119,7 @@ void screens_tick(void)
         }
         if (pad1_new & PAD_B) { sfx_menu_back(); if (last_mode == MODE_COMP) comp_screen(); else menu_screen(); break; }
         if (cfg.env != ENV_NUDE && brk_t < 48 && !fade_lvl) far_call(BANK_PODIUM, (void *)vs_anim, (u8)++brk_t);   /* (après le fondu) */
+        if (cfg.env != ENV_NUDE) bank_call(BANK_CAR, fiche_tick);       /* fiche des joueurs, en alternance (2.72) */
         present_sprites();
         break;
     case SS_COMP:

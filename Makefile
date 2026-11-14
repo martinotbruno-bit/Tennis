@@ -27,7 +27,7 @@ BANK15 = highlight
 BANK16 = assets_pnet
 BANK17 = assets_tz17
 BANK18 = rules
-BANK19 =
+BANK19 = career
 BANK20 =
 CSRC = $(FIXED) $(BANK0) $(BANK1) $(BANK2) $(BANK3) $(BANK4) $(BANK5) $(BANK6) $(BANK7) $(BANK8) $(BANK9) $(BANK10) $(BANK11) $(BANK12) $(BANK13) $(BANK14) $(BANK15) $(BANK16) $(BANK17) $(BANK18) $(BANK19) $(BANK20)
 OBJS = $(BUILD)/crt0.o $(BUILD)/sprp.o $(BUILD)/poses.o $(BUILD)/slip.o $(BUILD)/dpcm.o $(BUILD)/fastmove.o $(addprefix $(BUILD)/,$(addsuffix .o,$(CSRC)))
@@ -75,7 +75,7 @@ $(addprefix $(BUILD)/,$(addsuffix .s,$(BANK15))): SEGS = --code-name BANK15 --ro
 $(addprefix $(BUILD)/,$(addsuffix .s,$(BANK16))): SEGS = --code-name BANK16 --rodata-name RODATA16
 $(addprefix $(BUILD)/,$(addsuffix .s,$(BANK17))): SEGS = --code-name BANK17 --rodata-name RODATA17
 $(addprefix $(BUILD)/,$(addsuffix .s,$(BANK18))): SEGS = --code-name BANK18 --rodata-name RODATA18
-$(addprefix $(BUILD)/,$(addsuffix .s,$(BANK19))): SEGS = --code-name BANK19 --rodata-name RODATA19
+$(addprefix $(BUILD)/,$(addsuffix .s,$(BANK19))): SEGS = --code-name BANK19 --rodata-name RODATA19 --bss-name WBSS
 $(addprefix $(BUILD)/,$(addsuffix .s,$(BANK20))): SEGS = --code-name BANK20 --rodata-name RODATA20
 
 $(BUILD)/crt0.o: src/crt0.s assets/tiles.chr | $(BUILD)

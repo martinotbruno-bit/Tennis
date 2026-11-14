@@ -333,10 +333,12 @@ void sun_apply(void)
    pendant l'affichage (sun_apply, elle, est aussi appelée à la fin de chaque
    jeu, écran allumé : en 2.71 elle appelait band_init, et ces écritures en
    plein affichage abîmaient des tuiles du court et de la police) */
+void car_match_setup(void);           /* career.c : bonus de la carrière */
 void court_post(void)
 {
     band_init();
     sun_apply();
+    bank_call(BANK_CAR, car_match_setup);
 }
 void hl_ace_msg(void)
 {

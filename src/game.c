@@ -151,6 +151,7 @@ extern u16 hl_bf, rp_seq;
 extern u8 hl_bi, hl_bx, hl_by, hl_bin, hl_bok, hl_w, hl_sok, hl_sbok;
 extern const char *hl_ptxt;
 extern u8 hl_spd, hl_srv, st_vmax[2], st_vmaxp[2];
+extern u8 car_srv, car_spd;   /* carrière (career.c) */
 void hl_ace_msg(void);
 void hl_serve(void);
 void court_post(void);
@@ -560,6 +561,7 @@ static void serve_hit(u8 p, u8 pad, u8 btn, u8 quality, u8 spread)
     HL_HIT(p, 2 | 0x80);            /* (service : début du point, bit 7) */
     if (faults == 0) ++st_first_tot[t];
     launch(tx, ty, T, grav);
+    if (!p) speed += car_srv;          /* carrière : service (2.72) */
     hl_spd = speed; hl_srv = p;     /* vitesse du service : km/h (annoncés sur un ace) et record du match, highlight.c */
     bank_call(BANK_HL, hl_serve);
     ms = MS_RALLY;
@@ -619,7 +621,7 @@ static void dive_hit(u8 p)
 /* ====================================================================== */
 static void human_update(u8 p, u8 pad, u8 pressed)
 {
-    s16 sp = HUMAN_SPEED - (s16)((tired << 1) + tired);   /* fatigue : jusqu'à -21 % */
+    s16 sp = HUMAN_SPEED + car_spd - (s16)((tired << 1) + tired);   /* fatigue : jusqu'à -21 % ; carrière : +2 par cran (car_spd ne vaut que pour le joueur 1) */
     s16 nx = plx[p], ny = ply[p];
     u8 st = pl_state[p];
 

@@ -37,6 +37,7 @@ s16 iabs(s16 v);
 #define PXU(v) ((u8)(((u16)(v) << 2) >> 8))      /* pixels, valeur positive */
 extern u8 st_perf[2], st_ptry[2], swing_early, perf_t, perf_x, perf_y;
 void set_msg(const char *a, const char *b, u8 t);   /* banque fixe */
+extern u8 car_acc;            /* carrière : précision (career.c, 2.72) */
 /* Entraînement : écart au bon moment, en images (trames) */
 #pragma bss-name(push, "WBSS")
 static char timing_b[12];
@@ -179,6 +180,7 @@ void shot_select(void)
        (tired 0..10) ; la frappe parfaite reste précise */
     else if (tired) { speed = (u8)(speed + (u8)(((u16)speed * (u8)(tired * 3)) >> 7)); spread = (u8)(spread + (tired >> 1)); }
     sh_power = power;
+    if (p == 0 && car_acc) spread = spread > car_acc ? (u8)(spread - car_acc) : 0;   /* carrière : précision (2.72) */
     sh_depth = depth; sh_speed = speed; sh_grav = grav; sh_spread = spread;
 }
 

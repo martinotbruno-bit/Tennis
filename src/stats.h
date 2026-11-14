@@ -5,6 +5,8 @@
 #define STATS_H
 #include "runtime.h"
 #include "game.h"
+#include "app.h"
+#include "gfx.h"
 
 typedef struct {
     u8 sig[4];
@@ -20,6 +22,7 @@ typedef struct {
 } SaveData;
 
 extern SaveData sv;
+extern u8 sw_h2h[NCHARS + 2], sw_car[12];   /* face-à-face, carrière (2.72) */
 extern u8 sw_best[4];   /* meilleurs rangs des types 5 et 6 : sw_best[1], sw_best[2] */
 
 /* derniers réglages du menu, dans un bloc à part (le palmarès garde sa
@@ -42,7 +45,7 @@ typedef struct {
 } SaveCanon;
 extern SaveCanon sx;
 void sx_check(void);
-extern u8 opt_val[NOPT_SAVE + 1];    /* + VUE, mémorisée à part (sw_view) */
+extern u8 opt_val[NOPT_SAVE + 2];    /* + VUE, mémorisée à part (sw_view), + CARRIERE (sw_car, 2.72) */
 u8 __fastcall__ so_load(u8 unused);    /* 1 si des réglages valides ont été copiés dans opt_val */
 u8 __fastcall__ so_save(u8 unused);
 /* Banque BANK_COMP : appel par far_call() */

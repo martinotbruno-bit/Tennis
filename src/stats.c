@@ -15,6 +15,12 @@ u8 sw_view[3];          /* 'V', valeur, contrôle */
 u8 sw_best[4];          /* 'B', type 5, type 6, contrôle */
 /* record du service le plus rapide (2.71), bloc à part : 'S', km/h - 80, personnage, contrôle */
 u8 sw_spd[4];
+/* face-à-face (2.72) : 'H', puis pour chaque personnage adverse vos victoires
+   (4 bits hauts) et défaites (4 bits bas) contre lui, en simple, contrôle */
+u8 sw_h2h[NCHARS + 2];
+/* carrière (2.72) : 'C', points (2 octets), compétitions, titres, meilleur
+   classement, derniers points gagnés (2 octets), option CARRIERE, -, -, contrôle */
+u8 sw_car[12];
 #pragma bss-name(pop)
 u8 sp_new;              /* 1 : record battu au dernier match (écran des résultats) */
 extern u8 st_vmax[2], st_vmaxp[2];
@@ -38,6 +44,19 @@ static void sp_check(void)
 {
     if (sw_spd[0] != 'S' || sw_spd[3] != sp_sum()) { sw_spd[0] = 'S'; sw_spd[1] = sw_spd[2] = 0; sw_spd[3] = sp_sum(); }
 }
+static u8 blk_sum(const u8 *b, u8 n) { u8 s = 0x3B; while (n--) s = (u8)(((s << 1) | (s >> 7)) ^ *b++); return s; }
+static void hc_check(void)
+{
+    u8 i;
+    if (sw_h2h[0] != 'H' || sw_h2h[NCHARS + 1] != blk_sum(sw_h2h, NCHARS + 1)) {
+        sw_h2h[0] = 'H'; for (i = 1; i <= NCHARS; ++i) sw_h2h[i] = 0; sw_h2h[NCHARS + 1] = blk_sum(sw_h2h, NCHARS + 1);
+    }
+    if (sw_car[0] != 'C' || sw_car[11] != blk_sum(sw_car, 11)) {
+        for (i = 1; i < 11; ++i) sw_car[i] = 0;
+        sw_car[0] = 'C'; sw_car[11] = blk_sum(sw_car, 11);
+    }
+}
+static void car_commit(void) { sw_car[11] = blk_sum(sw_car, 11); }
 static void sb_check(void)
 {
     if (sw_best[0] != 'B' || sw_best[3] != sb_sum()) { sw_best[0] = 'B'; sw_best[1] = sw_best[2] = 0; sw_best[3] = sb_sum(); }
@@ -50,9 +69,11 @@ static u8 so_sum(void)
     return s;
 }
 
+void car_comp_end(void);
 u8 __fastcall__ so_save(u8 unused)
 {
     u8 i;
+    hc_check(); sw_car[8] = opt_val[NOPT_SAVE + 1]; car_commit();   /* option CARRIERE (2.72) */
     for (i = 0; i < NOPT_SAVE; ++i) so.opt[i] = opt_val[i];
     so.sig[0] = 'P'; so.sig[1] = 'O';
     sw_view[0] = 'V'; sw_view[1] = opt_val[NOPT_SAVE]; sw_view[2] = (u8)(0x5A ^ opt_val[NOPT_SAVE]);
@@ -67,6 +88,7 @@ u8 __fastcall__ so_load(u8 unused)
     if (so.sig[0] != 'P' || so.sig[1] != 'O' || so.sum != so_sum()) return 0;
     for (i = 0; i < NOPT_SAVE; ++i) opt_val[i] = so.opt[i];
     if (sw_view[0] == 'V' && sw_view[1] < 2 && sw_view[2] == (u8)(0x5A ^ sw_view[1])) opt_val[NOPT_SAVE] = sw_view[1];
+    hc_check(); opt_val[NOPT_SAVE + 1] = (u8)(sw_car[8] == 1);
     return 1;
 }
 
@@ -91,6 +113,7 @@ u8 __fastcall__ sv_clear(u8 unused)
     sx.sig[0] = 0; sx_check();             /* services canon remis à zéro */
     sw_best[0] = 0; sb_check();
     sw_spd[0] = 0; sp_check();
+    sw_h2h[0] = sw_car[0] = 0; hc_check();
     return unused;
 }
 
@@ -101,6 +124,7 @@ u8 __fastcall__ sv_check(u8 unused)
     sx_check();
     sb_check();
     sp_check();
+    hc_check();
     return 0;
 }
 
@@ -126,6 +150,12 @@ u8 __fastcall__ sv_after_match(u8 unused)
     if (st_longest > sv.best_rally) sv.best_rally = st_longest;
     if (st_aces[0] > sv.best_aces) sv.best_aces = st_aces[0];
     commit();
+    if (!d && cfg.ctrl[1] == CTRL_CPU) {   /* face-à-face (simple, contre l'ordinateur) */
+        u8 *h = &sw_h2h[1 + cfg.chr[1]];
+        if (sc_winner == 0) { if (*h < 0xF0) *h += 0x10; }
+        else if ((*h & 15) < 15) ++*h;
+        sw_h2h[NCHARS + 1] = blk_sum(sw_h2h, NCHARS + 1);
+    }
     if (st_vmax[0] > sw_spd[1]) {          /* service le plus rapide (joueur humain de l'équipe 1) */
         sw_spd[1] = st_vmax[0]; sw_spd[2] = cfg.chr[st_vmaxp[0]]; sw_spd[3] = sp_sum(); sp_new = 1;
     }
@@ -166,5 +196,6 @@ u8 __fastcall__ sv_comp_end(u8 unused)
     sv.hist[0][0] = type; sv.hist[0][1] = rank; sv.hist[0][2] = chr; sv.hist[0][3] = surf;
     if (sv.hist_n < 8) ++sv.hist_n;
     commit();
+    bank_call(BANK_CAR, car_comp_end);   /* carrière : points et classement (career.c) */
     return 0;
 }

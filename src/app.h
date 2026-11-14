@@ -19,6 +19,7 @@
 #define BANK_SWAP 13     /* jeux de tuiles par phase (célébrations, revers) */
 #define BANK_GMI 14      /* écrans d'annonce du Grand Martinot */
 #define BANK_COURTS 12   /* tables de noms des courts (vue à plat) */
+#define BANK_CAR    19   /* fiche des joueurs, face-à-face, carrière (career.c, 2.72) */
 #define BANK_RULES  18   /* règles du score (rules.c, appelées par rules_far.c, banque fixe ; 2.71) */
 #define BANK_HL     15   /* ralenti : gros plan et arrêt sur image zoomé (highlight.c), récapitulatif du score */
 

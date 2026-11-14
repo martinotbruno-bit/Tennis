@@ -8,7 +8,7 @@
 #pragma bss-name ("WBSS")      /* (RAM de cartouche, variables locales comprises : la RAM interne est pleine) */
 u8 help_o, help_v;           /* ligne (option) et valeur à expliquer */
 
-static const char * const help_s[151] = {
+static const char * const help_s[155] = {
     "LANCE LA PARTIE AVEC CES",
     "REGLAGES (OU START).",
     "VOUS CONTRE L'ORDINATEUR,",
@@ -151,6 +151,10 @@ static const char * const help_s[151] = {
     "DU DESSUS.",
     "LE COURT SE RESSERRE AU",
     "FOND, VU DES GRADINS.",
+    "LA COMPETITION NE COMPTE",
+    "PAS POUR LA CARRIERE.",
+    "POINTS, CLASSEMENT ET",
+    "QUALITES (VOIR PALMARES).",
     "BON PARTOUT, SANS FAIBLESSE.",
     "LONGS ECHANGES DU FOND.",
     "FRAPPES FORTES ET LOURDES.",
@@ -161,8 +165,8 @@ static const char * const help_s[151] = {
     "VISE LES LIGNES, PRECIS.",
     "VARIE TOUT : AMORTIES, LOBS.",
 };
-static const u8 help_first[25] = { 0, 1, 7, 255, 255, 9, 12, 18, 25, 29, 33, 36, 37, 39, 41, 43, 52, 56, 57, 58, 59, 61, 64, 67, 69 };
-static const u8 help_n[25] = { 1, 6, 2, 0, 0, 3, 6, 7, 4, 4, 3, 1, 2, 2, 2, 9, 4, 1, 1, 1, 2, 3, 3, 2, 2 };
+static const u8 help_first[26] = { 0, 1, 7, 255, 255, 9, 12, 18, 25, 29, 33, 36, 37, 39, 41, 43, 52, 56, 57, 58, 59, 61, 64, 67, 69, 71 };
+static const u8 help_n[26] = { 1, 6, 2, 0, 0, 3, 6, 7, 4, 4, 3, 1, 2, 2, 2, 9, 4, 1, 1, 1, 2, 3, 3, 2, 2, 2 };
 
 /* remplit comp_l1 (28 caractères) avec la ligne r (0, 1) de l'aide */
 u8 __fastcall__ menu_help(u8 r)
@@ -172,7 +176,7 @@ u8 __fastcall__ menu_help(u8 r)
     u = ""; i = 0; k = help_first[help_o];
     if (k == 255) {             /* joueur : son style */
         if (r == 0) { t = "STYLE : "; u = style_name[char_style[help_v]]; }
-        else t = help_s[142 + char_style[help_v]];
+        else t = help_s[146 + char_style[help_v]];
     } else {
         if (help_n[help_o] > 1) k += help_v;
         t = help_s[k * 2 + r];

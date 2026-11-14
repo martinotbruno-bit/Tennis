@@ -38,6 +38,7 @@ extern const char menu_bigchars[];
 extern u8 bg_dirty;
 extern u8 pal_page;
 void hl_rec_row(void);
+void car_pal_text(void);
 
 #pragma bss-name(push, "SAVEDATA")
 char deco_str[24];        /* titre à écrire (copié par screens.c) */
@@ -161,7 +162,7 @@ void menu_marks(void)
    même groupe : partie (mode, compétition, exercice), joueurs, match (lieu,
    conditions, format...), options (vue, son). Tuile de la ligne i. */
 
-static const u8 grp_of[25] = { 0, 1, 2, 2, 2, 2, 3, 3, 3, 3, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 3, 4, 3, 4 };
+static const u8 grp_of[26] = { 0, 1, 2, 2, 2, 2, 3, 3, 3, 3, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 3, 4, 3, 4, 1 };
 u8 __fastcall__ grp_tile(u8 i)
 {
     u8 g, up, dn;
@@ -242,6 +243,7 @@ void palmares_build(void)
             txt_at(3, (u8)(7 + i), ex_name[i]);
             u16_at(20, (u8)(7 + i), sv.best_train[i]);
         }
+        bank_call(BANK_CAR, car_pal_text);       /* carrière (2.72, career.c) */
     }
     {   /* médailles (sprites, palmares_sprites) : or, argent, bronze */
         static const u8 med[9] = { 0x28, 0x18, 0x38,  0x10, 0x00, 0x30,  0x17, 0x07, 0x27 };
