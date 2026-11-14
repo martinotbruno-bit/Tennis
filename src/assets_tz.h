@@ -120,7 +120,7 @@ static const tz_art_t tz_art[TZ_N][3] = {   /* homme, femme, fillette (Margaux) 
     { { 4, 126, 6, 16, 2, 26, 0, tz_chr_smash_m, tz_map_smash_m, tz_at_smash_m },
       { 2, 113, 8, 14, 2, 26, 0, tz_chr_smash_f, tz_map_smash_f, tz_at_smash_f },
       { 9, 105, 8, 14, 2, 26, 0, tz_chr_smash_g, tz_map_smash_g, tz_at_smash_g } },
-    { { 9, 193, 2, 24, 2, 26, 0, tz_chr_backhand_m, tz_map_backhand_m, tz_at_backhand_m },
+    { { 9, 194, 2, 24, 2, 26, 0, tz_chr_backhand_m, tz_map_backhand_m, tz_at_backhand_m },
       { 10, 201, 2, 24, 2, 26, 0, tz_chr_backhand_f, tz_map_backhand_f, tz_at_backhand_f },
       { 12, 182, 2, 24, 2, 26, 0, tz_chr_backhand_g, tz_map_backhand_g, tz_at_backhand_g } },
 };

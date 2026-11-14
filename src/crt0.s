@@ -541,11 +541,11 @@ _band_on:
     sta split_on
     cli
     rts
-; void __fastcall__ lbox_on(u8 l2) : bandes du ralenti (lignes 0-23 et 216-239
-; sur l'écran 1) : interruptions aux lignes 23 et l2 (relative), 2.73
+; void __fastcall__ lbox_on(u8 l2) : bandes du ralenti (lignes 0-15 et 224-239
+; sur l'écran 1) : interruptions aux lignes 15 et l2 (relative), 2.73
 _lbox_on:
     sta split_l2
-    lda #23
+    lda #15
     sta split_l
     lda #3
     sta split_on

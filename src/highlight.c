@@ -271,17 +271,17 @@ static void voice_tick(void)
     if ((ms == MS_DEAD || ms == MS_SERVE) && !((*(volatile u8 *)0x4015) & 0x10)) { sfx_umpire(voice_pend); voice_pend = 0; }
 }
 /* ====================================================================== */
-/* Bandes « cinéma » du ralenti (2.73) : rangées 0-2 et 27-29 de l'écran 1   */
+/* Bandes « cinéma » du ralenti (2.73) : rangées 0-1 et 28-29 de l'écran 1   */
 /* en noir (tuile $01, palette 1 : couleur 1 = noir), avec un cartouche    */
 /* « RALENTI » et « A : PASSER » dans celle du haut ; le haut de l'image    */
-/* vient de l'écran 1 (scroll_nt = 1), l'interruption de la ligne 24 passe */
-/* au court, celle de la ligne 216 revient à l'écran 1 (crt0.s, lbox_on).  */
-/* Les rangées 27-28 sont aussi celles du bandeau du score : il les réécrit */
-/* à sa prochaine apparition (band_rows, bit 2). Sprites cachés sous les   */
-/* bandes. lb_st : 0 rien, 1 à 6 rangées en écriture, 7 affiché.            */
+/* vient de l'écran 1 (scroll_nt = 1), l'interruption de la ligne 16 passe */
+/* au court, celle de la ligne 224 revient à l'écran 1 (crt0.s, lbox_on).  */
+/* La rangée 28 est aussi le filet du bandeau du score : il la réécrit à   */
+/* sa prochaine apparition (band_rows, bit 2). Les joueurs passent devant */
+/* les bandes. lb_st : 0 rien, 0 à 3 rangées en écriture, 7 affiché.        */
 /* ====================================================================== */
 u8 lb_st;
-static const u8 lb_rows[6] = { 0, 1, 2, 27, 28, 29 };
+static const u8 lb_rows[4] = { 0, 1, 28, 29 };
 static void lb_row(u8 r)
 {
     u8 i;
@@ -305,28 +305,13 @@ void lbox_tick(void)                    /* à chaque trame du ralenti (rp_play, 
         bb[0] = bb[1] = 1;
         vbuf_raw((u16)(BAND_NT + r * 32), (const u8 *)bb, 2);
         vbuf_raw((u16)(BAND_NT + r * 32 + 30), (const u8 *)bb, 2);
-        if (++lb_st == 6) {
+        if (++lb_st == 4) {
             lb_st = 7;
-            scroll_nt = 1; lbox_on(191);      /* (interruptions : lignes 24 et 216, réglées sur jsnes et FCEUX) */
+            scroll_nt = 1; lbox_on(207);      /* (interruptions : lignes 16 et 224) */
         }
-        return;
     }
-    /* sprites : rien sous les bandes */
-    __asm__("ldx #0");
-    __asm__("lb_hide: lda %v,x", oam_buf);
-    __asm__("cmp #23");
-    __asm__("bcc lb_off");
-    __asm__("cmp #208");
-    __asm__("bcc lb_keep");
-    __asm__("cmp #240");
-    __asm__("bcs lb_keep");
-    __asm__("lb_off: lda #$FF");
-    __asm__("sta %v,x", oam_buf);
-    __asm__("lb_keep: inx");
-    __asm__("inx");
-    __asm__("inx");
-    __asm__("inx");
-    __asm__("bne lb_hide");
+    /* (les joueurs passent devant les bandes : le joueur du fond, près de la
+       bande du haut, reste entier) */
 }
 static void lbox_end(void)
 {

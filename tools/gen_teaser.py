@@ -626,7 +626,10 @@ POSES['smash'] = dict(
 POSES['backhand'] = dict(
     s=dict(pelvis=(112, 121), torso=-87, legL=(112, 104, 160), legR=(67, 76, 20),
            armR=(95, -35), armL=(12, 8), tilt=0.08, turn=1.0,
-           order=['racket', 'legL', 'armL', 'legR', 'torso', 'armR', 'head']),
+           # (2.73) le bras tendu traverse le buste DEVANT lui jusqu'à la main
+           # du haut du manche ; le bras plié reste derrière, main du bas : en
+           # 2.68-2.72 c'était l'inverse et les bras paraissaient emmêlés
+           order=['racket', 'legL', 'legR', 'armR', 'torso', 'armL', 'head']),
     face='focus', hand='R', rdir=-20, rlen=52)
 
 # plans : (nom, pose, échelle, (x, y) de base visé au centre ; None : pieds au sol)
