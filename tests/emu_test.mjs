@@ -2806,8 +2806,12 @@ for (const view of [0, 1]) {
 {
   const m = boot(); startWith(m, { FMT: 3, REPLAY: 0 }); allCpu(m);
   m.poke('sc_games', 5); m.poke('sc_points', 2);
-  const said = runUntil(m, () => String.fromCharCode(...Array.from({ length: 14 }, (_, i) => m.peek('msg1', i))) === 'BALLE DE MATCH', 60 * 60 * 3);
-  check(said && (m.peek('sc_crit') & 4), 'balle de match annoncée avant le service');
+  const nt1 = (r) => String.fromCharCode(...Array.from(m.nes.ppu.vramMem.slice(0x2400 + r * 32, 0x2400 + r * 32 + 32)).map(c => c < 32 ? 32 : c));
+  const said = runUntil(m, () => m.peek('mp_t') >= 20, 60 * 60 * 3);
+  const txt = nt1(14) + '|' + nt1(15), served = m.peek('ms');
+  const gone = runUntil(m, () => m.peek('mp_t') === 0, 200);
+  check(said && (m.peek('sc_crit') & 4) && txt.includes('BALLE DE MATCH') && txt.includes('POUR ALEX') && served === 0 && gone,
+        `balle de match : bandeau au centre avant le service (« ${txt.replace(/ +/g, ' ').trim()} »), disparu seul`);
 }
 }
 if (sec('Compensation 50 Hz (PAL)')) {

@@ -287,6 +287,9 @@ void flags_draw(void);                  /* drapeaux des supporters : train.c, ba
 extern u8 hl_flags;
 #pragma zpsym("hl_flags")
 static void pause_tick(void);
+void mp_tick(void);
+extern u8 mp_t;
+#pragma zpsym("mp_t")
 void band_draw(void)
 {
     u8 i, v;
@@ -296,7 +299,8 @@ void band_draw(void)
        chaque balle de match (remise à zéro à la fin de chaque point) */
     if (cfg.mode == GM_MATCH && !cfg.demo) {
         if (ms == MS_DEAD && end_reason == END_POINT) hl_flags &= (u8)~2;
-        else if (ms == MS_SERVE && !cer && (sc_crit & 4) && !(hl_flags & 2)) { hl_flags |= 2; set_msg("BALLE DE MATCH", "", 120); sfx_crowd(4); }
+        else bank_call(BANK_TRAIN, mp_tick);        /* (bandeau central, train.c) */
+        if (mp_t) { band_hold = 1; voice_tick(); return; }
     }
     voice_tick();
     lbox_end();

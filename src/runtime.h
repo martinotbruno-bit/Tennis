@@ -81,6 +81,7 @@ void __fastcall__ split_start(u8 o);   /* MMC3 : glissade de l'affiche VS (ligne
 void split_stop(void);
 void __fastcall__ band_on(u8 l);
 void __fastcall__ lbox_on(u8 l2);
+void __fastcall__ cband_on(u8 l2);     /* bandeau central, lignes 96 à 143 sur l'écran 1 (2.75) */
 void __fastcall__ fly_on(u8 l);         /* MMC3 : survol du stade, 3 bandes de défilement (2.73) */
 extern u8 fly_x[2], fly_n[2];
 #pragma zpsym("fly_x")

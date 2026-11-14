@@ -383,3 +383,58 @@ u16 __fastcall__ pod_extra_tick(u16 t)
     oam_buf[252] = (u8)(y - 1); oam_buf[253] = S_PLATE + 1; oam_buf[254] = 3; oam_buf[255] = (u8)(pod_px + 8);
     return 0;
 }
+
+/* Balle de match (2.75) : bandeau au centre de l'écran (rangées 12 à 17, les
+   mêmes que le bandeau de la pause), dessiné d'avance sur l'écran 1 à raison
+   d'une rangée par trame, puis montré par deux interruptions de ligne
+   (cband_on, crt0.s) : pas d'écran coupé. Il disparaît seul après 2 s, au
+   lancer de la balle ou à un appui. Appelé par band_draw (highlight.c) ;
+   mp_t : 0 rien, 1 à 7 écriture, puis 8 à 8 + MP_SHOW affiché. */
+extern u8 band_vis, band_dis, band_hold, hl_flags, mp_t, sc_crit;
+#pragma zpsym("band_hold")
+#pragma zpsym("hl_flags")
+#pragma zpsym("mp_t")
+#define MP_ROW  12
+#define T_RULE  0xFF            /* (filet du bandeau, highlight.c) */
+#define MP_SHOW 120
+void mp_tick(void)
+{
+    static const char t_mp[] = "BALLE DE MATCH";
+    u8 i, r;
+    char b[32];
+    if (!mp_t) {
+        if (ms != MS_SERVE || cer || paused || rp_pending || !(sc_crit & 4) || (hl_flags & 2)) return;
+        if (band_hold && !band_dis) return;          /* (bandeau du score attendu ou en attente d'un appui) */
+        hl_flags |= 2;
+        if (band_vis) { split_stop(); band_vis = 0; }
+        band_dis = 1;
+        mp_t = 1;
+        if (msg_timer && !memcmp(msg1, t_mp, 14)) msg_timer = 1;   /* (l'annonce du haut s'efface : le bandeau la remplace) */
+        sfx_crowd(4);
+    }
+    if (mp_t < 8) {
+        r = (u8)(mp_t - 1);
+        memset(b, 0, 32);
+        if (r == 1 || r == 4) { memset(b + 1, T_RULE, 30); }
+        else if (r == 2) memcpy(b + 9, t_mp, 14);
+        else if (r == 3) {
+            i = (u8)((sc_crit & 1) ? 0 : 1);
+            memcpy(b + 11, "POUR ", 5);
+            team_label(cfg.chr[i], cfg.doubles ? cfg.chr[i + 2] : 255, b + 16);
+        }
+        if (r == 6) {                                /* attributs : palette 1 */
+            memset(b, 0x55, 16);
+            if (!vbuf_raw(0x27C0 + 24, (const u8 *)b, 16)) return;
+        } else {
+            if (vram_len + 40 > VBUF_MAX) return;
+            vbuf_raw((u16)(0x2400 + (MP_ROW + r) * 32), (const u8 *)b, 16);
+            vbuf_raw((u16)(0x2400 + (MP_ROW + r) * 32 + 16), (const u8 *)b + 16, 16);
+        }
+        if (++mp_t == 8) cband_on(47);
+        return;
+    }
+    if (paused || ms != MS_SERVE || ++mp_t >= 8 + MP_SHOW || (pad1_new | pad2_new)) {
+        split_stop();
+        mp_t = 0;
+    }
+}

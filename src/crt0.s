@@ -12,8 +12,8 @@
 .export _wait_frame, _pad_poll, _ppu_off, _ppu_on, _vram_adr, _vram_put
 .export _swap_put, _vram_fill, _vram_unrle, _rand8, _rand_seed
 .export _scroll_y, _scroll_nt, _mirror_h, _scroll_x, _tz_bank, _tz_n, _tz_unpack, _tz_copy, _tz_src
-.export _chr_data, _split_start, _split_stop, _split_o, _ctrl_swap, _rp_seq, _band_on, _lbox_on, _fly_on
-.exportzp _fly_x, _fly_n, _band_hold, _crowd_big, _hl_flags
+.export _chr_data, _split_start, _split_stop, _split_o, _ctrl_swap, _rp_seq, _band_on, _lbox_on, _fly_on, _cband_on
+.exportzp _fly_x, _fly_n, _band_hold, _crowd_big, _hl_flags, _mp_t
 .export _spr1, _spr_meta, _spr_end, _oam_i, _spr_rot, _set_bank, _cur_bank, _bank_call, _far_call, _rp_record
 .import _bx, _by, _bz, _b_vis, _plx, _ply, _pose_cache, _flip_cache
 .import _rp_buf, _rp_head, _rp_count, _swp_dst
@@ -73,6 +73,7 @@ split_ph: .res 1        ; bandes du ralenti : 0 avant la bande du haut finie, 1 
 _fly_x:   .res 2        ; survol du stade (split_on 4) : défilement des bandes 2 et 3 (tribunes, court)
 _fly_n:   .res 2        ; ... et leur écran (0 ou 1)
 _hl_flags: .res 1       ; bit 0 bandeau de pause affiché, bit 1 balle de match annoncée (highlight.c, 2.75)
+_mp_t:     .res 1       ; bandeau central de la balle de match : étape, puis durée (train.c, 2.75)
 _crowd_big: .res 1      ; standing ovation demandée (highlight.c, extras.c, 2.74)
 _band_hold: .res 1      ; bandeau du score affiché, en attente d'un appui humain (highlight.c, 2.74)
 _frame_cnt: .res 1
@@ -468,6 +469,25 @@ irq:
     sta PPUCTRL
     jmp @out
 @nolb:
+    cmp #5
+    bne @nocb
+    ; bandeau central (2.75) : écran 1 de la ligne 96 à la ligne 143, puis
+    ; de nouveau l'écran 0 (même défilement : les rangées 12 à 17 de l'écran 1)
+    lda split_ph
+    bne @cb2
+    lda #CTRL_VAL | 1
+    sta PPUCTRL
+    inc split_ph
+    lda split_l2
+    sta MMC3_IRQL
+    sta MMC3_IRQR
+    sta MMC3_IRQE
+    jmp @out
+@cb2:
+    lda #CTRL_VAL
+    sta PPUCTRL
+    jmp @out
+@nocb:
     lsr a
     bcs @vs
     ; bandeau du score (2.71) : écran 1 à partir de la ligne suivante (le bit
@@ -560,6 +580,16 @@ _fly_on:
     sta split_l
     sta split_l2
     lda #4
+    sta split_on
+    cli
+    rts
+; void __fastcall__ cband_on(u8 l2) : bandeau central, interruptions aux
+; lignes 95 et l2 (relative), 2.75
+_cband_on:
+    sta split_l2
+    lda #95
+    sta split_l
+    lda #5
     sta split_on
     cli
     rts
