@@ -143,6 +143,8 @@ Le lancer reste visible quelle que soit votre position, y compris quand vous ser
     - ligne 2 : les jeux gagnés dans le set en cours (« J 3 »), suivis de `*` si ce joueur sert ;
     - ligne 3 : les points du jeu en cours (0, 15, 30, 40, AV), suivis d'un rond plein par set gagné.
 - **L'arbitre parle** : « Out! » sur une balle dehors, « Fault! » sur un service faux, « Let! » sur un let, et depuis la version 2.71 il annonce le score : « Deuce! » (égalité), « Advantage! » (avantage) et « Game! » (fin d'un jeu), juste après l'annonce de la faute, sans la couper. Au court Margaux, la princesse annonce d'une voix plus aiguë.
+- **Statistiques au changement de côté** (version 2.72) : pendant que les joueurs sont assis, le bandeau du bas montre le score, puis les premières balles, les aces, les coups gagnants et le service le plus rapide de chacun (A ou START passe).
+- **Plongeon de dernière chance** (version 2.72) : sur un service canon, le receveur peut plonger un peu plus loin que d'habitude (l'ordinateur le tente presque toujours) ; un retour réussi est salué (« PLONGEON ! SUR LE CANON »), et s'il gagne le point, le ralenti montre le gros plan du plongeon.
 - **Bandeau du score façon télévision** (version 2.71) : après chaque point, et pendant que les joueurs sont assis au changement de côté, un bandeau s'affiche en bas de l'écran avec le score détaillé : une balle devant le serveur, les noms, les jeux de chaque set (le set en cours compris) et les points du jeu. Il disparaît avant le service.
 - Les **annonces** de l'arbitre s'affichent au centre du bandeau : faute, let, égalité, avantage, balle de set ou de match, jeu décisif, changement de côté, ace, coup gagnant… Sur un ace, la **vitesse du service** s'affiche sous « ACE ! », comme à la télévision (par exemple « 174 KM/H » ; depuis la version 2.70).
 - Les **coups gagnants** sont nommés : SMASH SAUTÉ, SMASH, AMORTIE, LOB GAGNANT, VOLÉE GAGNANTE, PASSING (adversaire au filet) ou COUP GAGNANT, avec un bref « ting » ; sans autre son ajouté et toujours sans musique pendant le match.
@@ -175,6 +177,8 @@ Le lancer reste visible quelle que soit votre position, y compris quand vous ser
 - **A** ou **START** passe chacune de ces séquences.
 
 ### L'affiche du match (version 2.57)
+
+**Fiche des joueurs** (version 2.72) : en simple, sous chaque buste, les lignes manette, niveau et style alternent avec la fiche du joueur : taille, main forte, classement (ou celui de votre carrière) ; en bas, les conditions du match alternent avec votre face-à-face contre cet adversaire (victoires et défaites, gardées au palmarès, quand la manette 1 joue contre l'ordinateur).
 
 Avant chaque match, une affiche **VS** (depuis la version 2.63, les deux bustes glissent depuis les bords de l'écran, en lignes entrelacées, se rejoignent sur un éclair blanc, puis « CONTRE » s'inscrit sur un flash) : les deux joueurs en buste, bras croisés, face à face (dessinés en grand, à leurs couleurs), « CONTRE » au centre, sur un fond de la couleur de la surface (les femmes avec une ombre douce sous la poitrine, Margaux en fillette) ; sous chaque buste, le nom, la manette ou le niveau et le style ; en bas, la surface, le lieu, les conditions et le format. Au club nudiste, la présentation reste celle d'origine.
 
@@ -215,6 +219,7 @@ Conditions :
   - **En équipe** : toujours en double (la ligne JEU n'est pas proposée), contre deux joueurs CPU. PARTENAIRE choisit le personnage de votre coéquipier, et JOUE PAR décide qui le contrôle : l'ordinateur ou la manette 2.
   - **2 joueurs adversaires** : en double, chacun a un partenaire CPU.
 - **Démo** : l'ordinateur joue seul.
+- **Carrière** (option, version 2.72) : en compétition, en simple (sauf compétition personnalisée), la ligne CARRIERE (NON / OUI) fait compter la compétition pour votre carrière. Vous débutez 100e ; chaque compétition rapporte des points selon votre rang final, le type de compétition et le niveau (400 pour un tournoi gagné en Normal ; davantage en championnat, en saison, au Grand Martinot et au Martinworld Tour, ou en Expert). Le classement monte avec les points (60e à 400, 10e vers 5 400, 1er au-delà de 58 800). Tous les 400 points, une qualité progresse à tour de rôle — service (balle plus rapide), vitesse de course, précision — jusqu'à 5 crans chacune ; elles ne jouent que dans les matchs d'une compétition en carrière. Les points gagnés et le classement s'affichent à la fin de la compétition ; le palmarès (page des records) montre le classement, le meilleur classement, les points, les compétitions, les titres et les qualités. Sans l'option, rien ne change.
 
 ### Compétitions
 
@@ -280,16 +285,20 @@ Pour reprendre plus tard :
 
 Une somme de contrôle de 12 bits détecte les erreurs de recopie.
 
+## 8 ter. Reprendre un match interrompu
+
+Depuis la version 2.72, sur une cartouche à pile, un match hors compétition est sauvegardé à la fin de chaque point. Si la console est éteinte en plein match, l'écran titre propose au rallumage **B : REPRENDRE LE MATCH** : l'affiche du match revient, puis A le reprend au même score, avec ses statistiques, au service (« REPRISE DU MATCH »). La sauvegarde est effacée quand le match se termine, quand on l'abandonne, ou quand un autre match commence. Les matchs de compétition ont déjà leur code de reprise.
+
 ## 9. Palmarès
 
 Le palmarès comporte 3 pages (GAUCHE/DROITE) :
 - **Statistiques** : matchs joués, gagnés et perdus en simple et en double ; points, aces, doubles fautes, coups gagnants, fautes, pourcentage de premières balles ; titres et compétitions disputées ; records (plus long échange, aces en un match, et depuis la version 2.71 le service le plus rapide, avec le nom du joueur : « RECORD SERVICE 212 KM/H ALEX ») ; services canon et coups parfaits, en nombre et en pourcentage.
 - **Résultats** : meilleur résultat par type de compétition et historique des 8 dernières ; une médaille d'or, d'argent ou de bronze marque chaque podium.
-- **Records d'entraînement** : meilleur score par exercice.
+- **Records d'entraînement** : meilleur score par exercice ; depuis la version 2.72, la carrière (classement, meilleur classement, points, compétitions, titres, qualités).
 
 Seuls les matchs où la manette 1 joue sont comptés ; en double, ce sont les statistiques de son équipe (donc aussi celles de la manette 2 si elle joue le partenaire). Pour tout effacer, appuyez deux fois sur **SELECT**.
 
-Le palmarès est conservé tant que la console reste allumée. Sur une cartouche équipée d'une pile, il est conservé même éteinte.
+Il garde aussi, depuis la version 2.72, vos face-à-face contre chaque adversaire (affichés sur la fiche avant le match). Le palmarès est conservé tant que la console reste allumée. Sur une cartouche équipée d'une pile, il est conservé même éteinte.
 
 ## 9 ter. Le court Margaux
 

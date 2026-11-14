@@ -1,6 +1,6 @@
 # Royal Martinot — Liste de vérification sur vraie console
 
-Le jeu a été testé uniquement sur émulateur. Cette liste sert à le vérifier pas à pas sur une vraie NES ou Famicom. Cochez chaque case et notez ce qui ne va pas, si possible avec une photo de l'écran. Comptez environ une heure et quart pour l'ensemble. Version du guide : 2.71.
+Le jeu a été testé uniquement sur émulateur. Cette liste sert à le vérifier pas à pas sur une vraie NES ou Famicom. Cochez chaque case et notez ce qui ne va pas, si possible avec une photo de l'écran. Comptez environ une heure et quart pour l'ensemble. Version du guide : 2.72.
 
 ## 0. Matériel
 
@@ -160,6 +160,9 @@ Pour chaque ligne, lancez un match et regardez l'écran pendant une dizaine de s
 | 10.22 | Bandeau du score (version 2.71) | Après un point : bandeau en bas (filets, noms, jeux, points), net, sans ligne qui saute ni image brouillée ; aucun joueur dessiné par-dessus ; il disparaît avant le service | ☐ |
 | 10.23 | Crépuscule (version 2.71) | CONDITIONS : CREPUSCULE, match en 1 set : teinte chaude, puis rose-violette, puis projecteurs au fil des jeux (sur une console PAL, la teinte doit rester chaude, pas verte) | ☐ |
 | 10.24 | Voix (version 2.71) | « Deuce! », « Advantage! », « Game! » audibles et compréhensibles, après « Out! » sans le couper | ☐ |
+| 10.25 | Reprise (version 2.72, cartouche à pile) | Éteindre en plein match amical, rallumer : « B : REPRENDRE LE MATCH » ; B puis A : même score, au service | ☐ |
+| 10.26 | Fiche et carrière (version 2.72) | Affiche VS : la fiche (taille, main, classement) alterne avec les textes, sans ligne abîmée ; compétition avec CARRIERE : OUI, points et classement à la fin | ☐ |
+| 10.27 | Podium (version 2.72) | Public debout de chaque côté quand la coupe est brandie, plaque du finaliste, confettis | ☐ |
 
 ## 11. Ce qu'il faut renvoyer
 

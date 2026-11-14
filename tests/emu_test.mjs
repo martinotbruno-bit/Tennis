@@ -32,7 +32,7 @@ function check(cond, msg) {
 const AS = { SCREENS: 0, MATCH: 1, MANUAL: 2 };
 const SS = { TITLE: 0, MENU: 1, RESULTS: 2, PRESENT: 3, COMP: 4, CODE: 5, PALMARES: 6, TRAIN_RES: 7, COMP_END: 8, SETBREAK: 9 };
 const O = { MODE: 1, TYPE: 2, P1: 3, P2: 4, LEVEL: 5, SURF: 6, ENV: 7, COND: 8, FMT: 9, REPLAY: 10, COMP: 11,
-            CSIZE: 12, CPROG: 13, CVAR: 14, EX: 15, SIDE: 16, SPEED: 17, SPIN: 18, COUNT: 19, CPART: 20, GSPEED: 21, SOUND: 22, FATIG: 23, VIEW: 24 };
+            CSIZE: 12, CPROG: 13, CVAR: 14, EX: 15, SIDE: 16, SPEED: 17, SPIN: 18, COUNT: 19, CPART: 20, GSPEED: 21, SOUND: 22, FATIG: 23, VIEW: 24, CAREER: 25 };
 const MODE = { P1: 0, P2: 1, TEAM: 2, COMP: 3, TRAIN: 4, DEMO: 5 };
 const CFG = { CTRL: 2, LEVEL: 10, GAMES: 17, REPLAYS: 19 };
 
@@ -458,6 +458,106 @@ for (const view of [0, 1]) {
   runUntil(e, () => scr(e) === SS.RESULTS, 600); e.run(20);
   const v = e.peek('st_vmax', 0) + 80, rec = e.peek('sw_spd', 1) + 80;
   check(e.peek('sp_new') === 1 && rec === v && e.text(2, 20, 16).startsWith('KM/H : RECORD'), `record de vitesse au palmarès (${rec} km/h), annoncé aux résultats (« ${e.text(2, 20, 16).trim()} »)`);
+}
+}
+if (sec('Version 2.72 : carrière, fiche, reprise, cérémonie')) {
+console.log('Version 2.72 : carrière, fiche, reprise, cérémonie');
+{
+  // blocs sauvegardés : mêmes adresses qu'en 2.71 (sinon les palmarès et
+  // réglages des cartouches existantes seraient perdus)
+  const e = boot();
+  const want = { sv: 0x7800, sw_best: 0x7851, so: 0x7855, sw_view: 0x787B, sw_spd: 0x787E };   /* (sx : nom aussi pris par une variable statique ; entre so et sw_view) */
+  const bad = Object.entries(want).filter(([k, a]) => e.addr(k) !== a).map(([k]) => k);
+  check(bad.length === 0 && e.addr('sw_h2h') > 0x787E && e.addr('sw_car') > 0x787E, `sauvegardes : adresses des versions précédentes conservées${bad.length ? ' (' + bad.join(', ') + ')' : ''}`);
+}
+{
+  // fiche des joueurs sur l'affiche VS (alterne avec les textes d'origine)
+  const e = boot(); toMenu(e); setOpts(e, { MODE: 0 }); e.tap('START');
+  runUntil(e, () => scr(e) === SS.PRESENT, 120); e.run(100);
+  const a = e.text(2, 21, 9), b0 = e.text(2, 24, 12);
+  e.run(160);
+  const h = e.text(2, 20, 6), m = e.text(2, 21, 8), f = e.text(2, 24, 19);
+  check(a === 'MANETTE 1' && /^\d,\d\d M$/.test(h) && /^(DROITIERE?|GAUCHERE?)/.test(m.trim()) && (f.startsWith('FACE A FACE') || f === 'PREMIER FACE A FACE'),
+    `fiche : « ${a} » puis « ${h} / ${m.trim()} », « ${f.trim()} »`);
+}
+{
+  // carrière : tournoi gagné = points, classement, ligne au palmarès ; bonus en match
+  const { e } = playComp(0, { CAREER: 1 }, () => true);
+  const pts = e.peek('sw_car', 1) | (e.peek('sw_car', 2) << 8);
+  check(pts === 400 && e.peek('sw_car', 3) === 1 && e.peek('sw_car', 4) === 1 && e.peek('sw_car', 5) === 60, `carrière : tournoi gagné, ${pts} points, ${e.peek('sw_car', 5)}e`);
+  const f = boot(); toMenu(f); setOpts(f, { MODE: MODE.COMP, COMP: 0, CAREER: 1 }); f.tap('B'); f.run(30); toMenu(f); f.run(10);
+  check(rowOf(f, 25) > 0, 'carrière : ligne CARRIERE dans les réglages d\'une compétition en simple');
+  f.poke('sw_car', 0x43, 0); f.poke('sw_car', 2000 & 255, 1); f.poke('sw_car', 2000 >> 8, 2);
+  let c = 0x3B; for (let i = 0; i < 11; i++) c = (((c << 1) | (c >> 7)) & 255) ^ f.peek('sw_car', i); f.poke('sw_car', c, 11);
+  f.tap('START'); f.run(60); skipIntro(f); toMatch(f);
+  check(f.peek('car_srv') === 4 && f.peek('car_spd') === 4 && f.peek('car_acc') === 1, `carrière : 2 000 points, service +${f.peek('car_srv')}, vitesse +${f.peek('car_spd')}, précision ${f.peek('car_acc')}`);
+}
+{
+  // reprise d'un match après extinction (RAM de cartouche gardée par la pile)
+  const e = boot(); startWith(e, { FMT: 1, REPLAY: 0 }); allCpu(e);
+  runUntil(e, () => e.peek('sc_games', 0) + e.peek('sc_games', 1) >= 3 && e.peek('ms') === 0, 60 * 60 * 10, () => e.poke('cer_skip', e.peek('cer') >= 1 && e.peek('cer') <= 3 ? 1 : 0));
+  e.run(30);
+  const snap = (x) => ['sc_points', 'sc_games', 'sc_sets', 'st_points'].map(n => x.peek(n, 0) + '-' + x.peek(n, 1)).join(' ') + ' ' + x.peek('sc_server') + x.peek('sc_swap');
+  const before = snap(e), sram = e.nes.cpu.mem.slice(0x6000, 0x8000);
+  const f = new Emu(rom); for (let i = 0; i < 0x2000; i++) f.nes.cpu.mem[0x6000 + i] = sram[i];
+  f.run(40); f.tap('START', 1, 1, 0); f.run(4); f.tap('START', 1, 1, 0); f.run(40);
+  runUntil(f, () => scr(f) === SS.TITLE, 200); f.run(30);
+  const t = f.text(4, 25, 22);
+  f.tap('B'); f.run(60); const pr = scr(f);
+  f.tap('A'); runUntil(f, () => app(f) === AS.MATCH, 300); f.run(20);
+  check(t === 'B : REPRENDRE LE MATCH' && pr === SS.PRESENT && snap(f) === before && !f.peek('cer'), `reprise du match : « ${t} », même score (${snap(f)})`);
+  // match fini : plus de reprise
+  f.poke('sc_winner', 0); f.poke('sc_over', 1); f.poke('ms', 4); f.poke('hl_fin', 1); f.poke('ms_timer', 2);
+  runUntil(f, () => app(f) === AS.SCREENS, 120); f.run(30);
+  check(f.peek('pod_buf', 0) !== 0x4D, 'match terminé : la sauvegarde est effacée');
+}
+{
+  // changement de côté : le bandeau montre le score puis 4 statistiques
+  const e = boot(); startWith(e, { FMT: 0, REPLAY: 0 }); allCpu(e);
+  const want = { 1: '1ERE', 2: 'ACES', 3: 'COUP', 4: 'SERV' }, seen = new Set();
+  for (let f = 0; f < 60 * 60 * 10 && seen.size < 4 && app(e) === AS.MATCH; f++) {
+    e.poke('cer_skip', e.peek('cer') >= 1 && e.peek('cer') <= 3 ? 1 : 0);
+    e.run(1);
+    const pg = e.peek('band_pg');
+    if (e.peek('cer') === 5 && e.peek('band_vis') === 3 && pg && String.fromCharCode(...e.nes.ppu.vramMem.slice(0x2400 + 27 * 32 + 2, 0x2400 + 27 * 32 + 6)) === want[pg]) seen.add(pg);
+  }
+  check(seen.size === 4, `changement de côté : le bandeau montre les 4 statistiques (${[...seen].sort().join(',')})`);
+}
+{
+  // plongeon de dernière chance sur un service canon
+  const e = boot(); startWith(e, { FMT: 2, REPLAY: 1 });
+  const cfga = e.addr('cfg'); for (let i = 1; i < 4; i++) { e.nes.cpu.mem[cfga + 2 + i] = 2; e.nes.cpu.mem[cfga + 10 + i] = 2; }
+  let dives = 0, pd = 0, close = 0;
+  for (let f = 0; f < 60 * 60 * 20 && !close && app(e) === AS.MATCH; f++) {
+    e.poke('cer_skip', e.peek('cer') >= 1 && e.peek('cer') <= 3 ? 1 : 0);
+    const ms = e.peek('ms');
+    if (e.peek('sc_server') === 0 && ms === 0 && !e.peek('cer')) { e.down('A'); e.run(1); e.up('A'); }
+    if (e.peek('sc_server') === 0 && ms === 1) { const v = e.peekS16('bvz'); if (v < 8 && v > -8) { e.down('A'); e.down(f & 2 ? 'LEFT' : 'RIGHT'); } else { e.up('A'); e.up('LEFT'); e.up('RIGHT'); } } else if (ms !== 0) { e.up('A'); e.up('LEFT'); e.up('RIGHT'); }
+    if (e.peek('srv_canon') && ms === 2 && e.peek('bounces') === 0 && e.peek('b_serve')) {
+      const bxp = e.peek16('bx') >> 6, x = Math.max(20, Math.min(230, bxp + (bxp < 128 ? 38 : -38)));
+      e.poke('plx', (x << 6) & 255, 2); e.poke('plx', (x << 6) >> 8, 3);
+    }
+    e.run(1);
+    const d = e.peek('dive_canon'); if (d && !pd) dives++; pd = d;
+    if (e.peek('hl_mode') === 1 && e.peek('hl_sk') === 4) close = 1;
+  }
+  check(dives > 0 && close, `service canon : plongeons de dernière chance (${dives}), gros plan du plongeon gagnant`);
+}
+{
+  // remise du trophée : tribunes, public debout, plaque du finaliste
+  const { e } = playComp(0, {}, () => true);
+  while (e.peek16('pod_t') < 330) e.run(1);
+  const nt = e.nes.ppu.vramMem;
+  const fans = nt[0x2000 + 12 * 32] >= 0xB1 && nt[0x2000 + 12 * 32] <= 0xB2 && nt[0x2000 + 12 * 32 + 31] >= 0xB1;
+  check(fans && e.peek('oam_buf', 249) === 0x3C && e.peek('oam_buf', 248) < 0xF0, 'podium : tribunes, plaque du finaliste');
+}
+{
+  // mode d'emploi illustré
+  const e = boot(); runUntil(e, () => scr(e) === SS.TITLE, 100); e.run(30);
+  e.tap('DOWN'); e.tap('A'); e.run(60);
+  let ok = 0;
+  for (let p = 0; p < 8; p++) { e.run(20); let n = 0; for (let i = 0; i < 64; i++) if (e.peek('oam_buf', i * 4) < 0xF0) n++; if (n >= 6) ok++; e.tap('RIGHT'); e.run(10); }
+  check(ok === 8, `mode d'emploi : un joueur animé sur chaque page (${ok}/8)`);
 }
 }
 if (sec('Ralenti : gros plan et zoom')) {

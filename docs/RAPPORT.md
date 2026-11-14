@@ -1,10 +1,24 @@
-# Royal Martinot — Rapport de réalisation (version 2.71)
+# Royal Martinot — Rapport de réalisation (version 2.72)
 
 Comme l'exige le CDC (§ 17.5), ce rapport distingue ce qui est **réalisé**, **testé**, **validé sur matériel réel**, **validé uniquement en émulation**, **dépendant d'une extension**, et les **limitations restantes**.
 
 > **Validation matérielle : aucune.** Aucun test n'a été fait sur console réelle (NES, Famicom, PAL, cartouche MMC3). Toutes les validations ont eu lieu en émulation (jsnes ; depuis la version 2.69, aussi FCEUX pour les effets sensibles) et par des tests unitaires sur PC. Les critères « vérifié sur console physique » (CDC § 2.1, 15.4, 16.A) **ne sont pas remplis**. Ce point ne peut pas être traité dans l'environnement de développement utilisé.
 
 ## 1. Évolutions
+
+### Version 2.72
+
+| Demande | Réalisation |
+|---|---|
+| (2) Statistiques télé au changement de côté | Pendant que les joueurs sont assis, le bandeau du bas montre le score, puis 1ERES BALLES (%), ACES, COUPS GAGNANTS et SERVICE MAX KM/H des deux joueurs, une page toutes les 50 trames ; en match, la pause assise dure 250 trames au lieu de 130 (A ou START passe). Image : `docs/stats_cote_272.png`. Test ajouté |
+| (7) Retour plongeant sur service canon | Sur un service canon, le receveur plonge plus loin (allonge de dernière chance : 54 px au lieu de 46 pour un humain, +8 px pour l'ordinateur, qui tente presque toujours) ; un retour réussi : « PLONGEON ! SUR LE CANON » ; s'il gagne le point : ralenti et gros plan du plongeon, titre « PLONGEON ». Image : `docs/plongeon_272.png`. Test ajouté |
+| (9) Mode carrière, en option | Ligne CARRIERE (NON par défaut) dans les réglages des compétitions en simple (sauf personnalisée). Points selon le rang final, le type et le niveau ; classement de 100e à 1er ; trois qualités (service, vitesse, précision) qui progressent tous les 400 points et ne jouent que dans les matchs de carrière ; points et classement à la fin de la compétition ; carrière au palmarès (page des records) ; option et carrière gardées par la pile. Image : `docs/carriere_272.png`. Tests ajoutés |
+| (12) Fiche des joueurs | Sur l'affiche VS (simple), les lignes sous les bustes alternent avec la fiche : taille, main forte, classement (ou celui de la carrière) ; en bas, les conditions alternent avec le face-à-face contre cet adversaire (victoires et défaites gardées par la pile). Image : `docs/fiche_272.png`. Test ajouté |
+| (13) Remise du trophée | Tribunes de chaque côté du podium : le public, assis pendant les médailles, se lève quand la coupe est brandie et agite les bras ; le finaliste tient une plaque d'argent ; confettis aux couleurs du vainqueur et or. Image : `docs/podium_272.png`. Test ajouté |
+| (17) Sauvegarde en cours de match | Match hors compétition sauvegardé à chaque point (cartouche à pile) ; au rallumage, « B : REPRENDRE LE MATCH » sur l'écran titre : même score, mêmes statistiques, au service. Effacée à la fin du match, à l'abandon, ou au début d'un autre match. Image : `docs/reprise_272.png`. Test ajouté (extinction simulée) |
+| (18) Mode d'emploi illustré | En haut à droite de chaque page, un joueur enchaîne les gestes de la page (course et frappe, coups droit et revers, volée, smash, amortie, service, poing serré, double, joie, plongeon), avec la balle. Image : `docs/manuel_272.png`. Test ajouté |
+| (défaut de la 2.71) | La fin de chaque jeu réécrivait le bandeau du score dans la VRAM pendant l'affichage : des tuiles de la police (le 0) et du court étaient abîmées. Corrigé (le bandeau n'est écrit qu'au chargement du court) ; test : chiffres de la police intacts pendant tout un match, à plat et en perspective |
+| (fiabilité) | Les blocs sauvegardés (palmarès, réglages, records) gardent leurs adresses : une cartouche qui a joué une version précédente garde son palmarès. Test ajouté |
 
 ### Version 2.71
 
