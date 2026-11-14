@@ -560,6 +560,72 @@ console.log('Version 2.72 : carrière, fiche, reprise, cérémonie');
   check(ok === 8, `mode d'emploi : un joueur animé sur chaque page (${ok}/8)`);
 }
 }
+if (sec('Version 2.73 : bandes du ralenti, survol, bandeau, dehors de peu')) {
+console.log('Version 2.73 : bandes du ralenti, survol, bandeau, dehors de peu');
+{
+  // bandes « cinéma » du ralenti (écran 1, rangées 0-1 et 28-29) ; bandeau
+  // du score jusqu'à l'appui ; haut de l'écran sans les jeux ; zoom rapide
+  // sur une balle dehors de peu
+  const e = boot(); startWith(e, { FMT: 2, REPLAY: 1 }); allCpu(e);
+  const vm = e.nes.ppu.vramMem;
+  let lbPrev = false, lbOk = 0, lbSeen = 0, quick = 0, quickLen = 0, pm = 0, start = 0, modes = '', bandServe = 0, hud = '';
+  for (let f = 0; f < 60 * 60 * 12 && app(e) === AS.MATCH; f++) {
+    e.poke('cer_skip', e.peek('cer') >= 1 && e.peek('cer') <= 3 ? 1 : 0);
+    e.run(1);
+    const m = e.peek('ms'), hm = e.peek('hl_mode');
+    const lb = m === 5 && e.peek('lb_st') === 7 && !hm, lbSteady = lb && lbPrev; lbPrev = lb;   /* (rangées envoyées au PPU à la trame suivante) */
+    if (lbSteady) {
+      lbSeen++;
+      const top = vm.slice(0x2400, 0x2420).every(v => v === 1), bot = vm.slice(0x2400 + 29 * 32, 0x2400 + 30 * 32).every(v => v === 1);
+      const cap = String.fromCharCode(...vm.slice(0x2400 + 32 + 4, 0x2400 + 32 + 11));
+      if (top && bot && cap === 'RALENTI' && e.peek('scroll_nt') === 1) lbOk++;
+
+    }
+    if (m === 5 && pm !== 5) { start = f; modes = ''; }
+    if (m === 5 && hm && !modes.endsWith(String(hm))) modes += hm;
+    if (m !== 5 && pm === 5 && modes === '2') { quick++; quickLen = Math.max(quickLen, f - start); }
+    if (m === 0 && !e.peek('cer') && e.peek('band_vis') === 3) bandServe++;
+    if (!hud && m === 0 && f > 600) hud = e.text(1, 2, 4);
+    pm = m;
+  }
+  check(lbSeen > 50 && lbOk === lbSeen, `ralenti : bandes noires en haut et en bas, « RALENTI » (${lbOk}/${lbSeen} trames)`);
+  check(quick > 0 && quickLen < 220, `balle dehors de peu : zoom seul, rapide (${quick} fois, ${quickLen} trames au plus)`);
+  check(bandServe > 0, `bandeau du score pendant la mise en place du service (${bandServe} trames)`);
+  check(!hud.startsWith('J') && /^( 0|15|30|40|AV| -)/.test(hud), `haut de l'écran : les points, sans les jeux (« ${hud} »)`);
+  // le bandeau part à l'appui
+  const g = boot(); startWith(g, { FMT: 3 });
+  runUntil(g, () => g.peek('ms') === 0 && !g.peek('cer'), 60 * 60, () => g.poke('cer_skip', g.peek('cer') >= 1 && g.peek('cer') <= 3 ? 1 : 0));
+  g.poke('band_dis', 0);              /* (l'appui sur A de l'affiche a déjà renvoyé le premier) */
+  runUntil(g, () => g.peek('band_vis') === 3, 30);
+  const before = g.peek('band_vis');
+  g.tap('B'); g.run(2);
+  check(before === 3 && g.peek('band_vis') === 0, `bandeau : caché à l'appui (${before} puis ${g.peek('band_vis')})`);
+}
+{
+  // perspective : la tuile $5F (vide, bord du court) n'est plus prise par le
+  // filet du bandeau (traits horizontaux entre le public et le court, 2.71-2.72)
+  const e = boot(); startWith(e, { FMT: 3, VIEW: 1 }); allCpu(e); e.run(600);
+  const vm = e.nes.ppu.vramMem;
+  check(vm.slice(0x5F0, 0x600).every(v => v === 0) && vm.slice(0xFF0, 0xFF8).some(v => v), 'perspective : tuile $5F vide (bord du court), filet du bandeau sur $FF');
+}
+{
+  // survol du stade avant une finale : 3 bandes à des vitesses différentes
+  const e = boot(); startWith(e, { MODE: MODE.COMP, COMP: 0, FMT: 3 }); skipIntro(e);
+  let m = 0;
+  while (scr(e) === SS.COMP && m < 2) {
+    toMatch(e);
+    e.poke('sc_winner', 0); e.poke('sc_over', 1); e.poke('ms', 4); e.poke('hl_fin', 1); e.poke('ms_timer', 2);
+    runUntil(e, () => app(e) === AS.SCREENS, 60); e.run(20); m++;
+    e.tap('A'); e.run(40); skipIntro(e);
+  }
+  e.tap('A'); e.run(5);
+  const fly = scr(e) === 12;
+  runUntil(e, () => e.peek16('fly_t') >= 120, 300);
+  const sky = e.peek('scroll_x'), st = e.peek('fly_x', 0), ct = e.peek('fly_x', 1);
+  runUntil(e, () => scr(e) === SS.PRESENT, 400);
+  check(fly && sky < st && st < ct && scr(e) === SS.PRESENT, `finale : survol du stade (ciel ${sky}, tribunes ${st}, court ${ct}), puis l'affiche`);
+}
+}
 if (sec('Ralenti : gros plan et zoom')) {
 console.log('Ralenti : gros plan et zoom');
 {

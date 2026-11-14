@@ -338,6 +338,15 @@ Le dessin des personnages est commun aux vues de face et de dos (rangées de tui
 - **IA** (`ai_update`, banque 0) : à partir de Normal, après le lob et l'amortie, croisé court avec une probabilité 90/256 si l'adversaire est au filet, 20/256 sinon.
 - **Réglages** : première rangée `MY0` = 4 + (18 − `nvis`) / 2 (screens.c ; même calcul dans `menu_marks`) ; `menu_soft` réécrit les 18 rangées ; portraits en y = `MY0` × 8 − 30, entre 7 et 16. Tests : `menuY(e, i)`.
 
+### Version 2.73 : bandes du ralenti, survol, bandeau, dehors de peu
+
+- **Interruptions MMC3** (crt0.s) : `split_on` 3 (bandes du ralenti) et 4 (survol) : à la première interruption, l'écran ou le défilement de la bande suivante, puis réarmement (`MMC3_IRQL`, `IRQR`, `IRQE` avec `split_l2`) ; `split_ph` (page zéro) distingue les deux. La NMI remet `split_ph` à 0. Variables `split_l2`, `split_ph`, `fly_x[2]`, `fly_n[2]` en page zéro (WBSS est plein).
+- **Bandes** (highlight.c) : `lbox_tick` (appelé par `rp_play` après `spr_end`) écrit les rangées 0, 1, 28, 29 de l'écran 1 (tuile $01, palette 1 ; cartouche en rangée 1), puis `scroll_nt = 1` et `lbox_on(207)` (lignes 16 et 224). `lbox_end` (début de `band_draw`) arrête tout ; `court_post` remet `lb_st` à 0 (après un gros plan). Le bandeau du score réécrit son filet (rangée 28) et vide la rangée 29 à sa réapparition (`band_rows` bits 2-3). Tuile du filet : `T_RULE` $FF.
+- **Survol** (fly.c, banque 20) : tuiles $C0-$CD dessinées par le programme, rangées 0-9 ciel, 10-19 tribunes, 20-29 court, sur les deux écrans (512 px) ; `fly_tick` : ciel `t/4` (`scroll_x`), tribunes `t/2`, court `1,25 t` ; `fly_on(79)`. Fin : `chr_reload`. Appelé par screens.c (`SS_FLY` 12) quand l'étape est la finale.
+- **Bandeau** : `band_dis` (renvoyé par un appui en `MS_SERVE`, remis à 0 en `MS_DEAD`) ; visible en `MS_DEAD` et en `MS_SERVE` tant que `!band_dis`. HUD (extras.c) : rangée 2 points et serveur, rangée 3 sets.
+- **Dehors de peu** : `hl_out` (point_over, faute adverse) : rebond hors du court à 3 px ou moins → `hl_quick`, `rp_pending`, repère du rebond seul ; `rp_start` : `rp_left` = trames depuis le rebond + 12 ; zoom de 50 trames, puis `rp_done`. Smash sauté gagnant : `hl_select` pose `rp_pending`.
+- **Revers HD** : `gen_teaser.py`, pose `backhand` : ordre de dessin `armR` avant le buste, `armL` après.
+
 ### Version 2.72 : carrière, fiche, reprise, cérémonie
 
 - **Banque 19** (`career.c`) : textes de l'affiche VS (déplacés de screens.c, banque 1 pleine) et fiche (`vs_texts`, `fiche_tick` : une rangée par trame quand le tampon VRAM a 32 octets libres ; tables taille, gaucher, classement), carrière (`car_rank`, `car_comp_end`, `car_match_setup`, `car_end_text`, `car_pal_text`), sauvegarde du match (`msave_*`). Tampon de texte : `comp_l1`. Variables en WBSS.

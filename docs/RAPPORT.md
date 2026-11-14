@@ -1,10 +1,25 @@
-# Royal Martinot — Rapport de réalisation (version 2.72)
+# Royal Martinot — Rapport de réalisation (version 2.73)
 
 Comme l'exige le CDC (§ 17.5), ce rapport distingue ce qui est **réalisé**, **testé**, **validé sur matériel réel**, **validé uniquement en émulation**, **dépendant d'une extension**, et les **limitations restantes**.
 
 > **Validation matérielle : aucune.** Aucun test n'a été fait sur console réelle (NES, Famicom, PAL, cartouche MMC3). Toutes les validations ont eu lieu en émulation (jsnes ; depuis la version 2.69, aussi FCEUX pour les effets sensibles) et par des tests unitaires sur PC. Les critères « vérifié sur console physique » (CDC § 2.1, 15.4, 16.A) **ne sont pas remplis**. Ce point ne peut pas être traité dans l'environnement de développement utilisé.
 
 ## 1. Évolutions
+
+### Version 2.73
+
+| Demande | Réalisation |
+|---|---|
+| (1) Bandes « cinéma » pendant les ralentis | Bandes noires de 16 lignes en haut et en bas de l'image pendant le ralenti, avec le cartouche « RALENTI » et « A : PASSER » ; MMC3 : deux interruptions de ligne par trame (lignes 16 et 224, l'interruption se réarme elle-même), vérifié sur FCEUX. Les joueurs passent devant les bandes. Image : `docs/bandes_ralenti_273.png`. Test ajouté |
+| (3) Survol du stade | Avant chaque finale : ciel et nuages (avec le nom de l'épreuve et « LA FINALE »), tribunes pleines, court vu de côté à la couleur de la surface ; la caméra glisse et chaque bande défile à sa vitesse (parallaxe : deux interruptions par trame). Environ 4 s, A passe. Image : `docs/survol_273.png`. Test ajouté |
+| Bras emmêlés (image HD du revers) | Revers à deux mains du gros plan : le bras tendu passe devant le buste jusqu'à la main du haut du manche, le bras plié reste derrière (main du bas) ; avant, les bras se croisaient. Image : `docs/revers_273.png` |
+| Traits horizontaux en perspective | Le filet du bandeau du score (2.71) avait été dessiné sur la tuile $5F, que la vue en perspective emploie comme tuile vide entre le public et le court : des traits apparaissaient. Il est sur la tuile $FF (vérifié libre dans tous les lieux, à plat et en perspective). Test ajouté |
+| Bandeau du score jusqu'à l'appui | Le bandeau reste pendant la mise en place du service ; un appui (manette 1 ou 2) ou le lancer de balle le renvoie. Image : `docs/bandeau_service_273.png`. Test ajouté |
+| Jeux retirés du haut de l'écran | Coins du haut : nom, points et serveur (*), sets gagnés (@) ; les jeux sont dans le bandeau du bas. Test ajouté |
+| Ralenti du smash sauté | Un smash sauté gagnant déclenche toujours le ralenti et le gros plan |
+| Zoom rapide sur les balles dehors de peu | Balle d'échange dehors à 3 px de la ligne ou moins : ralenti court (12 trames avant le rebond), sans gros plan, zoom x 2 sur l'impact avec la trace et « DEHORS ! », puis fin (≈ 2,6 s au lieu de ≈ 10). Image : `docs/dehors_de_peu_273.png`. Test ajouté |
+| (défauts trouvés en route) | Musique de la finale absente depuis la 2.72 (la fiche écrivait dans le tampon du nom de l'étape) : rétablie. Place : `win_label`, `menu_bk_pick`, `spr_port` sortis de la banque fixe (512 octets libérés) |
+| (8) Nouvelles images HD | Reportées à la version suivante (ramasseur de balles, poignée de main, public en gros plan) |
 
 ### Version 2.72
 

@@ -1,6 +1,6 @@
 # Royal Martinot — Liste de vérification sur vraie console
 
-Le jeu a été testé uniquement sur émulateur. Cette liste sert à le vérifier pas à pas sur une vraie NES ou Famicom. Cochez chaque case et notez ce qui ne va pas, si possible avec une photo de l'écran. Comptez environ une heure et quart pour l'ensemble. Version du guide : 2.72.
+Le jeu a été testé uniquement sur émulateur. Cette liste sert à le vérifier pas à pas sur une vraie NES ou Famicom. Cochez chaque case et notez ce qui ne va pas, si possible avec une photo de l'écran. Comptez environ une heure et quart pour l'ensemble. Version du guide : 2.73.
 
 ## 0. Matériel
 
@@ -163,6 +163,9 @@ Pour chaque ligne, lancez un match et regardez l'écran pendant une dizaine de s
 | 10.25 | Reprise (version 2.72, cartouche à pile) | Éteindre en plein match amical, rallumer : « B : REPRENDRE LE MATCH » ; B puis A : même score, au service | ☐ |
 | 10.26 | Fiche et carrière (version 2.72) | Affiche VS : la fiche (taille, main, classement) alterne avec les textes, sans ligne abîmée ; compétition avec CARRIERE : OUI, points et classement à la fin | ☐ |
 | 10.27 | Podium (version 2.72) | Public debout de chaque côté quand la coupe est brandie, plaque du finaliste, confettis | ☐ |
+| 10.28 | Bandes du ralenti (version 2.73) | Ralenti : bandes noires en haut et en bas, nettes, sans ligne qui saute ; joueurs visibles devant | ☐ |
+| 10.29 | Survol (version 2.73) | Avant une finale : ciel, tribunes et court glissent à des vitesses différentes ; limites des bandes nettes (au pire une ligne qui tremble) | ☐ |
+| 10.30 | Perspective (version 2.73) | Plus de traits horizontaux entre le public et le court | ☐ |
 
 ## 11. Ce qu'il faut renvoyer
 
