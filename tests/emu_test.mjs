@@ -660,6 +660,28 @@ console.log('Version 2.73 : bandes du ralenti, survol, bandeau, dehors de peu');
   check(humOk === true, `bandeau : l'appui du serveur ferme le bandeau sans lancer la balle (${humOk})`);
 }
 {
+  // (2.74) public : drapeaux aux couleurs des joueurs au changement de côté ;
+  // standing ovation (toutes les tribunes debout) après un très long échange
+  const e = boot(); startWith(e, { FMT: 3, REPLAY: 0 }); allCpu(e);
+  e.cerSkip = false; e.poke('cer_skip', 0); e.poke('sc_games', 2); e.poke('sc_points', 3); e.poke('sc_points', 0, 1);
+  const ft = e.peek('flag_tile');
+  let flags = 0;
+  for (let f = 0; f < 60 * 60 * 3 && !flags; f++) {
+    e.run(1);
+    if (e.peek('cer') === 5 && e.peek('cer_t') === 60) { for (let i = 0; i < 64; i++) if (e.peek('oam_buf', i * 4 + 1) === ft && e.peek('oam_buf', i * 4) < 0xEF) flags++; }
+  }
+  check(flags === 6, `changement de côté : 6 drapeaux des supporters dans les tribunes (${flags})`);
+  const o = boot(); startWith(o, { FMT: 2, REPLAY: 0 }); allCpu(o);
+  let seq = '', up = 0;
+  for (let f = 0; f < 60 * 60 * 6 && !seq.endsWith('2340'); f++) {
+    if (f === 600) o.poke('rally_hits', 12);
+    o.run(1);
+    const v = o.peek('ola_on'); if (!seq.endsWith(String(v))) seq += v;
+    if (v === 3 && !up) { const vm = o.nes.ppu.vramMem; for (let r = 4; r < 30; r++) for (const c of [0, 1, 2, 3, 28, 29, 30, 31]) { const t = vm[0x2000 + r * 32 + c]; if (t >= 9 && t <= 12) up++; } }
+  }
+  check(seq.includes('2340') && up > 100, `standing ovation : les tribunes se lèvent, restent debout, se rassoient (${seq}, ${up} spectateurs debout)`);
+}
+{
   // (2.74) lob : après son rebond, il reste frappable (62 px de haut au plus)
   // jusqu'à ce qu'il quitte l'écran : il se reprend aussi juste avant le
   // second rebond (avant : 90 à 110 px, hors d'atteinte et hors de l'écran)

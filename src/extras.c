@@ -282,11 +282,11 @@ void load_court(void)
 /* Filet qui tremble quand la balle le touche : les tuiles des mailles
    alternent entre dessin « secoué » et « au repos » (net_shake : 14 -> 0) */
 u8 net_shake, net_state;
-void pnet_tick(void);              /* banque 15 : filet en perspective (version 2.68) */
+void pnet_tick(void);              /* banque 20 : filet en perspective (version 2.68, train.c en 2.74) */
 void net_tick(void)
 {
     u8 want = (u8)(net_shake > 1 && ((net_shake >> 2) & 1));
-    if (persp) { bank_call(BANK_HL, pnet_tick); return; }
+    if (persp) { bank_call(BANK_TRAIN, pnet_tick); return; }
     if (want != net_state) {
         const u8 *s = want ? net_shk : net_norm;
         if (!vbuf_raw((u16)net_idx[0] << 4, s, 16)) return;      /* budget VBlank : trame suivante */
@@ -315,7 +315,8 @@ static u8 st_map[26 * 12];           /* tribunes : rangées 4 à 29, colonnes 0-
 static u8 cr_cur[18], rowbuf[6];
 extern u8 crowd_big;
 #pragma zpsym("crowd_big")
-static u8 ola_on, ola_o, cr_prev_t, cr_prev_ms, cr_df, cr_mp, cr_clap, cr_react, cr_all;
+u8 ola_on;                          /* (0 rien, 1 ola, 2 à 4 standing ovation : lu par flags_draw, highlight.c) */
+static u8 ola_o, cr_prev_t, cr_prev_ms, cr_df, cr_mp, cr_clap, cr_react, cr_all;
 #pragma bss-name(pop)
 
 #define PPU_DATA (*(volatile u8 *)0x2007)

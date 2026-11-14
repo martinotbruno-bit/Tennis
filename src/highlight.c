@@ -221,7 +221,7 @@ static void band_text(u8 t)
             switch (band_pg) {
             case 1:
                 band_num(i, st_first_tot[k] ? (u16)(((u16)st_first_in[k] * 100) / st_first_tot[k]) : 0);
-                bb[i + 3] = '%';
+                if (!persp) bb[i + 3] = 0x25;   /* « % » ; pas en perspective : sa tuile y dessine le court (PERSP_NOTXT, gen_assets.py) */
                 break;
             case 2: band_num(i, st_aces[k]); break;
             case 3: band_num(i, st_winners[k]); break;
@@ -305,9 +305,17 @@ static u8 band_human(void)
     return 0;
 }
 #pragma static-locals(pop)
+/* drapeaux des supporters (2.74) : trois par tribune, aux couleurs des
+   joueurs (palette de sprites de l'équipe : étoffe = tenue, hampe = couleur
+   sombre), agités (retournés toutes les 8 trames, en décalé) pendant les
+   changements de côté, la standing ovation et la fin du match ; ni au club
+   nudiste ni au court Margaux (public à part). Sprites ajoutés après
+   spr_end (emplacements restés libres). */
+void flags_draw(void);                  /* drapeaux des supporters : train.c, banque 20 (2.74) */
 void band_draw(void)
 {
     u8 i, v;
+    bank_call(BANK_TRAIN, flags_draw);
     voice_tick();
     lbox_end();
     /* (2.74) le bandeau du score apparaît après le point (après le ralenti
@@ -1135,31 +1143,7 @@ void hl_tick(void)
 /* revient ; chaque changement est écrit par le tampon VRAM, sur une ou     */
 /* plusieurs trames (budget du VBlank), tuile après tuile.                  */
 /* ---------------------------------------------------------------------- */
-#define BANK_PNET 16
-extern const unsigned char * const persp_net[7];
-extern u8 net_shake, net_state;
-#pragma bss-name(push, "WBSS")
-static u8 pn_pos, pn_buf[17];
-#pragma bss-name(pop)
-void pnet_tick(void)
-{
-    const u8 *p;
-    u8 n, want = (u8)(net_shake > 6);
-    if (want != net_state) {
-        bank_read(BANK_PNET, &p, &persp_net[cfg.env], 2);
-        bank_read(BANK_PNET, &n, p, 1);
-        while (pn_pos < n) {
-            const u8 *q = p + 1 + (u16)pn_pos * 33;
-            bank_read(BANK_PNET, pn_buf, q, 1);
-            bank_read(BANK_PNET, pn_buf + 1, q + 1 + (want ? 16 : 0), 16);
-            if (!vbuf_raw((u16)pn_buf[0] << 4, pn_buf + 1, 16)) break;   /* budget de la trame : la suite à la suivante */
-            ++pn_pos;
-        }
-        if (pn_pos >= n) { net_state = want; pn_pos = 0; }
-    }
-    /* (le filet revient au repos avant la fin du tremblement) */
-    if (net_shake > 1 || net_state == 0) --net_shake;
-}
+/* (pnet_tick : train.c, banque 20, version 2.74 : banque 15 pleine) */
 
 /* ====================================================================== */
 /* Remise du trophée (2.72, podium.c, banque 8 pleine) : tribunes de chaque  */

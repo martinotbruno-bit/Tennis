@@ -1612,6 +1612,21 @@ marg_map = [marg_pool[k] for k in marg_keys]
 print('tuiles partagées : %d (célébrations %d, revers %d)' % (NSWAP, len(swap_sets['C'][0]), len(swap_sets['R'][0])))
 assert next_spr <= 256, "trop de tuiles de sprites (%d)" % next_spr
 
+# drapeau des supporters (2.74) : hampe (couleur 3, cheveux du joueur : sombre)
+# et étoffe (couleur 2, sa tenue) qui ondule ; agité en le retournant
+def flag():
+    t = [[0] * 8 for _ in range(8)]
+    for y in range(8): t[y][0] = 3
+    wave = (0, 0, 1, 1, 1, 0, 0)
+    for x in range(1, 8):
+        for y in range(5):
+            yy = y + wave[x - 1]
+            if yy < 6: t[yy][x] = 2
+    return t
+FLAG_TILE = next_spr
+spr_tile(FLAG_TILE, flag()); next_spr += 1
+assert next_spr <= 256, "trop de tuiles de sprites (%d)" % next_spr
+
 # --------------------------------------------------------------------------
 # Vue en perspective (option VUE du menu), 15 % : pour chaque lieu, le court
 # (colonnes 4 à 27, rangées 4 à 29) est déformé comme vu par une caméra : le
@@ -2077,6 +2092,7 @@ src.append('#if NPOSE != %d\n#error "NPOSE (assets.h) ne correspond pas a tools/
 src.append('const unsigned int people_bytes = %d;\n' % ((POOL_END - POOL0) * 16))
 src.append('const unsigned char marg_prof_l = 0x%02X;\nconst unsigned char marg_prof_r = 0x%02X;\n' % (MARG_PROF_L, MARG_PROF_R))
 src.append('const unsigned char trophy_tile = 0x%02X;\nconst unsigned char confetti_tile = 0x%02X;\nconst unsigned char ball_base = 0x%02X;\n' % (TROPHY_TILE, CONFETTI_TILE, BALL_BASE))
+src.append('const unsigned char flag_tile = 0x%02X;   /* drapeau des supporters (2.74) */\n' % FLAG_TILE)
 with open(os.path.join(ROOT, 'src', 'assets_data.c'), 'w') as f:
     f.write('\n'.join(src))
 

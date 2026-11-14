@@ -202,3 +202,52 @@ void train_event(void)
     }
     check_end();
 }
+
+/* ---------------------------------------------------------------------- */
+/* Filet qui tremble en perspective (version 2.68, déplacé de highlight.c) */
+/* ---------------------------------------------------------------------- */
+#define BANK_PNET 16
+extern const unsigned char * const persp_net[7];
+extern u8 net_shake, net_state;
+#pragma bss-name(push, "WBSS")
+static u8 pn_pos, pn_buf[17];
+#pragma bss-name(pop)
+void pnet_tick(void)
+{
+    const u8 *p;
+    u8 n, want = (u8)(net_shake > 6);
+    if (want != net_state) {
+        bank_read(BANK_PNET, &p, &persp_net[cfg.env], 2);
+        bank_read(BANK_PNET, &n, p, 1);
+        while (pn_pos < n) {
+            const u8 *q = p + 1 + (u16)pn_pos * 33;
+            bank_read(BANK_PNET, pn_buf, q, 1);
+            bank_read(BANK_PNET, pn_buf + 1, q + 1 + (want ? 16 : 0), 16);
+            if (!vbuf_raw((u16)pn_buf[0] << 4, pn_buf + 1, 16)) break;   /* budget de la trame : la suite à la suivante */
+            ++pn_pos;
+        }
+        if (pn_pos >= n) { net_state = want; pn_pos = 0; }
+    }
+    /* (le filet revient au repos avant la fin du tremblement) */
+    if (net_shake > 1 || net_state == 0) --net_shake;
+}
+
+/* ---------------------------------------------------------------------- */
+/* Drapeaux des supporters (version 2.74)                                  */
+/* ---------------------------------------------------------------------- */
+extern u8 ola_on, oam_i, hl_mode, cer;
+#pragma zpsym("oam_i")
+extern const unsigned char flag_tile;
+static const u8 flag_x[6] = { 6, 14, 6, 242, 234, 242 };
+static const u8 flag_y[6] = { 52, 96, 168, 64, 116, 176 };
+void flags_draw(void)
+{
+    u8 i, a;
+    if (cfg.mode != GM_MATCH || cfg.env == ENV_NUDE || cfg.env == ENV_MARGAUX || hl_mode) return;
+    if (!((u8)(cer - 4) < 7 || ola_on >= 2)) return;     /* (cer 4 à 10 : chaises, assis, retour ; fin du match) */
+    for (i = 0; i < 6 && oam_i < 252; ++i) {
+        a = (u8)(i < 3 ? 0 : 1);                         /* palette : équipe de gauche, de droite */
+        if (((frame_cnt >> 3) + i) & 1) a |= 0x40;       /* agité */
+        spr1(flag_x[i], flag_y[i], flag_tile, a);
+    }
+}

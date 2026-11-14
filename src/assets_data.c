@@ -68,3 +68,5 @@ const unsigned char marg_prof_r = 0xDA;
 const unsigned char trophy_tile = 0xA6;
 const unsigned char confetti_tile = 0xAA;
 const unsigned char ball_base = 0xAB;
+
+const unsigned char flag_tile = 0xFF;   /* drapeau des supporters (2.74) */
