@@ -30,7 +30,7 @@ static const u8 char_pal[NCHARS][3] = {
     { 0x17, 0x31, 0x0F },   /* SARA : bleu clair */
     { 0x07, 0x2C, 0x0F },   /* NOAH : cyan */
     { 0x27, 0x07, 0x0F },   /* INES : chocolat (idem) */
-    { 0x27, 0x35, 0x28 },   /* MARGAUX : rose clair, cheveux blonds (blond clair $38 sur la plage) */
+    { 0x27, 0x35, 0x37 },   /* MARGAUX : rose clair, cheveux blonds ($37 : le $28 de la palette NES tire sur le vert olive, 2.73) */
     { 0x07, 0x27, 0x0F },   /* MAX : orange */
     { 0x37, 0x00, 0x07 },   /* LOLA : anthracite, cheveux châtains */
     { 0x36, 0x30, 0x10 },   /* PAPI : blanc, cheveux gris */
@@ -153,8 +153,6 @@ void pal_set_player(u8 slot, u8 c)
     pal_buf[b + 1] = char_pal[c][0];
     pal_buf[b + 2] = char_pal[c][1];
     pal_buf[b + 3] = char_pal[c][2];
-    /* Margaux sur le sable jaune ($28, $18 sous la pluie) : cheveux blond clair */
-    if (c == 16 && (pal_buf[1] == 0x28 || pal_buf[1] == 0x18)) pal_buf[b + 3] = 0x38;
     pal_dirty = 1;
 }
 

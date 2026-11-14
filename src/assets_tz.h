@@ -82,6 +82,21 @@ extern const unsigned char tz_at_backhand_f[];
 extern const unsigned char tz_chr_backhand_g[];
 extern const unsigned char tz_map_backhand_g[];
 extern const unsigned char tz_at_backhand_g[];
+extern const unsigned char tz_chr_ballkid_m[];
+extern const unsigned char tz_map_ballkid_m[];
+extern const unsigned char tz_at_ballkid_m[];
+extern const unsigned char tz_chr_handshake_m[];
+extern const unsigned char tz_map_handshake_m[];
+extern const unsigned char tz_at_handshake_m[];
+extern const unsigned char tz_chr_handshake_f[];
+extern const unsigned char tz_map_handshake_f[];
+extern const unsigned char tz_at_handshake_f[];
+extern const unsigned char tz_chr_handshake_g[];
+extern const unsigned char tz_map_handshake_g[];
+extern const unsigned char tz_at_handshake_g[];
+extern const unsigned char tz_chr_crowd_m[];
+extern const unsigned char tz_map_crowd_m[];
+extern const unsigned char tz_at_crowd_m[];
 
 typedef struct { unsigned char bank, ntile, x0, w, y0, h, zoom; const unsigned char *chr, *map, *at; } tz_art_t;
 
@@ -94,35 +109,47 @@ typedef struct { unsigned char bank, ntile, x0, w, y0, h, zoom; const unsigned c
 #define TZ_ANGRY_Z 6
 #define TZ_SMASH 7
 #define TZ_BACKHAND 8
-#define TZ_N 9
+#define TZ_BALLKID 9
+#define TZ_HANDSHAKE 10
+#define TZ_CROWD 11
+#define TZ_N 12
 static const tz_art_t tz_art[TZ_N][3] = {   /* homme, femme, fillette (Margaux) */
-    { { 17, 209, 0, 30, 2, 26, 0, tz_chr_impact_m, tz_map_impact_m, tz_at_impact_m },
+    { { 17, 204, 0, 30, 2, 26, 0, tz_chr_impact_m, tz_map_impact_m, tz_at_impact_m },
       { 12, 217, 0, 30, 2, 26, 0, tz_chr_impact_f, tz_map_impact_f, tz_at_impact_f },
-      { 17, 192, 0, 30, 2, 26, 0, tz_chr_impact_g, tz_map_impact_g, tz_at_impact_g } },
-    { { 4, 194, 2, 30, 2, 26, 0, tz_chr_slide_m, tz_map_slide_m, tz_at_slide_m },
-      { 2, 182, 2, 30, 4, 24, 0, tz_chr_slide_f, tz_map_slide_f, tz_at_slide_f },
-      { 6, 168, 2, 30, 4, 24, 0, tz_chr_slide_g, tz_map_slide_g, tz_at_slide_g } },
-    { { 9, 232, 0, 32, 0, 28, 0, tz_chr_slide_z_m, tz_map_slide_z_m, tz_at_slide_z_m },
-      { 17, 227, 0, 32, 0, 28, 0, tz_chr_slide_z_f, tz_map_slide_z_f, tz_at_slide_z_f },
-      { 12, 206, 0, 32, 0, 28, 0, tz_chr_slide_z_g, tz_map_slide_z_g, tz_at_slide_z_g } },
-    { { 17, 158, 4, 20, 0, 28, 0, tz_chr_victory_m, tz_map_victory_m, tz_at_victory_m },
-      { 10, 152, 4, 18, 0, 28, 0, tz_chr_victory_f, tz_map_victory_f, tz_at_victory_f },
-      { 12, 136, 4, 18, 0, 28, 0, tz_chr_victory_g, tz_map_victory_g, tz_at_victory_g } },
-    { { 4, 216, 0, 30, 0, 28, 1, tz_chr_victory_z_m, tz_map_victory_z_m, tz_at_victory_z_m },
-      { 17, 213, 0, 28, 0, 28, 1, tz_chr_victory_z_f, tz_map_victory_z_f, tz_at_victory_z_f },
-      { 7, 192, 0, 28, 0, 28, 1, tz_chr_victory_z_g, tz_map_victory_z_g, tz_at_victory_z_g } },
-    { { 9, 168, 8, 16, 4, 24, 0, tz_chr_angry_m, tz_map_angry_m, tz_at_angry_m },
-      { 7, 153, 8, 16, 4, 24, 0, tz_chr_angry_f, tz_map_angry_f, tz_at_angry_f },
-      { 6, 139, 8, 16, 4, 24, 0, tz_chr_angry_g, tz_map_angry_g, tz_at_angry_g } },
-    { { 9, 244, 0, 32, 0, 28, 1, tz_chr_angry_z_m, tz_map_angry_z_m, tz_at_angry_z_m },
-      { 4, 192, 4, 26, 4, 24, 1, tz_chr_angry_z_f, tz_map_angry_z_f, tz_at_angry_z_f },
-      { 2, 184, 4, 26, 4, 24, 1, tz_chr_angry_z_g, tz_map_angry_z_g, tz_at_angry_z_g } },
-    { { 4, 126, 6, 16, 2, 26, 0, tz_chr_smash_m, tz_map_smash_m, tz_at_smash_m },
-      { 2, 113, 8, 14, 2, 26, 0, tz_chr_smash_f, tz_map_smash_f, tz_at_smash_f },
-      { 9, 105, 8, 14, 2, 26, 0, tz_chr_smash_g, tz_map_smash_g, tz_at_smash_g } },
+      { 18, 191, 0, 30, 2, 26, 0, tz_chr_impact_g, tz_map_impact_g, tz_at_impact_g } },
+    { { 18, 193, 2, 30, 2, 26, 0, tz_chr_slide_m, tz_map_slide_m, tz_at_slide_m },
+      { 12, 184, 2, 30, 4, 24, 0, tz_chr_slide_f, tz_map_slide_f, tz_at_slide_f },
+      { 12, 166, 2, 30, 4, 24, 0, tz_chr_slide_g, tz_map_slide_g, tz_at_slide_g } },
+    { { 20, 235, 0, 32, 0, 28, 0, tz_chr_slide_z_m, tz_map_slide_z_m, tz_at_slide_z_m },
+      { 17, 231, 0, 32, 0, 28, 0, tz_chr_slide_z_f, tz_map_slide_z_f, tz_at_slide_z_f },
+      { 4, 210, 0, 32, 0, 28, 0, tz_chr_slide_z_g, tz_map_slide_z_g, tz_at_slide_z_g } },
+    { { 18, 155, 4, 20, 0, 28, 0, tz_chr_victory_m, tz_map_victory_m, tz_at_victory_m },
+      { 6, 152, 4, 18, 0, 28, 0, tz_chr_victory_f, tz_map_victory_f, tz_at_victory_f },
+      { 17, 133, 4, 18, 0, 28, 0, tz_chr_victory_g, tz_map_victory_g, tz_at_victory_g } },
+    { { 20, 213, 0, 30, 0, 28, 1, tz_chr_victory_z_m, tz_map_victory_z_m, tz_at_victory_z_m },
+      { 4, 214, 0, 28, 0, 28, 1, tz_chr_victory_z_f, tz_map_victory_z_f, tz_at_victory_z_f },
+      { 17, 187, 0, 28, 0, 28, 1, tz_chr_victory_z_g, tz_map_victory_z_g, tz_at_victory_z_g } },
+    { { 2, 167, 8, 16, 4, 24, 0, tz_chr_angry_m, tz_map_angry_m, tz_at_angry_m },
+      { 10, 153, 8, 16, 4, 24, 0, tz_chr_angry_f, tz_map_angry_f, tz_at_angry_f },
+      { 7, 140, 8, 16, 4, 24, 0, tz_chr_angry_g, tz_map_angry_g, tz_at_angry_g } },
+    { { 17, 242, 0, 32, 0, 28, 1, tz_chr_angry_z_m, tz_map_angry_z_m, tz_at_angry_z_m },
+      { 10, 192, 4, 26, 4, 24, 1, tz_chr_angry_z_f, tz_map_angry_z_f, tz_at_angry_z_f },
+      { 20, 184, 4, 26, 4, 24, 1, tz_chr_angry_z_g, tz_map_angry_z_g, tz_at_angry_z_g } },
+    { { 9, 127, 6, 16, 2, 26, 0, tz_chr_smash_m, tz_map_smash_m, tz_at_smash_m },
+      { 4, 113, 8, 14, 2, 26, 0, tz_chr_smash_f, tz_map_smash_f, tz_at_smash_f },
+      { 12, 104, 8, 14, 2, 26, 0, tz_chr_smash_g, tz_map_smash_g, tz_at_smash_g } },
     { { 9, 194, 2, 24, 2, 26, 0, tz_chr_backhand_m, tz_map_backhand_m, tz_at_backhand_m },
-      { 10, 201, 2, 24, 2, 26, 0, tz_chr_backhand_f, tz_map_backhand_f, tz_at_backhand_f },
-      { 12, 182, 2, 24, 2, 26, 0, tz_chr_backhand_g, tz_map_backhand_g, tz_at_backhand_g } },
+      { 20, 202, 2, 24, 2, 26, 0, tz_chr_backhand_f, tz_map_backhand_f, tz_at_backhand_f },
+      { 7, 182, 2, 24, 2, 26, 0, tz_chr_backhand_g, tz_map_backhand_g, tz_at_backhand_g } },
+    { { 4, 171, 0, 26, 0, 28, 0, tz_chr_ballkid_m, tz_map_ballkid_m, tz_at_ballkid_m },
+      { 4, 171, 0, 26, 0, 28, 0, tz_chr_ballkid_m, tz_map_ballkid_m, tz_at_ballkid_m },
+      { 4, 171, 0, 26, 0, 28, 0, tz_chr_ballkid_m, tz_map_ballkid_m, tz_at_ballkid_m } },
+    { { 9, 205, 0, 32, 2, 26, 0, tz_chr_handshake_m, tz_map_handshake_m, tz_at_handshake_m },
+      { 18, 199, 0, 32, 4, 24, 0, tz_chr_handshake_f, tz_map_handshake_f, tz_at_handshake_f },
+      { 2, 178, 0, 32, 4, 24, 0, tz_chr_handshake_g, tz_map_handshake_g, tz_at_handshake_g } },
+    { { 9, 236, 0, 32, 2, 26, 0, tz_chr_crowd_m, tz_map_crowd_m, tz_at_crowd_m },
+      { 9, 236, 0, 32, 2, 26, 0, tz_chr_crowd_m, tz_map_crowd_m, tz_at_crowd_m },
+      { 9, 236, 0, 32, 2, 26, 0, tz_chr_crowd_m, tz_map_crowd_m, tz_at_crowd_m } },
 };
 #define TZ_IMPACT_RACKET_X 13
 #define TZ_IMPACT_RACKET_Y 52
@@ -196,5 +223,17 @@ static const tz_art_t tz_art[TZ_N][3] = {   /* homme, femme, fillette (Margaux) 
 #define TZ_BACKHAND_FACE_Y 39
 #define TZ_BACKHAND_RACKET_TIP_X 205
 #define TZ_BACKHAND_RACKET_TIP_Y 66
+#define TZ_BALLKID_FOOTR_X 197
+#define TZ_BALLKID_FOOTR_Y 219
+#define TZ_BALLKID_FACE_X 119
+#define TZ_BALLKID_FACE_Y 74
+#define TZ_HANDSHAKE_RACKET_X 52
+#define TZ_HANDSHAKE_RACKET_Y 202
+#define TZ_HANDSHAKE_FOOTR_X 130
+#define TZ_HANDSHAKE_FOOTR_Y 239
+#define TZ_HANDSHAKE_FACE_X 92
+#define TZ_HANDSHAKE_FACE_Y 46
+#define TZ_HANDSHAKE_RACKET_TIP_X 50
+#define TZ_HANDSHAKE_RACKET_TIP_Y 221
 #define TZ_GROUND_ROW 28
 #define TZ_FIRST_TILE 1

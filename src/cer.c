@@ -21,6 +21,7 @@
 #include "gfx.h"
 #include "audio.h"
 #include "assets.h"
+extern u8 hl_mode;                 /* plan de la ramasseuse (highlight.c, 2.73) */
 
 #pragma static-locals(off)
 
@@ -282,6 +283,9 @@ void cer_tick(void)
            score puis 4 statistiques (A ou START passe) */
         if (cer_t >= (cfg.mode == GM_MATCH ? 250 : 130)) {
             cer = CER_BACK; cer_t = 0;
+            /* un changement sur deux : la ramasseuse de balles, plan télé (2.73) */
+            if (cfg.mode == GM_MATCH && cfg.replays == 1 && cfg.env != ENV_NUDE && !cfg.demo &&
+                ((sc_games[0] + sc_games[1]) & 2)) hl_mode = 4;
             for (p = 0; p < npl; ++p) stage[p] = 0;
         }
         break;

@@ -1073,7 +1073,8 @@ u8 match_tick(void)
     u8 p, ctrl, pad, pressed;
 
     /* portrait du vainqueur (fin du match, banque 15), puis les résultats */
-    if (hl_mode == 3) { bank_call(BANK_HL, hl_tick); return (u8)(hl_mode ? 0 : 1); }
+    /* ramasseuse au changement de côté (hl_mode 4, 2.73) */
+    if (hl_mode >= 3) { pad = hl_mode; bank_call(BANK_HL, hl_tick); return (u8)(pad == 3 && !hl_mode); }
 
     /* démonstration : un bouton rend la main */
     if (cfg.demo && (pad1_new & (PAD_A | PAD_START))) { match_quit = 2; return 1; }

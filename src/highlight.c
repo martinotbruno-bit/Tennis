@@ -599,7 +599,7 @@ static void label_draw(u8 y, u8 shown)
 /* un plan : image haute définition, fond uni, sol ; palettes du joueur */
 static void cut_build(u8 art)
 {
-    u8 i, S, O, D, z, c = cfg.chr[hl_sp];
+    u8 i, S, O, D, z, c = (art == TZ_BALLKID || art == TZ_CROWD) ? 11 : cfg.chr[hl_sp];   /* (ramasseuse, public : tenues vertes, celles de JADE) */
     const tz_art_t *a = &tz_art[art][char_female[c] ? (c == 16 ? 2 : 1) : 0];
     const u8 *m;
     u16 ad;
@@ -706,7 +706,12 @@ static void closeup_tick(void)
         if (hl_t == 69) { flash(0x30); sfx_winner(); }
         return;
     }
-    if (hl_t == 70) { cut_build(TZ_VICTORY_Z); hl_shake = 6; }
+    if (hl_t == 70) {
+        /* après un long échange (12 frappes ou plus) : le public debout (2.73) */
+        if (rally_hits >= 12) { cut_build(TZ_CROWD); hl_cam = 0; scroll_x = 0; scroll_nt = 0; sfx_crowd(7); }
+        else cut_build(TZ_VICTORY_Z);
+        hl_shake = 6;
+    }
     /* gros plan : la joie, l'écran tremble puis s'apaise ; confettis */
     if (hl_shake) { scroll_y = (u8)((hl_t & 1) ? hl_shake : 0); if ((hl_t & 3) == 0) --hl_shake; } else scroll_y = 0;
     for (i = 0; i < 10; ++i)
@@ -923,26 +928,82 @@ static void final_tick(void)
         flash(0x30);
     }
     ++hl_t;
+    /* en pied (3-81), poignée de main au filet (82-141, 2.73), gros plan du visage */
     if (hl_t == 3) cut_build(TZ_VICTORY);
-    if (hl_t == 80) { flash(0x30); sfx_winner(); }
-    if (hl_t == 82) { if (cfg.doubles) hl_sp = (u8)(w + 2); cut_build(TZ_VICTORY_Z); hl_shake = 6; }
+    if (hl_t == 80 || hl_t == 140) { flash(0x30); sfx_winner(); }
+    if (hl_t == 82) cut_build(TZ_HANDSHAKE);
+    if (hl_t == 142) { if (cfg.doubles) hl_sp = (u8)(w + 2); cut_build(TZ_VICTORY_Z); hl_shake = 6; }
     if (hl_t < 4) return;
-    if (hl_t == 4 || hl_t == 84) sfx_crowd(7);
+    if (hl_t == 4 || hl_t == 144) sfx_crowd(7);
+    if (hl_t == 96) sfx_clap();
     if (hl_shake) { scroll_y = (u8)((hl_t & 1) ? hl_shake : 0); if ((hl_t & 3) == 0) --hl_shake; } else scroll_y = 0;
-    /* plan en pied : arrivée en travelling éclair ; gros plan : fixe */
-    hl_c = (u8)(hl_t - 3);
-    hl_cam = (hl_t < 82 && hl_c < 6) ? -(s16)whip_in[hl_c] : 0;
+    /* plans en pied : arrivée en travelling éclair ; gros plan : fixe */
+    hl_c = (u8)(hl_t - (hl_t >= 82 ? 81 : 3));
+    hl_cam = (hl_t < 142 && hl_c < 6) ? -(s16)whip_in[hl_c] : 0;
     scroll_x = (u8)hl_cam; scroll_nt = (u8)((hl_cam >> 8) & 1);
     spr_begin();
     for (i = 0; i < 12; ++i)
         spr1((u8)(i * 21 + 6), (u8)(((hl_t * (1 + (i & 1)) + i * 23) & 0xBF) + 8), confetti_tile, (u8)(i & 3));
     if (hl_t >= 14) label_draw(12, (u8)((hl_t - 14) >> 1));
     spr_end();
-    if (hl_t >= 160) final_end();
+    if (hl_t >= 220) final_end();
 }
+
+/* ---------------------------------------------------------------------- */
+/* Ramasseuse de balles (hl_mode 4, version 2.73) : au changement de côté, */
+/* un sur deux, un plan télé avant que les joueurs ne retournent sur le    */
+/* court ; une balle roule vers elle. A, B ou START passe. Retour au court */
+/* sans ralenti.                                                           */
+/* ---------------------------------------------------------------------- */
+static void kid_end(void)
+{
+    flash(0x30);
+    fade_skip = 1; fade_lvl = 0;
+    ppu_off();
+    ctrl_swap = 0;
+    scroll_x = 0; scroll_y = 0; scroll_nt = 0;
+    chr_reload();
+    bg_dirty = 0;
+    swap_on = 0;
+    bank_call(BANK_GAME, court_reload);
+    hl_mode = 0; hl_t = 0;
+    spr_begin(); spr_end();
+    ppu_on();
+}
+#pragma static-locals(push, off)
+static void kid_tick(void)
+{
+    u8 k;
+    s16 sx;
+    if (hl_t == 0) {
+        static const char nm[] = "LES BALLES";   /* (deux lignes : 8 sprites par ligne au plus) */
+        for (k = 0; (hl_txt[k] = nm[k]) != 0; ++k) ;
+        if (band_vis) { split_stop(); band_vis = 0; }
+        flash(0x30);
+    }
+    ++hl_t;
+    if (hl_t == 3) { cut_build(TZ_BALLKID); sfx_crowd(3); }
+    if (hl_t < 4) return;
+    if ((hl_t > 20 && (pad1_new & (PAD_A | PAD_B | PAD_START))) || hl_t >= 110) { kid_end(); return; }
+    hl_c = (u8)(hl_t - 3);
+    hl_cam = hl_c < 6 ? -(s16)whip_in[hl_c] : 0;
+    scroll_x = (u8)hl_cam; scroll_nt = (u8)((hl_cam >> 8) & 1);
+    spr_begin();
+    /* une balle arrive de la droite en rebondissant, puis roule jusqu'à elle */
+    if (hl_c >= 10 && hl_c < 70) {
+        k = (u8)(hl_c - 10);
+        sx = (s16)(TZ_BALLKID_FOOTR_X + 140 - k * 2);
+        spr1((u8)sx, (u8)(TZ_BALLKID_FOOTR_Y - 6 - (k < 40 ? (u8)(((k & 15) * (u8)(16 - (k & 15))) >> (k < 16 ? 1 : 2)) : 0)), ball_base + 8, 3);
+        if (k < 40 && (k & 15) == 0) sfx_bounce();
+    }
+    if (hl_c >= 14) label_draw(204, (u8)((hl_c - 14) >> 1));   /* (en bas : la balle levée est en haut de l'image) */
+    spr_end();
+}
+#pragma static-locals(pop)
 
 void hl_tick(void)
 {
+    if (hl_mode == 4) { kid_tick(); return; }
     if (hl_mode == 3) {
         if (hl_t > 20 && (pad1_new & (PAD_A | PAD_START))) { final_end(); return; }
         final_tick();

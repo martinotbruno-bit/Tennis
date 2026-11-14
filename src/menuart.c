@@ -125,7 +125,7 @@ u8 __fastcall__ port_pal(u8 a)
 {
     u8 c = (u8)(a & 31), b = (u8)(16 + (a >> 5) * 4);
     pal_set_player((u8)(a >> 5), c);
-    if (c == 16) pal_buf[b + 2] = 0x38;
+    if (c == 16) pal_buf[b + 2] = 0x37;
     if (c == 16 || c == 19) pal_buf[b + 3] = 0x0F;
     return 0;
 }

@@ -345,7 +345,16 @@ Le dessin des personnages est commun aux vues de face et de dos (rangées de tui
 - **Survol** (fly.c, banque 20) : tuiles $C0-$CD dessinées par le programme, rangées 0-9 ciel, 10-19 tribunes, 20-29 court, sur les deux écrans (512 px) ; `fly_tick` : ciel `t/4` (`scroll_x`), tribunes `t/2`, court `1,25 t` ; `fly_on(79)`. Fin : `chr_reload`. Appelé par screens.c (`SS_FLY` 12) quand l'étape est la finale.
 - **Bandeau** : `band_dis` (renvoyé par un appui en `MS_SERVE`, remis à 0 en `MS_DEAD`) ; visible en `MS_DEAD` et en `MS_SERVE` tant que `!band_dis`. HUD (extras.c) : rangée 2 points et serveur, rangée 3 sets.
 - **Dehors de peu** : `hl_out` (point_over, faute adverse) : rebond hors du court à 3 px ou moins → `hl_quick`, `rp_pending`, repère du rebond seul ; `rp_start` : `rp_left` = trames depuis le rebond + 12 ; zoom de 50 trames, puis `rp_done`. Smash sauté gagnant : `hl_select` pose `rp_pending`.
+- **Robe HD** (`gen_teaser.py`, `side`) : le profil du corsage s'arrête à 88 % de l'épaule à la hanche (avant : deux points à ±8 px de la hanche, qui dépassaient du haut de la jupe).
+- **Blond** : Margaux `{ 0x27, 0x35, 0x37 }` (gfx.c ; `port_pal` : couleur 2 $37) ; règle « $38 sur la plage » retirée de `pal_set_player` et de `contrast.py`.
+- **Mains HD** (`arm`) : poing = capsule + disque dans l'axe poignet → main, trois traits de doigts et un pouce en couleur d'ombre ; main qui tient la raquette inchangée. Poignée de main (`_shake_extra`) : main de l'adversaire (6,6 × 5,4) par-dessus celle du joueur, doigts, pouce du joueur.
+- **Public** : `figures[].shorts` recolore la classe 5 du short (3 : vert) ; la paire blanc + sombre n'existe dans aucune palette (`PALS`).
+- **Ramasseuse** : `armL` (-120, -88) levé avec la balle (`_ballkid_extra` : `hdL`), `armR` (82, 55) sur le genou ; cadrage (86, 123).
 - **Revers HD** : `gen_teaser.py`, pose `backhand` : ordre de dessin `armR` avant le buste, `armL` après.
+- **Nouvelles images HD** (`gen_teaser.py`) : poses `ballkid` (ramasseuse à genoux, balle levée), `handshake` (poignée de main au filet : bras de l'adversaire venant de la droite, bande blanche, mailles seules), `crowd` (trois spectateurs, `figures` avec maillots recolorés, rangée de sièges sombre) ; `FIXED_FEMALE` (une seule variante pour la ramasseuse et le public) ; banques 18 et 20 ajoutées aux images (`assets_tz18.c`, `assets_tz20.c`). `cut_build` prend la palette de JADE (11) pour `TZ_BALLKID` et `TZ_CROWD`, celle du joueur sinon.
+- **Ramasseuse** (`hl_mode` 4, `kid_tick`) : cer.c, fin de `CER_SEAT` en match, ralentis OUI TELE, hors club nudiste et démonstration, quand (jeux joués & 2) : un changement sur deux. Bandeau arrêté, `TZ_BALLKID` en travelling éclair, une balle roule jusqu’à elle, « LES BALLES » (en bas, deux lignes) ; 110 trames (A, B, START après 20) ; `kid_end` : rechargement du court sans ralenti. Banque 0 : `match_tick` passe la main à `hl_tick` pour `hl_mode` ≥ 3 et ne rend 1 qu'à la fin du portrait (3).
+- **Poignée de main** (`final_tick`) : `TZ_VICTORY` 3-81, `TZ_HANDSHAKE` 82-141 (travelling éclair, applaudissements), `TZ_VICTORY_Z` 142-219 ; fin à 220.
+- **Public** (`closeup_tick`) : à la trame 70, `TZ_CROWD` si `rally_hits` ≥ 12, sinon `TZ_VICTORY_Z`.
 
 ### Version 2.72 : carrière, fiche, reprise, cérémonie
 

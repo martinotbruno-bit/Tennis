@@ -13,13 +13,17 @@ Comme l'exige le CDC (§ 17.5), ce rapport distingue ce qui est **réalisé**, *
 | (1) Bandes « cinéma » pendant les ralentis | Bandes noires de 16 lignes en haut et en bas de l'image pendant le ralenti, avec le cartouche « RALENTI » et « A : PASSER » ; MMC3 : deux interruptions de ligne par trame (lignes 16 et 224, l'interruption se réarme elle-même), vérifié sur FCEUX. Les joueurs passent devant les bandes. Image : `docs/bandes_ralenti_273.png`. Test ajouté |
 | (3) Survol du stade | Avant chaque finale : ciel et nuages (avec le nom de l'épreuve et « LA FINALE »), tribunes pleines, court vu de côté à la couleur de la surface ; la caméra glisse et chaque bande défile à sa vitesse (parallaxe : deux interruptions par trame). Environ 4 s, A passe. Image : `docs/survol_273.png`. Test ajouté |
 | Bras emmêlés (image HD du revers) | Revers à deux mains du gros plan : le bras tendu passe devant le buste jusqu'à la main du haut du manche, le bras plié reste derrière (main du bas) ; avant, les bras se croisaient. Image : `docs/revers_273.png` |
+| Jupe qui dépassait aux hanches (images HD) | Le haut de la robe descendait jusqu'aux hanches avec des coins larges qui sortaient du contour de la jupe (bras levés, joueuses et fillette). Il s'arrête maintenant sous la taille, au milieu de la jupe, qui forme seule le contour. Toutes les images féminines sont régénérées. Image : `docs/jupe_273.png` |
+| Blond de Margaux | Ses cheveux étaient de la couleur NES $28, qui tire sur le vert olive ; ils passent en $37 (blond sable) en jeu, dans les menus et sur les images HD. Plus de cas particulier sur la plage : contraste vérifié (`contrast.py 25` : 0 paire) |
+| Mains et poses des images HD | Poings dessinés dans l'axe de l'avant-bras : doigts repliés séparés, pouce ; poignée de main au filet en mains serrées (la main de l'adversaire enveloppe celle du vainqueur, pouce par-dessus) ; ramasseuse : balle levée de la main gauche, main droite posée sur le genou (le bras ne traverse plus le buste) ; titre « LES BALLES » en bas, sur deux lignes (« RAMASSEUSE », 10 lettres, dépassait les 8 sprites par ligne) |
+| Bande bleue entre short et polo (public) | Aucune palette de fond ne réunit peau, blanc et noir : sur les carreaux où le polo blanc touchait le short noir, le short prenait la couleur du fond. Les spectateurs portent un short vert (couleurs du club), compatible avec le polo blanc et le polo noir |
 | Traits horizontaux en perspective | Le filet du bandeau du score (2.71) avait été dessiné sur la tuile $5F, que la vue en perspective emploie comme tuile vide entre le public et le court : des traits apparaissaient. Il est sur la tuile $FF (vérifié libre dans tous les lieux, à plat et en perspective). Test ajouté |
 | Bandeau du score jusqu'à l'appui | Le bandeau reste pendant la mise en place du service ; un appui (manette 1 ou 2) ou le lancer de balle le renvoie. Image : `docs/bandeau_service_273.png`. Test ajouté |
 | Jeux retirés du haut de l'écran | Coins du haut : nom, points et serveur (*), sets gagnés (@) ; les jeux sont dans le bandeau du bas. Test ajouté |
 | Ralenti du smash sauté | Un smash sauté gagnant déclenche toujours le ralenti et le gros plan |
 | Zoom rapide sur les balles dehors de peu | Balle d'échange dehors à 3 px de la ligne ou moins : ralenti court (12 trames avant le rebond), sans gros plan, zoom x 2 sur l'impact avec la trace et « DEHORS ! », puis fin (≈ 2,6 s au lieu de ≈ 10). Image : `docs/dehors_de_peu_273.png`. Test ajouté |
 | (défauts trouvés en route) | Musique de la finale absente depuis la 2.72 (la fiche écrivait dans le tampon du nom de l'étape) : rétablie. Place : `win_label`, `menu_bk_pick`, `spr_port` sortis de la banque fixe (512 octets libérés) |
-| (8) Nouvelles images HD | Reportées à la version suivante (ramasseur de balles, poignée de main, public en gros plan) |
+| (8) Nouvelles images HD | Trois nouveaux plans dessinés comme les gros plans : la **ramasseuse de balles** (un changement de côté sur deux, si les ralentis sont activés : une balle roule jusqu’à elle, « LES BALLES »), la **poignée de main au filet** (fin du match, entre le vainqueur en pied et le gros plan de son visage) et le **public debout** (après un échange de 12 frappes ou plus, à la place du gros plan de joie). A, B ou START passe. Image : `docs/hd_273.png`. Tests ajoutés |
 
 ### Version 2.72
 
@@ -647,7 +651,7 @@ Pour loger ce contenu, la cartouche passe de NROM (32 Ko) à **MMC1** : 128 Ko d
 | Relecture des textes (`check_texts.py`) | 0 problème |
 | Contraste (`contrast.py 25`) | 0 paire sous ΔE 25 (personnages, courts, balle, tenues) |
 | Profil CPU, double, 6 000 trames | 27 trames d'échange en dépassement (0,45 %), sans défaut d'image |
-| Compilation | Reproductible : SHA-256 `e1d8af46eed311af6a1f9842920c80d5f4914ccdde8f1b9e00990de00d11ec76` sur deux compilations propres |
+| Compilation | Reproductible : SHA-256 `858a9cc84066943ef8ca6a95eefb49af5a8c7ea76d81e07642342a0f3c605451` sur deux compilations propres |
 
 ## 3. Conformité par section du CDC
 

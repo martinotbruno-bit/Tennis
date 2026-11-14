@@ -197,12 +197,21 @@ def body(f, j, female, face, front=('armR', 'legL'), racket_hand='L', racket_dir
         if hold:
             # poignet éponge blanc
             f.part(f.m_caps(lerp(el, wr, 0.78), wr, 4.6, 4.4), W, None, group=g)
-        h = f.part(f.m_ell(hand, 5.2 * AW, 5.2 * AW), S, s, sh=(2, 2), group=g)
         if hold:
             ret['hand'] = hand
-        else:
-            # doigts repliés
-            f.paint(f.m_line([(hand[0] - 3, hand[1] + 1), (hand[0] + 2, hand[1] + 1)], 0.7), 2, within=[h])
+        if True:
+            # poing (2.73) : dans l'axe de l'avant-bras, plus large aux doigts,
+            # trois doigts repliés marqués, pouce replié sur le côté (aussi la
+            # main qui tient la raquette : ses doigts serrent le manche)
+            d = (hand[0] - wr[0], hand[1] - wr[1]); L = math.hypot(*d) or 1; u = (d[0] / L, d[1] / L)
+            n = (-u[1], u[0])
+            ts = 1 if (side == 'R') == (u[1] < 0.3) else -1
+            Pk = lambda t, k: (hand[0] + u[0] * t + n[0] * k, hand[1] + u[1] * t + n[1] * k)
+            fist = f.m_caps(Pk(-2.5, 0), Pk(1.6, 0), 4.1 * AW, 5.0 * AW) | f.m_ell(Pk(1.8, 0), 5.0 * AW, 5.0 * AW)
+            h = f.part(fist, S, s, sh=(1.5, 1.5), group=g)
+            for k in (-2.2, 0.0, 2.2):                     # séparations des doigts
+                f.paint(f.m_line([Pk(2.6 * AW, k * AW), Pk(6.2 * AW, k * AW)], 0.45), 2, within=[h])
+            f.paint(f.m_line([Pk(-1.8, ts * 3.6 * AW), Pk(2.4 * AW, ts * 1.2 * AW)], 0.75), 2, within=[h])   # pouce
 
     def racket():
         hand = j['hd' + racket_hand]
@@ -248,11 +257,12 @@ def body(f, j, female, face, front=('armR', 'legL'), racket_hand='L', racket_dir
             # profil en courbe douce : aisselle, poitrine, dessous de poitrine, taille, hanche
             def side(sh_, hp_, sx):
                 P_ = lambda t, dx: (lerp(sh_, hp_, t)[0] + sx * dx, lerp(sh_, hp_, t)[1])
+                # (le corsage s'arrête sous la taille, au milieu de la jupe : ses
+                # coins, larges sur les hanches, dépassaient du haut de la jupe)
                 if female == 2:     # fillette : buste droit
-                    return [P_(0.13, -0.5), P_(0.25, 0.5), P_(0.4, 0.3), P_(0.6, -1.0), P_(0.8, 0.5),
-                            (hp_[0] + sx * 8, hp_[1] - 7), (hp_[0] + sx * 8, hp_[1] - 2)]
+                    return [P_(0.13, -0.5), P_(0.25, 0.5), P_(0.4, 0.3), P_(0.6, -1.0), P_(0.8, 0.5), P_(0.88, -1.5)]
                 return [P_(0.13, -0.5), P_(0.22, 3.2), P_(0.31, 4.4), P_(0.4, 3.0), P_(0.5, 0.0),
-                        P_(0.6, -2.0), P_(0.7, -2.0), P_(0.8, 0.5), (hp_[0] + sx * 7.5, hp_[1] - 7), (hp_[0] + sx * 8, hp_[1] - 2)]
+                        P_(0.6, -2.0), P_(0.7, -2.0), P_(0.8, 0.5), P_(0.88, -1.5)]
             # bretelles : elles montent jusqu'en haut de l'épaule, le long de sa pente, jusqu'au cou
             pts = [(shL[0] + 0.5, shL[1] - 4.8), (nk[0] - 6.6, nk[1] - 2.9), (nk[0] - 4.0, nk[1] - 1.6),
                    (nk[0] - 3.6, nk[1] + 7), (nk[0], nk[1] + 9), (nk[0] + 3.6, nk[1] + 7),
@@ -295,11 +305,18 @@ def body(f, j, female, face, front=('armR', 'legL'), racket_hand='L', racket_dir
             f.paint(f.m_line([(a_[0] - u_[0] * 2.2, a_[1] - u_[1] * 2.2), (b_[0] - u_[0] * 2.2, b_[1] - u_[1] * 2.2)], 0.6), 0, within=[sid])   # ourlet
         cr = lerp(hpL, hpR, 0.5)
         f.paint(f.m_line([(cr[0], cr[1] + 2), lerp(cr, lerp(lerp(hpL, j['knL'], 0.48), lerp(hpR, j['knR'], 0.48), 0.5), 1.0)], 0.9), 0, within=[sid])   # entrejambe
-        # polo, porté par-dessus le short
+        # polo, porté par-dessus le short ; flanc droit de la poitrine à la
+        # hanche (2.73 : la taille creusée faisait une silhouette en sablier)
+        def straight(ch_, dc, hp_, dh, w_):
+            a_, b_ = (ch_[0] + dc, ch_[1]), (hp_[0] + dh, hp_[1] - 10)
+            t = (w_[1] - a_[1]) / ((b_[1] - a_[1]) or 1)
+            x = a_[0] + (b_[0] - a_[0]) * t
+            x0 = w_[0] + (2 if dc > 0 else -2)
+            return ((x if dc > 0 else x) if (x - x0) * dc > 0 else x0, w_[1])
         top_l = (shL[0] - 2, shL[1] - 5); top_r = (shR[0] + 2, shR[1] - 5)
         pts = [top_l, (nk[0] - 6, nk[1] - 1), (nk[0] + 6, nk[1] - 1), top_r, (shR[0] + 5, shR[1] + 2),
-               (ch_r[0] + 2, ch_r[1]), (wr[0] + 2, wr[1]), (hpR[0] + 12, hpR[1] - 10), (hpR[0] + 12.5, hpR[1] - 5),
-               (hpL[0] - 12.5, hpL[1] - 5), (hpL[0] - 12, hpL[1] - 10), (wl[0] - 2, wl[1]), (ch_l[0] - 2, ch_l[1]), (shL[0] - 5, shL[1] + 2)]
+               (ch_r[0] + 2, ch_r[1]), straight(ch_r, 2, hpR, 12, wr), (hpR[0] + 12, hpR[1] - 10), (hpR[0] + 12.5, hpR[1] - 5),
+               (hpL[0] - 12.5, hpL[1] - 5), (hpL[0] - 12, hpL[1] - 10), straight(ch_l, -2, hpL, -12, wl), (ch_l[0] - 2, ch_l[1]), (shL[0] - 5, shL[1] + 2)]
         tm = f.m_poly(pts)
         tid = f.part(tm, O, o, sh=(5, 2))
         f.paint(tm & ~shift_mask(f, (0, -1.5), tm) & shift_mask(f, (0, 8), tm) | (tm & ~shift_mask(f, (0, -1.5), tm) & ~shift_mask(f, (0, 30), tm)), 4, within=[tid])   # ourlet du polo
@@ -329,6 +346,26 @@ def body(f, j, female, face, front=('armR', 'legL'), racket_hand='L', racket_dir
         if nr[0] < 0: nr = (-nr[0], -nr[1])
         hem_l = (hl[0] + nl[0] * 16, hl[1] + nl[1] * 16 + 1)
         hem_r = (hr[0] + nr[0] * 16, hr[1] + nr[1] * 16 + 1)
+        in_l, in_r = (hl[0] - nl[0] * 6, hl[1] + 4), (hr[0] - nr[0] * 6, hr[1] + 4)
+        # cuisse levée (genou à terre, 2.73) : la jupe repose sur la cuisse
+        # jusqu'à mi-longueur et tombe un peu sous elle, au lieu de pendre droit
+        # (l'autre côté, sur la cuisse au sol, s'évase peu : elle ne pend pas
+        # en rideau)
+        if abs(dl[1]) < 0.6 * Ll:
+            m_ = lerp(hpL, kl, 0.65); hem_l = (m_[0], m_[1] + 6); in_l = (lerp(hpL, kl, 0.3)[0], lerp(hpL, kl, 0.3)[1] + 8)
+            h2 = lerp(hpR, kr, 0.5); hem_r = (h2[0] + nr[0] * 6, h2[1] + nr[1] * 6); in_r = (h2[0] - nr[0] * 4, h2[1] + 2)
+        elif abs(dr[1]) < 0.6 * Lr:
+            m_ = lerp(hpR, kr, 0.65); hem_r = (m_[0], m_[1] + 6); in_r = (lerp(hpR, kr, 0.3)[0], lerp(hpR, kr, 0.3)[1] + 8)
+            h2 = lerp(hpL, kl, 0.5); hem_l = (h2[0] + nl[0] * 6, h2[1] + nl[1] * 6); in_l = (h2[0] - nl[0] * 4, h2[1] + 2)
+        # cuisse levée : le haut arrondi de la cuisse, à la hanche, déborde de
+        # la jupe vers l'arrière ; elle l'englobe (sans monter au-dessus de la taille)
+        cover = []
+        for hp_, d_, L_ in ((hpL, dl, Ll), (hpR, dr, Lr)):
+            if abs(d_[0]) > 0.3 * L_ and (abs(dl[1]) < 0.6 * Ll or abs(dr[1]) < 0.6 * Lr):   # (cuisse en biais, genou à terre)
+                back = math.degrees(math.atan2(-d_[1], -d_[0]))      # à l'opposé du genou
+                for a_ in range(-90, 11, 15):
+                    q = (hp_[0] + math.cos(math.radians(back + a_)) * 8.6, hp_[1] + math.sin(math.radians(back + a_)) * 8.6)
+                    if q[1] >= min(top_l[1], top_r[1]) + 2: cover.append(q)
         # profil arrondi : la jupe s'évase vite sous la taille puis plus
         # doucement jusqu'à l'ourlet (pas d'angle droit en haut sur les côtés)
         prof = []
@@ -336,7 +373,7 @@ def body(f, j, female, face, front=('armR', 'legL'), racket_hand='L', racket_dir
             for fr in (0.1, 0.25, 0.42, 0.6, 0.8):
                 prof.append((A[0] + (B[0] - A[0]) * fr ** 0.7, A[1] + (B[1] - A[1]) * fr))
         sk = hull([(top_l[0] + 2, top_l[1]), (top_r[0] - 2, top_r[1]), hem_l, hem_r,
-                   (hl[0] - nl[0] * 6, hl[1] + 4), (hr[0] - nr[0] * 6, hr[1] + 4)] + prof
+                   in_l, in_r] + prof + cover
                   + [(hp_[0] + math.cos(math.radians(a_)) * 8.5, hp_[1] + math.sin(math.radians(a_)) * 8.5)
                      for hp_ in (hpL, hpR) for a_ in range(0, 181, 30)])
         sm = f.m_poly(sk)
@@ -362,9 +399,10 @@ def body(f, j, female, face, front=('armR', 'legL'), racket_hand='L', racket_dir
         R = lambda dx, dy: (h[0] + hs * (dx * ca - dy * sa), h[1] + hs * (dx * sa + dy * ca))   # repère de la tête
         if female:
             # chevelure arrière (encadre le visage) et queue de cheval haute
-            f.part(f.m_caps(R(6, -10), R(13, 7), 4, 2.2) | f.m_ell(R(6.5, -9.5), 4.5, 3.5, tilt), D, None)
+            hair_back = [f.part(f.m_caps(R(6, -10), R(13, 7), 4, 2.2) | f.m_ell(R(6.5, -9.5), 4.5, 3.5, tilt), D, None)]
             back = f.m_ell(R(0, -1), 12.2, 12.5, tilt) & ~f.m_poly([R(-20, 6), R(20, 6), R(20, 30), R(-20, 30)])
-            f.part(back, D, None)
+            hair_back.append(f.part(back, D, None))
+            ret['hair_back'] = hair_back
         ear_x = 10.2
         f.part(f.m_ell(R(-ear_x + turn * 0.3, 1.8), 2.1, 3.4, tilt) | f.m_ell(R(ear_x + turn * 0.3, 1.8), 2.1, 3.4, tilt), S, s, sh=(1, 1))
         # crâne et mâchoire : carrée chez l'homme, plus fine et arrondie chez la femme
@@ -391,6 +429,7 @@ def body(f, j, female, face, front=('armR', 'legL'), racket_hand='L', racket_dir
             sides = f.m_poly([R(-10.4, -5), R(-9.9, 1.8), R(-9.0, 1.8), R(-8.8, -3.2)]) | f.m_poly([R(10.4, -5), R(9.9, 1.8), R(9.0, 1.8), R(8.8, -3.2)])
             hair = top | quiff | fringe | sides
         hr = f.part(hair, D, None, group=hid)
+        ret['hair_pid'] = hr; ret['head_pid'] = hid
         if female:
             f.paint(f.m_line([R(-3.5, -12.5), R(-2.5, -8.5)], 0.6), 0, within=[hr])          # raie
         else:
@@ -632,6 +671,71 @@ POSES['backhand'] = dict(
            order=['racket', 'legL', 'legR', 'armR', 'torso', 'armL', 'head']),
     face='focus', hand='R', rdir=-20, rlen=52)
 
+# 7. ramasseur de balles (version 2.73, changement de côté) : un genou à terre
+#    près du poteau, une balle levée dans la main, l'autre main sur le genou
+def _ballkid_extra(f, j, female, r):
+    hd = j['hdL']                       # (2.73 : main gauche, côté éloigné : l'autre main sur le genou)
+    c = (hd[0], hd[1] - 6)
+    bid = f.part(f.m_ell(c, 6.5, 6.5), 6, None)                     # balle (blanc)
+    f.paint(f.m_arc(c, 4.5, 4.5, 200, 340, 0.8), 5, within=[bid])   # couture
+    r['ball'] = c
+POSES['ballkid'] = dict(
+    # (2.73) genou à terre comme une fente : jambe avant (droite, hanche de
+    # devant) cuisse horizontale, tibia vertical, pied à plat ; jambe arrière
+    # (gauche) en biais vers l'arrière, genou au sol, tibia à plat ; bras
+    # gauche levé avec la balle, main droite sur le genou avant
+    s=dict(pelvis=(80, 157), torso=-84, legL=(112, 177, 178), legR=(0, 90, 0),
+           armL=(-120, -88), armR=(50, 60), tilt=0.05, turn=0.4,
+           order=['armL', 'legL', 'torso', 'legR', 'head', 'armR']),
+    face='joy', hand='X', rdir=0, rlen=50, extra=_ballkid_extra)
+
+# 8. poignée de main au filet (version 2.73, fin du match) : le vainqueur
+#    tend la main droite de l'écran ; le bras de l'adversaire entre par la
+#    droite (peau, poignet blanc) ; la bande du filet devant, à la taille
+def _shake_extra(f, j, female, r):
+    hd = j['hdR']
+    a = (300, hd[1] + 14)
+    el = (232, hd[1] + 8)
+    g = f.part(f.m_caps(a, el, 7.5, 6.5) | f.m_caps(el, (hd[0] + 7, hd[1] + 1), 6.5, 5.0), 1, 2, sh=(2.5, 1.5))
+    f.part(f.m_caps(lerp(el, (hd[0] + 7, hd[1] + 1), 0.62), lerp(el, (hd[0] + 7, hd[1] + 1), 0.78), 5.4, 5.2), 6, None, group=g)   # poignet blanc
+    # mains serrées (2.73) : celle de l'adversaire enveloppe celle du joueur
+    # (doigts repliés sur le dos de sa main), le pouce du joueur par-dessus
+    hm = f.m_ell((hd[0] + 3, hd[1] + 1), 6.6, 5.4)
+    hid = f.part(hm, 1, 2, sh=(2, 2), group=g)
+    for dy in (-1.6, 0.6, 2.8):
+        f.paint(f.m_line([(hd[0] - 2.5, hd[1] + 1 + dy), (hd[0] + 2.5, hd[1] + 1 + dy * 1.1)], 0.45), 2, within=[hid])
+    f.part(f.m_caps((hd[0] - 3, hd[1] - 3.2), (hd[0] + 4.5, hd[1] - 4.6), 1.9, 1.6), 1, 2, sh=(1, 1))   # pouce du joueur
+    y0 = j['hipL'][1] - 4
+    net = f.m_poly([(-50, y0), (400, y0), (400, y0 + 90), (-50, y0 + 90)])
+    yy, xx = np.mgrid[0:f.H, 0:f.W]
+    f.part(net & (((xx + yy) % 8 == 0) | ((xx - yy) % 8 == 0)), 6, None)   # mailles blanches (seules : le joueur se voit derrière ; en couleur sombre, celle des cheveux de Margaux les délavait)
+    tape = f.m_poly([(-50, y0 - 6), (400, y0 - 6), (400, y0 + 1), (-50, y0 + 1)])
+    f.part(tape, 6, None)                                             # bande blanche
+POSES['handshake'] = dict(
+    s=dict(pelvis=(82, 122), torso=-90, legL=(97, 94, 165), legR=(83, 86, 15),
+           armL=(100, 95), armR=(30, -8), tilt=0.0, turn=0.3,
+           order=['legL', 'legR', 'armL', 'racket', 'torso', 'head', 'armR']),
+    face='joy', hand='L', rdir=95, rlen=50, extra=_shake_extra)
+
+# 9. public en gros plan (version 2.73, après un très long échange) : trois
+#    spectateurs debout qui applaudissent, bras levés, maillots différents
+POSES['crowd'] = dict(figures=[
+    dict(s=dict(pelvis=(28, 126), torso=-92, legL=(97, 94, 165), legR=(83, 86, 15),
+                armL=(-120, -100), armR=(-60, -80), tilt=-0.06, turn=0.2,
+                order=['legL', 'legR', 'torso', 'armL', 'armR', 'head']), female=0, face='joy', shirt=6, shorts=3, tag='1'),
+    dict(s=dict(pelvis=(136, 128), torso=-88, legL=(97, 94, 165), legR=(83, 86, 15),
+                armL=(-140, -95), armR=(-40, -85), tilt=0.08, turn=-0.3,
+                order=['legL', 'legR', 'torso', 'armL', 'armR', 'head']), female=0, face='joy', shorts=6, tag='3'),
+    dict(s=dict(pelvis=(82, 122), torso=-90, legL=(97, 94, 165), legR=(83, 86, 15),
+                armL=(-100, -70), armR=(-80, -110), tilt=0.0, turn=0.0,
+                order=['legL', 'legR', 'torso', 'armL', 'armR', 'head']), female=1, face='joy', tag='2'),
+    ], face='joy', hand='X', rdir=0, rlen=50, extra=lambda f, j, female, r: f.part(
+        f.m_poly([(-50, 150), (400, 150), (400, 400), (-50, 400)]), 5, None))   # rang de sièges devant : jambes cachées
+
+# images identiques quel que soit le joueur (une seule copie en ROM) : la
+# fillette pour le ramasseur, le public
+FIXED_FEMALE = {'ballkid': 2, 'crowd': 0}
+
 # plans : (nom, pose, échelle, (x, y) de base visé au centre ; None : pieds au sol)
 # zoom : True si le visage est assez grand pour sa palette (peau, sombre, blanc)
 SHOTS = [
@@ -644,6 +748,9 @@ SHOTS = [
     ('angry_z', 'angry', 3.4, (83, 70), True),       # zoom : le visage qui crie
     ('smash', 'smash', 0.86, (92, None), False),
     ('backhand', 'backhand', 1.4, (150, 102), False),   # revers à deux mains, gros plan (ralenti, 2.68)      # smash et service, en pied (ralenti, 2.68)
+    ('ballkid', 'ballkid', 1.3, (94, 123), False),     # ramasseur de balles (changement de côté, 2.73)
+    ('handshake', 'handshake', 1.3, (110, 96), False),  # poignée de main au filet (fin du match, 2.73)
+    ('crowd', 'crowd', 0.9, (82, 92), False),           # public en gros plan (long échange, 2.73)
 ]
 
 
@@ -656,15 +763,41 @@ def render(pose, female, k, center, dark=True):
     else:
         oy = cy - (H / 2) / k
     f = Fig(W, H, k, cx - 128 / k, oy)
-    r = body(f, skeleton(P['s'], female), female, P['face'], racket_hand=P['hand'], racket_dir=P['rdir'], racket_len=P['rlen'])
+    if 'figures' in P:
+        # plusieurs personnages (public, version 2.73) : de l'arrière à l'avant ;
+        # chacun peut changer la couleur de sa tenue (classes 3-4 -> autre)
+        r = {}
+        for fs in P['figures']:
+            n0 = f.n
+            rr = body(f, skeleton(fs['s'], fs['female']), fs['female'], fs['face'], racket_hand='X', racket_dir=0, racket_len=50)
+            if fs.get('shirt'):
+                m = (f.pid > n0) & np.isin(f.cls, (3, 4))
+                f.cls[m] = fs['shirt']
+            if fs.get('shorts') and isinstance(rr.get('shorts'), (int, np.integer)):
+                # short d'une autre couleur : un polo blanc sur un short sombre
+                # ne tient dans aucune palette (peau, blanc, sombre)
+                m = (f.pid == rr['shorts']) & (f.cls == 5)
+                f.cls[m] = fs['shorts']
+            r.update({k_ + fs.get('tag', ''): v for k_, v in rr.items()})
+    else:
+        r = body(f, skeleton(P['s'], female), female, P['face'], racket_hand=P['hand'], racket_dir=P['rdir'], racket_len=P['rlen'])
+    if 'extra' in P:                     # dessin complémentaire (balle, bras de l'adversaire, filet : 2.73)
+        P['extra'](f, skeleton(P['s'], female) if 's' in P else None, female, r)
     f.outline()
     # contours et yeux dans la couleur sombre (version 2.61), et non dans
     # celle du fond ; sauf Margaux (cheveux blonds : ses yeux seraient jaunes)
     if female != 2 and dark:
         f.cls[(f.cls == 0) & (f.pid > 0)] = 5
+    # Margaux (2.73) : la couleur sombre est celle de ses cheveux blonds ; les
+    # autres détails sombres (manche de la raquette, semelles, sourcils...)
+    # passent dans la couleur du fond, sombre elle aussi, au lieu de jaunir
+    if female == 2 and isinstance(r.get('head_pid'), (int, np.integer)):
+        hid_ = r['head_pid']
+        hair_ids = [p_ for p_ in range(1, f.n + 1) if f.grp.get(p_) == hid_ and p_ != hid_] + list(r.get('hair_back', []))
+        f.cls[(f.cls == 5) & ~np.isin(f.pid, hair_ids)] = 0
     f.leg_ids = [r[k_] for k_ in ('legL', 'legR') if k_ in r]
-    f.joints = skeleton(P['s'], female)
-    r = {key: f.T(v) for key, v in r.items() if isinstance(v, tuple)}
+    f.joints = skeleton(P['s'] if 's' in P else P['figures'][-1]['s'], female)
+    r = {key: f.T(v) for key, v in r.items() if isinstance(v, tuple) and len(v) == 2 and not isinstance(v[0], (list, tuple))}
     return f, r
 
 
@@ -770,7 +903,7 @@ def build(f, zoom):
 
 
 # ------------------------------------------------------------------ aperçu
-SAMPLES = [(0x27, 0x30, 0x0F), (0x37, 0x1C, 0x0F), (0x07, 0x27, 0x0F), (0x27, 0x35, 0x28)]
+SAMPLES = [(0x27, 0x30, 0x0F), (0x37, 0x1C, 0x0F), (0x07, 0x27, 0x0F), (0x27, 0x35, 0x37)]
 
 
 def shades(S, O, D):
@@ -815,27 +948,29 @@ def main():
     sheet = []
     for name, pose, k, cen, zoom in SHOTS:
         for female in (0, 1, 2):
-            f, r = render(pose, female, k, cen)
+            f, r = render(pose, FIXED_FEMALE.get(name, female), k, cen)
             try:
                 res = build(f, zoom)
             except AssertionError:      # trop de tuiles différentes : contours dans la couleur du fond
-                f, r = render(pose, female, k, cen, dark=False)
+                f, r = render(pose, FIXED_FEMALE.get(name, female), k, cen, dark=False)
                 res = build(f, zoom)
                 print('  (%s %d : contours dans la couleur du fond, faute de tuiles)' % (name, female))
             res['r'] = r
             out[(name, female)] = res
             print('%-10s %s : %3d tuiles, colonnes %d-%d, rangées %d-%d' % (
                 name, 'HFG'[female], len(res['tiles']), res['x0'], res['x1'] - 1, res['y0'], res['y1'] - 1))
+            # (ramasseuse, public : toujours la tenue de JADE en jeu, highlight.c)
+            smp = [(0x36, 0x2B, 0x0F)] * 4 if name in FIXED_FEMALE else SAMPLES
             if female == 0:
-                sheet.append([preview(res, c) for c in SAMPLES[:2]])
+                sheet.append([preview(res, c) for c in smp[:2]])
             elif female == 1:
-                sheet[-1] += [preview(res, c) for c in SAMPLES[2:]]
+                sheet[-1] += [preview(res, c) for c in smp[2:]]
     return out, sheet
 
 
 # ------------------------------------------------------------------ export
 # banques libres (octets disponibles, marge comprise)
-BANKS = [(9, 13600), (12, 11500), (4, 12200), (10, 7600), (2, 7900), (7, 6800), (6, 5800), (17, 16000)]
+BANKS = [(9, 13600), (12, 11500), (4, 12200), (10, 7600), (2, 7900), (7, 6800), (6, 5800), (17, 16000), (18, 13500), (20, 14500)]
 
 
 def pack(chr_):

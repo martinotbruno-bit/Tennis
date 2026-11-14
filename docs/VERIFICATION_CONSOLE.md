@@ -166,6 +166,7 @@ Pour chaque ligne, lancez un match et regardez l'écran pendant une dizaine de s
 | 10.28 | Bandes du ralenti (version 2.73) | Ralenti : bandes noires en haut et en bas, nettes, sans ligne qui saute ; joueurs visibles devant | ☐ |
 | 10.29 | Survol (version 2.73) | Avant une finale : ciel, tribunes et court glissent à des vitesses différentes ; limites des bandes nettes (au pire une ligne qui tremble) | ☐ |
 | 10.30 | Perspective (version 2.73) | Plus de traits horizontaux entre le public et le court | ☐ |
+| 10.31 | Plans télé (version 2.73) | Ramasseuse au changement de côté, poignée de main en fin de match, public après un long échange : images nettes, retour au court propre (score, bandeau, joueurs) | ☐ |
 
 ## 11. Ce qu'il faut renvoyer
 

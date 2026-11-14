@@ -665,7 +665,7 @@ console.log('Ralenti : gros plan et zoom');
     const w = d.peek('sc_winner'), np = d.peek('npl');
     runUntil(d, () => d.peek('hl_t') === 40, 100); const a = d.peek('hl_sp');
     const tx = []; for (let i = 0; i < 15 && d.peek('hl_txt', i); i++) tx.push(d.peek('hl_txt', i));
-    runUntil(d, () => d.peek('hl_t') === 120, 200); const b = d.peek('hl_sp');
+    runUntil(d, () => d.peek('hl_t') === 180, 200); const b = d.peek('hl_sp');
     runUntil(d, () => scr(d) === SS.RESULTS, 400);
     check(np === 4 && a === w && b === w + 2 && String.fromCharCode(...tx) === 'VICTOIRE !' && scr(d) === SS.RESULTS,
       `double : portrait du vainqueur, puis gros plan de son partenaire (« ${String.fromCharCode(...tx)} »), puis les résultats`);
@@ -680,6 +680,27 @@ console.log('Ralenti : gros plan et zoom');
   let rq = 0, hq = 0, pq = 0;
   for (let f = 0; f < 60 * 60 * 4; f++) { q.run(1); const m = q.peek('ms'); if (m === 5 && pq !== 5) rq++; if (q.peek('hl_mode')) hq++; pq = m; }
   check(rq > 0 && hq === 0, `RALENTIS « OUI, SIMPLE » : ralentis (${rq}) sans gros plan ni zoom`);
+  // plans télé HD (2.73) : ramasseuse au changement de côté (un sur deux), public après un long échange
+  {
+    const k = boot(); startWith(k, { FMT: 3, REPLAY: 1 }); allCpu(k);
+    k.cerSkip = false; k.poke('cer_skip', 0); k.poke('sc_games', 2); k.poke('sc_points', 3); k.poke('sc_points', 0, 1);
+    let kid = false, pal = false, txt = '', back = false;
+    for (let f = 0; f < 60 * 60 * 3 && !back; f++) {
+      k.run(1);
+      if (k.peek('cer') === 5 && k.peek('cer_t') < 240) k.poke('cer_t', 245);
+      if (k.peek('hl_mode') === 4) {
+        kid = true;
+        if (k.peek('hl_t') === 60) { pal = k.peek('pal_buf', 5) === 0x36 && k.peek('pal_buf', 9) === 0x2B; const a = []; for (let i = 0; i < 15 && k.peek('hl_txt', i); i++) a.push(k.peek('hl_txt', i)); txt = String.fromCharCode(...a); }
+      } else if (kid) { k.run(20); back = k.peek('cer') === 6 && k.peek('ctrl_swap') === 0 && k.peek('scroll_x') === 0 && app(k) === AS.MATCH; }
+    }
+    check(kid && pal && txt === 'LES BALLES' && back, `ramasseuse au changement de côté (« ${txt} », tenue verte ${pal}), puis retour au court (${back})`);
+    const c = boot(); startWith(c, { FMT: 3, REPLAY: 1 }); allCpu(c);
+    runUntil(c, () => c.peek('hl_mode') === 1, 60 * 60 * 15); c.poke('rally_hits', 14);
+    runUntil(c, () => c.peek('hl_t') === 90, 200);
+    const cp = c.peek('pal_buf', 5) === 0x36 && c.peek('pal_buf', 9) === 0x2B;
+    runUntil(c, () => c.peek('hl_mode') === 0, 200);
+    check(cp && c.peek('ctrl_swap') === 0, `long échange : le public debout à la place du gros plan de joie (${cp})`);
+  }
   // ace (2.70) : vitesse du service affichée façon télé, « ACE ! / xxx KM/H »
   {
     const a = boot(); startWith(a, { FMT: 3 });
@@ -2440,11 +2461,11 @@ console.log('Séquences animées du match');
         portrait = true;
         const t = e.peek('hl_t');
         if (t === 40) { const a = []; for (let i = 0; i < 15 && e.peek('hl_txt', i); i++) a.push(e.peek('hl_txt', i)); txt = String.fromCharCode(...a); first = e.peek('hl_sp'); }
-        if (t === 120) second = e.peek('hl_sp');
+        if (t === 180) second = e.peek('hl_sp');
       }
     }
     check(kneel && supine && racket, `${dbl ? 'double' : 'simple'} : balle de match, vainqueur à genoux poings levés, puis allongé, raquette lâchée`);
-    check(shake && close && salute && app(e) !== AS.MATCH && frames < 950, `${dbl ? 'double' : 'simple'} : poignée de main au filet, salut à l'arbitre, portrait du vainqueur, puis les résultats (${frames} trames)`);
+    check(shake && close && salute && app(e) !== AS.MATCH && frames < 1010, `${dbl ? 'double' : 'simple'} : poignée de main au filet, salut à l'arbitre, portrait du vainqueur, puis les résultats (${frames} trames)`);
     e.run(60);
     const four = n === 4, want = four ? 'VICTOIRE !' : (e.text(20, 4, 8).match(/^[A-Z]+/) || [''])[0] + ' GAGNE !';
     check(portrait && first === w && second === (four ? w + 2 : w) && txt === want && scr(e) === SS.RESULTS && e.peek('ctrl_swap') === 0,
