@@ -270,7 +270,9 @@ void cer_tick(void)
         break;
     case CER_SEAT:
         for (p = 0; p < npl; ++p) pose_force[p] = POSE_SIT;
-        if (cer_t >= 130) {
+        /* en match, un peu plus long (2.72) : le bandeau du bas montre le
+           score puis 4 statistiques (A ou START passe) */
+        if (cer_t >= (cfg.mode == GM_MATCH ? 250 : 130)) {
             cer = CER_BACK; cer_t = 0;
             for (p = 0; p < npl; ++p) stage[p] = 0;
         }

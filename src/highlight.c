@@ -158,8 +158,20 @@ u8 sun_st;
 #define CER_SEAT  5
 extern u8 hl_mode, cer;
 u8 band_vis, band_rows;      /* band_vis : 0 caché, 1 texte, 2 sprites cachés, 3 affiché */
-static u8 band_last[6];
+static u8 band_last[7];
 static char bb[28];
+/* changement de côté (2.72) : le bandeau alterne le score (page 0) et des
+   statistiques du match, une page toutes les 50 trames (joueurs assis
+   250 trames en match, cer.c) */
+u8 band_pg;
+static u8 band_t;
+static const char * const band_lbl[4] = { "1ERES BALLES", "ACES", "COUPS GAGNANTS", "SERVICE MAX KM/H" };
+static void band_num(u8 at, u16 v)
+{
+    bb[at + 2] = (char)('0' + v % 10);
+    if (v >= 10) bb[at + 1] = (char)('0' + (v / 10) % 10);
+    if (v >= 100) bb[at] = (char)('0' + v / 100);
+}
 static void band_init(void)
 {
     static const u8 rule[16] = { 0, 0, 0xFF, 0, 0, 0, 0, 0,   0, 0, 0xFF, 0xFF, 0, 0, 0, 0 };   /* trait blanc, ombre noire */
@@ -176,8 +188,33 @@ static void band_init(void)
 }
 static void band_text(u8 t)
 {
-    u8 i;
+    u8 i, k;
+    const char *q;
     for (i = 0; i < 28; ++i) bb[i] = ' ';
+    if (band_pg) {
+        if (t == 0) {               /* noms au-dessus des colonnes */
+            team_label(cfg.chr[0], cfg.doubles ? cfg.chr[2] : 255, bb + 16);
+            team_label(cfg.chr[1], cfg.doubles ? cfg.chr[3] : 255, bb + 23);
+            bb[20] = bb[27] = ' ';
+            return;
+        }
+        for (q = band_lbl[band_pg - 1], i = 0; *q; ) bb[i++] = *q++;
+        for (k = 0; k < 2; ++k) {
+            i = (u8)(17 + k * 7);
+            switch (band_pg) {
+            case 1:
+                band_num(i, st_first_tot[k] ? (u16)(((u16)st_first_in[k] * 100) / st_first_tot[k]) : 0);
+                bb[i + 3] = '%';
+                break;
+            case 2: band_num(i, st_aces[k]); break;
+            case 3: band_num(i, st_winners[k]); break;
+            default:
+                if (st_vmax[k]) band_num(i, (u16)st_vmax[k] + 80);
+                else bb[i] = bb[i + 1] = bb[i + 2] = '-';
+            }
+        }
+        return;
+    }
     if (sc_server == t) bb[0] = '@';                          /* balle : au service */
     team_label(cfg.chr[t], cfg.doubles ? cfg.chr[t + 2] : 255, bb + 2);
     bb[6] = ' ';
@@ -229,9 +266,13 @@ void band_draw(void)
         return;
     }
     if (!band_vis) { band_vis = 1; band_rows = 3; }
+    if (cer == CER_SEAT) {
+        if (++band_t >= 50) { band_t = 0; if (++band_pg > 4) band_pg = 0; }
+    } else band_pg = band_t = 0;
     /* texte : rafraîchi quand le score change, une rangée par trame */
     if (band_last[0] != sc_points[0] || band_last[1] != sc_points[1] || band_last[2] != sc_games[0] ||
-        band_last[3] != sc_games[1] || band_last[4] != sc_set_no || band_last[5] != sc_server) {
+        band_last[3] != sc_games[1] || band_last[4] != sc_set_no || band_last[5] != sc_server || band_last[6] != band_pg) {
+        band_last[6] = band_pg;
         band_last[0] = sc_points[0]; band_last[1] = sc_points[1]; band_last[2] = sc_games[0];
         band_last[3] = sc_games[1]; band_last[4] = sc_set_no; band_last[5] = sc_server;
         band_rows = 3;
@@ -268,7 +309,6 @@ void band_draw(void)
 void sun_apply(void)
 {
     u8 i, g, L, st, red;
-    band_init();
     if (cfg.cond != COND_SUNSET || cfg.mode != GM_MATCH) return;
     g = (u8)(sc_games[0] + sc_games[1]);
     for (i = 0; i < sc_set_no && i < MAX_SETS; ++i) g = (u8)(g + sc_hist[i][0] + sc_hist[i][1]);
@@ -279,6 +319,16 @@ void sun_apply(void)
     pal_set_court(cfg.surface, st == 3 ? COND_NIGHT : COND_DAY, cfg.env);
     ppu_emph = st == 1 ? red : st == 2 ? (u8)(red | 0x80) : 0;
     sun_st = st;
+}
+/* chargement du court (court_load, game.c ; rendu coupé) : bandeau du score
+   (écran 1) puis lumière du crépuscule. band_init écrit dans la VRAM : jamais
+   pendant l'affichage (sun_apply, elle, est aussi appelée à la fin de chaque
+   jeu, écran allumé : en 2.71 elle appelait band_init, et ces écritures en
+   plein affichage abîmaient des tuiles du court et de la police) */
+void court_post(void)
+{
+    band_init();
+    sun_apply();
 }
 void hl_ace_msg(void)
 {

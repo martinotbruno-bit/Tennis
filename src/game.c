@@ -153,7 +153,7 @@ extern const char *hl_ptxt;
 extern u8 hl_spd, hl_srv, st_vmax[2], st_vmaxp[2];
 void hl_ace_msg(void);
 void hl_serve(void);
-void sun_apply(void);
+void court_post(void);
 void band_draw(void);
 u16 __fastcall__ hl_point_ev(u16 ev);
 extern u8 rp_head;
@@ -974,7 +974,7 @@ static void court_load(void)
     vram_adr(0x2000);
     bank_call(BANK_EXTRAS, load_court);
     pal_set_court(cfg.surface, cfg.cond, cfg.env);
-    bank_call(BANK_HL, sun_apply);     /* bandeau du score (écran 1) ; crépuscule : lumière selon les jeux joués (highlight.c) */
+    bank_call(BANK_HL, court_post);    /* bandeau du score (écran 1) ; crépuscule : lumière selon les jeux joués (highlight.c) */
     pal_set_player(0, cfg.chr[0]);
     pal_set_player(1, cfg.chr[1]);
 }

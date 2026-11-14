@@ -429,6 +429,23 @@ console.log('Version 2.71 : bandeau du score, crépuscule, voix, record');
   runUntil(e, () => scr(e) === SS.RESULTS, 600);
   check(e.peek('ppu_emph') === 0 && e.peek('band_vis') === 0 || scr(e) === SS.RESULTS && e.peek('ppu_emph') === 0, `hors du court : pas d'accentuation (${e.peek('ppu_emph')})`);
 }
+for (const view of [0, 1]) {
+  // (2.72) aucune écriture dans la VRAM pendant l'affichage : en 2.71, la fin
+  // de chaque jeu réécrivait le bandeau et la tuile de son filet écran
+  // allumé, et abîmait des tuiles de la police et du court
+  const e = boot(); startWith(e, { FMT: 0, COND: 3, VIEW: view, REPLAY: 0 }); allCpu(e);
+  const vm = e.nes.ppu.vramMem, font = () => Array.from(vm.slice(0x300, 0x3A0)).join(',');   /* chiffres 0 à 9 */
+  let ref = null, bad = 0, games = 0, pg = 0;
+  for (let f = 0; f < 60 * 60 * 8 && app(e) === AS.MATCH; f++) {
+    e.poke('cer_skip', e.peek('cer') >= 1 && e.peek('cer') <= 3 ? 1 : 0);
+    e.run(1);
+    const g = e.peek('sc_games', 0) + e.peek('sc_games', 1); if (g !== pg) { games++; pg = g; }
+    if (e.peek('hl_mode')) continue;
+    const s = font();
+    if (ref === null) ref = s; else if (s !== ref) bad++;
+  }
+  check(games >= 4 && bad === 0, `${view ? 'perspective' : 'à plat'} : chiffres de la police intacts pendant tout le match (${games} jeux, ${bad} trames abîmées)`);
+}
 {
   // record du service le plus rapide (palmarès), « KM/H : RECORD ! »
   const e = boot(); startWith(e, { FMT: 3 });
