@@ -119,12 +119,20 @@ static void finish(void)
 
 /* ---------------------------------------------------------------------- */
 /* Entrée des joueurs (début du match) */
+#define BANK_CAR 19                  /* (app.h) */
+extern u8 mresume, pod_buf[];
+void msave_restore(void);
 void cer_entry(void)
 {
     u8 p;
     cer_skip = 0;
     all_free();
     cer = 0;
+    /* reprise d'un match sauvegardé (2.72) : score et statistiques, pas
+       d'entrée des joueurs ni de tirage au sort ; sinon, la sauvegarde
+       d'un autre match est effacée */
+    if (mresume) { bank_call(BANK_CAR, msave_restore); if (!mresume && pod_buf[0] == 'M') return; }
+    pod_buf[0] = 0;
     if (cfg.mode != GM_MATCH || cfg.demo) return;
     for (p = 0; p < npl; ++p) {
         tx[p] = plx[p]; ty[p] = ply[p];

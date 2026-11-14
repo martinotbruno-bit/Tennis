@@ -280,6 +280,7 @@ static void draw_logo(u8 y)
 u8 title_cur;
 static const char * const title_items[4] = { "JOUER", "MODE D'EMPLOI", "PALMARES", "CODE DE REPRISE" };
 
+u16 __fastcall__ msave_ok(u16 unused); void msave_load_cfg(void); void __fastcall__ msave_mode(u8 m);   /* career.c */
 static u8 opts_loaded;
 static void title_screen(void)
 {
@@ -313,7 +314,8 @@ static void title_screen(void)
     deco_row = 24; bank_call(BANK_PODIUM, deco_filet);
     pal_buf[9] = 0x27; pal_buf[10] = 0x28; pal_buf[11] = 0x30;   /* logo et balle : couleurs d'origine */
     for (i = 0; i < 4; ++i) txt_at(10, (u8)(16 + i * 2), title_items[i]);
-    txt_at(4, 25, "HAUT/BAS PUIS A - START");
+    /* match interrompu (console éteinte) : on peut le reprendre (2.72) */
+    txt_at(4, 25, far_call(BANK_CAR, (void *)msave_ok, 0) ? "B : REPRENDRE LE MATCH" : "HAUT/BAS PUIS A - START");
     txt_at(4, 27, "(C) 2026 BRUNO MARTINOT");
     ppu_on();
     if (music_cur != MUS_TITLE) music_play(MUS_TITLE);   /* même polka qu'au menu, sans reprise */
@@ -992,8 +994,10 @@ static void palmares_screen(void)
 }
 
 /* ---------------------------------------------------------------------- */
+extern u8 pod_buf[];
 static void after_match(void)
 {
+    pod_buf[0] = 0;                     /* match fini ou abandonné : plus de reprise (2.72) */
     if (match_quit == 2) { title_screen(); return; }        /* démonstration */
     if (match_quit) {
         music_play(MUS_NONE);
@@ -1016,7 +1020,7 @@ void screens_enter(u8 scr)
     }
 }
 
-static void go_match(void) { go_req = GO_MATCH; }
+static void go_match(void) { far_call(BANK_CAR, (void *)msave_mode, last_mode); go_req = GO_MATCH; }   /* (mode du menu : rangé avec la sauvegarde du match) */
 
 void screens_tick(void)
 {
@@ -1026,6 +1030,9 @@ void screens_tick(void)
         if (pad1_new & PAD_UP)   { title_cur = (u8)((title_cur + 3) & 3); sfx_menu_move(); idle = 0; }
         if (pad1_new & PAD_DOWN) { title_cur = (u8)((title_cur + 1) & 3); sfx_menu_move(); idle = 0; }
         if (pad1_new & PAD_SELECT) { sfx_menu_ok(); code_screen(); break; }
+        if ((pad1_new & PAD_B) && (v = (u8)far_call(BANK_CAR, (void *)msave_ok, 0)) != 0) {
+            sfx_menu_ok(); last_mode = (u8)(v - 1); bank_call(BANK_CAR, msave_load_cfg); present_screen(); break;
+        }
         if (pad1_new & (PAD_START | PAD_A)) {
             sfx_menu_ok();
             if ((pad1_new & PAD_START) || title_cur == 0) menu_screen();

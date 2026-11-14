@@ -22,7 +22,6 @@ typedef struct {
 } SaveData;
 
 extern SaveData sv;
-extern u8 sw_h2h[NCHARS + 2], sw_car[12];   /* face-à-face, carrière (2.72) */
 extern u8 sw_best[4];   /* meilleurs rangs des types 5 et 6 : sw_best[1], sw_best[2] */
 
 /* derniers réglages du menu, dans un bloc à part (le palmarès garde sa

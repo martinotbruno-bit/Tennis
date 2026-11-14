@@ -12,6 +12,9 @@
 #include "game.h"
 #include "comp.h"
 #include "stats.h"
+#include "game_int.h"
+#include "audio.h"
+void set_msg(const char *a, const char *b, u8 t);   /* banque fixe */
 
 #pragma static-locals(on)
 
@@ -25,7 +28,7 @@ static const u8 ch_h[NCHARS] = { 85, 72, 90, 68, 83, 70, 96, 75, 88, 66, 79, 74,
 static const u8 ch_left[NCHARS] = { 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0 };
 static const u8 ch_rank[NCHARS] = { 3, 1, 5, 2, 8, 6, 4, 7, 11, 9, 14, 10, 12, 13, 15, 16, 0, 18, 17, 0, 0 };
 
-extern u8 sw_h2h[NCHARS + 2];          /* stats.c : 'H', vos victoires (4 bits hauts) et défaites contre chaque personnage, contrôle */
+extern u8 sw_h2h[NCHARS + 2], sw_car[12];   /* stats.c (carrière : sw_car) : 'H', vos victoires (4 bits hauts) et défaites contre chaque personnage, contrôle */
 extern u16 car_rank(void);             /* classement de la carrière (0 : pas de carrière) */
 
 #define fb comp_l1                     /* (tampon de texte de 29 caractères de comp.c : libre sur l'affiche et les écrans de fin) */
@@ -217,4 +220,89 @@ void car_pal_text(void)
         while (x < 15) fb[x++] = '-';
         txt_at(3, (u8)(21 + k), fb);
     }
+}
+
+/* ====================================================================== */
+/* Sauvegarde du match en cours (2.72, cartouche à pile) : à la fin de     */
+/* chaque point d'un match hors compétition (hl_point_ev), réglages,      */
+/* score et statistiques sont copiés dans pod_buf (RAM sauvegardée ; le    */
+/* podium, seul autre utilisateur, ne vient qu'en fin de compétition).    */
+/* Au démarrage, l'écran titre propose « B : REPRENDRE LE MATCH » : le     */
+/* match repart au même score, au service (cer_entry -> msave_restore).   */
+/* La sauvegarde est effacée au début d'un autre match et à la fin du     */
+/* match (gagné, perdu ou abandonné).                                     */
+/* ====================================================================== */
+extern u8 pod_buf[144];
+extern u8 st_points[2], st_aces[2], st_dfaults[2], st_winners[2], st_errors[2], st_first_in[2], st_first_tot[2];
+extern u8 st_longest, st_canon[2], st_ctry[2], st_perf[2], st_ptry[2], st_vmax[2], st_vmaxp[2], srv_slot[2];
+#include "rules.h"
+#pragma bss-name(push, "WBSS")
+u8 mresume;                             /* 1 : le prochain match reprend la sauvegarde */
+#pragma bss-name(pop)
+typedef struct { u8 *p; u8 n; } MsvPart;
+static const MsvPart msv_tab[] = {
+    { (u8 *)&cfg, sizeof(MatchCfg) },
+    { sc_points, 2 }, { sc_games, 2 }, { sc_sets, 2 }, { (u8 *)sc_hist, MAX_SETS * 2 },
+    { &sc_set_no, 1 }, { &sc_tiebreak, 1 }, { &sc_server, 1 }, { &sc_swap, 1 }, { &sc_tb_first, 1 },
+    { &sc_set_first_server, 1 }, { &sc_sets_to_win, 1 }, { &sc_games_per_set, 1 },
+    { st_points, 2 }, { st_aces, 2 }, { st_dfaults, 2 }, { st_winners, 2 }, { st_errors, 2 },
+    { st_first_in, 2 }, { st_first_tot, 2 }, { &st_longest, 1 }, { st_canon, 2 }, { st_ctry, 2 },
+    { st_perf, 2 }, { st_ptry, 2 }, { st_vmax, 2 }, { st_vmaxp, 2 }, { srv_slot, 2 } };
+#define MSV_N (sizeof(msv_tab) / sizeof(msv_tab[0]))
+static u8 msv_len, msv_sum;
+static void msv_check(void)             /* longueur et contrôle de pod_buf[0 .. msv_len - 1] */
+{
+    u8 i = 0, c = 0x4D;
+    msv_len = 2;
+    for (msv_sum = 0; msv_sum < MSV_N; ++msv_sum) msv_len = (u8)(msv_len + msv_tab[msv_sum].n);
+    while (i < msv_len) { c = (u8)(((c << 1) | (c >> 7)) ^ pod_buf[i]); ++i; }
+    msv_sum = c;
+}
+/* fin d'un point (hl_point_ev) : last_mode connu de screens.c, rangé par msave_mode */
+static u8 msv_mode;
+void __fastcall__ msave_mode(u8 m) { msv_mode = m; }
+void msave_write(void)
+{
+    u8 k, i, n = 2;
+    const u8 *q;
+    if (cfg.mode != GM_MATCH || cfg.demo || c_active || sc_over) return;
+    pod_buf[0] = 'M'; pod_buf[1] = msv_mode;
+    for (k = 0; k < MSV_N; ++k)
+        for (q = msv_tab[k].p, i = msv_tab[k].n; i; --i) pod_buf[n++] = *q++;
+    msv_check();
+    pod_buf[msv_len] = msv_sum;
+}
+void msave_clear(void) { pod_buf[0] = 0; }
+/* écran titre : 1 + le mode du menu si une sauvegarde est valable, 0 sinon */
+u16 __fastcall__ msave_ok(u16 unused)
+{
+    (void)unused;
+    if (pod_buf[0] != 'M') return 0;
+    msv_check();
+    if (pod_buf[msv_len] != msv_sum) return 0;
+    return (u16)(1 + pod_buf[1]);
+}
+/* reprise demandée : les réglages tout de suite (écran de présentation) */
+void msave_load_cfg(void)
+{
+    u8 i;
+    u8 *d = (u8 *)&cfg;
+    for (i = 0; i < sizeof(MatchCfg); ++i) d[i] = pod_buf[2 + i];
+    mresume = 1;
+}
+/* début du match (cer_entry, après match_start) : score et statistiques ;
+   un « let » d'une trame replace les joueurs pour le service (after_point) */
+void sun_apply(void);                   /* highlight.c, banque 15 */
+void msave_restore(void)
+{
+    u8 k, i, n = 2;
+    u8 *q;
+    mresume = 0;
+    /* (seulement si le match lancé est bien celui de la sauvegarde) */
+    for (q = (u8 *)&cfg, i = 0; i < sizeof(MatchCfg); ++i) if (q[i] != pod_buf[2 + i]) { pod_buf[0] = 0; return; }
+    for (k = 0; k < MSV_N; ++k)
+        for (q = msv_tab[k].p, i = msv_tab[k].n; i; --i) *q++ = pod_buf[n++];
+    ms = MS_DEAD; ms_timer = 1; end_reason = 3;     /* END_LET : after_point replace les joueurs */
+    set_msg("REPRISE", "DU MATCH", 90);
+    bank_call(BANK_HL, sun_apply);                  /* crépuscule : la lumière du moment */
 }

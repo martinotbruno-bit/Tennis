@@ -52,7 +52,12 @@ static u8 pal_sv[16], med_x[4], med_y[4], med_ty[4], med_c[4], n_med, fl_t, meda
 #pragma bss-name(pop)
 #pragma bss-name(push, "SAVEDATA")    /* (version 2.61 : zone de sauvegarde libre, hors du bloc sauvegardé ; libère la RAM de travail) */
 u8 pod_new;
-static u8 src[16], out[64], at[64];
+/* src (16), out (64), at (64) : un seul bloc, pod_buf (2.72) ; hors du
+   podium, il garde la sauvegarde du match en cours (career.c) */
+u8 pod_buf[144];
+#define src pod_buf
+#define out (pod_buf + 16)
+#define at (pod_buf + 80)
 static u8 cup_t, fw_c, third_c;
 #pragma bss-name(pop)
 

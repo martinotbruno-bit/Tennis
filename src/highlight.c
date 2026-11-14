@@ -235,6 +235,7 @@ static void band_text(u8 t)
    (hl_point_ev, game.c), dites un peu après, quand le DMC a fini l'annonce
    en cours (« Out! », « Fault! ») : rien n'est coupé. */
 void sun_apply(void);
+void msave_write(void);
 #define V_DEUCE 4
 #define V_GAME  5
 #define V_ADV   6
@@ -255,6 +256,7 @@ u16 __fastcall__ hl_point_ev(u16 ev)
     else if (!sc_tiebreak && sc_points[0] >= 3 && sc_points[1] >= 3)
         voice_pend = sc_points[0] == sc_points[1] ? V_DEUCE : V_ADV;
     voice_t = 24;
+    bank_call(BANK_CAR, msave_write);       /* sauvegarde du match en cours (2.72, career.c) */
     return 0;
 }
 static void voice_tick(void)
