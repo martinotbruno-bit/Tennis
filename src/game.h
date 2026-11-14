@@ -28,6 +28,7 @@
 #define COND_DAY   0
 #define COND_NIGHT 1
 #define COND_RAIN  2
+#define COND_SUNSET 3   /* crépuscule (2.71) : jour, soleil couchant, puis nuit au fil des jeux (match seul) */
 
 /* lieux */
 #define ENV_STADIUM 0

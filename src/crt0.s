@@ -6,13 +6,13 @@
 
 .export __STARTUP__ : absolute = 1
 .export _oam_buf, _vram_buf, _vram_len
-.export _frame_cnt, _nmi_ready, _pal_buf, _pal_dirty, _ppu_mask, _fade_lvl, _fade_skip
+.export _frame_cnt, _nmi_ready, _pal_buf, _pal_dirty, _ppu_mask, _fade_lvl, _fade_skip, _ppu_emph
 .import _audio_tick, _is_pal
 .export _pad1, _pad2, _pad1_new, _pad2_new, _region_cnt
 .export _wait_frame, _pad_poll, _ppu_off, _ppu_on, _vram_adr, _vram_put
 .export _swap_put, _vram_fill, _vram_unrle, _rand8, _rand_seed
 .export _scroll_y, _scroll_nt, _mirror_h, _scroll_x, _tz_bank, _tz_n, _tz_unpack, _tz_copy, _tz_src
-.export _chr_data, _split_start, _split_stop, _split_o, _ctrl_swap, _rp_seq
+.export _chr_data, _split_start, _split_stop, _split_o, _ctrl_swap, _rp_seq, _band_on
 .export _spr1, _spr_meta, _spr_end, _oam_i, _spr_rot, _set_bank, _cur_bank, _bank_call, _far_call, _rp_record
 .import _bx, _by, _bz, _b_vis, _plx, _ply, _pose_cache, _flip_cache
 .import _rp_buf, _rp_head, _rp_count, _swp_dst
@@ -73,6 +73,7 @@ _pal_dirty: .res 1
 _fade_lvl:  .res 1      ; fondu de la palette : 0 (normal) à 64 (noir)
 _fade_skip: .res 1      ; 1 : prochaine coupure sans fondu
 _ppu_mask:  .res 1
+_ppu_emph:  .res 1     ; accentuation des couleurs (bits 5-7 de PPUMASK : crépuscule, 2.71), effacée par ppu_off
 _pad1:      .res 1
 _pad2:      .res 1
 _pad1_new:  .res 1
@@ -108,7 +109,8 @@ _region_cnt:.res 2      ; nombre de boucles entre deux VBlank (détection NTSC/P
 .segment "WBSS"
 _rp_seq:    .res 2      ; trames enregistrées (rp_record)
 _ctrl_swap: .res 1      ; tables de tuiles échangées (highlight.c, version 2.67)
-split_on: .res 1
+split_on: .res 1        ; 1 : glissade de l'affiche VS ; 2 : bandeau du score (2.71)
+split_l:  .res 1        ; ligne de l'interruption (valeur de recharge du compteur MMC3)
 _split_o:
 split_o:  .res 1
 split_c:  .res 1
@@ -345,6 +347,7 @@ nmi:
     ora _scroll_nt
     sta PPUCTRL
     lda _ppu_mask
+    ora _ppu_emph
     sta PPUMASK
     lda #0
     sta _nmi_ready
@@ -356,7 +359,14 @@ nmi:
     lda _ppu_mask
     and #$18
     beq @nosplit
-    lda #31
+    ; trame en retard (NMI sans le travail du VBlank) : l'interruption du
+    ; bandeau a laissé l'écran 1 dans PPUCTRL ; on le remet pour le haut de
+    ; l'image (2.71)
+    lda #CTRL_VAL
+    eor _ctrl_swap
+    ora _scroll_nt
+    sta PPUCTRL
+    lda split_l         ; (31 : affiche VS ; bandeau du score : plus bas)
     sta MMC3_IRQL       ; (jsnes : compteur ; MMC3 : valeur de recharge)
     sta MMC3_IRQR       ; (jsnes : recharge ; MMC3 : rechargement)
     sta MMC3_IRQD       ; acquitte
@@ -404,6 +414,16 @@ irq:
     tya
     pha
     sta MMC3_IRQD       ; acquitte (une seule par trame)
+    lda split_on
+    lsr a
+    bcs @vs
+    ; bandeau du score (2.71) : écran 1 à partir de la ligne suivante (le bit
+    ; horizontal de l'écran passe dans l'adresse du PPU à la fin de la ligne ;
+    ; même défilement : les rangées du bas de l'écran 1 s'affichent)
+    lda #CTRL_VAL | 1
+    sta PPUCTRL
+    jmp @out
+@vs:
     ldx split_o         ; X : défilement des lignes paires (+o)
     txa
     eor #$FF
@@ -446,6 +466,7 @@ irq:
     sta PPUCTRL
     lda _scroll_x
     sta PPUSCROLL
+@out:
     bit PPUSTATUS       ; (double accès remis à zéro pour le thread principal)
     pla
     tay
@@ -457,7 +478,16 @@ irq:
 ; void split_start(u8 o) : glissade active, décalage o (0..255)
 _split_start:
     sta split_o
+    ldx #31
+    stx split_l
     lda #1
+    sta split_on
+    cli
+    rts
+; void __fastcall__ band_on(u8 l) : bandeau du score, interruption à la ligne l
+_band_on:
+    sta split_l
+    lda #2
     sta split_on
     cli
     rts
@@ -513,6 +543,7 @@ _ppu_off:
     jsr _split_stop     ; (glissade de l'affiche VS : interruption coupée)
     lda #0
     sta _ppu_mask
+    sta _ppu_emph       ; (crépuscule : pas d'accentuation hors du court)
     jsr _wait_frame
     lda #0
     sta PPUMASK

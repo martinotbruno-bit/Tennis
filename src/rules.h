@@ -27,6 +27,18 @@ extern ru8 sc_sets_to_win, sc_games_per_set;
 extern ru8 sc_tb_first;       /* serveur du premier point du jeu décisif */
 extern ru8 sc_set_first_server;
 
+/* NES (2.71) : le code des règles est dans une banque commutable (place
+   libérée dans la banque fixe pour les voix de l'arbitre) ; les fonctions
+   rules_* de la banque fixe (rules_far.c) l'appellent sous le nom rb_*. */
+#if defined(__CC65__) && defined(RULES_BANKED)
+#define rules_init rb_init
+#define rules_point rb_point
+#define rules_ad_side rb_ad_side
+#define rules_point_label rb_point_label
+#define rules_is_set_point rb_is_set_point
+#define rules_is_match_point rb_is_match_point
+#endif
+
 void rules_init(ru8 sets_to_win, ru8 games_per_set, ru8 first_server);
 ru8 rules_point(ru8 team);
 /* 0 = côté égalité (droite du serveur), 1 = côté avantage */

@@ -50,7 +50,7 @@ Depuis la version 2.59, le fond des menus change à chaque allumage : terre batt
 | NIVEAU CPU | Facile · Normal · Expert |
 | SURFACE | Terre battue · Gazon · Dur · Moquette · Plage · Glace (les deux dernières sont des terrains fantaisie) |
 | LIEU | Stade (tribunes pleines) · Club (extérieur, arbres) · Salle (intérieur) · Club nudiste (bonus à débloquer, voir § 9 bis ; panneau « BRONZES » à côté du score) · Court Margaux (court rose, décor de cœurs, fleurs et étoiles, petit panneau « MARGAUX » à côté du score) · **Château** (murs de pierre, bannières royales, torches, spectateurs aux balcons) · **Parc** (arbres aux couleurs de l'automne) |
-| CONDITIONS | Jour · Nuit · Pluie. Il ne pleut pas en salle : la pluie y devient « jour » |
+| CONDITIONS | Jour · Nuit · Pluie · Crépuscule (depuis la version 2.71). Il ne pleut pas en salle : la pluie y devient « jour ». Le crépuscule est réservé aux matchs hors compétition, en plein air : ailleurs il devient « jour » (« CREP. > JOUR ») |
 | FORMAT | 1 set · 3 sets · 5 sets · Rapide (sets de 4 jeux) |
 | RALENTIS | Ralenti automatique après les plus beaux points : NON ; OUI, TELE (avec gros plan du coup et zoom sur le rebond, depuis la version 2.67) ; OUI, SIMPLE (le ralenti seul, plus court, version 2.69) |
 | VITESSE JEU | Lent (75 %, idéal pour débuter ou pour les enfants) · Normal · Rapide (125 %). Aussi en compétition et à l'entraînement. En Lent, une petite croix montre une demi-seconde où va tomber la balle adverse |
@@ -142,6 +142,8 @@ Le lancer reste visible quelle que soit votre position, y compris quand vous ser
     - ligne 1 : le nom ;
     - ligne 2 : les jeux gagnés dans le set en cours (« J 3 »), suivis de `*` si ce joueur sert ;
     - ligne 3 : les points du jeu en cours (0, 15, 30, 40, AV), suivis d'un rond plein par set gagné.
+- **L'arbitre parle** : « Out! » sur une balle dehors, « Fault! » sur un service faux, « Let! » sur un let, et depuis la version 2.71 il annonce le score : « Deuce! » (égalité), « Advantage! » (avantage) et « Game! » (fin d'un jeu), juste après l'annonce de la faute, sans la couper. Au court Margaux, la princesse annonce d'une voix plus aiguë.
+- **Bandeau du score façon télévision** (version 2.71) : après chaque point, et pendant que les joueurs sont assis au changement de côté, un bandeau s'affiche en bas de l'écran avec le score détaillé : une balle devant le serveur, les noms, les jeux de chaque set (le set en cours compris) et les points du jeu. Il disparaît avant le service.
 - Les **annonces** de l'arbitre s'affichent au centre du bandeau : faute, let, égalité, avantage, balle de set ou de match, jeu décisif, changement de côté, ace, coup gagnant… Sur un ace, la **vitesse du service** s'affiche sous « ACE ! », comme à la télévision (par exemple « 174 KM/H » ; depuis la version 2.70).
 - Les **coups gagnants** sont nommés : SMASH SAUTÉ, SMASH, AMORTIE, LOB GAGNANT, VOLÉE GAGNANTE, PASSING (adversaire au filet) ou COUP GAGNANT, avec un bref « ting » ; sans autre son ajouté et toujours sans musique pendant le match.
 - **Bruitages** : le geste de raquette fait un souffle, la frappe un « pok » avec du corps (plus grave quand elle est forte), une balle dehors ou un service faux déclenche le « bip » du juge électronique. Le public n'est plus coupé par un simple rebond.
@@ -162,7 +164,7 @@ Le lancer reste visible quelle que soit votre position, y compris quand vous ser
 - À la fin du match, avant les résultats, le **vainqueur** apparaît en grand, à ses couleurs : en pied, bras levés sous les confettis, avec son nom (« MAYA GAGNE ! » ; en double « VICTOIRE ! »), puis en gros plan (en double, son partenaire). A ou START passe.
 - **En fin de match** :
   - le vainqueur célèbre et le perdant baisse la tête ;
-  - l'écran de résultats donne les statistiques : points gagnés, aces, doubles fautes, coups gagnants, fautes, pourcentage de premières balles, plus long échange, services canon, coups parfaits et, depuis la version 2.70, le service le plus rapide de chacun (SERVICE MAX KM/H) ;
+  - l'écran de résultats donne les statistiques : points gagnés, aces, doubles fautes, coups gagnants, fautes, pourcentage de premières balles, plus long échange, services canon, coups parfaits et, depuis la version 2.70, le service le plus rapide de chacun (SERVICE MAX KM/H ; « KM/H : RECORD ! » en or quand vous battez votre record, version 2.71) ;
   - **A** relance une revanche, **B** revient au menu.
 
 ### Les moments du match (version 2.52)
@@ -205,6 +207,7 @@ Les joueurs courent de profil quand ils se déplacent sur le côté, et l'on ent
 Conditions :
 - **Nuit** : décor assombri.
 - **Pluie** : gouttes à l'écran, rebonds plus bas et balle qui glisse.
+- **Crépuscule** (version 2.71) : le soleil se couche pendant le match. Au fil des jeux, la lumière passe du plein jour à une lumière chaude de fin d'après-midi, puis rose-violette au coucher du soleil, plus sombre ; enfin les projecteurs s'allument (la lumière d'un match de nuit). Toute l'image change de teinte, joueurs compris, comme sous un vrai éclairage.
 
 ## 7. Modes
 
@@ -280,7 +283,7 @@ Une somme de contrôle de 12 bits détecte les erreurs de recopie.
 ## 9. Palmarès
 
 Le palmarès comporte 3 pages (GAUCHE/DROITE) :
-- **Statistiques** : matchs joués, gagnés et perdus en simple et en double ; points, aces, doubles fautes, coups gagnants, fautes, pourcentage de premières balles ; titres et compétitions disputées ; records (plus long échange, aces en un match).
+- **Statistiques** : matchs joués, gagnés et perdus en simple et en double ; points, aces, doubles fautes, coups gagnants, fautes, pourcentage de premières balles ; titres et compétitions disputées ; records (plus long échange, aces en un match, et depuis la version 2.71 le service le plus rapide, avec le nom du joueur : « RECORD SERVICE 212 KM/H ALEX ») ; services canon et coups parfaits, en nombre et en pourcentage.
 - **Résultats** : meilleur résultat par type de compétition et historique des 8 dernières ; une médaille d'or, d'argent ou de bronze marque chaque podium.
 - **Records d'entraînement** : meilleur score par exercice.
 

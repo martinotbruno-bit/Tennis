@@ -86,14 +86,16 @@ u16 __fastcall__ hl_hit(u16 pk)
 /* ace (2.70) : « ACE ! » et la vitesse du service, comme à la télévision :
    environ 140 km/h coupé, 170 à plat, 210 canon (1,375 x la vitesse de la
    balle + 80, à quelques km/h près) */
-u8 hl_spd, hl_srv;     /* vitesse du service (puis km/h - 80), équipe au service */
+u8 hl_spd, hl_srv;     /* vitesse du service (puis km/h - 80), joueur au service */
 u8 st_vmax[2];         /* service le plus rapide de chaque équipe (km/h - 80, 0 : aucun) */
+u8 st_vmaxp[2];        /* ... et le joueur qui l'a servi (record du palmarès) */
+extern u8 sp_new;      /* nouveau record de vitesse (stats.c) */
 static char ace_b[10];
 /* à chaque service (game.c) : vitesse convertie en km/h façon télé, et record du match */
 void hl_serve(void)
 {
     hl_spd = (u8)(hl_spd + (hl_spd >> 2) + (hl_spd >> 3) + (rand8() & 7));
-    if (hl_spd > st_vmax[hl_srv]) st_vmax[hl_srv] = hl_spd;
+    if (hl_spd > st_vmax[hl_srv & 1]) { st_vmax[hl_srv & 1] = hl_spd; st_vmaxp[hl_srv & 1] = hl_srv; }
 }
 /* ligne « SERVICE MAX KM/H » des écrans de statistiques (screens.c), « --- » sans service */
 u16 __fastcall__ hl_vmax_row(u16 y)
@@ -101,7 +103,8 @@ u16 __fastcall__ hl_vmax_row(u16 y)
     u8 t;
     u16 k;
     char n[4];
-    txt_at(2, (u8)y, "SERVICE MAX KM/H");
+    if (sp_new) { txt_off = 0x40; txt_at(2, (u8)y, "KM/H : RECORD !"); txt_off = 0; }   /* (palmarès, en or) */
+    else txt_at(2, (u8)y, "SERVICE MAX KM/H");
     n[3] = 0;
     for (t = 0; t < 2; ++t) {
         k = (u16)st_vmax[t] + 80;
@@ -110,6 +113,152 @@ u16 __fastcall__ hl_vmax_row(u16 y)
         txt_at((u8)(19 + t * 6), (u8)y, n);
     }
     return 0;
+}
+/* palmarès, rangée 22 (menuart.c) : « RECORD SERVICE  212 KM/H ALEX » */
+extern u8 sw_spd[4];
+void hl_rec_row(void)
+{
+    u16 k = (u16)sw_spd[1] + 80;
+    char n[5];
+    txt_at(3, 22, "RECORD SERVICE");
+    if (!sw_spd[1]) { txt_at(22, 22, "---"); return; }
+    n[0] = (char)('0' + k / 100); n[1] = (char)('0' + (k / 10) % 10); n[2] = (char)('0' + k % 10); n[3] = 0;
+    txt_at(18, 22, n); txt_at(22, 22, "KM/H");
+    team_label(sw_spd[2], 255, n); txt_at(27, 22, n);
+}
+/* Crépuscule (2.71, CONDITIONS : CREPUSCULE) : la lumière change au fil des
+   jeux, en 4 paliers sur environ un match moyen (sets gagnants x jeux par
+   set x 1,2 jeux) : 0 plein jour ; 1 soleil bas, lumière chaude (accentuation
+   du rouge de la NES : toute l'image, joueurs compris, comme un vrai
+   éclairage) ; 2 soleil couchant (rouge et bleu : lumière rose-violette,
+   plus sombre) ; 3 nuit, projecteurs allumés (palette du match de nuit,
+   sans accentuation). Sur une NES PAL, les bits du rouge et du vert sont
+   inversés. Appelé au chargement du court (court_load, après ppu_off qui
+   efface l'accentuation) et à la fin de chaque jeu (game.c). */
+extern u8 ppu_emph;
+#pragma zpsym("ppu_emph")
+u8 sun_st;
+/* ====================================================================== */
+/* Bandeau du score façon télévision (2.71)                                */
+/*                                                                        */
+/* Entre deux points (temps mort après le point, joueurs assis au         */
+/* changement de côté ; pas pendant la mise en place du service, le       */
+/* joueur du bas serait caché), les quatre dernières rangées de l'écran   */
+/* montrent le score détaillé : serveur (balle), noms, jeux de chaque set */
+/* (le set en cours compris), points du jeu. Elles sont dessinées une     */
+/* fois pour toutes dans le bas de l'écran 1 (rangées 25 à 28, palette du */
+/* bandeau du haut) ; l'interruption de ligne du MMC3 fait passer le PPU  */
+/* sur l'écran 1 à partir de la ligne 200 (crt0.s, band_on), le temps que */
+/* le bandeau est affiché. Les sprites qui descendraient dans le bandeau  */
+/* sont cachés. Filets : tuile $5F (« _ », jamais écrite en match).        */
+/* ====================================================================== */
+#define BAND_NT   0x2400
+#define BAND_ROW  25
+#define BAND_LINE 199          /* (valeur de recharge du compteur : réglée sur jsnes et FCEUX) */
+#define CER_SEAT  5
+extern u8 hl_mode, cer;
+u8 band_vis, band_rows;      /* band_vis : 0 caché, 1 texte, 2 sprites cachés, 3 affiché */
+static u8 band_last[6];
+static char bb[28];
+static void band_init(void)
+{
+    static const u8 rule[16] = { 0, 0, 0xFF, 0, 0, 0, 0, 0,   0, 0, 0xFF, 0xFF, 0, 0, 0, 0 };   /* trait blanc, ombre noire */
+    u8 i;
+    vram_adr(0x05F0);
+    for (i = 0; i < 16; ++i) vram_put(rule[i]);
+    vram_adr(BAND_NT + 24 * 32); vram_fill(0, 32);
+    vram_put(0); vram_fill(0x5F, 30); vram_put(0);          /* rangée 25 : filet */
+    vram_fill(0, 64);                                       /* rangées 26-27 : texte */
+    vram_put(0); vram_fill(0x5F, 30); vram_put(0);          /* rangée 28 : filet */
+    vram_fill(0, 32);
+    vram_adr(BAND_NT + 0x3C0 + 6 * 8); vram_fill(0x55, 16);  /* palette 1 (bandeau du haut) */
+    band_vis = 0;
+}
+static void band_text(u8 t)
+{
+    u8 i;
+    for (i = 0; i < 28; ++i) bb[i] = ' ';
+    if (sc_server == t) bb[0] = '@';                          /* balle : au service */
+    team_label(cfg.chr[t], cfg.doubles ? cfg.chr[t + 2] : 255, bb + 2);
+    bb[6] = ' ';
+    for (i = 0; i <= sc_set_no && i < MAX_SETS; ++i)
+        bb[8 + i * 3] = (char)('0' + (i < sc_set_no ? sc_hist[i][t] : sc_games[t]));
+    rules_point_label(t, bb + 24);
+}
+/* Annonces du score par l'arbitre (2.71) : « Game! » à la fin d'un jeu,
+   « Deuce! » et « Advantage! » (hors jeu décisif). Posées à la fin du point
+   (hl_point_ev, game.c), dites un peu après, quand le DMC a fini l'annonce
+   en cours (« Out! », « Fault! ») : rien n'est coupé. */
+void sun_apply(void);
+#define V_DEUCE 4
+#define V_GAME  5
+#define V_ADV   6
+u8 voice_pend, voice_t;       /* (globales : lues par les tests) */
+u16 __fastcall__ hl_point_ev(u16 ev)
+{
+    voice_pend = 0;
+    if (ev & (EV_GAME | EV_SET)) { sun_apply(); voice_pend = V_GAME; }
+    else if (!sc_tiebreak && sc_points[0] >= 3 && sc_points[1] >= 3)
+        voice_pend = sc_points[0] == sc_points[1] ? V_DEUCE : V_ADV;
+    voice_t = 24;
+    return 0;
+}
+static void voice_tick(void)
+{
+    if (!voice_pend) return;
+    if (voice_t) { --voice_t; return; }
+    if ((ms == MS_DEAD || ms == MS_SERVE) && !((*(volatile u8 *)0x4015) & 0x10)) { sfx_umpire(voice_pend); voice_pend = 0; }
+}
+void band_draw(void)
+{
+    u8 i, v;
+    voice_tick();
+    v = (u8)(cfg.mode == GM_MATCH && !paused && !hl_mode && !sc_over &&
+             ((cer == CER_SEAT) || ((!cer || cer >= 0xF0) && ms == MS_DEAD)));
+    if (!v) {
+        if (band_vis) { split_stop(); band_vis = 0; }
+        return;
+    }
+    if (!band_vis) { band_vis = 1; band_rows = 3; }
+    /* texte : rafraîchi quand le score change, une rangée par trame */
+    if (band_last[0] != sc_points[0] || band_last[1] != sc_points[1] || band_last[2] != sc_games[0] ||
+        band_last[3] != sc_games[1] || band_last[4] != sc_set_no || band_last[5] != sc_server) {
+        band_last[0] = sc_points[0]; band_last[1] = sc_points[1]; band_last[2] = sc_games[0];
+        band_last[3] = sc_games[1]; band_last[4] = sc_set_no; band_last[5] = sc_server;
+        band_rows = 3;
+    }
+    if (band_rows) {
+        i = (u8)((band_rows & 1) ? 0 : 1);
+        band_text(i);
+        if (vbuf_raw((u16)(BAND_NT + (BAND_ROW + 1 + i) * 32 + 2), (const u8 *)bb, 28)) band_rows &= (u8)~(1 << i);
+    }
+    /* 1 : texte en cours d'écriture ; 2 : texte prêt, sprites cachés dès
+       cette trame ; 3 : bandeau affiché, une trame plus tard (sur une trame
+       en retard, l'OAM envoyée au PPU est celle de la trame d'avant : elle
+       doit déjà être sans les sprites du bas) */
+    if (band_vis == 1) { if (band_rows) return; band_vis = 2; }
+    else if (band_vis == 2) { band_vis = 3; band_on(BAND_LINE); }
+    /* sprites : rien ne descend dans le bandeau */
+    for (i = 0; i < 64; ++i) {
+        v = oam_buf[i << 2];
+        if (v >= 192 && v < 240) oam_buf[i << 2] = 0xFF;
+    }
+}
+
+void sun_apply(void)
+{
+    u8 i, g, L, st, red;
+    band_init();
+    if (cfg.cond != COND_SUNSET || cfg.mode != GM_MATCH) return;
+    g = (u8)(sc_games[0] + sc_games[1]);
+    for (i = 0; i < sc_set_no && i < MAX_SETS; ++i) g = (u8)(g + sc_hist[i][0] + sc_hist[i][1]);
+    L = (u8)((cfg.sets_to_win * cfg.games_per_set * 6) / 5);
+    st = (u8)(((u16)g * 4) / L);
+    if (st > 3) st = 3;
+    red = is_pal ? 0x40 : 0x20;
+    pal_set_court(cfg.surface, st == 3 ? COND_NIGHT : COND_DAY, cfg.env);
+    ppu_emph = st == 1 ? red : st == 2 ? (u8)(red | 0x80) : 0;
+    sun_st = st;
 }
 void hl_ace_msg(void)
 {

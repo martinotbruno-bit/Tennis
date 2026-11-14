@@ -67,14 +67,14 @@ u8 scr_state;
 #define NMODES       6
 
 u8 opt_val[NOPT] = { 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 2, 1, 0, 1, 0, 1, 0, 1, 0 };
-static const u8 opt_max[NOPT] = { 1, NMODES, 2, NCHARS, NCHARS, 3, NSURF, NENV, 3, 4, 3, NCT, 2, 2, 2, NEX, 4, 3, 3, 3, 2, 3, 3, 2, 2 };
+static const u8 opt_max[NOPT] = { 1, NMODES, 2, NCHARS, NCHARS, 3, NSURF, NENV, 4, 4, 3, NCT, 2, 2, 2, NEX, 4, 3, 3, 3, 2, 3, 3, 2, 2 };
 static const char * const opt_label[NOPT] = {
     "COMMENCER", "MODE", "JEU", "JOUEUR 1", "JOUEUR 2", "NIVEAU CPU", "SURFACE", "LIEU",
     "CONDITIONS", "FORMAT", "RALENTIS", "COMPETITION", "JOUEURS", "ADVERSAIRES", "SURFACES",
     "EXERCICE", "COTE", "VITESSE", "EFFET", "BALLES", "JOUE PAR", "VITESSE JEU", "SON", "FATIGUE", "VUE" };
 static const char * const mode_name[NMODES] = {
     "1 JOUEUR VS CPU", "2 J. ADVERSAIRES", "EN EQUIPE", "COMPETITION", "ENTRAINEMENT", "DEMO CPU" };
-static const char * const cond_name[3] = { "JOUR", "NUIT", "PLUIE" };
+static const char * const cond_name[4] = { "JOUR", "NUIT", "PLUIE", "CREPUSCULE" };
 static const char * const level_name[3] = { "FACILE", "NORMAL", "EXPERT" };
 static const char * const fmt_name[4] = { "1 SET", "3 SETS", "5 SETS", "RAPIDE 4 JEUX" };
 static const char * const ex_name[NEX] = {
@@ -177,6 +177,8 @@ static const char *opt_text(u8 o)
     case O_ENV:    return env_name[v];
     case O_COND:
         if (opt_val[O_ENV] == ENV_HALL && v == COND_RAIN) return "PLUIE > JOUR";
+        /* crépuscule : en match seulement (pas en salle, ni à l'entraînement, ni en compétition) */
+        if (v == COND_SUNSET && (opt_val[O_ENV] == ENV_HALL || opt_val[O_MODE] == MODE_TRAIN || opt_val[O_MODE] == MODE_COMP)) return "CREP. > JOUR";
         return cond_name[v];
     case O_FMT:    return fmt_name[v];
     case O_REPLAY: return v == 0 ? "NON" : v == 1 ? "OUI, TELE" : "OUI, SIMPLE";   /* (2.69 : 1 avec gros plan et zoom) */
@@ -480,7 +482,7 @@ static void base_cfg(void)
     cfg.env = opt_val[O_ENV];
     cfg.cond = opt_val[O_COND];
     /* cohérence météo / lieu (CDC 6.3) : pas de pluie en salle */
-    if (cfg.env == ENV_HALL && cfg.cond == COND_RAIN) cfg.cond = COND_DAY;
+    if (cfg.env == ENV_HALL && cfg.cond >= COND_RAIN) cfg.cond = COND_DAY;
     cfg.sets_to_win = (u8)(f == 1 ? 2 : f == 2 ? 3 : 1);
     cfg.games_per_set = (u8)(f == 3 ? 4 : 6);
     cfg.replays = opt_val[O_REPLAY];
@@ -758,6 +760,7 @@ static void start_comp(void)
     c_surf = (u8)(opt_val[O_SURF] > 3 && (c_type == CT_SEASON || c_type >= CT_GRAND) ? 0 : opt_val[O_SURF]);
     c_env = opt_val[O_ENV];
     c_cond = opt_val[O_COND];
+    if (c_cond == COND_SUNSET) c_cond = COND_DAY;   /* (le mot de passe ne code que 3 conditions) */
     if (c_type >= CT_GRAND) { c_env = ENV_STADIUM; c_cond = 0; }   /* Grand Martinot, Martinworld Tour : toujours au stade, de jour */
     c_fmt = opt_val[O_FMT];
     c_pl[0] = opt_val[O_P1];

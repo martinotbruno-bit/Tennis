@@ -1,6 +1,6 @@
 # Royal Martinot — Liste de vérification sur vraie console
 
-Le jeu a été testé uniquement sur émulateur. Cette liste sert à le vérifier pas à pas sur une vraie NES ou Famicom. Cochez chaque case et notez ce qui ne va pas, si possible avec une photo de l'écran. Comptez environ une heure et quart pour l'ensemble. Version du guide : 2.70.
+Le jeu a été testé uniquement sur émulateur. Cette liste sert à le vérifier pas à pas sur une vraie NES ou Famicom. Cochez chaque case et notez ce qui ne va pas, si possible avec une photo de l'écran. Comptez environ une heure et quart pour l'ensemble. Version du guide : 2.71.
 
 ## 0. Matériel
 
@@ -157,6 +157,9 @@ Pour chaque ligne, lancez un match et regardez l'écran pendant une dizaine de s
 | 10.19 | Vue en perspective, balle dans le filet (version 2.68) | Le filet tremble (bande qui s'affaisse d'un pixel, mailles qui bougent) sur toute sa largeur, sans marche à l'endroit des lignes, puis revient exactement comme avant | ☐ |
 | 10.20 | Fin d'un match (version 2.69) | Après la poignée de main, portrait du vainqueur en grand (nom, confettis), puis gros plan ; écran des résultats ensuite, lisible (titre, « VICTOIRE DE », tableau des sets sans chevauchement, joueurs sous les statistiques) | ☐ |
 | 10.21 | Ace et statistiques (version 2.70) | Sur un ace, « ACE ! » puis la vitesse (« 174 KM/H ») lisible dans le bandeau ; aux écrans de fin de set et de résultats, ligne SERVICE MAX KM/H alignée avec les chiffres au-dessus, 100 % affiché « 100 » | ☐ |
+| 10.22 | Bandeau du score (version 2.71) | Après un point : bandeau en bas (filets, noms, jeux, points), net, sans ligne qui saute ni image brouillée ; aucun joueur dessiné par-dessus ; il disparaît avant le service | ☐ |
+| 10.23 | Crépuscule (version 2.71) | CONDITIONS : CREPUSCULE, match en 1 set : teinte chaude, puis rose-violette, puis projecteurs au fil des jeux (sur une console PAL, la teinte doit rester chaude, pas verte) | ☐ |
+| 10.24 | Voix (version 2.71) | « Deuce! », « Advantage! », « Game! » audibles et compréhensibles, après « Out! » sans le couper | ☐ |
 
 ## 11. Ce qu'il faut renvoyer
 

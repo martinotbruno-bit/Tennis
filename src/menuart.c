@@ -37,6 +37,7 @@ extern const u8 menu_font2[], menu_deco[], menu_attr[], menu_big[], menu_grp[], 
 extern const char menu_bigchars[];
 extern u8 bg_dirty;
 extern u8 pal_page;
+void hl_rec_row(void);
 
 #pragma bss-name(push, "SAVEDATA")
 char deco_str[24];        /* titre à écrire (copié par screens.c) */
@@ -217,9 +218,10 @@ void palmares_build(void)
         txt_at(3, 17, "COMPETITIONS"); u16_at(22, 17, sv.comps);
         txt_at(3, 18, "RECORD ECHANGE"); u16_at(22, 18, sv.best_rally);
         txt_at(3, 19, "RECORD ACES/MATCH"); u16_at(22, 19, sv.best_aces);
-        txt_at(20, 20, "NB     %");
-        txt_at(3, 21, "SERVICES CANON"); u16_at(17, 21, sx.ok); u16_at(23, 21, pct16(sx.ok, sx.tried));
-        txt_at(3, 22, "COUPS PARFAITS"); u16_at(17, 22, sx.pok); u16_at(23, 22, pct16(sx.pok, sx.ptry));
+        /* nombre, puis pourcentage suivi de « % » (2.71 : sans ligne d'en-tête, place du record) */
+        txt_at(3, 20, "SERVICES CANON"); u16_at(17, 20, sx.ok); u16_at(22, 20, pct16(sx.ok, sx.tried)); txt_at(27, 20, "%");
+        txt_at(3, 21, "COUPS PARFAITS"); u16_at(17, 21, sx.pok); u16_at(22, 21, pct16(sx.pok, sx.ptry)); txt_at(27, 21, "%");
+        bank_call(BANK_HL, hl_rec_row);           /* RECORD SERVICE (2.71, highlight.c) */
     } else if (pal_page == 1) {
         txt_at(3, 5, "MEILLEURS RESULTATS");
         for (i = 0; i < NCT; ++i) {

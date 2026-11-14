@@ -387,6 +387,62 @@ console.log('Court Margaux');
 }
 
 }
+if (sec('Version 2.71 : bandeau du score, crépuscule, voix, record')) {
+console.log('Version 2.71 : bandeau du score, crépuscule, voix, record');
+{
+  // bandeau du score (MMC3 : bas de l'écran 1 dès la ligne 200) et voix de
+  // l'arbitre ; crépuscule (accentuation des couleurs au fil des jeux)
+  const e = boot(); startWith(e, { FMT: 0, COND: 3 }); allCpu(e);
+  const apu = e.nes.papu, orig = apu.writeReg.bind(apu), said = [];
+  let la = -1;
+  apu.writeReg = (a, v) => { if (a === 0x4012) la = v; if (a === 0x4015 && (v & 0x10) && la >= 0) said.push(la); return orig(a, v); };
+  const names = {}; ['out', 'fault', 'let', 'pok', 'deuce', 'game', 'adv'].forEach((n, i) => names[e.peek('dpcm_addr', i)] = n);
+  const vm = e.nes.ppu.vramMem;
+  let shown = 0, okText = 0, okSpr = 0, badServe = 0, pm = -1, forced = 0, prevBv = false;
+  const emph = new Set(), stages = new Set();
+  for (let f = 0; f < 60 * 60 * 20 && app(e) === AS.MATCH; f++) {
+    if (e.peek('cer') >= 1 && e.peek('cer') <= 3) e.poke('cer_skip', 1);
+    // égalité forcée de temps en temps (annonces « Deuce! », « Advantage! »)
+    const m = e.peek('ms');
+    if (m === 0 && pm !== 0 && !e.peek('sc_tiebreak') && forced < 6 && (f & 1)) { e.poke('sc_points', 3, 0); e.poke('sc_points', 3, 1); forced++; }
+    pm = m;
+    e.run(1);
+    if (!e.peek('hl_mode') && e.peek('ppu_mask')) { stages.add(e.peek('sun_st')); emph.add(e.peek('sun_st') * 256 + e.peek('ppu_emph')); }   /* (gros plan : sans accentuation) */
+    const bv = e.peek('band_vis') === 3 && !e.peek('hl_mode') && e.peek('ms') !== 5;   /* (gros plan : band_vis n'est plus tenu à jour) */
+    const steady = bv && prevBv; prevBv = bv;
+    if (steady) {   /* (l'OAM envoyée au PPU est celle de la trame précédente) */
+      shown++;
+      const row = String.fromCharCode(...vm.slice(0x2400 + 26 * 32 + 4, 0x2400 + 26 * 32 + 8));
+      if (/^[A-Z][A-Z ]{3}$/.test(row)) okText++;
+      let low = 0; for (let i = 0; i < 64; i++) { const y = e.nes.ppu.spriteMem[i * 4]; if (y >= 192 && y < 240) low++; }   /* (OAM envoyée au PPU)*/
+      if (!low) okSpr++; else if (process.env.DBG) { const l = []; for (let i = 0; i < 64; i++) { const y = e.nes.ppu.spriteMem[i * 4]; if (y >= 192 && y < 240) l.push(y + ':' + e.nes.ppu.spriteMem[i * 4 + 1].toString(16)); } console.log('spr', f, e.peek('cer'), e.peek('ms'), e.peek('ms_timer'), l.join(' ')); }
+      if (e.peek('ms') === 0 && e.peek('ms_timer') === 0 && e.peek('cer') === 0) badServe++;
+    }
+  }
+  check(shown > 100 && okText === shown && okSpr === shown, `bandeau du score entre les points (${shown} trames, texte ${okText}, sprites ${okSpr}) : noms et score dans l'écran 1, aucun sprite dessous`);
+  check(badServe === 0, `bandeau caché quand le serveur est prêt (${badServe})`);
+  const seq = said.map(a => names[a] ?? '?').filter(n => n !== 'pok');
+  check(['deuce', 'adv', 'game'].every(n => seq.includes(n)), `annonces de l'arbitre : ${['deuce', 'adv', 'game'].map(n => n + ' ' + seq.filter(x => x === n).length).join(', ')}`);
+  const red = 0x20;
+  const okEmph = [...emph].every(v => { const st = v >> 8, em = v & 255; return em === (st === 1 ? red : st === 2 ? (red | 0x80) : 0); });
+  check(stages.has(1) && stages.has(2) && okEmph, `crépuscule : paliers ${[...stages].sort().join(',')}, accentuation rouge puis rouge et bleu, projecteurs (${[...emph].map(v => (v >> 8) + ':' + (v & 255).toString(16)).join(' ')})`);
+  runUntil(e, () => scr(e) === SS.RESULTS, 600);
+  check(e.peek('ppu_emph') === 0 && e.peek('band_vis') === 0 || scr(e) === SS.RESULTS && e.peek('ppu_emph') === 0, `hors du court : pas d'accentuation (${e.peek('ppu_emph')})`);
+}
+{
+  // record du service le plus rapide (palmarès), « KM/H : RECORD ! »
+  const e = boot(); startWith(e, { FMT: 3 });
+  for (let f = 0; f < 60 * 60 * 15 && app(e) === AS.MATCH; f++) {
+    if (e.peek('ms') === 0 && e.peek('sc_server') === 0) { e.tap('A'); e.run(14); e.tap('A'); }
+    if (e.peek('cer') >= 4) e.poke('cer_skip', 1);
+    if (e.peek('hl_mode') === 3) e.tap('A');
+    e.run(1);
+  }
+  runUntil(e, () => scr(e) === SS.RESULTS, 600); e.run(20);
+  const v = e.peek('st_vmax', 0) + 80, rec = e.peek('sw_spd', 1) + 80;
+  check(e.peek('sp_new') === 1 && rec === v && e.text(2, 20, 16).startsWith('KM/H : RECORD'), `record de vitesse au palmarès (${rec} km/h), annoncé aux résultats (« ${e.text(2, 20, 16).trim()} »)`);
+}
+}
 if (sec('Ralenti : gros plan et zoom')) {
 console.log('Ralenti : gros plan et zoom');
 {

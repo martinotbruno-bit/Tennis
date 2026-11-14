@@ -4,6 +4,7 @@
  * changements de côté après chaque jeu impair et tous les 6 points du jeu
  * décisif. Code C portable : compilé par cc65 pour la NES et par gcc pour
  * les tests unitaires (tests/rules_test.c). */
+#define RULES_BANKED      /* (NES : noms rb_*, voir rules.h) */
 #include "rules.h"
 
 ru8 sc_points[2], sc_games[2], sc_sets[2];

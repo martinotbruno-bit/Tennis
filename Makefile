@@ -6,7 +6,7 @@ CFLAGS = -t nes -Oirs --static-locals -g -I src
 BUILD = build
 ROM = $(BUILD)/royal_martinot.nes
 # banque fixe ($C000)
-FIXED = main rules gfx audio assets_data gamefix
+FIXED = main rules_far gfx audio assets_data gamefix
 # banques commutables ($8000)
 BANK0 = game
 BANK1 = screens
@@ -26,7 +26,7 @@ BANK14 = assets_gm gmintro assets_help
 BANK15 = highlight
 BANK16 = assets_pnet
 BANK17 = assets_tz17
-BANK18 =
+BANK18 = rules
 BANK19 =
 BANK20 =
 CSRC = $(FIXED) $(BANK0) $(BANK1) $(BANK2) $(BANK3) $(BANK4) $(BANK5) $(BANK6) $(BANK7) $(BANK8) $(BANK9) $(BANK10) $(BANK11) $(BANK12) $(BANK13) $(BANK14) $(BANK15) $(BANK16) $(BANK17) $(BANK18) $(BANK19) $(BANK20)

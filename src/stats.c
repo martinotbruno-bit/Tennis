@@ -13,7 +13,11 @@ u8 sw_view[3];          /* 'V', valeur, contrôle */
 /* meilleur rang du Grand Martinot et du Martinworld Tour (types 5 et 6), bloc à
    part : SaveData n'a de place que pour les types 0 à 4 */
 u8 sw_best[4];          /* 'B', type 5, type 6, contrôle */
+/* record du service le plus rapide (2.71), bloc à part : 'S', km/h - 80, personnage, contrôle */
+u8 sw_spd[4];
 #pragma bss-name(pop)
+u8 sp_new;              /* 1 : record battu au dernier match (écran des résultats) */
+extern u8 st_vmax[2], st_vmaxp[2];
 
 static u8 sx_sum(void)
 {
@@ -29,6 +33,11 @@ void sx_check(void)
 }
 
 static u8 sb_sum(void) { return (u8)(0xA5 ^ sw_best[1] ^ (u8)(sw_best[2] << 1)); }
+static u8 sp_sum(void) { return (u8)(0x5C ^ sw_spd[1] ^ (u8)(sw_spd[2] << 3)); }
+static void sp_check(void)
+{
+    if (sw_spd[0] != 'S' || sw_spd[3] != sp_sum()) { sw_spd[0] = 'S'; sw_spd[1] = sw_spd[2] = 0; sw_spd[3] = sp_sum(); }
+}
 static void sb_check(void)
 {
     if (sw_best[0] != 'B' || sw_best[3] != sb_sum()) { sw_best[0] = 'B'; sw_best[1] = sw_best[2] = 0; sw_best[3] = sb_sum(); }
@@ -81,6 +90,7 @@ u8 __fastcall__ sv_clear(u8 unused)
     commit();
     sx.sig[0] = 0; sx_check();             /* services canon remis à zéro */
     sw_best[0] = 0; sb_check();
+    sw_spd[0] = 0; sp_check();
     return unused;
 }
 
@@ -90,6 +100,7 @@ u8 __fastcall__ sv_check(u8 unused)
         sv_clear(unused);
     sx_check();
     sb_check();
+    sp_check();
     return 0;
 }
 
@@ -98,6 +109,7 @@ static void add16(u16 *v, u8 n) { *v = (u16)(*v + n < *v ? 0xFFFF : *v + n); }
 u8 __fastcall__ sv_after_match(u8 unused)
 {
     u8 d = cfg.doubles;
+    sp_new = 0;
     /* seules les parties où l'équipe 1 est jouée par un humain comptent */
     if (cfg.demo || cfg.ctrl[0] == CTRL_CPU || cfg.mode != GM_MATCH) return 0;
     sv_check(unused);
@@ -114,6 +126,9 @@ u8 __fastcall__ sv_after_match(u8 unused)
     if (st_longest > sv.best_rally) sv.best_rally = st_longest;
     if (st_aces[0] > sv.best_aces) sv.best_aces = st_aces[0];
     commit();
+    if (st_vmax[0] > sw_spd[1]) {          /* service le plus rapide (joueur humain de l'équipe 1) */
+        sw_spd[1] = st_vmax[0]; sw_spd[2] = cfg.chr[st_vmaxp[0]]; sw_spd[3] = sp_sum(); sp_new = 1;
+    }
     sx_check();
     add16(&sx.ok, st_canon[0]);
     add16(&sx.tried, st_ctry[0]);

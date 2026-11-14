@@ -110,6 +110,7 @@ extern const u8 dpcm_addr[], dpcm_len[], dpcm_rate[];
 #define V_FAULT 1
 #define V_LET 2
 #define V_POK 3
+/* annonces du score (2.71) : V_DEUCE 4, V_GAME 5, V_ADV 6 (sfx_umpire) */
 static void dpcm(u8 k)
 {
     u8 r = dpcm_rate[k];
@@ -200,6 +201,7 @@ static void announce(u8 k)
 void sfx_out(void)        { announce(V_OUT); }     /* « Out! » */
 void sfx_svfault(void)    { announce(V_FAULT); }   /* service faux : « Fault! » */
 void sfx_let(void)        { announce(V_LET); }     /* let : « Let! » */
+void sfx_umpire(u8 k)     { announce(k); }         /* score : « Deuce! », « Game! », « Advantage! » (2.71) */
 
 /* balle dehors : « bip » du juge électronique (aigu, 1/12 s) */
 void sfx_line(void)

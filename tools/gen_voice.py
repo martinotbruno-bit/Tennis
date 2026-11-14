@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Royal Martinot — échantillons DPCM (canal DMC de la NES) : voix de
-l'arbitre (« Out! », « Fault! », « Let! ») et « pok » de la balle.
+l'arbitre (« Out! », « Fault! », « Let! », et depuis la version 2.71 le
+score : « Deuce! », « Advantage! », « Game! ») et « pok » de la balle.
 
 Voix synthétisées par espeak-ng (voix anglaise, comme à Wimbledon) ; le
 « pok » est calculé (rebond amorti de 30 ms). Les échantillons sont écrits
@@ -88,7 +89,7 @@ def encode(x, gain=1.0, mid=36):
 samples = []
 # voix : 7 919 Hz (indice 6), assez pour être compréhensible, et peu de place
 VOICE_RATE = 6
-for name, word, speed in (('out', 'Out!', 160), ('fault', 'Fault!', 175), ('let', 'Let!', 170)):
+for name, word, speed in (('out', 'Out!', 172), ('fault', 'Fault!', 175), ('let', 'Let!', 170)):
     x, sr = speak(word, speed)
     # toute la plage du DMC (0..127, autour de 64) et une saturation douce :
     # à 36 ± 32, la voix était couverte par le bip et le public
@@ -104,6 +105,16 @@ for i in range(int(sr * 0.03)):
     nz = (seed / 0x7FFFFFFF - 0.5) * (0.6 if t < 0.004 else 0)
     pok.append((math.sin(2 * math.pi * 900 * t) + nz) * math.exp(-t * 120))
 samples.append(('pok', encode(pok, 0.9, 28), POK_RATE))
+# annonces du score (2.71) : « Deuce! », « Advantage! », « Game! » (place
+# libérée dans la banque fixe en déplaçant les règles du score en banque 18)
+# (« Advantage! », le plus long, un peu plus vite et à 7 046 Hz, un cran
+# en dessous : il tient dans la place libre)
+# (« Advantage! » en dernier : le dernier échantillon n'est pas complété
+# jusqu'au multiple de 64 octets suivant)
+for name, word, speed, rate in (('deuce', 'Deuce!', 205, VOICE_RATE), ('game', 'Game!', 210, VOICE_RATE),
+                                ('adv', 'Advantage!', 215, VOICE_RATE - 1)):
+    x, sr = speak(word, speed)
+    samples.append((name, encode(compress(resample(x, sr, RATES[rate])), 1.0, 64), rate))
 
 out = ['; Fichier généré par tools/gen_voice.py — ne pas modifier.',
        '; Échantillons DPCM (voix de l\'arbitre, « pok »), banque fixe.',

@@ -150,9 +150,12 @@ static u8 receiver_p(void)
 extern u16 hl_bf, rp_seq;
 extern u8 hl_bi, hl_bx, hl_by, hl_bin, hl_bok, hl_w, hl_sok, hl_sbok;
 extern const char *hl_ptxt;
-extern u8 hl_spd, hl_srv, st_vmax[2];
+extern u8 hl_spd, hl_srv, st_vmax[2], st_vmaxp[2];
 void hl_ace_msg(void);
 void hl_serve(void);
+void sun_apply(void);
+void band_draw(void);
+u16 __fastcall__ hl_point_ev(u16 ev);
 extern u8 rp_head;
 u16 __fastcall__ hl_hit(u16 pk);
 void hl_select(void);
@@ -557,7 +560,7 @@ static void serve_hit(u8 p, u8 pad, u8 btn, u8 quality, u8 spread)
     HL_HIT(p, 2 | 0x80);            /* (service : début du point, bit 7) */
     if (faults == 0) ++st_first_tot[t];
     launch(tx, ty, T, grav);
-    hl_spd = speed; hl_srv = t;     /* vitesse du service : km/h (annoncés sur un ace) et record du match, highlight.c */
+    hl_spd = speed; hl_srv = p;     /* vitesse du service : km/h (annoncés sur un ace) et record du match, highlight.c */
     bank_call(BANK_HL, hl_serve);
     ms = MS_RALLY;
     pl_state[p] = ST_SWING;
@@ -935,6 +938,7 @@ void match_start(void)
         st_points[i] = st_aces[i] = st_dfaults[i] = st_winners[i] = st_errors[i] = 0;
         st_canon[i] = st_ctry[i] = st_perf[i] = st_ptry[i] = 0;
         st_first_in[i] = st_first_tot[i] = st_vmax[i] = 0;
+        st_vmaxp[i] = i;
         srv_slot[i] = 0;
         ad_l[i] = ad_r[i] = ad_net[i] = ad_n[i] = 0;
         ai_bias_n[i] = 0xFF;
@@ -970,6 +974,7 @@ static void court_load(void)
     vram_adr(0x2000);
     bank_call(BANK_EXTRAS, load_court);
     pal_set_court(cfg.surface, cfg.cond, cfg.env);
+    bank_call(BANK_HL, sun_apply);     /* bandeau du score (écran 1) ; crépuscule : lumière selon les jeux joués (highlight.c) */
     pal_set_player(0, cfg.chr[0]);
     pal_set_player(1, cfg.chr[1]);
 }
@@ -1034,6 +1039,7 @@ static void after_point(void)
     {
         static char nm[5];
         team_name(w, nm); nm[4] = 0;
+        far_call(BANK_HL, (void *)hl_point_ev, ev);   /* crépuscule (la lumière baisse) ; annonce du score par l'arbitre */
         /* récapitulatif : écran de fin de set (sauf démonstration), score des
            sets dans le bandeau après chaque jeu */
         if (ev & EV_SET) { set_msg("JEU ET SET", nm, 90); music_play(MUS_GAME); crowd_timer = 64; if (!cfg.demo) brk_pend = 1; }
@@ -1269,6 +1275,7 @@ void match_draw(void)
     if (party) { win_fx(); fw_draw(ms_timer, 0); }
     if (cfg.cond == COND_RAIN) bank_call(BANK_EXTRAS, rain_draw);
     spr_end();
+    bank_call(BANK_HL, band_draw);      /* bandeau du score entre les points (highlight.c, 2.71) */
 }
 #undef ord
 #undef ys
