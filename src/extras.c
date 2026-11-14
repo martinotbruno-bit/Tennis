@@ -376,9 +376,9 @@ static u8 ola_row(u8 o, u8 up)
 static s16 out_by(void)
 {
     s16 x = PX(bx), y = PX(by), d = 0;
-    s16 l = cfg.doubles ? DBL_L : SGL_L, r = cfg.doubles ? DBL_R : SGL_R;
+    s16 l = cfg.doubles ? IN_DL : IN_SL, r = cfg.doubles ? IN_DR : IN_SR;   /* (ligne comprise) */
     if (x < l) d = l - x; else if (x > r) d = x - r;
-    if (y < TOP_BASE) d += TOP_BASE - y; else if (y > BOT_BASE) d += y - BOT_BASE;
+    if (y < IN_TOP) d += IN_TOP - y; else if (y > IN_BOT) d += y - IN_BOT;
     return d;
 }
 /* balle hors du court de peu (moins de 5 px) : le public retient son souffle */

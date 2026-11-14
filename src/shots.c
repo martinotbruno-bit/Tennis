@@ -246,8 +246,8 @@ void dive_try(void)
         lv = cfg.level[p];
         /* balle qui va sortir (pas encore rebondi) : on la laisse */
         if (bounces == 0) {
-            s16 l = cfg.doubles ? DBL_L : SGL_L, r = cfg.doubles ? DBL_R : SGL_R;
-            if (land_x < l || land_x > r || land_y < TOP_BASE || land_y > BOT_BASE) return;
+            s16 l = cfg.doubles ? IN_DL : IN_SL, r = cfg.doubles ? IN_DR : IN_SR;
+            if (land_x < l || land_x > r || land_y < IN_TOP || land_y > IN_BOT) return;
         }
         run = (s16)(22 + (((u16)ai_spd[lv] * n * 3) >> 8));
         reach = (s16)(n > 2 ? 24 + (n - 2) * 3 : 24);

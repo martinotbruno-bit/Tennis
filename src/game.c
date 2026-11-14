@@ -235,10 +235,10 @@ static u8 in_service_box(void)
     /* bas+égalité -> carré gauche ; bas+avantage -> droit ; inversé en haut */
     u8 left = (u8)((srv_side == 0) == (ad == 0));
     s16 x = PX(bx), y = PX(by);
-    if (left) { if (x < SGL_L || x > CENTER_X) return 0; }
-    else      { if (x < CENTER_X || x > SGL_R) return 0; }
-    if (srv_side == 0) return (u8)(y >= TOP_SERV && y <= NET_Y);
-    return (u8)(y >= NET_Y && y <= BOT_SERV);
+    if (left) { if (x < IN_SL || x > CENTER_X + 1) return 0; }   /* (ligne touchée : bonne) */
+    else      { if (x < CENTER_X - 1 || x > IN_SR) return 0; }
+    if (srv_side == 0) return (u8)(y >= IN_TSRV && y <= NET_Y);
+    return (u8)(y >= NET_Y && y <= IN_BSRV);
 }
 
 static void ball_bounce(void)
@@ -247,7 +247,7 @@ static void ball_bounce(void)
     u8 recv = (u8)(hitter ^ 1);
     u8 rest = surf_rest[cfg.surface], fric = surf_fric[cfg.surface];
     s16 x = PX(bx), y = PX(by);
-    s16 l = cfg.doubles ? DBL_L : SGL_L, r = cfg.doubles ? DBL_R : SGL_R;
+    s16 l = cfg.doubles ? IN_DL : IN_SL, r = cfg.doubles ? IN_DR : IN_SR;   /* (ligne comprise) */
 
     if (bspin == SPIN_TOP)   { rest = (u8)(rest + 24); if (fric < 240) fric += 12; }
     if (bspin == SPIN_SLICE) { rest = (u8)(rest - 46); }
@@ -264,7 +264,7 @@ static void ball_bounce(void)
     if (bounces == 0) {
         /* repère du ralenti : premier rebond de cette balle */
         hl_bi = rp_head; hl_bf = rp_seq; hl_bx = (u8)x; hl_by = (u8)y; hl_bok = 1;
-        hl_bin = (u8)(half == side_of(recv) && (b_serve ? in_service_box() : !(x < l || x > r || y < TOP_BASE || y > BOT_BASE)));
+        hl_bin = (u8)(half == side_of(recv) && (b_serve ? in_service_box() : !(x < l || x > r || y < IN_TOP || y > IN_BOT)));
         if (half != side_of(recv)) {
             /* la balle n'a pas passé le filet */
             if (b_serve) { serve_fault("FILET"); return; }
@@ -290,7 +290,7 @@ static void ball_bounce(void)
                 ++bounces;
                 return;
             }
-        } else if (x < l || x > r || y < TOP_BASE || y > BOT_BASE) {
+        } else if (x < l || x > r || y < IN_TOP || y > IN_BOT) {
             set_msg("DEHORS", "", 50);
             if (cfg.mode == GM_TRAIN && hitter == 0) {
                 tr_ev = TEV_LAND_OUT; bank_call(BANK_EXTRAS, train_event);

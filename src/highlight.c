@@ -461,9 +461,9 @@ void hl_out(void)
 {
     s16 x = hl_bx, y = hl_by, d = 0, l, r;
     if (!hl_bok || hl_bin || b_serve || cfg.replays != 1 || cfg.env == ENV_NUDE || cfg.demo) return;
-    l = cfg.doubles ? DBL_L : SGL_L; r = cfg.doubles ? DBL_R : SGL_R;
+    l = cfg.doubles ? IN_DL : IN_SL; r = cfg.doubles ? IN_DR : IN_SR;   /* (ligne comprise) */
     if (x < l) d = l - x; else if (x > r) d = x - r;
-    if (y < TOP_BASE) d += TOP_BASE - y; else if (y > BOT_BASE) d += y - BOT_BASE;
+    if (y < IN_TOP) d += IN_TOP - y; else if (y > IN_BOT) d += y - IN_BOT;
     if (d == 0 || d > 3) return;
     hl_sok = 0;                         /* pas de gros plan */
     hl_sbok = 1; hl_sbi = hl_bi; hl_sbx = hl_bx; hl_sby = hl_by; hl_sbin = 0; hl_sbf = hl_bf;
