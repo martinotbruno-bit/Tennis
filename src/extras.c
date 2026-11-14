@@ -161,6 +161,7 @@ u16 swp_dst;                        /* destination de swap_put (crt0.s) */
 #pragma bss-name(pop)
 u8 __fastcall__ swap_put(const u8 *src);   /* crt0.s, banque 13 (far_call) */
 extern u8 cer;                              /* séquence animée en cours (cer.c) */
+extern u8 sc_crit;                          /* balles de set et de match (rules_far.c, 2.71) */
 extern u16 cer_t;
 extern u8 pose_now[4];
 void slot_tick(void);                       /* banque 13 (cer.c) */
@@ -450,7 +451,7 @@ void crowd_tick(void)
             k = (u8)(st_dfaults[0] + st_dfaults[1]);
             if (k != cr_df) { cr_df = k; cr_react = 2; }
         }
-        if (m == MS_SERVE) { cr_mp = (u8)(cfg.mode == GM_MATCH && (rules_is_match_point(0) || rules_is_match_point(1))); cr_clap = 0; }
+        if (m == MS_SERVE) { cr_mp = (u8)(cfg.mode == GM_MATCH && (sc_crit & 4)); cr_clap = 0; }
         if (m == MS_TOSS) sfx_hush();            /* silence au lancer */
         cr_prev_ms = m;
     }
@@ -854,8 +855,8 @@ void ai_tactic(void)
         o = (u8)(t ^ 1);
         pw = 0; mg = 0; net = 0; err = 0; safe = 0;
         d = (s8)(sc_games[t] - sc_games[o]) + (s8)(3 * ((s8)sc_sets[t] - (s8)sc_sets[o]));
-        if (rules_is_match_point(o) || rules_is_set_point(o)) { mg = 6; pw = -2; err = 0x10; }
-        else if (rules_is_match_point(t) || rules_is_set_point(t)) { pw = 4; net = 60; }
+        if ((sc_crit >> o) & 1) { mg = 6; pw = -2; err = 0x10; }          /* balle de set ou de match (sc_crit, 2.71) */
+        else if ((sc_crit >> t) & 1) { pw = 4; net = 60; }
         else if (d <= -2) { pw = 5; mg = -3; net = 50; }
         else if (d >= 2) { mg = 3; err = 0x10; }
         if (game_pt(o) && sc_server == t) { safe = 1; mg += 4; err = 0x10; }   /* balle de break à sauver */

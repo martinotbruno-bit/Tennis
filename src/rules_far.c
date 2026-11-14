@@ -15,20 +15,22 @@ ru8 rb_is_set_point(ru8 team);
 ru8 rb_is_match_point(ru8 team);
 
 static u8 rf_b, rf_r;
+u8 sc_crit;     /* balles de set ou de match (bits 0-1 : de l'équipe 0, 1 ; bit 2 : balle de match), calculées à chaque point (highlight.c) */
 
 void rules_init(ru8 sets_to_win, ru8 games_per_set, ru8 first_server)
 {
     rf_b = cur_bank; set_bank(BANK_RULES);
     rb_init(sets_to_win, games_per_set, first_server);
     set_bank(rf_b);
+    sc_crit = 0;
 }
 ru8 rules_point(ru8 team)
 {
     rf_b = cur_bank; set_bank(BANK_RULES); rf_r = rb_point(team); set_bank(rf_b); return rf_r;
 }
-ru8 rules_ad_side(void)
+ru8 rules_ad_side(void)             /* (une addition : sans changer de banque) */
 {
-    rf_b = cur_bank; set_bank(BANK_RULES); rf_r = rb_ad_side(); set_bank(rf_b); return rf_r;
+    return (ru8)((sc_points[0] + sc_points[1]) & 1);
 }
 void rules_point_label(ru8 team, char *out)
 {

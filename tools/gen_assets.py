@@ -1760,6 +1760,7 @@ def _persp_check_texts():
         b = os.path.basename(f)
         if b in menus or b.startswith('assets') or b == 'music_data.c': continue
         t = _re.sub(r'/\*.*?\*/', '', open(f, encoding='utf-8', errors='replace').read(), flags=_re.S)
+        t = _re.sub(r'__asm__\(.*?\);', '', t)          # assembleur intégré (pas du texte)
         for m in _re.finditer(r'"((?:[^"\\\n]|\\.)*)"|\'(.)\'', t):
             bad = {c for c in (m.group(1) or m.group(2) or '') if ord(c) in PERSP_NOTXT}
             if bad: sys.exit('perspective : %s utilise %r pendant le match (PERSP_NOTXT)' % (b, ''.join(sorted(bad))))

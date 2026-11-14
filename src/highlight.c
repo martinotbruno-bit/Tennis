@@ -194,8 +194,17 @@ void sun_apply(void);
 #define V_GAME  5
 #define V_ADV   6
 u8 voice_pend, voice_t;       /* (globales : lues par les tests) */
+extern u8 sc_crit;
 u16 __fastcall__ hl_point_ev(u16 ev)
 {
+    u8 t;
+    /* balles de set et de match, lues par l'IA à chaque trame (extras.c) :
+       une seule fois par point (chaque appel des règles change de banque) */
+    sc_crit = 0;
+    for (t = 0; t < 2; ++t) {
+        if (rules_is_match_point(t)) sc_crit |= (u8)(4 | (1 << t));
+        else if (rules_is_set_point(t)) sc_crit |= (u8)(1 << t);
+    }
     voice_pend = 0;
     if (ev & (EV_GAME | EV_SET)) { sun_apply(); voice_pend = V_GAME; }
     else if (!sc_tiebreak && sc_points[0] >= 3 && sc_points[1] >= 3)
@@ -239,10 +248,21 @@ void band_draw(void)
     if (band_vis == 1) { if (band_rows) return; band_vis = 2; }
     else if (band_vis == 2) { band_vis = 3; band_on(BAND_LINE); }
     /* sprites : rien ne descend dans le bandeau */
-    for (i = 0; i < 64; ++i) {
-        v = oam_buf[i << 2];
-        if (v >= 192 && v < 240) oam_buf[i << 2] = 0xFF;
-    }
+    /* (en assembleur : la boucle en C coûtait une trame en retard sur
+       quatre en double en perspective) */
+    __asm__("ldx #0");
+    __asm__("band_hide: lda %v,x", oam_buf);
+    __asm__("cmp #192");
+    __asm__("bcc band_keep");
+    __asm__("cmp #240");
+    __asm__("bcs band_keep");
+    __asm__("lda #$FF");
+    __asm__("sta %v,x", oam_buf);
+    __asm__("band_keep: inx");
+    __asm__("inx");
+    __asm__("inx");
+    __asm__("inx");
+    __asm__("bne band_hide");
 }
 
 void sun_apply(void)

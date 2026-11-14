@@ -25,6 +25,7 @@ for f in sorted((ROOT / 'src').glob('*.c')):
     src = f.read_text(encoding='utf-8')
     code = re.sub(r'/\*.*?\*/', '', src, flags=re.S)       # sans les commentaires
     code = re.sub(r'#\s*(include|pragma).*', '', code)
+    code = re.sub(r'__asm__\(.*?\);', '', code)          # assembleur intégré (pas du texte affiché)
     for m in re.finditer(STR, code):
         t = m.group(1)
         if f.name == 'stats.c' or t in ('BANK', 'RODATA'):
