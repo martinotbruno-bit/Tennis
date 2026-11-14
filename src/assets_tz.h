@@ -160,9 +160,9 @@ static const tz_art_t tz_art[TZ_N][3] = {   /* homme, femme, fillette (Margaux) 
     { { 9, 202, 0, 32, 2, 26, 0, tz_chr_handshake_m, tz_map_handshake_m, tz_at_handshake_m },
       { 18, 199, 0, 32, 4, 24, 0, tz_chr_handshake_f, tz_map_handshake_f, tz_at_handshake_f },
       { 20, 178, 0, 32, 4, 24, 0, tz_chr_handshake_g, tz_map_handshake_g, tz_at_handshake_g } },
-    { { 4, 212, 0, 32, 2, 26, 0, tz_chr_crowd_m, tz_map_crowd_m, tz_at_crowd_m },
-      { 4, 212, 0, 32, 2, 26, 0, tz_chr_crowd_m, tz_map_crowd_m, tz_at_crowd_m },
-      { 4, 212, 0, 32, 2, 26, 0, tz_chr_crowd_m, tz_map_crowd_m, tz_at_crowd_m } },
+    { { 4, 220, 0, 32, 0, 28, 0, tz_chr_crowd_m, tz_map_crowd_m, tz_at_crowd_m },
+      { 4, 220, 0, 32, 0, 28, 0, tz_chr_crowd_m, tz_map_crowd_m, tz_at_crowd_m },
+      { 4, 220, 0, 32, 0, 28, 0, tz_chr_crowd_m, tz_map_crowd_m, tz_at_crowd_m } },
 };
 #define TZ_IMPACT_RACKET_X 13
 #define TZ_IMPACT_RACKET_Y 52

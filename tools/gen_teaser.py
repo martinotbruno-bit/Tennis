@@ -778,9 +778,7 @@ POSES['crowd'] = dict(figures=[
     dict(s=dict(pelvis=(28, 126), torso=-92, legL=(97, 94, 165), legR=(83, 86, 15),
                 armL=(-120, -100), armR=(-60, -80), tilt=-0.06, turn=0.2,
                 order=['legL', 'legR', 'torso', 'armL', 'armR', 'head']), female=0, face='joy', shirt=6, shorts=3, casual=True, tag='1'),
-    dict(s=dict(pelvis=(136, 128), torso=-88, legL=(97, 94, 165), legR=(83, 86, 15),
-                armL=(-140, -95), armR=(-40, -85), tilt=0.08, turn=-0.3,
-                order=['legL', 'legR', 'torso', 'armL', 'armR', 'head']), female=0, face='joy', shorts=6, casual=True, tag='3'),
+    # (2.75 : vue resserrée sur deux spectateurs ; le troisième, à droite, retiré : place des tuiles)
     dict(s=dict(pelvis=(82, 122), torso=-90, legL=(97, 94, 165), legR=(83, 86, 15),
                 armL=(-100, -70), armR=(-80, -110), tilt=0.0, turn=0.0,
                 order=['legL', 'legR', 'torso', 'armL', 'armR', 'head']), female=1, face='joy', tag='2'),
@@ -794,32 +792,35 @@ def _crowd_extra(f, r):
     crown = f.m_ell((ex, ey - 8.5), 10.5, 6.5) & f.m_poly([(ex - 20, ey - 30), (ex + 20, ey - 30), (ex + 20, ey - 5.5), (ex - 20, ey - 5.5)])
     brim = f.m_poly([(ex - 3, ey - 6.5), (ex + 14, ey - 6.5), (ex + 14, ey - 4.5), (ex - 3, ey - 4.5)])
     f.part(crown | brim, 3, 4, sh=(1, 1))
-    # (2.75) gradins : au lieu d'un bloc noir, des rangées de sièges vues de
-    # face. Motif de 16 x 16 pixels calé sur les tuiles (peu de tuiles
-    # différentes) : dossier arrondi de la couleur du club (tenue), reflet,
-    # bas ombré, nez de marche clair, fond sombre ; rangées décalées d'un
-    # demi-siège. La première rangée, juste devant les spectateurs, cache le
-    # bas du corps.
+    # (2.75) gradins à l'échelle des spectateurs : un dossier est large comme
+    # des épaules (32 px) ; la rangée de devant cache le bas du corps, la
+    # rangée du dessus se voit derrière eux, entre les spectateurs : ils sont
+    # dans la tribune. Motif de 40 x 40 pixels calé sur les tuiles, rangées
+    # décalées d'un demi-siège : béton clair (teinte de la peau claire),
+    # dossier orangé arrondi (ombre de la peau), reflet et arête clairs,
+    # assise, ombre sous l'assise ; couleurs différentes des maillots.
     yy, xx = np.mgrid[0:f.H, 0:f.W]
-    y0 = int(f.T((0, 110))[1]) // 8 * 8
-    zone = yy >= y0
-    f.part(zone, 6, None)                                       # béton clair des gradins
-    r_ = (yy - y0) // 24
-    cy = (yy - y0) % 24
-    cx = (xx - (r_ % 2) * 12) % 24
-    # dossier : 18 px de large, arrondi en haut, de cy 0 à 12
-    back = zone & (cy <= 12) & (cx >= 3) & (cx <= 20) & ~((cy == 0) & ((cx <= 4) | (cx >= 19))) & ~((cy == 1) & ((cx == 3) | (cx == 20)))
-    # (couleurs d'un même bloc : vert, blanc et le fond seulement, sinon le
-    # blanc de la marche est perdu à la quantification)
-    sid_ = f.part(back, 3, None)
-    f.paint(back & (cy == 2) & (cx >= 6) & (cx <= 15), 6, within=[sid_])  # reflet
-    f.paint(back & (cx == 19) & (cy >= 3) & (cy <= 10), 6, within=[sid_]) # arête du dossier
-    # assise (vue de face : bande plus large sous le dossier, bord clair)
-    seat = zone & (cy >= 14) & (cy <= 16) & (cx >= 1) & (cx <= 22)
-    sid2 = f.part(seat, 3, None)
-    f.paint(seat & (cy == 14), 6, within=[sid2])
-    # ombre sous l'assise et au pied de la marche (couleur du fond)
-    f.part(zone & (((cy >= 17) & (cy <= 18) & (cx >= 2) & (cx <= 21)) | (cy == 23)), 5, None)
+    y0 = int(f.T((0, 110))[1]) // 16 * 16                      # (limite de bloc de couleurs : le haut des sièges ne partage pas un bloc avec les maillots)
+    free = f.pid == 0                                           # (derrière les spectateurs : le fond seulement)
+    # (motif à l'échelle de l'image : 40 px pour k = 0,9, multiple de 8)
+    C = max(40, int(round(40 * f.k / 0.9 / 8)) * 8)
+    B = C * 4 // 5 // 8 * 8                                     # (rangée du dessus : sous les épaules)
+    front = yy >= y0
+    behind = (yy < 0)          # (rangée du dessus retirée en vue resserrée : elle faisait des carrés pâles sur les maillots)
+    r_ = np.where(front, (yy - y0) // C, -1)
+    cy = np.where(front, (yy - y0) % C, yy - (y0 - B)) * 40 // C
+    cx = ((xx - (r_ % 2) * (C // 2)) % C) * 40 // C
+    zone = front | behind
+    f.part(front, 1, None)                                      # béton (devant : cache le bas du corps)
+    f.part(behind, 1, None)
+    back = zone & (cy <= 22) & (cx >= 4) & (cx <= 35) & ~((cy <= 1) & ((cx <= 6) | (cx >= 33))) & ~((cy == 2) & ((cx == 4) | (cx == 35)))
+    sid_ = f.part(back, 2, None)
+    f.paint(back & (cy == 3) & (cx >= 9) & (cx <= 26), 1, within=[sid_])     # reflet
+    f.paint(back & (cx == 33) & (cy >= 5) & (cy <= 19), 1, within=[sid_])    # arête
+    seat = zone & (cy >= 24) & (cy <= 28) & (cx >= 1) & (cx <= 38)
+    sid2 = f.part(seat, 2, None)
+    f.paint(seat & (cy == 24), 1, within=[sid2])
+    f.part(zone & (((cy >= 29) & (cy <= 31) & (cx >= 3) & (cx <= 36)) | (cy == 39)), 5, None)   # ombre sous l'assise, pied de marche
 
 # images identiques quel que soit le joueur (une seule copie en ROM) : la
 # fillette pour le ramasseur, le public
@@ -840,7 +841,7 @@ SHOTS = [
     ('backhand', 'backhand', 1.4, (150, 102), False),   # revers à deux mains, gros plan (ralenti, 2.68)      # smash et service, en pied (ralenti, 2.68)
     ('ballkid', 'ballkid', 1.3, (94, 123), False),     # ramasseur de balles (changement de côté, 2.73)
     ('handshake', 'handshake', 1.3, (110, 96), False),  # poignée de main au filet (fin du match, 2.73)
-    ('crowd', 'crowd', 0.9, (82, 92), False),           # public en gros plan (long échange, 2.73)
+    ('crowd', 'crowd', 1.3, (50, 86), False),           # public en gros plan (long échange, 2.73)
 ]
 
 
