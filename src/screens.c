@@ -24,6 +24,7 @@
 #define SS_COMP_END  8
 #define SS_GMI      10   /* annonce d'un tournoi du Grand Martinot */
 #define SS_TEASER   11   /* bande-annonce du Grand Martinot et du Martinworld Tour */
+#define SS_FLY      12   /* survol du stade avant une finale (2.73, fly.c) */
 void teaser_build(void); void teaser_tick(void);
 extern u8 teaser_done;
 #define SS_SETBREAK  9
@@ -606,12 +607,14 @@ static void team_line(u8 t, u8 y)
 }
 
 void vs_build(void);
+void fly_build(void); u16 __fastcall__ fly_tick(u16 pad);   /* fly.c, banque 20 */
 void vs_texts(void); void fiche_tick(void); u16 __fastcall__ car_end_text(u16 y);   /* career.c, banque 19 */
 static u16 brk_t;            /* (aussi : temps de l'entrée de l'affiche VS) */
 u8 __fastcall__ vs_anim(u8 t);
 static void present_screen(void)
 {
     u8 vs = (u8)(cfg.env != ENV_NUDE);       /* (au club nudiste : la présentation d'origine) */
+    u8 fin;
     screen_begin();
     people_tiles((u8)(cfg.env == ENV_NUDE));
     pal_set_player(0, cfg.chr[0]);
@@ -627,6 +630,7 @@ static void present_screen(void)
         txt_at(3, 2, comp_l1);
         txt_at(3, 3, comp_l2);
     } else txt_at(3, 1, cfg.doubles ? "MATCH DE DOUBLE" : "MATCH AMICAL");
+    fin = (u8)(last_mode == MODE_COMP && is_final());   /* (avant vs_texts : la fiche écrit dans comp_l1) */
     if (vs) {
         bank_call(BANK_CAR, vs_texts);   /* noms, manette ou niveau, style, conditions ; fiche des joueurs (career.c, 2.72) */
         brk_t = 0; far_call(BANK_PODIUM, (void *)vs_anim, 0);   /* (« CONTRE » : écrit par l'entrée animée) */
@@ -641,7 +645,7 @@ static void present_screen(void)
     }
     txt_at(4, 27, "A : JOUER   B : RETOUR");
     ppu_on();
-    if (last_mode == MODE_COMP && is_final()) music_play(MUS_FINAL);
+    if (fin) music_play(MUS_FINAL);
     else if (cfg.env == ENV_MARGAUX && music_cur != MUS_MARGAUX) music_play(MUS_MARGAUX);
     scr_state = SS_PRESENT;
 }
@@ -1156,8 +1160,15 @@ void screens_tick(void)
             for (i = 0; i < 3; ++i) spr1(c_type == CT_LEAGUE ? 12 : 8, (u8)((14 + i) * 8 - 1), (u8)(ball_base + 8), i);
             spr_end();
         }
-        if (pad1_new & (PAD_A | PAD_START)) { comp_cfg(); present_screen(); break; }
+        if (pad1_new & (PAD_A | PAD_START)) {
+            comp_cfg();
+            if (is_final()) { bank_call(BANK_FLY, fly_build); scr_state = SS_FLY; break; }   /* survol du stade (2.73) */
+            present_screen(); break;
+        }
         if (pad1_new & PAD_B) { sfx_menu_back(); menu_screen(); }
+        break;
+    case SS_FLY:
+        if (far_call(BANK_FLY, (void *)fly_tick, pad1_new)) present_screen();
         break;
     case SS_SETBREAK:
         /* n'importe quel bouton (manette 1 ou 2) ferme l'écran aussitôt,
