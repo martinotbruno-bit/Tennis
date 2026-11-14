@@ -144,7 +144,7 @@ static void label(u8 x, u8 w, u8 i)
     if (c_dbl) team_label(c_pl[i], c_pl2[i], b);
     else {
         /* simple : nom entier (MARGAUX déborde d'une case, toujours centré) */
-        const char *p = char_name[c_pl[i]];
+        const char *p = chr_nm(c_pl[i]);
         for (n = 0; n < 7 && p[n] > ' '; ++n) b[n] = p[n];
         b[n] = 0;
     }

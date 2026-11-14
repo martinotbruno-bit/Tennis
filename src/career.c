@@ -52,7 +52,7 @@ static void side_text(u8 t, u8 r, u8 pg)
     u16 k;
     fb_clear(14);
     if (!pg) {
-        if (r == 0) { if (cfg.doubles) { fb[0] = '+'; fb_put(2, char_name[cfg.chr[t + 2]]); } }
+        if (r == 0) { if (cfg.doubles) { fb[0] = '+'; fb_put(2, chr_nm(cfg.chr[t + 2])); } }
         else if (r == 1) fb_put(0, cfg.ctrl[t] == CTRL_CPU ? lvl_name[cfg.level[t]] : cfg.ctrl[t] == CTRL_PAD1 ? (const char *)"MANETTE 1" : (const char *)"MANETTE 2");
         else if (cfg.doubles && cfg.ctrl[t + 2] == CTRL_PAD2) fb_put(0, "+ MANETTE 2");
         else if (cfg.ctrl[t] == CTRL_CPU) fb_put(0, style_name[char_style[c]]);
@@ -82,7 +82,7 @@ static void foot_text(u8 r, u8 pg)
         if (!v) { fb_put(0, "PREMIER FACE A FACE"); return; }
         fb_put(0, "FACE A FACE : ");
         r = fb_num(14, v >> 4); fb_put(r, " V - "); r = fb_num((u8)(r + 5), v & 15); fb_put(r, " D");
-    } else { fb_put(0, "VOS MATCHS CONTRE "); fb_put(18, char_name[cfg.chr[1]]); }
+    } else { fb_put(0, "VOS MATCHS CONTRE "); fb_put(18, chr_nm(cfg.chr[1])); }
 }
 
 /* affiche VS : textes (rendu coupé), puis la fiche alterne (fiche_tick) */
@@ -90,7 +90,7 @@ void vs_texts(void)
 {
     u8 t, r;
     for (t = 0; t < 2; ++t) {
-        txt_at((u8)(t ? 18 : 2), 19, char_name[cfg.chr[t]]);
+        txt_at((u8)(t ? 18 : 2), 19, chr_nm(cfg.chr[t]));
         for (r = 0; r < 3; ++r) { side_text(t, r, 0); txt_at((u8)(t ? 18 : 2), (u8)(20 + r), fb); }
     }
     if (cfg.env == ENV_MARGAUX) txt_at(2, 3, "BIENVENUE AU COURT MARGAUX !");
@@ -283,12 +283,14 @@ u16 __fastcall__ msave_ok(u16 unused)
     return (u16)(1 + pod_buf[1]);
 }
 /* reprise demandée : les réglages tout de suite (écran de présentation) */
+static void cust_resume(void);
 void msave_load_cfg(void)
 {
     u8 i;
     u8 *d = (u8 *)&cfg;
     for (i = 0; i < sizeof(MatchCfg); ++i) d[i] = pod_buf[2 + i];
     mresume = 1;
+    cust_resume();                      /* joueur personnalisé d'un match de compétition (2.75) */
 }
 /* début du match (cer_entry, après match_start) : score et statistiques ;
    un « let » d'une trame replace les joueurs pour le service (after_point) */
@@ -311,4 +313,197 @@ void msave_restore(void)
     ms = MS_DEAD; ms_timer = 1; end_reason = 3;     /* END_LET : after_point replace les joueurs */
     set_msg("REPRISE", "DU MATCH", 90);
     bank_call(BANK_HL, sun_apply);                  /* crépuscule : la lumière du moment */
+}
+
+/* ---------------------------------------------------------------------- */
+/* Joueur personnalisé en compétition (2.75) : les joueurs humains peuvent  */
+/* habiller le personnage choisi (nom, sexe, peau, cheveux, tenue), sans    */
+/* obligation. Le profil est gardé dans la sauvegarde (cu_sav, gfx.c) et   */
+/* appliqué pendant la compétition seulement (cu_map, char_female).        */
+/* Les cheveux partagent leur couleur avec le short et la raquette          */
+/* (« sombre » des personnages).                                            */
+#pragma static-locals(off)              /* (variables locales sur la pile : WBSS est pleine) */
+extern u8 cu_st[6];
+#define cu_row cu_st[0]
+#define cu_ed  cu_st[1]
+#define cu_pos cu_st[2]
+#define cu_k   cu_st[3]
+#define cu_n   cu_st[4]
+extern u8 cu_c[2];
+#define CU_ROWS 7
+#define CU_VX   13
+#define CU_Y(r) (u8)(7 + (r) * 2)
+static const u8 cu_skin[5] = { 0x36, 0x37, 0x27, 0x17, 0x07 };
+static const char * const cu_skin_n[5] = { "PALE", "CLAIRE", "MATE", "BRUNE", "EBENE" };
+static const u8 cu_hair[6] = { 0x0F, 0x07, 0x17, 0x37, 0x10, 0x30 };
+static const char * const cu_hair_n[6] = { "NOIRS", "BRUNS", "ROUX", "BLONDS", "GRIS", "BLANCS" };
+static const u8 cu_out[15] = { 0x30, 0x10, 0x00, 0x37, 0x35, 0x24, 0x27, 0x07, 0x2B, 0x3B, 0x39, 0x2C, 0x31, 0x1C, 0x0C };
+static const char * const cu_out_n[15] = { "BLANC", "GRIS", "ANTHRACITE", "CREME", "ROSE", "MAGENTA", "ORANGE",
+                                           "CHOCOLAT", "VERT", "MENTHE", "ANIS", "CYAN", "CIEL", "CANARD", "PETROLE" };
+static const char * const cu_lbl[CU_ROWS] = { "PROFIL", "NOM", "SEXE", "PEAU", "CHEVEUX", "TENUE", "VALIDER" };
+static const char cu_abc[] = " ABCDEFGHIJKLMNOPQRSTUVWXYZ-";
+extern const u8 char_pal_rom[NCHARS][3];        /* (gfx.c) */
+extern const u8 char_female0[NCHARS];
+
+static u8 cu_find(const u8 *t, u8 n, u8 v) { u8 i; for (i = 0; i < n; ++i) if (t[i] == v) return i; return 0; }
+
+/* profil k d'après le personnage c (nom, sexe, couleurs d'origine) ; inactif */
+static void cu_from_char(u8 k, u8 c)
+{
+    u8 *s = cu_sav + CU_SLOT(k), i;
+    const char *n = char_name[c];
+    for (i = 0; i < 7; ++i) s[i] = (u8)(*n > ' ' ? *n++ : ' ');
+    s[7] = 0;
+    s[8] = (u8)(char_female0[c] << 1);
+    s[9] = char_pal_rom[c][0]; s[10] = char_pal_rom[c][1]; s[11] = char_pal_rom[c][2];
+}
+
+/* appliqué au début de la compétition (et à sa reprise) */
+void cust_apply(void)
+{
+    u8 k, c, *s;
+    cust_reset();
+    if (cu_sav[0] != CU_MAGIC) return;
+    for (k = 0; k < 2; ++k) {
+        c = k ? (c_hum2 ? c_pl2[0] : 255) : c_pl[0];
+        s = cu_sav + CU_SLOT(k);
+        if (c < NCHARS && (s[8] & 1)) { cu_map[k] = (u8)(c + 1); char_female[c] = (u8)((s[8] >> 1) & 1); }
+    }
+}
+
+static void cu_live(void)                       /* aperçu : profil en cours appliqué */
+{
+    u8 *s = cu_sav + CU_SLOT(cu_k), c = cu_c[cu_k];
+    cust_reset();
+    if (s[8] & 1) { cu_map[cu_k] = (u8)(c + 1); char_female[c] = (u8)((s[8] >> 1) & 1); }
+    pal_set_player(0, c);
+}
+
+static void cu_value(u8 r, u8 now)              /* valeur de la rangée r (now : pendant l'affichage) */
+{
+    u8 *s = cu_sav + CU_SLOT(cu_k), i;
+    char b[11];
+    const char *v = "";
+    for (i = 0; i < 10; ++i) b[i] = ' ';
+    b[10] = 0;
+    switch (r) {
+    case 0: v = (s[8] & 1) ? "PERSONNEL" : "D'ORIGINE"; break;
+    case 1:
+        for (i = 0; i < 7; ++i) b[i] = (char)s[i];
+        if (cu_ed) b[cu_pos] = (char)(b[cu_pos] == ' ' ? '_' : b[cu_pos] + 0x40);   /* lettre en cours : en or */
+        v = 0; break;
+    case 2: v = (s[8] & 2) ? "FEMME" : "HOMME"; break;
+    case 3: v = cu_skin_n[cu_find(cu_skin, 5, s[9])]; break;
+    case 4: v = cu_hair_n[cu_find(cu_hair, 6, s[11])]; break;
+    case 5: v = cu_out_n[cu_find(cu_out, 15, s[10])]; break;
+    default: return;
+    }
+    if (v) for (i = 0; *v; ++i) b[i] = *v++;
+    if (now) vbuf_text(CU_VX, CU_Y(r), b, 10); else txt_at(CU_VX, CU_Y(r), b);
+}
+
+/* page du joueur cu_k (écran coupé : appelée après screen_begin, screens.c) */
+void cust_page(void)
+{
+    u8 r;
+    txt_off = 0x40;
+    txt_at(4, 4, cu_k ? "PARTENAIRE : MANETTE 2" : (cu_n > 1 ? "JOUEUR 1 : MANETTE 1" : "NOM ET TENUE, FACULTATIF"));
+    txt_off = 0;
+    for (r = 0; r < CU_ROWS; ++r) { txt_at(3, CU_Y(r), cu_lbl[r]); cu_value(r, 0); }
+    txt_at(1, CU_Y(cu_row), ">");
+    txt_at(3, 21, "GAUCHE/DROITE : CHANGER");
+    txt_at(3, 22, "A SUR LE NOM : L'ECRIRE");
+    txt_at(2, 25, "START : JOUER   B : RETOUR");
+    cu_live();
+}
+
+/* first : 1 au début (réglages lus dans opt_val : joueur 1, partenaire
+   humain en double), 0 : page du partenaire */
+extern u8 opt_val[];
+u16 __fastcall__ cust_build(u16 first)
+{
+    u8 k;
+    if (!first) { cust_page(); return 0; }
+    cu_c[0] = opt_val[3];                       /* (O_P1 ; O_P2 4, O_TYPE 2, O_CPART 20 : screens.c) */
+    cu_c[1] = opt_val[4] == cu_c[0] ? (u8)((cu_c[0] + 1) % NCHARS) : opt_val[4];
+    cu_n = (u8)(opt_val[2] && opt_val[20] ? 2 : 1);
+    if (cu_sav[0] != CU_MAGIC) { cu_from_char(0, cu_c[0]); cu_from_char(1, cu_n > 1 ? cu_c[1] : 0); cu_sav[0] = CU_MAGIC; }
+    /* profil inactif : repart du personnage choisi */
+    for (k = 0; k < cu_n; ++k) if (!(cu_sav[CU_SLOT(k) + 8] & 1)) cu_from_char(k, cu_c[k]);
+    cu_k = 0; cu_row = 0; cu_ed = 0;
+    cust_page();
+    return 0;
+}
+
+/* à chaque trame : 0 continuer, 1 terminé, 2 page suivante (partenaire),
+   3 retour au menu */
+u16 __fastcall__ cust_tick(u16 pad)
+{
+    u8 *s = cu_sav + CU_SLOT(cu_k), r = cu_row, i, ch;
+    spr_begin();
+    spr_person(212, 150, cu_c[cu_k], 1, (frame_cnt & 64) ? POSE_JOY : POSE_IDLE, 0, 0);
+    spr_end();
+    if (cu_ed) {                                /* saisie du nom */
+        if (pad & (PAD_A | PAD_B | PAD_START)) { cu_ed = 0; sfx_menu_ok(); }
+        else if ((pad & PAD_LEFT) && cu_pos) { --cu_pos; sfx_menu_move(); }
+        else if ((pad & PAD_RIGHT) && cu_pos < 6) { ++cu_pos; sfx_menu_move(); }
+        else if (pad & (PAD_UP | PAD_DOWN)) {
+            ch = s[cu_pos];
+            for (i = 0; cu_abc[i] && cu_abc[i] != (char)ch; ++i) ;
+            if (!cu_abc[i]) i = 0;
+            if (pad & PAD_UP) { if (!cu_abc[++i]) i = 0; } else i = (u8)(i ? i - 1 : sizeof(cu_abc) - 2);
+            s[cu_pos] = (u8)cu_abc[i];
+            s[8] |= 1; sfx_menu_val(1);
+            cu_value(0, 1);
+        } else return 0;
+        cu_value(1, 1);
+        return 0;
+    }
+    if (pad & PAD_B) { sfx_menu_back(); cust_reset(); return 3; }
+    if ((pad & PAD_START) || ((pad & PAD_A) && r == CU_ROWS - 1)) {
+        sfx_menu_ok();
+        /* nom vide : celui du personnage */
+        for (i = 0; i < 7 && s[i] == ' '; ++i) ;
+        if (i == 7) { ch = s[8]; cu_from_char(cu_k, cu_c[cu_k]); s[8] = ch; }
+        cust_reset();
+        if (cu_k + 1 < cu_n) { ++cu_k; cu_row = 0; return 2; }
+        return 1;
+    }
+    if (pad & (PAD_UP | PAD_DOWN)) {
+        vbuf_text(1, CU_Y(r), " ", 1);
+        r = (u8)((pad & PAD_UP) ? (r ? r - 1 : CU_ROWS - 1) : (r + 1 < CU_ROWS ? r + 1 : 0));
+        cu_row = r;
+        vbuf_text(1, CU_Y(r), ">", 1);
+        sfx_menu_move();
+        return 0;
+    }
+    if ((pad & PAD_A) && r == 1) { cu_ed = 1; cu_pos = 0; s[8] |= 1; sfx_menu_ok(); cu_value(0, 1); cu_value(1, 1); cu_live(); return 0; }
+    if (pad & (PAD_LEFT | PAD_RIGHT | PAD_A)) {
+        u8 d = (u8)((pad & PAD_LEFT) ? 0 : 1);
+        switch (r) {
+        case 0: s[8] ^= 1; break;
+        case 2: s[8] ^= 2; s[8] |= 1; break;
+        case 3: i = cu_find(cu_skin, 5, s[9]); s[9] = cu_skin[d ? (i + 1) % 5 : (i + 4) % 5]; s[8] |= 1; break;
+        case 4: i = cu_find(cu_hair, 6, s[11]); s[11] = cu_hair[d ? (i + 1) % 6 : (i + 5) % 6]; s[8] |= 1; break;
+        case 5: i = cu_find(cu_out, 15, s[10]); s[10] = cu_out[d ? (i + 1) % 15 : (i + 14) % 15]; s[8] |= 1; break;
+        default: return 0;
+        }
+        sfx_menu_val(d);
+        cu_value(0, 1); cu_value(r, 1);
+        cu_live();
+    }
+    return 0;
+}
+
+/* reprise d'un match de compétition sauvegardé : profil d'après cfg */
+static void cust_resume(void)
+{
+    u8 k, c, *t;
+    cust_reset();
+    if (pod_buf[1] != 3 || cu_sav[0] != CU_MAGIC) return;   /* (3 : MODE_COMP, screens.c) */
+    for (k = 0; k < 2; ++k) {
+        c = k ? (cfg.doubles && cfg.ctrl[2] == CTRL_PAD2 ? cfg.chr[2] : 255) : cfg.chr[0];
+        t = cu_sav + CU_SLOT(k);
+        if (c < NCHARS && (t[8] & 1)) { cu_map[k] = (u8)(c + 1); char_female[c] = (u8)((t[8] >> 1) & 1); }
+    }
 }

@@ -4,7 +4,17 @@
 
 #define NCHARS 21     /* 16 + Margaux (index 16) + MAX, LOLA, PAPI, TITOU (17 à 20) */
 extern const char * const char_name[NCHARS];
-extern const u8 char_female[NCHARS];
+extern u8 char_female[NCHARS];   /* (2.75 : en RAM, copie de la table d'origine ; le joueur personnalisé peut changer de sexe) */
+/* Joueur personnalisé en compétition (2.75) : cu_sav (sauvegardé, pile) :
+   [0] contrôle CU_MAGIC, puis pour le joueur 1 et le partenaire (manette 2)
+   12 octets : nom (7 lettres et 0), drapeaux (bit 0 actif, bit 1 femme),
+   peau, tenue, cheveux (et short). cu_map[k] : personnage habillé + 1
+   (0 : aucun), posé pendant une compétition seulement. */
+#define CU_MAGIC 0xC5
+#define CU_SLOT(k) (1 + (k) * 12)
+extern u8 cu_sav[25], cu_map[2];
+const char * __fastcall__ chr_nm(u8 c);   /* nom du personnage (personnalisé le cas échéant) */
+void cust_reset(void);                  /* personnages d'origine */
 extern const u8 char_style[NCHARS];
 
 /* styles de jeu des personnages contrôlés par l'IA (CDC 10.2) */

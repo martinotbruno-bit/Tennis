@@ -1077,7 +1077,7 @@ static void final_tick(void)
 {
     u8 i, w = sc_winner;
     if (hl_t == 0) {
-        const char *nm = char_name[cfg.chr[w]];
+        const char *nm = chr_nm(cfg.chr[w]);
         if (cfg.doubles) nm = "VICTOIRE";
         for (i = 0; nm[i] && i < 8; ++i) hl_txt[i] = nm[i];
         if (!cfg.doubles) { const char *g = " GAGNE !"; u8 k = 0; while ((hl_txt[i] = g[k]) != 0) { ++i; ++k; } }

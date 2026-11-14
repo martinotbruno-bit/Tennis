@@ -25,6 +25,11 @@
 #define SS_GMI      10   /* annonce d'un tournoi du Grand Martinot */
 #define SS_TEASER   11   /* bande-annonce du Grand Martinot et du Martinworld Tour */
 #define SS_FLY      12   /* survol du stade avant une finale (2.73, fly.c) */
+#define SS_CUSTOM   13   /* joueur personnalisé avant une compétition (2.75, career.c) */
+u16 __fastcall__ cust_build(u16 arg);   /* joueur personnalisé (career.c, banque 19, 2.75) */
+u16 __fastcall__ cust_tick(u16 pad);
+void cust_page(void);
+void cust_apply(void);
 void teaser_build(void); void teaser_tick(void);
 extern u8 teaser_done;
 #define SS_SETBREAK  9
@@ -195,7 +200,7 @@ static const char *opt_text(u8 o)
     case O_MODE:   return mode_name[v];
     case O_TYPE:   return v ? "DOUBLE" : "SIMPLE";
     case O_P1:
-    case O_P2:     return char_name[v];
+    case O_P2:     return chr_nm(v);
     case O_LEVEL:  return level_name[v];
     case O_SURF:   return surf_name[v];
     case O_ENV:    return env_name[v];
@@ -457,9 +462,18 @@ static void menu_info_tick(void)
     }
 }
 
+static void cust_screen(u8 first)
+{
+    screen_begin();
+    deco("TON JOUEUR", 0, 24);
+    far_call(BANK_CAR, (void *)cust_build, first);   /* (lit opt_val) */
+    ppu_on();
+    scr_state = SS_CUSTOM;
+}
 static void menu_screen(void)
 {
     u8 i;
+    cust_reset();                       /* (personnages d'origine hors compétition, 2.75) */
     build_visible();
     rd_row = rd_n = 0;
     screen_begin();
@@ -598,8 +612,8 @@ static void team_line(u8 t, u8 y)
 {
     /* nom complet (jusqu'à 7 lettres : MARGAUX) ; en double, le partenaire
        sur la ligne suivante */
-    txt_at(6, y, char_name[cfg.chr[t]]);
-    if (cfg.doubles) { txt_at(6, (u8)(y + 1), "+"); txt_at(8, (u8)(y + 1), char_name[cfg.chr[t + 2]]); }
+    txt_at(6, y, chr_nm(cfg.chr[t]));
+    if (cfg.doubles) { txt_at(6, (u8)(y + 1), "+"); txt_at(8, (u8)(y + 1), chr_nm(cfg.chr[t + 2])); }
     if (cfg.ctrl[t] == CTRL_CPU) txt_at(18, y, level_name[cfg.level[t]]);
     else txt_at(18, y, cfg.ctrl[t] == CTRL_PAD1 ? "MANETTE 1" : "MANETTE 2");
     if (cfg.doubles && cfg.ctrl[t + 2] == CTRL_PAD2) txt_at(18, (u8)(y + 1), "+ MANETTE 2");
@@ -786,6 +800,7 @@ static void start_comp(void)
     c_pl2[0] = opt_val[O_P2];
     if (c_dbl && c_pl2[0] == c_pl[0]) c_pl2[0] = (u8)((c_pl[0] + 1) % NCHARS);
     c_seed = (u8)(rand8() ^ frame_cnt);
+    bank_call(BANK_CAR, cust_apply);    /* joueur personnalisé (2.75) */
     COMP(comp_new, 0);
     if (c_type >= CT_GRAND) {
         /* Grand Martinot, Martinworld Tour : bande-annonce (banque 7) */
@@ -838,6 +853,7 @@ static void code_tick(void)
             c_surf = pw.surf; c_fmt = pw.fmt; c_cond = pw.cond; c_env = pw.env; c_lvl = pw.lvl;
             c_results = pw.results; c_opts = pw.opts; c_trophies = pw.trophies; c_gres = pw.gres; c_slam = 0;
             c_dbl = pw.doubles; c_pl2[0] = pw.partner; c_hum2 = pw.hum2;
+            bank_call(BANK_CAR, cust_apply);
             if (c_trophies) nude_unlocked = 1;     /* un trophée débloque le club nudiste */
             COMP(comp_build, 0);
             opt_val[O_P1] = c_pl[0];
@@ -949,7 +965,7 @@ static void results_screen(void)
     deco("RESULTAT", 0, 24);
     txt_off = 0x40;                              /* en or */
     txt_at(8, 4, "VICTOIRE DE");
-    txt_at(20, 4, char_name[cfg.chr[w]]);
+    txt_at(20, 4, chr_nm(cfg.chr[w]));
     txt_off = 0;
     set_table(6);                       /* (rangées 6 à 8 : sous le titre, version 2.69 ; rangées 2 à 4 avant, sous les lettres du titre) */
     /* colonnes de 4 lettres (MARGAUX : « MARG ») */
@@ -1125,7 +1141,7 @@ void screens_tick(void)
             sfx_menu_ok();
             (void)far_call(BANK_COMP, (void *)so_save, 0);   /* mémorise les réglages */
             v = opt_val[O_MODE];
-            if (v == MODE_COMP) { start_comp(); break; }
+            if (v == MODE_COMP) { cust_screen(1); break; }   /* (joueur personnalisé, puis la compétition) */
             setup_cfg(v);
             if (v == MODE_TRAIN || v == MODE_DEMO) go_match();
             else present_screen();
@@ -1203,6 +1219,12 @@ void screens_tick(void)
         break;
     case SS_CODE:
         code_tick();
+        break;
+    case SS_CUSTOM:
+        v = (u8)far_call(BANK_CAR, (void *)cust_tick, (u16)(pad1_new | pad2_new));
+        if (v == 1) start_comp();
+        else if (v == 2) { fade_skip = 1; cust_screen(0); }
+        else if (v == 3) menu_screen();
         break;
     case SS_PALMARES:
         if (pad1_new & PAD_RIGHT) { pal_page = (u8)(pal_page == 2 ? 0 : pal_page + 1); fade_skip = 1; palmares_screen(); break; }

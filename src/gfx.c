@@ -9,9 +9,9 @@ const char * const char_name[NCHARS] = {
     "ALEX", "MAYA", "LEON", "NINA", "OMAR", "ZOE ", "HUGO", "EMMA",
     "IVAN", "LINA", "TOM ", "JADE", "LUCA", "SARA", "NOAH", "INES", "MARGAUX",
     "MAX ", "LOLA", "PAPI", "TITOU" };
-const u8 char_female[NCHARS] = { 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 1, 0, 1, 0, 0 };
+const u8 char_female0[NCHARS] = { 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 1, 0, 1, 0, 0 };
 /* peau, tenue, sombre (cheveux/short/raquette) */
-static const u8 char_pal[NCHARS][3] = {
+const u8 char_pal_rom[NCHARS][3] = {
     /* tenues choisies pour ressortir sur toutes les surfaces et se distinguer
        de la peau ; cheveux / short / raquette en noir ou brun foncé */
     { 0x27, 0x30, 0x0F },   /* ALEX : blanc (tenue classique) */
@@ -36,6 +36,23 @@ static const u8 char_pal[NCHARS][3] = {
     { 0x36, 0x30, 0x10 },   /* PAPI : blanc, cheveux gris */
     { 0x27, 0x0C, 0x07 },   /* TITOU : canard foncé, cheveux châtains */
 };
+u8 char_female[NCHARS];
+u8 cu_map[2];
+u8 cu_st[6], cu_c[2];                            /* écran du joueur personnalisé (career.c) : rangée, saisie du nom, lettre, joueur, nombre, (libre) */
+#pragma bss-name(push, "SAVEDATA")
+u8 cu_sav[25];
+#pragma bss-name(pop)
+void cust_reset(void)
+{
+    memcpy(char_female, char_female0, NCHARS);
+    cu_map[0] = cu_map[1] = 0;
+}
+const char * __fastcall__ chr_nm(u8 c)
+{
+    if (cu_map[0] == (u8)(c + 1)) return (const char *)cu_sav + CU_SLOT(0);
+    if (cu_map[1] == (u8)(c + 1)) return (const char *)cu_sav + CU_SLOT(1);
+    return char_name[c];
+}
 const char * const style_name[NSTYLES] = {
     "EQUILIBRE", "FOND DE COURT", "PUISSANCE", "FILET",
     "DEFENSIF", "OFFENSIF", "TACTIQUE", "PLACEMENT", "FANTAISIE" };
@@ -150,9 +167,12 @@ void pal_set_menu(void)
 void pal_set_player(u8 slot, u8 c)
 {
     u8 b = (u8)(16 + slot * 4);
-    pal_buf[b + 1] = char_pal[c][0];
-    pal_buf[b + 2] = char_pal[c][1];
-    pal_buf[b + 3] = char_pal[c][2];
+    const u8 *p = char_pal_rom[c];
+    if (cu_map[0] == (u8)(c + 1)) p = cu_sav + CU_SLOT(0) + 9;          /* (joueur personnalisé, 2.75) */
+    else if (cu_map[1] == (u8)(c + 1)) p = cu_sav + CU_SLOT(1) + 9;
+    pal_buf[b + 1] = p[0];
+    pal_buf[b + 2] = p[1];
+    pal_buf[b + 3] = p[2];
     pal_dirty = 1;
 }
 
@@ -293,13 +313,16 @@ void people_tiles(u8 nude)
 /* Nom d'équipe : « ALEX » en simple, « AL/MA » en double (b = 255 : simple) */
 void team_label(u8 a, u8 b, char *out)
 {
-    const char *n = char_name[a];
+    const char *n = chr_nm(a);
+    u8 k;
     if (b == 255) { out[0] = n[0]; out[1] = n[1]; out[2] = n[2]; out[3] = n[3]; out[4] = 0; return; }
     /* 2 lettres par joueur ; nom long (MARGAUX) : première et dernière
        lettres (« MX »), pour ne pas se confondre avec MAYA (« MA ») */
-    out[0] = n[0]; out[1] = n[4] > ' ' ? n[6] : n[1]; out[2] = '/';
-    n = char_name[b];
-    out[3] = n[0]; out[4] = n[4] > ' ' ? n[6] : n[1]; out[5] = 0;
+    for (k = 3; n[k + 1] > ' '; ++k) ;
+    out[0] = n[0]; out[1] = k > 3 ? n[k] : n[1]; out[2] = '/';
+    n = chr_nm(b);
+    for (k = 3; n[k + 1] > ' '; ++k) ;
+    out[3] = n[0]; out[4] = k > 3 ? n[k] : n[1]; out[5] = 0;
 }
 
 /* Noms des compétitions (banque fixe : lus par les écrans et le palmarès) */

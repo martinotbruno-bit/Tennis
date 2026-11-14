@@ -108,7 +108,7 @@ static void write_slot(u8 s, u8 i)
         if (t[0] == '@') {
             /* le champion de la saison (ou l'équipe, en double) */
             if (c_dbl) team_label(c_pl[0], c_pl2[0], name);
-            else { const char *p = char_name[c_pl[0]]; for (k = 0; k < 7 && p[k] > ' '; ++k) name[k] = p[k]; name[k] = 0; }
+            else { const char *p = chr_nm(c_pl[0]); for (k = 0; k < 7 && p[k] > ' '; ++k) name[k] = p[k]; name[k] = 0; }
             t = name;
         }
     }

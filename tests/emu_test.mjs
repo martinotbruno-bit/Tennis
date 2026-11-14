@@ -31,7 +31,7 @@ function check(cond, msg) {
   else { fails++; console.log('  ECHEC ' + msg); }
 }
 const AS = { SCREENS: 0, MATCH: 1, MANUAL: 2 };
-const SS = { TITLE: 0, MENU: 1, RESULTS: 2, PRESENT: 3, COMP: 4, CODE: 5, PALMARES: 6, TRAIN_RES: 7, COMP_END: 8, SETBREAK: 9 };
+const SS = { TITLE: 0, MENU: 1, RESULTS: 2, PRESENT: 3, COMP: 4, CODE: 5, PALMARES: 6, TRAIN_RES: 7, COMP_END: 8, SETBREAK: 9, CUSTOM: 13 };
 const O = { MODE: 1, TYPE: 2, P1: 3, P2: 4, LEVEL: 5, SURF: 6, ENV: 7, COND: 8, FMT: 9, REPLAY: 10, COMP: 11,
             CSIZE: 12, CPROG: 13, CVAR: 14, EX: 15, SIDE: 16, SPEED: 17, SPIN: 18, COUNT: 19, CPART: 20, GSPEED: 21, SOUND: 22, FATIG: 23, VIEW: 24, CAREER: 25 };
 const MODE = { P1: 0, P2: 1, TEAM: 2, COMP: 3, TRAIN: 4, DEMO: 5 };
@@ -81,11 +81,21 @@ function startWith(e, opts) {
   toMenu(e); setOpts(e, opts); e.tap('START');
   // certains écrans (classements) se construisent en plusieurs trames
   for (let n = 0; n < 90 && app(e) === AS.SCREENS && scr(e) === SS.MENU; n++) e.run(1);
+  // (2.75) compétition : écran du joueur personnalisé, passé avec START
+  passCustom(e);
   // bande-annonce du Grand Martinot (passée par le banc d'essai), puis l'annonce
   if (app(e) === AS.SCREENS && scr(e) === 11) runUntil(e, () => scr(e) !== 11, 120);
   e.run(10);
   // le court se charge sur quelques trames (fondu, décor, copie des tribunes)
   if (app(e) === AS.SCREENS && scr(e) === SS.PRESENT) { e.tap('A'); runUntil(e, () => app(e) === AS.MATCH, 60); e.run(2); }
+}
+function passCustom(e) {
+  // (une page par joueur humain : le partenaire à la manette 2 a la sienne)
+  for (let k = 0; k < 3 && app(e) === AS.SCREENS && (scr(e) === SS.CUSTOM || scr(e) === SS.MENU); k++) {
+    for (let n = 0; n < 90 && scr(e) === SS.MENU; n++) e.run(1);
+    if (scr(e) !== SS.CUSTOM) return;
+    e.tap('START');
+  }
 }
 function allCpu(e) { const c = e.addr('cfg'); for (let i = 0; i < 4; i++) e.nes.cpu.mem[c + CFG.CTRL + i] = 2; }
 // Attentes à plafond adaptatif : chaque appel (repéré par sa ligne) retient
@@ -1299,7 +1309,7 @@ console.log('Compétition en double, levée de coupe et club nudiste');
   // un code portant un trophée débloque aussi le club nudiste sur une autre console
   const { e } = playComp(4, { CSIZE: 0 }, () => true);
   // retour au titre après le podium (CHR-RAM rechargée : ~47 trames)
-  e.tap('A'); runUntil(e, () => scr(e) === SS.TITLE && e.peek('ppu_mask') !== 0, 200); e.run(10); toMenu(e); setOpts(e, { MODE: MODE.COMP, COMP: 0 }); e.tap('START'); e.run(40);
+  e.tap('A'); runUntil(e, () => scr(e) === SS.TITLE && e.peek('ppu_mask') !== 0, 200); e.run(10); toMenu(e); setOpts(e, { MODE: MODE.COMP, COMP: 0 }); e.tap('START'); passCustom(e); e.run(40);
   const code = e.text(10, 22, 15).replace(/ /g, '');
   check(e.peek('c_trophies') === 1, 'les trophées se cumulent d\'une compétition à l\'autre');
   const f = boot(); f.tap('UP'); f.tap('A'); f.run(10);
@@ -2666,7 +2676,7 @@ console.log('Bande-annonce du Grand Martinot et du Martinworld Tour');
 for (const type of [5, 6]) {
   // au lancement : 4 plans en gros plan, puis le titre, sur le riff de rock ;
   // environ 7 secondes (titre tenu une seconde de plus) ; puis l'écran de la compétition
-  const e = boot(); e.cerSkip = false; toMenu(e); setOpts(e, { MODE: MODE.COMP, COMP: type, FMT: 3 }); e.tap('START');
+  const e = boot(); e.cerSkip = false; toMenu(e); setOpts(e, { MODE: MODE.COMP, COMP: type, FMT: 3 }); e.tap('START'); passCustom(e);
   runUntil(e, () => scr(e) === 11, 120);
   const t0 = e.frames, cuts = new Set(); let rock = false, big = 0, cam = false, title = '', dur = 0;
   runUntil(e, () => {
@@ -2687,7 +2697,7 @@ for (const type of [5, 6]) {
   const name = type === 5 ? 'Grand Martinot' : 'Martinworld Tour';
   check(cuts.size === 8 && rock && big > 140 && cam && dur > 6.5 && dur < 8 && title.includes('TOURNOIS') && scr(e) === SS.COMP,
     `${name} : bande-annonce (7 plans en haute définition jusqu'à ${big} tuiles, travellings, riff de rock, ${dur.toFixed(1)} s, titre tenu une seconde de plus, « ${title} »), puis l'écran de la compétition`);
-  const a = boot(); a.cerSkip = false; toMenu(a); setOpts(a, { MODE: MODE.COMP, COMP: type, FMT: 3 }); a.tap('START');
+  const a = boot(); a.cerSkip = false; toMenu(a); setOpts(a, { MODE: MODE.COMP, COMP: type, FMT: 3 }); a.tap('START'); passCustom(a);
   runUntil(a, () => scr(a) === 11, 120); a.run(20); a.tap('A'); runUntil(a, () => scr(a) === SS.COMP, 60);
   check(scr(a) === SS.COMP, `${name} : A passe la bande-annonce`);
 }
@@ -2817,6 +2827,42 @@ for (const view of [0, 1]) {
   const gone = runUntil(m, () => m.peek('mp_t') === 0, 200);
   check(said && (m.peek('sc_crit') & 4) && txt.includes('BALLE DE MATCH') && txt.includes('POUR ALEX') && served === 0 && gone,
         `balle de match : bandeau au centre avant le service (« ${txt.replace(/ +/g, ' ').trim()} »), disparu seul`);
+}
+}
+if (sec('Joueur personnalisé en compétition (2.75)')) {
+console.log('Joueur personnalisé en compétition (2.75)');
+{
+  const e = boot(); toMenu(e); setOpts(e, { MODE: MODE.COMP, COMP: 0, P1: 0, FMT: 3 }); e.tap('START'); e.run(20);
+  check(scr(e) === SS.CUSTOM && e.text(3, 7, 6) === 'PROFIL' && e.text(13, 7, 9) === "D'ORIGINE", 'compétition : écran « TON JOUEUR » avant le tableau, profil d\'origine par défaut');
+  // nom BRUNO, femme, peau ébène, cheveux blonds, tenue rose
+  e.tap('DOWN'); e.tap('A');
+  for (const L of 'BRUNO') { let n = 0; while (e.peek('cu_sav', 1 + e.peek('cu_st', 2)) !== L.charCodeAt(0) && n++ < 40) e.tap('UP', 1, 1, 2); e.tap('RIGHT', 1, 1, 2); }
+  e.tap('A');
+  e.tap('DOWN'); e.tap('RIGHT');
+  e.tap('DOWN'); e.tap('RIGHT'); e.tap('RIGHT');
+  e.tap('DOWN'); e.tap('RIGHT'); e.tap('RIGHT'); e.tap('RIGHT');
+  e.tap('DOWN'); e.tap('RIGHT'); e.tap('RIGHT'); e.tap('RIGHT'); e.tap('RIGHT');
+  const sav = Array.from({ length: 12 }, (_, i) => e.peek('cu_sav', 1 + i));
+  check(e.text(13, 7, 9) === 'PERSONNEL' && String.fromCharCode(...sav.slice(0, 7)) === 'BRUNO  ' && sav[8] === 3 && sav[9] === 0x07 && sav[10] === 0x35 && sav[11] === 0x37,
+    `profil : BRUNO, femme, peau ébène, tenue rose, cheveux blonds (${sav.map(v => v.toString(16)).join(' ')})`);
+  e.tap('START'); e.run(40);
+  check(scr(e) === SS.COMP && e.peek('cu_map', 0) === 1 && e.peek('char_female', 0) === 1 && e.text(0, 0, 32 * 30 > 0 ? 32 : 32) !== null &&
+        [...Array(30).keys()].some(r => e.text(0, r, 32).includes('BRUN')), 'tableau de la compétition : le joueur personnalisé à la place d\'ALEX');
+  e.tap('A'); for (let n = 0; n < 400 && app(e) !== AS.MATCH; n++) { e.run(1); if (scr(e) === SS.PRESENT && n % 30 === 0) e.tap('A'); }
+  e.run(60);
+  const pl = [17, 18, 19].map(i => e.peek('pal_buf', i));
+  check(app(e) === AS.MATCH && pl[0] === 0x07 && pl[1] === 0x35 && pl[2] === 0x37 && [0, 1, 2, 3].some(r => e.text(0, r, 32).includes('BRUN')),
+    `en match : couleurs du profil (${pl.map(v => v.toString(16)).join(' ')}), nom « BRUN » en haut`);
+  // retour au menu : personnages d'origine ; le profil reste gardé
+  e.tap('START', 1, 1, 2); e.tap('SELECT', 1, 1, 2);
+  runUntil(e, () => app(e) === AS.SCREENS, 400); e.run(30);
+  if (scr(e) !== SS.MENU) { e.tap('B'); runUntil(e, () => scr(e) === SS.MENU, 200); e.run(20); }
+  check(e.peek('cu_map', 0) === 0 && e.peek('char_female', 0) === 0 && e.peek('cu_sav', 0) === 0xC5, 'hors compétition : ALEX d\'origine, profil gardé dans la sauvegarde');
+  e.tap('START'); e.run(20);
+  check(scr(e) === SS.CUSTOM && e.text(13, 9, 5) === 'BRUNO' && e.text(13, 7, 9) === 'PERSONNEL', 'compétition suivante : le profil revient');
+  e.tap('RIGHT');                       // (curseur sur PROFIL : PERSONNEL -> D'ORIGINE)
+  e.tap('START'); e.run(40);
+  check(scr(e) === SS.COMP && e.peek('cu_map', 0) === 0 && [...Array(30).keys()].some(r => e.text(0, r, 32).includes('ALEX')), 'profil « D\'ORIGINE » : ALEX tel quel (sans obligation)');
 }
 }
 if (sec('Compensation 50 Hz (PAL)')) {
