@@ -333,7 +333,7 @@ console.log('Menu de configuration');
   const e = boot(); toMenu(e);
   check(scr(e) === SS.MENU && e.peek('nvis') === 14, 'configuration match : 14 lignes (pas de ligne JEU contre le CPU)');
   e.tap('DOWN'); e.tap('RIGHT'); e.tap('RIGHT'); e.tap('RIGHT'); e.run(5);
-  check(e.peek('opt_val', O.MODE) === MODE.COMP && e.peek('nvis') === 15, 'mode compétition : lignes adaptées');
+  check(e.peek('opt_val', O.MODE) === MODE.COMP && e.peek('nvis') === 16, 'mode compétition : lignes adaptées (avec CARRIERE, 2.72)');
   e.tap('RIGHT'); e.run(5);
   check(e.peek('opt_val', O.MODE) === MODE.TRAIN && e.peek('nvis') === 10, 'mode entraînement : lignes adaptées');
   e.tap('B'); e.run(10);   // (les tuiles des personnages, remplacées par les portraits, sont rechargées)

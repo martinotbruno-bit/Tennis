@@ -232,7 +232,7 @@ void car_pal_text(void)
 /* La sauvegarde est effacée au début d'un autre match et à la fin du     */
 /* match (gagné, perdu ou abandonné).                                     */
 /* ====================================================================== */
-extern u8 pod_buf[144];
+extern u8 pod_buf[144], sc_crit;
 extern u8 st_points[2], st_aces[2], st_dfaults[2], st_winners[2], st_errors[2], st_first_in[2], st_first_tot[2];
 extern u8 st_longest, st_canon[2], st_ctry[2], st_perf[2], st_ptry[2], st_vmax[2], st_vmaxp[2], srv_slot[2];
 #include "rules.h"
@@ -302,6 +302,12 @@ void msave_restore(void)
     for (q = (u8 *)&cfg, i = 0; i < sizeof(MatchCfg); ++i) if (q[i] != pod_buf[2 + i]) { pod_buf[0] = 0; return; }
     for (k = 0; k < MSV_N; ++k)
         for (q = msv_tab[k].p, i = msv_tab[k].n; i; --i) *q++ = pod_buf[n++];
+    /* balles de set et de match (lues par l'IA) : comme à la fin d'un point */
+    sc_crit = 0;
+    for (k = 0; k < 2; ++k) {
+        if (rules_is_match_point(k)) sc_crit |= (u8)(4 | (1 << k));
+        else if (rules_is_set_point(k)) sc_crit |= (u8)(1 << k);
+    }
     ms = MS_DEAD; ms_timer = 1; end_reason = 3;     /* END_LET : after_point replace les joueurs */
     set_msg("REPRISE", "DU MATCH", 90);
     bank_call(BANK_HL, sun_apply);                  /* crépuscule : la lumière du moment */
