@@ -251,3 +251,29 @@ void flags_draw(void)
         spr1(flag_x[i], flag_y[i], flag_tile, a);
     }
 }
+
+/* ---------------------------------------------------------------------- */
+/* Médailles du palmarès (2.72, déplacé de highlight.c en 2.75)            */
+/* ---------------------------------------------------------------------- */
+/* (2.72 : déplacée de la banque 8, pleine ; appelée par screens.c) */
+extern u8 pal_page;
+#include "stats.h"
+#include "comp.h"
+/* page des résultats : une médaille devant chaque meilleur résultat et
+   chaque compétition de l'historique terminée sur le podium (1er, 2e, 3e) */
+void palmares_sprites(void)
+{
+    u8 i, t;
+    spr_begin();
+    if (pal_page == 1) {
+        for (i = 0; i < NCT; ++i) {
+            t = (u8)(i < 5 ? sv.comp_best[i] : sw_best[i - 4]);
+            if (t >= 1 && t <= 3) spr1(9, (u8)((6 + i) * 8 - 1), (u8)(ball_base + 8), (u8)(t - 1));
+        }
+        for (i = 0; i < sv.hist_n && i < 8; ++i) {
+            t = sv.hist[i][1];
+            if (t >= 1 && t <= 3) spr1(9, (u8)((15 + i) * 8 - 1), (u8)(ball_base + 8), (u8)(t - 1));
+        }
+    }
+    spr_end();
+}

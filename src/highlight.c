@@ -343,7 +343,10 @@ void band_draw(void)
     if (cer != CER_SEAT && band_t < BAND_WAIT) { ++band_t; return; }   /* (délai : pas encore de bandeau) */
     if (!band_vis) { band_vis = 1; band_rows = 15; }  /* (bits 2-3 : filet du bas, bords et rangée 29, que les bandes du ralenti recouvrent) */
     if (cer == CER_SEAT) {
-        if (++band_t >= 50) { band_t = 0; if (++band_pg > 4) band_pg = 0; }
+        if (band_human()) {
+            /* (2.75) une page par appui ; après la dernière, les joueurs repartent */
+            if ((pad1_new | pad2_new) & (PAD_A | PAD_B | PAD_START)) { if (band_pg >= 4) band_hold = 2; else ++band_pg; }
+        } else if (++band_t >= 50) { band_t = 0; if (++band_pg > 4) band_pg = 0; }
     } else band_pg = 0;
     /* texte : rafraîchi quand le score change, une rangée par trame */
     if (band_last[0] != sc_points[0] || band_last[1] != sc_points[1] || band_last[2] != sc_games[0] ||
@@ -689,7 +692,7 @@ static void closeup_tick(void)
     ++hl_t;
     if (hl_t < 12) {                     /* image figée */
         if (hl_t == 9) { flash(0x30); sfx_perfect(); }
-        if (hl_t == 11) cut_build(hl_sk == 4 ? TZ_SLIDE : hl_sk == 3 ? TZ_BACKHAND : hl_sk ? TZ_SMASH : TZ_IMPACT);   /* plongeon : la glissade */   /* revers ; service, smash : raquette au-dessus de la tête (2.68) */
+        if (hl_t == 11) cut_build(hl_sk == 4 ? TZ_SLIDE : hl_sk == 3 ? TZ_BACKHAND : hl_sk == 1 ? TZ_SMASH_AIR : hl_sk ? TZ_SMASH : TZ_IMPACT);   /* (2.75 : smash en plein vol) */   /* plongeon : la glissade */   /* revers ; service, smash : raquette au-dessus de la tête (2.68) */
         return;
     }
     hl_c = (u8)(hl_t - 11);             /* temps du plan */
@@ -706,6 +709,7 @@ static void closeup_tick(void)
             k = (u8)(22 - hl_c);
             if (hl_sk == 4) { SPR(TZ_SLIDE_RACKET_X - k * 9, TZ_SLIDE_RACKET_Y - 4 + k * 3, ball_base + 8, 3); }   /* plongeon : de la gauche, au ras du sol */
             else if (hl_sk == 3) { SPR(TZ_BACKHAND_RACKET_X - k * 9, TZ_BACKHAND_RACKET_Y - 4 + k * 5, ball_base + 8, 3); }   /* revers : de la gauche */
+            else if (hl_sk == 1) { if ((s16)(TZ_SMASH_AIR_RACKET_Y - 4) - (s16)(k * 7) >= 0) SPR(TZ_SMASH_AIR_RACKET_X + k * 4, TZ_SMASH_AIR_RACKET_Y - 4 - k * 7, ball_base + 8, 3); }
             else if (hl_sk) { if ((s16)(TZ_SMASH_RACKET_Y - 4) - (s16)(k * 7) >= 0) SPR(TZ_SMASH_RACKET_X + k * 4, TZ_SMASH_RACKET_Y - 4 - k * 7, ball_base + 8, 3); }   /* (au-dessus du cadre : cachée) */
             else { SPR(TZ_IMPACT_RACKET_X + k * 9, TZ_IMPACT_RACKET_Y - 4 + k * 5, ball_base + 8, 3); }
         } else if (hl_c == 22) {
@@ -716,6 +720,7 @@ static void closeup_tick(void)
                 if (k >= 40) continue;
                 if (hl_sk == 4) { SPR(TZ_SLIDE_RACKET_X - 4 - k, TZ_SLIDE_RACKET_Y - 8 - k, ball_base + 8, 3); }   /* (relevée vers le haut) */
                 else if (hl_sk == 3) { SPR(TZ_BACKHAND_RACKET_X - 4 + k, TZ_BACKHAND_RACKET_Y - 8 - (k >> 1), ball_base + 8, 3); }
+                else if (hl_sk == 1) { SPR(TZ_SMASH_AIR_RACKET_X - k, TZ_SMASH_AIR_RACKET_Y + k + (k >> 1), ball_base + 8, 3); }
                 else if (hl_sk) { SPR(TZ_SMASH_RACKET_X - k, TZ_SMASH_RACKET_Y + k + (k >> 1), ball_base + 8, 3); }
                 else { SPR(TZ_IMPACT_RACKET_X + 4 - k, TZ_IMPACT_RACKET_Y - 8 - (k >> 1), ball_base + 8, 3); }
             }
@@ -1209,27 +1214,7 @@ u16 __fastcall__ pod_extra_tick(u16 t)
     return 0;
 }
 
-/* (2.72 : déplacée de la banque 8, pleine ; appelée par screens.c) */
-extern u8 pal_page;
-#include "stats.h"
-/* page des résultats : une médaille devant chaque meilleur résultat et
-   chaque compétition de l'historique terminée sur le podium (1er, 2e, 3e) */
-void palmares_sprites(void)
-{
-    u8 i, t;
-    spr_begin();
-    if (pal_page == 1) {
-        for (i = 0; i < NCT; ++i) {
-            t = (u8)(i < 5 ? sv.comp_best[i] : sw_best[i - 4]);
-            if (t >= 1 && t <= 3) spr1(9, (u8)((6 + i) * 8 - 1), (u8)(ball_base + 8), (u8)(t - 1));
-        }
-        for (i = 0; i < sv.hist_n && i < 8; ++i) {
-            t = sv.hist[i][1];
-            if (t >= 1 && t <= 3) spr1(9, (u8)((15 + i) * 8 - 1), (u8)(ball_base + 8), (u8)(t - 1));
-        }
-    }
-    spr_end();
-}
+/* (palmares_sprites : train.c, banque 20, version 2.75 : banque 15 pleine) */
 
 /* (2.73 : déplacé de la banque fixe) message du coup gagnant (game.c) */
 extern u8 hit_perf, last_shot, hit_pass, hit_jump;

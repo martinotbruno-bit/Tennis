@@ -342,6 +342,9 @@ Le dessin des personnages est commun aux vues de face et de dos (rangées de tui
 
 - **Titre du zoom** : « BONNE ! » seulement si `near_in(hl_sbx, hl_sby)`, sinon pas de titre ; « DEHORS ! » toujours.
 - **x 4** : construit depuis l'image x 2 (voir 2.74, `zoom4_build`), plus de rechargement du court.
+- **Statistiques à l'appui** : `band_draw` (assis, joueur humain : `band_human`) avance `band_pg` à chaque appui, puis pose `band_hold` = 2 après la dernière page ; cer.c (`seat_human`) bloque `cer_t` à 200 jusque-là, puis le passe à 250 ; l'appui ne termine plus la séquence (`cer_tick`). Tests : `Emu.bandSkip` pose `band_hold` = 2 quand `cer` = 5 et un joueur humain.
+- **Smash en plein vol** : pose `smash_air` (gen_teaser.py, cadrage (92, 100), ombre `_smash_air_extra`), `TZ_SMASH_AIR` pour `hl_sk` = 1 ; `TZ_SMASH` reste pour le service. Images : banque 21 ajoutée (`assets_tz21.c`), `palmares_sprites` déplacée en banque 20 (banque 15 pleine).
+- **Coup selon la hauteur** (shots.c) : `smash = bz > (bounces ? 30 : 24) px`.
 - **Public HD** (`closeup_tick`) : `TZ_CROWD` si `rally_hits` ≥ 20. `gen_teaser.py` : `figures[].casual` (t-shirt à encolure ronde, `CASUAL`), `_crowd_extra` (casquette du spectateur 1, rangée de sièges à y = 110).
 
 ### Version 2.74 : bandeau à l'appui, zooms des balles limites

@@ -565,6 +565,19 @@ console.log('Version 2.72 : carrière, fiche, reprise, cérémonie');
     if (e.peek('cer') === 5 && e.peek('band_vis') === 3 && pg && String.fromCharCode(...e.nes.ppu.vramMem.slice(0x2400 + 27 * 32 + 2, 0x2400 + 27 * 32 + 6)) === want[pg]) seen.add(pg);
   }
   check(seen.size === 4, `changement de côté : le bandeau montre les 4 statistiques (${[...seen].sort().join(',')})`);
+  // (2.75) avec un joueur humain : elles restent affichées et défilent à l'appui ;
+  // les joueurs ne repartent qu'après la dernière page
+  const h = boot(); h.bandSkip = false; startWith(h, { FMT: 3, REPLAY: 0 }); allCpu(h);
+  h.cerSkip = false; h.poke('cer_skip', 0); h.poke('sc_games', 2); h.poke('sc_points', 3); h.poke('sc_points', 0, 1);
+  runUntil(h, () => h.peek('cer') === 5, 60 * 60 * 3);
+  h.poke('cfg', 0, CFG.CTRL);                      /* (un joueur prend la manette) */
+  h.run(400);
+  const stay = h.peek('cer') === 5 && h.peek('band_pg') === 0;
+  const pages = [];
+  for (let k = 0; k < 4; k++) { h.tap('A'); pages.push(h.peek('band_pg')); }
+  const still = h.peek('cer') === 5;
+  h.tap('A'); h.run(4);
+  check(stay && pages.join() === '1,2,3,4' && still && h.peek('cer') === 6, `changement de côté : statistiques affichées jusqu'à l'appui, une page par appui (${pages}), puis retour des joueurs (${h.peek('cer')})`);
 }
 {
   // plongeon de dernière chance sur un service canon
@@ -647,6 +660,7 @@ console.log('Version 2.73 : bandes du ralenti, survol, bandeau, dehors de peu');
   for (let f = 0; f < 60 * 60 * 6 && (humOk === null || cpuWait === null) && app(g) === AS.MATCH; f++) {
     g.poke('cer_skip', g.peek('cer') >= 1 && g.peek('cer') <= 3 ? 1 : 0);
     g.run(1);
+    if (g.peek('cer') === 5) { g.tap('A'); continue; }   /* (2.75 : assis, les statistiques défilent à l'appui) */
     if (g.peek('ms') === 0 && !g.peek('cer') && g.peek('band_dis') && g.peek('sc_server') === 0) { g.tap('A'); g.run(14); g.tap('A'); continue; }   /* (bandeau fermé : le joueur sert) */
     if (g.peek('ms') !== 0 || g.peek('cer') || g.peek('band_vis') !== 3) continue;
     if (g.peek('sc_server') === 1) {           /* l'ordinateur sert */
@@ -683,6 +697,22 @@ console.log('Version 2.73 : bandes du ralenti, survol, bandeau, dehors de peu');
     if (v === 3 && !up) { const vm = o.nes.ppu.vramMem; for (let r = 4; r < 30; r++) for (const c of [0, 1, 2, 3, 28, 29, 30, 31]) { const t = vm[0x2000 + r * 32 + c]; if (t >= 9 && t <= 12) up++; } }
   }
   check(seq.includes('2340') && up > 100, `standing ovation : les tribunes se lèvent, restent debout, se rassoient (${seq}, ${up} spectateurs debout)`);
+}
+{
+  // (2.75) coup selon la hauteur de la balle : avant le rebond, smash au-dessus
+  // de 24 px, volée en dessous ; après le rebond, smash au-dessus de 30 px
+  const e = boot(); startWith(e, { FMT: 2, REPLAY: 0 }); allCpu(e);
+  let bad = [], hi = 0;
+  for (let f = 0; f < 60 * 60 * 6; f++) {
+    const z = e.peekS16('bz') >> 6, b = e.peek('bounces'), h0 = e.peek('hitter');
+    e.run(1);
+    if (e.peek('hitter') !== h0 && e.peek('ms') === 2 && !e.peek('b_serve')) {
+      const smash = e.peek('last_shot') === 7, want = z > (b ? 30 : 24);
+      if (want) hi++;
+      if (smash !== want && Math.abs(z - (b ? 30 : 24)) > 2) bad.push(`${b ? 'après' : 'avant'} rebond ${z} px : ${e.peek('last_shot')}`);
+    }
+  }
+  check(hi > 0 && bad.length === 0, `coup selon la hauteur : smash sur balle haute avant ou après le rebond (${hi}), volée ou coup normal plus bas${bad.length ? ' — ' + bad.slice(0, 3).join(', ') : ''}`);
 }
 {
   // (2.74) lob : après son rebond, il reste frappable (62 px de haut au plus)

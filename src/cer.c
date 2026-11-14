@@ -226,12 +226,22 @@ static void name_side(u8 t, char *out)
     out[i] = 0;
 }
 
+extern u8 band_hold;
+#pragma zpsym("band_hold")
+/* un joueur à la manette (pas de démonstration) */
+static u8 seat_human(void)
+{
+    u8 i;
+    if (cfg.demo) return 0;
+    for (i = 0; i < npl; ++i) if (cfg.ctrl[i] != CTRL_CPU) return 1;
+    return 0;
+}
 void cer_tick(void)
 {
     u8 p, done = 1, win, top;
     if (cer >= CER_CHAIRS) return;
     ++cer_t;
-    if (cer_skip || ((pad1_new | pad2_new) & (PAD_A | PAD_START))) {
+    if (cer_skip || (((pad1_new | pad2_new) & (PAD_A | PAD_START)) && !(cer == CER_SEAT && cfg.mode == GM_MATCH && seat_human()))) {   /* (2.75 : assis, l'appui fait défiler les statistiques) */
         /* passer : fin du match, il reste peu de temps (sauf pour les
            tests, qui gardent la durée d'avant) */
         if (cer >= CER_JOY && !cer_skip && ms_timer > 20) ms_timer = 20;
@@ -281,6 +291,10 @@ void cer_tick(void)
         for (p = 0; p < npl; ++p) pose_force[p] = POSE_SIT;
         /* en match, un peu plus long (2.72) : le bandeau du bas montre le
            score puis 4 statistiques (A ou START passe) */
+        /* (2.75) avec un joueur humain, les statistiques du bandeau défilent
+           à l'appui et restent affichées : les joueurs ne repartent qu'après
+           la dernière page (band_hold = 2, highlight.c) */
+        if (cfg.mode == GM_MATCH && seat_human()) { if (band_hold == 2) { band_hold = 0; cer_t = 250; } else if (cer_t > 200) cer_t = 200; }
         if (cer_t >= (cfg.mode == GM_MATCH ? 250 : 130)) {
             cer = CER_BACK; cer_t = 0;
             /* un changement sur deux : la ramasseuse de balles, plan télé (2.73) */

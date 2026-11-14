@@ -70,7 +70,11 @@ class Emu {
     for (let i = 0; i < n; i++) {
       this.nes.frame(); this.frames++;
       if (this.cerAddr !== undefined) this.nes.cpu.mem[this.cerAddr] = this.cerSkip ? 1 : 0;
-      if (this.bandSkip && this.bandHold !== undefined && this.nes.cpu.mem[this.bandHold] && this.human()) { this.nes.cpu.mem[this.bandDis] = 1; this.nes.cpu.mem[this.bandHold] = 0; }
+      if (this.bandSkip && this.bandHold !== undefined && this.human()) {
+        const m = this.nes.cpu.mem;
+        if (m[this.bandHold] === 1) { m[this.bandDis] = 1; m[this.bandHold] = 0; }
+        if (m[this.labels['_cer']] === 5) m[this.bandHold] = 2;   /* (2.75 : assis, statistiques passées d'office) */
+      }
       if (each) each(this);
     }
   }

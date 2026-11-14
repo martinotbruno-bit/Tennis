@@ -105,7 +105,11 @@ extern u8 hit_margin;              /* game.c : angle des coups le long des ligne
 void shot_select(void)
 {
     u8 p = sh_p, pad = sh_pad, power = sh_power, spread = sh_spread, speed, grav, T;
-    u8 smash = (u8)(bounces == 0 && bz > 24 * FP);
+    /* coup selon la hauteur de la balle (2.75) : avant le rebond, smash
+       au-dessus de 24 px (sauté au-dessus de 40), volée en dessous ; après
+       le rebond, une balle haute (lob qui retombe, au-dessus de 30 px) se
+       smashe aussi, sans sauter */
+    u8 smash = (u8)(bz > (bounces ? 30 * FP : 24 * FP));
     u8 volley = (u8)(bounces == 0), flat = 0;
     s16 depth;
     if (sh_dx > 14 || sh_dx < -14) spread += 8;          /* frappe en extension */

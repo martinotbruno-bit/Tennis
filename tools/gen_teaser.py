@@ -667,6 +667,18 @@ POSES['smash'] = dict(
            order=['legR', 'legL', 'torso', 'armR', 'head', 'armL', 'racket']),
     face='focus', hand='L', rdir=-122, rlen=50)
 
+# 5 bis. smash en plein vol (version 2.75, gros plan du smash au ralenti) :
+#    même haut du corps que le smash, mais les deux pieds décollés (ciseau :
+#    jambe avant repliée, jambe arrière lancée derrière), bras libre tendu
+#    vers la balle ; ombre au sol, loin sous les pieds
+def _smash_air_extra(f, j, female, r):
+    f.part(f.m_ell((96, 223), 15, 3), 5, None)
+POSES['smash_air'] = dict(
+    s=dict(pelvis=(96, 96), torso=-104, legL=(55, 125, 160), legR=(125, 195, 215),
+           armL=(-118, -104), armR=(-55, -75), tilt=-0.08, turn=-0.7, head_bend=-14,
+           order=['legR', 'legL', 'torso', 'armR', 'head', 'armL', 'racket']),
+    face='focus', hand='L', rdir=-122, rlen=50, extra=_smash_air_extra)
+
 # 6. revers à deux mains, à l'impact (version 2.68, gros plan du ralenti) :
 #    miroir du coup droit, les deux bras tendus vers la droite de l'écran,
 #    mains jointes sur le manche
@@ -764,6 +776,7 @@ SHOTS = [
     ('angry', 'angry', 1.12, None, False),           # raquette au sol, en pied
     ('angry_z', 'angry', 3.4, (83, 70), True),       # zoom : le visage qui crie
     ('smash', 'smash', 0.86, (92, None), False),
+    ('smash_air', 'smash_air', 0.86, (92, 100), False),   # smash en plein vol (ralenti du smash, 2.75)
     ('backhand', 'backhand', 1.4, (150, 102), False),   # revers à deux mains, gros plan (ralenti, 2.68)      # smash et service, en pied (ralenti, 2.68)
     ('ballkid', 'ballkid', 1.3, (94, 123), False),     # ramasseur de balles (changement de côté, 2.73)
     ('handshake', 'handshake', 1.3, (110, 96), False),  # poignée de main au filet (fin du match, 2.73)
@@ -995,7 +1008,7 @@ def main():
 
 # ------------------------------------------------------------------ export
 # banques libres (octets disponibles, marge comprise)
-BANKS = [(9, 13600), (12, 11500), (4, 12200), (10, 7600), (2, 7900), (7, 6800), (6, 5800), (17, 16000), (18, 13500), (20, 14500)]
+BANKS = [(9, 13600), (12, 11500), (4, 12200), (10, 7050), (2, 7900), (7, 6800), (6, 5800), (17, 16000), (18, 13500), (20, 13300), (21, 15500)]
 
 
 def pack(chr_):

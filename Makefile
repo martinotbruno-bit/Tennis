@@ -29,7 +29,8 @@ BANK17 = assets_tz17
 BANK18 = rules assets_tz18
 BANK19 = career
 BANK20 = fly assets_tz20 train
-CSRC = $(FIXED) $(BANK0) $(BANK1) $(BANK2) $(BANK3) $(BANK4) $(BANK5) $(BANK6) $(BANK7) $(BANK8) $(BANK9) $(BANK10) $(BANK11) $(BANK12) $(BANK13) $(BANK14) $(BANK15) $(BANK16) $(BANK17) $(BANK18) $(BANK19) $(BANK20)
+BANK21 = assets_tz21
+CSRC = $(FIXED) $(BANK0) $(BANK1) $(BANK2) $(BANK3) $(BANK4) $(BANK5) $(BANK6) $(BANK7) $(BANK8) $(BANK9) $(BANK10) $(BANK11) $(BANK12) $(BANK13) $(BANK14) $(BANK15) $(BANK16) $(BANK17) $(BANK18) $(BANK19) $(BANK20) $(BANK21)
 OBJS = $(BUILD)/crt0.o $(BUILD)/sprp.o $(BUILD)/poses.o $(BUILD)/slip.o $(BUILD)/dpcm.o $(BUILD)/fastmove.o $(addprefix $(BUILD)/,$(addsuffix .o,$(CSRC)))
 
 all: $(ROM)
@@ -46,7 +47,7 @@ src/assets_port.c: tools/gen_port.py
 src/assets_help.c: tools/gen_help.py
 	python3 tools/gen_help.py
 
-src/assets_vs.c src/assets_vs.h src/assets_tz.h src/assets_tz2.c src/assets_tz4.c src/assets_tz9.c src/assets_tz10.c src/assets_tz12.c src/assets_tz6.c src/assets_tz7.c src/assets_tz17.c src/assets_tz18.c src/assets_tz20.c: tools/gen_teaser.py
+src/assets_vs.c src/assets_vs.h src/assets_tz.h src/assets_tz2.c src/assets_tz4.c src/assets_tz9.c src/assets_tz10.c src/assets_tz12.c src/assets_tz6.c src/assets_tz7.c src/assets_tz17.c src/assets_tz18.c src/assets_tz20.c src/assets_tz21.c: tools/gen_teaser.py
 	python3 tools/gen_teaser.py
 
 src/music_data.c: tools/gen_music.py tools/music_src.c
@@ -77,6 +78,7 @@ $(addprefix $(BUILD)/,$(addsuffix .s,$(BANK17))): SEGS = --code-name BANK17 --ro
 $(addprefix $(BUILD)/,$(addsuffix .s,$(BANK18))): SEGS = --code-name BANK18 --rodata-name RODATA18
 $(addprefix $(BUILD)/,$(addsuffix .s,$(BANK19))): SEGS = --code-name BANK19 --rodata-name RODATA19 --bss-name WBSS
 $(addprefix $(BUILD)/,$(addsuffix .s,$(BANK20))): SEGS = --code-name BANK20 --rodata-name RODATA20 --bss-name WBSS
+$(addprefix $(BUILD)/,$(addsuffix .s,$(BANK21))): SEGS = --code-name BANK21 --rodata-name RODATA21
 
 $(BUILD)/crt0.o: src/crt0.s assets/tiles.chr | $(BUILD)
 	$(CA65) -t nes -g -o $@ src/crt0.s

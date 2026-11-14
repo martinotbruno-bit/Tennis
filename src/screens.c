@@ -1211,7 +1211,7 @@ void screens_tick(void)
             else { vbuf_reset(); vbuf_text(2, 22, "SELECT ENCORE : EFFACER", 24); }
         }
         if (pad1_new & PAD_B) { sfx_menu_back(); title_screen(); break; }
-        bank_call(BANK_HL, palmares_sprites);
+        bank_call(BANK_TRAIN, palmares_sprites);   /* (train.c, banque 20, 2.75) */
         break;
     }
 }
