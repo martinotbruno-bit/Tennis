@@ -1,10 +1,20 @@
-# Royal Martinot — Rapport de réalisation (version 2.73)
+# Royal Martinot — Rapport de réalisation (version 2.74)
 
 Comme l'exige le CDC (§ 17.5), ce rapport distingue ce qui est **réalisé**, **testé**, **validé sur matériel réel**, **validé uniquement en émulation**, **dépendant d'une extension**, et les **limitations restantes**.
 
 > **Validation matérielle : aucune.** Aucun test n'a été fait sur console réelle (NES, Famicom, PAL, cartouche MMC3). Toutes les validations ont eu lieu en émulation (jsnes ; depuis la version 2.69, aussi FCEUX pour les effets sensibles) et par des tests unitaires sur PC. Les critères « vérifié sur console physique » (CDC § 2.1, 15.4, 16.A) **ne sont pas remplis**. Ce point ne peut pas être traité dans l'environnement de développement utilisé.
 
 ## 1. Évolutions
+
+### Version 2.74
+
+| Demande | Réalisation |
+|---|---|
+| Supprimer les bandes noires du ralenti | Retirées : le ralenti montre l'image entière (le court, les deux joueurs). Test ajusté |
+| Bandeau du score fermé seulement par un appui | Après un point, le bandeau reste jusqu'à l'appui d'un joueur humain (manette 1 ou 2) : l'ordinateur ne le ferme plus en lançant sa balle, il attend l'appui pour servir. Cet appui ferme seulement le bandeau : il ne lance plus la balle de service (un second appui sert). Sans joueur humain (démonstration, ordinateur contre ordinateur) : comportement d'avant, pour que le match continue. Tests ajoutés |
+| Bandeau après le ralenti | Quand le point est rejoué, le bandeau n'apparaît qu'une fois le ralenti terminé. Test ajouté |
+| Zoom aussi pour les balles bonnes sur la ligne | Le zoom rapide sur l'impact des balles dehors de peu vaut aussi pour une balle qui finit le point bonne sur la ligne ou juste à l'intérieur (2 px au-delà du point où elle la touche encore) : « BONNE ! ». Quand le point est déjà rejoué en entier, le ralenti montre ce rebond comme avant. Image : `docs/bonne_ligne_274.png` |
+| Zooms en mode « ralenti simple » | Réglage RALENTIS « OUI, SIMPLE » : ralenti avec le zoom sur le rebond (et le zoom rapide des balles limites), sans les gros plans dessinés. Aide du réglage mise à jour. Test ajusté |
 
 ### Version 2.73
 

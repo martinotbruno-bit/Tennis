@@ -338,6 +338,13 @@ Le dessin des personnages est commun aux vues de face et de dos (rangées de tui
 - **IA** (`ai_update`, banque 0) : à partir de Normal, après le lob et l'amortie, croisé court avec une probabilité 90/256 si l'adversaire est au filet, 20/256 sinon.
 - **Réglages** : première rangée `MY0` = 4 + (18 − `nvis`) / 2 (screens.c ; même calcul dans `menu_marks`) ; `menu_soft` réécrit les 18 rangées ; portraits en y = `MY0` × 8 − 30, entre 7 et 16. Tests : `menuY(e, i)`.
 
+### Version 2.74 : bandeau à l'appui, zooms des balles limites
+
+- **Bandes du ralenti** : `rp_play` n'appelle plus `lbox_tick` (code laissé en place, inutilisé ; `lb_st` reste 0).
+- **Bandeau** (`band_draw`) : visible en `MS_DEAD` / `MS_SERVE` si `!band_dis && !rp_pending` (après le ralenti) ; `band_dis` remis à 0 hors de ces états, posé par un appui (manettes 1 ou 2) hors ralenti en attente. `band_hold` (page zéro, crt0.s) = bandeau affiché hors changement de côté et joueur humain présent (`band_human` : pas de démonstration, un `cfg.ctrl` ≠ `CTRL_CPU`). game.c : `human_update` ne lance pas la balle tant que `band_hold` (l'appui ferme le bandeau) ; `ai_update` garde `ms_timer` à 40 tant que `band_hold`.
+- **Balles limites** (`hl_out`, appelé à chaque fin de point après le choix du ralenti, sauf si un ralenti est déjà prévu) : dehors à 3 px ou moins des limites `IN_*`, ou bonne (`hl_bin`) à 4 px ou moins à l'intérieur de ces limites ; `hl_sbin` = `hl_bin` (« BONNE ! » / « DEHORS ! »). Actif dès que les ralentis sont activés (1 ou 2).
+- **« OUI, SIMPLE »** (`hl_check`) : `hl_sok = 0` seulement (le zoom `hl_sbok` reste).
+
 ### Version 2.73 : bandes du ralenti, survol, bandeau, dehors de peu
 
 - **Interruptions MMC3** (crt0.s) : `split_on` 3 (bandes du ralenti) et 4 (survol) : à la première interruption, l'écran ou le défilement de la bande suivante, puis réarmement (`MMC3_IRQL`, `IRQR`, `IRQE` avec `split_l2`) ; `split_ph` (page zéro) distingue les deux. La NMI remet `split_ph` à 0. Variables `split_l2`, `split_ph`, `fly_x[2]`, `fly_n[2]` en page zéro (WBSS est plein).

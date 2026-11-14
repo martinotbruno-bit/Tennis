@@ -45,7 +45,7 @@ H = {
             ("POINTS, CLASSEMENT ET", "QUALITES (VOIR PALMARES).")],
  'REPLAY': [("PAS DE RALENTI.", ""),
             ("RALENTI TELE : GROS PLAN DU", "COUP, ZOOM SUR LE REBOND."),
-            ("RALENTI SIMPLE, SANS GROS", "PLAN NI ZOOM (PLUS COURT).")],
+            ("RALENTI AVEC ZOOM SUR LE", "REBOND, SANS GROS PLAN.")],
  'COMP': [("", "")],     # (explication en 4 lignes, banque 5)
  'CSIZE': [("TOURNOI A 4 JOUEURS :", "DEMI-FINALE ET FINALE."),
            ("TOURNOI A 8 JOUEURS :", "QUART, DEMI ET FINALE.")],

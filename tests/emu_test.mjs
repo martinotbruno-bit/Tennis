@@ -608,19 +608,14 @@ console.log('Version 2.73 : bandes du ralenti, survol, bandeau, dehors de peu');
   // sur une balle dehors de peu
   const e = boot(); startWith(e, { FMT: 2, REPLAY: 1 }); allCpu(e);
   const vm = e.nes.ppu.vramMem;
-  let lbPrev = false, lbOk = 0, lbSeen = 0, quick = 0, quickLen = 0, pm = 0, start = 0, modes = '', bandServe = 0, hud = '';
+  let rpF = 0, bars = 0, quick = 0, quickIn = 0, quickLen = 0, pm = 0, start = 0, modes = '', bandServe = 0, hud = '', early = 0;
   for (let f = 0; f < 60 * 60 * 12 && app(e) === AS.MATCH; f++) {
     e.poke('cer_skip', e.peek('cer') >= 1 && e.peek('cer') <= 3 ? 1 : 0);
     e.run(1);
     const m = e.peek('ms'), hm = e.peek('hl_mode');
-    const lb = m === 5 && e.peek('lb_st') === 7 && !hm, lbSteady = lb && lbPrev; lbPrev = lb;   /* (rangées envoyées au PPU à la trame suivante) */
-    if (lbSteady) {
-      lbSeen++;
-      const top = vm.slice(0x2400, 0x2420).every(v => v === 1), bot = vm.slice(0x2400 + 29 * 32, 0x2400 + 30 * 32).every(v => v === 1);
-      const cap = String.fromCharCode(...vm.slice(0x2400 + 32 + 4, 0x2400 + 32 + 11));
-      if (top && bot && cap === 'RALENTI' && e.peek('scroll_nt') === 1) lbOk++;
-
-    }
+    if (m === 5 && !hm) { rpF++; if (e.peek('split_on') === 3 || e.peek('lb_st')) bars++; }   /* (2.74 : plus de bandes noires) */
+    if (m === 3 && e.peek('rp_pending') && e.peek('band_vis')) early++;                      /* (2.74 : bandeau après le ralenti) */
+    if (hm === 2 && e.peek('hl_quick') && e.peek('hl_t') === 1 && e.peek('hl_sbin')) quickIn++;
     if (m === 5 && pm !== 5) { start = f; modes = ''; }
     if (m === 5 && hm && !modes.endsWith(String(hm))) modes += hm;
     if (m !== 5 && pm === 5 && modes === '2') { quick++; quickLen = Math.max(quickLen, f - start); }
@@ -628,18 +623,32 @@ console.log('Version 2.73 : bandes du ralenti, survol, bandeau, dehors de peu');
     if (!hud && m === 0 && f > 600) hud = e.text(1, 2, 4);
     pm = m;
   }
-  check(lbSeen > 50 && lbOk === lbSeen, `ralenti : bandes noires en haut et en bas, « RALENTI » (${lbOk}/${lbSeen} trames)`);
-  check(quick > 0 && quickLen < 220, `balle dehors de peu : zoom seul, rapide (${quick} fois, ${quickLen} trames au plus)`);
+  check(rpF > 50 && bars === 0, `ralenti sans bandes noires (${rpF} trames, ${bars} avec bandes)`);
+  check(early === 0, `bandeau du score après le ralenti seulement (${early} trames avant)`);
+  check(quick > 0 && quickLen < 220, `balle limite : zoom seul, rapide (${quick} fois dont ${quickIn} bonnes sur la ligne, ${quickLen} trames au plus)`);
   check(bandServe > 0, `bandeau du score pendant la mise en place du service (${bandServe} trames)`);
   check(!hud.startsWith('J') && /^( 0|15|30|40|AV| -)/.test(hud), `haut de l'écran : les points, sans les jeux (« ${hud} »)`);
-  // le bandeau part à l'appui
+  // (2.74) le bandeau ne part qu'à l'appui d'un joueur humain : l'ordinateur
+  // attend pour servir ; l'appui ferme le bandeau sans lancer la balle
   const g = boot(); startWith(g, { FMT: 3 });
-  runUntil(g, () => g.peek('ms') === 0 && !g.peek('cer'), 60 * 60, () => g.poke('cer_skip', g.peek('cer') >= 1 && g.peek('cer') <= 3 ? 1 : 0));
-  g.poke('band_dis', 0);              /* (l'appui sur A de l'affiche a déjà renvoyé le premier) */
-  runUntil(g, () => g.peek('band_vis') === 3, 30);
-  const before = g.peek('band_vis');
-  g.tap('B'); g.run(2);
-  check(before === 3 && g.peek('band_vis') === 0, `bandeau : caché à l'appui (${before} puis ${g.peek('band_vis')})`);
+  let humOk = null, cpuWait = null, cpuGo = null;
+  for (let f = 0; f < 60 * 60 * 6 && (humOk === null || cpuWait === null) && app(g) === AS.MATCH; f++) {
+    g.poke('cer_skip', g.peek('cer') >= 1 && g.peek('cer') <= 3 ? 1 : 0);
+    g.run(1);
+    if (g.peek('ms') === 0 && !g.peek('cer') && g.peek('band_dis') && g.peek('sc_server') === 0) { g.tap('A'); g.run(14); g.tap('A'); continue; }   /* (bandeau fermé : le joueur sert) */
+    if (g.peek('ms') !== 0 || g.peek('cer') || g.peek('band_vis') !== 3) continue;
+    if (g.peek('sc_server') === 1) {           /* l'ordinateur sert */
+      if (cpuWait !== null) { g.tap('B'); continue; }
+      g.run(300); cpuWait = g.peek('ms') === 0 && g.peek('band_vis') === 3;
+      g.tap('B'); g.run(4); const gone = g.peek('band_vis') === 0;
+      cpuGo = gone && runUntil(g, () => g.peek('ms') !== 0, 200);
+    } else {                                   /* le joueur sert */
+      g.tap('A'); g.run(4);
+      if (humOk === null) humOk = g.peek('ms') === 0 && g.peek('band_vis') === 0;
+    }
+  }
+  check(cpuWait === true && cpuGo === true, `bandeau : l'ordinateur attend l'appui pour servir (attente ${cpuWait}, service après l'appui ${cpuGo})`);
+  check(humOk === true, `bandeau : l'appui du serveur ferme le bandeau sans lancer la balle (${humOk})`);
 }
 {
   // perspective : la tuile $5F (vide, bord du court) n'est plus prise par le
@@ -717,9 +726,9 @@ console.log('Ralenti : gros plan et zoom');
   check(rep > 0 && hl === 0, `club nudiste : ralentis (${rep}) sans gros plan ni zoom`);
   // réglage RALENTIS « OUI, SIMPLE » (2.69) : ralentis sans gros plan ni zoom
   const q = boot(); startWith(q, { FMT: 3, REPLAY: 2 }); allCpu(q);
-  let rq = 0, hq = 0, pq = 0;
-  for (let f = 0; f < 60 * 60 * 4; f++) { q.run(1); const m = q.peek('ms'); if (m === 5 && pq !== 5) rq++; if (q.peek('hl_mode')) hq++; pq = m; }
-  check(rq > 0 && hq === 0, `RALENTIS « OUI, SIMPLE » : ralentis (${rq}) sans gros plan ni zoom`);
+  let rq = 0, hq = 0, zq = 0, pq = 0;
+  for (let f = 0; f < 60 * 60 * 4; f++) { q.run(1); const m = q.peek('ms'); if (m === 5 && pq !== 5) rq++; if (q.peek('hl_mode') === 1) hq++; if (q.peek('hl_mode') === 2) zq++; pq = m; }
+  check(rq > 0 && hq === 0 && zq > 0, `RALENTIS « OUI, SIMPLE » : ralentis (${rq}) avec zoom (${zq} trames), sans gros plan`);
   // plans télé HD (2.73) : ramasseuse au changement de côté (un sur deux), public après un long échange
   {
     const k = boot(); startWith(k, { FMT: 3, REPLAY: 1 }); allCpu(k);

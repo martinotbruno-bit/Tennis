@@ -458,7 +458,7 @@ static u8 hl_fresh(u16 f)
 void hl_check(void)
 {
     if (cfg.env == ENV_NUDE) { hl_sok = hl_sbok = 0; return; }   /* (club nudiste : ni gros plan habillé, ni sprites agrandis) */
-    if (cfg.replays == 2) hl_sok = 0;   /* « OUI, SIMPLE » : pas de gros plan, mais le zoom (2.74) */   /* (club nudiste ; réglage « OUI, SIMPLE ») */   /* (club nudiste : ni gros plan habillé, ni sprites agrandis) */
+    if (cfg.replays == 2) hl_sok = 0;   /* « OUI, SIMPLE » : pas de gros plan, mais le zoom (2.74) */
     /* frappe décisive plus ancienne que le ralenti (lob, long échange
        conclu par une faute adverse) : le gros plan ouvre le ralenti (son
        image ne dépend pas de la trame) */
