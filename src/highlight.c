@@ -170,6 +170,8 @@ u8 sun_st;
 #define BAND_LINE 199          /* (valeur de recharge du compteur : réglée sur jsnes et FCEUX) */
 #define CER_SEAT  5
 extern u8 hl_mode, cer;
+extern u8 band_hold;
+#pragma zpsym("band_hold")
 u8 band_vis, band_rows, band_dis;   /* band_dis : bandeau renvoyé par un appui (jusqu'au point suivant) */      /* band_vis : 0 caché, 1 texte, 2 sprites cachés, 3 affiché */
 static u8 band_last[7];
 static char bb[28];
@@ -322,17 +324,32 @@ static void lbox_end(void)
     hl_quick = 0;
     band_vis = 0;                        /* (le bandeau du score réécrit ses rangées) */
 }
+/* un joueur au moins à la manette (pas de démonstration) */
+#pragma static-locals(push, off)        /* (pile : la RAM de travail est pleine) */
+static u8 band_human(void)
+{
+    u8 i;
+    if (cfg.demo) return 0;
+    for (i = 0; i < npl; ++i) if (cfg.ctrl[i] != CTRL_CPU) return 1;
+    return 0;
+}
+#pragma static-locals(pop)
 void band_draw(void)
 {
     u8 i, v;
     voice_tick();
     lbox_end();
-    /* (2.73) le bandeau reste pendant la mise en place du service, jusqu'à
-       un appui (manette 1 ou 2) ou au lancer de balle */
-    if (ms == MS_DEAD) band_dis = 0;
-    else if (ms == MS_SERVE && (pad1_new | pad2_new)) band_dis = 1;
+    /* (2.74) le bandeau du score apparaît après le point (après le ralenti
+       s'il y en a un) et reste jusqu'à un appui d'un joueur humain : c'est
+       la seule façon de le fermer, et cet appui ne lance pas la balle ;
+       l'ordinateur attend pour servir (band_hold, game.c). Sans joueur
+       humain (démonstration, ordinateur contre ordinateur), il disparaît
+       au lancer de balle, comme avant. */
+    if (ms != MS_DEAD && ms != MS_SERVE) band_dis = 0;
+    else if (!rp_pending && (pad1_new | pad2_new)) band_dis = 1;
     v = (u8)(cfg.mode == GM_MATCH && !paused && !hl_mode && !sc_over &&
-             ((cer == CER_SEAT) || ((!cer || cer >= 0xF0) && (ms == MS_DEAD || (ms == MS_SERVE && !band_dis)))));
+             ((cer == CER_SEAT) || ((!cer || cer >= 0xF0) && !band_dis && !rp_pending && (ms == MS_DEAD || ms == MS_SERVE))));
+    band_hold = (u8)(v && cer != CER_SEAT && band_human());
     if (!v) {
         if (band_vis) { split_stop(); band_vis = 0; }
         return;
@@ -440,7 +457,8 @@ static u8 hl_fresh(u16 f)
 }
 void hl_check(void)
 {
-    if (cfg.env == ENV_NUDE || cfg.replays == 2) { hl_sok = hl_sbok = 0; return; }   /* (club nudiste ; réglage « OUI, SIMPLE ») */   /* (club nudiste : ni gros plan habillé, ni sprites agrandis) */
+    if (cfg.env == ENV_NUDE) { hl_sok = hl_sbok = 0; return; }   /* (club nudiste : ni gros plan habillé, ni sprites agrandis) */
+    if (cfg.replays == 2) hl_sok = 0;   /* « OUI, SIMPLE » : pas de gros plan, mais le zoom (2.74) */   /* (club nudiste ; réglage « OUI, SIMPLE ») */   /* (club nudiste : ni gros plan habillé, ni sprites agrandis) */
     /* frappe décisive plus ancienne que le ralenti (lob, long échange
        conclu par une faute adverse) : le gros plan ouvre le ralenti (son
        image ne dépend pas de la trame) */
@@ -460,13 +478,22 @@ extern u8 b_serve;
 void hl_out(void)
 {
     s16 x = hl_bx, y = hl_by, d = 0, l, r;
-    if (!hl_bok || hl_bin || b_serve || cfg.replays != 1 || cfg.env == ENV_NUDE || cfg.demo) return;
+    if (rp_pending || !hl_bok || b_serve || !cfg.replays || cfg.env == ENV_NUDE || cfg.demo) return;   /* (ralenti déjà prévu : il montre le rebond) */
     l = cfg.doubles ? IN_DL : IN_SL; r = cfg.doubles ? IN_DR : IN_SR;   /* (ligne comprise) */
-    if (x < l) d = l - x; else if (x > r) d = x - r;
-    if (y < IN_TOP) d += IN_TOP - y; else if (y > IN_BOT) d += y - IN_BOT;
-    if (d == 0 || d > 3) return;
+    if (hl_bin) {
+        /* bonne : sur la ligne ou à 2 px à l'intérieur du point où elle la
+           touche encore (2.74) ; distance à la ligne la plus proche */
+        d = x - l; if (r - x < d) d = r - x;
+        if (y - IN_TOP < d) d = y - IN_TOP;
+        if (IN_BOT - y < d) d = IN_BOT - y;
+        if (d > 4) return;
+    } else {
+        if (x < l) d = l - x; else if (x > r) d = x - r;
+        if (y < IN_TOP) d += IN_TOP - y; else if (y > IN_BOT) d += y - IN_BOT;
+        if (d == 0 || d > 3) return;
+    }
     hl_sok = 0;                         /* pas de gros plan */
-    hl_sbok = 1; hl_sbi = hl_bi; hl_sbx = hl_bx; hl_sby = hl_by; hl_sbin = 0; hl_sbf = hl_bf;
+    hl_sbok = 1; hl_sbi = hl_bi; hl_sbx = hl_bx; hl_sby = hl_by; hl_sbin = hl_bin; hl_sbf = hl_bf;
     hl_quick = 1; rp_pending = 1;
 }
 #pragma static-locals(pop)

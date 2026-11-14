@@ -516,7 +516,6 @@ void rp_play(void)
     }
     ump_draw();                      /* l'arbitre reste sur sa chaise pendant le ralenti */
     spr_end();
-    bank_call(BANK_HL, lbox_tick);   /* bandes « cinéma » (highlight.c, 2.73) */
     /* demi-vitesse : chaque trame enregistrée est montrée deux fois */
     rp_slow ^= 1;
     if (!rp_slow) {

@@ -56,6 +56,8 @@ void set_msg(const char *a, const char *b, u8 t);
 void launch(s16 tx, s16 ty, u8 T, u8 grav);
 void win_msg(void);
 void hl_out(void);
+extern u8 band_hold;
+#pragma zpsym("band_hold")
 void match_fx(void);
 u8 hit_margin;          /* (lu et réglé aussi par shot_select : angle du croisé court) */
 static s16 pcache_x[4], pcache_y[4];   /* prédictions IA en cache */
@@ -193,9 +195,9 @@ static void point_over(u8 winner, u8 reason)
     } else if (reason == 1) {
         ++st_errors[winner ^ 1];
         sfx_crowd(2);
-        bank_call(BANK_HL, hl_out);     /* dehors de peu : zoom rapide sur l'impact (highlight.c, 2.73) */
     }
     if (rally_hits >= 12) { set_msg("QUEL ECHANGE !", "", 70); sfx_crowd(7); crowd_timer = 64; rp_pending = 1; HL_SELECT(winner, msg1); }
+    bank_call(BANK_HL, hl_out);     /* balle limite (dehors de peu, bonne sur la ligne) : zoom rapide (highlight.c) */
     if (!cfg.replays || cfg.demo) rp_pending = 0;
     if (rp_pending) ms_timer = 110;
 }
@@ -628,7 +630,7 @@ static void human_update(u8 p, u8 pad, u8 pressed)
     u8 st = pl_state[p];
 
     if (ms == MS_SERVE && p == server_p()) {
-        if (pressed & (PAD_A | PAD_B)) { toss(p); return; }
+        if (pressed & (PAD_A | PAD_B)) { if (!band_hold) toss(p); return; }   /* (bandeau affiché : l'appui le ferme seulement, 2.74) */
         if (pad & PAD_LEFT) plx[p] -= 64;
         if (pad & PAD_RIGHT) plx[p] += 64;
         {
@@ -785,7 +787,8 @@ static void ai_update(u8 p)
                 sfx_hit(1);
                 return;
             }
-            if (--ms_timer == 0) toss(p);
+            if (band_hold) ms_timer = 40;      /* (bandeau affiché : l'ordinateur attend l'appui du joueur, 2.74) */
+            else if (--ms_timer == 0) toss(p);
         }
         pl_moving[p] = 0;
         return;
