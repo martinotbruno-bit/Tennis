@@ -824,6 +824,12 @@ def cost(a, b):
     if (a, b) in COST_X:
         return COST_X[(a, b)]
     if b == 0:
+        if not COST_X:
+            # (2.73, images du ralenti) la peau et la tenue ne deviennent jamais
+            # du fond (des trous dans les bras ou les jambes) : elles prennent
+            # la couleur la plus proche du carré. (Le sombre garde sa règle :
+            # le protéger aussi faisait perdre le blanc des chaussures.)
+            if a in (1, 2, 3, 4): return 14
         return COST.get((a, 0), 6)
     return COST.get((a, b), 9)
 

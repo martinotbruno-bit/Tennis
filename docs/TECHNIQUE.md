@@ -350,6 +350,7 @@ Le dessin des personnages est commun aux vues de face et de dos (rangées de tui
 - **Mains HD** (`arm`) : poing = capsule + disque dans l'axe poignet → main, trois traits de doigts et un pouce en couleur d'ombre ; main qui tient la raquette inchangée. Poignée de main (`_shake_extra`) : main de l'adversaire (6,6 × 5,4) par-dessus celle du joueur, doigts, pouce du joueur.
 - **Public** : `figures[].shorts` recolore la classe 5 du short (3 : vert) ; la paire blanc + sombre n'existe dans aucune palette (`PALS`).
 - **Ramasseuse** : fente (`pelvis` (80, 157), `legR` (0, 90, 0) jambe avant depuis la hanche de devant, `legL` (112, 177, 178) genou au sol), `armL` (-120, -88) levé avec la balle (`_ballkid_extra` : `hdL`), `armR` (50, 60) sur le genou avant ; cadrage (94, 123). Jupe (`skirt`) : sur une cuisse levée, ourlet posé à 65 % de la cuisse, l'autre côté à mi-cuisse ; arc de 8,6 px derrière la hanche d'une cuisse en biais (`cover`).
+- **Quantification** (`cost`, hors affiche VS) : peau et tenue (classes 1-4) → fond coûte 14 : elles ne deviennent plus jamais du fond ; le sombre garde 3.
 - **Silhouette** : `straight` (polo des hommes) : point de taille sur la droite poitrine-hanche, 1,5 px en retrait ; hanches du polo à ±11 (au lieu de ±12) : buste en V.
 - **Margaux** : après `outline`, la classe 5 hors cheveux (pièces du groupe de la tête et `hair_back`) passe en classe 0 (fond).
 - **Revers HD** : `gen_teaser.py`, pose `backhand` : ordre de dessin `armR` avant le buste, `armL` après.
