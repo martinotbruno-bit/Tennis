@@ -317,6 +317,25 @@ u16 __fastcall__ hl_vmax_row(u16 y)
     }
     return 0;
 }
+/* (2.75) écran des résultats : l'échange le plus long est commun aux deux
+   joueurs ; hors du tableau, en or, centré entre les deux joueurs :
+   « PLUS LONG / ECHANGE / 20 FRAPPES » */
+extern u8 st_longest;
+u16 __fastcall__ hl_rally_row(u16 y)
+{
+    char n[3];
+    u8 x = 0, v = st_longest;
+    txt_off = 0x40;
+    txt_at(11, (u8)y, "PLUS LONG");
+    txt_at(12, (u8)(y + 1), "ECHANGE");
+    if (v >= 10) n[x++] = (char)('0' + v / 10);
+    n[x++] = (char)('0' + v % 10); n[x] = 0;
+    x = (u8)(v > 1 ? 11 - (x >> 1) : 12 - (x >> 1));      /* (centré sur la colonne 15,5) */
+    txt_at(x, (u8)(y + 2), n);
+    txt_at((u8)(x + (v >= 10 ? 3 : 2)), (u8)(y + 2), v > 1 ? "FRAPPES" : "FRAPPE");
+    txt_off = 0;
+    return 0;
+}
 /* palmarès, rangée 22 (menuart.c) : « RECORD SERVICE  212 KM/H ALEX » */
 extern u8 sw_spd[4];
 void hl_rec_row(void)

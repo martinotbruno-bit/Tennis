@@ -871,6 +871,7 @@ static void stat_row(u8 y, const char *label, u8 a, u8 b)
 }
 
 u16 __fastcall__ hl_vmax_row(u16 y);                 /* (highlight.c, banque 15) */
+u16 __fastcall__ hl_rally_row(u16 y);                /* (train.c, banque 20, 2.75) */
 
 static u8 pct(u8 a, u8 b) { return b ? (u8)(((u16)a * 100) / b) : 0; }
 
@@ -954,17 +955,17 @@ static void results_screen(void)
     /* colonnes de 4 lettres (MARGAUX : « MARG ») */
     team_label(cfg.chr[0], 255, b); txt_at(19, 9, b);
     team_label(cfg.chr[1], 255, b); txt_at(25, 9, b);
-    stat_row(11, "POINTS GAGNES", st_points[0], st_points[1]);
-    stat_row(12, "ACES", st_aces[0], st_aces[1]);
-    stat_row(13, "DOUBLES FAUTES", st_dfaults[0], st_dfaults[1]);
-    stat_row(14, "COUPS GAGNANTS", st_winners[0], st_winners[1]);
-    stat_row(15, "FAUTES", st_errors[0], st_errors[1]);
-    stat_row(16, "1ERES BALLES %", pct(st_first_in[0], st_first_tot[0]), pct(st_first_in[1], st_first_tot[1]));
-    num2(b, st_longest); b[2] = 0;
-    txt_at(2, 17, "ECHANGE LE PLUS LONG"); txt_at(26, 17, b);
-    stat_row(18, "SERVICES CANON", st_canon[0], st_canon[1]);
-    stat_row(19, "COUPS PARFAITS", st_perf[0], st_perf[1]);
-    far_call(BANK_TRAIN, (void *)hl_vmax_row, 20);
+    stat_row(10, "POINTS GAGNES", st_points[0], st_points[1]);
+    stat_row(11, "ACES", st_aces[0], st_aces[1]);
+    stat_row(12, "DOUBLES FAUTES", st_dfaults[0], st_dfaults[1]);
+    stat_row(13, "COUPS GAGNANTS", st_winners[0], st_winners[1]);
+    stat_row(14, "FAUTES", st_errors[0], st_errors[1]);
+    stat_row(15, "1ERES BALLES %", pct(st_first_in[0], st_first_tot[0]), pct(st_first_in[1], st_first_tot[1]));
+    stat_row(16, "SERVICES CANON", st_canon[0], st_canon[1]);
+    stat_row(17, "COUPS PARFAITS", st_perf[0], st_perf[1]);
+    far_call(BANK_TRAIN, (void *)hl_vmax_row, 18);
+    /* (2.75) échange le plus long : sa propre ligne (train.c) */
+    far_call(BANK_TRAIN, (void *)hl_rally_row, 20);
     if (last_mode == MODE_COMP) txt_at(4, 25, "A : CONTINUER");
     else txt_at(4, 25, "A : REVANCHE   B : MENU");
     ppu_on();
@@ -980,7 +981,7 @@ static void results_sprites(void)
     spr_person(60, 188, cfg.chr[w], 1, joy, 0, w);
     spr_person(196, 188, cfg.chr[w ^ 1], 1, POSE_SAD, 0, (u8)(w ^ 1));
     if (cfg.doubles) {
-        spr_person(84, 188, cfg.chr[w + 2], 1, joy, 1, w);
+        spr_person(36, 188, cfg.chr[w + 2], 1, joy, 1, w);      /* (2.75 : à gauche ; l'échange le plus long est au centre) */
         spr_person(220, 188, cfg.chr[(w ^ 1) + 2], 1, POSE_SAD, 1, (u8)(w ^ 1));
     }
     spr_end();
