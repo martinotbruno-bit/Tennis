@@ -1685,7 +1685,7 @@ console.log('Margaux jouable et fatigue');
 {
   // public : suit la balle du regard (tuiles en CHR-RAM), ola (tribunes
   // réécrites puis rétablies), gradins en salle et bancs au club (palette 3)
-  const e = boot(); startWith(e, { ENV: 0, SURF: 2 }); allCpu(e); e.run(200);
+  const e = boot(); startWith(e, { ENV: 0, SURF: 2, REPLAY: 0 }); allCpu(e); e.run(200);   /* (sans ralentis : un zoom en plein écran masquerait les tribunes) */
   runUntil(e, () => e.peek('ms') === 2, 600);   // un échange en cours (le public suit la balle)
   const r3 = (sym, off) => e.nes.rom.rom[3][e.addr(sym) - 0x8000 + off];
   const ci = [...Array(6).keys()].map((k) => r3('crowd_idx', k)), chi = [...Array(6).keys()].map((k) => r3('cheer_idx', k));
@@ -1699,7 +1699,7 @@ console.log('Margaux jouable et fatigue');
   e.poke('crowd_timer', 64); let seen = 0;
   for (let n = 0; n < 40; n++) { e.run(1); if (stands().some((t) => chi.includes(t))) seen++; }
   e.run(60);
-  check(seen > 20 && stands().join() === before, `ola : la vague descend les tribunes (${seen} trames) puis tout est rétabli`);
+  check(seen > 20 && stands().join() === before, `ola : la vague descend les tribunes (${seen} trames) puis tout est rétabli (état ${e.peek('ola_on')}, échange ${e.peek('rally_hits')})`);
   const g = boot(); startWith(g, { ENV: 2, SURF: 2 });
   const h = boot(); startWith(h, { ENV: 1, SURF: 1 });
   const cb = [...Array(6).keys()].map((k) => r3('crowdb_idx', k));   // jeu B : club et salle
