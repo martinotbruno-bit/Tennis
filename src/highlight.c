@@ -105,35 +105,7 @@ void hl_serve(void)
     hl_spd = (u8)(hl_spd + (hl_spd >> 2) + (hl_spd >> 3) + (rand8() & 7));
     if (hl_spd > st_vmax[hl_srv & 1]) { st_vmax[hl_srv & 1] = hl_spd; st_vmaxp[hl_srv & 1] = hl_srv; }
 }
-/* ligne « SERVICE MAX KM/H » des écrans de statistiques (screens.c), « --- » sans service */
-u16 __fastcall__ hl_vmax_row(u16 y)
-{
-    u8 t;
-    u16 k;
-    char n[4];
-    if (sp_new) { txt_off = 0x40; txt_at(2, (u8)y, "KM/H : RECORD !"); txt_off = 0; }   /* (palmarès, en or) */
-    else txt_at(2, (u8)y, "SERVICE MAX KM/H");
-    n[3] = 0;
-    for (t = 0; t < 2; ++t) {
-        k = (u16)st_vmax[t] + 80;
-        if (st_vmax[t]) { n[0] = (char)('0' + k / 100); n[1] = (char)('0' + (k / 10) % 10); n[2] = (char)('0' + k % 10); }
-        else n[0] = n[1] = n[2] = '-';
-        txt_at((u8)(19 + t * 6), (u8)y, n);
-    }
-    return 0;
-}
-/* palmarès, rangée 22 (menuart.c) : « RECORD SERVICE  212 KM/H ALEX » */
-extern u8 sw_spd[4];
-void hl_rec_row(void)
-{
-    u16 k = (u16)sw_spd[1] + 80;
-    char n[5];
-    txt_at(3, 22, "RECORD SERVICE");
-    if (!sw_spd[1]) { txt_at(22, 22, "---"); return; }
-    n[0] = (char)('0' + k / 100); n[1] = (char)('0' + (k / 10) % 10); n[2] = (char)('0' + k % 10); n[3] = 0;
-    txt_at(18, 22, n); txt_at(22, 22, "KM/H");
-    team_label(sw_spd[2], 255, n); txt_at(27, 22, n);
-}
+/* (hl_vmax_row, hl_rec_row : train.c, banque 20, version 2.75) */
 /* Crépuscule (2.71, CONDITIONS : CREPUSCULE) : la lumière change au fil des
    jeux, en 4 paliers sur environ un match moyen (sets gagnants x jeux par
    set x 1,2 jeux) : 0 plein jour ; 1 soleil bas, lumière chaude (accentuation
@@ -312,10 +284,20 @@ static u8 band_human(void)
    nudiste ni au court Margaux (public à part). Sprites ajoutés après
    spr_end (emplacements restés libres). */
 void flags_draw(void);                  /* drapeaux des supporters : train.c, banque 20 (2.74) */
+extern u8 hl_flags;
+#pragma zpsym("hl_flags")
+static void pause_tick(void);
 void band_draw(void)
 {
     u8 i, v;
     bank_call(BANK_TRAIN, flags_draw);
+    pause_tick();
+    /* balle de match (2.75) : annoncée quand le serveur se met en place, à
+       chaque balle de match (remise à zéro à la fin de chaque point) */
+    if (cfg.mode == GM_MATCH && !cfg.demo) {
+        if (ms == MS_DEAD && end_reason == END_POINT) hl_flags &= (u8)~2;
+        else if (ms == MS_SERVE && !cer && (sc_crit & 4) && !(hl_flags & 2)) { hl_flags |= 2; set_msg("BALLE DE MATCH", "", 120); sfx_crowd(4); }
+    }
     voice_tick();
     lbox_end();
     /* (2.74) le bandeau du score apparaît après le point (après le ralenti
@@ -761,6 +743,57 @@ static const u8 t_mark[16] =   { 0x00, 0x3C, 0x3C, 0x00, 0x00, 0x00, 0x00, 0x00,
 #define T_MARK   (swap_base + 21)
 static u8 zx, zy, zwx, zwy;            /* point visé dans l'image agrandie ; coin de la fenêtre (px) */
 
+/* Bandeau du score pendant la pause (2.75) : rangées 12 à 17 de l'écran du
+   court (filet, deux lignes du score comme le bandeau du bas, filet), palette
+   1 ; les rangées et leurs attributs sont gardés dans zb_nt (libre hors du
+   zoom) et rétablis à la reprise ; écran coupé le temps de la copie. Les
+   sprites qui passeraient dessous sont cachés. */
+#define PB_ROW 12
+static void pause_tick(void)
+{
+    u8 i, k;
+    if (cfg.mode != GM_MATCH || hl_mode) return;
+    if (paused && !(hl_flags & 1)) {
+        hl_flags |= 1;
+        if (band_vis) { split_stop(); band_vis = 0; }
+        fade_skip = 1; fade_lvl = 0;
+        ppu_off();
+        vread(NTADR(0, PB_ROW), zb_nt, 192);
+        vread(0x23C0 + 24, zb_nt + 192, 16);         /* (attributs des rangées 12 à 19) */
+        for (i = 0; i < 32; ++i) bb[i & 15] = 0;
+        vwrite(NTADR(0, PB_ROW), (const u8 *)bb, 16); vwrite(NTADR(16, PB_ROW), (const u8 *)bb, 16);
+        vwrite(NTADR(0, PB_ROW + 5), (const u8 *)bb, 16); vwrite(NTADR(16, PB_ROW + 5), (const u8 *)bb, 16);
+        for (k = 0; k < 2; ++k) {                    /* filets */
+            for (i = 0; i < 16; ++i) bb[i] = T_RULE;
+            vwrite(NTADR(0, PB_ROW + 1 + k * 3), (const u8 *)bb, 16); vwrite(NTADR(16, PB_ROW + 1 + k * 3), (const u8 *)bb, 16);
+        }
+        i = band_pg; band_pg = 0;
+        for (k = 0; k < 2; ++k) {                    /* score (sets, jeux, points) */
+            vram_adr(NTADR(0, PB_ROW + 2 + k)); vram_put(0); vram_put(0);
+            band_text(k);
+            vwrite(NTADR(2, PB_ROW + 2 + k), (const u8 *)bb, 28);
+            vram_adr(NTADR(30, PB_ROW + 2 + k)); vram_put(0); vram_put(0);
+        }
+        band_pg = i;
+        vram_adr(0x23C0 + 24);
+        for (i = 0; i < 8; ++i) vram_put(0x55);
+        for (i = 0; i < 8; ++i) vram_put((u8)((zb_nt[200 + i] & 0xF0) | 0x05));
+        ppu_on();
+        sun_apply();
+    } else if (!paused && (hl_flags & 1)) {
+        hl_flags &= (u8)~1;
+        fade_skip = 1; fade_lvl = 0;
+        ppu_off();
+        vwrite(NTADR(0, PB_ROW), zb_nt, 192);
+        vwrite(0x23C0 + 24, zb_nt + 192, 16);
+        ppu_on();
+        sun_apply();
+        band_rows |= 3;
+    }
+    if (hl_flags & 1)                                /* (sprites : rien sous le bandeau) */
+        for (i = 0; i < 64; ++i) { k = oam_buf[i * 4]; if (k >= PB_ROW * 8 - 1 && k < (PB_ROW + 6) * 8) oam_buf[i * 4] = 0xFF; }
+}
+
 static void zoom_build(void)
 {
     register u8 i;
@@ -1159,74 +1192,9 @@ void hl_tick(void)
 /* ---------------------------------------------------------------------- */
 /* (pnet_tick : train.c, banque 20, version 2.74 : banque 15 pleine) */
 
-/* ====================================================================== */
-/* Remise du trophée (2.72, podium.c, banque 8 pleine) : tribunes de chaque  */
-/* côté du court (colonnes 0-1 et 30-31, rangées 10 à 27) ; le public est    */
-/* assis pendant les médailles, se lève quand la coupe est brandie et agite */
-/* les bras ; le finaliste lève une plaque d'argent (sprites 62-63, palette */
-/* des médailles) ; confettis aux couleurs du vainqueur et or (podium.c).   */
-/* ====================================================================== */
+/* (remise du trophée : pod_extra_build, pod_extra_tick : train.c, banque 20, version 2.75) */
 #include "comp.h"
-#define T_FAN 0xB1                 /* 2 tuiles du décor ($B1, $B2), libres au podium */
-#define S_PLATE 0x3C               /* 2 tuiles de sprites (personnages de dos, inutiles ici) */
-static const u8 fan_sit[32] = {
-    0x00,0x18,0x18,0x3C,0x7E,0x7E,0x00,0x00, 0x00,0x18,0x18,0x00,0x00,0x00,0x7E,0x00,
-    0x00,0x0C,0x0C,0x00,0x00,0x00,0x3F,0x00, 0x00,0x0C,0x0C,0x1E,0x3F,0x3F,0x00,0x00 };
-static const u8 fan_up[32] = {
-    0x42,0x5A,0x5A,0x7E,0x3C,0x3C,0x24,0x24, 0x42,0x18,0x18,0x00,0x00,0x00,0x00,0x00,
-    0x81,0x5A,0x3A,0x3C,0x3C,0x3C,0x24,0x24, 0x81,0x18,0x18,0x00,0x00,0x00,0x00,0x00 };
-static const u8 plate_chr[32] = {
-    0x00,0x7F,0x80,0x80,0x80,0x7F,0x00,0x00, 0x00,0x00,0x7F,0x7F,0x7F,0x00,0x00,0x00,
-    0x00,0xFE,0x01,0x01,0x01,0xFE,0x00,0x00, 0x00,0x00,0xFE,0xFE,0xFE,0x00,0x00,0x00 };
-static u8 pod_px, pod_py;
-/* écran du podium (rendu coupé) */
-void pod_extra_build(void)
-{
-    u8 r, i;
-    vram_adr((u16)T_FAN << 4);
-    for (i = 0; i < 32; ++i) vram_put(fan_sit[i]);
-    vram_adr(0x1000 + ((u16)S_PLATE << 4));
-    for (i = 0; i < 32; ++i) vram_put(plate_chr[i]);
-    for (r = 10; r < 28; ++r) {
-        i = (u8)(T_FAN + (r & 1));
-        vram_adr(NTADR(0, r)); vram_put(i); vram_put((u8)(i ^ 3));     /* ($B1 <-> $B2) */
-        vram_adr(NTADR(30, r)); vram_put((u8)(i ^ 3)); vram_put(i);
-    }
-    /* le finaliste (2e marche, à gauche) : x2 + 1, rangée 14 */
-    pod_px = (u8)((((32 - (c_dbl ? 22 : 18)) >> 1) + 1) * 8 + 8);
-    pod_py = 14 * 8;
-}
-/* à chaque trame : t = 0 avant la coupe, puis l'âge de la coupe (cup_t) */
-u16 __fastcall__ pod_extra_tick(u16 t)
-{
-    u8 y;
-    oam_buf[248] = oam_buf[252] = 0xFF;
-    if (t < 24) return 0;
-    if (t == 24) sfx_crowd(7);                         /* le public se lève */
-    if (t == 24 || (t & 15) == 8)                      /* et agite les bras */
-        if (vbuf_raw((u16)T_FAN << 4, fan_up + (((t >> 4) & 1) << 4), 16))
-            vbuf_raw((u16)(T_FAN + 1) << 4, fan_up + ((((t >> 4) & 1) ^ 1) << 4), 16);
-    /* la plaque, tenue à deux mains devant le finaliste : elle apparaît
-       avec la coupe, puis il la soulève un peu, en rythme */
-    y = (u8)(pod_py + 28 - (t < 40 ? (t - 24) >> 2 : 4 + (((t >> 4) & 1) ? 1 : 0)));
-    oam_buf[248] = (u8)(y - 1); oam_buf[249] = S_PLATE;     oam_buf[250] = 3; oam_buf[251] = pod_px;
-    oam_buf[252] = (u8)(y - 1); oam_buf[253] = S_PLATE + 1; oam_buf[254] = 3; oam_buf[255] = (u8)(pod_px + 8);
-    return 0;
-}
 
 /* (palmares_sprites : train.c, banque 20, version 2.75 : banque 15 pleine) */
 
-/* (2.73 : déplacé de la banque fixe) message du coup gagnant (game.c) */
-extern u8 hit_perf, last_shot, hit_pass, hit_jump;
-static /* Nom du coup gagnant affiché au centre du bandeau (15 caractères au plus) */
-const char *win_label(u8 shot, u8 pass, u8 jump)
-{
-    if (hit_perf) return "COUP PARFAIT !";
-    if (shot == SH_SMASH) return jump ? "SMASH SAUTE !" : "SMASH !";
-    if (shot == SH_DROP) return "AMORTIE !";
-    if (shot == SH_LOB) return "LOB GAGNANT !";
-    if (shot == SH_VOLLEY) return "VOLEE GAGNANTE";
-    if (pass) return "PASSING !";
-    return "COUP GAGNANT !";
-}
-void win_msg(void) { set_msg(win_label(last_shot, hit_pass, hit_jump), "", 70); }
+/* (win_msg : train.c, banque 20, version 2.75) */

@@ -2790,6 +2790,26 @@ console.log('Dérapages selon la surface');
   check(i.glide > 3 && i.glide < 10 && i.start < g.start - 1 && i.fx > 0, `glace : départ progressif, glissade de ${i.glide.toFixed(1)} px, éclats`);
 }
 }
+if (sec('Bandeau de pause et balle de match (2.75)')) {
+console.log('Bandeau de pause et balle de match (2.75)');
+for (const view of [0, 1]) {
+  const e = boot(); startWith(e, { FMT: 3, REPLAY: 0, VIEW: view }); allCpu(e);
+  e.run(900);
+  const nt = () => Array.from(e.nes.ppu.vramMem.slice(0x2000 + 12 * 32, 0x2000 + 18 * 32)).join();
+  const before = nt();
+  e.tap('START'); e.run(10);
+  const t = e.text(0, 14, 32) + e.text(0, 15, 32);
+  const paused = e.peek('paused');
+  e.tap('START'); e.run(10);
+  check(paused && /ALEX|MAYA/.test(t) && nt() === before, `pause (vue ${view}) : score au centre de l'écran, court rétabli à la reprise`);
+}
+{
+  const m = boot(); startWith(m, { FMT: 3, REPLAY: 0 }); allCpu(m);
+  m.poke('sc_games', 5); m.poke('sc_points', 2);
+  const said = runUntil(m, () => String.fromCharCode(...Array.from({ length: 14 }, (_, i) => m.peek('msg1', i))) === 'BALLE DE MATCH', 60 * 60 * 3);
+  check(said && (m.peek('sc_crit') & 4), 'balle de match annoncée avant le service');
+}
+}
 if (sec('Compensation 50 Hz (PAL)')) {
 console.log('Compensation 50 Hz (PAL)');
 {

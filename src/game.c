@@ -187,7 +187,7 @@ static void point_over(u8 winner, u8 reason)
     if (reason == 2) {
         ++st_winners[winner];
         if (rally_hits == 1) { ++st_aces[winner]; bank_call(BANK_HL, hl_ace_msg); HL_SELECT(winner, msg1); }   /* « ACE ! » et la vitesse du service */
-        else { bank_call(BANK_HL, win_msg); HL_SELECT(winner, msg1); }   /* « COUP GAGNANT ! », « LOB GAGNANT ! »… */
+        else { bank_call(BANK_TRAIN, win_msg); HL_SELECT(winner, msg1); }   /* « COUP GAGNANT ! », « LOB GAGNANT ! »… */
         sfx_winner();   /* carillon bref (canal des bruitages) */
         sfx_crowd(7);
         crowd_timer = 64;

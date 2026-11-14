@@ -277,3 +277,109 @@ void palmares_sprites(void)
     }
     spr_end();
 }
+
+/* ---------------------------------------------------------------------- */
+/* (2.73 : déplacé de la banque fixe) message du coup gagnant (game.c) */
+extern u8 hit_perf, hit_pass, hit_jump;   /* (last_shot : game_int.h) */
+void set_msg(const char *a, const char *b, u8 t);
+static /* Nom du coup gagnant affiché au centre du bandeau (15 caractères au plus) */
+const char *win_label(u8 shot, u8 pass, u8 jump)
+{
+    if (hit_perf) return "COUP PARFAIT !";
+    if (shot == SH_SMASH) return jump ? "SMASH SAUTE !" : "SMASH !";
+    if (shot == SH_DROP) return "AMORTIE !";
+    if (shot == SH_LOB) return "LOB GAGNANT !";
+    if (shot == SH_VOLLEY) return "VOLEE GAGNANTE";
+    if (pass) return "PASSING !";
+    return "COUP GAGNANT !";
+}
+void win_msg(void) { set_msg(win_label(last_shot, hit_pass, hit_jump), "", 70); }
+
+/* ---------------------------------------------------------------------- */
+/* Lignes des statistiques et du palmarès (2.70-2.71, déplacées de highlight.c) */
+/* ---------------------------------------------------------------------- */
+extern u8 sp_new;      /* nouveau record de vitesse (stats.c) */
+extern u8 st_vmax[2];  /* (highlight.c) */
+/* ligne « SERVICE MAX KM/H » des écrans de statistiques (screens.c), « --- » sans service */
+u16 __fastcall__ hl_vmax_row(u16 y)
+{
+    u8 t;
+    u16 k;
+    char n[4];
+    if (sp_new) { txt_off = 0x40; txt_at(2, (u8)y, "KM/H : RECORD !"); txt_off = 0; }   /* (palmarès, en or) */
+    else txt_at(2, (u8)y, "SERVICE MAX KM/H");
+    n[3] = 0;
+    for (t = 0; t < 2; ++t) {
+        k = (u16)st_vmax[t] + 80;
+        if (st_vmax[t]) { n[0] = (char)('0' + k / 100); n[1] = (char)('0' + (k / 10) % 10); n[2] = (char)('0' + k % 10); }
+        else n[0] = n[1] = n[2] = '-';
+        txt_at((u8)(19 + t * 6), (u8)y, n);
+    }
+    return 0;
+}
+/* palmarès, rangée 22 (menuart.c) : « RECORD SERVICE  212 KM/H ALEX » */
+extern u8 sw_spd[4];
+void hl_rec_row(void)
+{
+    u16 k = (u16)sw_spd[1] + 80;
+    char n[5];
+    txt_at(3, 22, "RECORD SERVICE");
+    if (!sw_spd[1]) { txt_at(22, 22, "---"); return; }
+    n[0] = (char)('0' + k / 100); n[1] = (char)('0' + (k / 10) % 10); n[2] = (char)('0' + k % 10); n[3] = 0;
+    txt_at(18, 22, n); txt_at(22, 22, "KM/H");
+    team_label(sw_spd[2], 255, n); txt_at(27, 22, n);
+}
+
+/* ====================================================================== */
+/* Remise du trophée (2.72, podium.c, banque 8 pleine) : tribunes de chaque  */
+/* côté du court (colonnes 0-1 et 30-31, rangées 10 à 27) ; le public est    */
+/* assis pendant les médailles, se lève quand la coupe est brandie et agite */
+/* les bras ; le finaliste lève une plaque d'argent (sprites 62-63, palette */
+/* des médailles) ; confettis aux couleurs du vainqueur et or (podium.c).   */
+/* ====================================================================== */
+#define T_FAN 0xB1                 /* 2 tuiles du décor ($B1, $B2), libres au podium */
+#define S_PLATE 0x3C               /* 2 tuiles de sprites (personnages de dos, inutiles ici) */
+static const u8 fan_sit[32] = {
+    0x00,0x18,0x18,0x3C,0x7E,0x7E,0x00,0x00, 0x00,0x18,0x18,0x00,0x00,0x00,0x7E,0x00,
+    0x00,0x0C,0x0C,0x00,0x00,0x00,0x3F,0x00, 0x00,0x0C,0x0C,0x1E,0x3F,0x3F,0x00,0x00 };
+static const u8 fan_up[32] = {
+    0x42,0x5A,0x5A,0x7E,0x3C,0x3C,0x24,0x24, 0x42,0x18,0x18,0x00,0x00,0x00,0x00,0x00,
+    0x81,0x5A,0x3A,0x3C,0x3C,0x3C,0x24,0x24, 0x81,0x18,0x18,0x00,0x00,0x00,0x00,0x00 };
+static const u8 plate_chr[32] = {
+    0x00,0x7F,0x80,0x80,0x80,0x7F,0x00,0x00, 0x00,0x00,0x7F,0x7F,0x7F,0x00,0x00,0x00,
+    0x00,0xFE,0x01,0x01,0x01,0xFE,0x00,0x00, 0x00,0x00,0xFE,0xFE,0xFE,0x00,0x00,0x00 };
+static u8 pod_px, pod_py;
+/* écran du podium (rendu coupé) */
+void pod_extra_build(void)
+{
+    u8 r, i;
+    vram_adr((u16)T_FAN << 4);
+    for (i = 0; i < 32; ++i) vram_put(fan_sit[i]);
+    vram_adr(0x1000 + ((u16)S_PLATE << 4));
+    for (i = 0; i < 32; ++i) vram_put(plate_chr[i]);
+    for (r = 10; r < 28; ++r) {
+        i = (u8)(T_FAN + (r & 1));
+        vram_adr(NTADR(0, r)); vram_put(i); vram_put((u8)(i ^ 3));     /* ($B1 <-> $B2) */
+        vram_adr(NTADR(30, r)); vram_put((u8)(i ^ 3)); vram_put(i);
+    }
+    /* le finaliste (2e marche, à gauche) : x2 + 1, rangée 14 */
+    pod_px = (u8)((((32 - (c_dbl ? 22 : 18)) >> 1) + 1) * 8 + 8);
+    pod_py = 14 * 8;
+}
+/* à chaque trame : t = 0 avant la coupe, puis l'âge de la coupe (cup_t) */
+u16 __fastcall__ pod_extra_tick(u16 t)
+{
+    u8 y;
+    oam_buf[248] = oam_buf[252] = 0xFF;
+    if (t < 24) return 0;
+    if (t == 24) sfx_crowd(7);                         /* le public se lève */
+    if (t == 24 || (t & 15) == 8)                      /* et agite les bras */
+        if (vbuf_raw((u16)T_FAN << 4, fan_up + (((t >> 4) & 1) << 4), 16))
+            vbuf_raw((u16)(T_FAN + 1) << 4, fan_up + ((((t >> 4) & 1) ^ 1) << 4), 16);
+    /* la plaque, tenue à deux mains devant le finaliste : elle apparaît
+       avec la coupe, puis il la soulève un peu, en rythme */
+    y = (u8)(pod_py + 28 - (t < 40 ? (t - 24) >> 2 : 4 + (((t >> 4) & 1) ? 1 : 0)));
+    oam_buf[248] = (u8)(y - 1); oam_buf[249] = S_PLATE;     oam_buf[250] = 3; oam_buf[251] = pod_px;
+    oam_buf[252] = (u8)(y - 1); oam_buf[253] = S_PLATE + 1; oam_buf[254] = 3; oam_buf[255] = (u8)(pod_px + 8);
+    return 0;
+}

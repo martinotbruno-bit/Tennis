@@ -167,6 +167,7 @@ Pour chaque ligne, lancez un match et regardez l'écran pendant une dizaine de s
 | 10.29 | Survol (version 2.73) | Avant une finale : ciel, tribunes et court glissent à des vitesses différentes ; limites des bandes nettes (au pire une ligne qui tremble) | ☐ |
 | 10.30 | Perspective (version 2.73) | Plus de traits horizontaux entre le public et le court | ☐ |
 | 10.31 | Plans télé (version 2.73) | Ramasseuse au changement de côté, poignée de main en fin de match, public après un long échange : images nettes, retour au court propre (score, bandeau, joueurs) | ☐ |
+| 10.32 | Pause et balle de match (version 2.75) | START : le score apparaît dans un bandeau au milieu de l'écran ; à la reprise, le court est intact. Avant une balle de match : « BALLE DE MATCH » en haut de l'écran | ☐ |
 
 ## 11. Ce qu'il faut renvoyer
 

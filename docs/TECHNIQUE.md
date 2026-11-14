@@ -347,6 +347,11 @@ Le dessin des personnages est commun aux vues de face et de dos (rangées de tui
 - **Coup selon la hauteur** (shots.c) : `smash = bz > (bounces ? 30 : 24) px`.
 - **Public HD** (`closeup_tick`) : `TZ_CROWD` si `rally_hits` ≥ 20. `gen_teaser.py` : `figures[].casual` (t-shirt à encolure ronde, `CASUAL`), `_crowd_extra` (casquette du spectateur 1, rangée de sièges à y = 110).
 
+- **Balle de match** (`band_draw`) : en `MS_SERVE`, hors changement de côté, si `sc_crit` bit 2 et `hl_flags` bit 1 à 0 : `set_msg("BALLE DE MATCH")`, `sfx_crowd(4)`, bit posé ; remis à 0 à la fin du point (`MS_DEAD`, `END_POINT`). `hl_flags` en page zéro (crt0.s).
+- **Bandeau de pause** (`pause_tick`, highlight.c) : à la pause, écran éteint (`fade_skip`), rangées 12-17 et 16 octets d'attributs ($23D8) sauvés dans `zb_nt`, filets (`T_RULE`) rangées 13 et 16, texte du bandeau (`band_text`, page 0) rangées 14-15, attributs palette 1 ; à la reprise, restauration et `band_rows |= 3`. Sprites entre y 95 et 144 cachés. `hl_flags` bit 0.
+- **Place en banque 15** : `win_msg`/`win_label`, `hl_vmax_row`/`hl_rec_row`, `pod_extra_build`/`pod_extra_tick` déplacées en banque 20 (train.c, appelées par `bank_call(BANK_TRAIN, …)`).
+- **Smash en vol** : `legL` (35, 100, 105) repliée, `legR` (120, 140, 150) tendue en arrière ; chaussure agrandie (pointe + 3,5 px, ellipse 3,9 × 3,4) pour toutes les images.
+
 ### Version 2.74 : bandeau à l'appui, zooms des balles limites
 
 - **Bandes du ralenti** : `rp_play` n'appelle plus `lbox_tick` (code laissé en place, inutilisé ; `lb_st` reste 0).

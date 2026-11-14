@@ -176,12 +176,12 @@ def body(f, j, female, face, front=('armR', 'legL'), racket_hand='L', racket_dir
         d = (toe[0] - an[0], toe[1] - an[1])
         L = math.hypot(*d) or 1
         u = (d[0] / L, d[1] / L)
-        toe = (toe[0] + u[0] * 2, toe[1] + u[1] * 2)            # pied plus long
+        toe = (toe[0] + u[0] * 3.5, toe[1] + u[1] * 3.5)        # pied plus long (chaussure un peu plus grande, 2.75)
         n = (u[1], -u[0]) if u[0] >= 0 else (-u[1], u[0])          # vers le haut
         Q = lambda t, h: (an[0] + u[0] * t + n[0] * h, an[1] + u[1] * t + n[1] * h)
         L = math.hypot(toe[0] - an[0], toe[1] - an[1])
-        shoe = f.m_poly([Q(-6, 5), Q(-1, 7), Q(L * 0.45, 4.5), Q(L + 1, 2.2), Q(L + 3, -1), Q(L + 1, -3.5), Q(-6, -3.5), Q(-7.5, 1)])
-        shoe |= f.m_ell(Q(L, -0.6), 3.3, 2.9)
+        shoe = f.m_poly([Q(-7, 6), Q(-1, 8.2), Q(L * 0.45, 5.4), Q(L + 1.5, 2.8), Q(L + 3.8, -1.2), Q(L + 1.5, -4.2), Q(-7, -4.2), Q(-8.6, 1)])
+        shoe |= f.m_ell(Q(L, -0.7), 3.9, 3.4)
         sid = f.part(shoe, W, None)
         sole = shoe & ~shift_mask(f, (-n[0] * 2.2, -n[1] * 2.2), shoe)
         f.paint(sole, D, within=[sid])
@@ -674,7 +674,10 @@ POSES['smash'] = dict(
 def _smash_air_extra(f, j, female, r):
     f.part(f.m_ell((96, 223), 15, 3), 5, None)
 POSES['smash_air'] = dict(
-    s=dict(pelvis=(96, 96), torso=-104, legL=(55, 125, 160), legR=(125, 195, 215),
+    # (2.75) ciseau du smash sauté, d'après la technique décrite par les
+    # entraîneurs : genou avant levé, tibia vertical et pied pointé vers le
+    # bas ; jambe arrière presque tendue vers l'arrière, pied en extension
+    s=dict(pelvis=(96, 96), torso=-104, legL=(35, 100, 105), legR=(120, 140, 150),
            armL=(-118, -104), armR=(-55, -75), tilt=-0.08, turn=-0.7, head_bend=-14,
            order=['legR', 'legL', 'torso', 'armR', 'head', 'armL', 'racket']),
     face='focus', hand='L', rdir=-122, rlen=50, extra=_smash_air_extra)
@@ -776,7 +779,7 @@ SHOTS = [
     ('angry', 'angry', 1.12, None, False),           # raquette au sol, en pied
     ('angry_z', 'angry', 3.4, (83, 70), True),       # zoom : le visage qui crie
     ('smash', 'smash', 0.86, (92, None), False),
-    ('smash_air', 'smash_air', 0.86, (92, 100), False),   # smash en plein vol (ralenti du smash, 2.75)
+    ('smash_air', 'smash_air', 0.86, (92, 97), False),   # smash en plein vol (ralenti du smash, 2.75)
     ('backhand', 'backhand', 1.4, (150, 102), False),   # revers à deux mains, gros plan (ralenti, 2.68)      # smash et service, en pied (ralenti, 2.68)
     ('ballkid', 'ballkid', 1.3, (94, 123), False),     # ramasseur de balles (changement de côté, 2.73)
     ('handshake', 'handshake', 1.3, (110, 96), False),  # poignée de main au filet (fin du match, 2.73)

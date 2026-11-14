@@ -222,7 +222,7 @@ void palmares_build(void)
         /* nombre, puis pourcentage suivi de « % » (2.71 : sans ligne d'en-tête, place du record) */
         txt_at(3, 20, "SERVICES CANON"); u16_at(17, 20, sx.ok); u16_at(22, 20, pct16(sx.ok, sx.tried)); txt_at(27, 20, "%");
         txt_at(3, 21, "COUPS PARFAITS"); u16_at(17, 21, sx.pok); u16_at(22, 21, pct16(sx.pok, sx.ptry)); txt_at(27, 21, "%");
-        bank_call(BANK_HL, hl_rec_row);           /* RECORD SERVICE (2.71, highlight.c) */
+        bank_call(BANK_TRAIN, hl_rec_row);           /* RECORD SERVICE (2.71, highlight.c) */
     } else if (pal_page == 1) {
         txt_at(3, 5, "MEILLEURS RESULTATS");
         for (i = 0; i < NCT; ++i) {

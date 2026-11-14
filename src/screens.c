@@ -926,7 +926,7 @@ static void setbreak_screen(void)
     stat_row(17, "FAUTES", st_errors[0], st_errors[1]);
     stat_row(18, "SERVICES CANON", st_canon[0], st_canon[1]);
     stat_row(19, "COUPS PARFAITS", st_perf[0], st_perf[1]);
-    far_call(BANK_HL, (void *)hl_vmax_row, 20);
+    far_call(BANK_TRAIN, (void *)hl_vmax_row, 20);
     txt_at(2, 22, "AU SERVICE :");
     if (cfg.doubles) team_label(cfg.chr[sc_server], cfg.chr[sc_server + 2], line); else team_label(cfg.chr[sc_server], 255, line);
     txt_at(15, 22, line);
@@ -964,7 +964,7 @@ static void results_screen(void)
     txt_at(2, 17, "ECHANGE LE PLUS LONG"); txt_at(26, 17, b);
     stat_row(18, "SERVICES CANON", st_canon[0], st_canon[1]);
     stat_row(19, "COUPS PARFAITS", st_perf[0], st_perf[1]);
-    far_call(BANK_HL, (void *)hl_vmax_row, 20);
+    far_call(BANK_TRAIN, (void *)hl_vmax_row, 20);
     if (last_mode == MODE_COMP) txt_at(4, 25, "A : CONTINUER");
     else txt_at(4, 25, "A : REVANCHE   B : MENU");
     ppu_on();

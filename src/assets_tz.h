@@ -128,35 +128,35 @@ static const tz_art_t tz_art[TZ_N][3] = {   /* homme, femme, fillette (Margaux) 
       { 21, 217, 0, 30, 2, 26, 0, tz_chr_impact_f, tz_map_impact_f, tz_at_impact_f },
       { 2, 191, 0, 30, 2, 26, 0, tz_chr_impact_g, tz_map_impact_g, tz_at_impact_g } },
     { { 12, 194, 2, 30, 2, 26, 0, tz_chr_slide_m, tz_map_slide_m, tz_at_slide_m },
-      { 20, 184, 2, 30, 4, 24, 0, tz_chr_slide_f, tz_map_slide_f, tz_at_slide_f },
-      { 10, 166, 2, 30, 4, 24, 0, tz_chr_slide_g, tz_map_slide_g, tz_at_slide_g } },
-    { { 21, 231, 0, 32, 0, 28, 0, tz_chr_slide_z_m, tz_map_slide_z_m, tz_at_slide_z_m },
-      { 17, 231, 0, 32, 0, 28, 0, tz_chr_slide_z_f, tz_map_slide_z_f, tz_at_slide_z_f },
-      { 9, 210, 0, 32, 0, 28, 0, tz_chr_slide_z_g, tz_map_slide_z_g, tz_at_slide_z_g } },
-    { { 12, 156, 4, 20, 0, 28, 0, tz_chr_victory_m, tz_map_victory_m, tz_at_victory_m },
+      { 20, 187, 0, 32, 4, 24, 0, tz_chr_slide_f, tz_map_slide_f, tz_at_slide_f },
+      { 10, 166, 0, 32, 4, 24, 0, tz_chr_slide_g, tz_map_slide_g, tz_at_slide_g } },
+    { { 21, 232, 0, 32, 0, 28, 0, tz_chr_slide_z_m, tz_map_slide_z_m, tz_at_slide_z_m },
+      { 17, 234, 0, 32, 0, 28, 0, tz_chr_slide_z_f, tz_map_slide_z_f, tz_at_slide_z_f },
+      { 9, 212, 0, 32, 0, 28, 0, tz_chr_slide_z_g, tz_map_slide_z_g, tz_at_slide_z_g } },
+    { { 12, 158, 4, 20, 0, 28, 0, tz_chr_victory_m, tz_map_victory_m, tz_at_victory_m },
       { 4, 152, 4, 18, 0, 28, 0, tz_chr_victory_f, tz_map_victory_f, tz_at_victory_f },
       { 9, 133, 4, 18, 0, 28, 0, tz_chr_victory_g, tz_map_victory_g, tz_at_victory_g } },
     { { 4, 205, 0, 30, 0, 28, 1, tz_chr_victory_z_m, tz_map_victory_z_m, tz_at_victory_z_m },
       { 17, 214, 0, 28, 0, 28, 1, tz_chr_victory_z_f, tz_map_victory_z_f, tz_at_victory_z_f },
       { 18, 187, 0, 28, 0, 28, 1, tz_chr_victory_z_g, tz_map_victory_z_g, tz_at_victory_z_g } },
-    { { 7, 166, 8, 16, 4, 24, 0, tz_chr_angry_m, tz_map_angry_m, tz_at_angry_m },
-      { 2, 153, 8, 16, 4, 24, 0, tz_chr_angry_f, tz_map_angry_f, tz_at_angry_f },
-      { 17, 140, 8, 16, 4, 24, 0, tz_chr_angry_g, tz_map_angry_g, tz_at_angry_g } },
+    { { 7, 168, 8, 16, 4, 24, 0, tz_chr_angry_m, tz_map_angry_m, tz_at_angry_m },
+      { 6, 157, 8, 16, 4, 24, 0, tz_chr_angry_f, tz_map_angry_f, tz_at_angry_f },
+      { 17, 143, 8, 16, 4, 24, 0, tz_chr_angry_g, tz_map_angry_g, tz_at_angry_g } },
     { { 20, 244, 0, 32, 0, 28, 1, tz_chr_angry_z_m, tz_map_angry_z_m, tz_at_angry_z_m },
       { 9, 192, 4, 26, 4, 24, 1, tz_chr_angry_z_f, tz_map_angry_z_f, tz_at_angry_z_f },
       { 21, 185, 4, 26, 4, 24, 1, tz_chr_angry_z_g, tz_map_angry_z_g, tz_at_angry_z_g } },
-    { { 20, 127, 6, 16, 2, 26, 0, tz_chr_smash_m, tz_map_smash_m, tz_at_smash_m },
-      { 10, 113, 8, 14, 2, 26, 0, tz_chr_smash_f, tz_map_smash_f, tz_at_smash_f },
+    { { 20, 128, 6, 16, 2, 26, 0, tz_chr_smash_m, tz_map_smash_m, tz_at_smash_m },
+      { 4, 114, 8, 14, 2, 26, 0, tz_chr_smash_f, tz_map_smash_f, tz_at_smash_f },
       { 21, 104, 8, 14, 2, 26, 0, tz_chr_smash_g, tz_map_smash_g, tz_at_smash_g } },
-    { { 6, 142, 6, 16, 0, 28, 0, tz_chr_smash_air_m, tz_map_smash_air_m, tz_at_smash_air_m },
-      { 18, 126, 8, 12, 2, 26, 0, tz_chr_smash_air_f, tz_map_smash_air_f, tz_at_smash_air_f },
-      { 4, 104, 8, 12, 2, 26, 0, tz_chr_smash_air_g, tz_map_smash_air_g, tz_at_smash_air_g } },
+    { { 2, 134, 6, 16, 2, 26, 0, tz_chr_smash_air_m, tz_map_smash_air_m, tz_at_smash_air_m },
+      { 18, 123, 8, 12, 2, 26, 0, tz_chr_smash_air_f, tz_map_smash_air_f, tz_at_smash_air_f },
+      { 10, 105, 8, 12, 2, 26, 0, tz_chr_smash_air_g, tz_map_smash_air_g, tz_at_smash_air_g } },
     { { 12, 192, 2, 24, 2, 26, 0, tz_chr_backhand_m, tz_map_backhand_m, tz_at_backhand_m },
       { 17, 202, 2, 24, 2, 26, 0, tz_chr_backhand_f, tz_map_backhand_f, tz_at_backhand_f },
       { 20, 183, 2, 24, 2, 26, 0, tz_chr_backhand_g, tz_map_backhand_g, tz_at_backhand_g } },
-    { { 17, 171, 0, 26, 0, 28, 0, tz_chr_ballkid_m, tz_map_ballkid_m, tz_at_ballkid_m },
-      { 17, 171, 0, 26, 0, 28, 0, tz_chr_ballkid_m, tz_map_ballkid_m, tz_at_ballkid_m },
-      { 17, 171, 0, 26, 0, 28, 0, tz_chr_ballkid_m, tz_map_ballkid_m, tz_at_ballkid_m } },
+    { { 17, 172, 0, 26, 0, 28, 0, tz_chr_ballkid_m, tz_map_ballkid_m, tz_at_ballkid_m },
+      { 17, 172, 0, 26, 0, 28, 0, tz_chr_ballkid_m, tz_map_ballkid_m, tz_at_ballkid_m },
+      { 17, 172, 0, 26, 0, 28, 0, tz_chr_ballkid_m, tz_map_ballkid_m, tz_at_ballkid_m } },
     { { 9, 202, 0, 32, 2, 26, 0, tz_chr_handshake_m, tz_map_handshake_m, tz_at_handshake_m },
       { 18, 199, 0, 32, 4, 24, 0, tz_chr_handshake_f, tz_map_handshake_f, tz_at_handshake_f },
       { 21, 178, 0, 32, 4, 24, 0, tz_chr_handshake_g, tz_map_handshake_g, tz_at_handshake_g } },
@@ -166,7 +166,7 @@ static const tz_art_t tz_art[TZ_N][3] = {   /* homme, femme, fillette (Margaux) 
 };
 #define TZ_IMPACT_RACKET_X 13
 #define TZ_IMPACT_RACKET_Y 52
-#define TZ_IMPACT_FOOTR_X 248
+#define TZ_IMPACT_FOOTR_X 250
 #define TZ_IMPACT_FOOTR_Y 239
 #define TZ_IMPACT_FACE_X 175
 #define TZ_IMPACT_FACE_Y 39
@@ -174,7 +174,7 @@ static const tz_art_t tz_art[TZ_N][3] = {   /* homme, femme, fillette (Margaux) 
 #define TZ_IMPACT_RACKET_TIP_Y 45
 #define TZ_SLIDE_RACKET_X 235
 #define TZ_SLIDE_RACKET_Y 116
-#define TZ_SLIDE_FOOTR_X 192
+#define TZ_SLIDE_FOOTR_X 194
 #define TZ_SLIDE_FOOTR_Y 223
 #define TZ_SLIDE_FACE_X 111
 #define TZ_SLIDE_FACE_Y 74
@@ -182,7 +182,7 @@ static const tz_art_t tz_art[TZ_N][3] = {   /* homme, femme, fillette (Margaux) 
 #define TZ_SLIDE_RACKET_TIP_Y 113
 #define TZ_SLIDE_Z_RACKET_X 240
 #define TZ_SLIDE_Z_RACKET_Y 99
-#define TZ_SLIDE_Z_FOOTR_X 189
+#define TZ_SLIDE_Z_FOOTR_X 191
 #define TZ_SLIDE_Z_FOOTR_Y 223
 #define TZ_SLIDE_Z_FACE_X 95
 #define TZ_SLIDE_Z_FACE_Y 50
@@ -190,15 +190,15 @@ static const tz_art_t tz_art[TZ_N][3] = {   /* homme, femme, fillette (Margaux) 
 #define TZ_SLIDE_Z_RACKET_TIP_Y 96
 #define TZ_VICTORY_RACKET_X 50
 #define TZ_VICTORY_RACKET_Y 5
-#define TZ_VICTORY_FOOTR_X 155
-#define TZ_VICTORY_FOOTR_Y 225
+#define TZ_VICTORY_FOOTR_X 157
+#define TZ_VICTORY_FOOTR_Y 226
 #define TZ_VICTORY_FACE_X 126
 #define TZ_VICTORY_FACE_Y 62
 #define TZ_VICTORY_RACKET_TIP_X 38
 #define TZ_VICTORY_RACKET_TIP_Y 0
 #define TZ_VICTORY_Z_RACKET_X 0
 #define TZ_VICTORY_Z_RACKET_Y 0
-#define TZ_VICTORY_Z_FOOTR_X 187
+#define TZ_VICTORY_Z_FOOTR_X 190
 #define TZ_VICTORY_Z_FOOTR_Y 239
 #define TZ_VICTORY_Z_FACE_X 128
 #define TZ_VICTORY_Z_FACE_Y 79
@@ -206,7 +206,7 @@ static const tz_art_t tz_art[TZ_N][3] = {   /* homme, femme, fillette (Margaux) 
 #define TZ_VICTORY_Z_RACKET_TIP_Y 0
 #define TZ_ANGRY_RACKET_X 86
 #define TZ_ANGRY_RACKET_Y 186
-#define TZ_ANGRY_FOOTR_X 176
+#define TZ_ANGRY_FOOTR_X 178
 #define TZ_ANGRY_FOOTR_Y 224
 #define TZ_ANGRY_FACE_X 119
 #define TZ_ANGRY_FACE_Y 53
@@ -222,35 +222,35 @@ static const tz_art_t tz_art[TZ_N][3] = {   /* homme, femme, fillette (Margaux) 
 #define TZ_ANGRY_Z_RACKET_TIP_Y 239
 #define TZ_SMASH_RACKET_X 70
 #define TZ_SMASH_RACKET_Y 32
-#define TZ_SMASH_FOOTR_X 169
+#define TZ_SMASH_FOOTR_X 170
 #define TZ_SMASH_FOOTR_Y 222
 #define TZ_SMASH_FACE_X 113
 #define TZ_SMASH_FACE_Y 88
 #define TZ_SMASH_RACKET_TIP_X 63
 #define TZ_SMASH_RACKET_TIP_Y 21
 #define TZ_SMASH_AIR_RACKET_X 70
-#define TZ_SMASH_AIR_RACKET_Y 23
-#define TZ_SMASH_AIR_FOOTR_X 71
-#define TZ_SMASH_AIR_FOOTR_Y 153
+#define TZ_SMASH_AIR_RACKET_Y 29
+#define TZ_SMASH_AIR_FOOTR_X 79
+#define TZ_SMASH_AIR_FOOTR_Y 207
 #define TZ_SMASH_AIR_FACE_X 113
-#define TZ_SMASH_AIR_FACE_Y 80
+#define TZ_SMASH_AIR_FACE_Y 86
 #define TZ_SMASH_AIR_RACKET_TIP_X 63
-#define TZ_SMASH_AIR_RACKET_TIP_Y 12
+#define TZ_SMASH_AIR_RACKET_TIP_Y 18
 #define TZ_BACKHAND_RACKET_X 186
 #define TZ_BACKHAND_RACKET_Y 73
-#define TZ_BACKHAND_FOOTR_X 142
+#define TZ_BACKHAND_FOOTR_X 144
 #define TZ_BACKHAND_FOOTR_Y 239
 #define TZ_BACKHAND_FACE_X 81
 #define TZ_BACKHAND_FACE_Y 39
 #define TZ_BACKHAND_RACKET_TIP_X 205
 #define TZ_BACKHAND_RACKET_TIP_Y 66
-#define TZ_BALLKID_FOOTR_X 197
+#define TZ_BALLKID_FOOTR_X 199
 #define TZ_BALLKID_FOOTR_Y 219
 #define TZ_BALLKID_FACE_X 119
 #define TZ_BALLKID_FACE_Y 74
 #define TZ_HANDSHAKE_RACKET_X 52
 #define TZ_HANDSHAKE_RACKET_Y 202
-#define TZ_HANDSHAKE_FOOTR_X 130
+#define TZ_HANDSHAKE_FOOTR_X 132
 #define TZ_HANDSHAKE_FOOTR_Y 239
 #define TZ_HANDSHAKE_FACE_X 92
 #define TZ_HANDSHAKE_FACE_Y 46
