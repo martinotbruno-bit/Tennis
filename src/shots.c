@@ -203,6 +203,7 @@ void shot_select(void)
 /* ---------------------------------------------------------------------- */
 extern u8 dive_t[4], dive_f[4], pl_state[4], pl_moving[4];
 #pragma static-locals(off)          /* RAM interne pleine : variables sur la pile */
+extern u8 srv_canon, dive_canon;
 void dive_try(void)
 {
     static const u8 ai_spd[3] = { 74, 86, 110 };     /* comme ai_speed (game.c) */
@@ -214,10 +215,12 @@ void dive_try(void)
     register s16 x, y, py;
     u8 p = sh_p, n, lv, ok = 0;
     s16 d, a, run, reach;
+    u8 cn;
     sh_short = 0;
     if (ms != MS_RALLY || !b_live || hitter == (u8)(p & 1) || bounces > 1 || dive_t[p] || pl_jump[p]) return;
     if ((b_serve && bounces == 0) || bz > 36 * FP) return;
     if (sh_pad == 0xFF && ((frame_cnt ^ p) & (npl == 4 ? 3 : 1))) return;   /* ordinateur : une trame sur deux (sur quatre en double) */
+    cn = (u8)(srv_canon && b_serve);    /* retour d'un service canon */
     x = bx; y = by; py = ply[p];
     /* balle encore loin en profondeur (plus de 13 trames à 4 px) : rien à
        décider, sans parcourir la boucle */
@@ -236,7 +239,7 @@ void dive_try(void)
         /* humain, au lâcher du bouton : bien placé (la balle passera à portée,
            en comptant le pas glissé pendant le geste), frappe normale ; trop
            loin (jusqu'à 45 px), plongeon */
-        ok = (u8)(a > (s16)(24 + (n >> 1)) && a < 46);
+        ok = (u8)(a > (s16)(24 + (n >> 1)) && a < (cn ? 54 : 46));   /* (service canon : allonge de dernière chance) */
     } else {
         lv = cfg.level[p];
         /* balle qui va sortir (pas encore rebondi) : on la laisse */
@@ -247,9 +250,11 @@ void dive_try(void)
         run = (s16)(22 + (((u16)ai_spd[lv] * n * 3) >> 8));
         reach = (s16)(n > 2 ? 24 + (n - 2) * 3 : 24);
         if (reach > 42) reach = 42;
-        ok = (u8)(a > run && a <= reach && rand8() < dive_p[lv]);
+        if (cn) reach += 8;             /* service canon : plongeon de dernière chance (2.72) */
+        ok = (u8)(a > run && a <= reach && rand8() < (cn ? 250 : dive_p[lv]));
     }
     if (!ok) return;
+    if (cn) dive_canon = (u8)(p + 1);   /* (highlight.c : « PLONGEON ! », gros plan s'il gagne le point) */
     dive_t[p] = 42;
     dive_f[p] = (u8)(d < 0);
     pl_state[p] = 0;                /* ST_IDLE */

@@ -266,24 +266,7 @@ void title_court(void)
     for (i = 0; i < 8; ++i) vram_put(0xFA);
 }
 
-/* page des résultats : une médaille devant chaque meilleur résultat et
-   chaque compétition de l'historique terminée sur le podium (1er, 2e, 3e) */
-void palmares_sprites(void)
-{
-    u8 i, t;
-    spr_begin();
-    if (pal_page == 1) {
-        for (i = 0; i < NCT; ++i) {
-            t = (u8)(i < 5 ? sv.comp_best[i] : sw_best[i - 4]);
-            if (t >= 1 && t <= 3) spr1(9, (u8)((6 + i) * 8 - 1), (u8)(ball_base + 8), (u8)(t - 1));
-        }
-        for (i = 0; i < sv.hist_n && i < 8; ++i) {
-            t = sv.hist[i][1];
-            if (t >= 1 && t <= 3) spr1(9, (u8)((15 + i) * 8 - 1), (u8)(ball_base + 8), (u8)(t - 1));
-        }
-    }
-    spr_end();
-}
+/* (palmares_sprites : en banque 15 depuis la version 2.72, highlight.c) */
 
 /* ---------------------------------------------------------------------- */
 /* Affiche VS (présentation du match) : bustes face à face, bras croisés,

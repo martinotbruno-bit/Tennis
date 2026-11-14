@@ -22,6 +22,8 @@
 #include "assets.h"
 #include "game.h"
 #include "comp.h"
+void pod_extra_build(void);
+u16 __fastcall__ pod_extra_tick(u16 t);
 
 #pragma static-locals(on)
 
@@ -469,6 +471,7 @@ void podium_build(void)
             medal_at((u8)((x1 + 1) * 8 + 12), 12, 1); medal_at((u8)((x2 + 1) * 8 + 12), 14, 2); medal_at((u8)((x3 + 1) * 8 + 12), 16, 3);
         }
     }
+    bank_call(BANK_HL, pod_extra_build);     /* tribunes, plaque du finaliste (2.72, highlight.c) */
     pal_dirty = 1;
     cup_t = 0;
 }
@@ -535,6 +538,7 @@ void podium_sprites(void)
 {
     u8 i, o, cy, y;
     if (gm_st) { gm_tick(); return; }
+    far_call(BANK_HL, (void *)pod_extra_tick, cup_t);   /* public debout, plaque du finaliste (2.72) */
     if (pod_t < 0xFFFF) ++pod_t;
     if (medals) {
         if (pod_t == 1) for (i = 0; i < 64; ++i) oam_buf[i * 4] = 0xFF;
@@ -548,7 +552,7 @@ void podium_sprites(void)
         for (i = 0; i < 10; ++i) {
             o = (u8)(80 + i * 4);
             conf_y[i] = conf_y0[i];
-            oam_buf[o + 1] = confetti_tile; oam_buf[o + 2] = (u8)(i & 3); oam_buf[o + 3] = conf_x[i];
+            oam_buf[o + 1] = confetti_tile; oam_buf[o + 2] = (u8)((i & 1) || c_dbl ? 2 : 0); oam_buf[o + 3] = conf_x[i];   /* or, et couleurs du vainqueur (2.72) */
         }
         if (c_dbl && !medals) big_spr(120, (u8)((((32 - 22) >> 1) + 16 + 1) * 8), 128, S_THIRD, 6, 0);
     }
