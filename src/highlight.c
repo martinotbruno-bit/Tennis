@@ -295,6 +295,7 @@ void band_draw(void)
     u8 i, v;
     bank_call(BANK_TRAIN, flags_draw);
     pause_tick();
+    if (hl_flags & 1) return;                /* (pause : son bandeau seulement) */
     /* balle de match (2.75) : annoncée quand le serveur se met en place, à
        chaque balle de match (remise à zéro à la fin de chaque point) */
     if (cfg.mode == GM_MATCH && !cfg.demo) {
@@ -747,55 +748,50 @@ static const u8 t_mark[16] =   { 0x00, 0x3C, 0x3C, 0x00, 0x00, 0x00, 0x00, 0x00,
 #define T_MARK   (swap_base + 21)
 static u8 zx, zy, zwx, zwy;            /* point visé dans l'image agrandie ; coin de la fenêtre (px) */
 
-/* Bandeau du score pendant la pause (2.75) : rangées 12 à 17 de l'écran du
-   court (filet, deux lignes du score comme le bandeau du bas, filet), palette
-   1 ; les rangées et leurs attributs sont gardés dans zb_nt (libre hors du
-   zoom) et rétablis à la reprise ; écran coupé le temps de la copie. Les
-   sprites qui passeraient dessous sont cachés. */
+/* Bandeau du score pendant la pause (2.75) : rangées 12 à 17 (filet, deux
+   lignes du score comme le bandeau du bas, filet), écrites sur l'écran 1 une
+   rangée par trame puis montrées par deux interruptions de ligne (cband_on,
+   comme le bandeau de la balle de match) : ni écran coupé, ni appui perdu.
+   mp_t (page zéro) : 1 à 7 écriture, 8 affiché. Les sprites qui passeraient
+   dessous sont cachés. */
 #define PB_ROW 12
 static void pause_tick(void)
 {
-    u8 i, k;
+    u8 i, r;
     if (cfg.mode != GM_MATCH || hl_mode) return;
-    if (paused && !(hl_flags & 1)) {
-        hl_flags |= 1;
-        if (band_vis) { split_stop(); band_vis = 0; }
-        fade_skip = 1; fade_lvl = 0;
-        ppu_off();
-        vread(NTADR(0, PB_ROW), zb_nt, 192);
-        vread(0x23C0 + 24, zb_nt + 192, 16);         /* (attributs des rangées 12 à 19) */
-        for (i = 0; i < 32; ++i) bb[i & 15] = 0;
-        vwrite(NTADR(0, PB_ROW), (const u8 *)bb, 16); vwrite(NTADR(16, PB_ROW), (const u8 *)bb, 16);
-        vwrite(NTADR(0, PB_ROW + 5), (const u8 *)bb, 16); vwrite(NTADR(16, PB_ROW + 5), (const u8 *)bb, 16);
-        for (k = 0; k < 2; ++k) {                    /* filets */
-            for (i = 0; i < 16; ++i) bb[i] = T_RULE;
-            vwrite(NTADR(0, PB_ROW + 1 + k * 3), (const u8 *)bb, 16); vwrite(NTADR(16, PB_ROW + 1 + k * 3), (const u8 *)bb, 16);
+    if (paused) {
+        if (!(hl_flags & 1)) {
+            hl_flags |= 1;
+            if (band_vis) band_vis = 0;
+            split_stop();
+            mp_t = 1;
         }
-        i = band_pg; band_pg = 0;
-        for (k = 0; k < 2; ++k) {                    /* score (sets, jeux, points) */
-            vram_adr(NTADR(0, PB_ROW + 2 + k)); vram_put(0); vram_put(0);
-            band_text(k);
-            vwrite(NTADR(2, PB_ROW + 2 + k), (const u8 *)bb, 28);
-            vram_adr(NTADR(30, PB_ROW + 2 + k)); vram_put(0); vram_put(0);
+        if (mp_t < 8) {
+            if (vram_len + 40 > VBUF_MAX) return;
+            r = (u8)(mp_t - 1);
+            for (i = 0; i < 16; ++i) bb[i] = (char)(r == 1 || r == 4 ? T_RULE : 0);
+            if (r == 2 || r == 3) {
+                i = band_pg; band_pg = 0;
+                band_text((u8)(r - 2));
+                band_pg = i;
+                vbuf_raw(BAND_NT + (PB_ROW + r) * 32 + 2, (const u8 *)bb, 28);
+            } else if (r == 6) {
+                for (i = 0; i < 16; ++i) bb[i] = 0x55;
+                vbuf_raw(BAND_NT + 0x3C0 + 24, (const u8 *)bb, 16);
+            } else {
+                bb[16] = bb[0]; bb[0] = 0;               /* (filet : coins vides) */
+                vbuf_raw(BAND_NT + (PB_ROW + r) * 32, (const u8 *)bb, 16);
+                bb[0] = bb[16]; bb[15] = 0;
+                vbuf_raw(BAND_NT + (PB_ROW + r) * 32 + 16, (const u8 *)bb, 16);
+            }
+            if (++mp_t == 8) cband_on(47);
         }
-        band_pg = i;
-        vram_adr(0x23C0 + 24);
-        for (i = 0; i < 8; ++i) vram_put(0x55);
-        for (i = 0; i < 8; ++i) vram_put((u8)((zb_nt[200 + i] & 0xF0) | 0x05));
-        ppu_on();
-        sun_apply();
-    } else if (!paused && (hl_flags & 1)) {
+        for (i = 0; i < 64; ++i) { r = oam_buf[i * 4]; if (r >= PB_ROW * 8 - 1 && r < (PB_ROW + 6) * 8) oam_buf[i * 4] = 0xFF; }
+    } else if (hl_flags & 1) {
         hl_flags &= (u8)~1;
-        fade_skip = 1; fade_lvl = 0;
-        ppu_off();
-        vwrite(NTADR(0, PB_ROW), zb_nt, 192);
-        vwrite(0x23C0 + 24, zb_nt + 192, 16);
-        ppu_on();
-        sun_apply();
-        band_rows |= 3;
+        split_stop();
+        mp_t = 0;
     }
-    if (hl_flags & 1)                                /* (sprites : rien sous le bandeau) */
-        for (i = 0; i < 64; ++i) { k = oam_buf[i * 4]; if (k >= PB_ROW * 8 - 1 && k < (PB_ROW + 6) * 8) oam_buf[i * 4] = 0xFF; }
 }
 
 static void zoom_build(void)

@@ -707,7 +707,8 @@ console.log('Version 2.73 : bandes du ralenti, survol, bandeau, dehors de peu');
     const z = e.peekS16('bz') >> 6, b = e.peek('bounces'), h0 = e.peek('hitter');
     e.run(1);
     if (e.peek('hitter') !== h0 && e.peek('ms') === 2 && !e.peek('b_serve')) {
-      const smash = e.peek('last_shot') === 7, want = z > (b ? 30 : 24);
+      // (après le rebond, B garde le lob ou l'amortie demandés)
+      const ls = e.peek('last_shot'), smash = ls === 7, want = z > (b ? 30 : 24) && !(b && (ls === 2 || ls === 3));
       if (want) hi++;
       if (smash !== want && Math.abs(z - (b ? 30 : 24)) > 2) bad.push(`${b ? 'après' : 'avant'} rebond ${z} px : ${e.peek('last_shot')}`);
     }
@@ -2084,7 +2085,8 @@ console.log('Rotation des sprites (double)');
   runUntil(e, () => e.peek('ms') === 0, 300);
   e.tap('START', 1, 1, 2);
   const s16 = (n, v, o = 0) => { e.poke(n, v & 255, o); e.poke(n, (v >> 8) & 255, o + 1); };
-  [[96, 146], [104, 136], [150, 144], [158, 138]].forEach(([x, y], i) => { s16('plx', x * 64, i * 2); s16('ply', y * 64, i * 2); });
+  // (2.75 : sous le bandeau de pause, rangées 12 à 17, les sprites sont cachés : joueurs plus bas)
+  [[96, 186], [104, 176], [150, 184], [158, 178]].forEach(([x, y], i) => { s16('plx', x * 64, i * 2); s16('ply', y * 64, i * 2); });
   const seen = new Map(); let rot = new Set(), maxLine = 0, frames = 0;
   for (let f = 0; f < 8; f++) {
     e.run(1); frames++;
@@ -2798,7 +2800,7 @@ for (const view of [0, 1]) {
   const nt = () => Array.from(e.nes.ppu.vramMem.slice(0x2000 + 12 * 32, 0x2000 + 18 * 32)).join();
   const before = nt();
   e.tap('START'); e.run(10);
-  const t = e.text(0, 14, 32) + e.text(0, 15, 32);
+  const t = [14, 15].map(r => String.fromCharCode(...Array.from(e.nes.ppu.vramMem.slice(0x2400 + r * 32, 0x2400 + r * 32 + 32)))).join('');
   const paused = e.peek('paused');
   e.tap('START'); e.run(10);
   check(paused && /ALEX|MAYA/.test(t) && nt() === before, `pause (vue ${view}) : score au centre de l'écran, court rétabli à la reprise`);

@@ -108,8 +108,9 @@ void shot_select(void)
     /* coup selon la hauteur de la balle (2.75) : avant le rebond, smash
        au-dessus de 24 px (sauté au-dessus de 40), volée en dessous ; après
        le rebond, une balle haute (lob qui retombe, au-dessus de 30 px) se
-       smashe aussi, sans sauter */
-    u8 smash = (u8)(bz > (bounces ? 30 * FP : 24 * FP));
+       smashe aussi, sans sauter, avec A (avec B, le lob ou l'amortie demandés
+       restent possibles) */
+    u8 smash = (u8)(bounces ? (bz > 30 * FP && sh_btn != PAD_B) : bz > 24 * FP);
     u8 volley = (u8)(bounces == 0), flat = 0;
     s16 depth;
     if (sh_dx > 14 || sh_dx < -14) spread += 8;          /* frappe en extension */
