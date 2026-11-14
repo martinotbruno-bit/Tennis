@@ -140,7 +140,7 @@ static const tz_art_t tz_art[TZ_N][3] = {   /* homme, femme, fillette (Margaux) 
       { 17, 214, 0, 28, 0, 28, 1, tz_chr_victory_z_f, tz_map_victory_z_f, tz_at_victory_z_f },
       { 18, 187, 0, 28, 0, 28, 1, tz_chr_victory_z_g, tz_map_victory_z_g, tz_at_victory_z_g } },
     { { 7, 168, 8, 16, 4, 24, 0, tz_chr_angry_m, tz_map_angry_m, tz_at_angry_m },
-      { 6, 157, 8, 16, 4, 24, 0, tz_chr_angry_f, tz_map_angry_f, tz_at_angry_f },
+      { 2, 157, 8, 16, 4, 24, 0, tz_chr_angry_f, tz_map_angry_f, tz_at_angry_f },
       { 17, 143, 8, 16, 4, 24, 0, tz_chr_angry_g, tz_map_angry_g, tz_at_angry_g } },
     { { 20, 244, 0, 32, 0, 28, 1, tz_chr_angry_z_m, tz_map_angry_z_m, tz_at_angry_z_m },
       { 9, 192, 4, 26, 4, 24, 1, tz_chr_angry_z_f, tz_map_angry_z_f, tz_at_angry_z_f },
@@ -148,9 +148,9 @@ static const tz_art_t tz_art[TZ_N][3] = {   /* homme, femme, fillette (Margaux) 
     { { 20, 128, 6, 16, 2, 26, 0, tz_chr_smash_m, tz_map_smash_m, tz_at_smash_m },
       { 4, 114, 8, 14, 2, 26, 0, tz_chr_smash_f, tz_map_smash_f, tz_at_smash_f },
       { 21, 104, 8, 14, 2, 26, 0, tz_chr_smash_g, tz_map_smash_g, tz_at_smash_g } },
-    { { 2, 134, 6, 16, 2, 26, 0, tz_chr_smash_air_m, tz_map_smash_air_m, tz_at_smash_air_m },
-      { 18, 123, 8, 12, 2, 26, 0, tz_chr_smash_air_f, tz_map_smash_air_f, tz_at_smash_air_f },
-      { 10, 105, 8, 12, 2, 26, 0, tz_chr_smash_air_g, tz_map_smash_air_g, tz_at_smash_air_g } },
+    { { 6, 136, 6, 16, 0, 28, 0, tz_chr_smash_air_m, tz_map_smash_air_m, tz_at_smash_air_m },
+      { 18, 125, 8, 12, 0, 28, 0, tz_chr_smash_air_f, tz_map_smash_air_f, tz_at_smash_air_f },
+      { 10, 107, 8, 12, 0, 28, 0, tz_chr_smash_air_g, tz_map_smash_air_g, tz_at_smash_air_g } },
     { { 12, 192, 2, 24, 2, 26, 0, tz_chr_backhand_m, tz_map_backhand_m, tz_at_backhand_m },
       { 17, 202, 2, 24, 2, 26, 0, tz_chr_backhand_f, tz_map_backhand_f, tz_at_backhand_f },
       { 20, 183, 2, 24, 2, 26, 0, tz_chr_backhand_g, tz_map_backhand_g, tz_at_backhand_g } },
@@ -229,13 +229,13 @@ static const tz_art_t tz_art[TZ_N][3] = {   /* homme, femme, fillette (Margaux) 
 #define TZ_SMASH_RACKET_TIP_X 63
 #define TZ_SMASH_RACKET_TIP_Y 21
 #define TZ_SMASH_AIR_RACKET_X 70
-#define TZ_SMASH_AIR_RACKET_Y 29
-#define TZ_SMASH_AIR_FOOTR_X 79
-#define TZ_SMASH_AIR_FOOTR_Y 207
+#define TZ_SMASH_AIR_RACKET_Y 14
+#define TZ_SMASH_AIR_FOOTR_X 91
+#define TZ_SMASH_AIR_FOOTR_Y 201
 #define TZ_SMASH_AIR_FACE_X 113
-#define TZ_SMASH_AIR_FACE_Y 86
+#define TZ_SMASH_AIR_FACE_Y 70
 #define TZ_SMASH_AIR_RACKET_TIP_X 63
-#define TZ_SMASH_AIR_RACKET_TIP_Y 18
+#define TZ_SMASH_AIR_RACKET_TIP_Y 3
 #define TZ_BACKHAND_RACKET_X 186
 #define TZ_BACKHAND_RACKET_Y 73
 #define TZ_BACKHAND_FOOTR_X 144

@@ -481,19 +481,31 @@ def face_features(f, x, y, face, hid, tilt=0.0, female=False, hs=1.0):
     ca, sa = math.cos(tilt), math.sin(tilt)
     R = lambda dx, dy: (x + hs * (dx * ca - dy * sa), y + hs * (dx * sa + dy * ca))
     bw = 0.8 if female else 1.25                       # sourcils fins / épais
-
+    # (2.75) petite échelle (smash, en pied) : sourcil, paupière, pupille et
+    # frange se touchaient en une tache noire sur l'œil ; traits allégés,
+    # sourcil remonté, pupille plus petite, œil un peu plus ouvert
+    small = f.k * hs < 0.8
+    if small:
+        bw = 0.6 if female else 0.8
     def eye(sx, look=0.0, lid=0.0):
         c = R(sx * 4.4, -0.2)
+        if small:
+            # (à cette taille, le blanc de l'œil ne tient qu'un pixel ou deux
+            # et dépend du découpage en tuiles : œil sombre en amande)
+            P(f.m_ell((c[0] + look * 0.4, c[1] + 0.1), 1.3, 0.9, tilt), 5)
+            return
         P(f.m_ell(c, 2.4 if female else 2.2, 1.35 - lid * 0.5, tilt), 6)
         P(f.m_ell((c[0] + look, c[1] + 0.15), 1.15, 1.15), 0)
-        P(line([R(sx * 4.4 - 2.6, -1.3 + lid), R(sx * 4.4 + 2.6, -1.3 + lid)], 0.9 if female else 0.6), 5)   # paupière
-        if female:
+        if not small:
+            P(line([R(sx * 4.4 - 2.6, -1.3 + lid), R(sx * 4.4 + 2.6, -1.3 + lid)], 0.9 if female else 0.6), 5)   # paupière
+        if female and not small:
             P(line([R(sx * 6.8, -1.2 + lid), R(sx * 7.9, -2.3 + lid)], 0.7), 5)                 # cils
     def brow(sx, inner=-3.3, outer=-3.6, arch=0.0):
+        up = -0.9 if small else 0.0
         if female:
-            P(f.m_arc(R(sx * 4.6, -2.6 + arch), 3.0, 1.4, 200, 340, bw), 5)
+            P(f.m_arc(R(sx * 4.6, -2.6 + arch + up), 3.0, 1.4, 200, 340, bw), 5)
         else:
-            P(line([R(sx * 7.2, outer), R(sx * 2.2, inner)], bw), 5)
+            P(line([R(sx * 7.2, outer + up), R(sx * 2.2, inner + up)], bw), 5)
     def nose():
         if female:
             P(line([R(0.8, 2.5), R(1.1, 4.8)], 0.6), 2)
@@ -672,12 +684,12 @@ POSES['smash'] = dict(
 #    jambe avant repliée, jambe arrière lancée derrière), bras libre tendu
 #    vers la balle ; ombre au sol, loin sous les pieds
 def _smash_air_extra(f, j, female, r):
-    f.part(f.m_ell((96, 223), 15, 3), 5, None)
+    f.part(f.m_ell((96, 229.3), 15, 3), 5, None)
 POSES['smash_air'] = dict(
     # (2.75) ciseau du smash sauté, d'après la technique décrite par les
     # entraîneurs : genou avant levé, tibia vertical et pied pointé vers le
     # bas ; jambe arrière presque tendue vers l'arrière, pied en extension
-    s=dict(pelvis=(96, 96), torso=-104, legL=(35, 100, 105), legR=(120, 140, 150),
+    s=dict(pelvis=(96, 96), torso=-104, legL=(55, 100, 110), legR=(112, 128, 140),
            armL=(-118, -104), armR=(-55, -75), tilt=-0.08, turn=-0.7, head_bend=-14,
            order=['legR', 'legL', 'torso', 'armR', 'head', 'armL', 'racket']),
     face='focus', hand='L', rdir=-122, rlen=50, extra=_smash_air_extra)
@@ -779,7 +791,7 @@ SHOTS = [
     ('angry', 'angry', 1.12, None, False),           # raquette au sol, en pied
     ('angry_z', 'angry', 3.4, (83, 70), True),       # zoom : le visage qui crie
     ('smash', 'smash', 0.86, (92, None), False),
-    ('smash_air', 'smash_air', 0.86, (92, 97), False),   # smash en plein vol (ralenti du smash, 2.75)
+    ('smash_air', 'smash_air', 0.86, (92, 104), False),   # smash en plein vol (ralenti du smash, 2.75)
     ('backhand', 'backhand', 1.4, (150, 102), False),   # revers à deux mains, gros plan (ralenti, 2.68)      # smash et service, en pied (ralenti, 2.68)
     ('ballkid', 'ballkid', 1.3, (94, 123), False),     # ramasseur de balles (changement de côté, 2.73)
     ('handshake', 'handshake', 1.3, (110, 96), False),  # poignée de main au filet (fin du match, 2.73)
