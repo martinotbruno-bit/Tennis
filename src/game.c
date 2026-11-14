@@ -54,7 +54,7 @@ s16 iabs(s16 v);
 s8 rnd_spread(u8 spread);
 void set_msg(const char *a, const char *b, u8 t);
 void launch(s16 tx, s16 ty, u8 T, u8 grav);
-const char *win_label(u8 shot, u8 pass, u8 jump);
+void win_msg(void);
 void match_fx(void);
 u8 hit_margin;          /* (lu et réglé aussi par shot_select : angle du croisé court) */
 static s16 pcache_x[4], pcache_y[4];   /* prédictions IA en cache */
@@ -183,7 +183,7 @@ static void point_over(u8 winner, u8 reason)
     if (reason == 2) {
         ++st_winners[winner];
         if (rally_hits == 1) { ++st_aces[winner]; bank_call(BANK_HL, hl_ace_msg); HL_SELECT(winner, msg1); }   /* « ACE ! » et la vitesse du service */
-        else { set_msg(win_label(last_shot, hit_pass, hit_jump), "", 70); HL_SELECT(winner, msg1); }
+        else { bank_call(BANK_HL, win_msg); HL_SELECT(winner, msg1); }   /* « COUP GAGNANT ! », « LOB GAGNANT ! »… */
         sfx_winner();   /* carillon bref (canal des bruitages) */
         sfx_crowd(7);
         crowd_timer = 64;

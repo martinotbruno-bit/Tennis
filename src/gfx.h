@@ -83,7 +83,6 @@ void spr_port(u8 x, u8 y, u8 base, u8 attr);      /* 0, ou $40 : variante surlig
 u8 vbuf_raw(u16 adr, const u8 *data, u8 len);
 void vbuf_reset(void);
 void num2(char *out, u8 v);
-void num3(char *out, u16 v);
 void clear_screen(void);
 /* tuiles des personnages : 0 tenue normale, 1 au naturel (rendu coupé) */
 void people_tiles(u8 nude);

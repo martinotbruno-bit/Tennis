@@ -76,17 +76,7 @@ void launch(s16 tx, s16 ty, u8 T, u8 grav)
     b_netcord = 0;
 }
 
-/* Nom du coup gagnant affiché au centre du bandeau (15 caractères au plus) */
-const char *win_label(u8 shot, u8 pass, u8 jump)
-{
-    if (hit_perf) return "COUP PARFAIT !";
-    if (shot == SH_SMASH) return jump ? "SMASH SAUTE !" : "SMASH !";
-    if (shot == SH_DROP) return "AMORTIE !";
-    if (shot == SH_LOB) return "LOB GAGNANT !";
-    if (shot == SH_VOLLEY) return "VOLEE GAGNANTE";
-    if (pass) return "PASSING !";
-    return "COUP GAGNANT !";
-}
+/* (win_label : highlight.c, banque 15, version 2.73) */
 
 /* ---------------------------------------------------------------------- */
 /* Petits effets du court (banque fixe, appelés à la fin de match_draw) :  */

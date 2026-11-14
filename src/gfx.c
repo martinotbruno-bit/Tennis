@@ -130,11 +130,7 @@ void pal_set_court(u8 s, u8 cond, u8 env)
 #pragma bss-name (push, "WBSS")
 u8 menu_bk;
 #pragma bss-name (pop)
-void menu_bk_pick(void)
-{
-    static const u8 bk[4] = { 0x07, 0x0A, 0x02, 0x05 };
-    menu_bk = bk[rand8() & 3];
-}
+/* (menu_bk_pick : screens.c, version 2.73) */
 void pal_set_menu(void)
 {
     /* fond vert sombre (gazon) ; ombre du texte noire (couleur 1), texte surligné
@@ -204,13 +200,6 @@ void vbuf_text(u8 x, u8 y, const char *s, u8 len)
 }
 
 /* vbuf_raw : en assembleur (fastmove.s, version 2.66) */
-
-void num3(char *out, u16 v)
-{
-    out[0] = (char)(v >= 100 ? '0' + (v / 100) % 10 : ' ');
-    out[1] = (char)(v >= 10 ? '0' + (v / 10) % 10 : ' ');
-    out[2] = (char)('0' + v % 10);
-}
 
 void num2(char *out, u8 v)
 {
@@ -288,19 +277,7 @@ void chr_reload(void)
    rechargées au prochain people_tiles() */
 void people_dirty(void) { chr_nude = 0xFE; }
 
-/* portrait 32 x 24 (4 x 3 sprites, tuiles base à base + 11), retourné si
-   attr a le bit $40 */
-#pragma static-locals(push, off)      /* (pile : la RAM fixe est pleine) */
-void spr_port(u8 x, u8 y, u8 base, u8 attr)
-{
-    u8 r, c, t;
-    for (r = 0; r < 3; ++r)
-        for (c = 0; c < 4; ++c) {
-            t = (u8)(base + r * 4 + ((attr & 0x40) ? 3 - c : c));
-            spr1((u8)(x + c * 8), (u8)(y + r * 8), t, attr);
-        }
-}
-#pragma static-locals(pop)
+/* (spr_port : screens.c, version 2.73) */
 
 void people_tiles(u8 nude)
 {

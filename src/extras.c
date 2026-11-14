@@ -161,7 +161,8 @@ u16 swp_dst;                        /* destination de swap_put (crt0.s) */
 #pragma bss-name(pop)
 u8 __fastcall__ swap_put(const u8 *src);   /* crt0.s, banque 13 (far_call) */
 extern u8 cer;                              /* séquence animée en cours (cer.c) */
-extern u8 sc_crit;                          /* balles de set et de match (rules_far.c, 2.71) */
+extern u8 sc_crit;
+void lbox_tick(void);                          /* balles de set et de match (rules_far.c, 2.71) */
 extern u16 cer_t;
 extern u8 pose_now[4];
 void slot_tick(void);                       /* banque 13 (cer.c) */
@@ -508,6 +509,7 @@ void rp_play(void)
     }
     ump_draw();                      /* l'arbitre reste sur sa chaise pendant le ralenti */
     spr_end();
+    bank_call(BANK_HL, lbox_tick);   /* bandes « cinéma » (highlight.c, 2.73) */
     /* demi-vitesse : chaque trame enregistrée est montrée deux fois */
     rp_slow ^= 1;
     if (!rp_slow) {

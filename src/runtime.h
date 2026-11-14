@@ -79,7 +79,8 @@ void pad_poll(void);
 void ppu_off(void);
 void __fastcall__ split_start(u8 o);   /* MMC3 : glissade de l'affiche VS (lignes 32-143), décalage o */
 void split_stop(void);
-void __fastcall__ band_on(u8 l);         /* MMC3 : bandeau du score en bas de l'écran (écran 1 dès la ligne l, 2.71) */
+void __fastcall__ band_on(u8 l);
+void __fastcall__ lbox_on(u8 l2);       /* MMC3 : bandes noires du ralenti (2.73) */         /* MMC3 : bandeau du score en bas de l'écran (écran 1 dès la ligne l, 2.71) */
 void ppu_on(void);
 void __fastcall__ vram_adr(u16 adr);
 void __fastcall__ vram_put(u8 v);

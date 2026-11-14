@@ -12,7 +12,7 @@
 .export _wait_frame, _pad_poll, _ppu_off, _ppu_on, _vram_adr, _vram_put
 .export _swap_put, _vram_fill, _vram_unrle, _rand8, _rand_seed
 .export _scroll_y, _scroll_nt, _mirror_h, _scroll_x, _tz_bank, _tz_n, _tz_unpack, _tz_copy, _tz_src
-.export _chr_data, _split_start, _split_stop, _split_o, _ctrl_swap, _rp_seq, _band_on
+.export _chr_data, _split_start, _split_stop, _split_o, _ctrl_swap, _rp_seq, _band_on, _lbox_on
 .export _spr1, _spr_meta, _spr_end, _oam_i, _spr_rot, _set_bank, _cur_bank, _bank_call, _far_call, _rp_record
 .import _bx, _by, _bz, _b_vis, _plx, _ply, _pose_cache, _flip_cache
 .import _rp_buf, _rp_head, _rp_count, _swp_dst
@@ -111,6 +111,8 @@ _rp_seq:    .res 2      ; trames enregistrées (rp_record)
 _ctrl_swap: .res 1      ; tables de tuiles échangées (highlight.c, version 2.67)
 split_on: .res 1        ; 1 : glissade de l'affiche VS ; 2 : bandeau du score (2.71)
 split_l:  .res 1        ; ligne de l'interruption (valeur de recharge du compteur MMC3)
+split_l2: .res 1        ; bandes du ralenti (split_on 3) : seconde interruption (bas de l'écran)
+split_ph: .res 1        ; bandes du ralenti : 0 avant la bande du haut finie, 1 ensuite
 _split_o:
 split_o:  .res 1
 split_c:  .res 1
@@ -366,6 +368,8 @@ nmi:
     eor _ctrl_swap
     ora _scroll_nt
     sta PPUCTRL
+    lda #0
+    sta split_ph
     lda split_l         ; (31 : affiche VS ; bandeau du score : plus bas)
     sta MMC3_IRQL       ; (jsnes : compteur ; MMC3 : valeur de recharge)
     sta MMC3_IRQR       ; (jsnes : recharge ; MMC3 : rechargement)
@@ -415,6 +419,26 @@ irq:
     pha
     sta MMC3_IRQD       ; acquitte (une seule par trame)
     lda split_on
+    cmp #3
+    bne @nolb
+    ; bandes du ralenti (2.73) : l'écran 1 (bandes noires) en haut ; à la
+    ; première interruption, le court (écran 0), puis l'interruption est
+    ; réarmée pour le bas ; à la seconde, de nouveau l'écran 1
+    lda split_ph
+    bne @lb2
+    lda #CTRL_VAL
+    sta PPUCTRL
+    inc split_ph
+    lda split_l2
+    sta MMC3_IRQL
+    sta MMC3_IRQR
+    sta MMC3_IRQE
+    jmp @out
+@lb2:
+    lda #CTRL_VAL | 1
+    sta PPUCTRL
+    jmp @out
+@nolb:
     lsr a
     bcs @vs
     ; bandeau du score (2.71) : écran 1 à partir de la ligne suivante (le bit
@@ -488,6 +512,16 @@ _split_start:
 _band_on:
     sta split_l
     lda #2
+    sta split_on
+    cli
+    rts
+; void __fastcall__ lbox_on(u8 l2) : bandes du ralenti (lignes 0-23 et 216-239
+; sur l'écran 1) : interruptions aux lignes 23 et l2 (relative), 2.73
+_lbox_on:
+    sta split_l2
+    lda #23
+    sta split_l
+    lda #3
     sta split_on
     cli
     rts

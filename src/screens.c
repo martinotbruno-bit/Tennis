@@ -28,6 +28,27 @@ void teaser_build(void); void teaser_tick(void);
 extern u8 teaser_done;
 #define SS_SETBREAK  9
 u8 scr_state;
+/* (2.73 : déplacées de la banque fixe, appelées seulement ici) */
+extern u8 menu_bk;
+void menu_bk_pick(void)
+{
+    static const u8 bk[4] = { 0x07, 0x0A, 0x02, 0x05 };
+    menu_bk = bk[rand8() & 3];
+}
+/* portrait 32 x 24 (4 x 3 sprites, tuiles base à base + 11), retourné si
+   attr a le bit $40 */
+#pragma static-locals(push, off)      /* (pile : la RAM fixe est pleine) */
+void spr_port(u8 x, u8 y, u8 base, u8 attr)
+{
+    u8 r, c, t;
+    for (r = 0; r < 3; ++r)
+        for (c = 0; c < 4; ++c) {
+            t = (u8)(base + r * 4 + ((attr & 0x40) ? 3 - c : c));
+            spr1((u8)(x + c * 8), (u8)(y + r * 8), t, attr);
+        }
+}
+#pragma static-locals(pop)
+
 
 /* ---------------------------------------------------------------------- */
 /* Options de configuration                                                */

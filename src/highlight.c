@@ -265,17 +265,83 @@ static void voice_tick(void)
     if (voice_t) { --voice_t; return; }
     if ((ms == MS_DEAD || ms == MS_SERVE) && !((*(volatile u8 *)0x4015) & 0x10)) { sfx_umpire(voice_pend); voice_pend = 0; }
 }
+/* ====================================================================== */
+/* Bandes « cinéma » du ralenti (2.73) : rangées 0-2 et 27-29 de l'écran 1   */
+/* en noir (tuile $01, palette 1 : couleur 1 = noir), avec un cartouche    */
+/* « RALENTI » et « A : PASSER » dans celle du haut ; le haut de l'image    */
+/* vient de l'écran 1 (scroll_nt = 1), l'interruption de la ligne 24 passe */
+/* au court, celle de la ligne 216 revient à l'écran 1 (crt0.s, lbox_on).  */
+/* Les rangées 27-28 sont aussi celles du bandeau du score : il les réécrit */
+/* à sa prochaine apparition (band_rows, bit 2). Sprites cachés sous les   */
+/* bandes. lb_st : 0 rien, 1 à 6 rangées en écriture, 7 affiché.            */
+/* ====================================================================== */
+u8 lb_st;
+static const u8 lb_rows[6] = { 0, 1, 2, 27, 28, 29 };
+static void lb_row(u8 r)
+{
+    u8 i;
+    for (i = 0; i < 28; ++i) bb[i] = 1;          /* (bb : tampon du bandeau, 28 octets) */
+    if (r == 1) {
+        static const char cap_l[] = " RALENTI ", cap_r[] = " A : PASSER ";
+        for (i = 0; cap_l[i]; ++i) bb[1 + i] = cap_l[i];
+        for (i = 0; cap_r[i]; ++i) bb[15 + i] = cap_r[i];
+    }
+}
+void lbox_tick(void)                    /* à chaque trame du ralenti (rp_play, banque 3) */
+{
+    u8 r;
+    if (cfg.mode != GM_MATCH) return;
+    if (lb_st < 7) {
+        if (vram_len + 70 > VBUF_MAX) return;
+        r = lb_rows[lb_st];
+        lb_row(r);
+        if (!vbuf_raw((u16)(BAND_NT + r * 32 + 2), (const u8 *)bb, 28)) return;
+        /* (colonnes 0-1 et 30-31 : noires aussi) */
+        bb[0] = bb[1] = 1;
+        vbuf_raw((u16)(BAND_NT + r * 32), (const u8 *)bb, 2);
+        vbuf_raw((u16)(BAND_NT + r * 32 + 30), (const u8 *)bb, 2);
+        if (++lb_st == 6) {
+            lb_st = 7;
+            scroll_nt = 1; lbox_on(191);      /* (interruptions : lignes 24 et 216, réglées sur jsnes et FCEUX) */
+        }
+        return;
+    }
+    /* sprites : rien sous les bandes */
+    __asm__("ldx #0");
+    __asm__("lb_hide: lda %v,x", oam_buf);
+    __asm__("cmp #23");
+    __asm__("bcc lb_off");
+    __asm__("cmp #208");
+    __asm__("bcc lb_keep");
+    __asm__("cmp #240");
+    __asm__("bcs lb_keep");
+    __asm__("lb_off: lda #$FF");
+    __asm__("sta %v,x", oam_buf);
+    __asm__("lb_keep: inx");
+    __asm__("inx");
+    __asm__("inx");
+    __asm__("inx");
+    __asm__("bne lb_hide");
+}
+static void lbox_end(void)
+{
+    if (!lb_st) return;
+    if (lb_st == 7) { split_stop(); scroll_nt = 0; }
+    lb_st = 0;
+    band_vis = 0;                        /* (le bandeau du score réécrit ses rangées) */
+}
 void band_draw(void)
 {
     u8 i, v;
     voice_tick();
+    lbox_end();
     v = (u8)(cfg.mode == GM_MATCH && !paused && !hl_mode && !sc_over &&
              ((cer == CER_SEAT) || ((!cer || cer >= 0xF0) && ms == MS_DEAD)));
     if (!v) {
         if (band_vis) { split_stop(); band_vis = 0; }
         return;
     }
-    if (!band_vis) { band_vis = 1; band_rows = 3; }
+    if (!band_vis) { band_vis = 1; band_rows = 15; }  /* (bits 2-3 : filet du bas, bords et rangée 29, que les bandes du ralenti recouvrent) */
     if (cer == CER_SEAT) {
         if (++band_t >= 50) { band_t = 0; if (++band_pg > 4) band_pg = 0; }
     } else band_pg = band_t = 0;
@@ -285,9 +351,25 @@ void band_draw(void)
         band_last[6] = band_pg;
         band_last[0] = sc_points[0]; band_last[1] = sc_points[1]; band_last[2] = sc_games[0];
         band_last[3] = sc_games[1]; band_last[4] = sc_set_no; band_last[5] = sc_server;
-        band_rows = 3;
+        band_rows |= 3;                  /* (sans effacer les bits 2-3 : filet et bords à réécrire) */
     }
-    if (band_rows) {
+    if (band_rows & 8) {                 /* bords de la rangée 27 et rangée 29 : vides */
+        for (i = 0; i < 16; ++i) bb[i] = 0;
+        if (vram_len + 50 <= VBUF_MAX) {
+            vbuf_raw((u16)(BAND_NT + 27 * 32), (const u8 *)bb, 2);
+            vbuf_raw((u16)(BAND_NT + 27 * 32 + 30), (const u8 *)bb, 2);
+            vbuf_raw((u16)(BAND_NT + 29 * 32), (const u8 *)bb, 16);
+            vbuf_raw((u16)(BAND_NT + 29 * 32 + 16), (const u8 *)bb, 16);
+            band_rows &= (u8)~8;
+        }
+    } else if (band_rows & 4) {                 /* filet du bas (rangée 28) et coins */
+        for (i = 0; i < 32; ++i) bb[i & 15] = 0x5F;
+        bb[0] = 0;
+        if (vbuf_raw((u16)(BAND_NT + 28 * 32), (const u8 *)bb, 16)) {
+            bb[0] = 0x5F; bb[15] = 0;
+            if (vbuf_raw((u16)(BAND_NT + 28 * 32 + 16), (const u8 *)bb, 16)) band_rows &= (u8)~4;
+        }
+    } else if (band_rows) {
         i = (u8)((band_rows & 1) ? 0 : 1);
         band_text(i);
         if (vbuf_raw((u16)(BAND_NT + (BAND_ROW + 1 + i) * 32 + 2), (const u8 *)bb, 28)) band_rows &= (u8)~(1 << i);
@@ -338,6 +420,7 @@ void sun_apply(void)
 void car_match_setup(void);           /* career.c : bonus de la carrière */
 void court_post(void)
 {
+    lb_st = 0;                          /* (bandes du ralenti : écran 1 réécrit par band_init) */
     band_init();
     sun_apply();
     bank_call(BANK_CAR, car_match_setup);
@@ -967,3 +1050,18 @@ void palmares_sprites(void)
     }
     spr_end();
 }
+
+/* (2.73 : déplacé de la banque fixe) message du coup gagnant (game.c) */
+extern u8 hit_perf, last_shot, hit_pass, hit_jump;
+static /* Nom du coup gagnant affiché au centre du bandeau (15 caractères au plus) */
+const char *win_label(u8 shot, u8 pass, u8 jump)
+{
+    if (hit_perf) return "COUP PARFAIT !";
+    if (shot == SH_SMASH) return jump ? "SMASH SAUTE !" : "SMASH !";
+    if (shot == SH_DROP) return "AMORTIE !";
+    if (shot == SH_LOB) return "LOB GAGNANT !";
+    if (shot == SH_VOLLEY) return "VOLEE GAGNANTE";
+    if (pass) return "PASSING !";
+    return "COUP GAGNANT !";
+}
+void win_msg(void) { set_msg(win_label(last_shot, hit_pass, hit_jump), "", 70); }
