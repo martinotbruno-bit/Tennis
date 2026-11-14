@@ -90,12 +90,8 @@ function startWith(e, opts) {
   if (app(e) === AS.SCREENS && scr(e) === SS.PRESENT) { e.tap('A'); runUntil(e, () => app(e) === AS.MATCH, 60); e.run(2); }
 }
 function passCustom(e) {
-  // (une page par joueur humain : le partenaire à la manette 2 a la sienne)
-  for (let k = 0; k < 3 && app(e) === AS.SCREENS && (scr(e) === SS.CUSTOM || scr(e) === SS.MENU); k++) {
-    for (let n = 0; n < 90 && scr(e) === SS.MENU; n++) e.run(1);
-    if (scr(e) !== SS.CUSTOM) return;
-    e.tap('START');
-  }
+  // (Emu.customSkip appuie sur START à chaque page : on attend la fin)
+  for (let n = 0; n < 150 && app(e) === AS.SCREENS && (scr(e) === SS.CUSTOM || scr(e) === SS.MENU); n++) e.run(1);
 }
 function allCpu(e) { const c = e.addr('cfg'); for (let i = 0; i < 4; i++) e.nes.cpu.mem[c + CFG.CTRL + i] = 2; }
 // Attentes à plafond adaptatif : chaque appel (repéré par sa ligne) retient
@@ -2832,7 +2828,7 @@ for (const view of [0, 1]) {
 if (sec('Joueur personnalisé en compétition (2.75)')) {
 console.log('Joueur personnalisé en compétition (2.75)');
 {
-  const e = boot(); toMenu(e); setOpts(e, { MODE: MODE.COMP, COMP: 0, P1: 0, FMT: 3 }); e.tap('START'); e.run(20);
+  const e = boot(); e.customSkip = false; toMenu(e); setOpts(e, { MODE: MODE.COMP, COMP: 0, P1: 0, FMT: 3 }); e.tap('START'); e.run(20);
   check(scr(e) === SS.CUSTOM && e.text(3, 7, 6) === 'PROFIL' && e.text(13, 7, 9) === "D'ORIGINE", 'compétition : écran « TON JOUEUR » avant le tableau, profil d\'origine par défaut');
   // nom BRUNO, femme, peau ébène, cheveux blonds, tenue rose
   e.tap('DOWN'); e.tap('A');

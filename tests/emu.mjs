@@ -37,6 +37,10 @@ class Emu {
     // l'ordinateur ne sert pas avant ; il est fermé d'office à chaque trame,
     // sauf pour les tests qui regardent ce comportement (bandSkip = false)
     this.bandSkip = true;
+    // (2.75) écran du joueur personnalisé avant une compétition : passé
+    // d'office avec START (customSkip = false pour le tester)
+    this.customSkip = true; this._cuPress = false;
+    this.scrAddr = this.labels['_scr_state']; this.appAddr = this.labels['_app_state'];
     this.bandDis = this.labels['_band_dis']; this.bandHold = this.labels['_band_hold'];
     // dessin de l'image (fonctions d'origine de jsnes, gardées pour setRender)
     const ppu = this.nes.ppu;
@@ -74,6 +78,11 @@ class Emu {
         const m = this.nes.cpu.mem;
         if (m[this.bandHold] === 1) { m[this.bandDis] = 1; m[this.bandHold] = 0; }
         if (m[this.labels['_cer']] === 5) m[this.bandHold] = 2;   /* (2.75 : assis, statistiques passées d'office) */
+      }
+      if (this.customSkip && this.scrAddr !== undefined) {
+        const m = this.nes.cpu.mem;
+        if (this._cuPress) { this.nes.buttonUp(1, BTN.START); this._cuPress = false; }
+        else if (m[this.scrAddr] === 13 && m[this.appAddr] === 0 && !this.held[0].has('START')) { this.nes.buttonDown(1, BTN.START); this._cuPress = true; }
       }
       if (each) each(this);
     }

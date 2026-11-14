@@ -39,7 +39,7 @@ const u8 char_pal_rom[NCHARS][3] = {
 u8 char_female[NCHARS];
 u8 cu_map[2];
 u8 cu_st[6], cu_c[2];                            /* écran du joueur personnalisé (career.c) : rangée, saisie du nom, lettre, joueur, nombre, (libre) */
-#pragma bss-name(push, "SAVEDATA")
+#pragma bss-name(push, "SAVECU")      /* (fin de la zone sauvegardée, adresse fixe : les sauvegardes des versions précédentes ne bougent pas) */
 u8 cu_sav[25];
 #pragma bss-name(pop)
 void cust_reset(void)
