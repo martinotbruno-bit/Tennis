@@ -179,7 +179,7 @@ static void point_over(u8 winner, u8 reason)
     ++st_points[winner];
     if (rally_hits > st_longest) st_longest = rally_hits;
     if (cfg.mode != GM_MATCH) {
-        if (winner == 1) { tr_ev = TEV_MISS; bank_call(BANK_EXTRAS, train_event); }
+        if (winner == 1) { tr_ev = TEV_MISS; bank_call(BANK_TRAIN, train_event); }
         end_reason = END_FAULT;
         ms_timer = 40;
         return;
@@ -213,7 +213,7 @@ static void serve_fault(const char *why)
     if (cfg.mode == GM_TRAIN) {
         end_reason = END_FAULT;
         set_msg("FAUTE", why, 50);
-        tr_ev = TEV_SERVE_FAULT; bank_call(BANK_EXTRAS, train_event);
+        tr_ev = TEV_SERVE_FAULT; bank_call(BANK_TRAIN, train_event);
         return;
     }
     if (faults == 0) {
@@ -289,7 +289,7 @@ static void ball_bounce(void)
             if (faults == 0) ++st_first_in[hitter];
             if (cfg.mode == GM_TRAIN) {
                 ev_x = x; ev_y = y;
-                tr_ev = TEV_SERVE_IN; bank_call(BANK_EXTRAS, train_event);
+                tr_ev = TEV_SERVE_IN; bank_call(BANK_TRAIN, train_event);
                 ms = MS_DEAD; ms_timer = 50; b_live = 0; end_reason = END_FAULT;
                 ++bounces;
                 return;
@@ -297,7 +297,7 @@ static void ball_bounce(void)
         } else if (x < l || x > r || y < IN_TOP || y > IN_BOT) {
             set_msg("DEHORS", "", 50);
             if (cfg.mode == GM_TRAIN && hitter == 0) {
-                tr_ev = TEV_LAND_OUT; bank_call(BANK_EXTRAS, train_event);
+                tr_ev = TEV_LAND_OUT; bank_call(BANK_TRAIN, train_event);
                 ms = MS_DEAD; ms_timer = 40; b_live = 0; end_reason = END_FAULT;
                 ++bounces;
                 return;
@@ -308,7 +308,7 @@ static void ball_bounce(void)
         } else if (cfg.mode == GM_TRAIN && hitter == 0) {
             /* entraînement : balle bonne ; l'exercice attribue les points */
             ev_x = x; ev_y = y;
-            tr_ev = TEV_LAND_IN; bank_call(BANK_EXTRAS, train_event);
+            tr_ev = TEV_LAND_IN; bank_call(BANK_TRAIN, train_event);
             if (cfg.ex != EX_STATIC) {
                 ms = MS_DEAD; ms_timer = 40; b_live = 0; end_reason = END_FAULT;
                 ++bounces;
@@ -779,7 +779,7 @@ static void ai_update(u8 p)
             if (cfg.mode == GM_TRAIN) {
                 if (tr_done || --ms_timer != 0) { pl_moving[p] = 0; return; }
                 /* lanceur de balles : l'exercice choisit la balle, le moteur la lance */
-                bank_call(BANK_EXTRAS, train_feed);
+                bank_call(BANK_TRAIN, train_feed);
                 bx = feed_x; by = feed_y; bz = feed_z;
                 b_vis = 1; hitter = t; hitter_p = p; b_serve = 0; rally_hits = 0;
                 hud_dirty = 1;
@@ -968,7 +968,7 @@ void match_start(void)
     rp_pending = 0;
     recap_pend = brk_pend = 0;
     if (cfg.mode == GM_TRAIN) {
-        bank_call(BANK_EXTRAS, train_start);
+        bank_call(BANK_TRAIN, train_start);
         sc_server = (u8)(tr_human_serves ? 0 : 1);
     }
     place_for_serve();

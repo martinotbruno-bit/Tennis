@@ -574,9 +574,12 @@ console.log('Version 2.72 : carrière, fiche, reprise, cérémonie');
     if (e.peek('sc_server') === 0 && ms === 0 && !e.peek('cer')) { e.down('A'); e.run(1); e.up('A'); }
     if (e.peek('sc_server') === 0 && ms === 1) { const v = e.peekS16('bvz'); if (v < 8 && v > -8) { e.down('A'); e.down(f & 2 ? 'LEFT' : 'RIGHT'); } else { e.up('A'); e.up('LEFT'); e.up('RIGHT'); } } else if (ms !== 0) { e.up('A'); e.up('LEFT'); e.up('RIGHT'); }
     if (e.peek('srv_canon') && ms === 2 && e.peek('bounces') === 0 && e.peek('b_serve')) {
-      const bxp = e.peek16('bx') >> 6, x = Math.max(20, Math.min(230, bxp + (bxp < 128 ? 38 : -38)));
+      const bxp = e.peek16('bx') >> 6, x = Math.max(20, Math.min(230, bxp + (bxp < 128 ? 34 : -34)));   /* (34 px : il faut plonger, avec une marge pour la dérive de la balle) */
       e.poke('plx', (x << 6) & 255, 2); e.poke('plx', (x << 6) >> 8, 3);
     }
+    /* (2.74) retour en plongeon réussi : le joueur 1 est écarté, le plongeon
+       gagne le point (sans dépendre du hasard du match) */
+    if (e.peek('dive_canon') && ms === 2 && e.peek('hitter') === 1 && !e.peek('b_serve')) { e.poke('plx', 0, 0); e.poke('plx', (20 << 6) >> 8, 1); }
     e.run(1);
     const d = e.peek('dive_canon'); if (d && !pd) dives++; pd = d;
     if (e.peek('hl_mode') === 1 && e.peek('hl_sk') === 4) close = 1;

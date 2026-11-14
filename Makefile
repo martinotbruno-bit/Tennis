@@ -28,7 +28,7 @@ BANK16 = assets_pnet
 BANK17 = assets_tz17
 BANK18 = rules assets_tz18
 BANK19 = career
-BANK20 = fly assets_tz20
+BANK20 = fly assets_tz20 train
 CSRC = $(FIXED) $(BANK0) $(BANK1) $(BANK2) $(BANK3) $(BANK4) $(BANK5) $(BANK6) $(BANK7) $(BANK8) $(BANK9) $(BANK10) $(BANK11) $(BANK12) $(BANK13) $(BANK14) $(BANK15) $(BANK16) $(BANK17) $(BANK18) $(BANK19) $(BANK20)
 OBJS = $(BUILD)/crt0.o $(BUILD)/sprp.o $(BUILD)/poses.o $(BUILD)/slip.o $(BUILD)/dpcm.o $(BUILD)/fastmove.o $(addprefix $(BUILD)/,$(addsuffix .o,$(CSRC)))
 

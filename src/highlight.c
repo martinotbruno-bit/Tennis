@@ -171,8 +171,9 @@ u8 sun_st;
 #define BAND_WAIT 48           /* délai d'apparition après le point (2.74) */
 #define CER_SEAT  5
 extern u8 hl_mode, cer;
-extern u8 band_hold;
+extern u8 band_hold, crowd_big;
 #pragma zpsym("band_hold")
+#pragma zpsym("crowd_big")
 u8 band_vis, band_rows, band_dis;   /* band_dis : bandeau renvoyé par un appui (jusqu'au point suivant) */      /* band_vis : 0 caché, 1 texte, 2 sprites cachés, 3 affiché */
 static u8 band_last[7];
 static char bb[28];
@@ -484,7 +485,8 @@ void hl_select(void)
     hl_sok = (u8)((hl_hv >> hl_w) & 1);
     hl_si = hl_hi[hl_w]; hl_sp = hl_hp[hl_w]; hl_sk = hl_hk[hl_w]; hl_sf = hl_hf[hl_w]; hl_sbf = hl_bf;
     hl_sbok = hl_bok; hl_sbi = hl_bi; hl_sbx = hl_bx; hl_sby = hl_by; hl_sbin = hl_bin;
-    if (hl_sok && hl_sk == 1 && hit_jump) rp_pending = 1;   /* smash sauté gagnant : toujours au ralenti (2.73) */
+    if (hl_sok && hl_sk == 1 && hit_jump) { rp_pending = 1; crowd_big |= 1; }   /* smash sauté gagnant : toujours au ralenti (2.73), standing ovation (2.74) */
+    if (rally_hits >= 12) crowd_big |= 1;                  /* (très long échange : standing ovation, 2.74) */
     if (hl_sok && hl_cdv[hl_w] && hl_sk == 4) {     /* plongeon gagnant sur un canon : ralenti et gros plan */
         set_msg("PLONGEON", "GAGNANT !", 70);    /* (titre du gros plan : 8 lettres, une ligne) */
         rp_pending = 1;
