@@ -463,18 +463,23 @@ extern u8 hl_quick;   /* (défini plus haut, avec les bandes du ralenti) */
 extern u8 hit_jump;
 extern u8 b_serve;
 #pragma static-locals(push, off)        /* (pile : la RAM de travail est pleine) */
+/* balle bonne sur la ligne ou à 2 px à l'intérieur du point où elle la
+   touche encore (2.74) : distance à la ligne la plus proche, 4 px au plus */
+static u8 near_in(s16 x, s16 y)
+{
+    s16 d, l = cfg.doubles ? IN_DL : IN_SL, r = cfg.doubles ? IN_DR : IN_SR;
+    d = x - l; if (r - x < d) d = r - x;
+    if (y - IN_TOP < d) d = y - IN_TOP;
+    if (IN_BOT - y < d) d = IN_BOT - y;
+    return (u8)(d <= 4);
+}
 void hl_out(void)
 {
     s16 x = hl_bx, y = hl_by, d = 0, l, r;
     if (!hl_bok || b_serve || !cfg.replays || cfg.env == ENV_NUDE || cfg.demo) return;   /* (2.74 : prioritaire sur le ralenti complet) */
     l = cfg.doubles ? IN_DL : IN_SL; r = cfg.doubles ? IN_DR : IN_SR;   /* (ligne comprise) */
     if (hl_bin) {
-        /* bonne : sur la ligne ou à 2 px à l'intérieur du point où elle la
-           touche encore (2.74) ; distance à la ligne la plus proche */
-        d = x - l; if (r - x < d) d = r - x;
-        if (y - IN_TOP < d) d = y - IN_TOP;
-        if (IN_BOT - y < d) d = IN_BOT - y;
-        if (d > 4) return;
+        if (!near_in(x, y)) return;
     } else {
         if (x < l) d = l - x; else if (x > r) d = x - r;
         if (y < IN_TOP) d += IN_TOP - y; else if (y > IN_BOT) d += y - IN_BOT;
@@ -868,9 +873,8 @@ static void zoom_build(void)
 
 /* Second temps du zoom des balles limites (2.74) : x 4 sur l'impact, sans
    les joueurs (8 sprites par ligne : un joueur agrandi 4 fois ne tiendrait
-   pas). Le premier temps (x 2) a pris des tuiles du court pour les sprites :
-   le court est rechargé, puis une fenêtre de 64 x 60 px autour de l'impact
-   est agrandie. Chaque tuile de l'image agrandie couvre 2 x 2 px du court
+   pas). Une fenêtre de 64 x 60 px du court autour de l'impact est agrandie
+   à partir de l'image x 2 (voir zoom4_build). Chaque tuile de l'image agrandie couvre 2 x 2 px du court
    (4 couleurs de 2 bits : au plus 256 tuiles, quelques dizaines en
    pratique), créée à la première rencontre (zb_map). Trace de la balle :
    ellipse de 12 x 8 px (deux sprites), titre BONNE / DEHORS. */
@@ -881,34 +885,41 @@ static const u8 t_mark4[32] = {
 #pragma static-locals(push, off)        /* (pile : la RAM de travail est pleine) */
 static void zoom4_build(void)
 {
-    u8 r, c, j, ty, py, sh, v, t, wx, wy, sx, sy, next = 0;
-    u8 *buf = zb_q[0];                  /* (128 octets : les 8 tuiles de la rangée source) */
-    u8 *row = zb_nt;                    /* (32 octets : une rangée de l'image agrandie) */
+    /* (2.74) construit à partir de l'image x 2 affichée (complète : en
+       perspective, le court rechargé n'avait pas encore ses lignes) : un
+       pixel du court y occupe 2 x 2 pixels ; image x 2 : écran 0, tuiles en
+       $1000 (fond pendant le zoom) ; image x 4 : écran 1, tuiles en $0000
+       (les sprites agrandis du x 2 y étaient ; il n'y a plus de joueurs),
+       trace et titre en $1000, tables des tuiles remises à l'endroit */
+    u8 r, c, j, sh, v, t, wx, wy, y2, px2, next = 0;
+    u8 *buf = zb_q[0];                  /* (256 octets : les 16 tuiles d'une rangée de l'image x 2) */
+    u8 *row = zb_nt;                    /* (32 octets : une rangée de l'image x 4) */
     flash(0x30);
     fade_skip = 1; fade_lvl = 0;
     ppu_off();
-    ctrl_swap = 0;
-    scroll_x = 0; scroll_y = 0; scroll_nt = 0;
-    chr_reload();
-    bg_dirty = 0; swap_on = 0;
-    bank_call(BANK_GAME, court_reload);  /* (court d'origine, ses tuiles et ses palettes) */
-    wx = (u8)(hl_rx < 32 ? 0 : ((hl_rx - 32) & 0xF8)); if (wx > 192) wx = 192;
-    wy = (u8)(hl_ry < 30 ? 0 : ((hl_ry - 30) & 0xFC)); if (wy > 180) wy = 180;
+    /* fenêtre x 4 : 64 x 60 px du court autour de l'impact, dans la fenêtre
+       x 2 (128 x 120 px depuis zwx, zwy) ; x multiple de 8, y de 4 */
+    wx = (u8)(hl_rx < 32 ? 0 : ((hl_rx - 32) & 0xF8));
+    if (wx < zwx) wx = zwx; if (wx > (u8)(zwx + 64)) wx = (u8)(zwx + 64);
+    wy = (u8)(hl_ry < 30 ? 0 : ((hl_ry - 30) & 0xFC));
+    if (wy < zwy) wy = zwy; if (wy > (u8)(zwy + 60)) wy = (u8)(zwy + 60);
     zx = (u8)((hl_rx - wx) << 2); zy = (u8)((hl_ry - wy) << 2);
     for (j = 0; ; ++j) { zb_map[j] = 0xFF; if (j == 255) break; }
-    vread(0x23C0, zb_at, 64);
     for (r = 0; r < 30; ++r) {
-        sy = (u8)(wy + r * 2); ty = (u8)(sy >> 3); py = (u8)(sy & 7);
-        if (r == 0 || py == 0)
-            for (j = 0; j < 8; ++j) { vread(NTADR((wx >> 3) + j, ty), &t, 1); vread((u16)t << 4, buf + j * 16, 16); }
+        y2 = (u8)(((wy - zwy) << 1) + (r << 2));      /* (ligne de l'image x 2 : multiple de 4) */
+        px2 = (u8)(y2 & 7);                           /* (0 ou 4 : les deux lignes lues dans la même tuile) */
+        if (r == 0 || px2 == 0) {
+            u8 tx0 = (u8)((wx - zwx) >> 2);           /* (première tuile x 2 de la fenêtre) */
+            vread(NTADR(tx0, y2 >> 3), row, 16);
+            for (j = 0; j < 16; ++j) vread(0x1000 + ((u16)row[j] << 4), buf + j * 16, 16);
+        }
         for (c = 0; c < 32; ++c) {
-            u8 *q = buf + (c >> 2) * 16 + py;
-            sh = (u8)(7 - ((c & 3) << 1));
-            /* 2 x 2 px du court : (a b / c d), 2 bits chacun */
+            u8 *q = buf + (c >> 1) * 16 + px2;
+            sh = (u8)(7 - ((c & 1) << 2));            /* (pixel x 2 : 0 ou 4 dans la tuile ; son voisin du court à 2) */
             v = (u8)(((q[0] >> sh) & 1) | (((q[8] >> sh) & 1) << 1)
-                   | (((q[0] >> (sh - 1)) & 1) << 2) | (((q[8] >> (sh - 1)) & 1) << 3)
-                   | (((q[1] >> sh) & 1) << 4) | (((q[9] >> sh) & 1) << 5)
-                   | (((q[1] >> (sh - 1)) & 1) << 6) | (((q[9] >> (sh - 1)) & 1) << 7));
+                   | (((q[0] >> (sh - 2)) & 1) << 2) | (((q[8] >> (sh - 2)) & 1) << 3)
+                   | (((q[2] >> sh) & 1) << 4) | (((q[10] >> sh) & 1) << 5)
+                   | (((q[2] >> (sh - 2)) & 1) << 6) | (((q[10] >> (sh - 2)) & 1) << 7));
             t = zb_map[v];
             if (t == 0xFF) {
                 for (j = 0; j < 8; ++j) {
@@ -917,21 +928,20 @@ static void zoom4_build(void)
                     zb_out[8 + j] = (u8)(((k & 2) ? 0xF0 : 0) | ((k & 8) ? 0x0F : 0));
                 }
                 t = next;
-                vwrite(0x1000 + ((u16)t << 4), zb_out, 16);
+                vwrite((u16)t << 4, zb_out, 16);
                 zb_map[v] = t;
                 if (next < 255) ++next;
             }
-            row[c] = t;
+            row[16 + (c & 15)] = t;
+            if ((c & 15) == 15) vwrite((u16)(0x2400 + r * 32 + (c & 16)), row + 16, 16);
         }
-        vwrite(NTADR(0, r), row, 32);
     }
-    /* attributs : un bloc de 16 x 16 couvre 4 x 4 px du court */
-    vram_adr(0x23C0);
+    /* attributs (écran 1) : un bloc de 16 x 16 couvre 4 x 4 px du court */
+    vram_adr(0x27C0);
     for (r = 0; r < 8; ++r)
         for (c = 0; c < 8; ++c) {
-            u8 a = 0, qq, p;
+            u8 a = 0, qq, p, sx, sy;
             for (qq = 0; qq < 4; ++qq) {
-                sx = (u8)((wx >> 3) + c + ((qq & 1) ? 0 : 0));
                 sx = (u8)((wx + (c * 2 + (qq & 1)) * 4) >> 3);
                 sy = (u8)((wy + (r * 2 + (qq >> 1)) * 4) >> 3);
                 if (sy > 29) sy = 29;
@@ -940,17 +950,16 @@ static void zoom4_build(void)
             }
             vram_put(a);
         }
-    /* sprites (table $0000 pendant le zoom) : trace (tuiles 0 et 15), titre (1...) */
+    /* sprites (table $1000) : trace (tuiles 0 et 15), titre (1...) */
     spr_begin(); spr_end();
-    vwrite(0x0000, t_mark4, 16);
-    vwrite(15 << 4, t_mark4 + 16, 16);
+    vwrite(0x1000, t_mark4, 16);
+    vwrite(0x1000 + (15 << 4), t_mark4 + 16, 16);
     hl_n = 0;
     for (j = 0; zl[j]; ++j)
         if ((u8)zl[j] > ' ' && (u8)zl[j] < 0x60)
-            chr_copy(BANK_CHR, chr_data + ((u16)(u8)zl[j] << 4), (u16)(1 + j) << 4, 16);
-    ctrl_swap = 0x18;
-    pal_buf[16 + 9] = 0x0F; pal_buf[16 + 10] = 0x0F; pal_buf[16 + 11] = 0x30;
-    pal_buf[16 + 14] = 0x0F;
+            chr_copy(BANK_CHR, chr_data + ((u16)(u8)zl[j] << 4), 0x1000 + ((u16)(1 + j) << 4), 16);
+    ctrl_swap = 0;                      /* (fond en $0000, sprites en $1000 : comme d'habitude) */
+    scroll_x = 0; scroll_y = 0; scroll_nt = 1;
     flash(hl_bk);
     ppu_on();
 }
@@ -1129,7 +1138,7 @@ void hl_tick(void)
         /* point visé : le rebond, à l'écran (projeté en perspective) ; texte */
         hl_rx = hl_sbx; hl_ry = hl_sby;
         if (persp) { proj2(hl_sbx, hl_sby); hl_rx = proj_x; hl_ry = proj_y; }
-        zl = hl_sbin ? "BONNE !" : "DEHORS !";
+        zl = !hl_sbin ? "DEHORS !" : near_in(hl_sbx, hl_sby) ? "BONNE !" : "";   /* (2.74 : « BONNE ! » seulement près de la ligne) */
     }
     if (hl_mode == 1) closeup_tick(); else zoom_tick();
     if (!hl_mode) hl_t = 0;

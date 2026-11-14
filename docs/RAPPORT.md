@@ -10,6 +10,8 @@ Comme l'exige le CDC (§ 17.5), ce rapport distingue ce qui est **réalisé**, *
 
 | Demande | Réalisation |
 |---|---|
+| « BONNE ! » seulement près de la ligne | Au zoom du ralenti, « BONNE ! » n'est écrit que si la balle est sur la ligne ou à 2 px à l'intérieur du point où elle la touche encore ; plus loin dans le court, le zoom se fait sans titre. « DEHORS ! » reste toujours |
+| Lignes absentes du zoom x 4 | En perspective, le x 4 rechargeait le court, dont les tuiles des lignes ne sont recopiées que sur les trames suivantes : les lignes manquaient. Le x 4 est maintenant construit à partir de l'image x 2 affichée (complète), sans rechargement (plus rapide). Vérifié dans les deux vues |
 | Supprimer les bandes noires du ralenti | Retirées : le ralenti montre l'image entière (le court, les deux joueurs). Test ajusté |
 | Bandeau du score fermé seulement par un appui | Après un point, le bandeau reste jusqu'à l'appui d'un joueur humain (manette 1 ou 2) : l'ordinateur ne le ferme plus en lançant sa balle, il attend l'appui pour servir. Cet appui ferme seulement le bandeau : il ne lance plus la balle de service (un second appui sert). Sans joueur humain (démonstration, ordinateur contre ordinateur) : comportement d'avant, pour que le match continue. Tests ajoutés |
 | Bandeau après le ralenti, apparition douce | Quand le point est rejoué, le bandeau n'apparaît qu'une fois le ralenti terminé. Il arrive environ 0,8 s après la fin du point (ou du ralenti), le temps de lire le message du point, puis monte du bas de l'écran en 1/6 s. Pas de fondu de couleur : sa palette est aussi celle d'une partie du court. Pendant ce délai, l'ordinateur attend pour servir. Tests ajoutés |

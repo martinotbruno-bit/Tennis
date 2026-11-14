@@ -622,7 +622,7 @@ console.log('Version 2.73 : bandes du ralenti, survol, bandeau, dehors de peu');
     if (m === 5 && !hm) { rpF++; if (e.peek('split_on') === 3 || e.peek('lb_st')) bars++; }   /* (2.74 : plus de bandes noires) */
     if (m === 3 && e.peek('rp_pending') && e.peek('band_vis')) early++;                      /* (2.74 : bandeau après le ralenti) */
     if (hm === 2 && e.peek('hl_quick') && e.peek('hl_t') === 1 && e.peek('hl_sbin')) quickIn++;
-    if (hm === 2 && e.peek('hl_quick') && e.peek('hl_c') === 50) { q4++; if (e.peek('ctrl_swap') === 0x18 && e.peek('hl_n') === 0) q4ok++; }   /* (2.74 : second temps x 4) */
+    if (hm === 2 && e.peek('hl_quick') && e.peek('hl_c') === 50) { q4++; if (e.peek('ctrl_swap') === 0 && e.peek('scroll_nt') === 1 && e.peek('hl_n') === 0) q4ok++; }   /* (2.74 : second temps x 4) */
     if (m === 5 && pm !== 5) { start = f; modes = ''; }
     if (m === 5 && hm && !modes.endsWith(String(hm))) modes += hm;
     if (m !== 5 && pm === 5 && modes === '2') { quick++; quickLen = Math.max(quickLen, f - start); }
