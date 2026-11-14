@@ -70,10 +70,12 @@ class Emu {
     for (let i = 0; i < n; i++) {
       this.nes.frame(); this.frames++;
       if (this.cerAddr !== undefined) this.nes.cpu.mem[this.cerAddr] = this.cerSkip ? 1 : 0;
-      if (this.bandSkip && this.bandHold !== undefined && this.nes.cpu.mem[this.bandHold]) { this.nes.cpu.mem[this.bandDis] = 1; this.nes.cpu.mem[this.bandHold] = 0; }
+      if (this.bandSkip && this.bandHold !== undefined && this.nes.cpu.mem[this.bandHold] && this.human()) { this.nes.cpu.mem[this.bandDis] = 1; this.nes.cpu.mem[this.bandHold] = 0; }
       if (each) each(this);
     }
   }
+  // un joueur à la manette (seul cas où le bandeau attend indéfiniment)
+  human() { const c = this.labels['_cfg'], n = this.nes.cpu.mem[this.labels['_npl']]; for (let i = 0; i < n; i++) if (this.nes.cpu.mem[c + 2 + i] !== 2) return true; return false; }
   tap(btn, pad = 1, hold = 3, after = 6) { this.down(btn, pad); this.run(hold); this.up(btn, pad); this.run(after); }
   // texte affiché à l'écran (table des noms $2000)
   text(x, y, len) {

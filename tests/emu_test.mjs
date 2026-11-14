@@ -608,7 +608,7 @@ console.log('Version 2.73 : bandes du ralenti, survol, bandeau, dehors de peu');
   // sur une balle dehors de peu
   const e = boot(); startWith(e, { FMT: 2, REPLAY: 1 }); allCpu(e);
   const vm = e.nes.ppu.vramMem;
-  let q4 = 0, q4ok = 0, rpF = 0, bars = 0, quick = 0, quickIn = 0, quickLen = 0, pm = 0, start = 0, modes = '', bandServe = 0, hud = '', early = 0;
+  let endF = -1, minDelay = 999, rise = new Set(), q4 = 0, q4ok = 0, rpF = 0, bars = 0, quick = 0, quickIn = 0, quickLen = 0, pm = 0, start = 0, modes = '', bandServe = 0, hud = '', early = 0;
   for (let f = 0; f < 60 * 60 * 12 && app(e) === AS.MATCH; f++) {
     e.poke('cer_skip', e.peek('cer') >= 1 && e.peek('cer') <= 3 ? 1 : 0);
     e.run(1);
@@ -621,6 +621,9 @@ console.log('Version 2.73 : bandes du ralenti, survol, bandeau, dehors de peu');
     if (m === 5 && hm && !modes.endsWith(String(hm))) modes += hm;
     if (m !== 5 && pm === 5 && modes === '2') { quick++; quickLen = Math.max(quickLen, f - start); }
     if (m === 0 && !e.peek('cer') && e.peek('band_vis') === 3) bandServe++;
+    if (m === 3 && pm !== 3 && !e.peek('rp_pending')) endF = f;                        /* (2.74 : délai, puis montée) */
+    if (endF >= 0 && e.peek('band_vis') === 3 && !e.peek('cer')) { minDelay = Math.min(minDelay, f - endF); endF = -1; }
+    if (e.peek('band_vis') === 3 && !e.peek('cer')) rise.add(e.peek('split_l'));
     if (!hud && m === 0 && f > 600) hud = e.text(1, 2, 4);
     pm = m;
   }
@@ -629,6 +632,7 @@ console.log('Version 2.73 : bandes du ralenti, survol, bandeau, dehors de peu');
   check(quick > 0 && quickLen < 330, `balle limite : zoom seul, rapide (${quick} fois dont ${quickIn} bonnes sur la ligne, ${quickLen} trames au plus)`);
   check(q4 > 0 && q4ok === q4, `balle limite : second temps x 4 sur l'impact (${q4ok}/${q4})`);
   check(bandServe > 0, `bandeau du score pendant la mise en place du service (${bandServe} trames)`);
+  check(minDelay >= 48 && minDelay < 120 && rise.size >= 8 && Math.max(...rise) > 230 && Math.min(...rise) === 199, `bandeau : apparaît ${minDelay} trames après le point, en montant (lignes ${Math.max(...rise)} à ${Math.min(...rise)})`);
   check(!hud.startsWith('J') && /^( 0|15|30|40|AV| -)/.test(hud), `haut de l'écran : les points, sans les jeux (« ${hud} »)`);
   // (2.74) le bandeau ne part qu'à l'appui d'un joueur humain : l'ordinateur
   // attend pour servir ; l'appui ferme le bandeau sans lancer la balle

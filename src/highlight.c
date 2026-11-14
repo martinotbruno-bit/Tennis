@@ -168,6 +168,7 @@ u8 sun_st;
 #define T_RULE    0xFF
 #define BAND_ROW  25
 #define BAND_LINE 199          /* (valeur de recharge du compteur : réglée sur jsnes et FCEUX) */
+#define BAND_WAIT 48           /* délai d'apparition après le point (2.74) */
 #define CER_SEAT  5
 extern u8 hl_mode, cer;
 extern u8 band_hold;
@@ -318,15 +319,23 @@ void band_draw(void)
     else if (!rp_pending && (pad1_new | pad2_new)) band_dis = 1;
     v = (u8)(cfg.mode == GM_MATCH && !paused && !hl_mode && !sc_over &&
              ((cer == CER_SEAT) || ((!cer || cer >= 0xF0) && !band_dis && !rp_pending && (ms == MS_DEAD || ms == MS_SERVE))));
-    band_hold = (u8)(v && cer != CER_SEAT && band_human());
+    /* (2.74) apparition : 48 trames après la fin du point (ou du ralenti),
+       le temps de lire le message du point, puis le bandeau monte du bas en
+       10 trames (la ligne de l'interruption remonte de 4 lignes par trame).
+       Pendant ce temps l'ordinateur attend aussi, même sans joueur humain,
+       pour que le bandeau se voie. (Pas de fondu : sa palette est aussi celle
+       d'une partie du court.) */
+    band_hold = (u8)(v && cer != CER_SEAT && (band_human() || band_t < BAND_WAIT + 10));
     if (!v) {
         if (band_vis) { split_stop(); band_vis = 0; }
+        band_t = 0;
         return;
     }
+    if (cer != CER_SEAT && band_t < BAND_WAIT) { ++band_t; return; }   /* (délai : pas encore de bandeau) */
     if (!band_vis) { band_vis = 1; band_rows = 15; }  /* (bits 2-3 : filet du bas, bords et rangée 29, que les bandes du ralenti recouvrent) */
     if (cer == CER_SEAT) {
         if (++band_t >= 50) { band_t = 0; if (++band_pg > 4) band_pg = 0; }
-    } else band_pg = band_t = 0;
+    } else band_pg = 0;
     /* texte : rafraîchi quand le score change, une rangée par trame */
     if (band_last[0] != sc_points[0] || band_last[1] != sc_points[1] || band_last[2] != sc_games[0] ||
         band_last[3] != sc_games[1] || band_last[4] != sc_set_no || band_last[5] != sc_server || band_last[6] != band_pg) {
@@ -361,7 +370,8 @@ void band_draw(void)
        en retard, l'OAM envoyée au PPU est celle de la trame d'avant : elle
        doit déjà être sans les sprites du bas) */
     if (band_vis == 1) { if (band_rows) return; band_vis = 2; }
-    else if (band_vis == 2) { band_vis = 3; band_on(BAND_LINE); }
+    else if (band_vis == 2) { band_vis = 3; band_on(cer == CER_SEAT ? BAND_LINE : BAND_LINE + 40); }
+    else if (cer != CER_SEAT && band_t < BAND_WAIT + 10) { ++band_t; band_on((u8)(BAND_LINE + (BAND_WAIT + 10 - band_t) * 4)); }   /* (montée) */
     /* sprites : rien ne descend dans le bandeau */
     /* (en assembleur : la boucle en C coûtait une trame en retard sur
        quatre en double en perspective) */
