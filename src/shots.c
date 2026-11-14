@@ -137,11 +137,7 @@ void shot_select(void)
         depth = (s16)(60 + T);
         T = (u8)iabs(PX(ply[p]) - NET_Y);
         speed = (u8)(T >= 80 ? 19 : T < 60 ? 31 : 24);
-        /* (2.74) effet coupé : au rebond le lob monte moins (une cinquantaine de
-           px au lieu de 90 à 110) et retombe dans le court, au lieu de partir
-           hors de l'écran : il se reprend aussi plus tard, juste avant le
-           second rebond */
-        grav = 6; bspin = SPIN_SLICE; last_shot = SH_LOB;
+        grav = 6; bspin = SPIN_TOP; last_shot = SH_LOB;   /* (rebond plafonné : lob_cap, gamefix.c, 2.74) */
     } else if (sh_btn == PAD_B && (pad & PAD_DOWN)) {      /* amortie */
         /* amortie : trajectoire basse et vive juste au-dessus du filet, puis la
            balle « meurt » au rebond (effet SPIN_DROP) ; plus elle est jouée

@@ -56,6 +56,7 @@ void set_msg(const char *a, const char *b, u8 t);
 void launch(s16 tx, s16 ty, u8 T, u8 grav);
 void win_msg(void);
 void hl_out(void);
+void lob_cap(void);                /* banque fixe (gamefix.c, 2.74) */
 extern u8 band_hold;
 #pragma zpsym("band_hold")
 void match_fx(void);
@@ -256,6 +257,7 @@ static void ball_bounce(void)
     if (bspin == SPIN_DROP) { rest >>= 1; fric >>= 1; }   /* amortie : rebond bas, balle freinée */
     if (cfg.cond == COND_RAIN) { rest = (u8)(rest - 20); if (fric < 248) fric += 6; }  /* court glissant */
     bvz = mulfrac(-bvz, rest);
+    lob_cap();                        /* (lob : rebond plafonné, gamefix.c, 2.74) */
     bvx = mulfrac(bvx, fric);
     bvy = mulfrac(bvy, fric);
     bz = 0;

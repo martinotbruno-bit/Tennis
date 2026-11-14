@@ -106,6 +106,16 @@ void team_name(u8 t, char *out)
     }
 }
 
+/* lob (2.74) : au rebond, il garde son élan lifté vers le fond, mais sa
+   remontée est plafonnée (environ 56 px au sommet au lieu de 90 à 110) : il
+   retombe dans le court, frappable jusqu'à son second rebond (can_hit :
+   62 px après le rebond), au lieu de partir hors de l'écran */
+#define LOB_VZ 210
+void lob_cap(void)
+{
+    if (last_shot == SH_LOB && bvz > LOB_VZ) bvz = LOB_VZ;
+}
+
 /* le joueur p peut-il frapper la balle ? (déplacé du moteur, banque 0) */
 u8 can_hit(u8 p)
 {
