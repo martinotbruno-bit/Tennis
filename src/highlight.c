@@ -281,6 +281,7 @@ static void voice_tick(void)
 /* les bandes. lb_st : 0 rien, 0 à 3 rangées en écriture, 7 affiché.        */
 /* ====================================================================== */
 u8 lb_st;
+u8 hl_quick;                             /* ralenti rapide d'une balle dehors de peu (hl_out, 2.73) */
 static const u8 lb_rows[4] = { 0, 1, 28, 29 };
 static void lb_row(u8 r)
 {
@@ -318,6 +319,7 @@ static void lbox_end(void)
     if (!lb_st) return;
     if (lb_st == 7) { split_stop(); scroll_nt = 0; }
     lb_st = 0;
+    hl_quick = 0;
     band_vis = 0;                        /* (le bandeau du score réécrit ses rangées) */
 }
 void band_draw(void)
@@ -445,6 +447,29 @@ void hl_check(void)
     if (!hl_fresh(hl_sf)) hl_si = (u8)(rp_head >= rp_left ? rp_head - rp_left : rp_head + 160 - rp_left);
     if (!hl_fresh(hl_sbf)) hl_sbok = 0;
 }
+/* balle dehors de peu (2.73) : le point s'arrête sur une balle d'échange
+   tombée à 3 px de la ligne ou moins ; ralenti court (12 trames avant le
+   rebond, rp_start), sans gros plan, droit au zoom x 2 sur l'impact
+   (« DEHORS ! », 50 trames au lieu de 80), puis fin du ralenti. Appelé par
+   point_over (faute adverse). */
+#include "court.h"
+extern u8 hl_quick;   /* (défini plus haut, avec les bandes du ralenti) */
+extern u8 hit_jump;
+extern u8 b_serve;
+#pragma static-locals(push, off)        /* (pile : la RAM de travail est pleine) */
+void hl_out(void)
+{
+    s16 x = hl_bx, y = hl_by, d = 0, l, r;
+    if (!hl_bok || hl_bin || b_serve || cfg.replays != 1 || cfg.env == ENV_NUDE || cfg.demo) return;
+    l = cfg.doubles ? DBL_L : SGL_L; r = cfg.doubles ? DBL_R : SGL_R;
+    if (x < l) d = l - x; else if (x > r) d = x - r;
+    if (y < TOP_BASE) d += TOP_BASE - y; else if (y > BOT_BASE) d += y - BOT_BASE;
+    if (d == 0 || d > 3) return;
+    hl_sok = 0;                         /* pas de gros plan */
+    hl_sbok = 1; hl_sbi = hl_bi; hl_sbx = hl_bx; hl_sby = hl_by; hl_sbin = 0; hl_sbf = hl_bf;
+    hl_quick = 1; rp_pending = 1;
+}
+#pragma static-locals(pop)
 /* fin de point : hl_w gagnant, hl_ptxt titre */
 void hl_select(void)
 {
@@ -453,6 +478,7 @@ void hl_select(void)
     hl_sok = (u8)((hl_hv >> hl_w) & 1);
     hl_si = hl_hi[hl_w]; hl_sp = hl_hp[hl_w]; hl_sk = hl_hk[hl_w]; hl_sf = hl_hf[hl_w]; hl_sbf = hl_bf;
     hl_sbok = hl_bok; hl_sbi = hl_bi; hl_sbx = hl_bx; hl_sby = hl_by; hl_sbin = hl_bin;
+    if (hl_sok && hl_sk == 1 && hit_jump) rp_pending = 1;   /* smash sauté gagnant : toujours au ralenti (2.73) */
     if (hl_sok && hl_cdv[hl_w] && hl_sk == 4) {     /* plongeon gagnant sur un canon : ralenti et gros plan */
         set_msg("PLONGEON", "GAGNANT !", 70);    /* (titre du gros plan : 8 lettres, une ligne) */
         rp_pending = 1;
@@ -860,7 +886,10 @@ static void zoom_tick(void)
             ++k;
         }
     }
-    if (hl_c >= 80) back_to_court();
+    if (hl_c >= (hl_quick ? 50 : 80)) {
+        back_to_court();
+        if (hl_quick) { hl_quick = 0; rp_done = 1; }   /* dehors de peu : le ralenti s'arrête là (2.73) */
+    }
 }
 
 /* ---------------------------------------------------------------------- */

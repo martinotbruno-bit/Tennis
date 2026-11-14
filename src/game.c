@@ -55,6 +55,7 @@ s8 rnd_spread(u8 spread);
 void set_msg(const char *a, const char *b, u8 t);
 void launch(s16 tx, s16 ty, u8 T, u8 grav);
 void win_msg(void);
+void hl_out(void);
 void match_fx(void);
 u8 hit_margin;          /* (lu et réglé aussi par shot_select : angle du croisé court) */
 static s16 pcache_x[4], pcache_y[4];   /* prédictions IA en cache */
@@ -192,6 +193,7 @@ static void point_over(u8 winner, u8 reason)
     } else if (reason == 1) {
         ++st_errors[winner ^ 1];
         sfx_crowd(2);
+        bank_call(BANK_HL, hl_out);     /* dehors de peu : zoom rapide sur l'impact (highlight.c, 2.73) */
     }
     if (rally_hits >= 12) { set_msg("QUEL ECHANGE !", "", 70); sfx_crowd(7); crowd_timer = 64; rp_pending = 1; HL_SELECT(winner, msg1); }
     if (!cfg.replays || cfg.demo) rp_pending = 0;

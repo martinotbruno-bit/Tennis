@@ -163,7 +163,9 @@ u16 swp_dst;                        /* destination de swap_put (crt0.s) */
 u8 __fastcall__ swap_put(const u8 *src);   /* crt0.s, banque 13 (far_call) */
 extern u8 cer;                              /* séquence animée en cours (cer.c) */
 extern u8 sc_crit;
-void lbox_tick(void);                          /* balles de set et de match (rules_far.c, 2.71) */
+void lbox_tick(void);
+extern u8 hl_quick;
+extern u16 hl_sbf, rp_seq;                          /* balles de set et de match (rules_far.c, 2.71) */
 extern u16 cer_t;
 extern u8 pose_now[4];
 void slot_tick(void);                       /* banque 13 (cer.c) */
@@ -479,6 +481,10 @@ extern u8 hl_mode, hl_sok, hl_si, hl_sbok, hl_sbi;   /* repères du ralenti (gam
 void rp_start(void)
 {
     rp_left = rp_count < RP_SHOW ? rp_count : RP_SHOW;
+    if (hl_quick) {                  /* dehors de peu : 12 trames avant le rebond seulement (2.73) */
+        u16 k = (u16)(rp_seq - hl_sbf) + 12;
+        if (k < rp_left) rp_left = (u8)k;
+    }
     rp_pos = (u8)(rp_head >= rp_left ? rp_head - rp_left : rp_head + RP_LEN - rp_left);
     rp_slow = 0;
     rp_done = (u8)(rp_left == 0);
