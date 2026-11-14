@@ -14,6 +14,7 @@ Comme l'exige le CDC (§ 17.5), ce rapport distingue ce qui est **réalisé**, *
 | Coucher de soleil (option avec jour, nuit, pluie) | Nouvelle valeur CREPUSCULE de la ligne CONDITIONS : au fil des jeux, plein jour, lumière chaude de fin d'après-midi, puis rose-violette et plus sombre au coucher du soleil, enfin projecteurs allumés (palette du match de nuit). La teinte passe par les bits d'accentuation des couleurs du PPU (toute l'image, joueurs compris, comme un vrai éclairage ; bits rouge et vert inversés sur une NES PAL). En match hors compétition, en plein air (le mot de passe des compétitions ne code que 3 conditions). Image : `docs/crepuscule_271.png`. Test ajouté |
 | Record de vitesse au palmarès | Le palmarès garde le service le plus rapide (km/h et nom du joueur) ; quand il est battu, la ligne SERVICE MAX KM/H des résultats devient « KM/H : RECORD ! » en or. La ligne d'en-tête « NB % » du palmarès est remplacée par un « % » après chaque pourcentage, pour la place. Image : `docs/record_271.png`. Test ajouté |
 | Bandeau de score façon télévision | Après chaque point et pendant le changement de côté, un bandeau en bas de l'écran : balle devant le serveur, noms, jeux de chaque set, points du jeu. Avantage de la cartouche MMC3 : son interruption de ligne fait passer le PPU sur un second écran à la ligne 200, où le bandeau est dessiné une fois pour toutes ; le court au-dessus ne bouge pas. Les sprites qui descendraient dans le bandeau sont cachés. Il n'est pas affiché pendant la mise en place du service (le joueur du bas serait caché). Vérifié sur FCEUX à plat et en perspective. Image : `docs/bandeau_271.png`. Test ajouté |
+| (performances) | Le passage des règles en banque 18 rendait chaque appel plus coûteux ; l'IA demandait les balles de set et de match plusieurs fois par trame. Elles sont maintenant calculées une fois par point (`sc_crit`), et la boucle qui cache les sprites sous le bandeau est en assembleur : double en perspective, 8,9 % de trames en retard (limite du test : 11 %) |
 | (défaut trouvé par FCEUX) | Sur une trame en retard, l'écran restait entièrement sur le second écran (image brouillée d'une trame) : la NMI remet désormais le bon écran à chaque trame quand une interruption de ligne est active. Sur une trame en retard au moment où le bandeau apparaît, les sprites du bas s'affichaient une trame dessus : le bandeau apparaît maintenant une trame après que les sprites sont cachés |
 
 ### Version 2.70 (travail en autonomie)
@@ -616,7 +617,7 @@ Pour loger ce contenu, la cartouche passe de NROM (32 Ko) à **MMC1** : 128 Ko d
 | Relecture des textes (`check_texts.py`) | 0 problème |
 | Contraste (`contrast.py 25`) | 0 paire sous ΔE 25 (personnages, courts, balle, tenues) |
 | Profil CPU, double, 6 000 trames | 27 trames d'échange en dépassement (0,45 %), sans défaut d'image |
-| Compilation | Reproductible : SHA-256 `ee8e5071adc3551d3253e1edf4e25ca8233f69299fab9914376e7193528b9b0b` sur deux compilations propres |
+| Compilation | Reproductible : SHA-256 `5bcdf75e03025ba5548425874d831fa712c21c2739519f24ff0593555581c409` sur deux compilations propres |
 
 ## 3. Conformité par section du CDC
 

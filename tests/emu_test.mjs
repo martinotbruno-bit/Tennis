@@ -1413,6 +1413,7 @@ console.log('Margaux jouable et fatigue');
   mm.write = (a, v) => { if (a === 0x400C) { env = v; if (v === 0x30) log.push('silence'); } if (a === 0x400E) log.push(env.toString(16) + '/' + v.toString(16)); return w(a, v); };
   const s16 = (n, v) => { e.poke(n, v & 255); e.poke(n, (v >> 8) & 255, 1); };
   e.poke('sc_games', 3, 0); e.poke('sc_points', 3, 0); e.poke('sc_points', 0, 1); e.poke('sc_server', 0);
+  e.poke('sc_crit', 4 | 1);   /* (2.71 : calculé à la fin de chaque point ; ici le score est posé à la main) */
   e.poke('ms', 2); e.run(1); e.poke('ms', 0); e.poke('ms_timer', 250); log.length = 0; e.run(60);
   const claps = log.filter((x) => x === '1/5').length;
   log.length = 0; e.tap('A', 1, 1, 0); e.run(3);
