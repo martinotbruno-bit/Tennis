@@ -728,8 +728,8 @@ static void closeup_tick(void)
         return;
     }
     if (hl_t == 70) {
-        /* après un long échange (12 frappes ou plus) : le public debout (2.73) */
-        if (rally_hits >= 12) { cut_build(TZ_CROWD); hl_cam = 0; scroll_x = 0; scroll_nt = 0; sfx_crowd(7); }
+        /* après un très long échange (20 frappes ou plus ; 12 en 2.73) : le public debout */
+        if (rally_hits >= 20) { cut_build(TZ_CROWD); hl_cam = 0; scroll_x = 0; scroll_nt = 0; sfx_crowd(7); }
         else cut_build(TZ_VICTORY_Z);
         hl_shake = 6;
     }

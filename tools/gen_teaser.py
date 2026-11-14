@@ -138,6 +138,9 @@ class HS:
 
 
 # ------------------------------------------------------------------ corps
+CASUAL = [False]      # (2.74) tenue de ville : t-shirt sans col (public)
+
+
 def body(f, j, female, face, front=('armR', 'legL'), racket_hand='L', racket_dir=None,
          racket_len=50, racket_bend=0.0, ret=None):
     """j : articulations (repère de base, sol en y = 206). 'L'/'R' : côté de
@@ -321,12 +324,16 @@ def body(f, j, female, face, front=('armR', 'legL'), racket_hand='L', racket_dir
         tm = f.m_poly(pts)
         tid = f.part(tm, O, o, sh=(5, 2))
         f.paint(tm & ~shift_mask(f, (0, -1.5), tm) & shift_mask(f, (0, 8), tm) | (tm & ~shift_mask(f, (0, -1.5), tm) & ~shift_mask(f, (0, 30), tm)), 4, within=[tid])   # ourlet du polo
-        # col du polo (rabattu) et patte de boutonnage
-        f.part(f.m_poly([(nk[0] - 7, nk[1] - 2), (nk[0] - 1, nk[1] + 7), (nk[0] - 3, nk[1] + 9), (nk[0] - 8, nk[1] + 1)])
-               | f.m_poly([(nk[0] + 7, nk[1] - 2), (nk[0] + 1, nk[1] + 7), (nk[0] + 3, nk[1] + 9), (nk[0] + 8, nk[1] + 1)]),
-               O, o, sh=(1, 1), group=tid)
-        f.paint(f.m_poly([(nk[0] - 1.5, nk[1] + 2), (nk[0] + 1.5, nk[1] + 2), (nk[0] + 0.5, nk[1] + 8), (nk[0] - 0.5, nk[1] + 8)]), 1, within=[tid])
-        f.paint(f.m_line([(nk[0], nk[1] + 8), (nk[0], nk[1] + 15)], 0.8), 4, within=[tid])
+        if CASUAL[0]:
+            # t-shirt de spectateur (2.74) : encolure ronde, ni col ni boutons
+            f.paint(f.m_ell((nk[0], nk[1] + 1), 5.5, 3.2), 1, within=[tid])
+        else:
+            # col du polo (rabattu) et patte de boutonnage
+            f.part(f.m_poly([(nk[0] - 7, nk[1] - 2), (nk[0] - 1, nk[1] + 7), (nk[0] - 3, nk[1] + 9), (nk[0] - 8, nk[1] + 1)])
+                   | f.m_poly([(nk[0] + 7, nk[1] - 2), (nk[0] + 1, nk[1] + 7), (nk[0] + 3, nk[1] + 9), (nk[0] + 8, nk[1] + 1)]),
+                   O, o, sh=(1, 1), group=tid)
+            f.paint(f.m_poly([(nk[0] - 1.5, nk[1] + 2), (nk[0] + 1.5, nk[1] + 2), (nk[0] + 0.5, nk[1] + 8), (nk[0] - 0.5, nk[1] + 8)]), 1, within=[tid])
+            f.paint(f.m_line([(nk[0], nk[1] + 8), (nk[0], nk[1] + 15)], 0.8), 4, within=[tid])
         # plis du tissu
         f.paint(f.m_line([lerp(ch_l, wl, 0.2), (lerp(ch_l, wl, 0.2)[0] + 7, lerp(ch_l, wl, 0.2)[1] + 6)], 0.8), 4, within=[tid])
         f.paint(f.m_line([(lerp(wl, wr, 0.3)[0], lerp(wl, wr, 0.3)[1] - 2), (lerp(wl, wr, 0.6)[0], lerp(wl, wr, 0.6)[1] + 1)], 0.8), 4, within=[tid])
@@ -723,15 +730,24 @@ POSES['handshake'] = dict(
 POSES['crowd'] = dict(figures=[
     dict(s=dict(pelvis=(28, 126), torso=-92, legL=(97, 94, 165), legR=(83, 86, 15),
                 armL=(-120, -100), armR=(-60, -80), tilt=-0.06, turn=0.2,
-                order=['legL', 'legR', 'torso', 'armL', 'armR', 'head']), female=0, face='joy', shirt=6, shorts=3, tag='1'),
+                order=['legL', 'legR', 'torso', 'armL', 'armR', 'head']), female=0, face='joy', shirt=6, shorts=3, casual=True, tag='1'),
     dict(s=dict(pelvis=(136, 128), torso=-88, legL=(97, 94, 165), legR=(83, 86, 15),
                 armL=(-140, -95), armR=(-40, -85), tilt=0.08, turn=-0.3,
-                order=['legL', 'legR', 'torso', 'armL', 'armR', 'head']), female=0, face='joy', shorts=6, tag='3'),
+                order=['legL', 'legR', 'torso', 'armL', 'armR', 'head']), female=0, face='joy', shorts=6, casual=True, tag='3'),
     dict(s=dict(pelvis=(82, 122), torso=-90, legL=(97, 94, 165), legR=(83, 86, 15),
                 armL=(-100, -70), armR=(-80, -110), tilt=0.0, turn=0.0,
                 order=['legL', 'legR', 'torso', 'armL', 'armR', 'head']), female=1, face='joy', tag='2'),
-    ], face='joy', hand='X', rdir=0, rlen=50, extra=lambda f, j, female, r: f.part(
-        f.m_poly([(-50, 150), (400, 150), (400, 400), (-50, 400)]), 5, None))   # rang de sièges devant : jambes cachées
+    ], face='joy', hand='X', rdir=0, rlen=50, extra=lambda f, j, female, r: _crowd_extra(f, r))
+
+def _crowd_extra(f, r):
+    # (2.74) casquette (couleur de la tenue) pour le spectateur de gauche ;
+    # rangée de sièges devant, assez haute pour cacher le bas du corps (ni
+    # short ni jupe de tennis : ce sont des spectateurs, pas des joueurs)
+    ex, ey = r['face1']
+    crown = f.m_ell((ex, ey - 8.5), 10.5, 6.5) & f.m_poly([(ex - 20, ey - 30), (ex + 20, ey - 30), (ex + 20, ey - 5.5), (ex - 20, ey - 5.5)])
+    brim = f.m_poly([(ex - 3, ey - 6.5), (ex + 14, ey - 6.5), (ex + 14, ey - 4.5), (ex - 3, ey - 4.5)])
+    f.part(crown | brim, 3, 4, sh=(1, 1))
+    f.part(f.m_poly([(-50, 110), (400, 110), (400, 400), (-50, 400)]), 5, None)
 
 # images identiques quel que soit le joueur (une seule copie en ROM) : la
 # fillette pour le ramasseur, le public
@@ -770,7 +786,9 @@ def render(pose, female, k, center, dark=True):
         r = {}
         for fs in P['figures']:
             n0 = f.n
+            CASUAL[0] = bool(fs.get('casual'))
             rr = body(f, skeleton(fs['s'], fs['female']), fs['female'], fs['face'], racket_hand='X', racket_dir=0, racket_len=50)
+            CASUAL[0] = False
             if fs.get('shirt'):
                 m = (f.pid > n0) & np.isin(f.cls, (3, 4))
                 f.cls[m] = fs['shirt']

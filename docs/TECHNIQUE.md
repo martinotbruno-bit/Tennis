@@ -338,6 +338,12 @@ Le dessin des personnages est commun aux vues de face et de dos (rangées de tui
 - **IA** (`ai_update`, banque 0) : à partir de Normal, après le lob et l'amortie, croisé court avec une probabilité 90/256 si l'adversaire est au filet, 20/256 sinon.
 - **Réglages** : première rangée `MY0` = 4 + (18 − `nvis`) / 2 (screens.c ; même calcul dans `menu_marks`) ; `menu_soft` réécrit les 18 rangées ; portraits en y = `MY0` × 8 − 30, entre 7 et 16. Tests : `menuY(e, i)`.
 
+### Version 2.75 : titre du zoom, x 4 depuis le x 2, public
+
+- **Titre du zoom** : « BONNE ! » seulement si `near_in(hl_sbx, hl_sby)`, sinon pas de titre ; « DEHORS ! » toujours.
+- **x 4** : construit depuis l'image x 2 (voir 2.74, `zoom4_build`), plus de rechargement du court.
+- **Public HD** (`closeup_tick`) : `TZ_CROWD` si `rally_hits` ≥ 20. `gen_teaser.py` : `figures[].casual` (t-shirt à encolure ronde, `CASUAL`), `_crowd_extra` (casquette du spectateur 1, rangée de sièges à y = 110).
+
 ### Version 2.74 : bandeau à l'appui, zooms des balles limites
 
 - **Bandes du ralenti** : `rp_play` n'appelle plus `lbox_tick` (code laissé en place, inutilisé ; `lb_st` reste 0).

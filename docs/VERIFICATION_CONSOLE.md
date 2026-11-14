@@ -1,6 +1,6 @@
 # Royal Martinot — Liste de vérification sur vraie console
 
-Le jeu a été testé uniquement sur émulateur. Cette liste sert à le vérifier pas à pas sur une vraie NES ou Famicom. Cochez chaque case et notez ce qui ne va pas, si possible avec une photo de l'écran. Comptez environ une heure et quart pour l'ensemble. Version du guide : 2.74.
+Le jeu a été testé uniquement sur émulateur. Cette liste sert à le vérifier pas à pas sur une vraie NES ou Famicom. Cochez chaque case et notez ce qui ne va pas, si possible avec une photo de l'écran. Comptez environ une heure et quart pour l'ensemble. Version du guide : 2.75.
 
 ## 0. Matériel
 

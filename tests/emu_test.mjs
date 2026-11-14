@@ -794,7 +794,7 @@ console.log('Ralenti : gros plan et zoom');
     }
     check(kid && pal && txt === 'LES BALLES' && back, `ramasseuse au changement de côté (« ${txt} », tenue verte ${pal}), puis retour au court (${back})`);
     const c = boot(); startWith(c, { FMT: 3, REPLAY: 1 }); allCpu(c);
-    runUntil(c, () => c.peek('hl_mode') === 1, 60 * 60 * 15); c.poke('rally_hits', 14);
+    runUntil(c, () => c.peek('hl_mode') === 1, 60 * 60 * 15); c.poke('rally_hits', 22);   /* (20 frappes au moins depuis la 2.75) */
     runUntil(c, () => c.peek('hl_t') === 90, 200);
     const cp = c.peek('pal_buf', 5) === 0x36 && c.peek('pal_buf', 9) === 0x2B;
     runUntil(c, () => c.peek('hl_mode') === 0, 200);
