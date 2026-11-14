@@ -657,6 +657,22 @@ console.log('Version 2.73 : bandes du ralenti, survol, bandeau, dehors de peu');
   check(humOk === true, `bandeau : l'appui du serveur ferme le bandeau sans lancer la balle (${humOk})`);
 }
 {
+  // (2.74) lob : après son rebond, il reste frappable (62 px de haut au plus)
+  // jusqu'à ce qu'il quitte l'écran : il se reprend aussi juste avant le
+  // second rebond (avant : 90 à 110 px, hors d'atteinte et hors de l'écran)
+  const e = boot(); startWith(e, { FMT: 2, REPLAY: 0 }); allCpu(e);
+  let n = 0, zmax = 0, seen = false;
+  for (let f = 0; f < 60 * 60 * 12 && n < 4 && app(e) === AS.MATCH; f++) {
+    e.run(1);
+    if (e.peek('ms') === 2 && e.peek('last_shot') === 2 && e.peek('bounces') <= 1) {
+      for (let q = 0; q < e.peek('npl'); q++) if ((q & 1) !== e.peek('hitter')) e.poke('plx', 0, q * 2), e.poke('plx', 48 >> 2, q * 2 + 1);   /* (receveur écarté : la balle va au bout de sa course) */
+      const y = e.peekS16('by') >> 6;
+      if (e.peek('bounces') === 1 && y > 8 && y < 240) { zmax = Math.max(zmax, e.peekS16('bz') >> 6); seen = true; }
+    } else if (seen) { n++; seen = false; }
+  }
+  check(n >= 2 && zmax <= 62, `lob : après le rebond, toujours à portée (${n} lobs, ${zmax} px de haut au plus)`);
+}
+{
   // perspective : la tuile $5F (vide, bord du court) n'est plus prise par le
   // filet du bandeau (traits horizontaux entre le public et le court, 2.71-2.72)
   const e = boot(); startWith(e, { FMT: 3, VIEW: 1 }); allCpu(e); e.run(600);
