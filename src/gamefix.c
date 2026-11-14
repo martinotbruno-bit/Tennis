@@ -122,10 +122,14 @@ u8 can_hit(u8 p)
     dx = PX(bx) - PX(plx[p]);
     if (dx < -24 || dx > 24) return 0;
     if (bz > 40 * FP) {
-        /* balle très haute : smash sauté (joueurs humains et CPU expert),
-           avant le rebond et hors du fond du court */
-        if (bz > 62 * FP || bounces || iabs(PX(ply[p]) - NET_Y) > 70) return 0;
-        if (cfg.ctrl[p] == CTRL_CPU && cfg.level[p] != 2) return 0;
+        /* balle très haute : avant le rebond, smash sauté (joueurs humains et
+           CPU expert, hors du fond du court) ; après le rebond (2.74), un lob
+           haut se reprend jusqu'à 62 px, sans sauter */
+        if (bz > 62 * FP) return 0;
+        if (!bounces) {
+            if (iabs(PX(ply[p]) - NET_Y) > 70) return 0;
+            if (cfg.ctrl[p] == CTRL_CPU && cfg.level[p] != 2) return 0;
+        }
     }
     return 1;
 }

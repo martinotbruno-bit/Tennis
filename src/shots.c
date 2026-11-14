@@ -111,7 +111,7 @@ void shot_select(void)
     if (sh_dx > 14 || sh_dx < -14) spread += 8;          /* frappe en extension */
     sh_short = 0;
     bspin = SPIN_FLAT;
-    hit_jump = (u8)(bz > 40 * FP);
+    hit_jump = (u8)(!bounces && bz > 40 * FP);   /* (2.74 : balle haute après le rebond : frappée sans sauter) */
     if (hit_jump) pl_jump[p] = 14;          /* le joueur saute, frappe en l'air et retombe */
     if (smash) {
         last_shot = SH_SMASH;
@@ -137,7 +137,11 @@ void shot_select(void)
         depth = (s16)(60 + T);
         T = (u8)iabs(PX(ply[p]) - NET_Y);
         speed = (u8)(T >= 80 ? 19 : T < 60 ? 31 : 24);
-        grav = 6; bspin = SPIN_TOP; last_shot = SH_LOB;
+        /* (2.74) effet coupé : au rebond le lob monte moins (une cinquantaine de
+           px au lieu de 90 à 110) et retombe dans le court, au lieu de partir
+           hors de l'écran : il se reprend aussi plus tard, juste avant le
+           second rebond */
+        grav = 6; bspin = SPIN_SLICE; last_shot = SH_LOB;
     } else if (sh_btn == PAD_B && (pad & PAD_DOWN)) {      /* amortie */
         /* amortie : trajectoire basse et vive juste au-dessus du filet, puis la
            balle « meurt » au rebond (effet SPIN_DROP) ; plus elle est jouée
