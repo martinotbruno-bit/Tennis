@@ -323,7 +323,7 @@ static void vs_pal(u8 side)
     u8 b = (u8)(side * 8), S, O, D;
     pal_set_player(61, cfg.chr[side]);       /* (palette 1 du décor : peau, tenue, sombre) */
     S = pal_buf[5]; O = pal_buf[6]; D = pal_buf[7];
-    pal_buf[b + 1] = D;
+    pal_buf[b + 1] = hd_dark(D);                                      /* (cheveux clairs : contours sombres, 2.75) */
     pal_buf[b + 2] = (u8)(S >= 0x10 ? S : S + 0x10);                 /* peau (éclairée) */
     pal_buf[b + 6] = (u8)(O >= 0x10 ? O : O + 0x10);                  /* tenue */
     pal_buf[b + 5] = (u8)((D & 0x30) >= 0x20 ? 0x07 : D);             /* B : sombre (ombre du texte : noir si cheveux clairs), tenue, blanc */

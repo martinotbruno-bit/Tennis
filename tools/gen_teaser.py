@@ -296,7 +296,9 @@ def body(f, j, female, face, front=('armR', 'legL'), racket_hand='L', racket_dir
         for side, sx in (('L', -1), ('R', 1)):
             hp, kn = j['hip' + side], j['kn' + side]
             d = (kn[0] - hp[0], kn[1] - hp[1]); L = math.hypot(*d) or 1; u = (d[0] / L, d[1] / L); n = (-u[1], u[0])
-            e = lerp(hp, kn, 0.48)
+            # (2.75) ourlet à la même distance de la hanche sur les deux jambes,
+            # même quand une cuisse est raccourcie (genou levé vers la caméra)
+            e = (hp[0] + u[0] * min(SEG['thigh'] * 1.06 * 0.48, L * 0.85), hp[1] + u[1] * min(SEG['thigh'] * 1.06 * 0.48, L * 0.85))
             leg_ = f.m_caps((hp[0] - u[0] * 4, hp[1] - u[1] * 4), e, 11.2, 11.6)
             keep = f.m_poly([(e[0] + n[0] * 40, e[1] + n[1] * 40), (e[0] - n[0] * 40, e[1] - n[1] * 40),
                              (e[0] - n[0] * 40 - u[0] * 90, e[1] - n[1] * 40 - u[1] * 90),
@@ -307,7 +309,7 @@ def body(f, j, female, face, front=('armR', 'legL'), racket_hand='L', racket_dir
         for (a_, b_, u_) in hems:
             f.paint(f.m_line([(a_[0] - u_[0] * 2.2, a_[1] - u_[1] * 2.2), (b_[0] - u_[0] * 2.2, b_[1] - u_[1] * 2.2)], 0.6), 0, within=[sid])   # ourlet
         cr = lerp(hpL, hpR, 0.5)
-        f.paint(f.m_line([(cr[0], cr[1] + 2), lerp(cr, lerp(lerp(hpL, j['knL'], 0.48), lerp(hpR, j['knR'], 0.48), 0.5), 1.0)], 0.9), 0, within=[sid])   # entrejambe
+        f.paint(f.m_line([(cr[0], cr[1] + 2), lerp(hems[0][0], hems[1][1], 0.5)], 0.9), 0, within=[sid])   # entrejambe
         # polo, porté par-dessus le short ; flanc droit de la poitrine à la
         # hanche (2.73 : la taille creusée faisait une silhouette en sablier)
         def straight(ch_, dc, hp_, dh, w_):
@@ -485,14 +487,26 @@ def face_features(f, x, y, face, hid, tilt=0.0, female=False, hs=1.0):
     # frange se touchaient en une tache noire sur l'œil ; traits allégés,
     # sourcil remonté, pupille plus petite, œil un peu plus ouvert
     small = f.k * hs < 0.8
+    # Margaux en petit (2.75) : son « sombre » est le blond des cheveux ; ses
+    # traits (sourcils, paupières, bouche) passent dans l'ombre de la peau au
+    # lieu de la couleur du fond, qui faisait des trous dans le visage
+    gm = small and female == 2
     if small:
         bw = 0.6 if female else 0.8
     def eye(sx, look=0.0, lid=0.0):
         c = R(sx * 4.4, -0.2)
         if small:
             # (à cette taille, le blanc de l'œil ne tient qu'un pixel ou deux
-            # et dépend du découpage en tuiles : œil sombre en amande)
-            P(f.m_ell((c[0] + look * 0.4, c[1] + 0.1), 1.3, 0.9, tilt), 5)
+            # et dépend du découpage en tuiles : œil sombre en amande ;
+            # Margaux, dont le « sombre » est le blond : blanc de l'œil et
+            # petite pupille de la couleur du fond, 2.75)
+            if gm:
+                P(f.m_ell(c, 1.7, 0.9, tilt), 2)
+                P(f.m_ell((c[0] + look * 0.4, c[1] + 0.1), 0.7, 0.7), 0)
+                return
+            # (femme : œil plus petit et un peu plus bas, la frange de côté
+            # ne s'y colle pas)
+            P(f.m_ell((c[0] + look * 0.4, c[1] + (0.5 if female else 0.1)), 1.0 if female else 1.3, 0.75 if female else 0.9, tilt), 5)
             return
         P(f.m_ell(c, 2.4 if female else 2.2, 1.35 - lid * 0.5, tilt), 6)
         P(f.m_ell((c[0] + look, c[1] + 0.15), 1.15, 1.15), 0)
@@ -503,7 +517,7 @@ def face_features(f, x, y, face, hid, tilt=0.0, female=False, hs=1.0):
     def brow(sx, inner=-3.3, outer=-3.6, arch=0.0):
         up = -0.9 if small else 0.0
         if female:
-            P(f.m_arc(R(sx * 4.6, -2.6 + arch + up), 3.0, 1.4, 200, 340, bw), 5)
+            P(f.m_arc(R(sx * 4.6, -2.6 + arch + up), 3.0, 1.4, 200, 340, bw), 2 if gm else 5)
         else:
             P(line([R(sx * 7.2, outer + up), R(sx * 2.2, inner + up)], bw), 5)
     def nose():
@@ -519,7 +533,7 @@ def face_features(f, x, y, face, hid, tilt=0.0, female=False, hs=1.0):
             brow(sx, -3.2, -3.9)
         nose()
         if female:
-            P(line([R(-2.6, 8.9), R(0, 9.3), R(2.6, 8.9)], 0.7), 0)
+            P(line([R(-2.6, 8.9), R(0, 9.3), R(2.6, 8.9)], 0.7), 2 if gm else 0)
             P(f.m_ell(R(0, 10.0), 2.2, 0.8, tilt), 2)                                    # lèvre inférieure
         else:
             P(line([R(-3.2, 9.2), R(0, 9.5), R(3.2, 9.1)], 0.9), 0)
@@ -623,9 +637,14 @@ def skeleton(p, female):
     j['hipL'] = (P[0] - perp[0] * hw, P[1] - perp[1] * hw)
     j['hipR'] = (P[0] + perp[0] * hw, P[1] + perp[1] * hw)
     for sd in ('L', 'R'):
-        th, sn, tdir = p['leg' + sd]
-        kn = add(j['hip' + sd], dvec(th, G['thigh']))
-        an = add(kn, dvec(sn, G['shin']))
+        lg = p['leg' + sd]
+        th, sn, tdir = lg[:3]
+        # (2.75) facteurs de longueur facultatifs (cuisse, tibia) : membre
+        # qui vient vers la caméra ou s'en éloigne (genou levé, vu de face)
+        tk = lg[3] if len(lg) > 3 else 1.0
+        sk_ = lg[4] if len(lg) > 4 else 1.0
+        kn = add(j['hip' + sd], dvec(th, G['thigh'] * tk))
+        an = add(kn, dvec(sn, G['shin'] * sk_))
         j['kn' + sd], j['an' + sd] = kn, an
         j['toe' + sd] = add(an, dvec(tdir, 12))
         ua, fa = p['arm' + sd]
@@ -684,12 +703,13 @@ POSES['smash'] = dict(
 #    jambe avant repliée, jambe arrière lancée derrière), bras libre tendu
 #    vers la balle ; ombre au sol, loin sous les pieds
 def _smash_air_extra(f, j, female, r):
-    f.part(f.m_ell((96, 229.3), 15, 3), 5, None)
+    f.part(f.m_ell((96, 229.3), 15, 3), 0 if female == 2 else 5, None)   # (Margaux : son « sombre » est blond)
 POSES['smash_air'] = dict(
-    # (2.75) ciseau du smash sauté, d'après la technique décrite par les
-    # entraîneurs : genou avant levé, tibia vertical et pied pointé vers le
-    # bas ; jambe arrière presque tendue vers l'arrière, pied en extension
-    s=dict(pelvis=(96, 96), torso=-104, legL=(55, 100, 110), legR=(112, 128, 140),
+    # (2.75) ciseau du smash sauté vu de face : genou avant levé vers la
+    # caméra (cuisse raccourcie), tibia vertical, pied pointé vers le bas ;
+    # jambe arrière pendante, tibia replié vers l'arrière (raccourci) ; buste
+    # presque droit, hanches de niveau (short et jupe sans débord)
+    s=dict(pelvis=(96, 96), torso=-98, legL=(100, 115, 125, 1.0, 0.75), legR=(75, 95, 105, 0.6, 1.0),
            armL=(-118, -104), armR=(-55, -75), tilt=-0.08, turn=-0.7, head_bend=-14,
            order=['legR', 'legL', 'torso', 'armR', 'head', 'armL', 'racket']),
     face='focus', hand='L', rdir=-122, rlen=50, extra=_smash_air_extra)
@@ -774,7 +794,32 @@ def _crowd_extra(f, r):
     crown = f.m_ell((ex, ey - 8.5), 10.5, 6.5) & f.m_poly([(ex - 20, ey - 30), (ex + 20, ey - 30), (ex + 20, ey - 5.5), (ex - 20, ey - 5.5)])
     brim = f.m_poly([(ex - 3, ey - 6.5), (ex + 14, ey - 6.5), (ex + 14, ey - 4.5), (ex - 3, ey - 4.5)])
     f.part(crown | brim, 3, 4, sh=(1, 1))
-    f.part(f.m_poly([(-50, 110), (400, 110), (400, 400), (-50, 400)]), 5, None)
+    # (2.75) gradins : au lieu d'un bloc noir, des rangées de sièges vues de
+    # face. Motif de 16 x 16 pixels calé sur les tuiles (peu de tuiles
+    # différentes) : dossier arrondi de la couleur du club (tenue), reflet,
+    # bas ombré, nez de marche clair, fond sombre ; rangées décalées d'un
+    # demi-siège. La première rangée, juste devant les spectateurs, cache le
+    # bas du corps.
+    yy, xx = np.mgrid[0:f.H, 0:f.W]
+    y0 = int(f.T((0, 110))[1]) // 8 * 8
+    zone = yy >= y0
+    f.part(zone, 6, None)                                       # béton clair des gradins
+    r_ = (yy - y0) // 24
+    cy = (yy - y0) % 24
+    cx = (xx - (r_ % 2) * 12) % 24
+    # dossier : 18 px de large, arrondi en haut, de cy 0 à 12
+    back = zone & (cy <= 12) & (cx >= 3) & (cx <= 20) & ~((cy == 0) & ((cx <= 4) | (cx >= 19))) & ~((cy == 1) & ((cx == 3) | (cx == 20)))
+    # (couleurs d'un même bloc : vert, blanc et le fond seulement, sinon le
+    # blanc de la marche est perdu à la quantification)
+    sid_ = f.part(back, 3, None)
+    f.paint(back & (cy == 2) & (cx >= 6) & (cx <= 15), 6, within=[sid_])  # reflet
+    f.paint(back & (cx == 19) & (cy >= 3) & (cy <= 10), 6, within=[sid_]) # arête du dossier
+    # assise (vue de face : bande plus large sous le dossier, bord clair)
+    seat = zone & (cy >= 14) & (cy <= 16) & (cx >= 1) & (cx <= 22)
+    sid2 = f.part(seat, 3, None)
+    f.paint(seat & (cy == 14), 6, within=[sid2])
+    # ombre sous l'assise et au pied de la marche (couleur du fond)
+    f.part(zone & (((cy >= 17) & (cy <= 18) & (cx >= 2) & (cx <= 21)) | (cy == 23)), 5, None)
 
 # images identiques quel que soit le joueur (une seule copie en ROM) : la
 # fillette pour le ramasseur, le public
@@ -791,7 +836,7 @@ SHOTS = [
     ('angry', 'angry', 1.12, None, False),           # raquette au sol, en pied
     ('angry_z', 'angry', 3.4, (83, 70), True),       # zoom : le visage qui crie
     ('smash', 'smash', 0.86, (92, None), False),
-    ('smash_air', 'smash_air', 0.86, (92, 104), False),   # smash en plein vol (ralenti du smash, 2.75)
+    ('smash_air', 'smash_air', 0.86, (90, 104), False),   # smash en plein vol (ralenti du smash, 2.75)
     ('backhand', 'backhand', 1.4, (150, 102), False),   # revers à deux mains, gros plan (ralenti, 2.68)      # smash et service, en pied (ralenti, 2.68)
     ('ballkid', 'ballkid', 1.3, (94, 123), False),     # ramasseur de balles (changement de côté, 2.73)
     ('handshake', 'handshake', 1.3, (110, 96), False),  # poignée de main au filet (fin du match, 2.73)
@@ -1023,7 +1068,7 @@ def main():
 
 # ------------------------------------------------------------------ export
 # banques libres (octets disponibles, marge comprise)
-BANKS = [(9, 13600), (12, 11500), (4, 12200), (10, 7050), (2, 7900), (7, 6800), (6, 5800), (17, 16000), (18, 13500), (20, 12200), (21, 15500)]
+BANKS = [(9, 13600), (12, 11500), (4, 12200), (10, 7050), (2, 7900), (7, 6800), (6, 5800), (17, 16000), (18, 13500), (20, 11900), (21, 15500)]
 
 
 def pack(chr_):

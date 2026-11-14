@@ -14,7 +14,8 @@ extern u8 char_female[NCHARS];   /* (2.75 : en RAM, copie de la table d'origine 
 #define CU_SLOT(k) (1 + (k) * 12)
 extern u8 cu_sav[25], cu_map[2];
 const char * __fastcall__ chr_nm(u8 c);   /* nom du personnage (personnalisé le cas échéant) */
-void cust_reset(void);                  /* personnages d'origine */
+void cust_reset(void);
+u8 __fastcall__ hd_dark(u8 d);          /* sombre des images HD : cheveux clairs assombris (2.75) */                  /* personnages d'origine */
 extern const u8 char_style[NCHARS];
 
 /* styles de jeu des personnages contrôlés par l'IA (CDC 10.2) */
