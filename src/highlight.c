@@ -161,11 +161,16 @@ u8 sun_st;
 /* sont cachés. Filets : tuile $5F (« _ », jamais écrite en match).        */
 /* ====================================================================== */
 #define BAND_NT   0x2400
+/* filet du bandeau : tuile $FF, jamais posée sur le court (vérifié dans tous
+   les lieux, à plat et en perspective). En 2.71-2.72 c'était $5F (« _ »),
+   que la vue en perspective emploie comme tuile vide au bord du court : des
+   traits horizontaux apparaissaient entre le public et le court. */
+#define T_RULE    0xFF
 #define BAND_ROW  25
 #define BAND_LINE 199          /* (valeur de recharge du compteur : réglée sur jsnes et FCEUX) */
 #define CER_SEAT  5
 extern u8 hl_mode, cer;
-u8 band_vis, band_rows;      /* band_vis : 0 caché, 1 texte, 2 sprites cachés, 3 affiché */
+u8 band_vis, band_rows, band_dis;   /* band_dis : bandeau renvoyé par un appui (jusqu'au point suivant) */      /* band_vis : 0 caché, 1 texte, 2 sprites cachés, 3 affiché */
 static u8 band_last[7];
 static char bb[28];
 /* changement de côté (2.72) : le bandeau alterne le score (page 0) et des
@@ -184,12 +189,12 @@ static void band_init(void)
 {
     static const u8 rule[16] = { 0, 0, 0xFF, 0, 0, 0, 0, 0,   0, 0, 0xFF, 0xFF, 0, 0, 0, 0 };   /* trait blanc, ombre noire */
     u8 i;
-    vram_adr(0x05F0);
+    vram_adr((u16)T_RULE << 4);
     for (i = 0; i < 16; ++i) vram_put(rule[i]);
     vram_adr(BAND_NT + 24 * 32); vram_fill(0, 32);
-    vram_put(0); vram_fill(0x5F, 30); vram_put(0);          /* rangée 25 : filet */
+    vram_put(0); vram_fill(T_RULE, 30); vram_put(0);          /* rangée 25 : filet */
     vram_fill(0, 64);                                       /* rangées 26-27 : texte */
-    vram_put(0); vram_fill(0x5F, 30); vram_put(0);          /* rangée 28 : filet */
+    vram_put(0); vram_fill(T_RULE, 30); vram_put(0);          /* rangée 28 : filet */
     vram_fill(0, 32);
     vram_adr(BAND_NT + 0x3C0 + 6 * 8); vram_fill(0x55, 16);  /* palette 1 (bandeau du haut) */
     band_vis = 0;
@@ -335,8 +340,12 @@ void band_draw(void)
     u8 i, v;
     voice_tick();
     lbox_end();
+    /* (2.73) le bandeau reste pendant la mise en place du service, jusqu'à
+       un appui (manette 1 ou 2) ou au lancer de balle */
+    if (ms == MS_DEAD) band_dis = 0;
+    else if (ms == MS_SERVE && (pad1_new | pad2_new)) band_dis = 1;
     v = (u8)(cfg.mode == GM_MATCH && !paused && !hl_mode && !sc_over &&
-             ((cer == CER_SEAT) || ((!cer || cer >= 0xF0) && ms == MS_DEAD)));
+             ((cer == CER_SEAT) || ((!cer || cer >= 0xF0) && (ms == MS_DEAD || (ms == MS_SERVE && !band_dis)))));
     if (!v) {
         if (band_vis) { split_stop(); band_vis = 0; }
         return;
@@ -363,10 +372,10 @@ void band_draw(void)
             band_rows &= (u8)~8;
         }
     } else if (band_rows & 4) {                 /* filet du bas (rangée 28) et coins */
-        for (i = 0; i < 32; ++i) bb[i & 15] = 0x5F;
+        for (i = 0; i < 32; ++i) bb[i & 15] = T_RULE;
         bb[0] = 0;
         if (vbuf_raw((u16)(BAND_NT + 28 * 32), (const u8 *)bb, 16)) {
-            bb[0] = 0x5F; bb[15] = 0;
+            bb[0] = T_RULE; bb[15] = 0;
             if (vbuf_raw((u16)(BAND_NT + 28 * 32 + 16), (const u8 *)bb, 16)) band_rows &= (u8)~4;
         }
     } else if (band_rows) {

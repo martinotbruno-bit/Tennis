@@ -67,15 +67,16 @@ void hud_update(void)
             x = (u8)(side_of(t) == 0 ? 1 : 27);   /* colonne 0 : zone de débordement TV */
             team_name(t, line);
             vbuf_text(x, 1, line, 4);
-            /* ligne 2 : jeux du set en cours (« J 3 ») + serveur (*) */
-            line[0] = 'J';
-            num2(line + 1, sc_games[t]);
+            /* ligne 2 : points du jeu + serveur (*) ; ligne 3 : un rond (@ =
+               balle) par set gagné. (Les jeux, « J 3 » jusqu'en 2.72, sont
+               dans le bandeau du bas, entre les points.) */
+            rules_point_label(t, line);
+            line[2] = ' ';
             line[3] = (char)(sc_server == t ? '*' : ' ');
             vbuf_text(x, 2, line, 4);
-            /* ligne 3 : points du jeu + un rond (@ = balle) par set gagné */
-            rules_point_label(t, line);
-            line[2] = (char)(sc_sets[t] >= 1 ? '@' : ' ');
-            line[3] = (char)(sc_sets[t] >= 2 ? '@' : ' ');
+            line[0] = (char)(sc_sets[t] >= 1 ? '@' : ' ');
+            line[1] = (char)(sc_sets[t] >= 2 ? '@' : ' ');
+            line[2] = line[3] = ' ';
             vbuf_text(x, 3, line, 4);
         }
     } else {

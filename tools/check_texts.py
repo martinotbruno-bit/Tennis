@@ -47,11 +47,11 @@ for f in sorted((ROOT / 'src').glob('*.c')):
             for t in re.findall(STR, m.group(2)):
                 if len(t) > 14:
                     problems.append(f'extras.c: {m.group(1)} « {t} » : {len(t)} caractères (14 au plus)')
-    if f.name == 'gamefix.c':
-        i = code.index('win_label'); j = code.index('\n}', i)
+    if 'const char *win_label' in code:            # (highlight.c depuis la version 2.73)
+        i = code.index('const char *win_label'); j = code.index('\n}', i)
         for t in re.findall(STR, code[i:j]):
             if len(t) > 14:
-                problems.append(f'gamefix.c: annonce « {t} » trop longue')
+                problems.append(f'{f.name}: annonce « {t} » trop longue')
     if f.name == 'manual.c':
         i = code.index('page_text'); j = code.index('};', i)
         for t in re.findall(STR, code[i:j]):
