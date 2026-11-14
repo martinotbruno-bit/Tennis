@@ -312,11 +312,12 @@ def body(f, j, female, face, front=('armR', 'legL'), racket_hand='L', racket_dir
             t = (w_[1] - a_[1]) / ((b_[1] - a_[1]) or 1)
             x = a_[0] + (b_[0] - a_[0]) * t
             x0 = w_[0] + (2 if dc > 0 else -2)
-            return ((x if dc > 0 else x) if (x - x0) * dc > 0 else x0, w_[1])
+            x = x - (1.5 if dc > 0 else -1.5)          # (léger retrait au ventre : silhouette athlétique)
+            return (x if (x - x0) * dc > 0 else x0, w_[1])
         top_l = (shL[0] - 2, shL[1] - 5); top_r = (shR[0] + 2, shR[1] - 5)
         pts = [top_l, (nk[0] - 6, nk[1] - 1), (nk[0] + 6, nk[1] - 1), top_r, (shR[0] + 5, shR[1] + 2),
-               (ch_r[0] + 2, ch_r[1]), straight(ch_r, 2, hpR, 12, wr), (hpR[0] + 12, hpR[1] - 10), (hpR[0] + 12.5, hpR[1] - 5),
-               (hpL[0] - 12.5, hpL[1] - 5), (hpL[0] - 12, hpL[1] - 10), straight(ch_l, -2, hpL, -12, wl), (ch_l[0] - 2, ch_l[1]), (shL[0] - 5, shL[1] + 2)]
+               (ch_r[0] + 2, ch_r[1]), straight(ch_r, 2, hpR, 11, wr), (hpR[0] + 11, hpR[1] - 10), (hpR[0] + 11.5, hpR[1] - 5),
+               (hpL[0] - 11.5, hpL[1] - 5), (hpL[0] - 11, hpL[1] - 10), straight(ch_l, -2, hpL, -11, wl), (ch_l[0] - 2, ch_l[1]), (shL[0] - 5, shL[1] + 2)]
         tm = f.m_poly(pts)
         tid = f.part(tm, O, o, sh=(5, 2))
         f.paint(tm & ~shift_mask(f, (0, -1.5), tm) & shift_mask(f, (0, 8), tm) | (tm & ~shift_mask(f, (0, -1.5), tm) & ~shift_mask(f, (0, 30), tm)), 4, within=[tid])   # ourlet du polo
