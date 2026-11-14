@@ -608,7 +608,7 @@ console.log('Version 2.73 : bandes du ralenti, survol, bandeau, dehors de peu');
   // sur une balle dehors de peu
   const e = boot(); startWith(e, { FMT: 2, REPLAY: 1 }); allCpu(e);
   const vm = e.nes.ppu.vramMem;
-  let rpF = 0, bars = 0, quick = 0, quickIn = 0, quickLen = 0, pm = 0, start = 0, modes = '', bandServe = 0, hud = '', early = 0;
+  let q4 = 0, q4ok = 0, rpF = 0, bars = 0, quick = 0, quickIn = 0, quickLen = 0, pm = 0, start = 0, modes = '', bandServe = 0, hud = '', early = 0;
   for (let f = 0; f < 60 * 60 * 12 && app(e) === AS.MATCH; f++) {
     e.poke('cer_skip', e.peek('cer') >= 1 && e.peek('cer') <= 3 ? 1 : 0);
     e.run(1);
@@ -616,6 +616,7 @@ console.log('Version 2.73 : bandes du ralenti, survol, bandeau, dehors de peu');
     if (m === 5 && !hm) { rpF++; if (e.peek('split_on') === 3 || e.peek('lb_st')) bars++; }   /* (2.74 : plus de bandes noires) */
     if (m === 3 && e.peek('rp_pending') && e.peek('band_vis')) early++;                      /* (2.74 : bandeau après le ralenti) */
     if (hm === 2 && e.peek('hl_quick') && e.peek('hl_t') === 1 && e.peek('hl_sbin')) quickIn++;
+    if (hm === 2 && e.peek('hl_quick') && e.peek('hl_c') === 50) { q4++; if (e.peek('ctrl_swap') === 0x18 && e.peek('hl_n') === 0) q4ok++; }   /* (2.74 : second temps x 4) */
     if (m === 5 && pm !== 5) { start = f; modes = ''; }
     if (m === 5 && hm && !modes.endsWith(String(hm))) modes += hm;
     if (m !== 5 && pm === 5 && modes === '2') { quick++; quickLen = Math.max(quickLen, f - start); }
@@ -625,12 +626,13 @@ console.log('Version 2.73 : bandes du ralenti, survol, bandeau, dehors de peu');
   }
   check(rpF > 50 && bars === 0, `ralenti sans bandes noires (${rpF} trames, ${bars} avec bandes)`);
   check(early === 0, `bandeau du score après le ralenti seulement (${early} trames avant)`);
-  check(quick > 0 && quickLen < 220, `balle limite : zoom seul, rapide (${quick} fois dont ${quickIn} bonnes sur la ligne, ${quickLen} trames au plus)`);
+  check(quick > 0 && quickLen < 330, `balle limite : zoom seul, rapide (${quick} fois dont ${quickIn} bonnes sur la ligne, ${quickLen} trames au plus)`);
+  check(q4 > 0 && q4ok === q4, `balle limite : second temps x 4 sur l'impact (${q4ok}/${q4})`);
   check(bandServe > 0, `bandeau du score pendant la mise en place du service (${bandServe} trames)`);
   check(!hud.startsWith('J') && /^( 0|15|30|40|AV| -)/.test(hud), `haut de l'écran : les points, sans les jeux (« ${hud} »)`);
   // (2.74) le bandeau ne part qu'à l'appui d'un joueur humain : l'ordinateur
   // attend pour servir ; l'appui ferme le bandeau sans lancer la balle
-  const g = boot(); startWith(g, { FMT: 3 });
+  const g = boot(); g.bandSkip = false; startWith(g, { FMT: 3 });
   let humOk = null, cpuWait = null, cpuGo = null;
   for (let f = 0; f < 60 * 60 * 6 && (humOk === null || cpuWait === null) && app(g) === AS.MATCH; f++) {
     g.poke('cer_skip', g.peek('cer') >= 1 && g.peek('cer') <= 3 ? 1 : 0);

@@ -284,38 +284,7 @@ static void voice_tick(void)
 /* ====================================================================== */
 u8 lb_st;
 u8 hl_quick;                             /* ralenti rapide d'une balle dehors de peu (hl_out, 2.73) */
-static const u8 lb_rows[4] = { 0, 1, 28, 29 };
-static void lb_row(u8 r)
-{
-    u8 i;
-    for (i = 0; i < 28; ++i) bb[i] = 1;          /* (bb : tampon du bandeau, 28 octets) */
-    if (r == 1) {
-        static const char cap_l[] = " RALENTI ", cap_r[] = " A : PASSER ";
-        for (i = 0; cap_l[i]; ++i) bb[1 + i] = cap_l[i];
-        for (i = 0; cap_r[i]; ++i) bb[15 + i] = cap_r[i];
-    }
-}
-void lbox_tick(void)                    /* à chaque trame du ralenti (rp_play, banque 3) */
-{
-    u8 r;
-    if (cfg.mode != GM_MATCH) return;
-    if (lb_st < 7) {
-        if (vram_len + 70 > VBUF_MAX) return;
-        r = lb_rows[lb_st];
-        lb_row(r);
-        if (!vbuf_raw((u16)(BAND_NT + r * 32 + 2), (const u8 *)bb, 28)) return;
-        /* (colonnes 0-1 et 30-31 : noires aussi) */
-        bb[0] = bb[1] = 1;
-        vbuf_raw((u16)(BAND_NT + r * 32), (const u8 *)bb, 2);
-        vbuf_raw((u16)(BAND_NT + r * 32 + 30), (const u8 *)bb, 2);
-        if (++lb_st == 4) {
-            lb_st = 7;
-            scroll_nt = 1; lbox_on(207);      /* (interruptions : lignes 16 et 224) */
-        }
-    }
-    /* (les joueurs passent devant les bandes : le joueur du fond, près de la
-       bande du haut, reste entier) */
-}
+/* (2.74 : bandes du ralenti retirées ; lbox_end reste, lb_st vaut toujours 0) */
 static void lbox_end(void)
 {
     if (!lb_st) return;
@@ -478,7 +447,7 @@ extern u8 b_serve;
 void hl_out(void)
 {
     s16 x = hl_bx, y = hl_by, d = 0, l, r;
-    if (rp_pending || !hl_bok || b_serve || !cfg.replays || cfg.env == ENV_NUDE || cfg.demo) return;   /* (ralenti déjà prévu : il montre le rebond) */
+    if (!hl_bok || b_serve || !cfg.replays || cfg.env == ENV_NUDE || cfg.demo) return;   /* (2.74 : prioritaire sur le ralenti complet) */
     l = cfg.doubles ? IN_DL : IN_SL; r = cfg.doubles ? IN_DR : IN_SR;   /* (ligne comprise) */
     if (hl_bin) {
         /* bonne : sur la ligne ou à 2 px à l'intérieur du point où elle la
@@ -877,6 +846,96 @@ static void zoom_build(void)
     ppu_on();
 }
 
+/* Second temps du zoom des balles limites (2.74) : x 4 sur l'impact, sans
+   les joueurs (8 sprites par ligne : un joueur agrandi 4 fois ne tiendrait
+   pas). Le premier temps (x 2) a pris des tuiles du court pour les sprites :
+   le court est rechargé, puis une fenêtre de 64 x 60 px autour de l'impact
+   est agrandie. Chaque tuile de l'image agrandie couvre 2 x 2 px du court
+   (4 couleurs de 2 bits : au plus 256 tuiles, quelques dizaines en
+   pratique), créée à la première rencontre (zb_map). Trace de la balle :
+   ellipse de 12 x 8 px (deux sprites), titre BONNE / DEHORS. */
+#define Z4 40                           /* trames du premier temps (x 2) */
+static const u8 t_mark4[32] = {
+    0x00, 0x07, 0x1F, 0x1F, 0x1F, 0x1F, 0x07, 0x00, 0x07, 0x18, 0x20, 0x20, 0x20, 0x20, 0x18, 0x07,
+    0x00, 0xE0, 0xF8, 0xF8, 0xF8, 0xF8, 0xE0, 0x00, 0xE0, 0x18, 0x04, 0x04, 0x04, 0x04, 0x18, 0xE0 };
+#pragma static-locals(push, off)        /* (pile : la RAM de travail est pleine) */
+static void zoom4_build(void)
+{
+    u8 r, c, j, ty, py, sh, v, t, wx, wy, sx, sy, next = 0;
+    u8 *buf = zb_q[0];                  /* (128 octets : les 8 tuiles de la rangée source) */
+    u8 *row = zb_nt;                    /* (32 octets : une rangée de l'image agrandie) */
+    flash(0x30);
+    fade_skip = 1; fade_lvl = 0;
+    ppu_off();
+    ctrl_swap = 0;
+    scroll_x = 0; scroll_y = 0; scroll_nt = 0;
+    chr_reload();
+    bg_dirty = 0; swap_on = 0;
+    bank_call(BANK_GAME, court_reload);  /* (court d'origine, ses tuiles et ses palettes) */
+    wx = (u8)(hl_rx < 32 ? 0 : ((hl_rx - 32) & 0xF8)); if (wx > 192) wx = 192;
+    wy = (u8)(hl_ry < 30 ? 0 : ((hl_ry - 30) & 0xFC)); if (wy > 180) wy = 180;
+    zx = (u8)((hl_rx - wx) << 2); zy = (u8)((hl_ry - wy) << 2);
+    for (j = 0; ; ++j) { zb_map[j] = 0xFF; if (j == 255) break; }
+    vread(0x23C0, zb_at, 64);
+    for (r = 0; r < 30; ++r) {
+        sy = (u8)(wy + r * 2); ty = (u8)(sy >> 3); py = (u8)(sy & 7);
+        if (r == 0 || py == 0)
+            for (j = 0; j < 8; ++j) { vread(NTADR((wx >> 3) + j, ty), &t, 1); vread((u16)t << 4, buf + j * 16, 16); }
+        for (c = 0; c < 32; ++c) {
+            u8 *q = buf + (c >> 2) * 16 + py;
+            sh = (u8)(7 - ((c & 3) << 1));
+            /* 2 x 2 px du court : (a b / c d), 2 bits chacun */
+            v = (u8)(((q[0] >> sh) & 1) | (((q[8] >> sh) & 1) << 1)
+                   | (((q[0] >> (sh - 1)) & 1) << 2) | (((q[8] >> (sh - 1)) & 1) << 3)
+                   | (((q[1] >> sh) & 1) << 4) | (((q[9] >> sh) & 1) << 5)
+                   | (((q[1] >> (sh - 1)) & 1) << 6) | (((q[9] >> (sh - 1)) & 1) << 7));
+            t = zb_map[v];
+            if (t == 0xFF) {
+                for (j = 0; j < 8; ++j) {
+                    u8 k = (u8)(j < 4 ? v : v >> 4);
+                    zb_out[j] = (u8)(((k & 1) ? 0xF0 : 0) | ((k & 4) ? 0x0F : 0));
+                    zb_out[8 + j] = (u8)(((k & 2) ? 0xF0 : 0) | ((k & 8) ? 0x0F : 0));
+                }
+                t = next;
+                vwrite(0x1000 + ((u16)t << 4), zb_out, 16);
+                zb_map[v] = t;
+                if (next < 255) ++next;
+            }
+            row[c] = t;
+        }
+        vwrite(NTADR(0, r), row, 32);
+    }
+    /* attributs : un bloc de 16 x 16 couvre 4 x 4 px du court */
+    vram_adr(0x23C0);
+    for (r = 0; r < 8; ++r)
+        for (c = 0; c < 8; ++c) {
+            u8 a = 0, qq, p;
+            for (qq = 0; qq < 4; ++qq) {
+                sx = (u8)((wx >> 3) + c + ((qq & 1) ? 0 : 0));
+                sx = (u8)((wx + (c * 2 + (qq & 1)) * 4) >> 3);
+                sy = (u8)((wy + (r * 2 + (qq >> 1)) * 4) >> 3);
+                if (sy > 29) sy = 29;
+                p = (u8)((zb_at[(sy >> 2) * 8 + (sx >> 2)] >> (((sy & 2) << 1) | (sx & 2))) & 3);
+                a |= (u8)(p << (qq * 2));
+            }
+            vram_put(a);
+        }
+    /* sprites (table $0000 pendant le zoom) : trace (tuiles 0 et 15), titre (1...) */
+    spr_begin(); spr_end();
+    vwrite(0x0000, t_mark4, 16);
+    vwrite(15 << 4, t_mark4 + 16, 16);
+    hl_n = 0;
+    for (j = 0; zl[j]; ++j)
+        if ((u8)zl[j] > ' ' && (u8)zl[j] < 0x60)
+            chr_copy(BANK_CHR, chr_data + ((u16)(u8)zl[j] << 4), (u16)(1 + j) << 4, 16);
+    ctrl_swap = 0x18;
+    pal_buf[16 + 9] = 0x0F; pal_buf[16 + 10] = 0x0F; pal_buf[16 + 11] = 0x30;
+    pal_buf[16 + 14] = 0x0F;
+    flash(hl_bk);
+    ppu_on();
+}
+#pragma static-locals(pop)
+
 static void zoom_tick(void)
 {
     u8 i, k, d, ob;
@@ -900,6 +959,7 @@ static void zoom_tick(void)
     /* image agrandie : trace de la balle qui clignote, titre */
     hl_c = (u8)(hl_t - 15);
     if (hl_c == 1) { if (hl_sbin) sfx_crowd(7); else sfx_out(); }
+    if (hl_quick && hl_c == Z4) { zoom4_build(); sfx_menu_ok(); }   /* balle limite : second temps, x 4 (2.74) */
     /* (les sprites agrandis restent ; seuls la trace et le titre changent :
        on les écrit aux emplacements 52 à 63) */
     ob = 208;
@@ -907,6 +967,10 @@ static void zoom_tick(void)
     if (hl_c >= 4) {                    /* trace : centrée sur le point de rebond */
         oam_buf[ob] = (u8)(zy - 3);     /* (y de l'OAM : une ligne plus haut) */
         oam_buf[ob + 1] = hl_n; oam_buf[ob + 2] = 3; oam_buf[ob + 3] = (u8)(zx - 4);
+        if (hl_quick && hl_c >= Z4) {   /* x 4 : ellipse de 12 x 8 en deux sprites */
+            oam_buf[ob] = oam_buf[ob + 4] = (u8)(zy - 5);
+            oam_buf[ob + 3] = (u8)(zx - 8); oam_buf[ob + 5] = 15; oam_buf[ob + 6] = 3; oam_buf[ob + 7] = zx;
+        }
     }
     if (hl_c > 10) {
         /* titre sur une partie unie du court, loin du point visé */
@@ -918,7 +982,7 @@ static void zoom_tick(void)
             ++k;
         }
     }
-    if (hl_c >= (hl_quick ? 50 : 80)) {
+    if (hl_c >= (hl_quick ? Z4 + 60 : 80)) {
         back_to_court();
         if (hl_quick) { hl_quick = 0; rp_done = 1; }   /* dehors de peu : le ralenti s'arrête là (2.73) */
     }

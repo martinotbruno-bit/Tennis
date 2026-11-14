@@ -163,7 +163,6 @@ u16 swp_dst;                        /* destination de swap_put (crt0.s) */
 u8 __fastcall__ swap_put(const u8 *src);   /* crt0.s, banque 13 (far_call) */
 extern u8 cer;                              /* séquence animée en cours (cer.c) */
 extern u8 sc_crit;
-void lbox_tick(void);
 extern u8 hl_quick;
 extern u16 hl_sbf, rp_seq;                          /* balles de set et de match (rules_far.c, 2.71) */
 extern u16 cer_t;

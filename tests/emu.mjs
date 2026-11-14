@@ -33,6 +33,11 @@ class Emu {
     // à chaque trame, sauf pour les tests qui les regardent (cerSkip = false)
     this.cerSkip = true;
     this.cerAddr = this.labels['_cer_skip'];
+    // bandeau du score (2.74) : il attend l'appui d'un joueur humain et
+    // l'ordinateur ne sert pas avant ; il est fermé d'office à chaque trame,
+    // sauf pour les tests qui regardent ce comportement (bandSkip = false)
+    this.bandSkip = true;
+    this.bandDis = this.labels['_band_dis']; this.bandHold = this.labels['_band_hold'];
     // dessin de l'image (fonctions d'origine de jsnes, gardées pour setRender)
     const ppu = this.nes.ppu;
     this._rbg = ppu.renderBgScanline; this._rfp = ppu.renderFramePartially;
@@ -65,6 +70,7 @@ class Emu {
     for (let i = 0; i < n; i++) {
       this.nes.frame(); this.frames++;
       if (this.cerAddr !== undefined) this.nes.cpu.mem[this.cerAddr] = this.cerSkip ? 1 : 0;
+      if (this.bandSkip && this.bandHold !== undefined && this.nes.cpu.mem[this.bandHold]) { this.nes.cpu.mem[this.bandDis] = 1; this.nes.cpu.mem[this.bandHold] = 0; }
       if (each) each(this);
     }
   }
