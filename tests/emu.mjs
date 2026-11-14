@@ -33,6 +33,21 @@ class Emu {
     // à chaque trame, sauf pour les tests qui les regardent (cerSkip = false)
     this.cerSkip = true;
     this.cerAddr = this.labels['_cer_skip'];
+    // dessin de l'image (fonctions d'origine de jsnes, gardées pour setRender)
+    const ppu = this.nes.ppu;
+    this._rbg = ppu.renderBgScanline; this._rfp = ppu.renderFramePartially;
+    this.rendering = true;
+  }
+  // Dessin de l'image : coupé, l'émulation va ~1,5 fois plus vite (le décor
+  // n'est plus dessiné pixel par pixel). Le jeu n'en dépend pas : il ne lit
+  // jamais le « sprite 0 » (seul le bit de fin d'image de PPUSTATUS) ; la RAM
+  // reste identique à l'octet près (vérifié sur 4000 trames de match).
+  // frameBuf et screenshot() demandent le dessin : setRender(true) d'abord.
+  setRender(on) {
+    const ppu = this.nes.ppu;
+    ppu.renderBgScanline = on ? this._rbg : function () {};
+    ppu.renderFramePartially = on ? this._rfp : function () {};
+    this.rendering = on;
   }
   addr(sym) {
     const a = this.labels['_' + sym] ?? this.labels[sym];
@@ -62,6 +77,7 @@ class Emu {
     return t;
   }
   screenshot(file) {
+    if (!this.rendering) throw new Error('screenshot : dessin coupé (setRender(true) avant de jouer les trames)');
     const png = new PNG({ width: 256, height: 240 });
     for (let i = 0; i < 256 * 240; i++) {
       const c = this.frameBuf[i];

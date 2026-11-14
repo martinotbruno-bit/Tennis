@@ -1,5 +1,6 @@
 // Royal Martinot — tests de validation sur émulateur (jsnes).
 // Usage : node emu_test.mjs ../build/royal_martinot.nes
+import fs from 'fs';
 import { Emu } from './emu.mjs';
 
 const ARGS = process.argv.slice(2);
@@ -37,7 +38,7 @@ const MODE = { P1: 0, P2: 1, TEAM: 2, COMP: 3, TRAIN: 4, DEMO: 5 };
 const CFG = { CTRL: 2, LEVEL: 10, GAMES: 17, REPLAYS: 19 };
 
 // démarrage : le générique de lancement est passé avec START, puis écran titre
-function boot() { const e = new Emu(rom); seedHook(e); e.run(40); e.tap('START', 1, 1, 0); e.run(4); e.tap('START', 1, 1, 0); e.run(40); return e; }
+function boot(render = false) { const e = new Emu(rom); e.setRender(render); seedHook(e); e.run(40); e.tap('START', 1, 1, 0); e.run(4); e.tap('START', 1, 1, 0); e.run(40); return e; }
 // Le hasard du jeu (tirage au sort, trajectoires de l'ordinateur) dépend des
 // trames : la moindre trame de plus dans un menu changeait les matchs des
 // tests. La graine est donc fixée à l'appui qui lance le match (A sur la
@@ -87,7 +88,39 @@ function startWith(e, opts) {
   if (app(e) === AS.SCREENS && scr(e) === SS.PRESENT) { e.tap('A'); runUntil(e, () => app(e) === AS.MATCH, 60); e.run(2); }
 }
 function allCpu(e) { const c = e.addr('cfg'); for (let i = 0; i < 4; i++) e.nes.cpu.mem[c + CFG.CTRL + i] = 2; }
-function runUntil(e, pred, max, each) { let n = 0; while (!pred() && n < max) { if (each) each(); e.run(1); n++; } return n < max; }
+// Attentes à plafond adaptatif : chaque appel (repéré par sa ligne) retient
+// le nombre de trames qu'il a pris quand il a abouti (until_frames.json) ; son
+// plafond devient le double de ce maximum habituel (600 trames au moins, et
+// jamais plus que le plafond écrit dans le test). Une attente qui ne vient pas
+// échoue donc en quelques secondes au lieu de dérouler 10 à 30 minutes de jeu.
+// UNTIL_FULL=1 : plafonds écrits dans le test (après un changement du jeu qui
+// allonge une séquence, pour réapprendre les durées).
+const UNTIL_FILE = new URL('./until_frames.json', import.meta.url);
+let untilKnown = {};
+try { untilKnown = JSON.parse(fs.readFileSync(UNTIL_FILE, 'utf8')); } catch { untilKnown = {}; }
+const untilSeen = {};
+function callSite() {
+  const l = (new Error().stack || '').split('\n').find(s => s.includes('emu_test.mjs') && !s.includes('runUntil') && !s.includes('callSite'));
+  const m = l && l.match(/emu_test\.mjs:(\d+)/);
+  return m ? m[1] : '?';
+}
+function runUntil(e, pred, max, each) {
+  const site = callSite(), known = untilKnown[site];
+  const cap = (!process.env.UNTIL_FULL && known !== undefined) ? Math.min(max, Math.max(600, known * 2)) : max;
+  let n = 0;
+  while (!pred() && n < cap) { if (each) each(); e.run(1); n++; }
+  if (n < cap) { if (!(untilSeen[site] >= n)) untilSeen[site] = n; return true; }
+  if (cap < max) console.log(`  (attente ligne ${site} arrêtée à ${cap} trames : d'habitude ${known} au plus)`);
+  return false;
+}
+function untilSave() {
+  if (!Object.keys(untilSeen).length) return;
+  let cur = {};
+  try { cur = JSON.parse(fs.readFileSync(UNTIL_FILE, 'utf8')); } catch { cur = {}; }
+  for (const [k, v] of Object.entries(untilSeen)) if (!(cur[k] >= v)) cur[k] = v;
+  const tmp = UNTIL_FILE.pathname + '.' + process.pid;
+  fs.writeFileSync(tmp, JSON.stringify(cur, null, 0)); fs.renameSync(tmp, UNTIL_FILE.pathname);
+}
 let spChecks = 0;
 function spOk(e) {
   const wf = e.addr('wait_frame'), pc = e.nes.cpu.REG_PC + 1;
@@ -174,9 +207,16 @@ const skipIntro = (e) => {
 // de l'écran d'étape au match : présentation, A, puis (premier tour d'un
 // tournoi du Grand Martinot) l'image du tournoi, juste avant le match, A.
 // Renvoie la fanfare et les textes de l'image (0 / '' sans image).
+// jusqu'à l'affiche VS ; avant une finale, le survol du stade (2.73) est passé avec A
+function toPresent(e, max) {
+  runUntil(e, () => scr(e) === SS.PRESENT || scr(e) === 12, max);
+  if (scr(e) === 12) { e.run(10); e.tap('A'); runUntil(e, () => scr(e) === SS.PRESENT, 120); }
+}
 function toMatch(e) {
   const row = (y) => e.text(0, y, 32).replace(/\0/g, ' ').trim();
-  e.tap('A'); runUntil(e, () => scr(e) === SS.PRESENT, 60); e.run(3); e.tap('A');
+  e.tap('A'); runUntil(e, () => scr(e) === SS.PRESENT || scr(e) === 12, 60);
+  if (scr(e) === 12) { e.run(10); e.tap('A'); runUntil(e, () => scr(e) === SS.PRESENT, 120); }   /* finale : survol du stade (2.73), A passe */
+  e.run(3); e.tap('A');
   runUntil(e, () => app(e) === AS.MATCH || (scr(e) === 10 && litScr(e)), 120);
   const ann = { mus: 0, name: '', rank: '', head: '', tiles: 0 };
   if (app(e) !== AS.MATCH && scr(e) === 10) {
@@ -734,7 +774,7 @@ console.log('Présentation et pause');
 }
 {
   // affiche VS (2.63) : glissade des bustes par l'interruption par ligne de la MMC3
-  const e = boot(); toMenu(e); e.tap('START');
+  const e = boot(true); toMenu(e); e.tap('START');   /* (cette vérification lit l'image) */
   for (let i = 0; i < 80 && !(e.peek('split_on') && e.peek('split_o') > 20 && e.peek('split_o') < 60); i++) e.run(1);
   e.run(1);
   const fb = e.frameBuf, bg = fb[100 * 256 + 128];
@@ -1345,7 +1385,7 @@ console.log('Vitesse du jeu, coups gagnants, smash sauté, musiques');
     runUntil(e, () => app(e) === AS.SCREENS, 60); e.run(20); e.tap('A'); e.run(40);
   }
   check(scr(e) === SS.COMP && e.text(3, 5, 6) === 'FINALE' && e.peek('music_cur') === 6, 'écran de la finale : thème de la finale');
-  e.tap('A'); runUntil(e, () => scr(e) === SS.PRESENT && litScr(e), 90);
+  e.tap('A'); toPresent(e, 90); runUntil(e, () => litScr(e), 90);
   check(scr(e) === SS.PRESENT && e.peek('music_cur') === 6, 'présentation de la finale : le thème continue');
   e.tap('A'); runUntil(e, () => app(e) === AS.MATCH, 60);
   check(app(e) === AS.MATCH && e.peek('music_cur') === 0, 'finale : silence pendant le match');
@@ -2511,7 +2551,7 @@ for (const type of [5, 6]) {
   const seen = [];
   for (let m = 0; m < 8 && scr(e) === SS.COMP; m++) {
     const fin = e.text(0, 6, 32).replace(/\0/g, ' ').trim() === 'FINALE';
-    e.tap('A'); runUntil(e, () => scr(e) === SS.PRESENT, 60); e.run(3);
+    e.tap('A'); toPresent(e, 60); e.run(3);
     seen.push(`${fin ? 'F' : '-'}${e.peek('cfg', 16)}:${e.text(18, 25, 6).trim()}`);
     e.tap('A'); runUntil(e, () => app(e) === AS.MATCH || (scr(e) === 10 && litScr(e)), 120);
     if (app(e) !== AS.MATCH) { e.tap('A'); runUntil(e, () => app(e) === AS.MATCH, 120); }   /* image du tournoi */
@@ -2669,4 +2709,5 @@ console.log('Compensation 50 Hz (PAL)');
 secEnd();
 if (LIST) process.exit(0);
 console.log(`\n${passes} vérifications réussies, ${fails} échec(s) ; pile contrôlée ${spChecks} fois`);
+untilSave();
 process.exit(fails ? 1 : 0);
