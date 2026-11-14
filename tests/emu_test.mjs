@@ -99,10 +99,13 @@ const UNTIL_FILE = new URL('./until_frames.json', import.meta.url);
 let untilKnown = {};
 try { untilKnown = JSON.parse(fs.readFileSync(UNTIL_FILE, 'utf8')); } catch { untilKnown = {}; }
 const untilSeen = {};
+// (clé : le texte de la ligne de l'appel, et non son numéro, qui change dès
+// qu'on ajoute un test plus haut)
+const SRC_LINES = fs.readFileSync(new URL(import.meta.url), 'utf8').split('\n');
 function callSite() {
   const l = (new Error().stack || '').split('\n').find(s => s.includes('emu_test.mjs') && !s.includes('runUntil') && !s.includes('callSite'));
   const m = l && l.match(/emu_test\.mjs:(\d+)/);
-  return m ? m[1] : '?';
+  return m ? SRC_LINES[Number(m[1]) - 1].trim().slice(0, 160) : '?';
 }
 function runUntil(e, pred, max, each) {
   const site = callSite(), known = untilKnown[site];
@@ -110,7 +113,7 @@ function runUntil(e, pred, max, each) {
   let n = 0;
   while (!pred() && n < cap) { if (each) each(); e.run(1); n++; }
   if (n < cap) { if (!(untilSeen[site] >= n)) untilSeen[site] = n; return true; }
-  if (cap < max) console.log(`  (attente ligne ${site} arrêtée à ${cap} trames : d'habitude ${known} au plus)`);
+  if (cap < max) console.log(`  (attente arrêtée à ${cap} trames, d'habitude ${known} au plus : ${site.slice(0, 70)})`);
   return false;
 }
 function untilSave() {
@@ -2185,7 +2188,10 @@ console.log('Animation des joueurs');
   };
   let last = [-1, -1], still = [0, 0], prev = [0, 0];
   // (jusqu'à 6 min si aucune volée ni amortie : depuis la 2.61, le CPU ne joue l'amortie que de l'intérieur du court)
-  for (let f = 0; f < 60 * 60 * 3 || (f < 60 * 60 * 6 && !poses.has(13) && !poses.has(14)); f++) {
+  for (let f = 0; f < 60 * 60 * 3 || (f < 60 * 60 * 10 && !poses.has(13) && !poses.has(14)); f++) {
+    /* (2.74) volée et amortie sont rares (selon le hasard du match) : après
+       3 minutes sans elles, le joueur 0 monte au filet */
+    if (f > 60 * 60 * 3 && e.peek('ms') === 2) e.poke('ai_net', 1, 0);
     e.run(1);
     for (let p = 0; p < 2; p++) {
       const k = e.peek('pose_cache', p) & 31;
@@ -2200,7 +2206,7 @@ console.log('Animation des joueurs');
   }
   const has = (a, b) => a.join(',').includes(b);
   check((poses.has(8) || poses.has(22)) && poses.has(23) && poses.has(24) && poses.has(10), `revers à deux mains (préparation, impact, fin) et impact du service joués (${[...poses].sort((a, b) => a - b)})`);
-  check([11, 12, 15, 19, 20].every((k) => poses.has(k)) && [14, 13].some((k) => poses.has(k)), 'préparation, impact, volée ou amortie, rebonds avant le service, course en 4 temps');
+  check([11, 12, 15, 19, 20].every((k) => poses.has(k)) && [14, 13].some((k) => poses.has(k)), `préparation, impact, volée ou amortie, rebonds avant le service, course en 4 temps (manque : ${[11, 12, 15, 19, 20, 13, 14].filter((k) => !poses.has(k))})`);
   check([16, 17, 18].filter((k) => poses.has(k)).length >= 2 && poses.has(7), 'après le point : joie, déception, colère ou fatigue');
   check(has(seq[0], '5,10,4') || has(seq[1], '5,10,4'), 'service en 3 temps : lancer, impact bras tendu, accompagnement');
   check(split > 3, `split-step quand l'adversaire frappe (${split})`);
@@ -2514,7 +2520,7 @@ console.log('Séquences animées du match');
     // (sans ralentis : avec un ralenti, les chaises n'arrivent qu'après lui)
     const e = boot(); startWith(e, { FMT: 3, SURF: 1, REPLAY: 0 }); allCpu(e); e.run(20); e.cerSkip = false;
     // les chaises apparaissent dès la fin de l'échange qui amène le changement de côté
-    runUntil(e, () => e.peek('cer') === 0xFD || e.peek('cer') === 4, 60 * 120);
+    runUntil(e, () => e.peek('cer') === 0xFD || e.peek('cer') === 4, 60 * 240);   /* (2.74 : bandeau entre les points, jeux plus longs) */
     e.run(2);
     const early = e.peek('ms') === 3 && oamHas(e, CHAIR);
     runUntil(e, () => e.peek('cer') === 4, 1500);
