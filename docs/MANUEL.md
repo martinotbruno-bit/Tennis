@@ -42,6 +42,13 @@ Depuis la version 2.59, le fond des menus change à chaque allumage : terre batt
 
 **HAUT/BAS** choisit une ligne, **GAUCHE/DROITE** change la valeur. **START** lance la partie, **B** revient au titre. Les lignes affichées dépendent du mode. Tout le contenu est disponible dès le départ.
 
+**Depuis la version 2.76**, les choix qui se voient ne sont plus dans cette liste : après **START**, des **pages illustrées** se suivent, dans l'ordre :
+1. **le tournoi** (compétition TOURNOI : un des 7 tournois Martinot, sur son image d'annonce ; il impose la surface et le lieu) ;
+2. **les joueurs** : l'affiche du match, avec les bustes, les noms et les styles ; le joueur que l'on choisit est entre flèches (en compétition, il se choisit donc après le type de compétition) ;
+3. **le lieu**, puis **la surface** : le vrai court en aperçu, avec la lumière des conditions choisies.
+
+**GAUCHE/DROITE** change le choix, **A** passe à la page suivante, **B** revient à la précédente (ou aux réglages), **START** valide tout d'un coup. La ligne **JOUEUR 2** (CPU ou MANETTE 2) choisit qui joue le partenaire en double, ou, en compétition en simple, inscrit **un 2e joueur humain** (voir § 7).
+
 | Ligne | Choix |
 |---|---|
 | MODE | 1 joueur contre CPU · 2 joueurs adversaires · En équipe · Compétition · Entraînement · Démo |
@@ -126,7 +133,7 @@ Le lancer reste visible quelle que soit votre position, y compris quand vous ser
 - Points 0, 15, 30, 40, égalité, avantage ; il faut deux points d'écart pour gagner le jeu.
 - Sets de 6 jeux avec deux jeux d'écart ; **jeu décisif** en 7 points à 6-6 (à 4-4 en format rapide).
 - Le service alterne à chaque jeu, du côté droit puis gauche.
-- **Fautes** : deux fautes de service font une **double faute**. Un service qui touche la bande du filet puis tombe dans le bon carré est un **let** : il est à remettre, sans faute.
+- **Fautes** : deux fautes de service font une **double faute**. Un service qui touche la bande du filet puis tombe dans le bon carré est un **let** : il est à remettre, sans faute. Depuis la version 2.76, une balle faute (service faux, balle dehors) peut être renvoyée si votre coup est armé et qu'elle est à portée, comme on le fait sur un vrai court : le point reste joué.
 - Une balle qui touche la bande pendant l'échange et passe reste en jeu.
 - **Changement de côté** après chaque jeu impair, tous les 6 points du jeu décisif, et en fin de set si le total de jeux est impair.
 - **En double** :
@@ -182,7 +189,7 @@ Le lancer reste visible quelle que soit votre position, y compris quand vous ser
 ### Les moments du match (version 2.52)
 
 - **Entrée des joueurs** : au début de chaque match, les joueurs sortent du tunnel (en bas à droite), longent le court jusqu'à leur place et saluent le public, raquette levée. Puis vient le **tirage au sort** : l'arbitre attribue pile ou face à chaque joueur (par exemple « ALEX : FACE », « MAYA : PILE »), lance la pièce et annonce le résultat (« FACE ! ALEX SERT ») : le gagnant sert le premier jeu. En marchant, un joueur qui s'éloigne vers le fond est vu de dos.
-- **Changement de côté** : dès la fin de l'échange, les chaises apparaissent près de l'arbitre ; les joueurs s'y rendent et s'assoient, de profil, tournés vers le court, serviette autour du cou, et boivent à la gourde pendant que le score s'affiche ; puis ils rejoignent l'autre côté du court en passant à côté du poteau du filet. À la fin d'un set, l'écran de fin de set reste comme avant.
+- **Changement de côté** : dès la fin de l'échange, les chaises apparaissent près de l'arbitre ; les joueurs s'y rendent et s'assoient, de profil, tournés vers le court, serviette autour du cou, et boivent à la gourde pendant que le score s'affiche ; puis ils rejoignent l'autre côté du court en passant à côté du poteau du filet. À la fin d'un set (version 2.76), les joueurs vont aussi s'asseoir, un bandeau au milieu de l'écran annonce le set (« 1ER SET / POUR ALEX 6-4 »), puis l'écran de fin de set arrive en fondu, sur une musique d'ambiance douce ; à sa fermeture, les joueurs repartent des chaises vers le court.
 - **Balle de match** : le vainqueur fête d'abord le point comme d'habitude, puis tombe à genoux, poings levés, et s'allonge sur le dos, raquette lâchée près de lui. Ensuite, tous vont au filet se serrer la main, puis se tournent vers l'arbitre pour le saluer.
 - **A** ou **START** passe chacune de ces séquences.
 
@@ -221,7 +228,7 @@ Les joueurs courent de profil quand ils se déplacent sur le côté, et l'on ent
 Conditions :
 - **Nuit** : décor assombri.
 - **Pluie** : gouttes à l'écran, rebonds plus bas et balle qui glisse.
-- **Crépuscule** (version 2.71) : le soleil se couche pendant le match. Au fil des jeux, la lumière passe du plein jour à une lumière chaude de fin d'après-midi, puis rose-violette au coucher du soleil, plus sombre ; enfin les projecteurs s'allument (la lumière d'un match de nuit). Toute l'image change de teinte, joueurs compris, comme sous un vrai éclairage.
+- **Crépuscule** (version 2.71) : le soleil se couche pendant le match. Au fil des jeux, la lumière passe du plein jour à une lumière chaude de fin d'après-midi, puis rose-violette au coucher du soleil, plus sombre ; enfin les projecteurs s'allument (la lumière d'un match de nuit). Toute l'image change de teinte, joueurs compris, comme sous un vrai éclairage. Depuis la version 2.76, à chaque changement de lumière, au changement de côté suivant, un plan plein écran montre le soleil couchant façon jeux de course des années 80 (soleil rayé, ciel en dégradé) : SOLEIL COUCHANT, SOLEIL ROUGE, LA NUIT TOMBE ; le premier plan dépend de la surface et du lieu Martinot (tour Eiffel, Big Ben, gratte-ciel, montagnes enneigées, ou la mer et le Pain de Sucre de Rio). A, B ou START le passe.
 
 ## 7. Modes
 
@@ -249,12 +256,15 @@ Conditions :
 Dans le menu, quand le curseur est sur la ligne COMPETITION, le **fonctionnement de la compétition choisie** est expliqué en quatre lignes, en bas de l'écran.
 
 Toutes les compétitions se jouent **en simple ou en double** (ligne JEU) :
-- en double, vous choisissez votre partenaire (ligne PARTENAIRE), puis qui le joue (ligne JOUE PAR) : l'ordinateur ou la **manette 2**. À deux joueurs humains, vous formez une seule équipe contre les équipes CPU ;
+- en double, vous choisissez votre partenaire (sur la page des joueurs), puis qui le joue (ligne JOUEUR 2) : l'ordinateur ou la **manette 2**. À deux joueurs humains, vous formez une seule équipe contre les équipes CPU ;
+- **en simple, à deux (version 2.76)** : avec JOUEUR 2 : MANETTE 2, un ami s'inscrit aussi (son personnage se choisit sur la page des joueurs), dans l'autre moitié du tableau (ou l'autre poule). Chacun joue ses matchs, à tour de rôle : l'écran d'étape indique « A TOI, JOUEUR 1 (MANETTE 1) » ou « A TOI, JOUEUR 2 (MANETTE 2) ». Quand vous vous rencontrez, le match se joue à deux manettes. Si l'un est éliminé, l'autre continue ; le mieux classé monte sur le podium. Le code de reprise ne garde que le joueur 1 ;
 - les autres équipes sont tirées au sort parmi les 16 personnages d'origine, qui sont tous différents (Margaux, MAX, LOLA, PAPI et TITOU sont réservés aux joueurs).
 
-Quand vous gagnez une compétition, vous montez sur le **podium**, au centre de l'écran et sur le court de la compétition. Vous êtes sur la plus haute marche, le finaliste (ou le 2e du classement) à gauche, le 3e à droite, tous **en grand**. La coupe géante est brandie au-dessus de votre tête sous une pluie de confettis, sur la fanfare de victoire, pendant que **5 feux d'artifice** éclatent. Les noms sont écrits sous les marches. En double, vous montez à deux sur la plus haute marche ; pour les autres équipes, seul le capitaine monte, et le nom de l'équipe est écrit dessous. Ensuite, place au calme : l'écran reste affiché jusqu'à A.
+Au début de chaque match, les joueurs entrent et se présentent devant l'arbitre, de part et d'autre du filet, pour le **tirage au sort** (version 2.76). Le gagnant choisit sur un bandeau, avec sa manette : **A** pour servir, **B** pour choisir le côté (puis **A** rester, **B** changer ; l'adversaire sert alors). L'ordinateur, s'il gagne, choisit de servir. A ou START passe la cérémonie (le gagnant sert).
 
-L'écran d'étape montre le prochain adversaire (niveau, surface), le tableau ou le classement, et le **code de reprise**. Dans un tournoi à élimination, le **tableau** relie les joueurs par des traits dorés jusqu'au vainqueur de chaque tour déjà joué ; votre joueur est en or. Les matchs entre joueurs CPU sont simulés selon leur niveau.
+Quand vous gagnez une compétition, vous montez sur le **podium**, au centre de l'écran et sur le court de la compétition. Vous êtes sur la plus haute marche, le finaliste (ou le 2e du classement) à gauche, le 3e à droite, tous **en grand**. La coupe géante est brandie au-dessus de votre tête sous une pluie de confettis, sur la fanfare de victoire, pendant que **5 feux d'artifice** éclatent. Les noms sont écrits sous les marches. En double, vous montez à deux sur la plus haute marche ; pour les autres équipes, seul le capitaine monte, et le nom de l'équipe est écrit dessous. Ensuite, place au calme : l'écran reste affiché jusqu'à A. Puis (version 2.76) une image en haute définition : **le champion brandit la coupe** au-dessus de sa tête, sous les flashs des photographes et les confettis.
+
+L'écran d'étape montre, sur une première page, le prochain adversaire (niveau, surface, lieu) et le **code de reprise** ; **DROITE** affiche le tableau ou le classement, **GAUCHE** revient (version 2.76). Dans un tournoi à élimination, le **tableau** relie les joueurs par des traits dorés jusqu'au vainqueur de chaque tour déjà joué ; votre joueur est en or. Les matchs entre joueurs CPU sont simulés selon leur niveau.
 
 ### Entraînement
 

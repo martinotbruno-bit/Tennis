@@ -171,6 +171,11 @@ Pour chaque ligne, lancez un match et regardez l'écran pendant une dizaine de s
 | 10.33 | Joueur personnalisé (version 2.75) | Compétition : écran TON JOUEUR, changer nom, sexe, peau, cheveux, tenue ; le joueur apparaît ainsi au tableau et en match ; éteindre la console, rallumer : le profil revient à la compétition suivante | ☐ |
 | 10.34 | Changement de côté (version 2.76) | Le bandeau reste affiché de la fin du point aux statistiques ; les chaises apparaissent quand il est monté ; START assis relance le jeu sans pause | ☐ |
 | 10.35 | Défaite (version 2.76) | Perdre contre l'ordinateur : image du perdant à genoux, « DEFAITE » | ☐ |
+| 10.36 | Crépuscule (version 2.76) | Match au crépuscule : au changement de côté qui suit un changement de lumière, plan du soleil couchant net (couleurs, pas de tuiles parasites), retour au court propre | ☐ |
+| 10.37 | Pages de choix (version 2.76) | Après les réglages : joueurs (affiche), lieu et surface (aperçu du court), tournoi Martinot ; GAUCHE/DROITE, A, B, START ; pas d'écran figé ni de couleurs fausses au retour au menu | ☐ |
+| 10.38 | Fin de set (version 2.76) | Les joueurs s'assoient, bandeau « 1ER SET », écran du set en fondu, musique douce ; au retour, les deux (ou quatre) joueurs repartent sur le court | ☐ |
+| 10.39 | Tirage au sort (version 2.76) | Les joueurs face à l'arbitre au filet ; bandeau de choix du gagnant net, manette du gagnant seulement | ☐ |
+| 10.40 | Compétition à deux (version 2.76) | JOUEUR 2 : MANETTE 2 en simple : chacun joue ses matchs avec sa manette ; match entre les deux à deux manettes | ☐ |
 
 ## 11. Ce qu'il faut renvoyer
 

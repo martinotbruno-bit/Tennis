@@ -3017,6 +3017,70 @@ console.log('Version 2.76 : crépuscule et balle faute renvoyée');
   check(shown && okNt && stAfter === stBefore + 1, `crépuscule : plan du soleil couchant au changement de côté (image ${okNt ? 'chargée' : 'absente'}), lumière ${stBefore} -> ${stAfter}`);
 }
 }
+if (sec('Version 2.76 : parcours, tirage, fin de set, compétition à deux')) {
+console.log('Version 2.76 : parcours, tirage, fin de set, compétition à deux');
+{
+  // pages de choix après les réglages : joueurs (affiche VS), lieu, surface
+  const e = boot(); e.pickSkip = false; toMenu(e); setOpts(e, { MODE: MODE.P1, P1: 0, P2: 1, ENV: 0, SURF: 0 });
+  check(rowOf(e, O.P1) < 0 && rowOf(e, O.SURF) < 0 && rowOf(e, O.ENV) < 0, 'réglages : plus de lignes joueurs, lieu, surface');
+  e.tap('START'); runUntil(e, () => scr(e) === SS.PICK, 60); e.run(40);
+  const t1 = e.text(3, 1, 10);
+  e.tap('RIGHT'); e.run(40);
+  const p1 = e.peek('opt_val', O.P1);
+  e.tap('A'); e.run(40); const t2 = e.text(3, 1, 14);
+  e.tap('A'); e.run(30); const t3 = e.text(2, 1, 28);
+  e.tap('RIGHT'); e.run(30); const env = e.peek('opt_val', O.ENV);
+  e.tap('A'); e.run(30); const t4 = e.text(2, 1, 28);
+  e.tap('B'); e.run(30); const back = e.text(2, 1, 28);
+  e.tap('START'); runUntil(e, () => scr(e) === SS.PRESENT, 120);
+  check(t1 === 'TON JOUEUR' && p1 !== 0 && p1 !== 1 && t2.startsWith('TON ADVERSAIRE') && t3.includes('LIEU') && env === 1 && t4.includes('SURFACE') && back.includes('LIEU') && scr(e) === SS.PRESENT,
+    `pages : joueur (${p1}), adversaire, lieu (${env}), surface ; B revient, START valide (« ${t1} », « ${t2.trim()} », « ${t3.trim()} », « ${t4.trim()} »)`);
+}
+{
+  // tirage au sort : devant l'arbitre, le gagnant (humain) choisit sur le bandeau
+  const e = boot(); e.cerSkip = false; toMenu(e); setOpts(e, { MODE: MODE.P1, FMT: 0 }); e.tap('START');
+  passCustom(e); runUntil(e, () => scr(e) === SS.PRESENT, 120); e.run(10); e.tap('A'); runUntil(e, () => app(e) === AS.MATCH, 100);
+  const c = e.addr('cfg'); e.nes.cpu.mem[c + CFG.CTRL + 1] = 0;   // (les deux joueurs à la manette 1 : le gagnant est humain)
+  let atNet = false, band = false;
+  runUntil(e, () => { if (e.peek('cer') === 3 && Math.abs((e.peek('ply', 0) | (e.peek('ply', 1) << 8)) / 64 - 132) < 20) atNet = true; return e.peek('cer') === 11 && e.peek('band_vis') === 3; }, 900);
+  const nt1 = (y) => String.fromCharCode(...e.nes.ppu.vramMem.slice(0x2400 + y * 32 + 2, 0x2400 + y * 32 + 30));
+  band = e.peek('band_vis') === 3 && nt1(26).includes('GAGNE LE TIRAGE');
+  const srv = e.peek('sc_server'), sw = e.peek('sc_swap');
+  e.tap('B'); e.run(20); const q2 = nt1(27);
+  e.tap('B'); runUntil(e, () => e.peek('cer') === 0, 300);
+  check(atNet && band && q2.includes('CHANGER') && e.peek('sc_swap') === (sw ^ 1) && e.peek('sc_server') === (srv ^ 1) && e.peek('ms') === 0,
+    `tirage : au filet, bandeau « GAGNE LE TIRAGE », B puis B : côtés changés, l'adversaire sert (« ${q2.trim()} »)`);
+}
+{
+  // fin de set : les joueurs s'assoient, bandeau du set, puis l'écran du set ;
+  // au retour, ils repartent des chaises
+  const e = boot(); e.cerSkip = false; startWith(e, { FMT: 1, REPLAY: 0 }); allCpu(e);
+  let st = 0, seated = false, toScreen = false;
+  runUntil(e, () => { if (e.peek('brk_pend') && e.peek('st_t') === 8) st = 1; if (e.peek('cer') === 5 && e.peek('brk_pend')) seated = true; return app(e) === AS.SCREENS && scr(e) === SS.SETBREAK; }, 60 * 60 * 15,
+    () => { if (e.peek('cer') === 1 || e.peek('cer') === 2 || e.peek('cer') === 3 || e.peek('cer') === 11) e.poke('cer_skip', 1); });
+  toScreen = scr(e) === SS.SETBREAK && e.text(8, 7, 4) === 'SETS';
+  e.run(30); e.tap('A'); runUntil(e, () => app(e) === AS.MATCH, 60); e.run(2);
+  check(st && seated && toScreen && e.peek('cer') === 6, `fin de set : bandeau du set (${st}), assis (${seated}), écran du set (${toScreen}), retour aux places depuis les chaises (cer ${e.peek('cer')})`);
+}
+{
+  // compétition à deux joueurs humains : chacun ses matchs, puis la finale à deux manettes
+  const e = boot(); startWith(e, { MODE: MODE.COMP, COMP: 0, TYPE: 0, CPART: 1, P1: 0, P2: 5, FMT: 3 });
+  skipIntro(e);
+  const seq = []; let duo = 0;
+  for (let m = 0; m < 8 && scr(e) === SS.COMP; m++) {
+    seq.push(e.peek('c_me'));
+    toMatch(e);
+    if (app(e) !== AS.MATCH) break;
+    const c = e.addr('cfg');
+    if (e.nes.cpu.mem[c + CFG.CTRL] !== 2 && e.nes.cpu.mem[c + CFG.CTRL + 1] !== 2) duo++;
+    e.poke('sc_winner', 0); e.poke('sc_over', 1); e.poke('ms', 4); e.poke('hl_fin', 1); e.poke('ms_timer', 2);
+    runUntil(e, () => app(e) === AS.SCREENS, 60); e.run(20);
+    e.tap('A'); e.run(40); skipIntro(e);
+  }
+  check(e.peek('c_h2') === 4 && seq.join('') === '01100' && duo === 1 && scr(e) === SS.COMP_END && e.peek('c_rank') === 1,
+    `compétition à deux : tours ${seq.join('')} (0 joueur 1, 1 joueur 2), finale à deux manettes (${duo}), podium`);
+}
+}
 if (sec('Compensation 50 Hz (PAL)')) {
 console.log('Compensation 50 Hz (PAL)');
 {
