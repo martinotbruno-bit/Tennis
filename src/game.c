@@ -1000,10 +1000,14 @@ void court_reload(void)
 }
 
 /* Reprise après l'écran de fin de set : le score des sets dans le bandeau */
+void cer_back(void);                   /* cer.c */
+extern u8 st_t;                        /* train.c */
 void match_resume(void)
 {
     music_play(MUS_NONE);              /* jamais de musique pendant le match */
     court_load();
+    bank_call(BANK_SWAP, cer_back);    /* (2.76) assis aux chaises : ils repartent sur le court */
+    st_t = 0;                          /* (bandeau du set : écrit à nouveau au prochain set) */
     score_recap();
     bank_call(BANK_MDRAW, match_draw);
     ppu_on();
@@ -1069,9 +1073,12 @@ static void after_point(void)
             /* (2.76) plus de jingle bi-ton après chaque point (avant le 1er service) */
         }
     }
-    if (ev & EV_CHANGE) {
+    /* (2.76) fin de set : les joueurs vont s'asseoir (changement de côté ou
+       non), le set est annoncé au centre, puis l'écran du set en fondu */
+    if (ev & EV_SET) bank_call(BANK_SWAP, cer_save);
+    else if (ev & EV_CHANGE) {
         set_msg("CHANGEMENT", "DE COTE", 90);
-        if (!(ev & EV_SET)) bank_call(BANK_SWAP, cer_save);   /* (fin de set : écran à part) */
+        bank_call(BANK_SWAP, cer_save);
     }
     place_for_serve();
     if (cer) bank_call(BANK_SWAP, cer_change);   /* les joueurs vont s'asseoir */
@@ -1112,6 +1119,7 @@ u8 match_tick(void)
     /* séquence animée (entrée, changement de côté, fin du match) */
     if (cer && cer < 0xF0) {
         bank_call(BANK_SWAP, cer_tick);
+        if (brk_pend == 2 || (brk_pend && !cer)) { brk_pend = 0; return 2; }   /* (2.76) fin de set : assis, puis l'écran du set */
         if (ms == MS_OVER) {
             if (ms_timer > 1) --ms_timer;
             if (win_party()) fw_sound(ms_timer);
@@ -1179,7 +1187,7 @@ u8 match_tick(void)
             set_msg("RALENTI", "A : PASSER", 255);
         } else if (--ms_timer == 0) {
             after_point();
-            if (brk_pend) { brk_pend = 0; return 2; }      /* fin de set : écran récapitulatif */
+            if (brk_pend && !cer) { brk_pend = 0; return 2; }   /* fin de set sans passage aux chaises : écran du set */
         }
     } else if (ms == MS_OVER) {
         if (--ms_timer == 0) return match_end();

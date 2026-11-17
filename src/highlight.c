@@ -290,6 +290,8 @@ extern u8 hl_flags;
 #pragma zpsym("hl_flags")
 static void pause_tick(void);
 void mp_tick(void);
+void st_tick(void);                     /* bandeau du set (train.c, 2.76) */
+extern u8 brk_pend;
 extern u8 mp_t;
 #pragma zpsym("mp_t")
 void band_draw(void)
@@ -300,6 +302,9 @@ void band_draw(void)
     if (hl_flags & 1) return;                /* (pause : son bandeau seulement) */
     /* balle de match (2.75) : annoncée quand le serveur se met en place, à
        chaque balle de match (remise à zéro à la fin de chaque point) */
+    /* (2.76) fin de set : bandeau central du set pendant le passage aux
+       chaises (train.c), puis l'écran du set */
+    if (brk_pend && (cer == 4 || cer == CER_SEAT)) { bank_call(BANK_TRAIN, st_tick); band_hold = 1; voice_tick(); return; }
     if (cfg.mode == GM_MATCH && !cfg.demo) {
         if (ms == MS_DEAD && end_reason == END_POINT) hl_flags &= (u8)~2;
         else bank_call(BANK_TRAIN, mp_tick);        /* (bandeau central, train.c) */

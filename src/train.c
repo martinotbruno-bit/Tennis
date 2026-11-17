@@ -475,6 +475,54 @@ void mp_tick(void)
 }
 
 /* ---------------------------------------------------------------------- */
+/* Fin de set (2.76) : pendant que les joueurs vont s'asseoir, le bandeau   */
+/* central (comme celui de la balle de match) annonce « 1ER SET » et       */
+/* « POUR ALEX 6-4 » ; puis l'écran du set en fondu (cer.c, game.c).       */
+/* st_t : 0 rien, 1 à 7 écriture, 8 affiché (remis à 0 par match_resume).   */
+/* ---------------------------------------------------------------------- */
+u8 st_t;
+void st_tick(void)
+{
+    u8 i, r, n, w, k;
+    char b[32];
+    if (!st_t) {
+        if (band_vis) { split_stop(); band_vis = 0; }
+        band_dis = 1;
+        st_t = 1;
+    }
+    if (st_t < 8) {
+        r = (u8)(st_t - 1);
+        n = 0; while (n < 5 && (sc_hist[n][0] | sc_hist[n][1])) ++n;
+        if (!n) n = 1;
+        w = (u8)(sc_hist[n - 1][1] > sc_hist[n - 1][0]);
+        memset(b, 0, 32);
+        if (r == 1 || r == 4) { memset(b + 1, T_RULE, 30); }
+        else if (r == 2) {
+            b[12] = (char)('0' + n);
+            if (n == 1) memcpy(b + 13, "ER SET", 6); else memcpy(b + 13, "E SET", 5);
+        } else if (r == 3) {
+            memcpy(b + 6, "POUR ", 5);
+            team_label(cfg.chr[w], cfg.doubles ? cfg.chr[w + 2] : 255, b + 11);
+            for (k = 11; b[k]; ++k) ;
+            k = (u8)(k + 2);
+            b[k] = (char)('0' + sc_hist[n - 1][w]); b[k + 1] = '-'; b[k + 2] = (char)('0' + sc_hist[n - 1][w ^ 1]);
+        }
+        if (r == 6) {
+            memset(b, 0x55, 16);
+            if (!vbuf_raw(0x27C0 + 24, (const u8 *)b, 16)) return;
+        } else {
+            if (vram_len + 40 > VBUF_MAX) return;
+            vbuf_raw((u16)(0x2400 + (MP_ROW + r) * 32), (const u8 *)b, 16);
+            vbuf_raw((u16)(0x2400 + (MP_ROW + r) * 32 + 16), (const u8 *)b + 16, 16);
+        }
+        if (++st_t == 8) { cband_on(47); sfx_crowd(4); }
+        return;
+    }
+    /* rien par-dessus le bandeau (comme pour la balle de match) */
+    for (i = 0; i < 64; ++i) { r = oam_buf[i * 4]; if (r >= MP_ROW * 8 - 1 && r < (MP_ROW + 6) * 8) oam_buf[i * 4] = 0xFF; }
+}
+
+/* ---------------------------------------------------------------------- */
 /* Rebond (2.76, appelés par ball_bounce, game.c)                          */
 extern u8 sc_swap;
 #define side_of(t) ((u8)(((t) & 1) ^ sc_swap))

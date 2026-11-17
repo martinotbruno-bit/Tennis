@@ -22,7 +22,8 @@
 #include "audio.h"
 #include "assets.h"
 extern u8 hl_mode;                 /* plan de la ramasseuse (highlight.c, 2.73) */
-extern u8 sun_pend;                /* crépuscule : nouvelle lumière en attente (highlight.c, 2.76) */
+extern u8 sun_pend;
+extern u8 brk_pend;                 /* fin de set en attente (game.c, 2.76) */                /* crépuscule : nouvelle lumière en attente (highlight.c, 2.76) */
 
 #pragma static-locals(off)
 
@@ -195,22 +196,25 @@ void cer_end(void)
 }
 
 /* ---------------------------------------------------------------------- */
-/* Le point qui vient de finir amène-t-il un changement de côté (sans fin
-   de set, qui a son écran) ? Mêmes règles que rules_point. */
+/* Le point qui vient de finir amène-t-il un changement de côté, ou une fin
+   de set (passage aux chaises, 2.76) ? Mêmes règles que rules_point. */
 extern u8 pending_winner, end_reason;
+/* (2.76) fin de set (sauf balle de match gagnée) : passage aux chaises */
+extern u8 sc_crit;
+static u8 set_brk(u8 w) { return (u8)!((sc_crit & 4) && ((sc_crit >> w) & 1)); }
 static u8 change_next(u8 w)
 {
     u8 o = (u8)(w ^ 1), pw = (u8)(sc_points[w] + 1), g, n;
     if (sc_over) return 0;
     if (sc_tiebreak) {
-        if (pw >= 7 && pw >= sc_points[o] + 2) return 0;
+        if (pw >= 7 && pw >= sc_points[o] + 2) return set_brk(w);
         n = (u8)(sc_points[0] + sc_points[1] + 1);
         while (n >= 6) n -= 6;
         return (u8)(n == 0);
     }
     if (pw < 4 || pw < sc_points[o] + 2) return 0;
     g = (u8)(sc_games[w] + 1);
-    if (g >= sc_games_per_set && g >= sc_games[o] + 2) return 0;
+    if (g >= sc_games_per_set && g >= sc_games[o] + 2) return set_brk(w);
     return (u8)((g + sc_games[o]) & 1);
 }
 /* à chaque trame (swap_tick) : les chaises apparaissent à la fin de
@@ -298,6 +302,8 @@ void cer_tick(void)
         break;
     case CER_SEAT:
         for (p = 0; p < npl; ++p) pose_force[p] = POSE_SIT;
+        /* (2.76) fin de set : une fois assis, l'écran du set (game.c) */
+        if (brk_pend) { if (cer_t >= 40) brk_pend = 2; break; }
         /* en match, un peu plus long (2.72) : le bandeau du bas montre le
            score puis 4 statistiques (A ou START passe) */
         /* (2.75) avec un joueur humain, les statistiques du bandeau défilent
@@ -453,4 +459,14 @@ void slot_tick(void)
         }
         row1_ovr[p] = t;
     }
+}
+
+/* reprise après l'écran du set (match_resume, 2.76) : assis aux chaises, les
+   joueurs repartent sur le court, comme après le bandeau */
+void cer_back(void)
+{
+    u8 p;
+    if (cer != CER_SEAT) return;
+    cer = CER_BACK; cer_t = 0;
+    for (p = 0; p < npl; ++p) stage[p] = 0;
 }

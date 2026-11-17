@@ -152,14 +152,15 @@ static const u8 mus_cred_bass[] = {
  C3,48, E3,48,  F3,48, C3,48,  G3,48, D3,48,  C3,48, G3,48,
  END,0 };
 
-/* Interlude de fin de set : air calme et léger, 8 mesures de 48 trames */
+/* Interlude de fin de set (2.76) : musique d'ambiance discrète, notes
+ * longues et douces sur des accords tenus (Do, La mineur, Fa, Sol), sans
+ * percussions. 8 mesures de 96 trames (4 temps de 24), en boucle. */
 static const u8 mus_break_mel[] = {
- E5,12, G5,12, A5,12, G5,12,  E5,24, C5,24,  D5,12, E5,12, F5,12, A5,12,  G5,36, R,12,
- A5,12, G5,12, E5,12, D5,12,  C5,24, E5,24,  D5,12, F5,12, E5,12, D5,12,  C5,36, R,12,
+ E5,48, G5,48,   C5,72, B4,24,   A4,48, C5,24, E5,24,   D5,96,
+ G5,48, E5,48,   A5,48, G5,24, E5,24,   F5,48, E5,24, C5,24,   D5,72, R,24,
  END,0 };
 static const u8 mus_break_bass[] = {
- C3,24, G3,24,  A3,24, E3,24,  D3,24, F3,24,  G3,24, D3,24,
- F3,24, C3,24,  A3,24, E3,24,  D3,24, G3,24,  C3,36, R,12,
+ C3,96, A2,96, F3,96, G2,96,  C3,96, A2,96, F3,96, G2,96,
  END,0 };
 
 /* Le Grand Martinot : fanfares originales des écrans d'annonce des tournois

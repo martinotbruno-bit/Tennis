@@ -934,10 +934,10 @@ static void setbreak_screen(void)
     if (cfg.doubles) team_label(cfg.chr[n], cfg.chr[n + 2], line); else team_label(cfg.chr[n], 255, line);
     txt_at(21, 4, line);
     txt_off = 0;
-    set_table(6);
-    far_call(BANK_TRAIN, (void *)hl_time_rows, (u16)(6 | (sets_done() << 8)));   /* (2.76) durées */
-    team_label(cfg.chr[0], 255, b); txt_at(19, 11, b);
-    team_label(cfg.chr[1], 255, b); txt_at(25, 11, b);
+    set_table(7);                       /* (2.76 : durée rangée 6, sets 7-9, minutes 10, lignes libres 5 et 11) */
+    far_call(BANK_TRAIN, (void *)hl_time_rows, (u16)(7 | (sets_done() << 8)));   /* (2.76) durées */
+    team_label(cfg.chr[0], 255, b); txt_at(19, 12, b);
+    team_label(cfg.chr[1], 255, b); txt_at(25, 12, b);
     stat_row(13, "POINTS GAGNES", st_points[0], st_points[1]);
     stat_row(14, "ACES", st_aces[0], st_aces[1]);
     stat_row(15, "DOUBLES FAUTES", st_dfaults[0], st_dfaults[1]);

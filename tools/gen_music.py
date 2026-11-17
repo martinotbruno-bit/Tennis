@@ -170,12 +170,13 @@ song(7, 'margaux', m, b,
      harmony(m, b, 36, [(12, 6, 1), (24, 6, 2)]),
      drums(length(m), 36, [(0, KICK), (12, HAT), (24, HAT)]),
      loop=1, mduty=0x77, hduty=0x73)
-# --- interlude de fin de set : air calme, tierces tenues, charleston discret
+# --- interlude de fin de set (2.76) : ambiance discrète, carrés doux (50 %,
+# volume 4 et 2), accords tenus, sans percussions
 m, b = arr('mus_break_mel'), arr('mus_break_bass')
 song(8, 'break', m, b,
-     harmony(m, b, 24, [(0, 24, 1)]),
-     drums(length(m), 48, [(12, HAT), (36, HAT)]),
-     loop=1, mduty=0x76, hduty=0x72)
+     harmony(m, b, 96, [(0, 48, 1), (48, 48, 2)], sustain=True),
+     None,
+     loop=1, mduty=0xB4, hduty=0xB2)
 # --- générique : percussions seulement pendant la partie majestueuse
 # (timbales : grosse caisse sur les temps), puis roulement quand ça s'emballe
 m, b = arr('mus_intro_mel'), arr('mus_intro_bass')
