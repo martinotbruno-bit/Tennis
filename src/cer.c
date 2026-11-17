@@ -22,6 +22,7 @@
 #include "audio.h"
 #include "assets.h"
 extern u8 hl_mode;                 /* plan de la ramasseuse (highlight.c, 2.73) */
+extern u8 sun_pend;                /* crépuscule : nouvelle lumière en attente (highlight.c, 2.76) */
 
 #pragma static-locals(off)
 
@@ -116,6 +117,7 @@ static void finish(void)
     u8 p;
     if (cer >= CER_ENTRY && cer <= CER_BACK)
         for (p = 0; p < npl; ++p) { plx[p] = tx[p]; ply[p] = ty[p]; }
+    if (sun_pend && (cer == CER_CHAIR || cer == CER_SEAT)) hl_mode = 5;   /* (changement de côté passé : le soleil quand même) */
     all_free();
     cer = 0;
 }
@@ -133,6 +135,7 @@ void cer_entry(void)
     cer_skip = 0;
     for (p = 0; p < 5; ++p) tm_set[p] = 0;   /* (2.76) chronomètre du match */
     tm_last = frame_cnt; tm_sub = 0;
+    sun_pend = 0;
     all_free();
     cer = 0;
     /* reprise d'un match sauvegardé (2.72) : score et statistiques, pas
@@ -306,6 +309,8 @@ void cer_tick(void)
             /* un changement sur deux : la ramasseuse de balles, plan télé (2.73) */
             if (cfg.mode == GM_MATCH && cfg.replays == 1 && cfg.env != ENV_NUDE && !cfg.demo &&
                 ((sc_games[0] + sc_games[1]) & 2)) hl_mode = 4;
+            /* crépuscule : la lumière change, plan du soleil couchant (2.76) */
+            if (sun_pend) hl_mode = 5;
             for (p = 0; p < npl; ++p) stage[p] = 0;
         }
         break;

@@ -30,7 +30,13 @@ BANK18 = rules assets_tz18
 BANK19 = career
 BANK20 = fly assets_tz20 train
 BANK21 = assets_tz21
-CSRC = $(FIXED) $(BANK0) $(BANK1) $(BANK2) $(BANK3) $(BANK4) $(BANK5) $(BANK6) $(BANK7) $(BANK8) $(BANK9) $(BANK10) $(BANK11) $(BANK12) $(BANK13) $(BANK14) $(BANK15) $(BANK16) $(BANK17) $(BANK18) $(BANK19) $(BANK20) $(BANK21)
+BANK22 = sunset assets_sun
+BANK23 = assets_sun23
+BANK24 = assets_sun24
+BANK25 = assets_sun25
+BANK26 = assets_sun26
+BANK27 = assets_sun27
+CSRC = $(FIXED) $(BANK0) $(BANK1) $(BANK2) $(BANK3) $(BANK4) $(BANK5) $(BANK6) $(BANK7) $(BANK8) $(BANK9) $(BANK10) $(BANK11) $(BANK12) $(BANK13) $(BANK14) $(BANK15) $(BANK16) $(BANK17) $(BANK18) $(BANK19) $(BANK20) $(BANK21) $(BANK22) $(BANK23) $(BANK24) $(BANK25) $(BANK26) $(BANK27)
 OBJS = $(BUILD)/crt0.o $(BUILD)/sprp.o $(BUILD)/poses.o $(BUILD)/slip.o $(BUILD)/dpcm.o $(BUILD)/fastmove.o $(addprefix $(BUILD)/,$(addsuffix .o,$(CSRC)))
 
 all: $(ROM)
@@ -50,6 +56,9 @@ src/assets_help.c: tools/gen_help.py
 
 src/assets_vs.c src/assets_vs.h src/assets_tz.h src/assets_tz2.c src/assets_tz4.c src/assets_tz9.c src/assets_tz10.c src/assets_tz12.c src/assets_tz6.c src/assets_tz7.c src/assets_tz17.c src/assets_tz18.c src/assets_tz20.c src/assets_tz21.c: tools/gen_teaser.py
 	python3 tools/gen_teaser.py
+
+src/assets_sun.c src/assets_sun23.c src/assets_sun24.c src/assets_sun25.c src/assets_sun26.c src/assets_sun27.c: tools/gen_sun.py
+	python3 tools/gen_sun.py
 
 src/music_data.c: tools/gen_music.py tools/music_src.c
 	python3 tools/gen_music.py
@@ -80,6 +89,12 @@ $(addprefix $(BUILD)/,$(addsuffix .s,$(BANK18))): SEGS = --code-name BANK18 --ro
 $(addprefix $(BUILD)/,$(addsuffix .s,$(BANK19))): SEGS = --code-name BANK19 --rodata-name RODATA19 --bss-name WBSS
 $(addprefix $(BUILD)/,$(addsuffix .s,$(BANK20))): SEGS = --code-name BANK20 --rodata-name RODATA20 --bss-name WBSS
 $(addprefix $(BUILD)/,$(addsuffix .s,$(BANK21))): SEGS = --code-name BANK21 --rodata-name RODATA21
+$(addprefix $(BUILD)/,$(addsuffix .s,$(BANK22))): SEGS = --code-name BANK22 --rodata-name RODATA22
+$(addprefix $(BUILD)/,$(addsuffix .s,$(BANK23))): SEGS = --code-name BANK23 --rodata-name RODATA23
+$(addprefix $(BUILD)/,$(addsuffix .s,$(BANK24))): SEGS = --code-name BANK24 --rodata-name RODATA24
+$(addprefix $(BUILD)/,$(addsuffix .s,$(BANK25))): SEGS = --code-name BANK25 --rodata-name RODATA25
+$(addprefix $(BUILD)/,$(addsuffix .s,$(BANK26))): SEGS = --code-name BANK26 --rodata-name RODATA26
+$(addprefix $(BUILD)/,$(addsuffix .s,$(BANK27))): SEGS = --code-name BANK27 --rodata-name RODATA27
 
 $(BUILD)/crt0.o: src/crt0.s assets/tiles.chr | $(BUILD)
 	$(CA65) -t nes -g -o $@ src/crt0.s

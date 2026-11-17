@@ -24,6 +24,7 @@
 #define BANK_CAR    19   /* fiche des joueurs, face-à-face, carrière (career.c, 2.72) */
 #define BANK_RULES  18   /* règles du score (rules.c, appelées par rules_far.c, banque fixe ; 2.71) */
 #define BANK_HL     15   /* ralenti : gros plan et arrêt sur image zoomé (highlight.c), récapitulatif du score */
+#define BANK_SUN    22   /* soleil couchant du crépuscule (sunset.c, 2.76) */
 
 /* état de l'application (lu par la boucle principale, banque fixe) */
 #define AS_SCREENS 0

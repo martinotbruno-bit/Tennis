@@ -217,6 +217,7 @@ static void band_text(u8 t)
    (hl_point_ev, game.c), dites un peu après, quand le DMC a fini l'annonce
    en cours (« Out! », « Fault! ») : rien n'est coupé. */
 void sun_apply(void);
+static void sun_game(void);
 void msave_write(void);
 #define V_DEUCE 4
 #define V_GAME  5
@@ -234,7 +235,7 @@ u16 __fastcall__ hl_point_ev(u16 ev)
         else if (rules_is_set_point(t)) sc_crit |= (u8)(1 << t);
     }
     voice_pend = 0;
-    if (ev & (EV_GAME | EV_SET)) { sun_apply(); voice_pend = V_GAME; }
+    if (ev & (EV_GAME | EV_SET)) { sun_game(); voice_pend = V_GAME; }
     else if (!sc_tiebreak && sc_points[0] >= 3 && sc_points[1] >= 3)
         voice_pend = sc_points[0] == sc_points[1] ? V_DEUCE : V_ADV;
     voice_t = 24;
@@ -399,19 +400,41 @@ void band_draw(void)
     __asm__("bne band_hide");
 }
 
-void sun_apply(void)
+/* phase de la lumière d'après les jeux joués (0 jour .. 3 nuit) */
+static u8 sun_calc(void)
 {
-    u8 i, g, L, st, red;
-    if (cfg.cond != COND_SUNSET || cfg.mode != GM_MATCH) return;
+    u8 i, g, L, st;
     g = (u8)(sc_games[0] + sc_games[1]);
     for (i = 0; i < sc_set_no && i < MAX_SETS; ++i) g = (u8)(g + sc_hist[i][0] + sc_hist[i][1]);
     L = (u8)((cfg.sets_to_win * cfg.games_per_set * 6) / 5);
     st = (u8)(((u16)g * 4) / L);
-    if (st > 3) st = 3;
-    red = is_pal ? 0x40 : 0x20;
-    pal_set_court(cfg.surface, st == 3 ? COND_NIGHT : COND_DAY, cfg.env);
-    ppu_emph = st == 1 ? red : st == 2 ? (u8)(red | 0x80) : 0;
-    sun_st = st;
+    return st > 3 ? 3 : st;
+}
+static void sun_light(void)
+{
+    u8 red = is_pal ? 0x40 : 0x20;
+    pal_set_court(cfg.surface, sun_st == 3 ? COND_NIGHT : COND_DAY, cfg.env);
+    ppu_emph = sun_st == 1 ? red : sun_st == 2 ? (u8)(red | 0x80) : 0;
+}
+/* (2.76) la lumière ne change plus en plein jeu : la nouvelle phase attend
+   le changement de côté suivant, où un plan du soleil couchant la montre
+   (hl_mode 5, sun_pend) ; au chargement du court (début du match, reprise),
+   la phase réelle s'applique directement, sauf si un plan est en attente */
+u8 sun_pend;
+void sun_apply(void)
+{
+    if (cfg.cond != COND_SUNSET || cfg.mode != GM_MATCH) return;
+    if (!sun_pend) sun_st = sun_calc();
+    sun_light();
+}
+static void sun_game(void)
+{
+    u8 st;
+    if (cfg.cond != COND_SUNSET || cfg.mode != GM_MATCH) return;
+    st = sun_calc();
+    if (st == sun_st) return;
+    if (cfg.demo) { sun_st = st; sun_light(); }
+    else sun_pend = 1;
 }
 /* chargement du court (court_load, game.c ; rendu coupé) : bandeau du score
    (écran 1) puis lumière du crépuscule. band_init écrit dans la VRAM : jamais
@@ -1175,8 +1198,61 @@ static void kid_tick(void)
 }
 #pragma static-locals(pop)
 
+/* ---------------------------------------------------------------------- */
+/* Soleil couchant (hl_mode 5, version 2.76) : au crépuscule, quand la     */
+/* lumière change, un plan plein écran du soleil façon jeux de course des  */
+/* années 80 (sunset.c, banques 22-27), au changement de côté ; premier   */
+/* plan selon la surface (lieux Martinot). A, B ou START passe. Au retour, */
+/* le court prend la nouvelle lumière.                                     */
+/* ---------------------------------------------------------------------- */
+u16 __fastcall__ sun_build(u16 ph);    /* sunset.c, banque 22 */
+static void sun_end(void)
+{
+    sun_pend = 0;                       /* (court_reload -> sun_apply : la phase réelle) */
+    kid_end();
+}
+static void sun_tick(void)
+{
+    u8 k;
+    if (hl_t == 0) {
+        static const char * const nm[3] = { "SOLEIL COUCHANT", "SOLEIL ROUGE", "LA NUIT TOMBE" };
+        const char *t;
+        k = sun_calc();
+        t = nm[k ? k - 1 : 0];
+        for (k = 0; (hl_txt[k] = t[k]) != 0; ++k) ;
+        if (band_vis) { split_stop(); band_vis = 0; }
+        flash(0x0F);
+    }
+    ++hl_t;
+    if (hl_t == 3) {
+        k = sun_calc();
+        fade_skip = 1; fade_lvl = 0;
+        ppu_off();
+        ppu_emph = 0;
+        far_call(BANK_SUN, (void *)sun_build, (u16)(cfg.surface * 3 + (k ? k - 1 : 0)));   /* (premier plan : la surface, le lieu) */
+        pal_buf[16] = 0x0F;
+        pal_buf[16 + 9] = 0x0F; pal_buf[16 + 10] = 0x0F; pal_buf[16 + 11] = 0x30;   /* titre : blanc */
+        pal_dirty = 1;
+        hl_cam = 0; scroll_x = 0; scroll_y = 0; scroll_nt = 0;
+        spr_begin(); spr_end();
+        label_load();
+        ppu_on();
+    }
+    if (hl_t < 4) return;
+    if ((hl_t > 30 && (pad1_new & (PAD_A | PAD_B | PAD_START))) || hl_t >= 170) { sun_end(); return; }
+    /* plage : le reflet du soleil scintille sur la mer */
+    if (cfg.surface == 4 && (hl_t & 7) == 0) {
+        pal_buf[14] = (u8)(pal_buf[14] ^ 0x10);
+        pal_dirty = 1;
+    }
+    spr_begin();
+    if (hl_t >= 16) label_draw(18, (u8)((hl_t - 16) >> 1));
+    spr_end();
+}
+
 void hl_tick(void)
 {
+    if (hl_mode == 5) { sun_tick(); return; }
     if (hl_mode == 4) { kid_tick(); return; }
     if (hl_mode == 3) {
         if (hl_t > 20 && (pad1_new & (PAD_A | PAD_START))) { final_end(); return; }
