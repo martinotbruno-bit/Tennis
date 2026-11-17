@@ -32,6 +32,7 @@ u8 pose_cache[4], flip_cache[4];
 static u8 tr_wait;
 u8 b_netcord;
 u8 pause_cur;
+u16 __fastcall__ pause_input(u16 unused);
 u8 tgt_x, tgt_y;
 /* IA adaptative : tendances observées des joueurs humains, par équipe */
 static u8 ad_l[2], ad_r[2], ad_net[2], ad_n[2];
@@ -1087,9 +1088,7 @@ u8 match_tick(void)
         paused = 1; pause_cur = 0; hud_dirty = 1; pad1_new = 0;
     }
     if (paused) {
-        if (pad1_new & (PAD_UP | PAD_DOWN)) { pause_cur ^= 1; hud_dirty = 1; sfx_menu_move(); }
-        if ((pad1_new & PAD_SELECT) || ((pad1_new & PAD_A) && pause_cur)) { match_quit = 1; return 1; }
-        if (pad1_new & (PAD_START | PAD_B) || ((pad1_new & PAD_A) && !pause_cur)) { paused = 0; hud_dirty = 1; }
+        if (far_call(BANK_EXTRAS, (void *)pause_input, 0)) { match_quit = 1; return 1; }   /* (touches de la pause : extras.c, 2.76) */
         if (hud_dirty) bank_call(BANK_EXTRAS, hud_update);
         return 0;
     }

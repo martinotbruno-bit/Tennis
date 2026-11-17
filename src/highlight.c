@@ -925,7 +925,7 @@ static void zoom_build(void)
    (4 couleurs de 2 bits : au plus 256 tuiles, quelques dizaines en
    pratique), créée à la première rencontre (zb_map). Trace de la balle :
    ellipse de 12 x 8 px (deux sprites), titre BONNE / DEHORS. */
-#define Z4 40                           /* trames du premier temps (x 2) */
+#define Z4 26                           /* trames du premier temps (x 2) ; 40 avant la 2.76 */
 static const u8 t_mark4[32] = {
     0x00, 0x07, 0x1F, 0x1F, 0x1F, 0x1F, 0x07, 0x00, 0x07, 0x18, 0x20, 0x20, 0x20, 0x20, 0x18, 0x07,
     0x00, 0xE0, 0xF8, 0xF8, 0xF8, 0xF8, 0xE0, 0x00, 0xE0, 0x18, 0x04, 0x04, 0x04, 0x04, 0x18, 0xE0 };
@@ -1018,8 +1018,9 @@ static void zoom_tick(void)
     ++hl_t;
     if (hl_t < 16) {
         /* réticule : 4 coins qui se resserrent sur le point visé, par-dessus
-           l'image figée (emplacements 60 à 63 des sprites) */
-        if (hl_t == 1) { hl_bk = pal_buf[0]; vbuf_raw((u16)(0x1000 + ((u16)T_CORNER << 4)), t_corner, 16); return; }
+           l'image figée (emplacements 60 à 63 des sprites) ; (2.76) balle
+           limite : plus vite (10 trames au lieu de 15) */
+        if (hl_t == 1) { hl_bk = pal_buf[0]; vbuf_raw((u16)(0x1000 + ((u16)T_CORNER << 4)), t_corner, 16); if (hl_quick) hl_t = 5; return; }
         d = (u8)(40 - hl_t * 2);
         ob = 240;
         for (k = 0; k < 4; ++k, ob += 4) {
@@ -1058,7 +1059,7 @@ static void zoom_tick(void)
             ++k;
         }
     }
-    if (hl_c >= (hl_quick ? Z4 + 60 : 80)) {
+    if (hl_c >= (hl_quick ? Z4 + 48 : 80)) {
         back_to_court();
         if (hl_quick) { hl_quick = 0; rp_done = 1; }   /* dehors de peu : le ralenti s'arrête là (2.73) */
     }

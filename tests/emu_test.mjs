@@ -644,7 +644,7 @@ console.log('Version 2.73 : bandes du ralenti, survol, bandeau, dehors de peu');
     if (m === 5 && !hm) { rpF++; if (e.peek('split_on') === 3 || e.peek('lb_st')) bars++; }   /* (2.74 : plus de bandes noires) */
     if (m === 3 && e.peek('rp_pending') && e.peek('band_vis')) early++;                      /* (2.74 : bandeau après le ralenti) */
     if (hm === 2 && e.peek('hl_quick') && e.peek('hl_t') === 1 && e.peek('hl_sbin')) quickIn++;
-    if (hm === 2 && e.peek('hl_quick') && e.peek('hl_c') === 50) { q4++; if (e.peek('ctrl_swap') === 0 && e.peek('scroll_nt') === 1 && e.peek('hl_n') === 0) q4ok++; }   /* (2.74 : second temps x 4) */
+    if (hm === 2 && e.peek('hl_quick') && e.peek('hl_c') === 36) { q4++; if (e.peek('ctrl_swap') === 0 && e.peek('scroll_nt') === 1 && e.peek('hl_n') === 0) q4ok++; }   /* (2.74 : second temps x 4) */
     if (m === 5 && pm !== 5) { start = f; modes = ''; }
     if (m === 5 && hm && !modes.endsWith(String(hm))) modes += hm;
     if (m !== 5 && pm === 5 && modes === '2') { quick++; quickLen = Math.max(quickLen, f - start); }
@@ -658,7 +658,7 @@ console.log('Version 2.73 : bandes du ralenti, survol, bandeau, dehors de peu');
   }
   check(rpF > 50 && bars === 0, `ralenti sans bandes noires (${rpF} trames, ${bars} avec bandes)`);
   check(early === 0, `bandeau du score après le ralenti seulement (${early} trames avant)`);
-  check(quick > 0 && quickLen < 330, `balle limite : zoom seul, rapide (${quick} fois dont ${quickIn} bonnes sur la ligne, ${quickLen} trames au plus)`);
+  check(quick > 0 && quickLen < 290, `balle limite : zoom seul, rapide (${quick} fois dont ${quickIn} bonnes sur la ligne, ${quickLen} trames au plus)`);
   check(q4 > 0 && q4ok === q4, `balle limite : second temps x 4 sur l'impact (${q4ok}/${q4})`);
   check(bandServe > 0, `bandeau du score pendant la mise en place du service (${bandServe} trames)`);
   check(minDelay >= 48 && minDelay < 120 && rise.size >= 8 && Math.max(...rise) > 230 && Math.min(...rise) === 199, `bandeau : apparaît ${minDelay} trames après le point, en montant (lignes ${Math.max(...rise)} à ${Math.min(...rise)})`);
@@ -2889,6 +2889,17 @@ console.log('Version 2.76 : lignes, bandeau, smash');
   const t0 = e.frames;
   runUntil(e, () => e.peek('band_vis') === 3, 200);
   check(e.frames - t0 < 30, `après le ralenti : bandeau du score en ${e.frames - t0} trames (avant : environ 60)`);
+}
+}
+if (sec('Version 2.76 : pause')) {
+console.log('Version 2.76 : pause');
+{
+  // pause : 3e ligne RALENTI (NON / OUI / SIMPLE), retenue pour les matchs suivants
+  const e = boot(); startWith(e, { FMT: 3, REPLAY: 0 }); allCpu(e); e.run(200);
+  e.tap('START'); e.run(6); e.tap('DOWN'); e.tap('DOWN'); e.tap('RIGHT'); e.tap('RIGHT'); e.run(4);
+  const r = e.peek('cfg', CFG.REPLAYS), o = e.peek('opt_val', O.REPLAY), still = e.peek('paused');
+  e.tap('UP'); e.tap('UP'); e.tap('A'); e.run(4);
+  check(r === 2 && o === 2 && still && !e.peek('paused'), `pause : RALENTI réglé à SIMPLE (${r}, réglage ${o}), puis CONTINUER`);
 }
 }
 if (sec('Version 2.76 : balle de match et changement de côté')) {

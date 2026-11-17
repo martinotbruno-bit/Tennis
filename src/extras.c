@@ -56,11 +56,22 @@ static void nude_quip(void)
     else if (starts(msg1, "LET")) set2("CHATOUILLE");
 }
 
+#pragma static-locals(push, off)        /* (2.76 : tampon sur la pile, la RAM interne est pleine) */
+static const char * const rp_lbl[3] = { "  RALENTI NON", "  RALENTI OUI", "  RALENTI SIMPLE" };
 void hud_update(void)
 {
     static char line[5];
     u8 t, x;
     vbuf_reset();
+    if (paused) {   /* (2.76) réglage des ralentis, écrit en premier (tampon du VBlank limité) */
+            char b[17];
+            const char *q = rp_lbl[cfg.replays < 3 ? cfg.replays : 1];
+            u8 i;
+            for (i = 0; i < 16 && q[i]; ++i) b[i] = q[i];
+            b[i] = 0;
+            if (pause_cur == 2) b[0] = '>';
+            vbuf_text(9, 3, b, 16);
+        }
     if (cfg.mode == GM_MATCH) {
         for (t = 0; t < 2; ++t) {
             /* panneau de l'équipe affichée en bas à gauche, l'autre à droite */
@@ -89,9 +100,8 @@ void hud_update(void)
         vbuf_text(1, 3, line, 4);
     }
     if (paused) {
-        if (cfg.env == ENV_NUDE) vbuf_text(9, 3, "CREME SOLAIRE?", 14);
-        vbuf_text(9, 1, pause_cur ? "  CONTINUER" : "> CONTINUER", 14);
-        vbuf_text(9, 2, pause_cur ? "> QUITTER" : "  QUITTER", 14);
+        vbuf_text(9, 1, pause_cur == 0 ? "> CONTINUER" : "  CONTINUER", 11);
+        vbuf_text(9, 2, pause_cur == 1 ? "> QUITTER" : "  QUITTER", 11);
     } else if (msg_timer) {
         if (cfg.env == ENV_NUDE) nude_quip();
         vbuf_text(9, 1, msg1, 14);
@@ -106,6 +116,7 @@ void hud_update(void)
     if (cfg.env == ENV_NUDE && !paused) vbuf_text(9, 3, "", 14);
     hud_dirty = 0;
 }
+#pragma static-locals(pop)
 
 /* ---------------------------------------------------------------------- */
 /* Pluie : gouttes animées ; une sur deux par trame (8 sprites par ligne) */
@@ -697,3 +708,21 @@ void ai_tactic(void)
     }
 }
 
+
+/* (2.76) touches du menu de pause (game.c) : CONTINUER, QUITTER, RALENTI
+   (NON, OUI, SIMPLE ; GAUCHE/DROITE ou A), retenu pour les matchs suivants
+   (opt_val). Rend 1 pour quitter le match. */
+extern u8 opt_val[];                     /* (screens.c ; 10 : RALENTIS) */
+u16 __fastcall__ pause_input(u16 unused)
+{
+    (void)unused;
+    if (pad1_new & PAD_UP) { pause_cur = (u8)(pause_cur ? pause_cur - 1 : 2); hud_dirty = 1; sfx_menu_move(); }
+    if (pad1_new & PAD_DOWN) { pause_cur = (u8)(pause_cur == 2 ? 0 : pause_cur + 1); hud_dirty = 1; sfx_menu_move(); }
+    if (pause_cur == 2 && (pad1_new & (PAD_LEFT | PAD_RIGHT | PAD_A))) {
+        cfg.replays = (u8)((cfg.replays + ((pad1_new & PAD_LEFT) ? 2 : 1)) % 3);
+        opt_val[10] = cfg.replays; hud_dirty = 1; sfx_menu_val(1);
+    }
+    else if ((pad1_new & PAD_SELECT) || ((pad1_new & PAD_A) && pause_cur == 1)) return 1;
+    else if (pad1_new & (PAD_START | PAD_B) || ((pad1_new & PAD_A) && !pause_cur)) { paused = 0; hud_dirty = 1; }
+    return 0;
+}
