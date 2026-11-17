@@ -1,10 +1,35 @@
-# Royal Martinot — Rapport de réalisation (version 2.75)
+# Royal Martinot — Rapport de réalisation (version 2.76)
 
 Comme l'exige le CDC (§ 17.5), ce rapport distingue ce qui est **réalisé**, **testé**, **validé sur matériel réel**, **validé uniquement en émulation**, **dépendant d'une extension**, et les **limitations restantes**.
 
 > **Validation matérielle : aucune.** Aucun test n'a été fait sur console réelle (NES, Famicom, PAL, cartouche MMC3). Toutes les validations ont eu lieu en émulation (jsnes ; depuis la version 2.69, aussi FCEUX pour les effets sensibles) et par des tests unitaires sur PC. Les critères « vérifié sur console physique » (CDC § 2.1, 15.4, 16.A) **ne sont pas remplis**. Ce point ne peut pas être traité dans l'environnement de développement utilisé.
 
 ## 1. Évolutions
+
+### Version 2.76
+
+| Demande | Réalisation |
+|---|---|
+| Fautes dans les statistiques du changement de côté | Page FAUTES ajoutée juste avant SERVICE MAX KM/H (5 pages). Sans joueur humain, 40 trames par page pour que toutes passent pendant la pause assise |
+| Bandeau sans délai après un ralenti | Après un ralenti ou un zoom (joué ou passé avec A), le bandeau du score monte aussitôt (20 trames au lieu d'environ 60). Test ajouté |
+| Balles sur la ligne comptées dehors | Le rebond était vu à la fin de la trame, balle déjà passée sous le sol : elle était jugée là où elle se trouvait alors, jusqu'à 3-4 px plus loin que le point de contact. Elle est maintenant ramenée au point exact de contact avant d'être jugée (et pour le repère du zoom). Les seuils des règles (ligne touchée = bonne) étaient corrects. Test ajouté (balle sur la ligne de fond : bonne) |
+| Coups gagnants de fond de court pris pour des smashs | Depuis la 2.75, une balle haute après le rebond (lift qui rebondit haut) devenait un smash. Le smash après le rebond est maintenant réservé au lob qui retombe |
+| Pas de ralenti sur la balle de match | Le point qui termine le match n'est plus rejoué : la célébration commence tout de suite. Test ajouté |
+| Arbitre sur le bandeau BALLE DE MATCH | Les sprites sont cachés sous le bandeau central pendant qu'il est affiché |
+| START au changement de côté | Assis, START passe toutes les statistiques et relance le jeu, sans mettre en pause (A ou B : page suivante). Test ajouté |
+| Bandeau qui disparaît et revient avant le changement de côté | Il reste affiché de la fin du point jusqu'aux statistiques, pendant la marche vers les chaises. Test ajouté |
+| Chaises avant le bandeau | Les chaises n'apparaissent qu'une fois le bandeau entièrement monté. Test ajusté |
+| Dissocier cheveux et yeux des chaussures, raquette… | Dans les images HD, les contours et les pupilles sont maintenant dans la couleur du fond de l'image (toujours sombre, présente dans toutes les palettes) ; la couleur « sombre » du joueur ne sert plus qu'aux cheveux, sourcils, short, semelles et raquette. Une joueuse blonde reste blonde avec des contours sombres (plus d'assombrissement forcé). Effet secondaire : les défauts de couleur dans les blocs 16 × 16 sont divisés par deux |
+| Smash HD : visage décalé, manche | Visage du smash en vol de face et droit (il était tourné de trois quarts et penché) |
+| Défauts de tuiles sur plusieurs images HD | Contrôle automatique de toutes les images (pixels dont la couleur manque dans la palette de leur bloc) : 24 313 avant, 11 278 après (contours, puis léger décalage de chaque image pour mieux caler les blocs) |
+| PALE et CLAIRE identiques ; GENRE | Teintes : CLAIRE, HALEE, MATE, BRUNE, EBENE. La ligne SEXE s'appelle GENRE |
+| Défaite du joueur humain | Nouvelle image HD : le perdant à genoux, bras ballants, tête penchée, yeux baissés, raquette lâchée ; « DEFAITE », sans confettis ni carillon, à la place de la joie du vainqueur (la poignée de main reste). Image : `docs/defaite_276.png` |
+| Smash amorti | « AMORTIE HAUTE » au lieu de « SMASH ! » |
+| Symbole % | Premières balles : « 84% » aux résultats et au palmarès (le bandeau l'avait déjà, sauf en perspective où sa tuile dessine le court) |
+| Note bi-ton avant le 1er service | Le petit jingle joué après chaque point est supprimé |
+| Jeux gagnés en haut après chaque jeu | Rappel supprimé (le bandeau du score les donne) |
+| Jeu blanc | « JEU BLANC » et le nom, avec les applaudissements du public (c'est l'usage dans les jeux de tennis : « love game ») |
+| Durée des sets et du match | Temps réel de jeu, hors pause : « DUREE DU MATCH 1H05 » au-dessus du tableau des sets, minutes de chaque set dessous, à l'écran de fin de set et aux résultats. Image : `docs/resultats_276.png` |
 
 ### Version 2.75
 

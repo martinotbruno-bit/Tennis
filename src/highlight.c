@@ -153,7 +153,7 @@ static char bb[28];
    statistiques du match, une page toutes les 50 trames (joueurs assis
    250 trames en match, cer.c) */
 u8 band_pg;
-static u8 band_t;
+u8 band_t;                             /* (2.76 : remis à 0 à l'arrivée sur la chaise, cer.c) */
 static const char * const band_lbl[5] = { "1ERES BALLES", "ACES", "COUPS GAGNANTS", "FAUTES", "SERVICE MAX KM/H" };   /* (FAUTES : 2.76) */
 static void band_num(u8 at, u16 v)
 {

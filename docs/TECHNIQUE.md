@@ -338,6 +338,16 @@ Le dessin des personnages est commun aux vues de face et de dos (rangées de tui
 - **IA** (`ai_update`, banque 0) : à partir de Normal, après le lob et l'amortie, croisé court avec une probabilité 90/256 si l'adversaire est au filet, 20/256 sinon.
 - **Réglages** : première rangée `MY0` = 4 + (18 − `nvis`) / 2 (screens.c ; même calcul dans `menu_marks`) ; `menu_soft` réécrit les 18 rangées ; portraits en y = `MY0` × 8 − 30, entre 7 et 16. Tests : `menuY(e, i)`.
 
+### Version 2.76 : lignes, bandeau, couleurs HD, défaite, durées
+
+- **Point de contact** (`bounce_fix`, train.c, appelé par `ball_bounce`) : t = (−bz × 64) / (−bvz) ; bx −= bvx × t / 64, by −= bvy × t / 64 avant le jugement. `in_service_box` déplacé en banque 20 (`srv_box`, place en banque 0).
+- **Smash après le rebond** (shots.c) : `bz > 30 px && sh_btn != PAD_B && last_shot == SH_LOB` (coup reçu).
+- **Bandeau** : `band_t = BAND_WAIT` pendant un ralenti (`rp_pending`, `hl_mode`, `MS_REPLAY`) : montée sans délai à sa fin. Visible aussi en `CER_CHAIR` (4). `hl_flags` bit 2 : bandeau entièrement monté ; cer.c ne dessine les chaises de `CER_CHAIRS` qu'alors. `band_t` remis à 0 à l'arrivée sur la chaise. Page 5 FAUTES (`band_lbl[5]`) ; START assis : `band_hold = 2` ; game.c n'ouvre pas la pause si `cer == 5`.
+- **Balle de match** : game.c, `rp_pending = 0` si `sc_crit & 4` et `(sc_crit >> winner) & 1` ; `mp_tick` cache les sprites des lignes 95 à 143.
+- **HD** (gen_teaser.py) : plus de conversion des contours (classe 0) en classe 5 ; petits yeux en classe 0 ; `hd_dark` ne sert plus qu'à l'affiche VS. Cadrages décalés de ±2 à 6 px (contrôle : pixels hors palette de leur bloc). Banque 16 ajoutée aux images. Pose `defeat` (à genoux : cuisses et tibias raccourcis), visage `sad`, `TZ_DEFEAT` ; `final_tick` : `sad` si le vainqueur est l'ordinateur et le perdant un humain.
+- **Chronomètre** : `tm_set[5]` (secondes par set), `tm_last`, `tm_sub` (gfx.c) ; `tm_tick` (train.c, appelé par `flags_draw` à chaque trame du match) ajoute les trames écoulées (`frame_cnt`) hors pause ; remis à zéro par `cer_entry`. `hl_time_rows` : rangée y − 1 et y + 3. Statistiques des résultats déplacées en banque 20 (`res_stats`, rangées 10 à 19).
+- **Divers** : `MUS_POINT` n'est plus joué ; `recap_pend` n'est plus posé ; JEU BLANC (`blank`, after_point).
+
 ### Version 2.75 : titre du zoom, x 4 depuis le x 2, public
 
 - **Titre du zoom** : « BONNE ! » seulement si `near_in(hl_sbx, hl_sby)`, sinon pas de titre ; « DEHORS ! » toujours.

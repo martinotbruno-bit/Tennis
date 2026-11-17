@@ -27,7 +27,7 @@ extern u8 hl_mode;                 /* plan de la ramasseuse (highlight.c, 2.73) 
 
 extern const unsigned char prop_tile13, chair_tile13;   /* assets_swap.c (cette banque) : gourde, serviette, raquette ; chaise */
 
-extern u8 hl_flags;
+extern u8 hl_flags, band_t;
 #pragma zpsym("hl_flags")
 #define PXU(v) ((u8)(((u16)(v) << 2) >> 8))      /* pixels, valeur positive */
 
@@ -291,7 +291,7 @@ void cer_tick(void)
                 if (step_to(p, sx[p], sy[p])) { stage[p] = 2; pose_force[p] = POSE_SIT; }
                 else done = 0;
             }
-        if (done) { cer = CER_SEAT; cer_t = 0; }
+        if (done) { cer = CER_SEAT; cer_t = 0; band_t = 0; }   /* (2.76 : le bandeau resté affiché repart de la 1re page) */
         break;
     case CER_SEAT:
         for (p = 0; p < npl; ++p) pose_force[p] = POSE_SIT;

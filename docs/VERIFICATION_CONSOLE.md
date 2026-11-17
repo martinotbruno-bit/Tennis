@@ -1,6 +1,6 @@
 # Royal Martinot — Liste de vérification sur vraie console
 
-Le jeu a été testé uniquement sur émulateur. Cette liste sert à le vérifier pas à pas sur une vraie NES ou Famicom. Cochez chaque case et notez ce qui ne va pas, si possible avec une photo de l'écran. Comptez environ une heure et quart pour l'ensemble. Version du guide : 2.75.
+Le jeu a été testé uniquement sur émulateur. Cette liste sert à le vérifier pas à pas sur une vraie NES ou Famicom. Cochez chaque case et notez ce qui ne va pas, si possible avec une photo de l'écran. Comptez environ une heure et quart pour l'ensemble. Version du guide : 2.76.
 
 ## 0. Matériel
 
@@ -169,6 +169,8 @@ Pour chaque ligne, lancez un match et regardez l'écran pendant une dizaine de s
 | 10.31 | Plans télé (version 2.73) | Ramasseuse au changement de côté, poignée de main en fin de match, public après un long échange : images nettes, retour au court propre (score, bandeau, joueurs) | ☐ |
 | 10.32 | Pause et balle de match (version 2.75) | START : le score apparaît dans un bandeau au milieu de l'écran, sans clignotement ; à la reprise, le court est intact. Avant une balle de match : bandeau « BALLE DE MATCH / POUR … » au milieu, qui disparaît seul ; bords du bandeau nets (au pire une ligne qui tremble) | ☐ |
 | 10.33 | Joueur personnalisé (version 2.75) | Compétition : écran TON JOUEUR, changer nom, sexe, peau, cheveux, tenue ; le joueur apparaît ainsi au tableau et en match ; éteindre la console, rallumer : le profil revient à la compétition suivante | ☐ |
+| 10.34 | Changement de côté (version 2.76) | Le bandeau reste affiché de la fin du point aux statistiques ; les chaises apparaissent quand il est monté ; START assis relance le jeu sans pause | ☐ |
+| 10.35 | Défaite (version 2.76) | Perdre contre l'ordinateur : image du perdant à genoux, « DEFAITE » | ☐ |
 
 ## 11. Ce qu'il faut renvoyer
 

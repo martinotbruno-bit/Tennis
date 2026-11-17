@@ -299,7 +299,7 @@ static /* Nom du coup gagnant affiché au centre du bandeau (15 caractères au p
 const char *win_label(u8 shot, u8 pass, u8 jump)
 {
     if (hit_perf) return "COUP PARFAIT !";
-    if (shot == SH_SMASH) return bspin == SPIN_DROP ? "AMORTIE HAUTE !" : jump ? "SMASH SAUTE !" : "SMASH !";   /* (2.76 : smash amorti) */
+    if (shot == SH_SMASH) return bspin == SPIN_DROP ? "AMORTIE HAUTE" : jump ? "SMASH SAUTE !" : "SMASH !";   /* (2.76 : smash amorti) */
     if (shot == SH_DROP) return "AMORTIE !";
     if (shot == SH_LOB) return "LOB GAGNANT !";
     if (shot == SH_VOLLEY) return "VOLEE GAGNANTE";

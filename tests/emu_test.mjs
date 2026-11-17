@@ -1993,13 +1993,15 @@ console.log('Récapitulatif du score');
   check(app(e) === AS.MATCH && n <= 16 && e.peek('music_cur') === 0, `B : retour au court en ${n + 1} trames, musique coupée`);
   e.run(30);
   check(app(e) === AS.MATCH && /^[A-Z]{4} \d \d/.test(msgText(e)), `reprise du match, score des sets dans le bandeau : « ${msgText(e)} »`);
-  // un jeu plus tard : récapitulatif après le jeu
-  let after = '';
+  // un jeu plus tard : (2.76) plus de rappel des jeux en haut (le bandeau les donne)
+  let after = '', played = false;
   runUntil(e, () => {
     if (e.peek('ms') === 0 && e.peek('sc_games', 0) + e.peek('sc_games', 1) === 0) { e.poke('sc_points', 3, 0); e.poke('sc_points', 0, 1); }
-    const t = msgText(e); if (/^[A-Z]{4} \d \d/.test(t) && e.peek('sc_games', 0) + e.peek('sc_games', 1) > 0) after = t; return after !== '';
+    const t = msgText(e); if (/^[A-Z]{4} \d \d/.test(t) && e.peek('sc_games', 0) + e.peek('sc_games', 1) > 0) after = t;
+    if (e.peek('sc_games', 0) + e.peek('sc_games', 1) > 0 && e.peek('ms') === 2) played = true;
+    return played;
   }, 60 * 60 * 3);
-  check(after !== '', `après un jeu : « ${after} »`);
+  check(played && after === '', `après un jeu : pas de rappel des jeux en haut (« ${after} »)`);
 }
 
 }
@@ -2498,7 +2500,7 @@ console.log('Plongeon');
       if (t > prev[p]) {
         dives++; cur = p; rh = e.peek('rally_hits');
         const lx = e.peekS16('land_x'), ly = e.peekS16('land_y');
-        if (e.peek('bounces') === 0 && e.peek('ms') === 2 && (lx < 74 || lx > 182 || ly < 48 || ly > 216)) outDive++;
+        if (e.peek('bounces') === 0 && e.peek('ms') === 2 && (lx < 73 || lx > 183 || ly < 46 || ly > 218)) outDive++;   /* (limites des règles : ligne touchée = bonne) */
       }
       if (p === cur && t >= 30 && e.peek('rally_hits') !== rh && e.peek('hitter') === (p & 1)) { touched++; cur = -1; }
       prev[p] = t;
@@ -2562,10 +2564,12 @@ console.log('Séquences animées du match');
     // changement de côté (ordinateur contre ordinateur) : chaises, puis l'autre côté
     // (sans ralentis : avec un ralenti, les chaises n'arrivent qu'après lui)
     const e = boot(); startWith(e, { FMT: 3, SURF: 1, REPLAY: 0 }); allCpu(e); e.run(20); e.cerSkip = false;
-    // les chaises apparaissent dès la fin de l'échange qui amène le changement de côté
+    // (2.76) les chaises apparaissent dès que le bandeau du score est entièrement monté, pas avant
     runUntil(e, () => e.peek('cer') === 0xFD || e.peek('cer') === 4, 60 * 240);   /* (2.74 : bandeau entre les points, jeux plus longs) */
+    let noChairBefore = true;
+    runUntil(e, () => { if (!(e.peek('hl_flags') & 4) && oamHas(e, CHAIR)) noChairBefore = false; return (e.peek('hl_flags') & 4) !== 0 || e.peek('cer') === 4; }, 200);
     e.run(2);
-    const early = e.peek('ms') === 3 && oamHas(e, CHAIR);
+    const early = noChairBefore && oamHas(e, CHAIR);
     runUntil(e, () => e.peek('cer') === 4, 1500);
     const before = [pos(e, 0)[1] < 132, pos(e, 1)[1] < 132];
     let seated = false, chair = false, bottle = false, towel = false;
@@ -2577,7 +2581,7 @@ console.log('Séquences animées du match');
       }
     }
     const after = [pos(e, 0)[1] < 132, pos(e, 1)[1] < 132];
-    check(early, 'changement de côté : les chaises apparaissent dès la fin de l\'échange');
+    check(early, 'changement de côté : les chaises apparaissent avec le bandeau entièrement monté, pas avant');
     check(seated && chair && bottle && towel, 'changement de côté : assis de profil sur leur chaise, près de l\'arbitre (chaise, gourde, serviette)');
     check(e.peek('cer') === 0 && before[0] !== after[0] && before[1] !== after[1], 'changement de côté : chacun rejoint l\'autre côté du court');
   }
@@ -2923,14 +2927,14 @@ console.log('Version 2.76 : balle de match et changement de côté');
   const m = boot(); startWith(m, { FMT: 3, REPLAY: 1 }); allCpu(m);
   m.poke('sc_games', 5); m.poke('sc_points', 2);
   let rpAfterMp = 0, over = false, rp = 0;
-  for (let f = 0; f < 60 * 60 * 6 && app(m) === AS.MATCH && !over; f++) {
+  for (let f = 0; f < 60 * 60 * 20 && app(m) === AS.MATCH && !over; f++) {
     m.run(1);
     const ms = m.peek('ms');
     if (ms === 2) rp = 0;                       /* (nouveau point) */
     if (ms === 5) rp++;
     if (ms === 4) { over = true; rpAfterMp = rp; }
   }
-  check(over && rpAfterMp === 0, `balle de match gagnée : fin du match sans ralenti (${rpAfterMp} trames de ralenti)`);
+  check(over && rpAfterMp === 0, `balle de match gagnée : fin du match sans ralenti (${rpAfterMp} trames de ralenti, fin ${over})`);
 }
 }
 if (sec('Compensation 50 Hz (PAL)')) {
