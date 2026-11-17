@@ -457,3 +457,35 @@ void mp_tick(void)
         mp_t = 0;
     }
 }
+
+/* ---------------------------------------------------------------------- */
+/* Rebond (2.76, appelés par ball_bounce, game.c)                          */
+extern u8 sc_swap;
+#define side_of(t) ((u8)(((t) & 1) ^ sc_swap))
+/* Point de contact : le rebond est vu à la fin de la trame, la balle déjà
+   passée sous le sol ; elle a touché le sol une fraction t = bz / bvz de
+   trame plus tôt (jusqu'à 3-4 px plus loin à pleine vitesse : une balle sur
+   la ligne était jugée dehors). Elle y est ramenée avant d'être jugée. */
+void bounce_fix(void)
+{
+    u16 t;
+    if (bz >= 0 || bvz >= 0) return;
+    t = (u16)(((u16)(-bz) << 6) / (u16)(-bvz));     /* (0 à 64) */
+    if (t > 64) t = 64;
+    bx -= (s16)((bvx * (s16)t) >> 6);
+    by -= (s16)((bvy * (s16)t) >> 6);
+}
+/* service dans le bon carré (ligne touchée : bonne) */
+u16 __fastcall__ srv_box(u16 unused)
+{
+    u8 srv_side = side_of(hitter);
+    u8 ad = rules_ad_side();
+    /* bas+égalité -> carré gauche ; bas+avantage -> droit ; inversé en haut */
+    u8 left = (u8)((srv_side == 0) == (ad == 0));
+    s16 x = PX(bx), y = PX(by);
+    (void)unused;
+    if (left) { if (x < IN_SL || x > CENTER_X + 1) return 0; }
+    else      { if (x < CENTER_X - 1 || x > IN_SR) return 0; }
+    if (srv_side == 0) return (u16)(y >= IN_TSRV && y <= NET_Y);
+    return (u16)(y >= NET_Y && y <= IN_BSRV);
+}

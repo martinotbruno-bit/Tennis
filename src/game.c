@@ -231,26 +231,21 @@ static void serve_fault(const char *why)
 /* ====================================================================== */
 /* Rebond et arbitrage                                                     */
 /* ====================================================================== */
-static u8 in_service_box(void)
-{
-    u8 srv_side = side_of(hitter);
-    u8 ad = rules_ad_side();
-    /* bas+égalité -> carré gauche ; bas+avantage -> droit ; inversé en haut */
-    u8 left = (u8)((srv_side == 0) == (ad == 0));
-    s16 x = PX(bx), y = PX(by);
-    if (left) { if (x < IN_SL || x > CENTER_X + 1) return 0; }   /* (ligne touchée : bonne) */
-    else      { if (x < CENTER_X - 1 || x > IN_SR) return 0; }
-    if (srv_side == 0) return (u8)(y >= IN_TSRV && y <= NET_Y);
-    return (u8)(y >= NET_Y && y <= IN_BSRV);
-}
+/* carré de service et point de contact du rebond : banque 20 (train.c,
+   2.76 ; place en banque 0) */
+u16 __fastcall__ srv_box(u16 unused);
+void bounce_fix(void);
+static u8 in_service_box(void) { return (u8)far_call(BANK_TRAIN, (void *)srv_box, 0); }
 
 static void ball_bounce(void)
 {
-    u8 half = (u8)(PX(by) < NET_Y ? 1 : 0);
-    u8 recv = (u8)(hitter ^ 1);
+    u8 half, recv = (u8)(hitter ^ 1);
     u8 rest = surf_rest[cfg.surface], fric = surf_fric[cfg.surface];
-    s16 x = PX(bx), y = PX(by);
+    s16 x, y;
     s16 l = cfg.doubles ? IN_DL : IN_SL, r = cfg.doubles ? IN_DR : IN_SR;   /* (ligne comprise) */
+    bank_call(BANK_TRAIN, bounce_fix);   /* (2.76) balle ramenée au point de contact : jugée là où elle touche le sol */
+    half = (u8)(PX(by) < NET_Y ? 1 : 0);
+    x = PX(bx); y = PX(by);
 
     if (bspin == SPIN_TOP)   { rest = (u8)(rest + 24); if (fric < 240) fric += 12; }
     if (bspin == SPIN_SLICE) { rest = (u8)(rest - 46); }

@@ -110,7 +110,7 @@ void shot_select(void)
        le rebond, une balle haute (lob qui retombe, au-dessus de 30 px) se
        smashe aussi, sans sauter, avec A (avec B, le lob ou l'amortie demandés
        restent possibles) */
-    u8 smash = (u8)(bounces ? (bz > 30 * FP && sh_btn != PAD_B) : bz > 24 * FP);
+    u8 smash = (u8)(bounces ? (bz > 30 * FP && sh_btn != PAD_B && last_shot == SH_LOB) : bz > 24 * FP);   /* (2.76 : après le rebond, seulement un lob qui retombe ; last_shot : coup reçu) */
     u8 volley = (u8)(bounces == 0), flat = 0;
     s16 depth;
     if (sh_dx > 14 || sh_dx < -14) spread += 8;          /* frappe en extension */

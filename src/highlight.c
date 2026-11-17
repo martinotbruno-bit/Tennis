@@ -154,7 +154,7 @@ static char bb[28];
    250 trames en match, cer.c) */
 u8 band_pg;
 static u8 band_t;
-static const char * const band_lbl[4] = { "1ERES BALLES", "ACES", "COUPS GAGNANTS", "SERVICE MAX KM/H" };
+static const char * const band_lbl[5] = { "1ERES BALLES", "ACES", "COUPS GAGNANTS", "FAUTES", "SERVICE MAX KM/H" };   /* (FAUTES : 2.76) */
 static void band_num(u8 at, u16 v)
 {
     bb[at + 2] = (char)('0' + v % 10);
@@ -197,6 +197,7 @@ static void band_text(u8 t)
                 break;
             case 2: band_num(i, st_aces[k]); break;
             case 3: band_num(i, st_winners[k]); break;
+            case 4: band_num(i, st_errors[k]); break;
             default:
                 if (st_vmax[k]) band_num(i, (u16)st_vmax[k] + 80);
                 else bb[i] = bb[i + 1] = bb[i + 2] = '-';
@@ -324,7 +325,9 @@ void band_draw(void)
     band_hold = (u8)(v && cer != CER_SEAT && (band_human() || band_t < BAND_WAIT + 10));
     if (!v) {
         if (band_vis) { split_stop(); band_vis = 0; }
-        band_t = 0;
+        /* (2.76) pendant un ralenti (ou avant qu'il commence) : à sa fin,
+           joué ou passé, le bandeau monte aussitôt, sans le délai de lecture */
+        band_t = (u8)(rp_pending || hl_mode || ms == MS_REPLAY ? BAND_WAIT : 0);
         return;
     }
     if (cer != CER_SEAT && band_t < BAND_WAIT) { ++band_t; return; }   /* (délai : pas encore de bandeau) */
@@ -332,8 +335,8 @@ void band_draw(void)
     if (cer == CER_SEAT) {
         if (band_human()) {
             /* (2.75) une page par appui ; après la dernière, les joueurs repartent */
-            if ((pad1_new | pad2_new) & (PAD_A | PAD_B | PAD_START)) { if (band_pg >= 4) band_hold = 2; else ++band_pg; }
-        } else if (++band_t >= 50) { band_t = 0; if (++band_pg > 4) band_pg = 0; }
+            if ((pad1_new | pad2_new) & (PAD_A | PAD_B | PAD_START)) { if (band_pg >= 5) band_hold = 2; else ++band_pg; }
+        } else if (++band_t >= 40) { band_t = 0; if (++band_pg > 5) band_pg = 0; }   /* (40 trames par page : les 5 statistiques passent pendant la pause assise) */
     } else band_pg = 0;
     /* texte : rafraîchi quand le score change, une rangée par trame */
     if (band_last[0] != sc_points[0] || band_last[1] != sc_points[1] || band_last[2] != sc_games[0] ||

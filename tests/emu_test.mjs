@@ -564,16 +564,16 @@ console.log('Version 2.72 : carrière, fiche, reprise, cérémonie');
   check(f.peek('pod_buf', 0) !== 0x4D, 'match terminé : la sauvegarde est effacée');
 }
 {
-  // changement de côté : le bandeau montre le score puis 4 statistiques
+  // changement de côté : le bandeau montre le score puis 5 statistiques (FAUTES : 2.76)
   const e = boot(); startWith(e, { FMT: 0, REPLAY: 0 }); allCpu(e);
-  const want = { 1: '1ERE', 2: 'ACES', 3: 'COUP', 4: 'SERV' }, seen = new Set();
-  for (let f = 0; f < 60 * 60 * 10 && seen.size < 4 && app(e) === AS.MATCH; f++) {
+  const want = { 1: '1ERE', 2: 'ACES', 3: 'COUP', 4: 'FAUT', 5: 'SERV' }, seen = new Set();
+  for (let f = 0; f < 60 * 60 * 10 && seen.size < 5 && app(e) === AS.MATCH; f++) {
     e.poke('cer_skip', e.peek('cer') >= 1 && e.peek('cer') <= 3 ? 1 : 0);
     e.run(1);
     const pg = e.peek('band_pg');
     if (e.peek('cer') === 5 && e.peek('band_vis') === 3 && pg && String.fromCharCode(...e.nes.ppu.vramMem.slice(0x2400 + 27 * 32 + 2, 0x2400 + 27 * 32 + 6)) === want[pg]) seen.add(pg);
   }
-  check(seen.size === 4, `changement de côté : le bandeau montre les 4 statistiques (${[...seen].sort().join(',')})`);
+  check(seen.size === 5, `changement de côté : le bandeau montre les 5 statistiques (${[...seen].sort().join(',')})`);
   // (2.75) avec un joueur humain : elles restent affichées et défilent à l'appui ;
   // les joueurs ne repartent qu'après la dernière page
   const h = boot(); h.bandSkip = false; startWith(h, { FMT: 3, REPLAY: 0 }); allCpu(h);
@@ -583,10 +583,10 @@ console.log('Version 2.72 : carrière, fiche, reprise, cérémonie');
   h.run(400);
   const stay = h.peek('cer') === 5 && h.peek('band_pg') === 0;
   const pages = [];
-  for (let k = 0; k < 4; k++) { h.tap('A'); pages.push(h.peek('band_pg')); }
+  for (let k = 0; k < 5; k++) { h.tap('A'); pages.push(h.peek('band_pg')); }
   const still = h.peek('cer') === 5;
   h.tap('A'); h.run(4);
-  check(stay && pages.join() === '1,2,3,4' && still && h.peek('cer') === 6, `changement de côté : statistiques affichées jusqu'à l'appui, une page par appui (${pages}), puis retour des joueurs (${h.peek('cer')})`);
+  check(stay && pages.join() === '1,2,3,4,5' && still && h.peek('cer') === 6, `changement de côté : statistiques affichées jusqu'à l'appui, une page par appui (${pages}), puis retour des joueurs (${h.peek('cer')})`);
 }
 {
   // plongeon de dernière chance sur un service canon
@@ -649,7 +649,8 @@ console.log('Version 2.73 : bandes du ralenti, survol, bandeau, dehors de peu');
     if (m === 5 && hm && !modes.endsWith(String(hm))) modes += hm;
     if (m !== 5 && pm === 5 && modes === '2') { quick++; quickLen = Math.max(quickLen, f - start); }
     if (m === 0 && !e.peek('cer') && e.peek('band_vis') === 3) bandServe++;
-    if (m === 3 && pm !== 3 && !e.peek('rp_pending')) endF = f;                        /* (2.74 : délai, puis montée) */
+    if (m === 3 && pm !== 3 && pm !== 5 && !e.peek('rp_pending')) endF = f;   /* (2.76 : après un ralenti, le bandeau vient sans délai : non compté)                        /* (2.74 : délai, puis montée) */
+    if (endF >= 0 && (e.peek('hl_mode') || e.peek('rp_pending'))) endF = -1;           /* (2.76 : après un ralenti ou un zoom, pas de délai) */
     if (endF >= 0 && e.peek('band_vis') === 3 && !e.peek('cer')) { minDelay = Math.min(minDelay, f - endF); endF = -1; }
     if (e.peek('band_vis') === 3 && !e.peek('cer')) rise.add(e.peek('split_l'));
     if (!hud && m === 0 && f > 600) hud = e.text(1, 2, 4);
@@ -713,11 +714,12 @@ console.log('Version 2.73 : bandes du ralenti, survol, bandeau, dehors de peu');
   const e = boot(); startWith(e, { FMT: 2, REPLAY: 0 }); allCpu(e);
   let bad = [], hi = 0;
   for (let f = 0; f < 60 * 60 * 6; f++) {
-    const z = e.peekS16('bz') >> 6, b = e.peek('bounces'), h0 = e.peek('hitter');
+    const z = e.peekS16('bz') >> 6, b = e.peek('bounces'), h0 = e.peek('hitter'), inc = e.peek('last_shot');
     e.run(1);
     if (e.peek('hitter') !== h0 && e.peek('ms') === 2 && !e.peek('b_serve')) {
-      // (après le rebond, B garde le lob ou l'amortie demandés)
-      const ls = e.peek('last_shot'), smash = ls === 7, want = z > (b ? 30 : 24) && !(b && (ls === 2 || ls === 3));
+      // (après le rebond, B garde le lob ou l'amortie demandés ; 2.76 : smash
+      // après le rebond seulement sur un lob reçu)
+      const ls = e.peek('last_shot'), smash = ls === 7, want = z > (b ? 30 : 24) && !(b && (ls === 2 || ls === 3)) && !(b && inc !== 2);
       if (want) hi++;
       if (smash !== want && Math.abs(z - (b ? 30 : 24)) > 2) bad.push(`${b ? 'après' : 'avant'} rebond ${z} px : ${e.peek('last_shot')}`);
     }
@@ -2859,6 +2861,30 @@ console.log('Joueur personnalisé en compétition (2.75)');
   e.tap('RIGHT');                       // (curseur sur PROFIL : PERSONNEL -> D'ORIGINE)
   e.tap('START'); e.run(40);
   check(scr(e) === SS.COMP && e.peek('cu_map', 0) === 0 && [...Array(30).keys()].some(r => e.text(0, r, 32).includes('ALEX')), 'profil « D\'ORIGINE » : ALEX tel quel (sans obligation)');
+}
+}
+if (sec('Version 2.76 : lignes, bandeau, smash')) {
+console.log('Version 2.76 : lignes, bandeau, smash');
+{
+  // balle qui touche la ligne de fond en milieu de trame : jugée au point de
+  // contact (sur la ligne, bonne), et non là où elle est en fin de trame (2 px plus loin)
+  const e = boot(); startWith(e, { FMT: 3, REPLAY: 0 }); allCpu(e);
+  runUntil(e, () => e.peek('ms') === 2 && e.peek('bounces') === 0 && !e.peek('b_serve') && e.peek('hitter') === 1 && e.peek('sc_swap') === 0, 60 * 60 * 3);
+  const s16 = (n, v) => { e.poke(n, v & 255, 0); e.poke(n, (v >> 8) & 255, 1); };
+  s16('bx', 128 * 64); s16('by', 13773); s16('bvx', 0); s16('bvy', 256); s16('bz', 30); s16('bvz', -40);
+  e.run(1);
+  const endY = (13773 + 256) >> 6;
+  check(e.peek('bounces') === 1 && e.peek('hl_bin') === 1 && e.peek('hl_by') === 217 && endY === 219 && e.peek('ms') === 2,
+    `balle sur la ligne de fond : jugée au point de contact (y ${e.peek('hl_by')}, bonne) et non en fin de trame (y ${endY}, dehors)`);
+}
+{
+  // après un ralenti, le bandeau du score monte aussitôt (pas de délai de lecture)
+  const e = boot(); e.bandSkip = false; startWith(e, { FMT: 3, REPLAY: 1 }); allCpu(e);
+  runUntil(e, () => e.peek('hl_mode') !== 0, 60 * 60 * 15);
+  runUntil(e, () => e.peek('hl_mode') === 0 && !e.peek('rp_pending'), 60 * 30);
+  const t0 = e.frames;
+  runUntil(e, () => e.peek('band_vis') === 3, 200);
+  check(e.frames - t0 < 30, `après le ralenti : bandeau du score en ${e.frames - t0} trames (avant : environ 60)`);
 }
 }
 if (sec('Compensation 50 Hz (PAL)')) {
