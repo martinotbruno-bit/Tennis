@@ -709,7 +709,8 @@ def _trophy_extra(f, j, female, r):
     hl, hr = j['hdL'], j['hdR']
     cx = (hl[0] + hr[0]) / 2
     hy = (hl[1] + hr[1]) / 2
-    base, bot, top = hy + 13, hy + 3, hy - 29        # (anses à hauteur des mains)
+    base = min(hy + 13, j['head'][1] - (30 if female else 26))   # (au-dessus de la tête : les joueuses, plus petites, avaient les cheveux coupés)
+    bot, top = base - 10, base - 42
     mid = (bot + top) / 2
     bowl = f.m_poly([(cx - 17, top), (cx + 17, top), (cx + 10, bot), (cx - 10, bot)]) | f.m_ell((cx, bot), 10, 5)
     cup = (bowl | f.m_ell((cx, top), 17, 4) | f.m_caps((cx, bot), (cx, base - 2), 3.2, 3.6)

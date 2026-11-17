@@ -173,7 +173,7 @@ static const tz_art_t tz_art[TZ_N][3] = {   /* homme, femme, fillette (Margaux) 
       { 2, 110, 8, 16, 2, 26, 0, tz_chr_smash_g, tz_map_smash_g, tz_at_smash_g } },
     { { 9, 125, 8, 14, 0, 28, 0, tz_chr_smash_air_m, tz_map_smash_air_m, tz_at_smash_air_m },
       { 6, 119, 8, 14, 0, 28, 0, tz_chr_smash_air_f, tz_map_smash_air_f, tz_at_smash_air_f },
-      { 28, 113, 8, 14, 0, 28, 0, tz_chr_smash_air_g, tz_map_smash_air_g, tz_at_smash_air_g } },
+      { 16, 113, 8, 14, 0, 28, 0, tz_chr_smash_air_g, tz_map_smash_air_g, tz_at_smash_air_g } },
     { { 16, 183, 2, 26, 2, 26, 0, tz_chr_backhand_m, tz_map_backhand_m, tz_at_backhand_m },
       { 20, 186, 2, 24, 2, 26, 0, tz_chr_backhand_f, tz_map_backhand_f, tz_at_backhand_f },
       { 12, 182, 2, 24, 2, 26, 0, tz_chr_backhand_g, tz_map_backhand_g, tz_at_backhand_g } },
@@ -187,8 +187,8 @@ static const tz_art_t tz_art[TZ_N][3] = {   /* homme, femme, fillette (Margaux) 
       { 21, 209, 0, 32, 0, 28, 0, tz_chr_crowd_m, tz_map_crowd_m, tz_at_crowd_m },
       { 21, 209, 0, 32, 0, 28, 0, tz_chr_crowd_m, tz_map_crowd_m, tz_at_crowd_m } },
     { { 4, 139, 12, 8, 0, 28, 0, tz_chr_trophy_m, tz_map_trophy_m, tz_at_trophy_m },
-      { 16, 133, 10, 12, 0, 28, 0, tz_chr_trophy_f, tz_map_trophy_f, tz_at_trophy_f },
-      { 21, 133, 10, 12, 0, 28, 0, tz_chr_trophy_g, tz_map_trophy_g, tz_at_trophy_g } },
+      { 21, 133, 10, 12, 0, 28, 0, tz_chr_trophy_f, tz_map_trophy_f, tz_at_trophy_f },
+      { 28, 133, 10, 12, 0, 28, 0, tz_chr_trophy_g, tz_map_trophy_g, tz_at_trophy_g } },
 };
 #define TZ_IMPACT_RACKET_X 7
 #define TZ_IMPACT_RACKET_Y 52

@@ -95,6 +95,17 @@ function passCustom(e) {
   // (2.76) puis les pages de choix illustrées (Emu.pickSkip : START aussi)
   for (let n = 0; n < 300 && app(e) === AS.SCREENS && (scr(e) === SS.CUSTOM || scr(e) === SS.MENU || scr(e) === SS.PICK); n++) e.run(1);
 }
+// (2.76) pages de choix : depuis les réglages, START puis A jusqu'à la page
+// dont le titre (rangées 0 à 2) contient « mot » ; START du banc coupé
+function toPick(e, mot) {
+  e.pickSkip = false; e.tap('START');
+  runUntil(e, () => scr(e) === SS.PICK, 120); e.run(40);
+  for (let k = 0; k < 6; k++) {
+    if ([0, 1, 2].some(y => e.text(0, y, 32).includes(mot))) return true;
+    e.tap('A'); e.run(40);
+  }
+  return false;
+}
 function allCpu(e) { const c = e.addr('cfg'); for (let i = 0; i < 4; i++) e.nes.cpu.mem[c + CFG.CTRL + i] = 2; }
 // Attentes à plafond adaptatif : chaque appel (repéré par sa ligne) retient
 // le nombre de trames qu'il a pris quand il a abouti (until_frames.json) ; son
@@ -382,11 +393,11 @@ if (sec('Menu de configuration')) {
 console.log('Menu de configuration');
 {
   const e = boot(); toMenu(e);
-  check(scr(e) === SS.MENU && e.peek('nvis') === 14, 'configuration match : 14 lignes (pas de ligne JEU contre le CPU)');
+  check(scr(e) === SS.MENU && e.peek('nvis') === 10, 'configuration match : 10 lignes (pas de ligne JEU contre le CPU ; joueurs, lieu et surface sur des pages, 2.76)');
   e.tap('DOWN'); e.tap('RIGHT'); e.tap('RIGHT'); e.tap('RIGHT'); e.run(5);
-  check(e.peek('opt_val', O.MODE) === MODE.COMP && e.peek('nvis') === 16, 'mode compétition : lignes adaptées (avec CARRIERE, 2.72)');
+  check(e.peek('opt_val', O.MODE) === MODE.COMP && e.peek('nvis') === 14, 'mode compétition : lignes adaptées (avec CARRIERE, 2.72 ; JOUEUR 2, 2.76)');
   e.tap('RIGHT'); e.run(5);
-  check(e.peek('opt_val', O.MODE) === MODE.TRAIN && e.peek('nvis') === 10, 'mode entraînement : lignes adaptées');
+  check(e.peek('opt_val', O.MODE) === MODE.TRAIN && e.peek('nvis') === 7, 'mode entraînement : lignes adaptées');
   e.tap('B'); e.run(10);   // (les tuiles des personnages, remplacées par les portraits, sont rechargées)
   check(scr(e) === SS.TITLE, 'B revient au titre');
 }
@@ -396,7 +407,7 @@ if (sec('Mode en équipe (double)')) {
 console.log('Mode en équipe (double)');
 {
   const e = boot(); toMenu(e); setOpts(e, { MODE: MODE.TEAM, TYPE: 0, CPART: 1 }); e.tap('B'); e.run(5); toMenu(e);
-  check(e.peek('nvis') === 15 && e.text(3, menuY(e, 3), 10) === 'PARTENAIRE' && e.text(3, menuY(e, 4), 8) === 'JOUE PAR', 'pas de ligne JEU ; lignes PARTENAIRE et JOUE PAR');
+  check(e.peek('nvis') === 11 && rowOf(e, O.TYPE) < 0 && e.text(3, menuY(e, 2), 8) === 'JOUEUR 2', 'pas de ligne JEU ; ligne JOUEUR 2 (le partenaire : sur la page des joueurs, 2.76)');
   e.tap('START'); runUntil(e, () => scr(e) === SS.PRESENT && litScr(e), 90);
   check(e.text(3, 1, 15) === 'MATCH DE DOUBLE' && e.text(2, 22, 11) === '+ MANETTE 2', 'toujours un double, manette 2 partenaire');
   e.tap('A'); e.run(30);
@@ -416,11 +427,12 @@ console.log('Mode en équipe (double)');
 if (sec('Court Margaux')) {
 console.log('Court Margaux');
 {
-  const e = boot(); toMenu(e);
-  e.poke('cursor', rowOf(e, O.ENV));
-  const seen = new Set(); for (let i = 0; i < 6; i++) { e.tap('RIGHT'); seen.add(e.peek('opt_val', O.ENV)); }
+  const e = boot(); toMenu(e); setOpts(e, { ENV: 0 });
+  toPick(e, 'LIEU');
+  const seen = new Set(); for (let i = 0; i < 6; i++) { e.tap('RIGHT'); e.run(30); seen.add(e.peek('opt_val', O.ENV)); }
   check(seen.has(4) && !seen.has(3), 'court Margaux proposé d\'emblée (club nudiste toujours verrouillé)');
-  setOpts(e, { ENV: 4 }); e.tap('START'); runUntil(e, () => scr(e) === SS.PRESENT && litScr(e), 90);
+  while (e.peek('opt_val', O.ENV) !== 4) { e.tap('RIGHT'); e.run(30); }
+  e.tap('START'); runUntil(e, () => scr(e) === SS.PRESENT && litScr(e), 120);
   check(e.text(2, 3, 26) === 'BIENVENUE AU COURT MARGAUX', 'présentation du court Margaux');
   e.tap('A'); e.run(30);
   // petit panneau dans le bandeau, à droite du score de gauche (rangées 2-3, colonnes 5 à 8) :

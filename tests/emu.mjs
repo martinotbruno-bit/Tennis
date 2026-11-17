@@ -43,6 +43,7 @@ class Emu {
     // (2.76) pages de choix illustrées (joueurs, tournoi, lieu, surface) :
     // validées d'office avec START (pickSkip = false pour les tester)
     this.pickSkip = true;
+    this.tossSkip = true; this._tsPress = false;
     this.scrAddr = this.labels['_scr_state']; this.appAddr = this.labels['_app_state'];
     this.bandDis = this.labels['_band_dis']; this.bandHold = this.labels['_band_hold'];
     // dessin de l'image (fonctions d'origine de jsnes, gardées pour setRender)
@@ -82,10 +83,17 @@ class Emu {
         if (m[this.bandHold] === 1) { m[this.bandDis] = 1; m[this.bandHold] = 0; }
         if (m[this.labels['_cer']] === 5) m[this.bandHold] = 2;   /* (2.75 : assis, statistiques passées d'office) */
       }
-      if (this.customSkip && this.scrAddr !== undefined) {
+      if ((this.customSkip || this.pickSkip) && this.scrAddr !== undefined) {
         const m = this.nes.cpu.mem;
         if (this._cuPress) { this.nes.buttonUp(1, BTN.START); this._cuPress = false; }
-        else if ((m[this.scrAddr] === 13 || (this.pickSkip && m[this.scrAddr] === 15)) && m[this.appAddr] === 0 && !this.held[0].has('START')) { this.nes.buttonDown(1, BTN.START); this._cuPress = true; }
+        else if (((this.customSkip && m[this.scrAddr] === 13) || (this.pickSkip && m[this.scrAddr] === 15)) && m[this.appAddr] === 0 && !this.held[0].has('START')) { this.nes.buttonDown(1, BTN.START); this._cuPress = true; }
+      }
+      // (2.76) tirage au sort : le gagnant humain choisit de servir (A, sur
+      // ses deux manettes possibles), sauf pour les tests qui le regardent
+      if (this.tossSkip && this.cerAddr !== undefined && this.appAddr !== undefined) {
+        const m = this.nes.cpu.mem;
+        if (this._tsPress) { this.nes.buttonUp(1, BTN.A); this.nes.buttonUp(2, BTN.A); this._tsPress = false; }
+        else if (m[this.appAddr] === 1 && m[this.labels['_cer']] === 11 && !this.held[0].has('A')) { this.nes.buttonDown(1, BTN.A); this.nes.buttonDown(2, BTN.A); this._tsPress = true; }
       }
       if (each) each(this);
     }
