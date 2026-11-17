@@ -73,7 +73,7 @@ static void logic_tick(void)
         set_bank(BANK_GAME);
         r = match_tick();
         if (r) { go_req = GO_SCREEN; go_arg = (u8)(r == 2 ? SCR_SETBREAK : SCR_AFTER_MATCH); }
-        else if (!no_draw) match_draw();   /* trame logique ajoutée : pas de dessin */
+        else if (!no_draw) bank_call(BANK_MDRAW, match_draw);   /* (banque 22) */   /* trame logique ajoutée : pas de dessin */
         break;
     case AS_INTRO:
         set_bank(BANK_INTRO);

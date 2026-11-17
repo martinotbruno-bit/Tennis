@@ -536,9 +536,10 @@ static void medal_tick(void)
 /* Coupe brandie au-dessus du ou des vainqueurs, feux d'artifice, confettis ;
    en double, le 3e en sprites agrandis. Pour tenir dans une image, seuls les
    éléments qui bougent sont réécrits à chaque trame, directement dans la
-   copie de l'OAM : entrées 0-15 la coupe (hauteur), 16-19 les feux
-   d'artifice, 20-29 les confettis (hauteur, par addition), 30-53 le 3e
+   copie de l'OAM : entrées 0-15 la coupe (hauteur), 16-19 et 60-63 les
+   feux d'artifice (blancs, jaunes), 20-29 les confettis (hauteur, par addition), 30-53 le 3e
    (écrit une seule fois). */
+extern u8 fw_o2;                /* train.c */
 void podium_sprites(void)
 {
     u8 i, o, cy, y;
@@ -569,12 +570,14 @@ void podium_sprites(void)
     for (i = 0; i < 16; ++i) oam_buf[i * 4] = (u8)(cy + (i >> 2) * 8 - 1);
     /* feux d'artifice pendant que la coupe est brandie (5 fusées, ~4 s) */
     oam_buf[64] = oam_buf[68] = oam_buf[72] = oam_buf[76] = 0xFF;
+    oam_buf[240] = oam_buf[244] = oam_buf[248] = oam_buf[252] = 0xFF;   /* (étincelles jaunes, 2.76) */
     if (cup_t == 24) fw_c = 131;
     if (cup_t >= 24 && cup_t < 233) {             /* arrêt après la 5e gerbe, avant une 6e fusée */
         if (--fw_c == 0) fw_c = 130;
         fw_sound(fw_c);
-        oam_i = 64;
+        oam_i = 64; fw_o2 = 240;
         far_call(BANK_TRAIN, (void *)fw_draw, fw_c);
+        fw_o2 = 0;
     }
     /* confettis : chute à 3 vitesses, retour en haut */
     for (i = 0; i < 10; ++i) {

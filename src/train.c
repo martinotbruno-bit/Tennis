@@ -574,6 +574,7 @@ u16 __fastcall__ res_stats(u16 unused)
 static const u8 fw_pop_t2[3] = { 115, 75, 35 };
 static const u8 fw_px2[3] = { 72, 176, 124 };
 static const u8 fw_py2[3] = { 64, 80, 52 };
+u8 fw_o2;                                         /* podium : où écrire les étincelles jaunes (0 : à la suite) */
 u16 __fastcall__ fw_draw(u16 t16)
 {
     u8 t = (u8)t16, k, d, x, y;
@@ -589,6 +590,7 @@ u16 __fastcall__ fw_draw(u16 t16)
     spr1((u8)(x + d), y, 3, 2);
     spr1(x, (u8)(y - d), 3, 2);
     spr1(x, (u8)(y + d), 3, 2);
+    if (fw_o2) oam_i = fw_o2;                     /* (podium : entrées libres en fin d'OAM) */
     d = (u8)((d * 3) >> 2);
     spr1((u8)(x - d), (u8)(y - d), 3, 3);
     spr1((u8)(x + d), (u8)(y - d), 3, 3);

@@ -366,9 +366,9 @@ console.log("Mode d'emploi");
   const e = boot();
   e.tap('DOWN'); e.tap('A'); e.run(10);
   check(app(e) === AS.MANUAL && e.peek('cur_bank') === 4, "le mode d'emploi s'ouvre (banque 4)");
-  check(e.text(2, 3, 17) === 'COMMANDES DE BASE', 'page 1 : commandes de base');
-  for (let i = 0; i < 7; i++) { e.tap('RIGHT'); e.run(5); }
-  check(e.peek('page') === 7 && e.text(2, 3, 8) === 'CONSEILS', '8 pages consultables');
+  check(e.text(2, 3, 9) === 'COMMANDES', 'page 1 : commandes');
+  for (let i = 0; i < 12; i++) { e.tap('RIGHT'); e.run(5); }
+  check(e.peek('page') === 12 && e.text(2, 3, 8) === 'CONSEILS', '13 pages consultables');
   e.tap('RIGHT'); e.run(5);
   check(e.peek('page') === 0, 'navigation circulaire');
   e.tap('B'); e.run(10);
@@ -624,8 +624,8 @@ console.log('Version 2.72 : carrière, fiche, reprise, cérémonie');
   const e = boot(); runUntil(e, () => scr(e) === SS.TITLE, 100); e.run(30);
   e.tap('DOWN'); e.tap('A'); e.run(60);
   let ok = 0;
-  for (let p = 0; p < 8; p++) { e.run(20); let n = 0; for (let i = 0; i < 64; i++) if (e.peek('oam_buf', i * 4) < 0xF0) n++; if (n >= 6) ok++; e.tap('RIGHT'); e.run(10); }
-  check(ok === 8, `mode d'emploi : un joueur animé sur chaque page (${ok}/8)`);
+  for (let p = 0; p < 13; p++) { e.run(20); let n = 0; for (let i = 0; i < 64; i++) if (e.peek('oam_buf', i * 4) < 0xF0) n++; if (n >= 12) ok++; e.tap('RIGHT'); e.run(10); }
+  check(ok === 13, `mode d'emploi : deux joueurs animés sur le mini-court de chaque page (${ok}/13)`);
 }
 }
 if (sec('Version 2.73 : bandes du ralenti, survol, bandeau, dehors de peu')) {
@@ -2342,9 +2342,21 @@ console.log('Vue en perspective (option VUE)');
   const g = boot(); toMenu(g); setOpts(g, { MODE: 1, TYPE: 1, VIEW: 1, FMT: 3, REPLAY: 0 }); g.tap('START');   /* (sans ralentis : le jeu seul) */
   runUntil(g, () => scr(g) === SS.PRESENT, 120); g.run(40); g.tap('A');
   runUntil(g, () => app(g) === AS.MATCH, 300); allCpu(g);
-  const wf = g.addr('wait_frame'); let late = 0, n = 0;
-  for (let f = 0; f < 3000 && app(g) === AS.MATCH; f++) { g.run(1); n++; const pc = g.nes.cpu.REG_PC + 1; if (pc < wf || pc > wf + 16) late++; }
-  check(n === 3000 && g.peek('npl') === 4 && g.peek('persp') === 1 && late * 100 < n * 11, `double en perspective : ${late} trames en retard sur ${n} (moins de 11 %)`);
+  // (2.76) depuis le rattrapage (main.c : une trame perdue est rattrapée par
+  // une trame logique sans dessin), ce qui compte est la vitesse du jeu :
+  // trames logiques (match_tick) par trame affichée pendant les échanges
+  const wf = g.addr('wait_frame'), mt = g.addr('match_tick'), cb = g.addr('cur_bank');
+  let late = 0, n = 0, ticks = 0, rf = 0, rt = 0;
+  const cpu = g.nes.cpu, emu0 = cpu.emulate.bind(cpu);
+  cpu.emulate = function () { if (cpu.REG_PC + 1 === mt && cpu.mem[cb] === 0) ticks++; return emu0(); };
+  for (let f = 0; f < 3000 && app(g) === AS.MATCH; f++) {
+    const t0 = ticks; g.run(1); n++;
+    const pc = g.nes.cpu.REG_PC + 1; if (pc < wf || pc > wf + 16) late++;
+    if (g.peek('ms') === 2) { rf++; rt += ticks - t0; }
+  }
+  cpu.emulate = emu0;
+  check(n === 3000 && g.peek('npl') === 4 && g.peek('persp') === 1 && rf > 300 && rt * 100 >= rf * 97,
+    `double en perspective : vitesse du jeu ${(rt / rf).toFixed(3)} (${rt} trames logiques pour ${rf} trames d'échange, 0,97 au moins ; ${late} trames rattrapées sur ${n})`);
 }
 {
   // lignes fines (2.64) : les tuiles des lignes prennent la place des panneaux et
