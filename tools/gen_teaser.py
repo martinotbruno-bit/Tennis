@@ -158,8 +158,9 @@ def body(f, j, female, face, front=('armR', 'legL'), racket_hand='L', racket_dir
             # (2.76) à genoux, assis sur les talons, vu de face : la cuisse
             # vient vers la caméra, le genou rond posé au sol ; tibia et pied
             # sont cachés sous le corps
-            thigh = f.m_caps(hip, kn, 8.0 if female else 9.5, 6.6 if female else 7.8)
-            knee = f.m_ell(kn, 6.4 if female else 7.6, 5.2 if female else 6.0)
+            # (cuisses pleines, écrasées sur les talons : plus larges qu'en pied)
+            thigh = f.m_caps(hip, kn, 11.0 if female else 12.5, 9.2 if female else 10.4)
+            knee = f.m_ell(kn, 8.6 if female else 9.8, 6.8 if female else 7.6)
             g = f.part(thigh | knee, S, s, sh=(2, 1))
             ret['leg' + side] = g
             f.paint(f.m_arc((kn[0], kn[1] + 1.0), 4.0, 2.4, 200, 340, 0.7), 2, within=[g])   # rotule
