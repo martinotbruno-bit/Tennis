@@ -317,6 +317,9 @@ static void vs_side(u8 side)
         }
     }
 }
+/* (2.75) affiche VS : la couleur « sombre » sert aussi aux contours ;
+   cheveux clairs (joueur personnalisé) : teinte sombre de la même famille */
+static u8 hd_dark(u8 d) { return (u8)(d == 0x37 ? 0x18 : (d == 0x30 || d == 0x10) ? 0x00 : d); }
 /* palettes du joueur (couleurs de char_pal) : A et B */
 static void vs_pal(u8 side)
 {

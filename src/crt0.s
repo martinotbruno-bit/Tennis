@@ -13,7 +13,7 @@
 .export _swap_put, _vram_fill, _vram_unrle, _rand8, _rand_seed
 .export _scroll_y, _scroll_nt, _mirror_h, _scroll_x, _tz_bank, _tz_n, _tz_unpack, _tz_copy, _tz_src
 .export _chr_data, _split_start, _split_stop, _split_o, _ctrl_swap, _rp_seq, _band_on, _lbox_on, _fly_on, _cband_on
-.exportzp _fly_x, _fly_n, _band_hold, _crowd_big, _hl_flags, _mp_t
+.exportzp _fly_x, _fly_n, _band_hold, _crowd_big, _hl_flags, _mp_t, _fc_last, _ck1, _ck2
 .export _spr1, _spr_meta, _spr_end, _oam_i, _spr_rot, _set_bank, _cur_bank, _bank_call, _far_call, _rp_record
 .import _bx, _by, _bz, _b_vis, _plx, _ply, _pose_cache, _flip_cache
 .import _rp_buf, _rp_head, _rp_count, _swp_dst
@@ -73,6 +73,9 @@ split_ph: .res 1        ; bandes du ralenti : 0 avant la bande du haut finie, 1 
 _fly_x:   .res 2        ; survol du stade (split_on 4) : défilement des bandes 2 et 3 (tribunes, court)
 _fly_n:   .res 2        ; ... et leur écran (0 ou 1)
 _hl_flags: .res 1       ; bit 0 bandeau de pause affiché, bit 1 balle de match annoncée (highlight.c, 2.75)
+_fc_last:  .res 1       ; trame de la dernière boucle (main.c, rattrapage, 2.76)
+_ck1:      .res 1
+_ck2:      .res 1
 _mp_t:     .res 1       ; bandeau central de la balle de match : étape, puis durée (train.c, 2.75)
 _crowd_big: .res 1      ; standing ovation demandée (highlight.c, extras.c, 2.74)
 _band_hold: .res 1      ; bandeau du score affiché, en attente d'un appui humain (highlight.c, 2.74)

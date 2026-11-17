@@ -1194,7 +1194,7 @@ u8 match_tick(void)
     if (msg_timer) { if (--msg_timer == 0) { hud_dirty = 1; if (recap_pend) score_recap(); } }
     if (hud_dirty) bank_call(BANK_EXTRAS, hud_update);
     /* public animé (après le score : le tampon VRAM est partagé) */
-    bank_call(BANK_EXTRAS, crowd_tick);      /* public : suit la balle, ola, réactions */
+    if (npl < 4 || (frame_cnt & 1)) bank_call(BANK_EXTRAS, crowd_tick);      /* public : suit la balle, ola, réactions (double : une trame sur deux, 2.76) */
     /* filet qui tremble (après le score : le tampon VRAM est partagé) */
     if (net_shake) bank_call(BANK_EXTRAS, net_tick);
     return 0;

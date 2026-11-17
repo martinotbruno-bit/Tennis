@@ -12,6 +12,10 @@
 u8 app_state, go_req, go_arg;
 u8 is_pal, pal_acc;
 static u8 spd_acc, keep1, keep2, no_draw;
+extern u8 fc_last, ck1, ck2;            /* (2.76) rattrapage des trames manquées (page zéro, crt0.s) */
+#pragma zpsym("fc_last")
+#pragma zpsym("ck1")
+#pragma zpsym("ck2")
 
 static void handle_go(void)
 {
@@ -101,6 +105,16 @@ void main(void)
     for (;;) {
         wait_frame();
         pad_poll();
+        /* (2.76) rattrapage : une trame manquée (logique trop longue, double
+           en perspective) est rattrapée par une trame logique sans dessin ;
+           le jeu garde sa vitesse, seul l'affichage saute une image ; les
+           appuis restent pour la trame normale */
+        if (app_state == AS_MATCH && (u8)(frame_cnt - fc_last) > 1) {
+            ck1 = pad1_new; ck2 = pad2_new; pad1_new = pad2_new = 0;
+            no_draw = 1; logic_tick(); no_draw = 0;
+            pad1_new = ck1; pad2_new = ck2;
+        }
+        fc_last = frame_cnt;
         /* hasard : hors du match, le générateur avance à chaque trame et
            chaque appui y mêle l'instant où il a lieu ; le temps passé dans
            les menus, jamais le même, rend le tirage au sort, le premier

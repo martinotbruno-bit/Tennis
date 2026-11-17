@@ -49,10 +49,6 @@ void cust_reset(void)
     memcpy(char_female, char_female0, NCHARS);
     cu_map[0] = cu_map[1] = 0;
 }
-/* (2.75) gros plans HD et affiche VS : la couleur « sombre » sert aussi aux
-   contours et aux yeux ; cheveux clairs (joueur personnalisé blond, blanc,
-   gris ; Papi) : une teinte sombre de la même famille (Margaux a ses images) */
-u8 __fastcall__ hd_dark(u8 d) { return (u8)(d == 0x37 ? 0x18 : (d == 0x30 || d == 0x10) ? 0x00 : d); }
 const char * __fastcall__ chr_nm(u8 c)
 {
     if (cu_map[0] == (u8)(c + 1)) return (const char *)cu_sav + CU_SLOT(0);

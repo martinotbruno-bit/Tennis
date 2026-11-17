@@ -154,6 +154,17 @@ def body(f, j, female, face, front=('armR', 'legL'), racket_hand='L', racket_dir
 
     def leg(side):
         hip, kn, an, toe = j['hip' + side], j['kn' + side], j['an' + side], j['toe' + side]
+        if j.get('kneel'):
+            # (2.76) à genoux, assis sur les talons, vu de face : la cuisse
+            # vient vers la caméra, le genou rond posé au sol ; tibia et pied
+            # sont cachés sous le corps
+            thigh = f.m_caps(hip, kn, 8.0 if female else 9.5, 6.6 if female else 7.8)
+            knee = f.m_ell(kn, 6.4 if female else 7.6, 5.2 if female else 6.0)
+            g = f.part(thigh | knee, S, s, sh=(2, 1))
+            ret['leg' + side] = g
+            f.paint(f.m_arc((kn[0], kn[1] + 1.0), 4.0, 2.4, 200, 340, 0.7), 2, within=[g])   # rotule
+            ret['foot' + side] = (kn[0], kn[1] + 6)
+            return
         if female:
             # jambe fine et galbée, sans relief musculaire
             thigh = f.m_caps(hip, kn, 8.0, 4.8)
@@ -639,7 +650,7 @@ def skeleton(p, female):
     hw = 11.0 if female else 7.5                   # demi-largeur des hanches (homme : 1,5 tête avec les cuisses)
     shc = add(neck, dvec(at + 180, 3.5))
     j = dict(neck=neck, head=add(neck, dvec(at + p.get('head_bend', 0), SEG['neck'])),
-             tilt=p.get('tilt', 0.0), turn=p.get('turn', 0.0), order=p['order'])
+             tilt=p.get('tilt', 0.0), turn=p.get('turn', 0.0), order=p['order'], kneel=p.get('kneel', False))
     j['shL'] = (shc[0] - perp[0] * sw, shc[1] - perp[1] * sw + (2 if female else 0))
     j['shR'] = (shc[0] + perp[0] * sw, shc[1] + perp[1] * sw + (2 if female else 0))
     j['hipL'] = (P[0] - perp[0] * hw, P[1] - perp[1] * hw)
@@ -694,8 +705,8 @@ POSES['victory'] = dict(
 #    à genoux, bras ballants, tête penchée, raquette lâchée à ses pieds
 POSES['defeat'] = dict(
     # (à genoux : cuisses vers la caméra, tibias repliés derrière, presque cachés)
-    s=dict(pelvis=(88, 168), torso=-90, torso_len=0.84, legL=(105, 80, 170, 0.45, 0.18), legR=(75, 100, 10, 0.45, 0.18),
-           armL=(100, 92), armR=(80, 88), tilt=0.12, turn=0.0, head_bend=0,
+    s=dict(pelvis=(88, 182), torso=-90, torso_len=0.86, legL=(122, 90, 170, 0.42, 0.1), legR=(58, 90, 10, 0.42, 0.1),
+           armL=(104, 72), armR=(76, 108), tilt=0.14, turn=0.0, head_bend=0, kneel=True,
            order=['racket', 'legL', 'legR', 'torso', 'armL', 'armR', 'head']),
     face='sad', hand='L', rdir=170, rlen=44)
 

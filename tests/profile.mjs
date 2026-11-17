@@ -7,7 +7,7 @@ const dbg = fs.readFileSync(rom.replace(/\.nes$/, '.dbg'), 'utf8').split('\n');
 const segBank = {};
 for (const l of dbg) {
   const m = l.match(/^seg\tid=(\d+),name="([^"]+)"/);
-  if (m) { const b = m[2].match(/^(?:BANK|RODATA)(\d)$/); segBank[m[1]] = b ? +b[1] : -1; }
+  if (m) { const b = m[2].match(/^(?:BANK|RODATA)(\d+)$/); segBank[m[1]] = b ? +b[1] : -1; }
 }
 const tables = {};   // banque -> [adresse, nom]
 for (const l of dbg) {
@@ -31,7 +31,7 @@ function sym(pc, bank) {
 }
 const e = new Emu(rom);
 e.run(40); e.tap('START', 1, 1, 0); e.run(4); e.tap('START', 1, 1, 0); e.run(40);   // générique passé
-e.tap('START'); e.run(10); e.poke('opt_val', dbl, 1); e.poke('opt_val', dbl, 2); e.poke('opt_val', 3, 9); e.tap('START'); e.run(10); e.tap('A'); e.run(10);
+e.tap('START'); e.run(10); e.poke('opt_val', dbl, 1); e.poke('opt_val', dbl, 2); e.poke('opt_val', 3, 9); e.poke('opt_val', +(process.env.VIEW ?? 0), 24); e.tap('START'); e.run(10); e.tap('A'); e.run(10);
 const c = e.addr('cfg'); for (let i = 0; i < 4; i++) e.nes.cpu.mem[c + 2 + i] = 2;
 if (process.env.NOREPLAY) e.nes.cpu.mem[c + 19] = 0;
 const cpu = e.nes.cpu, orig = cpu.emulate.bind(cpu), acc = {};
@@ -54,9 +54,10 @@ logicCost.shift();
 const sorted = [...logicCost].sort((a, b) => a - b);
 const wait = acc['_wait_frame'] || 0;
 console.log('dépassements par état du match (0 service, 1 lancer, 2 échange, 3 point joué, 5 ralenti) :', JSON.stringify(overByMs));
+const ov = logicCost.filter(c => c > 27000 && c < 200000); console.log('dépassement moyen', (ov.reduce((a,b)=>a+b,0)/ov.length).toFixed(0), 'p90', [...ov].sort((a,b)=>a-b)[Math.floor(ov.length*0.9)]);
 console.log(`logique par trame : médiane ${sorted[sorted.length >> 1]}, max ${sorted[sorted.length - 1]} cycles ; trames > 27000 cycles : ${logicCost.filter(c => c > 27000).length}/${logicCost.length}`);
 console.log(`charge CPU hors attente : ${(100 * (total - wait) / total).toFixed(1)} %`);
 Object.entries(acc).sort((a, b) => b[1] - a[1]).slice(0, 18).forEach(([k, v]) => console.log(k.padEnd(24), (v / N).toFixed(0).padStart(7), 'cycles/trame'));
 const ns = Object.values(overByMs).reduce((a, b) => a + b, 0) || 1;
 console.log('--- trames d\'échange en dépassement : cycles moyens par fonction ---');
-Object.entries(spike).sort((a, b) => b[1] - a[1]).slice(0, 16).forEach(([k, v]) => console.log(k.padEnd(24), (v / (overByMs[2] || 1)).toFixed(0).padStart(7)));
+Object.entries(spike).sort((a, b) => b[1] - a[1]).slice(0, 70).forEach(([k, v]) => console.log(k.padEnd(24), (v / (overByMs[2] || 1)).toFixed(0).padStart(7)));
