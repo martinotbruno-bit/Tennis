@@ -9,7 +9,6 @@ const char * const char_name[NCHARS] = {
     "ALEX", "MAYA", "LEON", "NINA", "OMAR", "ZOE ", "HUGO", "EMMA",
     "IVAN", "LINA", "TOM ", "JADE", "LUCA", "SARA", "NOAH", "INES", "MARGAUX",
     "MAX ", "LOLA", "PAPI", "TITOU" };
-const u8 char_female0[NCHARS] = { 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 1, 0, 1, 0, 0 };
 /* peau, tenue, sombre (cheveux/short/raquette) */
 const u8 char_pal_rom[NCHARS][3] = {
     /* tenues choisies pour ressortir sur toutes les surfaces et se distinguer
@@ -44,11 +43,6 @@ u8 tm_last, tm_sub;                            /* écran du joueur personnalisé
 #pragma bss-name(push, "SAVECU")      /* (fin de la zone sauvegardée, adresse fixe : les sauvegardes des versions précédentes ne bougent pas) */
 u8 cu_sav[25];
 #pragma bss-name(pop)
-void cust_reset(void)
-{
-    memcpy(char_female, char_female0, NCHARS);
-    cu_map[0] = cu_map[1] = 0;
-}
 const char * __fastcall__ chr_nm(u8 c)
 {
     if (cu_map[0] == (u8)(c + 1)) return (const char *)cu_sav + CU_SLOT(0);
@@ -71,7 +65,7 @@ static const u8 surf_pal[NSURF + 1][4] = {
     { 0x1A, 0x2A, 0x30, 0x0F },   /* gazon : vert clair, abords vert */
     { 0x02, 0x12, 0x30, 0x0F },   /* dur : bleu, abords bleu nuit */
     { 0x03, 0x13, 0x30, 0x0F },   /* moquette : violet, abords violet sombre */
-    { 0x22, 0x28, 0x16, 0x0F },   /* plage : sable jaune, mer */
+    { 0x38, 0x28, 0x16, 0x0F },   /* plage : sable jaune, abords de sable pâle (2.76 : le bleu de la mer ne collait pas) */
     { 0x12, 0x21, 0x30, 0x0F },   /* glace : bleu ciel, abords bleu */
     { 0x14, 0x25, 0x30, 0x0F },   /* court Margaux : rose bonbon, abords prune */
 };
@@ -124,6 +118,7 @@ void pal_set_court(u8 s, u8 cond, u8 env)
        sueur), 3 blanc (couture de la balle, étoiles) */
     pal_buf[16 + 12] = p[0]; pal_buf[16 + 13] = ball_col[env == ENV_MARGAUX ? NSURF : s]; pal_buf[16 + 14] = 0x21; pal_buf[16 + 15] = 0x30;
     if (env == ENV_MARGAUX) pal_buf[16 + 11] = 0x34;   /* robe rose de la princesse arbitre (et reflet de la balle) */
+    if (env == ENV_NUDE) pal_buf[16 + 11] = 0x37;      /* (2.76) club nudiste : l'arbitre aussi est nu (chemise couleur peau) */
     if (cond == 2) {
         /* pluie : ciel couvert, couleurs ternies */
         pal_buf[0] = darken(pal_buf[0]);

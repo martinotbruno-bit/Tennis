@@ -36,6 +36,7 @@ OBJS = $(BUILD)/crt0.o $(BUILD)/sprp.o $(BUILD)/poses.o $(BUILD)/slip.o $(BUILD)
 all: $(ROM)
 
 assets/tiles.chr src/assets_data.c src/assets_court.c src/assets_nude.c src/assets_persp.c src/assets_persp3.c src/assets_pnet.c src/assets_courts12.c src/assets_swap.c: tools/gen_assets.py
+	python3 tools/gen_assets.py
 src/assets_gm.c src/assets_gm2.c: tools/gen_gm.py
 	python3 tools/gen_gm.py
 	python3 tools/gen_assets.py

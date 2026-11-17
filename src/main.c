@@ -99,7 +99,7 @@ void main(void)
 {
     /* NTSC ~1860 boucles entre deux VBlank, PAL/Dendy > 2050 */
     is_pal = (u8)(region_cnt > 1970);
-    cust_reset();                      /* personnages d'origine (2.75) */
+    bank_call(BANK_CAR, cust_reset);   /* personnages d'origine (2.75 ; career.c, banque 19) */
     go_req = GO_INTRO;                 /* générique, puis écran titre */
     handle_go();
     for (;;) {

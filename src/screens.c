@@ -473,7 +473,7 @@ static void cust_screen(u8 first)
 static void menu_screen(void)
 {
     u8 i;
-    cust_reset();                       /* (personnages d'origine hors compétition, 2.75) */
+    bank_call(BANK_CAR, cust_reset);    /* (personnages d'origine hors compétition, 2.75) */
     build_visible();
     rd_row = rd_n = 0;
     screen_begin();
@@ -982,13 +982,14 @@ static void results_screen(void)
 static void results_sprites(void)
 {
     u8 w = sc_winner, joy = (u8)((frame_cnt >> 4) & 1 ? POSE_JOY : POSE_SERVE);
+    u8 sad = (u8)(cfg.env == ENV_NUDE ? POSE_IDLE : POSE_SAD);   /* (2.76 : pas de pose triste au naturel : le perdant était rhabillé) */
     spr_begin();
     /* sous les statistiques (rangées 20 à 23, libres), loin du tableau des sets */
     spr_person(60, 188, cfg.chr[w], 1, joy, 0, w);
-    spr_person(196, 188, cfg.chr[w ^ 1], 1, POSE_SAD, 0, (u8)(w ^ 1));
+    spr_person(196, 188, cfg.chr[w ^ 1], 1, sad, 0, (u8)(w ^ 1));
     if (cfg.doubles) {
         spr_person(36, 188, cfg.chr[w + 2], 1, joy, 1, w);      /* (2.75 : à gauche ; l'échange le plus long est au centre) */
-        spr_person(220, 188, cfg.chr[(w ^ 1) + 2], 1, POSE_SAD, 1, (u8)(w ^ 1));
+        spr_person(220, 188, cfg.chr[(w ^ 1) + 2], 1, sad, 1, (u8)(w ^ 1));
     }
     spr_end();
 }

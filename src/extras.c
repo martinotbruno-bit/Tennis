@@ -407,12 +407,23 @@ void crowd_tick(void)
     if (nude || girly) {
         /* court Margaux : les coeurs, fleurs et étoiles scintillent ; club
            nudiste : les spectateurs se lèvent */
-        if (crowd_timer) {
-            u8 n = (u8)(nude ? 18 : 3);
-            u8 cheer = (u8)(crowd_timer >= n && ((crowd_timer >> 3) & 1));
-            k = (u8)(crowd_timer % n);
-            if (vbuf_raw((u16)(girly ? crowd_idx4 : crowd_idx3)[k] << 4,
-                         (girly ? (cheer ? crowd_cheer4 : crowd_norm4) : (cheer ? crowd_cheer3 : crowd_norm3)) + (k << 4), 16))
+        if (crowd_timer && nude) {
+            /* (2.76) club nudiste : les 4 tuiles du haut d'un spectateur
+               (tête, bras) dans la même trame, sinon il avait un moment les
+               bras levés et baissés à la fois ; les 2 du bas la trame d'après */
+            u8 cheer = (u8)(crowd_timer >= 6 && ((crowd_timer >> 3) & 1)), j, n;
+            k = (u8)(crowd_timer % 6);
+            j = (u8)((k >> 1) * 6 + ((k & 1) ? 4 : 0));
+            n = (u8)((k & 1) ? 2 : 4);
+            if (vram_len + n * 19 <= VBUF_MAX) {
+                for (m = 0; m < n; ++m, ++j)
+                    vbuf_raw((u16)crowd_idx3[j] << 4, (cheer ? crowd_cheer3 : crowd_norm3) + (j << 4), 16);
+                --crowd_timer;
+            }
+        } else if (crowd_timer) {
+            u8 cheer = (u8)(crowd_timer >= 3 && ((crowd_timer >> 3) & 1));
+            k = (u8)(crowd_timer % 3);
+            if (vbuf_raw((u16)crowd_idx4[k] << 4, (cheer ? crowd_cheer4 : crowd_norm4) + (k << 4), 16))
                 --crowd_timer;
         }
     } else {

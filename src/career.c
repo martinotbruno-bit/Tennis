@@ -7,6 +7,7 @@
  * du match alternent avec le face-à-face (vos matchs contre cet adversaire,
  * gardés au palmarès). Les textes d'origine de l'affiche (screens.c, banque
  * 1 pleine) sont écrits ici aussi. */
+#include <string.h>
 #include "app.h"
 #include "gfx.h"
 #include "game.h"
@@ -344,7 +345,14 @@ static const char * const cu_out_n[15] = { "BLANC", "GRIS", "ANTHRACITE", "CREME
 static const char * const cu_lbl[CU_ROWS] = { "PROFIL", "NOM", "GENRE", "PEAU", "CHEVEUX", "TENUE", "VALIDER" };
 static const char cu_abc[] = " ABCDEFGHIJKLMNOPQRSTUVWXYZ-";
 extern const u8 char_pal_rom[NCHARS][3];        /* (gfx.c) */
-extern const u8 char_female0[NCHARS];
+/* (2.76, déplacés de la banque fixe) sexe d'origine des personnages ;
+   personnages d'origine (au démarrage, aux réglages, hors compétition) */
+const u8 char_female0[NCHARS] = { 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 1, 0, 1, 0, 0 };
+void cust_reset(void)
+{
+    memcpy(char_female, char_female0, NCHARS);
+    cu_map[0] = cu_map[1] = 0;
+}
 
 static u8 cu_find(const u8 *t, u8 n, u8 v) { u8 i; for (i = 0; i < n; ++i) if (t[i] == v) return i; return 0; }
 

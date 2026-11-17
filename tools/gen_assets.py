@@ -506,6 +506,12 @@ def nude_fan(kind, cheer=False):
         f(5, 0, 10, 1, 3); f(4, 1, 4, 6, 3); f(11, 1, 11, 6, 3)
     else:                                 # chapeau de soleil
         f(3, 1, 12, 1, 3); f(6, 0, 9, 0, 3)
+    # (2.76) visage : deux yeux et une bouche (il n'y en avait pas)
+    if kind != 1:
+        f(6, 3, 6, 3, 3); f(9, 3, 9, 3, 3)
+    else:
+        f(6, 3, 6, 3, 3); f(9, 3, 9, 3, 3)
+    f(7, 5, 8, 5, 3)
     f(7, 6, 8, 6, 2)                      # cou
     f(5, 7, 10, 15, 2)                    # buste
     f(4, 8, 11, 9, 2)                     # épaules
@@ -517,8 +523,7 @@ def nude_fan(kind, cheer=False):
         f(2, 0, 3, 1, 2); f(12, 0, 13, 1, 2)       # mains
     else:
         f(3, 9, 3, 15, 2); f(12, 9, 12, 15, 2)     # bras le long du corps
-        if kind == 2:
-            f(12, 14, 14, 19, 3)                   # serviette à la main
+        # (2.76 : plus de serviette à la main, prise pour une manette)
     f(5, 16, 6, 22, 2); f(9, 16, 10, 22, 2)        # jambes
     f(4, 23, 6, 23, 2); f(9, 23, 11, 23, 2)        # pieds nus
     return t
@@ -1831,8 +1836,11 @@ def persp_sides(e, bmp, w):
                     if kk % 2 == 0:
                         return [r[:] for r in GIRLY[kk // 2]]
                 return [[filler(x, y) for x in range(8)] for y in range(8)]
-            ia = 2 if e == 2 else 3                       # salle : ajout entre gradins et panneaux
-            shift = (not crowd_row and e != 4) or e == 2  # décor sans public : glissé vers le court
+            # (2.76) salle : comme le stade, le public remplit l'espace jusqu'à la
+            # rambarde (avant : gradins au bord de l'écran, mur élargi vers le
+            # court, et un bloc tronqué en bas à droite)
+            ia = 3
+            shift = (not crowd_row and e != 4)            # décor sans public : glissé vers le court
             if shift and nins == 0 and xr == (31 if side == 0 else 225):
                 seq = outer[:]                            # comme à plat
                 nins = -1
@@ -1851,6 +1859,10 @@ def persp_sides(e, bmp, w):
                     seq = outer[:2] + fill + outer[2:3] + [last]
                 else:
                     seq = fill + outer[:3] + [last]
+            elif e == 2:
+                # (2.76) salle : spectateurs sur toute la tribune, du bord de
+                # l'écran à la rambarde, comme au stade (palette 3)
+                seq = [[r[:] for r in CROWDB[(ty * 5 + k * 2 + side) % 6]] for k in range(3 + nins)]
             else:
                 seq = outer[:ia] + [ext(k) for k in range(nins)] + outer[ia:3]
             edge = [[0] * 8 for _ in range(8)]
@@ -1899,6 +1911,13 @@ def persp_sides(e, bmp, w):
                     xe = 128 + ((DBL_L - 6 if side == 0 else DBL_R + 6) - 128) * sc
                     assert (xe > bxi * 16 + 15) if side == 0 else (xe < bxi * 16), ('tribune et court dans un même bloc', e, by)
                 fix[(bxi, by)] = court_attr(bxo, by, e)
+    if e == 2:                                            # (2.76) salle : tribunes entières en palette 3 (public)
+        for by in range(2, 15):
+            for bx in (1, 2, 13, 14):
+                if (bx, by) in fix or bx in (1, 14):
+                    if bx == CHAIR_X // 16 and CHAIR_Y // 16 <= by < CHAIR_Y // 16 + 2:
+                        continue
+                    fix[(bx, by)] = 3
     return fix
 
 def persp_build(e):
