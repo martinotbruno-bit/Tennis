@@ -65,7 +65,7 @@ typedef struct {
 
 extern MatchCfg cfg;
 void fw_sound(u8 t);            /* feux d'artifice (banque fixe, gamefix.c) */
-void fw_draw(u8 t, u8 dy);
+u16 __fastcall__ fw_draw(u16 t);       /* (banque 20, train.c, 2.76 : far_call(BANK_TRAIN, …)) */
 
 /* statistiques du dernier match, par équipe */
 extern u8 st_points[2], st_aces[2], st_dfaults[2], st_winners[2], st_errors[2];

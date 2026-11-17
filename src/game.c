@@ -1279,7 +1279,7 @@ void match_draw(void)
     }
     if (cer) bank_call(BANK_SWAP, cer_draw);    /* pièce, chaises, raquette lâchée */
     bank_call(BANK_EXTRAS, match_fx);   /* ombres, poussière, arbitre, repère */
-    if (party) { win_fx(); fw_draw(ms_timer, 0); }
+    if (party) { win_fx(); far_call(BANK_TRAIN, (void *)fw_draw, ms_timer); }
     if (cfg.cond == COND_RAIN) bank_call(BANK_EXTRAS, rain_draw);
     spr_end();
     bank_call(BANK_HL, band_draw);      /* bandeau du score entre les points (highlight.c, 2.71) */

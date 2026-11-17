@@ -162,8 +162,6 @@ u8 can_hit(u8 p)
    bas. Sons déclenchés par la logique (fw_sound), gerbes dessinées avec le
    reste (fw_draw). */
 static const u8 fw_pop_t[3] = { 115, 75, 35 };
-static const u8 fw_px[3] = { 72, 176, 124 };
-static const u8 fw_py[3] = { 64, 80, 52 };
 void fw_sound(u8 t)
 {
     u8 k;
@@ -171,19 +169,6 @@ void fw_sound(u8 t)
         if (t == (u8)(fw_pop_t[k] + 15)) sfx_fw_launch();
         else if (t == fw_pop_t[k]) sfx_fw_pop();
     }
-}
-void fw_draw(u8 t, u8 dy)
-{
-    u8 k, d, x, y;
-    if (t > 115) return;                         /* rien avant le 1er éclatement */
-    k = (u8)(t > 75 ? 0 : (t > 35 ? 1 : 2));     /* dernier feu éclaté */
-    d = (u8)(fw_pop_t[k] - t);                   /* trames depuis l'éclatement */
-    if (d >= 14) return;
-    x = fw_px[k]; y = (u8)(fw_py[k] + dy);
-    spr1((u8)(x - d), y, 3, 3);
-    spr1((u8)(x + d), y, 3, 3);
-    spr1(x, (u8)(y - d), 3, 2);
-    spr1(x, (u8)(y + d), 3, 2);
 }
 
 /* Fête de victoire : quand un humain gagne (ou en démonstration), comme pour

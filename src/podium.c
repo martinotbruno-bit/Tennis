@@ -349,7 +349,7 @@ static void gm_tick(void)
         /* trophée soulevé : confettis et feux d'artifice */
         if (t >= 480) {
             for (i = 0; i < 8; ++i) spr1((u8)(i * 31 + 9), (u8)(((t + i * 29) * (u8)(1 + (i & 1))) & 0xFF), confetti_tile, (u8)(i & 3));
-            fw_draw((u8)(130 - ((t - 480) % 130)), 0);
+            far_call(BANK_TRAIN, (void *)fw_draw, (u8)(130 - ((t - 480) % 130)));
             fw_sound((u8)(130 - ((t - 480) % 130)));
         }
         if (t == G_END) txt_c(28, "A : CONFERENCE DE PRESSE");
@@ -574,7 +574,7 @@ void podium_sprites(void)
         if (--fw_c == 0) fw_c = 130;
         fw_sound(fw_c);
         oam_i = 64;
-        fw_draw(fw_c, 0);
+        far_call(BANK_TRAIN, (void *)fw_draw, fw_c);
     }
     /* confettis : chute à 3 vitesses, retour en haut */
     for (i = 0; i < 10; ++i) {

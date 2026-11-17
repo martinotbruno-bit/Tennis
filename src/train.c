@@ -569,3 +569,30 @@ u16 __fastcall__ res_stats(u16 unused)
     hl_vmax_row(19);
     return 0;
 }
+
+/* (2.76, déplacé de la banque fixe, pleine) feux d'artifice : game.c, podium.c */
+static const u8 fw_pop_t2[3] = { 115, 75, 35 };
+static const u8 fw_px2[3] = { 72, 176, 124 };
+static const u8 fw_py2[3] = { 64, 80, 52 };
+u16 __fastcall__ fw_draw(u16 t16)
+{
+    u8 t = (u8)t16, k, d, x, y;
+    if (t > 115) return 0;                         /* rien avant le 1er éclatement */
+    k = (u8)(t > 75 ? 0 : (t > 35 ? 1 : 2));     /* dernier feu éclaté */
+    d = (u8)(fw_pop_t2[k] - t);                   /* trames depuis l'éclatement */
+    if (d >= 14) return 0;
+    x = fw_px2[k]; y = (u8)(fw_py2[k]);
+    /* (2.76) étincelles blanches (palette 2) en croix, jaunes (palette 3,
+       couleur 3 passée au jaune pendant la fête) en diagonale */
+    if (pal_buf[31] != 0x28) { pal_buf[31] = 0x28; pal_dirty = 1; }
+    spr1((u8)(x - d), y, 3, 2);
+    spr1((u8)(x + d), y, 3, 2);
+    spr1(x, (u8)(y - d), 3, 2);
+    spr1(x, (u8)(y + d), 3, 2);
+    d = (u8)((d * 3) >> 2);
+    spr1((u8)(x - d), (u8)(y - d), 3, 3);
+    spr1((u8)(x + d), (u8)(y - d), 3, 3);
+    spr1((u8)(x - d), (u8)(y + d), 3, 3);
+    spr1((u8)(x + d), (u8)(y + d), 3, 3);
+    return 0;
+}
