@@ -138,7 +138,8 @@ static void cut_build(void)
     if (S >= 0x10) { pal_buf[5] = S; pal_buf[6] = (u8)(S - 0x10); } else { pal_buf[5] = (u8)(S + 0x10); pal_buf[6] = S; }
     if (O >= 0x10) { pal_buf[9] = O; pal_buf[10] = (u8)(O - 0x10); } else { pal_buf[9] = (u8)(O + 0x10); pal_buf[10] = O; }
     if (O == 0x30) pal_buf[10] = 0x10;
-    if (ts_c != 16) D = hd_dark(D);   /* cheveux clairs (Papi, joueur personnalisé) : assombris, les contours et les yeux en sont faits (Margaux : ses propres images) */
+    /* (2.76) contours et yeux dans la couleur du fond : le sombre du joueur
+       ne sert qu'aux cheveux, au short, à la raquette (blond, gris, blanc tels quels) */
     pal_buf[7] = pal_buf[11] = D;
     pal_buf[13] = pal_buf[5]; pal_buf[14] = pal_buf[9]; pal_buf[15] = 0x30;
     if (z) { pal_buf[1] = pal_buf[5]; pal_buf[2] = D; pal_buf[3] = 0x30; pal_buf[14] = pal_buf[6]; pal_buf[15] = pal_buf[9]; }

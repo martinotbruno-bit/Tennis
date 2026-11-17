@@ -506,7 +506,7 @@ def face_features(f, x, y, face, hid, tilt=0.0, female=False, hs=1.0):
                 return
             # (femme : œil plus petit et un peu plus bas, la frange de côté
             # ne s'y colle pas)
-            P(f.m_ell((c[0] + look * 0.4, c[1] + (0.5 if female else 0.1)), 1.0 if female else 1.3, 0.75 if female else 0.9, tilt), 5)
+            P(f.m_ell((c[0] + look * 0.4, c[1] + (0.5 if female else 0.1)), 1.0 if female else 1.3, 0.75 if female else 0.9, tilt), 0)
             return
         P(f.m_ell(c, 2.4 if female else 2.2, 1.35 - lid * 0.5, tilt), 6)
         P(f.m_ell((c[0] + look, c[1] + 0.15), 1.15, 1.15), 0)
@@ -710,7 +710,8 @@ POSES['smash_air'] = dict(
     # jambe arrière pendante, tibia replié vers l'arrière (raccourci) ; buste
     # presque droit, hanches de niveau (short et jupe sans débord)
     s=dict(pelvis=(96, 96), torso=-98, legL=(100, 115, 125, 1.0, 0.75), legR=(75, 95, 105, 0.6, 1.0),
-           armL=(-118, -104), armR=(-55, -75), tilt=-0.08, turn=-0.7, head_bend=-14,
+           armL=(-118, -104), armR=(-55, -75), tilt=0.0, turn=0.0, head_bend=-8,   # (2.76 : visage de face, droit : il paraissait décalé)
+          
            order=['legR', 'legL', 'torso', 'armR', 'head', 'armL', 'racket']),
     face='focus', hand='L', rdir=-122, rlen=50, extra=_smash_air_extra)
 
@@ -829,19 +830,19 @@ FIXED_FEMALE = {'ballkid': 2, 'crowd': 0}
 # plans : (nom, pose, échelle, (x, y) de base visé au centre ; None : pieds au sol)
 # zoom : True si le visage est assez grand pour sa palette (peau, sombre, blanc)
 SHOTS = [
-    ('impact', 'impact', 1.4, (50, 102), False),     # gros plan : buste, raquette à l'impact
-    ('slide', 'slide', 1.12, None, False),           # glissade, en pied
-    ('slide_z', 'slide', 1.3, (100, None), False),   # zoom : la chaussure qui glisse
+    ('impact', 'impact', 1.4, (54.3, 102), False),     # gros plan : buste, raquette à l'impact  # (2.76 : décalé de +6 px, blocs de couleurs mieux placés)
+    ('slide', 'slide', 1.12, (88.2, None), False),           # glissade, en pied  # (2.76 : décalé de -2 px, blocs de couleurs mieux placés)
+    ('slide_z', 'slide', 1.3, (101.5, None), False),   # zoom : la chaussure qui glisse  # (2.76 : décalé de +2 px, blocs de couleurs mieux placés)
     ('victory', 'victory', 1.0, (82, None), False),        # bras levés, en pied
-    ('victory_z', 'victory', 2.0, (80, 62), True),   # zoom : buste et visage
-    ('angry', 'angry', 1.12, None, False),           # raquette au sol, en pied
-    ('angry_z', 'angry', 3.4, (83, 70), True),       # zoom : le visage qui crie
-    ('smash', 'smash', 0.86, (92, None), False),
+    ('victory_z', 'victory', 2.0, (83, 62), True),   # zoom : buste et visage  # (2.76 : décalé de +6 px, blocs de couleurs mieux placés)
+    ('angry', 'angry', 1.12, (91.8, None), False),           # raquette au sol, en pied  # (2.76 : décalé de +2 px, blocs de couleurs mieux placés)
+    ('angry_z', 'angry', 3.4, (84.8, 70), True),       # zoom : le visage qui crie  # (2.76 : décalé de +6 px, blocs de couleurs mieux placés)
+    ('smash', 'smash', 0.86, (87.3, None), False),  # (2.76 : décalé de -4 px, blocs de couleurs mieux placés)
     ('smash_air', 'smash_air', 0.86, (90, 104), False),   # smash en plein vol (ralenti du smash, 2.75)
-    ('backhand', 'backhand', 1.4, (150, 102), False),   # revers à deux mains, gros plan (ralenti, 2.68)      # smash et service, en pied (ralenti, 2.68)
-    ('ballkid', 'ballkid', 1.3, (94, 123), False),     # ramasseur de balles (changement de côté, 2.73)
-    ('handshake', 'handshake', 1.3, (110, 96), False),  # poignée de main au filet (fin du match, 2.73)
-    ('crowd', 'crowd', 1.3, (50, 86), False),           # public en gros plan (long échange, 2.73)
+    ('backhand', 'backhand', 1.4, (148.6, 102), False),   # revers à deux mains, gros plan (ralenti, 2.68)      # smash et service, en pied (ralenti, 2.68)  # (2.76 : décalé de -2 px, blocs de couleurs mieux placés)
+    ('ballkid', 'ballkid', 1.3, (97.1, 123), False),     # ramasseur de balles (changement de côté, 2.73)  # (2.76 : décalé de +4 px, blocs de couleurs mieux placés)
+    ('handshake', 'handshake', 1.3, (114.6, 96), False),  # poignée de main au filet (fin du match, 2.73)  # (2.76 : décalé de +6 px, blocs de couleurs mieux placés)
+    ('crowd', 'crowd', 1.3, (48.5, 86), False),           # public en gros plan (long échange, 2.73)  # (2.76 : décalé de -2 px, blocs de couleurs mieux placés)
 ]
 
 
@@ -879,7 +880,11 @@ def render(pose, female, k, center, dark=True):
     f.outline()
     # contours et yeux dans la couleur sombre (version 2.61), et non dans
     # celle du fond ; sauf Margaux (cheveux blonds : ses yeux seraient jaunes)
-    if female != 2 and dark:
+    # (2.76) contours et yeux : toujours dans la couleur du fond (sombre, et
+    # présente dans toutes les palettes) ; la couleur sombre du joueur ne
+    # sert plus qu'aux cheveux, sourcils, short, semelles et raquette : des
+    # cheveux blonds ou blancs ne font plus de contours clairs
+    if False and female != 2 and dark:
         f.cls[(f.cls == 0) & (f.pid > 0)] = 5
     # Margaux (2.73) : la couleur sombre est celle de ses cheveux blonds ; les
     # autres détails sombres (manche de la raquette, semelles, sourcils...)
@@ -1069,7 +1074,7 @@ def main():
 
 # ------------------------------------------------------------------ export
 # banques libres (octets disponibles, marge comprise)
-BANKS = [(9, 13600), (12, 11500), (4, 12200), (10, 7050), (2, 7900), (7, 6800), (6, 5800), (17, 16000), (18, 13500), (20, 11900), (21, 15500)]
+BANKS = [(9, 13600), (12, 11500), (4, 12200), (10, 7050), (2, 7900), (7, 6800), (6, 5800), (17, 16000), (18, 13500), (20, 9000), (21, 15500), (16, 12500)]
 
 
 def pack(chr_):

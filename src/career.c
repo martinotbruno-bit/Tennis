@@ -333,14 +333,15 @@ extern u8 cu_c[2];
 #define CU_ROWS 7
 #define CU_VX   13
 #define CU_Y(r) (u8)(7 + (r) * 2)
-static const u8 cu_skin[5] = { 0x36, 0x37, 0x27, 0x17, 0x07 };
-static const char * const cu_skin_n[5] = { "PALE", "CLAIRE", "MATE", "BRUNE", "EBENE" };
+/* (2.76) PALE ($36) et CLAIRE ($37) se confondaient : CLAIRE ($36), HALEE ($26, hâlée) */
+static const u8 cu_skin[5] = { 0x36, 0x26, 0x27, 0x17, 0x07 };
+static const char * const cu_skin_n[5] = { "CLAIRE", "HALEE", "MATE", "BRUNE", "EBENE" };
 static const u8 cu_hair[6] = { 0x0F, 0x07, 0x17, 0x37, 0x10, 0x30 };
 static const char * const cu_hair_n[6] = { "NOIRS", "BRUNS", "ROUX", "BLONDS", "GRIS", "BLANCS" };
 static const u8 cu_out[15] = { 0x30, 0x10, 0x00, 0x37, 0x35, 0x24, 0x27, 0x07, 0x2B, 0x3B, 0x39, 0x2C, 0x31, 0x1C, 0x0C };
 static const char * const cu_out_n[15] = { "BLANC", "GRIS", "ANTHRACITE", "CREME", "ROSE", "MAGENTA", "ORANGE",
                                            "CHOCOLAT", "VERT", "MENTHE", "ANIS", "CYAN", "CIEL", "CANARD", "PETROLE" };
-static const char * const cu_lbl[CU_ROWS] = { "PROFIL", "NOM", "SEXE", "PEAU", "CHEVEUX", "TENUE", "VALIDER" };
+static const char * const cu_lbl[CU_ROWS] = { "PROFIL", "NOM", "GENRE", "PEAU", "CHEVEUX", "TENUE", "VALIDER" };
 static const char cu_abc[] = " ABCDEFGHIJKLMNOPQRSTUVWXYZ-";
 extern const u8 char_pal_rom[NCHARS][3];        /* (gfx.c) */
 extern const u8 char_female0[NCHARS];
