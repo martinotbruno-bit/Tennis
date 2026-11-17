@@ -739,7 +739,7 @@ Pour loger ce contenu, la cartouche passe de NROM (32 Ko) à **MMC1** : 128 Ko d
 | Relecture des textes (`check_texts.py`) | 0 problème |
 | Contraste (`contrast.py 25`) | 0 paire sous ΔE 25 (personnages, courts, balle, tenues) |
 | Profil CPU, double, 6 000 trames | 27 trames d'échange en dépassement (0,45 %), sans défaut d'image |
-| Compilation | Reproductible : SHA-256 `6fc06f35413e33dc1460b581408bd074a5140ce453bfbbfedb91261524bc6c7c` sur deux compilations propres |
+| Compilation | Reproductible : SHA-256 `909276707178b11f29995ded17232f9d1f192b4d62489d298c06e059f99d482f` sur deux compilations propres |
 
 ## 3. Conformité par section du CDC
 
@@ -785,6 +785,8 @@ Légende : ✅ réalisé et testé en émulation · 🟡 partiel · 🔧 nécess
 - Aucune extension audio n'est utilisée.
 
 ## 5. Limitations restantes
+
+- **Version 2.76 livrée en cours de vérification** : la suite de tests n'a pas encore été entièrement adaptée au nouveau parcours (pages de choix, tirage au sort) ; les tests propres aux nouveautés passent, une partie des anciens tests du menu (lignes joueurs, lieu, surface désormais sur des pages) reste à réécrire.
 
 1. **Tests sur matériel réel** (priorité 1 du CDC). Il faut flasher `dist/royal_martinot.nes` sur une cartouche MMC1/SNROM (ou un linéaire EverDrive/PowerPak) et tester sur NES NTSC, NES PAL et Famicom. Points à surveiller :
    - l'état du MMC1 à la mise sous tension ;
