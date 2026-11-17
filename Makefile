@@ -10,7 +10,7 @@ FIXED = main rules_far gfx audio assets_data gamefix
 # banques commutables ($8000)
 BANK0 = game
 BANK1 = screens
-BANK5 = comp stats password
+BANK5 = comp password
 BANK3 = extras assets_court assets_persp3
 BANK2 = assets_tz2
 BANK4 = manual assets_tz4
@@ -21,7 +21,7 @@ BANK9 = credits assets_tz9
 BANK10 = music_data assets_tz10 assets_vs
 BANK11 = assets_persp
 BANK12 = assets_courts12 assets_tz12 assets_menu12
-BANK13 = assets_swap shots cer assets_port assets_menu
+BANK13 = assets_swap shots cer assets_menu
 BANK14 = assets_gm gmintro assets_help
 BANK15 = highlight
 BANK16 = assets_pnet assets_tz16
@@ -37,8 +37,9 @@ BANK25 = assets_sun25
 BANK26 = assets_sun26
 BANK27 = assets_sun27
 BANK28 = assets_tz28
-BANK29 = pick
-CSRC = $(FIXED) $(BANK0) $(BANK1) $(BANK2) $(BANK3) $(BANK4) $(BANK5) $(BANK6) $(BANK7) $(BANK8) $(BANK9) $(BANK10) $(BANK11) $(BANK12) $(BANK13) $(BANK14) $(BANK15) $(BANK16) $(BANK17) $(BANK18) $(BANK19) $(BANK20) $(BANK21) $(BANK22) $(BANK23) $(BANK24) $(BANK25) $(BANK26) $(BANK27) $(BANK28) $(BANK29)
+BANK29 = pick assets_port
+BANK30 = extra2 stats
+CSRC = $(FIXED) $(BANK0) $(BANK1) $(BANK2) $(BANK3) $(BANK4) $(BANK5) $(BANK6) $(BANK7) $(BANK8) $(BANK9) $(BANK10) $(BANK11) $(BANK12) $(BANK13) $(BANK14) $(BANK15) $(BANK16) $(BANK17) $(BANK18) $(BANK19) $(BANK20) $(BANK21) $(BANK22) $(BANK23) $(BANK24) $(BANK25) $(BANK26) $(BANK27) $(BANK28) $(BANK29) $(BANK30)
 OBJS = $(BUILD)/crt0.o $(BUILD)/sprp.o $(BUILD)/poses.o $(BUILD)/slip.o $(BUILD)/dpcm.o $(BUILD)/fastmove.o $(addprefix $(BUILD)/,$(addsuffix .o,$(CSRC)))
 
 all: $(ROM)
@@ -99,6 +100,7 @@ $(addprefix $(BUILD)/,$(addsuffix .s,$(BANK26))): SEGS = --code-name BANK26 --ro
 $(addprefix $(BUILD)/,$(addsuffix .s,$(BANK27))): SEGS = --code-name BANK27 --rodata-name RODATA27
 $(addprefix $(BUILD)/,$(addsuffix .s,$(BANK28))): SEGS = --code-name BANK28 --rodata-name RODATA28
 $(addprefix $(BUILD)/,$(addsuffix .s,$(BANK29))): SEGS = --code-name BANK29 --rodata-name RODATA29 --bss-name WBSS
+$(addprefix $(BUILD)/,$(addsuffix .s,$(BANK30))): SEGS = --code-name BANK30 --rodata-name RODATA30 --bss-name WBSS
 
 $(BUILD)/crt0.o: src/crt0.s assets/tiles.chr | $(BUILD)
 	$(CA65) -t nes -g -o $@ src/crt0.s

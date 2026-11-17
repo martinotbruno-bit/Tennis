@@ -16,25 +16,6 @@ extern u8 recap_pend;
 /* Récapitulatif du score : une ligne par équipe, « ALEX 6 3 2 », sets    */
 /* terminés puis jeux du set en cours (14 caractères pour 5 sets).        */
 /* ---------------------------------------------------------------------- */
-void score_line(u8 t, char *out)
-{
-    u8 i, k = 4;
-    team_name(t, out);
-    for (i = 0; i < sc_set_no && i < MAX_SETS; ++i) { out[k++] = ' '; out[k++] = (char)('0' + sc_hist[i][t]); }
-    if (!sc_over && k < 14) { out[k++] = ' '; out[k++] = (char)('0' + sc_games[t]); }
-    out[k] = 0;                     /* les deux lignes ont la même longueur : centrées ensemble */
-}
-
-/* bandeau : le score set par set pendant 2 secondes */
-static char recap_a[16], recap_b[16];
-void score_recap(void)
-{
-    score_line(0, recap_a);
-    score_line(1, recap_b);
-    set_msg(recap_a, recap_b, 120);
-    recap_pend = 0;
-}
-
 /* ====================================================================== */
 /* Mise en valeur du point pendant le ralenti (version 2.67)               */
 /*                                                                        */
@@ -143,6 +124,8 @@ void sun_apply(void);
 #define BAND_LINE 199          /* (valeur de recharge du compteur : réglée sur jsnes et FCEUX) */
 #define BAND_WAIT 48           /* délai d'apparition après le point (2.74) */
 #define CER_SEAT  5
+#define CER_CHOOSE 11            /* tirage au sort : choix du gagnant (cer.c, 2.76) */
+extern u8 toss_q;
 extern u8 hl_mode, cer;
 extern u8 band_hold, crowd_big;
 #pragma zpsym("band_hold")
@@ -181,6 +164,13 @@ static void band_text(u8 t)
     u8 i, k;
     const char *q;
     for (i = 0; i < 28; ++i) bb[i] = ' ';
+    if (band_pg == 6) {             /* (2.76) tirage au sort : le choix du gagnant */
+        q = t ? (toss_q == 1 ? "A : SERVIR     B : LE COTE" : "A : RESTER     B : CHANGER")
+              : (toss_q == 1 ? "GAGNE LE TIRAGE" : "CHOISIT SON COTE");
+        team_label(cfg.chr[sc_server], cfg.doubles ? cfg.chr[sc_server + 2] : 255, bb + (t ? 28 : 0));
+        for (i = (u8)(t ? 1 : 6); *q; ) bb[i++] = *q++;
+        return;
+    }
     if (band_pg) {
         if (t == 0) {               /* noms au-dessus des colonnes */
             team_label(cfg.chr[0], cfg.doubles ? cfg.chr[2] : 255, bb + 16);
@@ -319,8 +309,9 @@ void band_draw(void)
        au lancer de balle, comme avant. */
     if (ms != MS_DEAD && ms != MS_SERVE) band_dis = 0;
     else if (!rp_pending && (pad1_new | pad2_new)) band_dis = 1;
+    if (cer == CER_CHOOSE) band_pg = 6;
     v = (u8)(cfg.mode == GM_MATCH && !paused && !hl_mode && !sc_over &&
-             ((cer == CER_SEAT) || (cer == 4 && !band_dis) || ((!cer || cer >= 0xF0) && !band_dis && !rp_pending && (ms == MS_DEAD || ms == MS_SERVE))));
+             ((cer == CER_SEAT) || (cer == CER_CHOOSE && toss_q) || (cer == 4 && !band_dis) || ((!cer || cer >= 0xF0) && !band_dis && !rp_pending && (ms == MS_DEAD || ms == MS_SERVE))));
     /* (2.76) cer 4 (CER_CHAIR, vers les chaises) : le bandeau reste affiché
        depuis la fin du point jusqu'aux statistiques, sans disparaître */
     /* (2.74) apparition : 48 trames après la fin du point (ou du ralenti),
@@ -338,7 +329,7 @@ void band_draw(void)
         band_t = (u8)(rp_pending || hl_mode || ms == MS_REPLAY ? BAND_WAIT : 0);
         return;
     }
-    if (cer != CER_SEAT && band_t < BAND_WAIT) { ++band_t; return; }   /* (délai : pas encore de bandeau) */
+    if (cer != CER_SEAT && cer != CER_CHOOSE && band_t < BAND_WAIT) { ++band_t; return; }   /* (délai : pas encore de bandeau) */
     if (!band_vis) { band_vis = 1; band_rows = 15; }  /* (bits 2-3 : filet du bas, bords et rangée 29, que les bandes du ralenti recouvrent) */
     if (cer == CER_SEAT) {
         if (band_human()) {
@@ -346,7 +337,7 @@ void band_draw(void)
             if ((pad1_new | pad2_new) & PAD_START) band_hold = 2;                                       /* (2.76) START : toutes passées, on reprend */
             else if ((pad1_new | pad2_new) & (PAD_A | PAD_B)) { if (band_pg >= 5) band_hold = 2; else ++band_pg; }
         } else if (++band_t >= 40) { band_t = 0; if (++band_pg > 5) band_pg = 0; }   /* (40 trames par page : les 5 statistiques passent pendant la pause assise) */
-    } else band_pg = 0;
+    } else if (cer != CER_CHOOSE) band_pg = 0;
     /* texte : rafraîchi quand le score change, une rangée par trame */
     if (band_last[0] != sc_points[0] || band_last[1] != sc_points[1] || band_last[2] != sc_games[0] ||
         band_last[3] != sc_games[1] || band_last[4] != sc_set_no || band_last[5] != sc_server || band_last[6] != band_pg) {
@@ -381,7 +372,7 @@ void band_draw(void)
        en retard, l'OAM envoyée au PPU est celle de la trame d'avant : elle
        doit déjà être sans les sprites du bas) */
     if (band_vis == 1) { if (band_rows) return; band_vis = 2; }
-    else if (band_vis == 2) { band_vis = 3; band_on(cer == CER_SEAT ? BAND_LINE : BAND_LINE + 40); }
+    else if (band_vis == 2) { band_vis = 3; band_on(cer == CER_SEAT || cer == CER_CHOOSE ? BAND_LINE : BAND_LINE + 40); }
     else if (cer != CER_SEAT && band_t < BAND_WAIT + 10) { ++band_t; band_on((u8)(BAND_LINE + (BAND_WAIT + 10 - band_t) * 4)); }   /* (montée) */
     /* (2.76) hl_flags bit 2 : bandeau entièrement monté (les chaises du
        changement de côté n'apparaissent qu'alors, cer.c) */
@@ -442,43 +433,8 @@ void hl_check(void)
     if (!hl_fresh(hl_sf)) hl_si = (u8)(rp_head >= rp_left ? rp_head - rp_left : rp_head + 160 - rp_left);
     if (!hl_fresh(hl_sbf)) hl_sbok = 0;
 }
-/* balle dehors de peu (2.73) : le point s'arrête sur une balle d'échange
-   tombée à 3 px de la ligne ou moins ; ralenti court (12 trames avant le
-   rebond, rp_start), sans gros plan, droit au zoom x 2 sur l'impact
-   (« DEHORS ! », 50 trames au lieu de 80), puis fin du ralenti. Appelé par
-   point_over (faute adverse). */
-#include "court.h"
-extern u8 hl_quick;   /* (défini plus haut, avec les bandes du ralenti) */
 extern u8 hit_jump;
-extern u8 b_serve;
-#pragma static-locals(push, off)        /* (pile : la RAM de travail est pleine) */
-/* balle bonne sur la ligne ou à 2 px à l'intérieur du point où elle la
-   touche encore (2.74) : distance à la ligne la plus proche, 4 px au plus */
-static u8 near_in(s16 x, s16 y)
-{
-    s16 d, l = cfg.doubles ? IN_DL : IN_SL, r = cfg.doubles ? IN_DR : IN_SR;
-    d = x - l; if (r - x < d) d = r - x;
-    if (y - IN_TOP < d) d = y - IN_TOP;
-    if (IN_BOT - y < d) d = IN_BOT - y;
-    return (u8)(d <= 4);
-}
-void hl_out(void)
-{
-    s16 x = hl_bx, y = hl_by, d = 0, l, r;
-    if (!hl_bok || b_serve || !cfg.replays || cfg.env == ENV_NUDE || cfg.demo) return;   /* (2.74 : prioritaire sur le ralenti complet) */
-    l = cfg.doubles ? IN_DL : IN_SL; r = cfg.doubles ? IN_DR : IN_SR;   /* (ligne comprise) */
-    if (hl_bin) {
-        if (!near_in(x, y)) return;
-    } else {
-        if (x < l) d = l - x; else if (x > r) d = x - r;
-        if (y < IN_TOP) d += IN_TOP - y; else if (y > IN_BOT) d += y - IN_BOT;
-        if (d == 0 || d > 3) return;
-    }
-    hl_sok = 0;                         /* pas de gros plan */
-    hl_sbok = 1; hl_sbi = hl_bi; hl_sbx = hl_bx; hl_sby = hl_by; hl_sbin = hl_bin; hl_sbf = hl_bf;
-    hl_quick = 1; rp_pending = 1;
-}
-#pragma static-locals(pop)
+u16 __fastcall__ near_in_f(u16 xy);     /* extra2.c (2.76) */
 /* fin de point : hl_w gagnant, hl_ptxt titre */
 void hl_select(void)
 {
@@ -1276,7 +1232,7 @@ void hl_tick(void)
         /* point visé : le rebond, à l'écran (projeté en perspective) ; texte */
         hl_rx = hl_sbx; hl_ry = hl_sby;
         if (persp) { proj2(hl_sbx, hl_sby); hl_rx = proj_x; hl_ry = proj_y; }
-        zl = !hl_sbin ? "DEHORS !" : near_in(hl_sbx, hl_sby) ? "BONNE !" : "";   /* (2.74 : « BONNE ! » seulement près de la ligne) */
+        zl = !hl_sbin ? "DEHORS !" : far_call(BANK_X2, (void *)near_in_f, (u16)(hl_sbx | (hl_sby << 8))) ? "BONNE !" : "";   /* (2.74 : « BONNE ! » seulement près de la ligne) */
     }
     if (hl_mode == 1) closeup_tick(); else zoom_tick();
     if (!hl_mode) hl_t = 0;

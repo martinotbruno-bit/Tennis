@@ -299,7 +299,7 @@ void intro_begin(void)
     /* réglage SON mémorisé (cartouche à pile) appliqué dès le générique ;
        les autres réglages sont relus et vérifiés par l'écran titre */
     u8 i;
-    if ((u8)far_call(BANK_COMP, (void *)so_load, 0) && opt_val[22] < 3) snd_set(opt_val[22]);
+    if ((u8)far_call(BANK_X2, (void *)so_load, 0) && opt_val[22] < 3) snd_set(opt_val[22]);
     /* coupe d'origine sauvegardée (écran encore coupé au démarrage) */
     vram_adr((u16)(0x1000 + (trophy_tile << 4)));
     cup_save[0] = PPU_DATA;          /* lecture à vide (tampon du PPU) */

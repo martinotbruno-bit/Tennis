@@ -11,7 +11,12 @@
 #define CT_GRAND   5   /* le Grand Martinot : 4 tournois de 16 (8 équipes en double) */
 #define CT_WORLD   6   /* le Martinworld Tour : 7 tournois de 8, un par surface (version 2.47) */
 #define NCT        7
-u8 __fastcall__ comp_cname(u8 t);           /* banque 5 : nom de la compétition t dans comp_l2 */
+u8 __fastcall__ comp_cname(u8 t);
+u8 __fastcall__ comp_me(u8 unused);    /* (2.76) inscrit du joueur dont c'est le tour */
+u8 __fastcall__ comp_ctrl(u8 o);       /* (2.76) manettes du match */
+u8 __fastcall__ comp_who(u8 y);        /* (2.76) « A TOI, JOUEUR 2 » */
+extern u8 c_h2;
+#pragma zpsym("c_h2")           /* banque 5 : nom de la compétition t dans comp_l2 */
 
 /* options du tournoi personnalisé (bits de c_opts) */
 #define CO_SIZE8   1   /* 8 joueurs (sinon 4) */

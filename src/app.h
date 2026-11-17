@@ -26,6 +26,7 @@
 #define BANK_HL     15   /* ralenti : gros plan et arrêt sur image zoomé (highlight.c), récapitulatif du score */
 #define BANK_SUN    22   /* soleil couchant du crépuscule (sunset.c, 2.76) */
 #define BANK_MDRAW  22   /* dessin du match (mdraw.c, 2.76) */
+#define BANK_X2     30   /* fonctions de match ajoutées en 2.76 (extra2.c) */
 #define BANK_PICK   29   /* pages de choix illustrées : joueurs, lieu, surface, tournoi (pick.c, 2.76) */
 
 /* état de l'application (lu par la boucle principale, banque fixe) */

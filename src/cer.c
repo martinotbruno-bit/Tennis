@@ -23,7 +23,8 @@
 #include "assets.h"
 extern u8 hl_mode;                 /* plan de la ramasseuse (highlight.c, 2.73) */
 extern u8 sun_pend;
-extern u8 brk_pend;                 /* fin de set en attente (game.c, 2.76) */                /* crépuscule : nouvelle lumière en attente (highlight.c, 2.76) */
+extern u8 brk_pend;                 /* fin de set en attente (game.c, 2.76) */
+extern u8 toss_q, cer_req;          /* tirage au sort (plus bas, 2.76) */                /* crépuscule : nouvelle lumière en attente (highlight.c, 2.76) */
 
 #pragma static-locals(off)
 
@@ -43,6 +44,8 @@ extern u8 hl_flags, band_t;
 #define CER_NET    8    /* vers le filet */
 #define CER_SHAKE  9    /* poignée de main */
 #define CER_SALUTE 10   /* salut à l'arbitre */
+#define CER_CHOOSE 11   /* tirage gagné : choix du service ou du côté, sur le bandeau (2.76) */
+#define CER_GOSRV  12   /* du filet à la place du service (2.76) */
 #define CER_PEND   0xFE /* changement de côté annoncé (positions retenues) */
 #define CER_CHAIRS 0xFD /* fin de l'échange qui amène un changement de côté : les chaises apparaissent */
 
@@ -56,6 +59,7 @@ extern u8 hl_flags, band_t;
 
 #define TUNNEL_X  216   /* tunnel et couloir : à droite du court */
 #define CHAIR_X   46    /* chaises : à côté de l'arbitre */
+#define TOSS_X    72    /* tirage au sort : devant l'arbitre, au filet (2.76) */
 
 #pragma bss-name(push, "SAVEDATA")
 u8 cer, cer_skip, pose_force[4];
@@ -119,6 +123,8 @@ static void finish(void)
     if (cer >= CER_ENTRY && cer <= CER_BACK)
         for (p = 0; p < npl; ++p) { plx[p] = tx[p]; ply[p] = ty[p]; }
     if (sun_pend && (cer == CER_CHAIR || cer == CER_SEAT)) hl_mode = 5;   /* (changement de côté passé : le soleil quand même) */
+    if (cer >= CER_ENTRY && cer <= CER_TOSS || cer == CER_CHOOSE) { toss_q = 0; cer_req = 2; }   /* (tirage passé : le gagnant sert, places du service) */
+    if (cer == CER_GOSRV) for (p = 0; p < npl; ++p) { plx[p] = tx[p]; ply[p] = ty[p]; }
     all_free();
     cer = 0;
 }
@@ -145,8 +151,11 @@ void cer_entry(void)
     if (mresume) { bank_call(BANK_CAR, msave_restore); if (!mresume && pod_buf[0] == 'M') return; }
     pod_buf[0] = 0;
     if (cfg.mode != GM_MATCH || cfg.demo) return;
+    /* (2.76) les joueurs entrent et se présentent devant l'arbitre, de part
+       et d'autre du filet, pour le tirage au sort */
     for (p = 0; p < npl; ++p) {
-        tx[p] = plx[p]; ty[p] = ply[p];
+        tx[p] = (s16)((TOSS_X + (p >= 2 ? 16 : 0)) * FP);
+        ty[p] = (s16)((((p & 1) ^ sc_swap) ? NET_Y - 12 : NET_Y + 14) * FP);
         wx[p] = TUNNEL_X * FP;
         plx[p] = TUNNEL_X * FP; ply[p] = 236 * FP;
         stage[p] = 0;
@@ -227,6 +236,27 @@ void cer_watch(void)
     if (change_next(pending_winner)) cer = CER_CHAIRS;
 }
 
+/* (2.76) tirage au sort : question posée sur le bandeau (highlight.c) ;
+   cer_req : places du service à recalculer (game.c) */
+u8 toss_q, cer_req;
+extern u8 band_rows;
+/* appui de la manette d'un joueur humain de l'équipe t ($FF : ordinateur) */
+static u8 toss_pad(u8 t)
+{
+    u8 p;
+    for (p = t; p < npl; p = (u8)(p + 2))
+        if (cfg.ctrl[p] != CTRL_CPU) return cfg.ctrl[p] == CTRL_PAD2 ? pad2_new : pad1_new;
+    return 0xFF;
+}
+/* avant et après le placement pour le service (game.c) : les joueurs
+   partent de là où ils sont (au filet) */
+void cer_pre(void) { u8 p; for (p = 0; p < npl; ++p) { sx[p] = plx[p]; sy[p] = ply[p]; } }
+void cer_post(void)
+{
+    u8 p;
+    for (p = 0; p < npl; ++p) { tx[p] = plx[p]; ty[p] = ply[p]; if (cer_req == 1) { plx[p] = sx[p]; ply[p] = sy[p]; } }
+    if (cer_req == 1) { cer = CER_GOSRV; cer_t = 0; }
+}
 /* « ALEX : PILE » : nom de l'équipe t et ce que l'arbitre lui attribue */
 static void name_side(u8 t, char *out)
 {
@@ -286,11 +316,32 @@ void cer_tick(void)
         if (cer_t == 104) {
             team_name(sc_server, nm); nm[4] = 0;
             for (p = 0; p < 4 && nm[p]; ++p) who[p] = nm[p];
-            who[p++] = ' '; who[p++] = 'S'; who[p++] = 'E'; who[p++] = 'R'; who[p++] = 'T'; who[p] = 0;
+            who[p++] = ' '; who[p++] = 'G'; who[p++] = 'A'; who[p++] = 'G'; who[p++] = 'N'; who[p++] = 'E'; who[p] = 0;
             set_msg((u8)(toss_res ^ sc_server) ? "FACE !" : "PILE !", who, 70);
             sfx_clap();
         }
-        if (cer_t >= 175) { all_free(); cer = 0; }
+        if (cer_t >= 150) { cer = CER_CHOOSE; cer_t = 0; toss_q = 1; band_rows |= 3; }
+        break;
+    case CER_CHOOSE:
+        /* (2.76) le gagnant du tirage choisit, avec sa manette (l'ordinateur :
+           il sert) : A servir, B choisir le côté (puis A rester, B changer ;
+           l'adversaire sert alors) */
+        win = sc_server;
+        top = toss_pad(win);
+        if (top == 0xFF) top = (u8)(cer_t == 60 ? PAD_A : 0);
+        if (toss_q == 1) {
+            if (top & PAD_A) { toss_q = 0; }
+            else if (top & PAD_B) { toss_q = 2; band_rows |= 3; sfx_menu_move(); cer_t = 0; }
+        } else if (top & (PAD_A | PAD_B)) {
+            if (top & PAD_B) sc_swap ^= 1;
+            sc_server = (u8)(win ^ 1);
+            toss_q = 0;
+        }
+        if (!toss_q) { sfx_menu_ok(); cer_req = 1; }   /* (game.c : places du service, puis CER_GOSRV) */
+        break;
+    case CER_GOSRV:
+        for (p = 0; p < npl; ++p) if (!step_to(p, tx[p], ty[p])) done = 0;
+        if (done) { all_free(); cer = 0; }
         break;
     case CER_CHAIR:
         for (p = 0; p < npl; ++p)

@@ -5,7 +5,7 @@ Tête et épaules dessinées au pixel, 32 x 24 (4 x 3 sprites), aux couleurs
 du joueur (palette de sprite : 1 peau, 2 tenue, 3 sombre ; 0 transparent) :
 homme (polo), femme (débardeur, queue de cheval), fillette (Margaux :
 cheveux longs bouclés). Le portrait de droite est retourné.
-Sortie : src/assets_port.c (banque 13) et assets/preview_portraits.png."""
+Sortie : src/assets_port.c (banque 29 depuis la 2.76) et assets/preview_portraits.png."""
 import os
 import numpy as np
 from PIL import Image

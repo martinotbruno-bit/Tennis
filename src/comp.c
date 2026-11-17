@@ -11,6 +11,7 @@
 #include "password.h"
 #include "gfx.h"
 #include "app.h"
+#include "game.h"
 
 #pragma static-locals(on)
 
@@ -22,7 +23,38 @@ u8 c_surf, c_env, c_cond, c_fmt, c_n, c_dbl, c_hum2, c_slam;
 u8 c_pl[16], c_rt[16];
 u8 c_pl2[16];                 /* double : partenaire de chaque inscrit */
 u16 c_gres;
+/* (2.76) compétition à deux joueurs humains (en simple) : le second est
+   l'inscrit c_h2, dans l'autre moitié du tableau (0 : aucun). Chacun joue
+   ses matchs ; c_me : celui dont c'est le tour (0 : le joueur 1, 1 : le
+   joueur 2). Les résultats de celui dont c'est le tour sont dans c_stage,
+   c_results, c_gres, c_over, c_rank ; ceux de l'autre dans o_*. */
 #pragma bss-name(pop)
+#pragma bss-name(push, "ZEROPAGE")       /* (RAM de travail pleine : page zéro) */
+u8 c_h2, c_me, o_stage, o_results, o_over, o_rank;
+u8 HM, HO;                                /* le joueur dont c'est le tour ; l'autre joueur humain (si c_h2) */
+u16 o_gres;
+#pragma bss-name(pop)
+#pragma zpsym("c_me")
+#pragma zpsym("o_stage")
+#pragma zpsym("o_results")
+#pragma zpsym("o_over")
+#pragma zpsym("o_rank")
+#pragma zpsym("HM")
+#pragma zpsym("HO")
+#pragma zpsym("o_gres")
+#pragma static-locals(push, off)
+static void swap_me(void)
+{
+    u8 t; u16 w;
+    t = c_stage; c_stage = o_stage; o_stage = t;
+    t = c_results; c_results = o_results; o_results = t;
+    t = c_over; c_over = o_over; o_over = t;
+    t = c_rank; c_rank = o_rank; o_rank = t;
+    w = c_gres; c_gres = o_gres; o_gres = w;
+    c_me ^= 1;
+    t = HM; HM = HO; HO = t;
+}
+#pragma static-locals(pop)
 char comp_l1[32], comp_l2[32];
 static u8 c_shown;            /* étape dont le tournoi a été annoncé (Grand Martinot) */
 
@@ -55,7 +87,7 @@ u8 __fastcall__ comp_build(u8 unused)
     static const u8 rt6[5] = { 2, 1, 1, 0, 0 };
     static const u8 rt4[3] = { 2, 1, 0 };
     static const u8 rt16[15] = { 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0 };
-    u8 pool[NCHARS], np = 0, i, j, t;
+    u8 pool[NCHARS], np = 0, i, j, t, h2c = c_pl2[0];
     c_n = 8;
     if (c_type == CT_LEAGUE) c_n = 6;
     if (c_type == CT_GRAND && !c_dbl) c_n = 16;   /* en double : 8 équipes (16 joueurs) */
@@ -63,7 +95,7 @@ u8 __fastcall__ comp_build(u8 unused)
     /* adversaires tirés parmi les 16 personnages d'origine : Margaux (16) est
        la joueuse que l'on choisit, jamais une adversaire tirée au sort ; les
        anciens codes redonnent ainsi exactement les mêmes tableaux */
-    for (i = 0; i < 16; ++i) if (i != c_pl[0] && (!c_dbl || i != c_pl2[0])) pool[np++] = i;
+    for (i = 0; i < 16; ++i) if (i != c_pl[0] && (!(c_dbl || c_hum2) || i != h2c)) pool[np++] = i;
     rs_seed(c_seed, 0x33);
     for (i = np - 1; i > 0; --i) { j = (u8)(rn() % (u8)(i + 1)); t = pool[i]; pool[i] = pool[j]; pool[j] = t; }
     c_rt[0] = 1;
@@ -75,6 +107,11 @@ u8 __fastcall__ comp_build(u8 unused)
     }
     /* mélange des niveaux pour que les têtes de série ne soient pas toujours au même endroit */
     for (i = (u8)(c_n - 1); i > 1; --i) { j = (u8)(1 + rn() % i); t = c_rt[i]; c_rt[i] = c_rt[j]; c_rt[j] = t; }
+    /* (2.76) second joueur humain : dans l'autre moitié du tableau (l'autre
+       poule) ; ils ne se rencontrent qu'à la fin, ou au gré des tableaux */
+    c_h2 = 0; c_me = 0; o_stage = o_results = o_over = o_rank = 0; o_gres = 0; HM = 0;
+    if (!c_dbl && c_hum2) { c_h2 = (u8)(c_n >> 1); c_pl[c_h2] = h2c == c_pl[0] ? pool[np - 1] : h2c; c_rt[c_h2] = 1; }
+    HO = c_h2;
     (void)unused;
     c_active = 1;
     c_over = 0;
@@ -99,6 +136,7 @@ u8 __fastcall__ comp_new(u8 unused)
 #pragma bss-name(push, "WBSS")
 static u8 ko_cur[16];
 #pragma bss-name(pop)
+static u8 o_reach(u8 e);
 static void ko_run(u8 ev, u8 hr, u8 upto)
 {
     u8 m = c_n, r, i, a, b, w, t, j;
@@ -111,7 +149,8 @@ static void ko_run(u8 ev, u8 hr, u8 upto)
     for (r = 0; r < upto && m > 1; ++r) {
         for (i = 0; i < (u8)(m >> 1); ++i) {
             a = ko_cur[i * 2]; b = ko_cur[i * 2 + 1];
-            if (a == 0 || b == 0) w = (u8)((r < hr) == (a == 0) ? a : b);
+            if (a == HM || b == HM) w = (u8)((r < hr) == (a == HM) ? a : b);
+            else if (c_h2 && (a == HO || b == HO)) w = (u8)((r < o_reach(ev)) == (a == HO) ? a : b);   /* (l'autre joueur humain) */
             else w = sim_win(a, b, (u8)(c_type == CT_GRAND ? ev * 64 + r * 8 + i : ev * 16 + r * 4 + i)) ? a : b;
             ko_cur[i] = w;
         }
@@ -148,8 +187,10 @@ static u8 wins[8];
 /* résultat de a contre b ; joueur : bit du jour dans c_results */
 static u8 rr_win(u8 a, u8 b, u8 day, u8 salt)
 {
-    if (a == 0) return (u8)((c_results >> day) & 1);
-    if (b == 0) return (u8)(!((c_results >> day) & 1));
+    if (a == HM) return (u8)((c_results >> day) & 1);
+    if (b == HM) return (u8)(!((c_results >> day) & 1));
+    if (c_h2 && a == HO) return (u8)((o_results >> day) & 1);
+    if (c_h2 && b == HO) return (u8)(!((o_results >> day) & 1));
     return sim_win(a, b, salt);
 }
 static void groups_wins(u8 days)
@@ -211,8 +252,8 @@ static u8 group_rank_of_human(void)
 {
     u8 i;
     groups_wins(3);
-    rank_by(0, 4, 0);
-    for (i = 0; i < 4; ++i) if (order[i] == 0) return i;
+    rank_by((u8)(HM & 4), 4, 0);
+    for (i = 0; i < 4; ++i) if (order[i] == HM) return i;
     return 3;
 }
 /* demi-finales des poules : A1-B2 et B1-A2 */
@@ -237,13 +278,14 @@ static const u16 grand_pts[5] = { 180, 360, 720, 1200, 2000 };
 /* (décalages par boucle : un décalage d'un nombre variable de bits ferait
    entrer une routine de cc65 dans la banque fixe, pleine) */
 static u8 gres_w(void) { return (u8)(c_type == CT_GRAND ? 3 : 2); }   /* bits par tournoi */
-static u8 gres_get(u8 e)
+static u8 gres_getv(u16 v, u8 e)
 {
-    u16 v = c_gres; u8 w = gres_w(), s = 0;
+    u8 w = gres_w(), s = 0;
     while (e) { s += w; --e; }
     while (s) { v >>= 1; --s; }
     return (u8)(v & (w == 3 ? 7 : 3));
 }
+#define gres_get(e) gres_getv(c_gres, e)
 static u8 human_reach(u8 e)
 {
     if (c_type >= CT_GRAND) return gres_get(e);
@@ -256,7 +298,8 @@ static void season_points(u8 events)
     for (e = 0; e < events; ++e) {
         hr = human_reach(e);
         ko_reach(e, hr);
-        reach[0] = hr;
+        reach[HM] = hr;
+        if (c_h2) reach[HO] = o_reach(e);
         for (i = 0; i < c_n; ++i) {
             k = reach[i];
             if (c_type >= CT_GRAND) pts[i] += grand_pts[c_n == 16 ? k : k + 1];
@@ -285,19 +328,50 @@ static u8 ev_img(u8 e) { return c_type == CT_WORLD ? world_ev[e < 7 ? e : 6] : (
    3e. Tournoi : finaliste et demi-finaliste battu par le joueur ; poules :
    vainqueur de l'autre demi-finale et adversaire de la demi-finale du
    joueur ; championnat et saison : classement final. */
+#pragma static-locals(push, off)
+/* (2.76) adversaire du joueur au tour upto (où qu'il soit dans le tableau) */
+static u8 ko_opp(u8 ev, u8 hr, u8 upto)
+{
+    u8 s = 0;
+    ko_run(ev, hr, upto);
+    while (ko_cur[s] != HM && s < 15) ++s;
+    return ko_cur[s ^ 1];
+}
+/* vainqueur de la demi-finale k des poules (l'autre joueur humain : son
+   résultat ; il a gagné s'il est passé en finale) */
+static u8 semi_w(u8 k)
+{
+    u8 a = sf_a[k], b = sf_b[k];
+    if (c_h2 && (a == HO || b == HO)) return (u8)((o_stage > 3) == (a == HO) ? a : b);
+    return sim_win(a, b, 0x70) ? a : b;
+}
+/* tours gagnés par l'autre joueur humain dans l'épreuve e */
+static u8 o_reach(u8 e)
+{
+    u8 n = nrounds(), st = 0, k = e;
+    if (c_type == CT_SEASON) n = 3;
+    while (k) { st = (u8)(st + n); --k; }
+    if (c_type < CT_SEASON || c_type == CT_CUSTOM) return o_stage;    /* un seul tableau */
+    if (o_stage >= (u8)(st + n) || (o_over && o_stage >= st)) {
+        if (c_type == CT_SEASON) return (u8)((o_results >> (e * 2)) & 3);
+        return gres_getv(o_gres, e);
+    }
+    return o_stage > st ? (u8)(o_stage - st) : 0;
+}
+#pragma static-locals(pop)
 u8 c_pod[3];
 u8 __fastcall__ comp_podium(u8 unused)
 {
     u8 nr, k;
     (void)unused;
-    c_pod[0] = 0;
+    c_pod[0] = HM;
     switch (c_type) {
     case CT_GROUPS:
         groups_semis();
-        k = (u8)(sf_a[0] == 0 || sf_b[0] == 0 ? 1 : 0);      /* l'autre demi-finale */
-        c_pod[1] = sim_win(sf_a[k], sf_b[k], 0x70) ? sf_a[k] : sf_b[k];
+        k = (u8)(sf_a[0] == HM || sf_b[0] == HM ? 1 : 0);    /* l'autre demi-finale */
+        c_pod[1] = semi_w(k);
         k ^= 1;                                               /* celle du joueur */
-        c_pod[2] = sf_a[k] == 0 ? sf_b[k] : sf_a[k];
+        c_pod[2] = sf_a[k] == HM ? sf_b[k] : sf_a[k];
         break;
     case CT_LEAGUE:
         league_wins(5); rank_by(0, 6, 0);
@@ -311,8 +385,8 @@ u8 __fastcall__ comp_podium(u8 unused)
         break;
     default:
         nr = nrounds();
-        ko_run(0, 3, (u8)(nr - 1)); c_pod[1] = ko_cur[1];
-        ko_run(0, 3, (u8)(nr - 2)); c_pod[2] = ko_cur[1];
+        c_pod[1] = ko_opp(0, 3, (u8)(nr - 1));
+        c_pod[2] = ko_opp(0, 3, (u8)(nr - 2));
         break;
     }
     return 0;
@@ -327,28 +401,28 @@ u8 __fastcall__ comp_opponent(u8 unused)
     case CT_GROUPS:
         if (c_stage < 3) {
             d = c_stage;
-            return (u8)(g4[d][0] == 0 ? g4[d][1] : g4[d][0]);
+            a = (u8)(HM & 4); b = (u8)(HM - a);
+            for (k = 0; k < 4; ++k) if (g4[d][k] == b) return (u8)(a + g4[d][k ^ 1]);
+            return 1;
         }
         groups_semis();
-        if (c_stage == 3) return sf_a[0] == 0 ? sf_b[0] : sf_a[1] == 0 ? sf_b[1] : sf_b[1] == 0 ? sf_a[1] : sf_a[0];
+        if (c_stage == 3) return sf_a[0] == HM ? sf_b[0] : sf_a[1] == HM ? sf_b[1] : sf_b[1] == HM ? sf_a[1] : sf_a[0];
         /* finale : vainqueur de l'autre demi-finale */
-        k = (u8)(sf_a[0] == 0 || sf_b[0] == 0 ? 1 : 0);
-        return sim_win(sf_a[k], sf_b[k], 0x70) ? sf_a[k] : sf_b[k];
+        k = (u8)(sf_a[0] == HM || sf_b[0] == HM ? 1 : 0);
+        return semi_w(k);
     case CT_LEAGUE:
         for (k = 0; k < 3; ++k) {
             lg_pair(c_stage, k, &a, &b);
-            if (a == 0) return b;
-            if (b == 0) return a;
+            if (a == HM) return b;
+            if (b == HM) return a;
         }
         return 1;
     case CT_SEASON:
     case CT_GRAND:
     case CT_WORLD:
-        ko_run(ev_of(), nrounds(), rd_of());
-        return ko_cur[1];
+        return ko_opp(ev_of(), nrounds(), rd_of());
     default:
-        ko_run(0, 3, c_stage);
-        return ko_cur[1];
+        return ko_opp(0, 3, c_stage);
     }
 }
 
@@ -378,7 +452,7 @@ u8 __fastcall__ comp_level(u8 unused)
     return (u8)lv;
 }
 
-u8 __fastcall__ comp_record(u8 won)
+static u8 record1(u8 won)
 {
     u8 r, ev;
     switch (c_type) {
@@ -396,7 +470,7 @@ u8 __fastcall__ comp_record(u8 won)
             u8 i;
             league_wins(5);
             rank_by(0, 6, 0);
-            for (i = 0; i < 6; ++i) if (order[i] == 0) c_rank = (u8)(i + 1);
+            for (i = 0; i < 6; ++i) if (order[i] == HM) c_rank = (u8)(i + 1);
             c_over = 2;
         }
         break;
@@ -411,7 +485,7 @@ u8 __fastcall__ comp_record(u8 won)
                 u8 i;
                 season_points(4);
                 rank_by(0, 8, 1);
-                for (i = 0; i < 8; ++i) if (order[i] == 0) c_rank = (u8)(i + 1);
+                for (i = 0; i < 8; ++i) if (order[i] == HM) c_rank = (u8)(i + 1);
                 c_over = 2;
             }
         } else ++c_stage;
@@ -432,7 +506,7 @@ u8 __fastcall__ comp_record(u8 won)
                 u8 i;
                 season_points(nev());
                 rank_by(0, c_n, 1);
-                for (i = 0; i < c_n; ++i) if (order[i] == 0) c_rank = (u8)(i + 1);
+                for (i = 0; i < c_n; ++i) if (order[i] == HM) c_rank = (u8)(i + 1);
                 c_slam = 1;               /* tous les tournois gagnés : Grand Chelem */
                 for (i = 0; i < nev(); ++i) if (gres_get(i) != nrounds()) c_slam = 0;
                 c_over = 2;
@@ -452,6 +526,42 @@ u8 __fastcall__ comp_record(u8 won)
     if (c_over && c_rank == 1 && c_trophies < 15) ++c_trophies;
     return c_over;
 }
+/* (2.76) résultat du match : pour le joueur dont c'est le tour ; s'il a
+   joué contre l'autre joueur humain (à deux manettes), pour lui aussi ;
+   puis le tour passe à celui qui est en retard (ou au seul encore en lice).
+   Fin : quand les deux ont fini, le mieux classé est retenu (podium). */
+#pragma static-locals(push, off)
+u8 __fastcall__ comp_record(u8 won)
+{
+    u8 duo = (u8)(c_h2 && !o_over && o_stage == c_stage && comp_opponent(0) == HO);
+    record1(won);
+    if (!c_h2) return c_over;
+    if (duo) { swap_me(); record1((u8)!won); swap_me(); }
+    if (c_over && !o_over) swap_me();                    /* il a fini : l'autre continue */
+    else if (!o_over && o_stage < c_stage) swap_me();    /* l'autre est en retard */
+    if (c_over && o_over) {
+        if (o_rank < c_rank || (o_rank == c_rank && c_me)) swap_me();   /* le mieux classé (le joueur 1 à égalité) */
+        return c_over;
+    }
+    return 0;
+}
+/* à deux en simple : à qui de jouer (écran de l'étape) */
+u8 __fastcall__ comp_who(u8 y)
+{
+    if (c_h2) txt_at(3, y, c_me ? "A TOI, JOUEUR 2 (MANETTE 2)" : "A TOI, JOUEUR 1 (MANETTE 1)");
+    return 0;
+}
+/* pour screens.c : le joueur dont c'est le tour ; commandes du match */
+u8 __fastcall__ comp_me(u8 unused) { (void)unused; return HM; }
+u8 __fastcall__ comp_ctrl(u8 o)
+{
+    if (!c_h2) return 0;
+    cfg.chr[0] = c_pl[HM];
+    cfg.ctrl[0] = c_me ? CTRL_PAD2 : CTRL_PAD1;
+    if (o == HO) cfg.ctrl[1] = c_me ? CTRL_PAD1 : CTRL_PAD2;   /* les deux joueurs humains : deux manettes */
+    return 0;
+}
+#pragma static-locals(pop)
 
 static char nb[6];
 /* nombre sur 5 chiffres (jusqu'à 65 535 ; le Martinworld Tour va jusqu'à
@@ -471,7 +581,7 @@ static void num5(char *o, u16 v)
 static void ent_at(u8 i, u8 x, u8 y)
 {
     team_label(c_pl[i], c_pl2[i], nb);
-    txt_off = (u8)(i == 0 ? 0x40 : 0);      /* le joueur : surligné (or) */
+    txt_off = (u8)(i == 0 || (c_h2 && i == c_h2) ? 0x40 : 0);   /* les joueurs : surlignés (or) */
     txt_at(x, y, nb);
     txt_off = 0;
 }
@@ -489,7 +599,7 @@ u8 __fastcall__ comp_stage_name(u8 unused)
     l2[0] = 0;
     switch (c_type) {
     case CT_GROUPS:
-        if (c_stage < 3) { copy_txt(l1, "POULE A - JOURNEE"); l1[17] = ' '; l1[18] = (char)('1' + c_stage); l1[19] = '/'; l1[20] = '3'; l1[21] = 0; }
+        if (c_stage < 3) { copy_txt(l1, "POULE A - JOURNEE"); l1[6] = (char)('A' + (HM >> 2)); l1[17] = ' '; l1[18] = (char)('1' + c_stage); l1[19] = '/'; l1[20] = '3'; l1[21] = 0; }
         else copy_txt(l1, c_stage == 3 ? "DEMI-FINALE" : "FINALE");
         break;
     case CT_LEAGUE:
@@ -565,7 +675,7 @@ u8 __fastcall__ comp_draw_table(u8 y)
         head_at(3, y, "CLASSEMENT   POINTS");
         for (i = 0; i < 8; ++i) {
             b = i;
-            if (i == 7 && c_n == 16) for (n = 7; n < 16; ++n) if (order[n] == 0) b = n;
+            if (i == 7 && c_n == 16) for (n = 7; n < 16; ++n) if (order[n] == HM) b = n;
             num2(line, (u8)(b + 1)); line[2] = '.'; line[3] = 0;
             txt_at(2, (u8)(y + 1 + i), line);
             ent_at(order[b], 6, (u8)(y + 1 + i));
@@ -602,6 +712,7 @@ u8 __fastcall__ comp_draw_table(u8 y)
     return 0;
 }
 
+u8 __fastcall__ comp_who(u8 y);
 /* parcours : les tours du tournoi en cours, celui à jouer surligné (rien
    en poules ni en championnat) */
 u8 __fastcall__ comp_path(u8 y)
@@ -609,6 +720,7 @@ u8 __fastcall__ comp_path(u8 y)
     static const char * const rn[4] = { "FINALE", "DEMI", "QUART", "8E" };
     u8 n, r, i, x = 3, k;
     const char *t;
+    comp_who(23);                       /* (2.76) à deux en simple : à qui de jouer */
     switch (c_type) {
     case CT_GROUPS: case CT_LEAGUE: return 0;
     case CT_SEASON: n = 3; r = (u8)(c_stage % 3); break;

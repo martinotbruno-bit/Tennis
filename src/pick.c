@@ -65,7 +65,7 @@ static u8 pk_list(u8 *l)
     if (m == MODE_DEMO) return 0;
     if (m == MODE_COMP && ct == CT_KO) l[n++] = PK_EV;           /* d'abord le tournoi */
     l[n++] = PK_P1;
-    if (m == MODE_1P || m == MODE_2P || m == MODE_2P_TEAM || (m == MODE_COMP && opt_val[O_TYPE])) l[n++] = PK_P2;
+    if (m == MODE_1P || m == MODE_2P || m == MODE_2P_TEAM || (m == MODE_COMP && (opt_val[O_TYPE] || opt_val[O_CPART]))) l[n++] = PK_P2;   /* (2.76 : compétition à deux) */
     if (m == MODE_COMP) {
         if (ct != CT_KO && ct < CT_GRAND) { l[n++] = PK_ENV; if (ct != CT_SEASON) l[n++] = PK_SURF; }
     } else { l[n++] = PK_ENV; l[n++] = PK_SURF; }
@@ -74,7 +74,7 @@ static u8 pk_list(u8 *l)
 static u8 pk_stage(void) { u8 l[6]; return pk_i < pk_list(l) ? l[pk_i] : 0; }
 
 /* le partenaire (et non l'adversaire) : en équipe, ou en compétition */
-static u8 partner(void) { u8 m = opt_val[O_MODE]; return (u8)(m == MODE_2P_TEAM || m == MODE_COMP); }
+static u8 partner(void) { u8 m = opt_val[O_MODE]; return (u8)(m == MODE_2P_TEAM || (m == MODE_COMP && opt_val[O_TYPE])); }
 
 /* texte centré sur 28 colonnes (colonne 2), le reste effacé */
 static void line_at(u8 y, const char *s)
@@ -126,13 +126,13 @@ static void draw_players(u8 st)
     cfg.chr[0] = opt_val[O_P1];
     cfg.chr[1] = opt_val[O_P2];
     cfg.ctrl[0] = CTRL_PAD1;
-    cfg.ctrl[1] = (u8)(m == MODE_2P || (m == MODE_2P_TEAM && opt_val[O_CPART]) ? CTRL_PAD2 : CTRL_CPU);
+    cfg.ctrl[1] = (u8)(m == MODE_2P || ((m == MODE_2P_TEAM || m == MODE_COMP) && opt_val[O_CPART]) ? CTRL_PAD2 : CTRL_CPU);
     cfg.level[1] = opt_val[O_LEVEL];
     pal_set_player(0, cfg.chr[0]);
     pal_set_player(1, cfg.chr[1]);
     bank_call(BANK_PODIUM, vs_build);
     bank_call(BANK_CAR, vs_texts);
-    txt_at(3, 1, st == PK_P1 ? "TON JOUEUR" : partner() ? "TON PARTENAIRE" : opt_val[O_MODE] == MODE_2P ? "JOUEUR 2" : "TON ADVERSAIRE");
+    txt_at(3, 1, st == PK_P1 ? "TON JOUEUR" : partner() ? "TON PARTENAIRE" : m != MODE_1P ? "JOUEUR 2" : "TON ADVERSAIRE");
     txt_at(13, 11, partner() ? "  ET  " : "CONTRE");
     /* flèches autour du nom choisi (rangée 19) */
     txt_at((u8)(st == PK_P1 ? 1 : 17), 19, "<");

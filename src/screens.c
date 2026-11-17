@@ -103,7 +103,7 @@ static const u8 opt_max[NOPT] = { 1, NMODES, 2, NCHARS, NCHARS, 3, NSURF, NENV, 
 static const char * const opt_label[NOPT] = {
     "COMMENCER", "MODE", "JEU", "JOUEUR 1", "JOUEUR 2", "NIVEAU CPU", "SURFACE", "LIEU",
     "CONDITIONS", "FORMAT", "RALENTIS", "COMPETITION", "JOUEURS", "ADVERSAIRES", "SURFACES",
-    "EXERCICE", "COTE", "VITESSE", "EFFET", "BALLES", "JOUE PAR", "VITESSE JEU", "SON", "FATIGUE", "VUE", "CARRIERE" };
+    "EXERCICE", "COTE", "VITESSE", "EFFET", "BALLES", "JOUEUR 2", "VITESSE JEU", "SON", "FATIGUE", "VUE", "CARRIERE" };
 static const char * const mode_name[NMODES] = {
     "1 JOUEUR VS CPU", "2 J. ADVERSAIRES", "EN EQUIPE", "COMPETITION", "ENTRAINEMENT", "DEMO CPU" };
 static const char * const cond_name[4] = { "JOUR", "NUIT", "PLUIE", "CREPUSCULE" };
@@ -158,7 +158,7 @@ static void build_visible(void)
         if (opt_val[O_COMP] == CT_CUSTOM) { add_opt(O_CSIZE); add_opt(O_CPROG); add_opt(O_CVAR); }
         else if (!opt_val[O_TYPE]) add_opt(O_CAREER);   /* (2.72) */
         add_opt(O_TYPE);
-        if (opt_val[O_TYPE]) add_opt(O_CPART);   /* partenaire : CPU ou manette 2 */
+        add_opt(O_CPART);   /* 2e joueur : partenaire (double) ou rival (simple, 2.76), CPU ou manette 2 */
         add_opt(O_LEVEL);
         /* Grand Martinot, Martinworld Tour : au stade, de jour, surfaces
            imposées, 3 sets et finale en 5. (2.76) Joueurs, tournoi, lieu et
@@ -314,7 +314,7 @@ static void title_screen(void)
         /* derniers réglages du menu (cartouche à pile), bornés par sécurité */
         opts_loaded = 1;
         menu_bk_pick();          /* fond des menus : une surface au hasard, à chaque allumage */
-        if (far_call(BANK_COMP, (void *)so_load, 0)) {
+        if (far_call(BANK_X2, (void *)so_load, 0)) {
             for (i = 0; i < NOPT; ++i) if (opt_val[i] >= opt_max[i]) opt_val[i] = 0;
             if (opt_val[O_ENV] == ENV_NUDE && (!nude_unlocked || opt_val[O_P1] == 16 || opt_val[O_P2] == 16)) opt_val[O_ENV] = 0;
         }
@@ -468,7 +468,7 @@ static void present_screen(void);
 static void menu_go(void)
 {
     u8 v = opt_val[O_MODE];
-    (void)far_call(BANK_COMP, (void *)so_save, 0);   /* mémorise les réglages */
+    (void)far_call(BANK_X2, (void *)so_save, 0);   /* mémorise les réglages */
     if (v == MODE_COMP) { cust_screen(1); return; }  /* (joueur personnalisé, puis la compétition) */
     setup_cfg(v);
     if (v == MODE_TRAIN || v == MODE_DEMO) go_match();
@@ -615,6 +615,7 @@ static void comp_cfg(void)
     if (cfg.env == ENV_HALL && cfg.cond == COND_RAIN) cfg.cond = COND_DAY;
     cfg.sets_to_win = (u8)(c_fmt == 1 ? 2 : c_fmt == 2 ? 3 : 1);
     cfg.games_per_set = (u8)(c_fmt == 3 ? 4 : 6);
+    COMP(comp_ctrl, o);                 /* (2.76) à deux joueurs humains : le joueur du tour, les manettes */
     last_mode = MODE_COMP;
 }
 
@@ -701,7 +702,7 @@ static void make_code(void)
     pw.type = c_type; pw.stage = c_stage; pw.seed = c_seed; pw.chr = c_pl[0];
     pw.surf = c_surf; pw.fmt = c_fmt; pw.cond = c_cond; pw.env = c_env; pw.lvl = c_lvl;
     pw.results = c_results; pw.opts = c_opts; pw.trophies = c_trophies; pw.gres = c_gres;
-    pw.doubles = c_dbl; pw.partner = (u8)(c_dbl ? c_pl2[0] : 0); pw.hum2 = c_hum2;
+    pw.doubles = c_dbl; pw.partner = (u8)(c_dbl ? c_pl2[0] : 0); pw.hum2 = (u8)(c_hum2 & c_dbl);   /* (à 2 en simple : le code reprend le joueur 1 seul) */
     pw_s = code_buf; pw_p = &pw;
     (void)far_call(BANK_COMP, (void *)pw_enc_far, 0);
     code_buf[PW_LEN] = 0;
@@ -725,7 +726,7 @@ static void comp_screen(void)
     }
     /* page 1 : le prochain match (lignes espacées, 2.76) */
     o = COMP(comp_opponent, 0);
-    team_label(c_pl[0], c_pl2[0], line);
+    team_label(c_pl[COMP(comp_me, 0)], c_pl2[0], line);
     txt_off = 0x40; txt_at(3, 11, line); txt_off = 0;
     txt_at(9, 11, "CONTRE");
     team_label(c_pl[o], c_pl2[o], line);
@@ -817,7 +818,7 @@ static void start_comp(void)
     c_fmt = opt_val[O_FMT];
     c_pl[0] = opt_val[O_P1];
     c_dbl = opt_val[O_TYPE];
-    c_hum2 = (u8)(c_dbl && opt_val[O_CPART]);
+    c_hum2 = opt_val[O_CPART];          /* (2.76 : en simple, un 2e joueur humain inscrit) */
     c_pl2[0] = opt_val[O_P2];
     if (c_dbl && c_pl2[0] == c_pl[0]) c_pl2[0] = (u8)((c_pl[0] + 1) % NCHARS);
     c_seed = (u8)(rand8() ^ frame_cnt);

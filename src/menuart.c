@@ -114,7 +114,7 @@ void deco_title(void)
 extern const u8 port_chr[];
 void port_load(void)
 {
-    chr_copy(BANK_SWAP, port_chr, 0x1100, 992);     /* et vignettes des lieux ($40-$4D) */
+    chr_copy(BANK_PICK, port_chr, 0x1100, 992);     /* et vignettes des lieux ($40-$4D) ; (2.76 : données en banque 29) */
     people_dirty();
 }
 

@@ -31,7 +31,7 @@ function check(cond, msg) {
   else { fails++; console.log('  ECHEC ' + msg); }
 }
 const AS = { SCREENS: 0, MATCH: 1, MANUAL: 2 };
-const SS = { TITLE: 0, MENU: 1, RESULTS: 2, PRESENT: 3, COMP: 4, CODE: 5, PALMARES: 6, TRAIN_RES: 7, COMP_END: 8, SETBREAK: 9, CUSTOM: 13, CHAMP: 14 };
+const SS = { TITLE: 0, MENU: 1, RESULTS: 2, PRESENT: 3, COMP: 4, CODE: 5, PALMARES: 6, TRAIN_RES: 7, COMP_END: 8, SETBREAK: 9, CUSTOM: 13, CHAMP: 14, PICK: 15 };
 const O = { MODE: 1, TYPE: 2, P1: 3, P2: 4, LEVEL: 5, SURF: 6, ENV: 7, COND: 8, FMT: 9, REPLAY: 10, COMP: 11,
             CSIZE: 12, CPROG: 13, CVAR: 14, EX: 15, SIDE: 16, SPEED: 17, SPIN: 18, COUNT: 19, CPART: 20, GSPEED: 21, SOUND: 22, FATIG: 23, VIEW: 24, CAREER: 25 };
 const MODE = { P1: 0, P2: 1, TEAM: 2, COMP: 3, TRAIN: 4, DEMO: 5 };
@@ -81,7 +81,8 @@ function startWith(e, opts) {
   toMenu(e); setOpts(e, opts); e.tap('START');
   // certains écrans (classements) se construisent en plusieurs trames
   for (let n = 0; n < 90 && app(e) === AS.SCREENS && scr(e) === SS.MENU; n++) e.run(1);
-  // (2.75) compétition : écran du joueur personnalisé, passé avec START
+  // (2.75) compétition : écran du joueur personnalisé, passé avec START ;
+  // (2.76) pages de choix (joueurs, lieu, surface), passées avec START
   passCustom(e);
   // bande-annonce du Grand Martinot (passée par le banc d'essai), puis l'annonce
   if (app(e) === AS.SCREENS && scr(e) === 11) runUntil(e, () => scr(e) !== 11, 120);
@@ -91,7 +92,8 @@ function startWith(e, opts) {
 }
 function passCustom(e) {
   // (Emu.customSkip appuie sur START à chaque page : on attend la fin)
-  for (let n = 0; n < 150 && app(e) === AS.SCREENS && (scr(e) === SS.CUSTOM || scr(e) === SS.MENU); n++) e.run(1);
+  // (2.76) puis les pages de choix illustrées (Emu.pickSkip : START aussi)
+  for (let n = 0; n < 300 && app(e) === AS.SCREENS && (scr(e) === SS.CUSTOM || scr(e) === SS.MENU || scr(e) === SS.PICK); n++) e.run(1);
 }
 function allCpu(e) { const c = e.addr('cfg'); for (let i = 0; i < 4; i++) e.nes.cpu.mem[c + CFG.CTRL + i] = 2; }
 // Attentes à plafond adaptatif : chaque appel (repéré par sa ligne) retient

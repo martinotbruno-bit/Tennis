@@ -55,7 +55,7 @@ s16 iabs(s16 v);
 s8 rnd_spread(u8 spread);
 void set_msg(const char *a, const char *b, u8 t);
 void launch(s16 tx, s16 ty, u8 T, u8 grav);
-u16 __fastcall__ dead_hit(u16 p);   /* train.c */
+u16 __fastcall__ dead_hit(u16 p);   /* extra2.c */
 void win_msg(void);
 void hl_out(void);
 void lob_cap(void);                /* banque fixe (gamefix.c, 2.74) */
@@ -77,6 +77,7 @@ extern u8 dive_t[4], dive_f[4];        /* plongeon en cours (poses.s) */
 extern u8 cer, pose_force[4];
 void cer_entry(void); void cer_save(void); void cer_change(void); void cer_end(void);
 void cer_tick(void); void cer_draw(void); void cer_front(void); void slot_tick(void);
+void cer_pre(void); void cer_post(void); extern u8 cer_req;   /* tirage au sort (cer.c, 2.76) */
 void poses_all(void);
 u8 hit_pass, hit_jump;                 /* dernière frappe : adversaire au filet, smash sauté */
 u8 tired;                              /* fatigue de l'échange en cours, 0..10 */
@@ -189,7 +190,7 @@ static void point_over(u8 winner, u8 reason)
     }
     if (reason == 2) {
         ++st_winners[winner];
-        if (rally_hits == 1) { ++st_aces[winner]; bank_call(BANK_TRAIN, hl_ace_msg); HL_SELECT(winner, msg1); }   /* « ACE ! » et la vitesse du service */
+        if (rally_hits == 1) { ++st_aces[winner]; bank_call(BANK_X2, hl_ace_msg); HL_SELECT(winner, msg1); }   /* « ACE ! » et la vitesse du service */
         else { bank_call(BANK_TRAIN, win_msg); HL_SELECT(winner, msg1); }   /* « COUP GAGNANT ! », « LOB GAGNANT ! »… */
         sfx_winner();   /* carillon bref (canal des bruitages) */
         sfx_crowd(7);
@@ -201,7 +202,7 @@ static void point_over(u8 winner, u8 reason)
         sfx_crowd(2);
     }
     if (rally_hits >= 12) { set_msg("QUEL ECHANGE !", "", 70); sfx_crowd(7); crowd_timer = 64; rp_pending = 1; HL_SELECT(winner, msg1); }
-    bank_call(BANK_HL, hl_out);     /* balle limite (dehors de peu, bonne sur la ligne) : zoom rapide (highlight.c) */
+    bank_call(BANK_X2, hl_out);     /* balle limite (dehors de peu, bonne sur la ligne) : zoom rapide (highlight.c) */
     /* (2.76) balle de match gagnée : pas de ralenti, la fête tout de suite */
     if (!cfg.replays || cfg.demo || ((sc_crit & 4) && ((sc_crit >> winner) & 1))) rp_pending = 0;
     if (rp_pending) ms_timer = 110;
@@ -380,11 +381,11 @@ u8 can_hit(u8 p);
 /* nom d'équipe sur 4 lettres : banque fixe (gamefix.c) */
 void team_name(u8 t, char *out);
 u8 recap_pend, brk_pend;          /* récapitulatif du score à afficher / fin de set */
-/* récapitulatif du score (score_line, score_recap) : banque 15 (highlight.c, version 2.67) */
+/* récapitulatif du score (score_line, score_recap) : banque 30 (extra2.c, 2.76) */
 void score_recap(void);
 extern u8 hl_mode;                 /* 1 : gros plan, 2 : zoom en cours (highlight.c) */
 void hl_tick(void);
-#define score_recap() bank_call(BANK_HL, score_recap)
+#define score_recap() bank_call(BANK_X2, score_recap)   /* (extra2.c depuis la 2.76) */
 
 u8 __fastcall__ serve_fb(s16 vz);             /* banque 13 (shots.c) */
 
@@ -689,7 +690,7 @@ static void human_update(u8 p, u8 pad, u8 pressed)
         pl_timer[p] = 10;
     }
     /* balle faute renvoyée quand même, hors jeu (2.76, train.c) */
-    if (ms == MS_DEAD && (st == ST_CHARGE || (st == ST_SWING && pl_timer[p] > 4)) && !pl_hit[p] && far_call(BANK_TRAIN, (void *)dead_hit, p)) {
+    if (ms == MS_DEAD && (st == ST_CHARGE || (st == ST_SWING && pl_timer[p] > 4)) && !pl_hit[p] && far_call(BANK_X2, (void *)dead_hit, p)) {
         pl_hit[p] = 1; pl_state[p] = st = ST_SWING; pl_timer[p] = 10;
     }
     if (st == ST_SWING) {
@@ -1119,6 +1120,9 @@ u8 match_tick(void)
     /* séquence animée (entrée, changement de côté, fin du match) */
     if (cer && cer < 0xF0) {
         bank_call(BANK_SWAP, cer_tick);
+        if (cer_req) {                            /* (2.76) tirage au sort : places du service */
+            bank_call(BANK_SWAP, cer_pre); place_for_serve(); bank_call(BANK_SWAP, cer_post); cer_req = 0;
+        }
         if (brk_pend == 2 || (brk_pend && !cer)) { brk_pend = 0; return 2; }   /* (2.76) fin de set : assis, puis l'écran du set */
         if (ms == MS_OVER) {
             if (ms_timer > 1) --ms_timer;
