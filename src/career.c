@@ -295,7 +295,7 @@ void msave_load_cfg(void)
 }
 /* début du match (cer_entry, après match_start) : score et statistiques ;
    un « let » d'une trame replace les joueurs pour le service (after_point) */
-void sun_apply(void);                   /* highlight.c, banque 15 */
+void sun_apply(void);                   /* sunset.c, banque 22 */
 void msave_restore(void)
 {
     u8 k, i, n = 2;
@@ -313,7 +313,7 @@ void msave_restore(void)
     }
     ms = MS_DEAD; ms_timer = 1; end_reason = 3;     /* END_LET : after_point replace les joueurs */
     set_msg("REPRISE", "DU MATCH", 90);
-    bank_call(BANK_HL, sun_apply);                  /* crépuscule : la lumière du moment */
+    bank_call(BANK_SUN, sun_apply);                 /* crépuscule : la lumière du moment (banque 22) */
 }
 
 /* ---------------------------------------------------------------------- */

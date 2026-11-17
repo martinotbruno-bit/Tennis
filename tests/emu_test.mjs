@@ -31,7 +31,7 @@ function check(cond, msg) {
   else { fails++; console.log('  ECHEC ' + msg); }
 }
 const AS = { SCREENS: 0, MATCH: 1, MANUAL: 2 };
-const SS = { TITLE: 0, MENU: 1, RESULTS: 2, PRESENT: 3, COMP: 4, CODE: 5, PALMARES: 6, TRAIN_RES: 7, COMP_END: 8, SETBREAK: 9, CUSTOM: 13 };
+const SS = { TITLE: 0, MENU: 1, RESULTS: 2, PRESENT: 3, COMP: 4, CODE: 5, PALMARES: 6, TRAIN_RES: 7, COMP_END: 8, SETBREAK: 9, CUSTOM: 13, CHAMP: 14 };
 const O = { MODE: 1, TYPE: 2, P1: 3, P2: 4, LEVEL: 5, SURF: 6, ENV: 7, COND: 8, FMT: 9, REPLAY: 10, COMP: 11,
             CSIZE: 12, CPROG: 13, CVAR: 14, EX: 15, SIDE: 16, SPEED: 17, SPIN: 18, COUNT: 19, CPART: 20, GSPEED: 21, SOUND: 22, FATIG: 23, VIEW: 24, CAREER: 25 };
 const MODE = { P1: 0, P2: 1, TEAM: 2, COMP: 3, TRAIN: 4, DEMO: 5 };
@@ -2754,6 +2754,11 @@ for (const type of [5, 6]) {
   check(e.peek('gm_st') === 2 && e.text(0, 2, 32).includes('CONFERENCE DE PRESSE') && q1.length > 5, `${name} : conférence de presse (« ${q1} »)`);
   e.tap('A'); e.run(10); e.tap('A'); e.run(10);
   check(e.peek('pod_busy') === 0 && e.text(0, 27, 32).includes('A : CONTINUER'), `${name} : trois questions, puis A pour continuer`);
+  // (2.76) le champion brandit la coupe (image HD), puis le générique
+  e.tap('A'); runUntil(e, () => scr(e) === 14, 60); e.run(80);
+  const vmc = e.nes.ppu.vramMem; let used = new Set(); for (let i = 0; i < 960; i++) used.add(vmc[0x2000 + i]);
+  if (process.env.SHOT) { e.setRender(true); e.run(2); e.screenshot(process.env.SHOT + '_' + type + '.png'); }
+  check(scr(e) === 14 && used.size > 80, `${name} : le champion brandit la coupe (image HD, ${used.size} tuiles)`);
   e.tap('A'); runUntil(e, () => app(e) === 4, 180);
   check(app(e) === 4, `${name} : puis le générique de fin`);
 }

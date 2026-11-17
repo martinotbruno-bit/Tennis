@@ -26,6 +26,8 @@
 #define SS_TEASER   11   /* bande-annonce du Grand Martinot et du Martinworld Tour */
 #define SS_FLY      12   /* survol du stade avant une finale (2.73, fly.c) */
 #define SS_CUSTOM   13   /* joueur personnalisé avant une compétition (2.75, career.c) */
+#define SS_CHAMP    14   /* le champion brandit la coupe (2.76, highlight.c) */
+u16 __fastcall__ champ_tick(u16 a);
 u16 __fastcall__ cust_build(u16 arg);   /* joueur personnalisé (career.c, banque 19, 2.75) */
 u16 __fastcall__ cust_tick(u16 pad);
 void cust_page(void);
@@ -1187,13 +1189,21 @@ void screens_tick(void)
         break;
     case SS_COMP_END:
         if ((pad1_new & (PAD_A | PAD_START)) && !pod_busy) {   /* (cérémonie en cours : A la fait avancer) */
-            if (c_rank == 1) { ppu_off(); chr_reload(); }   /* tuiles du podium : motifs d'origine */
-            /* saison gagnée : générique de fin, puis l'écran titre */
-            if (c_rank == 1 && (c_type == CT_SEASON || c_type >= CT_GRAND)) { go_req = GO_CREDITS; break; }
+            /* (2.76) compétition gagnée : le champion brandit la coupe (HD) */
+            if (c_rank == 1) { far_call(BANK_HL, (void *)champ_tick, 0x100); scr_state = SS_CHAMP; break; }
             title_screen();
             break;
         }
         comp_end_sprites();
+        break;
+    case SS_CHAMP:
+        if (far_call(BANK_HL, (void *)champ_tick, pad1_new)) {
+            ppu_off(); chr_reload();    /* tuiles du podium et de l'image : motifs d'origine */
+            scroll_x = 0; scroll_nt = 0;
+            /* saison gagnée : générique de fin, puis l'écran titre */
+            if (c_type == CT_SEASON || c_type >= CT_GRAND) { go_req = GO_CREDITS; break; }
+            title_screen();
+        }
         break;
     case SS_RESULTS:
         if (pad1_new & PAD_A) {

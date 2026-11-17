@@ -115,6 +115,15 @@ extern const unsigned char tz_at_handshake_g[];
 extern const unsigned char tz_chr_crowd_m[];
 extern const unsigned char tz_map_crowd_m[];
 extern const unsigned char tz_at_crowd_m[];
+extern const unsigned char tz_chr_trophy_m[];
+extern const unsigned char tz_map_trophy_m[];
+extern const unsigned char tz_at_trophy_m[];
+extern const unsigned char tz_chr_trophy_f[];
+extern const unsigned char tz_map_trophy_f[];
+extern const unsigned char tz_at_trophy_f[];
+extern const unsigned char tz_chr_trophy_g[];
+extern const unsigned char tz_map_trophy_g[];
+extern const unsigned char tz_at_trophy_g[];
 
 typedef struct { unsigned char bank, ntile, x0, w, y0, h, zoom; const unsigned char *chr, *map, *at; } tz_art_t;
 
@@ -132,50 +141,54 @@ typedef struct { unsigned char bank, ntile, x0, w, y0, h, zoom; const unsigned c
 #define TZ_BALLKID 11
 #define TZ_HANDSHAKE 12
 #define TZ_CROWD 13
-#define TZ_N 14
+#define TZ_TROPHY 14
+#define TZ_N 15
 static const tz_art_t tz_art[TZ_N][3] = {   /* homme, femme, fillette (Margaux) */
-    { { 12, 204, 0, 30, 2, 26, 0, tz_chr_impact_m, tz_map_impact_m, tz_at_impact_m },
-      { 17, 194, 0, 30, 2, 26, 0, tz_chr_impact_f, tz_map_impact_f, tz_at_impact_f },
-      { 16, 185, 0, 30, 2, 26, 0, tz_chr_impact_g, tz_map_impact_g, tz_at_impact_g } },
-    { { 18, 186, 2, 30, 2, 26, 0, tz_chr_slide_m, tz_map_slide_m, tz_at_slide_m },
-      { 12, 177, 2, 30, 4, 24, 0, tz_chr_slide_f, tz_map_slide_f, tz_at_slide_f },
-      { 17, 172, 2, 30, 4, 24, 0, tz_chr_slide_g, tz_map_slide_g, tz_at_slide_g } },
+    { { 4, 204, 0, 30, 2, 26, 0, tz_chr_impact_m, tz_map_impact_m, tz_at_impact_m },
+      { 9, 194, 0, 30, 2, 26, 0, tz_chr_impact_f, tz_map_impact_f, tz_at_impact_f },
+      { 17, 185, 0, 30, 2, 26, 0, tz_chr_impact_g, tz_map_impact_g, tz_at_impact_g } },
+    { { 12, 186, 2, 30, 2, 26, 0, tz_chr_slide_m, tz_map_slide_m, tz_at_slide_m },
+      { 4, 177, 2, 30, 4, 24, 0, tz_chr_slide_f, tz_map_slide_f, tz_at_slide_f },
+      { 9, 172, 2, 30, 4, 24, 0, tz_chr_slide_g, tz_map_slide_g, tz_at_slide_g } },
     { { 21, 230, 0, 32, 0, 28, 0, tz_chr_slide_z_m, tz_map_slide_z_m, tz_at_slide_z_m },
-      { 9, 220, 0, 32, 0, 28, 0, tz_chr_slide_z_f, tz_map_slide_z_f, tz_at_slide_z_f },
-      { 17, 211, 0, 32, 0, 28, 0, tz_chr_slide_z_g, tz_map_slide_z_g, tz_at_slide_z_g } },
-    { { 20, 153, 4, 20, 0, 28, 0, tz_chr_victory_m, tz_map_victory_m, tz_at_victory_m },
-      { 6, 137, 4, 18, 0, 28, 0, tz_chr_victory_f, tz_map_victory_f, tz_at_victory_f },
-      { 18, 133, 4, 18, 0, 28, 0, tz_chr_victory_g, tz_map_victory_g, tz_at_victory_g } },
-    { { 21, 199, 0, 30, 0, 28, 1, tz_chr_victory_z_m, tz_map_victory_z_m, tz_at_victory_z_m },
-      { 9, 199, 0, 28, 0, 28, 1, tz_chr_victory_z_f, tz_map_victory_z_f, tz_at_victory_z_f },
-      { 20, 188, 0, 28, 0, 28, 1, tz_chr_victory_z_g, tz_map_victory_z_g, tz_at_victory_z_g } },
-    { { 4, 165, 4, 20, 4, 24, 0, tz_chr_defeat_m, tz_map_defeat_m, tz_at_defeat_m },
-      { 7, 169, 4, 18, 6, 22, 0, tz_chr_defeat_f, tz_map_defeat_f, tz_at_defeat_f },
-      { 12, 160, 4, 18, 6, 22, 0, tz_chr_defeat_g, tz_map_defeat_g, tz_at_defeat_g } },
-    { { 10, 170, 8, 16, 4, 24, 0, tz_chr_angry_m, tz_map_angry_m, tz_at_angry_m },
-      { 9, 147, 8, 16, 4, 24, 0, tz_chr_angry_f, tz_map_angry_f, tz_at_angry_f },
-      { 2, 143, 8, 16, 4, 24, 0, tz_chr_angry_g, tz_map_angry_g, tz_at_angry_g } },
-    { { 18, 244, 0, 32, 0, 28, 1, tz_chr_angry_z_m, tz_map_angry_z_m, tz_at_angry_z_m },
-      { 9, 200, 4, 26, 4, 24, 1, tz_chr_angry_z_f, tz_map_angry_z_f, tz_at_angry_z_f },
-      { 16, 188, 4, 26, 4, 24, 1, tz_chr_angry_z_g, tz_map_angry_z_g, tz_at_angry_z_g } },
-    { { 17, 127, 6, 18, 2, 26, 0, tz_chr_smash_m, tz_map_smash_m, tz_at_smash_m },
-      { 4, 112, 8, 16, 2, 26, 0, tz_chr_smash_f, tz_map_smash_f, tz_at_smash_f },
-      { 10, 110, 8, 16, 2, 26, 0, tz_chr_smash_g, tz_map_smash_g, tz_at_smash_g } },
-    { { 16, 125, 8, 14, 0, 28, 0, tz_chr_smash_air_m, tz_map_smash_air_m, tz_at_smash_air_m },
-      { 21, 119, 8, 14, 0, 28, 0, tz_chr_smash_air_f, tz_map_smash_air_f, tz_at_smash_air_f },
-      { 7, 113, 8, 14, 0, 28, 0, tz_chr_smash_air_g, tz_map_smash_air_g, tz_at_smash_air_g } },
-    { { 4, 183, 2, 26, 2, 26, 0, tz_chr_backhand_m, tz_map_backhand_m, tz_at_backhand_m },
-      { 18, 186, 2, 24, 2, 26, 0, tz_chr_backhand_f, tz_map_backhand_f, tz_at_backhand_f },
-      { 2, 182, 2, 24, 2, 26, 0, tz_chr_backhand_g, tz_map_backhand_g, tz_at_backhand_g } },
-    { { 21, 173, 0, 26, 0, 28, 0, tz_chr_ballkid_m, tz_map_ballkid_m, tz_at_ballkid_m },
-      { 21, 173, 0, 26, 0, 28, 0, tz_chr_ballkid_m, tz_map_ballkid_m, tz_at_ballkid_m },
-      { 21, 173, 0, 26, 0, 28, 0, tz_chr_ballkid_m, tz_map_ballkid_m, tz_at_ballkid_m } },
+      { 28, 220, 0, 32, 0, 28, 0, tz_chr_slide_z_f, tz_map_slide_z_f, tz_at_slide_z_f },
+      { 18, 211, 0, 32, 0, 28, 0, tz_chr_slide_z_g, tz_map_slide_z_g, tz_at_slide_z_g } },
+    { { 4, 153, 4, 20, 0, 28, 0, tz_chr_victory_m, tz_map_victory_m, tz_at_victory_m },
+      { 10, 137, 4, 18, 0, 28, 0, tz_chr_victory_f, tz_map_victory_f, tz_at_victory_f },
+      { 20, 133, 4, 18, 0, 28, 0, tz_chr_victory_g, tz_map_victory_g, tz_at_victory_g } },
+    { { 18, 199, 0, 30, 0, 28, 1, tz_chr_victory_z_m, tz_map_victory_z_m, tz_at_victory_z_m },
+      { 28, 199, 0, 28, 0, 28, 1, tz_chr_victory_z_f, tz_map_victory_z_f, tz_at_victory_z_f },
+      { 21, 188, 0, 28, 0, 28, 1, tz_chr_victory_z_g, tz_map_victory_z_g, tz_at_victory_z_g } },
+    { { 17, 165, 4, 20, 4, 24, 0, tz_chr_defeat_m, tz_map_defeat_m, tz_at_defeat_m },
+      { 16, 169, 4, 18, 6, 22, 0, tz_chr_defeat_f, tz_map_defeat_f, tz_at_defeat_f },
+      { 28, 160, 4, 18, 6, 22, 0, tz_chr_defeat_g, tz_map_defeat_g, tz_at_defeat_g } },
+    { { 21, 170, 8, 16, 4, 24, 0, tz_chr_angry_m, tz_map_angry_m, tz_at_angry_m },
+      { 7, 147, 8, 16, 4, 24, 0, tz_chr_angry_f, tz_map_angry_f, tz_at_angry_f },
+      { 12, 143, 8, 16, 4, 24, 0, tz_chr_angry_g, tz_map_angry_g, tz_at_angry_g } },
+    { { 9, 244, 0, 32, 0, 28, 1, tz_chr_angry_z_m, tz_map_angry_z_m, tz_at_angry_z_m },
+      { 28, 200, 4, 26, 4, 24, 1, tz_chr_angry_z_f, tz_map_angry_z_f, tz_at_angry_z_f },
+      { 2, 188, 4, 26, 4, 24, 1, tz_chr_angry_z_g, tz_map_angry_z_g, tz_at_angry_z_g } },
+    { { 18, 127, 6, 18, 2, 26, 0, tz_chr_smash_m, tz_map_smash_m, tz_at_smash_m },
+      { 17, 112, 8, 16, 2, 26, 0, tz_chr_smash_f, tz_map_smash_f, tz_at_smash_f },
+      { 2, 110, 8, 16, 2, 26, 0, tz_chr_smash_g, tz_map_smash_g, tz_at_smash_g } },
+    { { 9, 125, 8, 14, 0, 28, 0, tz_chr_smash_air_m, tz_map_smash_air_m, tz_at_smash_air_m },
+      { 6, 119, 8, 14, 0, 28, 0, tz_chr_smash_air_f, tz_map_smash_air_f, tz_at_smash_air_f },
+      { 28, 113, 8, 14, 0, 28, 0, tz_chr_smash_air_g, tz_map_smash_air_g, tz_at_smash_air_g } },
+    { { 16, 183, 2, 26, 2, 26, 0, tz_chr_backhand_m, tz_map_backhand_m, tz_at_backhand_m },
+      { 20, 186, 2, 24, 2, 26, 0, tz_chr_backhand_f, tz_map_backhand_f, tz_at_backhand_f },
+      { 12, 182, 2, 24, 2, 26, 0, tz_chr_backhand_g, tz_map_backhand_g, tz_at_backhand_g } },
+    { { 18, 173, 0, 26, 0, 28, 0, tz_chr_ballkid_m, tz_map_ballkid_m, tz_at_ballkid_m },
+      { 18, 173, 0, 26, 0, 28, 0, tz_chr_ballkid_m, tz_map_ballkid_m, tz_at_ballkid_m },
+      { 18, 173, 0, 26, 0, 28, 0, tz_chr_ballkid_m, tz_map_ballkid_m, tz_at_ballkid_m } },
     { { 17, 206, 0, 32, 2, 26, 0, tz_chr_handshake_m, tz_map_handshake_m, tz_at_handshake_m },
-      { 16, 190, 0, 32, 4, 24, 0, tz_chr_handshake_f, tz_map_handshake_f, tz_at_handshake_f },
-      { 21, 184, 0, 32, 4, 24, 0, tz_chr_handshake_g, tz_map_handshake_g, tz_at_handshake_g } },
-    { { 4, 209, 0, 32, 0, 28, 0, tz_chr_crowd_m, tz_map_crowd_m, tz_at_crowd_m },
-      { 4, 209, 0, 32, 0, 28, 0, tz_chr_crowd_m, tz_map_crowd_m, tz_at_crowd_m },
-      { 4, 209, 0, 32, 0, 28, 0, tz_chr_crowd_m, tz_map_crowd_m, tz_at_crowd_m } },
+      { 17, 190, 0, 32, 4, 24, 0, tz_chr_handshake_f, tz_map_handshake_f, tz_at_handshake_f },
+      { 16, 184, 0, 32, 4, 24, 0, tz_chr_handshake_g, tz_map_handshake_g, tz_at_handshake_g } },
+    { { 21, 209, 0, 32, 0, 28, 0, tz_chr_crowd_m, tz_map_crowd_m, tz_at_crowd_m },
+      { 21, 209, 0, 32, 0, 28, 0, tz_chr_crowd_m, tz_map_crowd_m, tz_at_crowd_m },
+      { 21, 209, 0, 32, 0, 28, 0, tz_chr_crowd_m, tz_map_crowd_m, tz_at_crowd_m } },
+    { { 4, 139, 12, 8, 0, 28, 0, tz_chr_trophy_m, tz_map_trophy_m, tz_at_trophy_m },
+      { 16, 133, 10, 12, 0, 28, 0, tz_chr_trophy_f, tz_map_trophy_f, tz_at_trophy_f },
+      { 21, 133, 10, 12, 0, 28, 0, tz_chr_trophy_g, tz_map_trophy_g, tz_at_trophy_g } },
 };
 #define TZ_IMPACT_RACKET_X 7
 #define TZ_IMPACT_RACKET_Y 52
@@ -277,5 +290,9 @@ static const tz_art_t tz_art[TZ_N][3] = {   /* homme, femme, fillette (Margaux) 
 #define TZ_HANDSHAKE_FACE_Y 46
 #define TZ_HANDSHAKE_RACKET_TIP_X 44
 #define TZ_HANDSHAKE_RACKET_TIP_Y 221
+#define TZ_TROPHY_FOOTR_X 156
+#define TZ_TROPHY_FOOTR_Y 217
+#define TZ_TROPHY_FACE_X 128
+#define TZ_TROPHY_FACE_Y 70
 #define TZ_GROUND_ROW 28
 #define TZ_FIRST_TILE 1

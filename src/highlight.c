@@ -98,7 +98,6 @@ u8 hl_spd, hl_srv;     /* vitesse du service (puis km/h - 80), joueur au service
 u8 st_vmax[2];         /* service le plus rapide de chaque équipe (km/h - 80, 0 : aucun) */
 u8 st_vmaxp[2];        /* ... et le joueur qui l'a servi (record du palmarès) */
 extern u8 sp_new;      /* nouveau record de vitesse (stats.c) */
-static char ace_b[10];
 /* à chaque service (game.c) : vitesse convertie en km/h façon télé, et record du match */
 void hl_serve(void)
 {
@@ -118,6 +117,8 @@ void hl_serve(void)
 extern u8 ppu_emph;
 #pragma zpsym("ppu_emph")
 u8 sun_st;
+void sun_game(void);                    /* sunset.c, banque 22 (2.76) */
+void sun_apply(void);
 /* ====================================================================== */
 /* Bandeau du score façon télévision (2.71)                                */
 /*                                                                        */
@@ -216,8 +217,6 @@ static void band_text(u8 t)
    « Deuce! » et « Advantage! » (hors jeu décisif). Posées à la fin du point
    (hl_point_ev, game.c), dites un peu après, quand le DMC a fini l'annonce
    en cours (« Out! », « Fault! ») : rien n'est coupé. */
-void sun_apply(void);
-static void sun_game(void);
 void msave_write(void);
 #define V_DEUCE 4
 #define V_GAME  5
@@ -235,7 +234,7 @@ u16 __fastcall__ hl_point_ev(u16 ev)
         else if (rules_is_set_point(t)) sc_crit |= (u8)(1 << t);
     }
     voice_pend = 0;
-    if (ev & (EV_GAME | EV_SET)) { sun_game(); voice_pend = V_GAME; }
+    if (ev & (EV_GAME | EV_SET)) { bank_call(BANK_SUN, sun_game); voice_pend = V_GAME; }
     else if (!sc_tiebreak && sc_points[0] >= 3 && sc_points[1] >= 3)
         voice_pend = sc_points[0] == sc_points[1] ? V_DEUCE : V_ADV;
     voice_t = 24;
@@ -405,42 +404,11 @@ void band_draw(void)
     __asm__("bne band_hide");
 }
 
-/* phase de la lumière d'après les jeux joués (0 jour .. 3 nuit) */
-static u8 sun_calc(void)
-{
-    u8 i, g, L, st;
-    g = (u8)(sc_games[0] + sc_games[1]);
-    for (i = 0; i < sc_set_no && i < MAX_SETS; ++i) g = (u8)(g + sc_hist[i][0] + sc_hist[i][1]);
-    L = (u8)((cfg.sets_to_win * cfg.games_per_set * 6) / 5);
-    st = (u8)(((u16)g * 4) / L);
-    return st > 3 ? 3 : st;
-}
-static void sun_light(void)
-{
-    u8 red = is_pal ? 0x40 : 0x20;
-    pal_set_court(cfg.surface, sun_st == 3 ? COND_NIGHT : COND_DAY, cfg.env);
-    ppu_emph = sun_st == 1 ? red : sun_st == 2 ? (u8)(red | 0x80) : 0;
-}
-/* (2.76) la lumière ne change plus en plein jeu : la nouvelle phase attend
-   le changement de côté suivant, où un plan du soleil couchant la montre
-   (hl_mode 5, sun_pend) ; au chargement du court (début du match, reprise),
-   la phase réelle s'applique directement, sauf si un plan est en attente */
+/* (2.76) phases du crépuscule et lumière : sunset.c (banque 22) */
 u8 sun_pend;
-void sun_apply(void)
-{
-    if (cfg.cond != COND_SUNSET || cfg.mode != GM_MATCH) return;
-    if (!sun_pend) sun_st = sun_calc();
-    sun_light();
-}
-static void sun_game(void)
-{
-    u8 st;
-    if (cfg.cond != COND_SUNSET || cfg.mode != GM_MATCH) return;
-    st = sun_calc();
-    if (st == sun_st) return;
-    if (cfg.demo) { sun_st = st; sun_light(); }
-    else sun_pend = 1;
-}
+void sun_apply(void);
+void sun_game(void);
+u16 __fastcall__ sun_calc_f(u16 unused);
 /* chargement du court (court_load, game.c ; rendu coupé) : bandeau du score
    (écran 1) puis lumière du crépuscule. band_init écrit dans la VRAM : jamais
    pendant l'affichage (sun_apply, elle, est aussi appelée à la fin de chaque
@@ -451,15 +419,8 @@ void court_post(void)
 {
     lb_st = 0;                          /* (bandes du ralenti : écran 1 réécrit par band_init) */
     band_init();
-    sun_apply();
+    bank_call(BANK_SUN, sun_apply);
     bank_call(BANK_CAR, car_match_setup);
-}
-void hl_ace_msg(void)
-{
-    u16 k = (u16)hl_spd + 80;
-    ace_b[0] = (char)('0' + k / 100); ace_b[1] = (char)('0' + (k / 10) % 10); ace_b[2] = (char)('0' + k % 10);
-    ace_b[3] = ' '; ace_b[4] = 'K'; ace_b[5] = 'M'; ace_b[6] = '/'; ace_b[7] = 'H'; ace_b[8] = 0;
-    set_msg("ACE !", ace_b, 90);
 }
 /* début du ralenti : les repères ne valent que s'ils sont dans les trames
    rejouées (tampon circulaire de 160 trames : un indice plus ancien a été
@@ -1100,6 +1061,13 @@ static void zoom_tick(void)
 /* visage (en double : son partenaire). L'écran des résultats se construit */
 /* ensuite : pas de retour au court.                                       */
 /* ---------------------------------------------------------------------- */
+/* confettis qui tombent (fin du match, champion) */
+static void confetti(void)
+{
+    u8 i;
+    for (i = 0; i < 12; ++i)
+        spr1((u8)(i * 21 + 6), (u8)(((hl_t * (1 + (i & 1)) + i * 23) & 0xBF) + 8), confetti_tile, (u8)(i & 3));
+}
 /* fin : tuiles d'origine (l'image a remplacé la police et les décors),
    écran coupé ; l'écran des résultats se construit ensuite */
 static void final_end(void)
@@ -1143,9 +1111,7 @@ static void final_tick(void)
     hl_cam = (hl_t < 142 && hl_c < 6) ? -(s16)whip_in[hl_c] : 0;
     scroll_x = (u8)hl_cam; scroll_nt = (u8)((hl_cam >> 8) & 1);
     spr_begin();
-    if (!sad)                           /* (pas de confettis pour une défaite) */
-        for (i = 0; i < 12; ++i)
-            spr1((u8)(i * 21 + 6), (u8)(((hl_t * (1 + (i & 1)) + i * 23) & 0xBF) + 8), confetti_tile, (u8)(i & 3));
+    if (!sad) confetti();               /* (pas de confettis pour une défaite) */
     if (hl_t >= 14) label_draw(12, (u8)((hl_t - 14) >> 1));
     spr_end();
     if (hl_t >= 220) final_end();
@@ -1204,6 +1170,43 @@ static void kid_tick(void)
 #pragma static-locals(pop)
 
 /* ---------------------------------------------------------------------- */
+/* Le champion (2.76) : après la remise du trophée d'une compétition        */
+/* gagnée, image haute définition du joueur qui brandit la coupe d'argent   */
+/* au-dessus de sa tête, arrivée en travelling éclair, sous les confettis   */
+/* et les flashs des photographes, « CHAMPION ! ». Appelée par l'écran de   */
+/* fin de compétition (screens.c) : a = $100 pour commencer, puis la        */
+/* manette 1 à chaque trame ; 1 à la fin (A ou START après 1 s, ou 4 s).    */
+/* ---------------------------------------------------------------------- */
+u16 __fastcall__ champ_tick(u16 a)
+{
+    u8 i;
+    if (a & 0x100) {
+        static const char nm[] = "CHAMPION";       /* (8 lettres : une ligne, sur le sol) */
+        for (i = 0; (hl_txt[i] = nm[i]) != 0; ++i) ;
+        hl_t = 0; hl_sp = 0;
+        flash(0x30);
+        return 0;
+    }
+    ++hl_t;
+    if (hl_t == 3) { cut_build(TZ_TROPHY); sfx_crowd(7); sfx_winner(); }
+    if (hl_t < 4) return 0;
+    if ((hl_t > 60 && ((u8)a & (PAD_A | PAD_START))) || hl_t >= 250) return 1;
+    hl_c = (u8)(hl_t - 3);
+    hl_cam = hl_c < 6 ? -(s16)whip_in[hl_c] : 0;
+    scroll_x = (u8)hl_cam; scroll_nt = (u8)((hl_cam >> 8) & 1);
+    /* flashs des photographes : le fond s'illumine une trame, par salves */
+    i = (u8)(hl_t & 63);
+    if (hl_t > 20 && (i == 7 || i == 11 || i == 30 || i == 47 || i == 50)) flash(0x30);
+    else if (pal_buf[0] == 0x30 && hl_t > 6) flash(0x01);
+    spr_begin();
+    confetti();
+    if (hl_t >= 16) label_draw(221, (u8)((hl_t - 16) >> 1));   /* (sur le sol, sous les pieds : la coupe est en haut) */
+    spr_end();
+    if (hl_t == 40 || hl_t == 140) sfx_crowd(7);
+    return 0;
+}
+
+/* ---------------------------------------------------------------------- */
 /* Soleil couchant (hl_mode 5, version 2.76) : au crépuscule, quand la     */
 /* lumière change, un plan plein écran du soleil façon jeux de course des  */
 /* années 80 (sunset.c, banques 22-27), au changement de côté ; premier   */
@@ -1222,7 +1225,7 @@ static void sun_tick(void)
     if (hl_t == 0) {
         static const char * const nm[3] = { "SOLEIL COUCHANT", "SOLEIL ROUGE", "LA NUIT TOMBE" };
         const char *t;
-        k = sun_calc();
+        k = (u8)far_call(BANK_SUN, (void *)sun_calc_f, 0);
         t = nm[k ? k - 1 : 0];
         for (k = 0; (hl_txt[k] = t[k]) != 0; ++k) ;
         if (band_vis) { split_stop(); band_vis = 0; }
@@ -1230,7 +1233,7 @@ static void sun_tick(void)
     }
     ++hl_t;
     if (hl_t == 3) {
-        k = sun_calc();
+        k = (u8)far_call(BANK_SUN, (void *)sun_calc_f, 0);
         fade_skip = 1; fade_lvl = 0;
         ppu_off();
         ppu_emph = 0;

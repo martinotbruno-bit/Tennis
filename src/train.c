@@ -674,3 +674,15 @@ u16 __fastcall__ dead_hit(u16 pp)
     if (ms_timer < 45) ms_timer = 45;                     /* (le temps de la voir partir) */
     return 1;
 }
+
+/* annonce « ACE ! » et vitesse du service (2.76 : déplacée de highlight.c,
+   banque 15 pleine) */
+extern u8 hl_spd;
+static char ace_b[10];
+void hl_ace_msg(void)
+{
+    u16 k = (u16)hl_spd + 80;
+    ace_b[0] = (char)('0' + k / 100); ace_b[1] = (char)('0' + (k / 10) % 10); ace_b[2] = (char)('0' + k % 10);
+    ace_b[3] = ' '; ace_b[4] = 'K'; ace_b[5] = 'M'; ace_b[6] = '/'; ace_b[7] = 'H'; ace_b[8] = 0;
+    set_msg("ACE !", ace_b, 90);
+}

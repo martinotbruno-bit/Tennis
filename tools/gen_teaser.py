@@ -702,6 +702,32 @@ POSES['victory'] = dict(
            order=['racket', 'legL', 'legR', 'torso', 'armL', 'armR', 'head']),
     face='joy', hand='L', rdir=-140, rlen=50)
 
+# 3 ter. le champion (2.76, fin d'une compétition gagnée) : la coupe
+#    brandie à deux mains au-dessus de la tête, cri de joie. Coupe d'argent
+#    (blanc, reflets sombres) : la seule couleur commune à toutes les palettes.
+def _trophy_extra(f, j, female, r):
+    hl, hr = j['hdL'], j['hdR']
+    cx = (hl[0] + hr[0]) / 2
+    hy = (hl[1] + hr[1]) / 2
+    base, bot, top = hy + 13, hy + 3, hy - 29        # (anses à hauteur des mains)
+    mid = (bot + top) / 2
+    bowl = f.m_poly([(cx - 17, top), (cx + 17, top), (cx + 10, bot), (cx - 10, bot)]) | f.m_ell((cx, bot), 10, 5)
+    cup = (bowl | f.m_ell((cx, top), 17, 4) | f.m_caps((cx, bot), (cx, base - 2), 3.2, 3.6)
+           | f.m_ell((cx, base), 10, 3.2)
+           | f.m_arc((cx - 16, mid), 7, 9, 90, 270, 2.4) | f.m_arc((cx + 16, mid), 7, 9, -90, 90, 2.4))
+    g = f.part(cup, 6, None, sh=(1.5, 1.5))
+    f.paint(f.m_line([(cx - 9, top + 6), (cx - 6, bot - 2)], 1.1), 5, within=[g])      # reflet sombre
+    f.paint(f.m_line([(cx + 8, top + 7), (cx + 6, bot - 4)], 0.6), 5, within=[g])
+    f.paint(f.m_ell((cx, top), 15, 2.2), 5, within=[g])                               # intérieur
+    f.paint(f.m_line([(cx - 12, top + 14), (cx + 12, top + 14)], 0.6), 5, within=[g])  # gravure
+    for h in (hl, hr):                                                                 # poings par-dessus
+        f.part(f.m_ell((h[0], h[1]), 5.6 * (0.82 if female else 1.0), 5.2), 1, 2, sh=(1.5, 1.5))
+POSES['trophy'] = dict(
+    s=dict(pelvis=(88, 128), torso=-90, legL=(97, 94, 165), legR=(83, 86, 15),
+           armL=(-104, -78), armR=(-76, -102), tilt=0.0, turn=0.0,
+           order=['legL', 'legR', 'torso', 'armL', 'armR', 'head']),
+    face='joy', hand='X', rdir=0, rlen=50, extra=_trophy_extra)
+
 # 3 bis. défaite (2.76, fin du match perdu par le joueur humain) :
 #    à genoux, bras ballants, tête penchée, raquette lâchée à ses pieds
 POSES['defeat'] = dict(
@@ -872,7 +898,8 @@ SHOTS = [
     ('backhand', 'backhand', 1.4, (148.6, 102), False),   # revers à deux mains, gros plan (ralenti, 2.68)      # smash et service, en pied (ralenti, 2.68)  # (2.76 : décalé de -2 px, blocs de couleurs mieux placés)
     ('ballkid', 'ballkid', 1.3, (97.1, 123), False),     # ramasseur de balles (changement de côté, 2.73)  # (2.76 : décalé de +4 px, blocs de couleurs mieux placés)
     ('handshake', 'handshake', 1.3, (114.6, 96), False),  # poignée de main au filet (fin du match, 2.73)  # (2.76 : décalé de +6 px, blocs de couleurs mieux placés)
-    ('crowd', 'crowd', 1.3, (48.5, 86), False),           # public en gros plan (long échange, 2.73)  # (2.76 : décalé de -2 px, blocs de couleurs mieux placés)
+    ('crowd', 'crowd', 1.3, (48.5, 86), False),
+    ('trophy', 'trophy', 0.9, (88, 92.5), False),           # le champion brandit la coupe (fin de compétition, 2.76)           # public en gros plan (long échange, 2.73)  # (2.76 : décalé de -2 px, blocs de couleurs mieux placés)
 ]
 
 
@@ -1104,7 +1131,7 @@ def main():
 
 # ------------------------------------------------------------------ export
 # banques libres (octets disponibles, marge comprise)
-BANKS = [(9, 13600), (12, 11500), (4, 12200), (10, 7050), (2, 7900), (7, 6800), (6, 5800), (17, 16000), (18, 13500), (20, 9000), (21, 15500), (16, 12500)]
+BANKS = [(9, 13600), (12, 11500), (4, 12200), (10, 7050), (2, 7900), (7, 6800), (6, 5800), (17, 16000), (18, 13500), (20, 9000), (21, 15500), (16, 12500), (28, 15000)]
 
 
 def pack(chr_):
