@@ -596,3 +596,31 @@ u16 __fastcall__ fw_draw(u16 t16)
     spr1((u8)(x + d), (u8)(y + d), 3, 3);
     return 0;
 }
+
+/* ---------------------------------------------------------------------- */
+/* Balle faute renvoyée (2.76) : après un service faux ou une balle dehors */
+/* (le point est déjà joué, MS_DEAD), le joueur humain qui a armé son coup */
+/* et a la balle à portée la renvoie quand même, mollement, vers l'autre   */
+/* camp, comme on le fait sur un vrai court. L'échange reste terminé : la  */
+/* balle n'est plus en jeu (b_live = 0), ses rebonds ne comptent pas.      */
+/* Appelée par human_update (game.c) ; 1 si la balle part.                 */
+/* ---------------------------------------------------------------------- */
+void launch(s16 tx, s16 ty, u8 T, u8 grav);   /* gamefix.c */
+extern u8 end_reason;
+u16 __fastcall__ dead_hit(u16 pp)
+{
+    u8 p = (u8)pp, top;
+    s16 d;
+    if (!b_vis || end_reason == END_LET || bz > 40 * FP) return 0;
+    top = (u8)(PX(ply[p]) < NET_Y);
+    if ((u8)(PX(by) < NET_Y) != top) return 0;            /* balle dans son camp */
+    if (top ? bvy >= 0 : bvy <= 0) return 0;              /* et qui vient vers lui (pas celle qu'il vient de renvoyer) */
+    d = PX(by) - PX(ply[p]); if (d < -15 || d > 10) return 0;
+    d = PX(bx) - PX(plx[p]); if (d < -24 || d > 24) return 0;
+    bspin = 0;
+    launch(CENTER_X + (s16)(rand8() & 31) - 16, top ? NET_Y + 70 : NET_Y - 70, 44, 7);
+    b_live = 0;                                           /* (hors jeu) */
+    sfx_hit(0);
+    if (ms_timer < 45) ms_timer = 45;                     /* (le temps de la voir partir) */
+    return 1;
+}

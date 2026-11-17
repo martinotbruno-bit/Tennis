@@ -2948,6 +2948,56 @@ console.log('Version 2.76 : balle de match et changement de côté');
   check(over && rpAfterMp === 0, `balle de match gagnée : fin du match sans ralenti (${rpAfterMp} trames de ralenti, fin ${over})`);
 }
 }
+if (sec('Version 2.76 : crépuscule et balle faute renvoyée')) {
+console.log('Version 2.76 : crépuscule et balle faute renvoyée');
+{
+  // balle faute (dehors, service faux) : le joueur humain armé et à portée
+  // la renvoie quand même ; l'échange reste terminé (b_live = 0)
+  const e = boot(); startWith(e, { FMT: 0 }); allCpu(e);
+  const c = e.addr('cfg');
+  const rd16 = (n) => { const v = e.peek(n) | (e.peek(n, 1) << 8); return v > 32767 ? v - 65536 : v; };
+  const s16 = (n, v) => { e.poke(n, v & 255); e.poke(n, (v >> 8) & 255, 1); };
+  let tries = 0, hits = 0, live = 0, scoreOk = 0;
+  for (let f = 0; f < 60 * 60 * 10 && app(e) === AS.MATCH && tries < 3; f++) {
+    e.run(1);
+    if (e.peek('ms') !== 3 || !e.peek('b_vis')) continue;
+    const by = rd16('by'), bvy = rd16('bvy'), top = (rd16('ply') >> 6) < 110;
+    if (!((top && bvy < 0) || (!top && bvy > 0))) continue;
+    const pts = e.peek('sc_points', 0) + e.peek('sc_points', 1) + e.peek('sc_games', 0) + e.peek('sc_games', 1);
+    s16('plx', rd16('bx')); s16('ply', by + bvy * 8 + (top ? -192 : 192));
+    e.nes.cpu.mem[c + CFG.CTRL] = 0; e.down('A'); e.run(4); e.up('A');
+    let hit = false;
+    for (let k = 0; k < 20 && !hit; k++) { e.run(1); const v = rd16('bvy'); hit = (top && v > 0) || (!top && v < 0); }
+    tries++; if (hit) hits++; if (e.peek('b_live')) live++;
+    runUntil(e, () => e.peek('ms') !== 3, 200);
+    const pts2 = e.peek('sc_points', 0) + e.peek('sc_points', 1) + e.peek('sc_games', 0) + e.peek('sc_games', 1);
+    if (pts2 !== pts || e.peek('ms') === 0) scoreOk++;   /* (point déjà compté : rien de plus) */
+    e.nes.cpu.mem[c + CFG.CTRL] = 2;
+  }
+  check(tries === 3 && hits === 3 && live === 0, `balle faute renvoyée par le joueur armé (${hits}/${tries}), hors jeu (b_live ${live})`);
+}
+{
+  // crépuscule : la lumière change au changement de côté, après un plan du
+  // soleil couchant (hl_mode 5, image selon la surface)
+  const e = boot(); startWith(e, { FMT: 0, COND: 3, SURF: 1 }); allCpu(e);
+  let shown = 0, okNt = 0, stBefore = -1, stAfter = -1, prev = 0;
+  for (let f = 0; f < 60 * 60 * 20 && app(e) === AS.MATCH && !shown; f++) {
+    e.run(1);
+    const h = e.peek('hl_mode');
+    if (h === 5 && prev !== 5) {
+      stBefore = e.peek('sun_st');
+      e.run(40);
+      const vm = e.nes.ppu.vramMem;
+      let used = new Set(); for (let i = 0; i < 960; i++) used.add(vm[0x2000 + i]);
+      if (used.size > 100) okNt = 1;
+      runUntil(e, () => e.peek('hl_mode') === 0, 300);
+      stAfter = e.peek('sun_st'); shown = 1;
+    }
+    prev = h;
+  }
+  check(shown && okNt && stAfter === stBefore + 1, `crépuscule : plan du soleil couchant au changement de côté (image ${okNt ? 'chargée' : 'absente'}), lumière ${stBefore} -> ${stAfter}`);
+}
+}
 if (sec('Compensation 50 Hz (PAL)')) {
 console.log('Compensation 50 Hz (PAL)');
 {

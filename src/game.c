@@ -55,6 +55,7 @@ s16 iabs(s16 v);
 s8 rnd_spread(u8 spread);
 void set_msg(const char *a, const char *b, u8 t);
 void launch(s16 tx, s16 ty, u8 T, u8 grav);
+u16 __fastcall__ dead_hit(u16 p);   /* train.c */
 void win_msg(void);
 void hl_out(void);
 void lob_cap(void);                /* banque fixe (gamefix.c, 2.74) */
@@ -686,6 +687,10 @@ static void human_update(u8 p, u8 pad, u8 pressed)
         do_hit(p, rel_pad(p, pad), pl_btn[p], pl_charge[p], 3);   /* HAUT/BAS relatifs au joueur */
         pl_state[p] = ST_SWING;
         pl_timer[p] = 10;
+    }
+    /* balle faute renvoyée quand même, hors jeu (2.76, train.c) */
+    if (ms == MS_DEAD && (st == ST_CHARGE || (st == ST_SWING && pl_timer[p] > 4)) && !pl_hit[p] && far_call(BANK_TRAIN, (void *)dead_hit, p)) {
+        pl_hit[p] = 1; pl_state[p] = st = ST_SWING; pl_timer[p] = 10;
     }
     if (st == ST_SWING) {
         sp = HUMAN_SPEED / 3;
