@@ -549,6 +549,7 @@ static void st_row(u8 y, const char *label, u8 a, u8 b)
         txt_at((u8)(19 + t * 6), y, n);
     }
 }
+static const char st_pc[2] = { 0x25, 0 };   /* « % » */
 static u8 st_pct(u8 a, u8 b) { return b ? (u8)(((u16)a * 100) / b) : 0; }
 u16 __fastcall__ res_stats(u16 unused)
 {
@@ -562,7 +563,7 @@ u16 __fastcall__ res_stats(u16 unused)
     st_row(14, "COUPS GAGNANTS", st_winners[0], st_winners[1]);
     st_row(15, "FAUTES", st_errors[0], st_errors[1]);
     st_row(16, "1ERES BALLES", st_pct(st_first_in[0], st_first_tot[0]), st_pct(st_first_in[1], st_first_tot[1]));
-    txt_at(22, 16, "%"); txt_at(28, 16, "%");      /* (symbole après chaque pourcentage) */
+    txt_at(22, 16, st_pc); txt_at(28, 16, st_pc);  /* (symbole après chaque pourcentage ; écran des résultats, hors match : la tuile n'y dessine pas le court) */
     st_row(17, "SERVICES CANON", st_canon[0], st_canon[1]);
     st_row(18, "COUPS PARFAITS", st_perf[0], st_perf[1]);
     hl_vmax_row(19);
