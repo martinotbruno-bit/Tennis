@@ -125,10 +125,14 @@ static void finish(void)
 #define BANK_CAR 19                  /* (app.h) */
 extern u8 mresume, pod_buf[];
 void msave_restore(void);
+extern u16 tm_set[5];
+extern u8 tm_last, tm_sub;
 void cer_entry(void)
 {
     u8 p;
     cer_skip = 0;
+    for (p = 0; p < 5; ++p) tm_set[p] = 0;   /* (2.76) chronomètre du match */
+    tm_last = frame_cnt; tm_sub = 0;
     all_free();
     cer = 0;
     /* reprise d'un match sauvegardé (2.72) : score et statistiques, pas

@@ -555,6 +555,14 @@ def face_features(f, x, y, face, hid, tilt=0.0, female=False, hs=1.0):
         P(f.m_ell(R(0, 10.0), 1.7, 0.7, tilt), 2)                                          # langue
         if female:
             P(f.m_arc(R(0, 8.9), 3.9, 2.8, 20, 160, 0.6), 2)                                # lèvre
+    elif face == 'sad':
+        # (2.76) abattu : paupières baissées (arcs vers le bas), sourcils
+        # relevés au milieu, bouche tombante
+        for sx in (-1, 1):
+            P(f.m_arc(R(sx * 4.4, -0.6), 2.4, 1.4, 20, 160, 1.0), 0)                       # yeux baissés
+            P(line([R(sx * 7.0, -3.0), R(sx * 2.0, -5.0)], bw), 5)                           # sourcils en accent circonflexe
+        nose()
+        P(f.m_arc(R(0, 11.2), 3.4, 1.8, 200, 340, 0.9), 0)                                  # bouche tombante
     elif face == 'angry':
         for sx in (-1, 1):
             eye(sx, look=0.0, lid=0.6)
@@ -681,6 +689,15 @@ POSES['victory'] = dict(
            armL=(-128, -108), armR=(-52, -72), tilt=0.0, turn=0.0,
            order=['racket', 'legL', 'legR', 'torso', 'armL', 'armR', 'head']),
     face='joy', hand='L', rdir=-140, rlen=50)
+
+# 3 bis. défaite (2.76, fin du match perdu par le joueur humain) :
+#    à genoux, bras ballants, tête penchée, raquette lâchée à ses pieds
+POSES['defeat'] = dict(
+    # (à genoux : cuisses vers la caméra, tibias repliés derrière, presque cachés)
+    s=dict(pelvis=(88, 168), torso=-90, torso_len=0.84, legL=(105, 80, 170, 0.45, 0.18), legR=(75, 100, 10, 0.45, 0.18),
+           armL=(100, 92), armR=(80, 88), tilt=0.12, turn=0.0, head_bend=0,
+           order=['racket', 'legL', 'legR', 'torso', 'armL', 'armR', 'head']),
+    face='sad', hand='L', rdir=170, rlen=44)
 
 # 4. raquette fracassée au sol : penché en avant (buste raccourci), bras abattu, cri de colère
 POSES['angry'] = dict(
@@ -835,6 +852,7 @@ SHOTS = [
     ('slide_z', 'slide', 1.3, (101.5, None), False),   # zoom : la chaussure qui glisse  # (2.76 : décalé de +2 px, blocs de couleurs mieux placés)
     ('victory', 'victory', 1.0, (82, None), False),        # bras levés, en pied
     ('victory_z', 'victory', 2.0, (83, 62), True),   # zoom : buste et visage  # (2.76 : décalé de +6 px, blocs de couleurs mieux placés)
+    ('defeat', 'defeat', 1.5, (88, 150), False),       # défaite : à genoux, abattu, plan rapproché (2.76)
     ('angry', 'angry', 1.12, (91.8, None), False),           # raquette au sol, en pied  # (2.76 : décalé de +2 px, blocs de couleurs mieux placés)
     ('angry_z', 'angry', 3.4, (84.8, 70), True),       # zoom : le visage qui crie  # (2.76 : décalé de +6 px, blocs de couleurs mieux placés)
     ('smash', 'smash', 0.86, (87.3, None), False),  # (2.76 : décalé de -4 px, blocs de couleurs mieux placés)

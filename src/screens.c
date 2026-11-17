@@ -887,9 +887,10 @@ static void stat_row(u8 y, const char *label, u8 a, u8 b)
 }
 
 u16 __fastcall__ hl_vmax_row(u16 y);                 /* (highlight.c, banque 15) */
-u16 __fastcall__ hl_rally_row(u16 y);                /* (train.c, banque 20, 2.75) */
+u16 __fastcall__ hl_rally_row(u16 y);
+u16 __fastcall__ hl_time_rows(u16 a);                /* (train.c, 2.76) */
+u16 __fastcall__ res_stats(u16 unused);                /* (train.c, banque 20, 2.75) */
 
-static u8 pct(u8 a, u8 b) { return b ? (u8)(((u16)a * 100) / b) : 0; }
 
 /* Tableau des sets terminés : en-tête puis une ligne par équipe (rangées
    y à y+2), noms au format des panneaux (« ALEX », « MXAL » en double) */
@@ -934,6 +935,7 @@ static void setbreak_screen(void)
     txt_at(21, 4, line);
     txt_off = 0;
     set_table(6);
+    far_call(BANK_TRAIN, (void *)hl_time_rows, (u16)(6 | (sets_done() << 8)));   /* (2.76) durées */
     team_label(cfg.chr[0], 255, b); txt_at(19, 11, b);
     team_label(cfg.chr[1], 255, b); txt_at(25, 11, b);
     stat_row(13, "POINTS GAGNES", st_points[0], st_points[1]);
@@ -957,7 +959,6 @@ static void setbreak_screen(void)
 static void results_screen(void)
 {
     u8 w = sc_winner;
-    char b[5];
     screen_begin();
     people_tiles((u8)(cfg.env == ENV_NUDE));
     pal_set_player(0, cfg.chr[0]);
@@ -968,19 +969,8 @@ static void results_screen(void)
     txt_at(20, 4, chr_nm(cfg.chr[w]));
     txt_off = 0;
     set_table(6);                       /* (rangées 6 à 8 : sous le titre, version 2.69 ; rangées 2 à 4 avant, sous les lettres du titre) */
-    /* colonnes de 4 lettres (MARGAUX : « MARG ») */
-    team_label(cfg.chr[0], 255, b); txt_at(19, 9, b);
-    team_label(cfg.chr[1], 255, b); txt_at(25, 9, b);
-    stat_row(10, "POINTS GAGNES", st_points[0], st_points[1]);
-    stat_row(11, "ACES", st_aces[0], st_aces[1]);
-    stat_row(12, "DOUBLES FAUTES", st_dfaults[0], st_dfaults[1]);
-    stat_row(13, "COUPS GAGNANTS", st_winners[0], st_winners[1]);
-    stat_row(14, "FAUTES", st_errors[0], st_errors[1]);
-    stat_row(15, "1ERES BALLES %", pct(st_first_in[0], st_first_tot[0]), pct(st_first_in[1], st_first_tot[1]));
-    stat_row(16, "SERVICES CANON", st_canon[0], st_canon[1]);
-    stat_row(17, "COUPS PARFAITS", st_perf[0], st_perf[1]);
-    far_call(BANK_TRAIN, (void *)hl_vmax_row, 18);
-    /* (2.75) échange le plus long : sa propre ligne (train.c) */
+    far_call(BANK_TRAIN, (void *)hl_time_rows, (u16)(6 | (sets_done() << 8)));   /* (2.76) durées : match (rangée 5), sets (rangée 9) */
+    far_call(BANK_TRAIN, (void *)res_stats, 0);   /* (2.76) statistiques : banque 20 (train.c) */
     far_call(BANK_TRAIN, (void *)hl_rally_row, 20);
     if (last_mode == MODE_COMP) txt_at(4, 25, "A : CONTINUER");
     else txt_at(4, 25, "A : REVANCHE   B : MENU");

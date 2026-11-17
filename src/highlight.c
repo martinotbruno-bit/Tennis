@@ -1085,23 +1085,28 @@ static void final_end(void)
 static void final_tick(void)
 {
     u8 i, w = sc_winner;
+    /* (2.76) match perdu par le joueur humain contre l'ordinateur : le
+       perdant abattu, à genoux (au lieu de la joie du vainqueur) */
+    u8 sad = (u8)(cfg.ctrl[w] == CTRL_CPU && cfg.ctrl[w ^ 1] != CTRL_CPU);
     if (hl_t == 0) {
         const char *nm = chr_nm(cfg.chr[w]);
         if (cfg.doubles) nm = "VICTOIRE";
+        if (sad) nm = "DEFAITE";
         for (i = 0; nm[i] && i < 8; ++i) hl_txt[i] = nm[i];
-        if (!cfg.doubles) { const char *g = " GAGNE !"; u8 k = 0; while ((hl_txt[i] = g[k]) != 0) { ++i; ++k; } }
+        if (!cfg.doubles && !sad) { const char *g = " GAGNE !"; u8 k = 0; while ((hl_txt[i] = g[k]) != 0) { ++i; ++k; } }
+        else if (sad) hl_txt[i] = 0;
         else { hl_txt[i++] = ' '; hl_txt[i++] = '!'; hl_txt[i] = 0; }
-        hl_sp = w;
-        flash(0x30);
+        hl_sp = (u8)(sad ? w ^ 1 : w);
+        flash(sad ? 0x10 : 0x30);
     }
     ++hl_t;
     /* en pied (3-81), poignée de main au filet (82-141, 2.73), gros plan du visage */
-    if (hl_t == 3) cut_build(TZ_VICTORY);
-    if (hl_t == 80 || hl_t == 140) { flash(0x30); sfx_winner(); }
+    if (hl_t == 3) cut_build(sad ? TZ_DEFEAT : TZ_VICTORY);
+    if (hl_t == 80 || hl_t == 140) { flash(sad ? 0x10 : 0x30); if (!sad) sfx_winner(); }
     if (hl_t == 82) cut_build(TZ_HANDSHAKE);
-    if (hl_t == 142) { if (cfg.doubles) hl_sp = (u8)(w + 2); cut_build(TZ_VICTORY_Z); hl_shake = 6; }
+    if (hl_t == 142) { if (cfg.doubles) hl_sp = (u8)(sad ? (w ^ 1) + 2 : w + 2); cut_build(sad ? TZ_DEFEAT : TZ_VICTORY_Z); if (!sad) hl_shake = 6; }
     if (hl_t < 4) return;
-    if (hl_t == 4 || hl_t == 144) sfx_crowd(7);
+    if (!sad && (hl_t == 4 || hl_t == 144)) sfx_crowd(7);
     if (hl_t == 96) sfx_clap();
     if (hl_shake) { scroll_y = (u8)((hl_t & 1) ? hl_shake : 0); if ((hl_t & 3) == 0) --hl_shake; } else scroll_y = 0;
     /* plans en pied : arrivée en travelling éclair ; gros plan : fixe */
@@ -1109,8 +1114,9 @@ static void final_tick(void)
     hl_cam = (hl_t < 142 && hl_c < 6) ? -(s16)whip_in[hl_c] : 0;
     scroll_x = (u8)hl_cam; scroll_nt = (u8)((hl_cam >> 8) & 1);
     spr_begin();
-    for (i = 0; i < 12; ++i)
-        spr1((u8)(i * 21 + 6), (u8)(((hl_t * (1 + (i & 1)) + i * 23) & 0xBF) + 8), confetti_tile, (u8)(i & 3));
+    if (!sad)                           /* (pas de confettis pour une défaite) */
+        for (i = 0; i < 12; ++i)
+            spr1((u8)(i * 21 + 6), (u8)(((hl_t * (1 + (i & 1)) + i * 23) & 0xBF) + 8), confetti_tile, (u8)(i & 3));
     if (hl_t >= 14) label_draw(12, (u8)((hl_t - 14) >> 1));
     spr_end();
     if (hl_t >= 220) final_end();

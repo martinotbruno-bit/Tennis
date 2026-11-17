@@ -214,7 +214,7 @@ void palmares_build(void)
         txt_at(3, 12, "DOUBLES FAUTES"); u16_at(22, 12, sv.dfaults);
         txt_at(3, 13, "COUPS GAGNANTS"); u16_at(22, 13, sv.winners);
         txt_at(3, 14, "FAUTES"); u16_at(22, 14, sv.errors);
-        txt_at(3, 15, "1ERES BALLES %"); u16_at(22, 15, pct16(sv.fs_in, sv.fs_tot));
+        txt_at(3, 15, "1ERES BALLES"); u16_at(22, 15, pct16(sv.fs_in, sv.fs_tot)); txt_at(27, 15, "%");
         txt_at(3, 16, "TITRES"); u16_at(22, 16, sv.titles);
         txt_at(3, 17, "COMPETITIONS"); u16_at(22, 17, sv.comps);
         txt_at(3, 18, "RECORD ECHANGE"); u16_at(22, 18, sv.best_rally);

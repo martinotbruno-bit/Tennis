@@ -506,7 +506,7 @@ for (const view of [0, 1]) {
   }
   runUntil(e, () => scr(e) === SS.RESULTS, 600); e.run(20);
   const v = e.peek('st_vmax', 0) + 80, rec = e.peek('sw_spd', 1) + 80;
-  check(e.peek('sp_new') === 1 && rec === v && e.text(2, 18, 16).startsWith('KM/H : RECORD'), `record de vitesse au palmarès (${rec} km/h), annoncé aux résultats (« ${e.text(2, 18, 16).trim()} »)`);
+  check(e.peek('sp_new') === 1 && rec === v && e.text(2, 19, 16).startsWith('KM/H : RECORD'), `record de vitesse au palmarès (${rec} km/h), annoncé aux résultats (« ${e.text(2, 19, 16).trim()} »)`);
   // (2.75) échange le plus long : ligne à part, sous le tableau
   const L = e.peek('st_longest'), lg = [20, 21, 22].map(r => e.text(8, r, 16).replace(/\0/g, ' ').trim()).join(' / ');
   check(lg === `PLUS LONG / ECHANGE / ${L} FRAPPE${L > 1 ? 'S' : ''}`, `résultats : « ${lg} », à part, entre les deux joueurs`);

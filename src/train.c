@@ -240,9 +240,22 @@ extern u8 ola_on, oam_i, hl_mode, cer;
 extern const unsigned char flag_tile;
 static const u8 flag_x[6] = { 6, 14, 6, 242, 234, 242 };
 static const u8 flag_y[6] = { 52, 96, 168, 64, 116, 176 };
+/* (2.76) chronomètre du match : temps réel (trames de l'écran), hors pause,
+   par set ; remis à zéro à l'entrée des joueurs (cer.c) */
+extern u16 tm_set[5];
+extern u8 tm_last, tm_sub;
+static void tm_tick(void)
+{
+    u8 d = (u8)(frame_cnt - tm_last), fps = (u8)(is_pal ? 50 : 60);
+    tm_last = frame_cnt;
+    if (paused || cfg.mode != GM_MATCH || sc_over) return;
+    tm_sub = (u8)(tm_sub + d);
+    while (tm_sub >= fps) { tm_sub = (u8)(tm_sub - fps); ++tm_set[sc_set_no < 5 ? sc_set_no : 4]; }
+}
 void flags_draw(void)
 {
     u8 i, a;
+    tm_tick();
     if (cfg.mode != GM_MATCH || cfg.env == ENV_NUDE || cfg.env == ENV_MARGAUX || hl_mode) return;
     if (!((u8)(cer - 4) < 7 || ola_on >= 2)) return;     /* (cer 4 à 10 : chaises, assis, retour ; fin du match) */
     for (i = 0; i < 6 && oam_i < 252; ++i) {
@@ -286,7 +299,7 @@ static /* Nom du coup gagnant affiché au centre du bandeau (15 caractères au p
 const char *win_label(u8 shot, u8 pass, u8 jump)
 {
     if (hit_perf) return "COUP PARFAIT !";
-    if (shot == SH_SMASH) return jump ? "SMASH SAUTE !" : "SMASH !";
+    if (shot == SH_SMASH) return bspin == SPIN_DROP ? "AMORTIE HAUTE !" : jump ? "SMASH SAUTE !" : "SMASH !";   /* (2.76 : smash amorti) */
     if (shot == SH_DROP) return "AMORTIE !";
     if (shot == SH_LOB) return "LOB GAGNANT !";
     if (shot == SH_VOLLEY) return "VOLEE GAGNANTE";
@@ -491,4 +504,67 @@ u16 __fastcall__ srv_box(u16 unused)
     else      { if (x < CENTER_X - 1 || x > IN_SR) return 0; }
     if (srv_side == 0) return (u16)(y >= IN_TSRV && y <= NET_Y);
     return (u16)(y >= NET_Y && y <= IN_BSRV);
+}
+
+/* (2.76) écrans de fin de set et de résultat : « DUREE DU MATCH 1H05 » au-
+   dessus du tableau des sets (rangée y - 1), minutes de chaque set dessous
+   (rangée y + 3), dans la colonne du set. a : y | (sets joués << 8) */
+static void tm_put(u8 x, u8 y, u16 v)          /* nombre à droite de x */
+{
+    char n[4];
+    u8 i = 3;
+    n[3] = 0;
+    do { n[--i] = (char)('0' + v % 10); v /= 10; } while (v && i);
+    txt_at((u8)(x - (3 - i) + 1), y, n + i);
+}
+u16 __fastcall__ hl_time_rows(u16 a)
+{
+    u8 y = (u8)a, n = (u8)(a >> 8), i;
+    u16 tot = 0, m;
+    for (i = 0; i < 5; ++i) tot += tm_set[i];
+    m = (tot + 30) / 60;
+    txt_at(8, (u8)(y - 1), "DUREE DU MATCH");
+    if (m >= 60) { tm_put(24, (u8)(y - 1), m / 60); txt_at(25, (u8)(y - 1), "H"); m %= 60; txt_at(26, (u8)(y - 1), m < 10 ? "0" : ""); tm_put(27, (u8)(y - 1), m); }
+    else { tm_put(25, (u8)(y - 1), m); txt_at(27, (u8)(y - 1), "MIN"); }
+    if (n) {
+        txt_at(8, (u8)(y + 3), "MIN");
+        for (i = 0; i < n && i < 5; ++i) tm_put((u8)(15 + i * 3), (u8)(y + 3), (tm_set[i] + 30) / 60);
+    }
+    return 0;
+}
+
+/* (2.76, déplacé de screens.c, banque 1 pleine) statistiques de l'écran des
+   résultats : noms (rangée 10), lignes 11 à 18, vitesse (19) */
+static void st_row(u8 y, const char *label, u8 a, u8 b)
+{
+    char n[4];
+    u8 t, v;
+    n[3] = 0;
+    txt_at(2, y, label);
+    for (t = 0; t < 2; ++t) {
+        v = t ? b : a;
+        n[0] = (char)(v >= 100 ? '0' + v / 100 : ' ');
+        n[1] = (char)(v >= 10 ? '0' + (v / 10) % 10 : ' ');
+        n[2] = (char)('0' + v % 10);
+        txt_at((u8)(19 + t * 6), y, n);
+    }
+}
+static u8 st_pct(u8 a, u8 b) { return b ? (u8)(((u16)a * 100) / b) : 0; }
+u16 __fastcall__ res_stats(u16 unused)
+{
+    char b[6];
+    (void)unused;
+    team_label(cfg.chr[0], 255, b); txt_at(19, 10, b);
+    team_label(cfg.chr[1], 255, b); txt_at(25, 10, b);
+    st_row(11, "POINTS GAGNES", st_points[0], st_points[1]);
+    st_row(12, "ACES", st_aces[0], st_aces[1]);
+    st_row(13, "DOUBLES FAUTES", st_dfaults[0], st_dfaults[1]);
+    st_row(14, "COUPS GAGNANTS", st_winners[0], st_winners[1]);
+    st_row(15, "FAUTES", st_errors[0], st_errors[1]);
+    st_row(16, "1ERES BALLES", st_pct(st_first_in[0], st_first_tot[0]), st_pct(st_first_in[1], st_first_tot[1]));
+    txt_at(22, 16, "%"); txt_at(28, 16, "%");      /* (symbole après chaque pourcentage) */
+    st_row(17, "SERVICES CANON", st_canon[0], st_canon[1]);
+    st_row(18, "COUPS PARFAITS", st_perf[0], st_perf[1]);
+    hl_vmax_row(19);
+    return 0;
 }

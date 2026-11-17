@@ -1017,7 +1017,7 @@ void match_begin(void)
 
 static void after_point(void)
 {
-    u8 ev, w = pending_winner, prev;
+    u8 ev, w = pending_winner, prev, blank;
     if (end_reason == END_LET) { place_for_serve(); return; }
     if (end_reason == END_FAULT) {
         if (cfg.mode == GM_MATCH) faults = 1;
@@ -1028,6 +1028,7 @@ static void after_point(void)
     faults = 0;
     if (cfg.mode != GM_MATCH) { place_for_serve(); return; }
     prev = sc_server;
+    blank = (u8)(!sc_tiebreak && sc_points[w ^ 1] == 0);   /* (2.76) jeu blanc si ce point gagne le jeu */
     ev = rules_point(w);
     /* double : quand une équipe perd le service, son autre joueur servira */
     if (sc_server != prev) srv_slot[prev] ^= 1;
@@ -1049,8 +1050,8 @@ static void after_point(void)
         /* récapitulatif : écran de fin de set (sauf démonstration), score des
            sets dans le bandeau après chaque jeu */
         if (ev & EV_SET) { set_msg("JEU ET SET", nm, 90); music_play(MUS_GAME); crowd_timer = 64; if (!cfg.demo) brk_pend = 1; }
-        else if (ev & EV_TIEBREAK) { set_msg("6 PARTOUT", "JEU DECISIF", 90); music_play(MUS_GAME); recap_pend = 1; }
-        else if (ev & EV_GAME) { set_msg("JEU", nm, 70); music_play(MUS_GAME); recap_pend = 1; }
+        else if (ev & EV_TIEBREAK) { set_msg("6 PARTOUT", "JEU DECISIF", 90); music_play(MUS_GAME); }   /* (2.76 : plus de rappel des jeux en haut : le bandeau les donne) */
+        else if (ev & EV_GAME) { set_msg(blank ? "JEU BLANC" : "JEU", nm, 70); music_play(MUS_GAME); if (blank) sfx_crowd(7); }
         else {
             if (rules_is_match_point(0) || rules_is_match_point(1)) set_msg("BALLE DE MATCH", "", 70);
             else if (rules_is_set_point(0) || rules_is_set_point(1)) set_msg("BALLE DE SET", "", 70);
@@ -1059,7 +1060,7 @@ static void after_point(void)
                 team_name((u8)(sc_points[0] > sc_points[1] ? 0 : 1), nm);
                 set_msg("AVANTAGE", nm, 60);
             }
-            music_play(MUS_POINT);
+            /* (2.76) plus de jingle bi-ton après chaque point (avant le 1er service) */
         }
     }
     if (ev & EV_CHANGE) {
