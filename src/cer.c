@@ -27,6 +27,8 @@ extern u8 hl_mode;                 /* plan de la ramasseuse (highlight.c, 2.73) 
 
 extern const unsigned char prop_tile13, chair_tile13;   /* assets_swap.c (cette banque) : gourde, serviette, raquette ; chaise */
 
+extern u8 hl_flags;
+#pragma zpsym("hl_flags")
 #define PXU(v) ((u8)(((u16)(v) << 2) >> 8))      /* pixels, valeur positive */
 
 #define CER_ENTRY  1    /* marche depuis le tunnel */
@@ -379,7 +381,9 @@ void cer_draw(void)
         h = (u8)((t * (u8)(44 - t)) >> 4);
         spr1(44, (u8)(110 - h), (u8)(ball_base + ((t >> 2) & 1 ? 12 : 8)), 2);   /* pile (grande balle) / tranche (balle écrasée) */
     }
-    if (cer == CER_CHAIRS || cer == CER_CHAIR || cer == CER_SEAT) {
+    /* (2.76) fin de l'échange : les chaises n'apparaissent qu'une fois le
+       bandeau du score entièrement à l'écran (hl_flags bit 2, highlight.c) */
+    if ((cer == CER_CHAIRS && (hl_flags & 4)) || cer == CER_CHAIR || cer == CER_SEAT) {
         for (p = 0; p < (u8)(npl == 4 ? 4 : 2); ++p) {
             qx = CHAIR_X; qy = chair_y[p];
             if (persp) { proj2(qx, qy); qx = proj_x; qy = proj_y; }

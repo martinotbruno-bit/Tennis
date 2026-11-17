@@ -166,6 +166,7 @@ u16 __fastcall__ hl_hit(u16 pk);
 void hl_select(void);
 #define HL_HIT(p, k) far_call(BANK_HL, (void *)hl_hit, (u16)((p) | ((k) << 8)))
 #define HL_SELECT(w, t) { hl_w = (w); hl_ptxt = (t); bank_call(BANK_HL, hl_select); }   /* (t en RAM : msg1) */
+extern u8 sc_crit;               /* balles de set et de match (rules_far.c) */
 static void point_over(u8 winner, u8 reason)
 {
     /* reason : 0 normal, 1 faute adverse (filet/dehors), 2 coup gagnant */
@@ -199,7 +200,8 @@ static void point_over(u8 winner, u8 reason)
     }
     if (rally_hits >= 12) { set_msg("QUEL ECHANGE !", "", 70); sfx_crowd(7); crowd_timer = 64; rp_pending = 1; HL_SELECT(winner, msg1); }
     bank_call(BANK_HL, hl_out);     /* balle limite (dehors de peu, bonne sur la ligne) : zoom rapide (highlight.c) */
-    if (!cfg.replays || cfg.demo) rp_pending = 0;
+    /* (2.76) balle de match gagnée : pas de ralenti, la fête tout de suite */
+    if (!cfg.replays || cfg.demo || ((sc_crit & 4) && ((sc_crit >> winner) & 1))) rp_pending = 0;
     if (rp_pending) ms_timer = 110;
 }
 
@@ -1080,7 +1082,7 @@ u8 match_tick(void)
     if (cfg.demo && (pad1_new & (PAD_A | PAD_START))) { match_quit = 2; return 1; }
 
     /* menu de pause (START) : CONTINUER / QUITTER ; SELECT = quitter directement */
-    if ((pad1_new & PAD_START) && ms != MS_OVER && ms != MS_REPLAY && !paused) {
+    if ((pad1_new & PAD_START) && ms != MS_OVER && ms != MS_REPLAY && !paused && cer != 5) {   /* (2.76 : assis au changement de côté, START passe les statistiques) */
         paused = 1; pause_cur = 0; hud_dirty = 1; pad1_new = 0;
     }
     if (paused) {

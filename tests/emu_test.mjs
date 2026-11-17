@@ -2887,6 +2887,52 @@ console.log('Version 2.76 : lignes, bandeau, smash');
   check(e.frames - t0 < 30, `après le ralenti : bandeau du score en ${e.frames - t0} trames (avant : environ 60)`);
 }
 }
+if (sec('Version 2.76 : balle de match et changement de côté')) {
+console.log('Version 2.76 : balle de match et changement de côté');
+{
+  // ralentis désactivés : le bandeau reste affiché de la fin du point aux
+  // statistiques ; les chaises n'apparaissent qu'avec le bandeau entièrement monté
+  const e = boot(); startWith(e, { FMT: 3, REPLAY: 0 }); allCpu(e);
+  e.cerSkip = false; e.poke('cer_skip', 0);
+  e.poke('sc_games', 0); e.poke('sc_points', 3); e.poke('sc_points', 0, 1);
+  let started = false, shown = false, gaps = 0, chairEarly = 0;
+  const chair = e.addr('chair_tile13') !== undefined ? null : null;
+  for (let f = 0; f < 60 * 60 * 2; f++) {
+    e.run(1);
+    const cer = e.peek('cer'), bv = e.peek('band_vis');
+    if (cer === 0xFD || cer === 4 || cer === 5) started = true;
+    if (!started) continue;
+    if (bv === 3) shown = true; else if (shown && cer !== 6) gaps++;
+    if (cer === 0xFD && !(e.peek('hl_flags') & 4)) { for (let i = 0; i < 64; i++) { const y = e.peek('oam_buf', i * 4), x = e.peek('oam_buf', i * 4 + 3); if (y < 0xF0 && x >= 36 && x <= 46 && (y === 91 || y === 149 || y === 79 || y === 161)) chairEarly++; } }
+    if (cer === 6) break;
+  }
+  check(shown && gaps === 0 && chairEarly === 0, `changement de côté sans ralenti : bandeau continu jusqu'aux statistiques (${gaps} trames sans), chaises après le bandeau (${chairEarly})`);
+}
+{
+  // START assis : toutes les statistiques passées, reprise, sans pause
+  const h = boot(); h.bandSkip = false; startWith(h, { FMT: 3, REPLAY: 0 }); allCpu(h);
+  h.cerSkip = false; h.poke('cer_skip', 0); h.poke('sc_games', 2); h.poke('sc_points', 3); h.poke('sc_points', 0, 1);
+  runUntil(h, () => h.peek('cer') === 5, 60 * 60 * 3);
+  h.poke('cfg', 0, CFG.CTRL);
+  h.run(60);
+  h.tap('START'); h.run(4);
+  check(h.peek('cer') === 6 && !h.peek('paused'), `assis : START reprend aussitôt (cer ${h.peek('cer')}), sans pause (${h.peek('paused')})`);
+}
+{
+  // balle de match gagnée : pas de ralenti, la fête tout de suite
+  const m = boot(); startWith(m, { FMT: 3, REPLAY: 1 }); allCpu(m);
+  m.poke('sc_games', 5); m.poke('sc_points', 2);
+  let rpAfterMp = 0, over = false, rp = 0;
+  for (let f = 0; f < 60 * 60 * 6 && app(m) === AS.MATCH && !over; f++) {
+    m.run(1);
+    const ms = m.peek('ms');
+    if (ms === 2) rp = 0;                       /* (nouveau point) */
+    if (ms === 5) rp++;
+    if (ms === 4) { over = true; rpAfterMp = rp; }
+  }
+  check(over && rpAfterMp === 0, `balle de match gagnée : fin du match sans ralenti (${rpAfterMp} trames de ralenti)`);
+}
+}
 if (sec('Compensation 50 Hz (PAL)')) {
 console.log('Compensation 50 Hz (PAL)');
 {

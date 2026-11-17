@@ -455,7 +455,10 @@ void mp_tick(void)
     if (paused || ms != MS_SERVE || ++mp_t >= 8 + MP_SHOW || (pad1_new | pad2_new)) {
         split_stop();
         mp_t = 0;
+        return;
     }
+    /* (2.76) rien par-dessus le bandeau (l'arbitre de chaise s'y incrustait) */
+    for (i = 0; i < 64; ++i) { r = oam_buf[i * 4]; if (r >= MP_ROW * 8 - 1 && r < (MP_ROW + 6) * 8) oam_buf[i * 4] = 0xFF; }
 }
 
 /* ---------------------------------------------------------------------- */

@@ -315,7 +315,9 @@ void band_draw(void)
     if (ms != MS_DEAD && ms != MS_SERVE) band_dis = 0;
     else if (!rp_pending && (pad1_new | pad2_new)) band_dis = 1;
     v = (u8)(cfg.mode == GM_MATCH && !paused && !hl_mode && !sc_over &&
-             ((cer == CER_SEAT) || ((!cer || cer >= 0xF0) && !band_dis && !rp_pending && (ms == MS_DEAD || ms == MS_SERVE))));
+             ((cer == CER_SEAT) || (cer == 4 && !band_dis) || ((!cer || cer >= 0xF0) && !band_dis && !rp_pending && (ms == MS_DEAD || ms == MS_SERVE))));
+    /* (2.76) cer 4 (CER_CHAIR, vers les chaises) : le bandeau reste affiché
+       depuis la fin du point jusqu'aux statistiques, sans disparaître */
     /* (2.74) apparition : 48 trames après la fin du point (ou du ralenti),
        le temps de lire le message du point, puis le bandeau monte du bas en
        10 trames (la ligne de l'interruption remonte de 4 lignes par trame).
@@ -324,6 +326,7 @@ void band_draw(void)
        d'une partie du court.) */
     band_hold = (u8)(v && cer != CER_SEAT && (band_human() || band_t < BAND_WAIT + 10));
     if (!v) {
+        hl_flags &= (u8)~4;
         if (band_vis) { split_stop(); band_vis = 0; }
         /* (2.76) pendant un ralenti (ou avant qu'il commence) : à sa fin,
            joué ou passé, le bandeau monte aussitôt, sans le délai de lecture */
@@ -335,7 +338,8 @@ void band_draw(void)
     if (cer == CER_SEAT) {
         if (band_human()) {
             /* (2.75) une page par appui ; après la dernière, les joueurs repartent */
-            if ((pad1_new | pad2_new) & (PAD_A | PAD_B | PAD_START)) { if (band_pg >= 5) band_hold = 2; else ++band_pg; }
+            if ((pad1_new | pad2_new) & PAD_START) band_hold = 2;                                       /* (2.76) START : toutes passées, on reprend */
+            else if ((pad1_new | pad2_new) & (PAD_A | PAD_B)) { if (band_pg >= 5) band_hold = 2; else ++band_pg; }
         } else if (++band_t >= 40) { band_t = 0; if (++band_pg > 5) band_pg = 0; }   /* (40 trames par page : les 5 statistiques passent pendant la pause assise) */
     } else band_pg = 0;
     /* texte : rafraîchi quand le score change, une rangée par trame */
@@ -374,6 +378,9 @@ void band_draw(void)
     if (band_vis == 1) { if (band_rows) return; band_vis = 2; }
     else if (band_vis == 2) { band_vis = 3; band_on(cer == CER_SEAT ? BAND_LINE : BAND_LINE + 40); }
     else if (cer != CER_SEAT && band_t < BAND_WAIT + 10) { ++band_t; band_on((u8)(BAND_LINE + (BAND_WAIT + 10 - band_t) * 4)); }   /* (montée) */
+    /* (2.76) hl_flags bit 2 : bandeau entièrement monté (les chaises du
+       changement de côté n'apparaissent qu'alors, cer.c) */
+    if (band_vis == 3 && (cer == CER_SEAT || band_t >= BAND_WAIT + 10)) hl_flags |= 4; else hl_flags &= (u8)~4;
     /* sprites : rien ne descend dans le bandeau */
     /* (en assembleur : la boucle en C coûtait une trame en retard sur
        quatre en double en perspective) */
