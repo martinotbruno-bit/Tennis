@@ -40,6 +40,9 @@ class Emu {
     // (2.75) écran du joueur personnalisé avant une compétition : passé
     // d'office avec START (customSkip = false pour le tester)
     this.customSkip = true; this._cuPress = false;
+    // (2.76) pages de choix illustrées (joueurs, tournoi, lieu, surface) :
+    // validées d'office avec START (pickSkip = false pour les tester)
+    this.pickSkip = true;
     this.scrAddr = this.labels['_scr_state']; this.appAddr = this.labels['_app_state'];
     this.bandDis = this.labels['_band_dis']; this.bandHold = this.labels['_band_hold'];
     // dessin de l'image (fonctions d'origine de jsnes, gardées pour setRender)
@@ -82,7 +85,7 @@ class Emu {
       if (this.customSkip && this.scrAddr !== undefined) {
         const m = this.nes.cpu.mem;
         if (this._cuPress) { this.nes.buttonUp(1, BTN.START); this._cuPress = false; }
-        else if (m[this.scrAddr] === 13 && m[this.appAddr] === 0 && !this.held[0].has('START')) { this.nes.buttonDown(1, BTN.START); this._cuPress = true; }
+        else if ((m[this.scrAddr] === 13 || (this.pickSkip && m[this.scrAddr] === 15)) && m[this.appAddr] === 0 && !this.held[0].has('START')) { this.nes.buttonDown(1, BTN.START); this._cuPress = true; }
       }
       if (each) each(this);
     }

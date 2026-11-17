@@ -27,6 +27,8 @@
 #define SS_FLY      12   /* survol du stade avant une finale (2.73, fly.c) */
 #define SS_CUSTOM   13   /* joueur personnalisé avant une compétition (2.75, career.c) */
 #define SS_CHAMP    14   /* le champion brandit la coupe (2.76, highlight.c) */
+#define SS_PICK     15   /* pages de choix illustrées (2.76, pick.c) */
+u16 __fastcall__ pick_begin(u16 first); u16 __fastcall__ pick_tick(u16 pad);
 u16 __fastcall__ champ_tick(u16 a);
 u16 __fastcall__ cust_build(u16 arg);   /* joueur personnalisé (career.c, banque 19, 2.75) */
 u16 __fastcall__ cust_tick(u16 pad);
@@ -128,11 +130,13 @@ void gm_intro_build(void);
 void gm_intro_tick(void);
 static void comp_screen(void);
 static void screen_begin(void);
+static u8 c_pg;                /* écran de la compétition : 0 le match, 1 le tableau (2.76) */
 static void comp_next(void)
 {
     /* l'image du tournoi (premier tour) s'affiche juste avant le début du
        match, après sa présentation (gm_ev : $FF = aucune) */
     gm_ev = COMP(comp_gm_intro, 0);
+    c_pg = 0;
     comp_screen();
 }
 u8 vis[NOPT];        /* (lu par menuart.c : accolades des groupes) */
@@ -154,23 +158,17 @@ static void build_visible(void)
         if (opt_val[O_COMP] == CT_CUSTOM) { add_opt(O_CSIZE); add_opt(O_CPROG); add_opt(O_CVAR); }
         else if (!opt_val[O_TYPE]) add_opt(O_CAREER);   /* (2.72) */
         add_opt(O_TYPE);
-        add_opt(O_P1);
-        if (opt_val[O_TYPE]) { add_opt(O_P2); add_opt(O_CPART); }   /* partenaire */
+        if (opt_val[O_TYPE]) add_opt(O_CPART);   /* partenaire : CPU ou manette 2 */
         add_opt(O_LEVEL);
         /* Grand Martinot, Martinworld Tour : au stade, de jour, surfaces
-           imposées, 3 sets et finale en 5 ; saison : surfaces imposées */
-        if (opt_val[O_COMP] < CT_GRAND) {
-            if (opt_val[O_COMP] != CT_SEASON) add_opt(O_SURF);
-            add_opt(O_ENV); add_opt(O_COND); add_opt(O_FMT);
-        }
+           imposées, 3 sets et finale en 5. (2.76) Joueurs, tournoi, lieu et
+           surface : pages illustrées après les réglages (pick.c) */
+        if (opt_val[O_COMP] < CT_GRAND) { add_opt(O_COND); add_opt(O_FMT); }
         add_opt(O_REPLAY);
         add_opt(O_GSPEED);
     } else if (m == MODE_TRAIN) {
         add_opt(O_EX);
         if (opt_val[O_EX] == EX_CUSTOM) { add_opt(O_SIDE); add_opt(O_SPEED); add_opt(O_SPIN); add_opt(O_COUNT); }
-        add_opt(O_P1);
-        add_opt(O_SURF);
-        add_opt(O_ENV);
         add_opt(O_COND);
         add_opt(O_GSPEED);
     } else {
@@ -178,12 +176,8 @@ static void build_visible(void)
            est toujours en double ; « 1 joueur contre CPU » toujours en simple
            (son double, avec un partenaire CPU, est le mode en équipe) */
         if (m == MODE_2P) add_opt(O_TYPE);
-        add_opt(O_P1);
-        add_opt(O_P2);
         if (m == MODE_2P_TEAM) add_opt(O_CPART);   /* partenaire : CPU ou manette 2 */
         add_opt(O_LEVEL);
-        add_opt(O_SURF);
-        add_opt(O_ENV);
         add_opt(O_COND);
         add_opt(O_FMT);
         add_opt(O_REPLAY);
@@ -409,11 +403,13 @@ static void menu_hl_tick(void)
    réécrit les lignes par le tampon VRAM, deux par trame environ. */
 static void menu_soft(void)
 {
-    u8 old = nvis;
+    u8 o = vis[cursor], i;
     build_visible();
     hl_cur = 0xFF;              /* toutes les lignes sont réécrites : surlignage ensuite */
+    /* (2.76) le curseur reste sur l'option changée, même si des lignes
+       apparaissent ou disparaissent au-dessus (il sautait d'une ligne) */
+    for (i = 0; i < nvis; ++i) if (vis[i] == o) cursor = i;
     if (cursor >= nvis) cursor = 0;
-    (void)old;
     rd_n = 18;                  /* (la liste se recentre : toutes les rangées 4 à 21) */
     rd_row = 0;
 }
@@ -464,6 +460,20 @@ static void menu_info_tick(void)
     }
 }
 
+/* réglages et choix faits : la suite du parcours */
+static void setup_cfg(u8 mode);
+static void go_match(void);
+static void cust_screen(u8 first);
+static void present_screen(void);
+static void menu_go(void)
+{
+    u8 v = opt_val[O_MODE];
+    (void)far_call(BANK_COMP, (void *)so_save, 0);   /* mémorise les réglages */
+    if (v == MODE_COMP) { cust_screen(1); return; }  /* (joueur personnalisé, puis la compétition) */
+    setup_cfg(v);
+    if (v == MODE_TRAIN || v == MODE_DEMO) go_match();
+    else present_screen();
+}
 static void cust_screen(u8 first)
 {
     screen_begin();
@@ -706,23 +716,32 @@ static void comp_screen(void)
     txt_off = 0x40; txt_at(3, 5, comp_l1); txt_off = 0;   /* en or */
     txt_at(3, 6, comp_l2);
     COMP(comp_path, 7);
+    if (c_pg) {
+        /* (2.76) page 2 : le tableau ou le classement, sous le titre */
+        COMP(comp_draw_table, 10);
+        txt_at(3, 25, "A : JOUER   B : MENU");
+        txt_at(3, 26, "GAUCHE : LE MATCH");
+        goto done;
+    }
+    /* page 1 : le prochain match (lignes espacées, 2.76) */
     o = COMP(comp_opponent, 0);
     team_label(c_pl[0], c_pl2[0], line);
-    txt_off = 0x40; txt_at(3, 9, line); txt_off = 0;
-    txt_at(9, 9, "CONTRE");
+    txt_off = 0x40; txt_at(3, 11, line); txt_off = 0;
+    txt_at(9, 11, "CONTRE");
     team_label(c_pl[o], c_pl2[o], line);
-    txt_at(16, 9, line);
-    txt_at(3, 10, "ADVERSAIRE :");
-    txt_at(16, 10, level_name[COMP(comp_level, 0)]);
-    txt_at(3, 11, surf_name[COMP(comp_surface, 0)]);
-    txt_at(17, 11, env_name[c_env]);
-    COMP(comp_draw_table, 13);
+    txt_at(16, 11, line);
+    txt_at(3, 13, "ADVERSAIRE :");
+    txt_at(16, 13, level_name[COMP(comp_level, 0)]);
+    txt_at(3, 15, surf_name[COMP(comp_surface, 0)]);
+    txt_at(17, 15, env_name[c_env]);
     make_code();
     txt_at(3, 22, "CODE :");
     vram_adr(NTADR(10, 22));
     for (o = 0; o < PW_LEN; ++o) { vram_put((u8)code_buf[o]); if (o == 3 || o == 7) vram_put(' '); }
     if (c_dbl) txt_at(3, 23, c_hum2 ? "DOUBLE A 2 JOUEURS" : "COMPETITION EN DOUBLE");
     txt_at(3, 25, "A : JOUER   B : MENU");
+    txt_at(3, 26, "DROITE : LE TABLEAU");
+done:
     {   /* médailles des 3 premiers (classements) : or, argent, bronze */
         static const u8 med[9] = { 0x28, 0x18, 0x38,  0x10, 0x00, 0x30,  0x17, 0x07, 0x27 };   /* (couleur 1 : disque, 3 : reflet) */
         for (o = 0; o < 9; ++o) pal_buf[17 + (o / 3) * 4 + o % 3] = med[o];
@@ -1132,17 +1151,19 @@ void screens_tick(void)
         if (pad1_new & PAD_B) { sfx_menu_back(); title_screen(); break; }
         if ((pad1_new & PAD_START) || ((pad1_new & PAD_A) && o == O_START)) {
             sfx_menu_ok();
-            (void)far_call(BANK_COMP, (void *)so_save, 0);   /* mémorise les réglages */
-            v = opt_val[O_MODE];
-            if (v == MODE_COMP) { cust_screen(1); break; }   /* (joueur personnalisé, puis la compétition) */
-            setup_cfg(v);
-            if (v == MODE_TRAIN || v == MODE_DEMO) go_match();
-            else present_screen();
+            /* (2.76) pages de choix illustrées (joueurs, tournoi, lieu, surface) */
+            if (far_call(BANK_PICK, (void *)pick_begin, 1)) { scr_state = SS_PICK; break; }
+            menu_go();
             break;
         }
         menu_soft_tick();
         menu_info_tick();
         menu_sprites();
+        break;
+    case SS_PICK:
+        v = (u8)far_call(BANK_PICK, (void *)pick_tick, pad1_new);
+        if (v == 1) menu_go();
+        else if (v == 2) menu_screen();
         break;
     case SS_TEASER:
         bank_call(BANK_INTRO, teaser_tick);
@@ -1165,11 +1186,12 @@ void screens_tick(void)
         present_sprites();
         break;
     case SS_COMP:
-        if (c_type == CT_LEAGUE || c_type == CT_SEASON || c_type >= CT_GRAND) {
+        if (c_pg && (c_type == CT_LEAGUE || c_type == CT_SEASON || c_type >= CT_GRAND)) {
             spr_begin();
-            for (i = 0; i < 3; ++i) spr1(c_type == CT_LEAGUE ? 12 : 8, (u8)((14 + i) * 8 - 1), (u8)(ball_base + 8), i);
+            for (i = 0; i < 3; ++i) spr1(c_type == CT_LEAGUE ? 12 : 8, (u8)((11 + i) * 8 - 1), (u8)(ball_base + 8), i);
             spr_end();
         }
+        if (pad1_new & (PAD_LEFT | PAD_RIGHT)) { c_pg = (u8)((pad1_new & PAD_RIGHT) ? 1 : 0); sfx_menu_move(); fade_skip = 1; comp_screen(); break; }   /* (2.76) deux pages */
         if (pad1_new & (PAD_A | PAD_START)) {
             comp_cfg();
             if (is_final()) { bank_call(BANK_FLY, fly_build); scr_state = SS_FLY; break; }   /* survol du stade (2.73) */

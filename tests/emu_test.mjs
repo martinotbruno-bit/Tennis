@@ -1227,7 +1227,7 @@ console.log('Code de reprise');
   f.tap('START'); f.run(40);
   const got = ['c_type', 'c_stage', 'c_seed', 'c_results', 'c_surf', 'c_env', 'c_cond'].map(n => f.peek(n));
   check(scr(f) === SS.COMP && JSON.stringify(got) === JSON.stringify(want), `code ${code} : championnat restauré (journée 2)`);
-  check(f.text(16, 9, 5) === e.text(16, 9, 5), "même adversaire après reprise");
+  check(f.text(16, 11, 5) === e.text(16, 11, 5), "même adversaire après reprise");
   const g = boot(); g.tap('UP'); g.tap('A'); g.run(10); g.tap('START'); g.run(10);
   check(scr(g) === SS.CODE, 'code invalide refusé');
 }
@@ -1662,7 +1662,7 @@ console.log('Margaux jouable et fatigue');
     `présentation en double : MARGAUX, partenaire sur la ligne suivante (${g.text(2, 20, 6).replace(/\0/g, " ")})`);
   const c = boot(); startWith(c, { MODE: MODE.COMP, COMP: 0, FMT: 3, P1: 16, TYPE: 1, P2: 7 });
   const code = c.text(10, 22, 15).replace(/ /g, '');
-  check(scr(c) === SS.COMP && c.text(3, 9, 5) === 'MX/EM', `équipe abrégée « MX/EM » (pas de confusion avec MAYA « MA ») ; code ${code}`);
+  check(scr(c) === SS.COMP && c.text(3, 11, 5) === 'MX/EM', `équipe abrégée « MX/EM » (pas de confusion avec MAYA « MA ») ; code ${code}`);
   const h = boot(); h.tap('UP'); h.tap('A'); h.run(10);
   const AL = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
   for (let i = 0; i < 13; i++) { const n = AL.indexOf(code[i]); for (let k = 0; k < n; k++) h.tap('UP', 1, 1, 1); if (i < 12) h.tap('RIGHT', 1, 1, 1); }
