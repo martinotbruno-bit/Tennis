@@ -500,7 +500,7 @@ for (const view of [0, 1]) {
   const e = boot(); startWith(e, { FMT: 0, COND: 3, VIEW: view, REPLAY: 0 }); allCpu(e);
   const vm = e.nes.ppu.vramMem, font = () => Array.from(vm.slice(0x300, 0x3A0)).join(',');   /* chiffres 0 à 9 */
   let ref = null, bad = 0, games = 0, pg = 0;
-  for (let f = 0; f < 60 * 60 * 8 && app(e) === AS.MATCH; f++) {
+  for (let f = 0; f < 60 * 60 * 14 && app(e) === AS.MATCH && games < 4; f++) {   /* (2.77i : échanges plus longs, l'ordinateur ne fait plus de fautes de puissance débordée) */
     e.poke('cer_skip', e.peek('cer') >= 1 && e.peek('cer') <= 3 ? 1 : 0);
     e.run(1);
     const g = e.peek('sc_games', 0) + e.peek('sc_games', 1); if (g !== pg) { games++; pg = g; }
@@ -3273,6 +3273,7 @@ console.log('Version 2.76 : parcours, tirage, fin de set, compétition à deux')
   // fin de set : les joueurs s'assoient, bandeau du set, puis l'écran du set ;
   // au retour, ils repartent des chaises
   const e = boot(); e.cerSkip = false; startWith(e, { FMT: 1, REPLAY: 0 }); allCpu(e);
+  e.poke('sc_games', 5, 0);   /* (2.77i : 5 jeux à 0, la fin du set vient vite ; les échanges sont plus longs) */
   let st = 0, seated = false, toScreen = false;
   runUntil(e, () => { if (e.peek('brk_pend') && e.peek('st_t') === 8) st = 1; if (e.peek('cer') === 5 && e.peek('brk_pend')) seated = true; return app(e) === AS.SCREENS && scr(e) === SS.SETBREAK; }, 60 * 60 * 15,
     () => { if (e.peek('cer') === 1 || e.peek('cer') === 2 || e.peek('cer') === 3 || e.peek('cer') === 11) e.poke('cer_skip', 1); });
