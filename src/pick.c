@@ -246,8 +246,7 @@ static void draw_court(void)
     pal_set_court(cfg.surface, cfg.cond == COND_SUNSET ? COND_DAY : cfg.cond, cfg.env);
     ppu_emph = (u8)(cfg.cond == COND_SUNSET ? (is_pal ? 0x40 : 0x20) : 0);
     if (cfg.cond == COND_SUNSET && cfg.env == ENV_CASTLE) { pal_buf[9] = 0x37; pal_buf[10] = 0x27; }   /* (pierre dorée, comme en match) */
-    pal_set_player(0, cfg.chr[0]);
-    pal_set_player(1, cfg.chr[1]);
+    pal_players_match(cfg.chr[0], cfg.chr[1]);                                 /* (2.77 : comme en match) */
     vram_adr(0x2000); vram_fill(0, 128);                 /* (rangées du score : le texte) */
     vram_adr(0x23C0); vram_fill(0x55, 8);                /* (2.77) palette du texte sur les 4 rangées : au court Margaux, la palette rose du décor rendait les lettres baveuses */
     rows_text(1);

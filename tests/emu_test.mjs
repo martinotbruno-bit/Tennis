@@ -2911,7 +2911,8 @@ console.log('Joueur personnalisé en compétition (2.75)');
   e.tap('A'); for (let n = 0; n < 400 && app(e) !== AS.MATCH; n++) { e.run(1); if (scr(e) === SS.PRESENT && n % 30 === 0) e.tap('A'); }
   e.run(60);
   const pl = [17, 18, 19].map(i => e.peek('pal_buf', i));
-  check(app(e) === AS.MATCH && pl[0] === 0x07 && pl[1] === 0x35 && pl[2] === 0x37 && [0, 1, 2, 3].some(r => e.text(0, r, 32).includes('BRUN')),
+  check(app(e) === AS.MATCH && pl[0] === 0x07 && pl[1] === 0x35 && pl[2] === 0x0F &&   // (2.77 : en match, contour, raquette et cheveux noirs)
+        [0, 1, 2, 3].some(r => e.text(0, r, 32).includes('BRUN')),
     `en match : couleurs du profil (${pl.map(v => v.toString(16)).join(' ')}), nom « BRUN » en haut`);
   // retour au menu : personnages d'origine ; le profil reste gardé
   e.tap('START', 1, 1, 2); e.tap('SELECT', 1, 1, 2);

@@ -174,6 +174,19 @@ void pal_set_player(u8 slot, u8 c)
     pal_dirty = 1;
 }
 
+/* (2.77) joueurs en match (et aperçu du court) : contour, raquette, short,
+   chaussures et cheveux en noir. La console ne donne que 3 couleurs par
+   sprite (peau, tenue, sombre) ; la couleur de cheveux choisie reste celle
+   des images HD, des bustes de l'affiche et des portraits. Sauf Margaux :
+   ses cheveux blonds bouclés sont dessinés dans cette couleur. */
+void pal_players_match(u8 c0, u8 c1)
+{
+    pal_set_player(0, c0);
+    pal_set_player(1, c1);
+    if (c0 != 16) pal_buf[16 + 3] = 0x0F;
+    if (c1 != 16) pal_buf[20 + 3] = 0x0F;
+}
+
 void spr_begin(void) { oam_i = spr_rot; }
 
 /* (x, y) = position des pieds ; sprite 16x24 dessiné par spr_meta (asm) */

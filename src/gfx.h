@@ -32,6 +32,7 @@ extern const char * const env_name[NENV];
 void pal_set_court(u8 surface, u8 cond, u8 env);   /* cond : 0 jour, 1 nuit, 2 pluie */
 void pal_set_menu(void);
 void pal_set_player(u8 slot, u8 character);
+void pal_players_match(u8 c0, u8 c1);          /* (2.77) palettes des joueurs en match : sombre = noir */
 void spr_begin(void);
 void spr_end(void);
 void __fastcall__ spr1(u8 x, u8 y, u8 tile, u8 attr);

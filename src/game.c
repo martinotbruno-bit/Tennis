@@ -993,8 +993,7 @@ static void court_load(void)
     bank_call(BANK_EXTRAS, load_court);
     pal_set_court(cfg.surface, cfg.cond, cfg.env);
     bank_call(BANK_HL, court_post);    /* bandeau du score (écran 1) ; crépuscule : lumière selon les jeux joués (highlight.c) */
-    pal_set_player(0, cfg.chr[0]);
-    pal_set_player(1, cfg.chr[1]);
+    pal_players_match(cfg.chr[0], cfg.chr[1]);               /* (2.77 : contour, raquette et cheveux noirs) */
 }
 
 /* Retour au court après un gros plan ou un zoom du ralenti (highlight.c,
