@@ -1325,6 +1325,7 @@ console.log('Compétition en double, levée de coupe et club nudiste');
   // retour au titre après le podium (CHR-RAM rechargée : ~47 trames)
   e.tap('A'); runUntil(e, () => scr(e) === SS.CHAMP, 60); e.run(70); e.tap('A');   /* (2.76 : le champion brandit la coupe) */
   runUntil(e, () => scr(e) === SS.TITLE && e.peek('ppu_mask') !== 0, 200); e.run(10); toMenu(e); setOpts(e, { MODE: MODE.COMP, COMP: 0 }); e.tap('START'); passCustom(e); e.run(40);
+  e.tap('LEFT'); e.run(20);   // (2.77 : ouverture sur le tableau ; le code est sur la page du match)
   const code = e.text(10, 22, 15).replace(/ /g, '');
   check(e.peek('c_trophies') === 1, 'les trophées se cumulent d\'une compétition à l\'autre');
   const f = boot(); f.tap('UP'); f.tap('A'); f.run(10);
@@ -1343,7 +1344,8 @@ if (sec('Compétition en double à deux joueurs humains')) {
 console.log('Compétition en double à deux joueurs humains');
 {
   const e = boot(); startWith(e, { MODE: MODE.COMP, COMP: 2, TYPE: 1, P2: 3, CPART: 1 });
-  check(scr(e) === SS.COMP && e.text(3, 23, 18) === 'DOUBLE A 2 JOUEURS', 'championnat en double à 2 joueurs');
+  const opening = e.peek('c_pg') === 1; e.tap('LEFT'); e.run(20);   // (2.77 : ouverture sur le tableau)
+  check(opening && scr(e) === SS.COMP && e.text(3, 23, 18) === 'DOUBLE A 2 JOUEURS', 'championnat en double à 2 joueurs : ouverture sur le tableau, puis la page du match');
   e.tap('A'); runUntil(e, () => scr(e) === SS.PRESENT && litScr(e), 90);
   check(e.text(2, 22, 11) === '+ MANETTE 2', 'présentation : partenaire à la manette 2');
   e.tap('A'); e.run(40);
@@ -2881,9 +2883,10 @@ console.log('Joueur personnalisé en compétition (2.75)');
   const second = scr(e), t2 = e.text(4, 4, 20);
   e.tap('START'); runUntil(e, () => scr(e) === SS.PICK, 120); e.run(40);
   const poster = scr(e), t3 = e.text(3, 1, 10), name = e.text(2, 19, 8);
+  e.tap('A'); e.run(40); const et = e.text(13, 11, 6).trim();   // (2.77 : page du joueur 2 : « ET », pas « CONTRE »)
   e.tap('START'); runUntil(e, () => scr(e) === SS.COMP, 200);
-  check(first === SS.CUSTOM && t1.startsWith('JOUEUR 1') && second === SS.CUSTOM && t2.startsWith('JOUEUR 2') && poster === SS.PICK && t3 === 'TON JOUEUR' && name.startsWith('Z') && scr(e) === SS.COMP,
-    `compétition : TON JOUEUR (« ${t1.trim()} », « ${t2.trim()} »), puis l'affiche VS avec le joueur conçu (« ${name.trim()} », ${poster}, « ${t3} », ${[...Array(30).keys()].map(r => e.text(0, r, 32)).filter(l => l.includes('Z')).length}), puis le tableau (${scr(e)})`);
+  check(first === SS.CUSTOM && t1.startsWith('JOUEUR 1') && second === SS.CUSTOM && t2.startsWith('JOUEUR 2') && poster === SS.PICK && t3 === 'TON JOUEUR' && name.startsWith('Z') && et === 'ET' && scr(e) === SS.COMP,
+    `compétition : TON JOUEUR (« ${t1.trim()} », « ${t2.trim()} »), puis l'affiche avec le joueur conçu, « ${et} » (« ${name.trim()} », ${poster}, « ${t3} », ${[...Array(30).keys()].map(r => e.text(0, r, 32)).filter(l => l.includes('Z')).length}), puis le tableau (${scr(e)})`);
   // (profil remis d'origine pour la suite)
   e.poke('cu_sav', 0, 0);
 }

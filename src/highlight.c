@@ -714,8 +714,7 @@ static u8 zx, zy, zwx, zwy;            /* point visé dans l'image agrandie ; co
    ligne : la trace est donc un disque de 2 px de rayon (du court), centré
    sur le centre du pixel de rebond, celui que juge l'arbitre. Balle bonne :
    la trace mord sur la ligne ; dehors : un écart se voit. Contour sombre
-   (couleur 2), anneau de la couleur de la balle (couleur 1), centre
-   transparent : la ligne se voit au travers. 2 x 2 sprites (16 x 16 px),
+   (couleur 2), intérieur plein de la couleur de la balle (couleur 1). 2 x 2 sprites (16 x 16 px),
    tuiles hl_n à hl_n + 3, le titre ensuite. (L'image agrandie est
    toujours celle du court à plat : voir zoom_build.) */
 u16 __fastcall__ mark_build_f(u16 adz);   /* extra2.c (banque 30) : adresse des 4 tuiles | z */

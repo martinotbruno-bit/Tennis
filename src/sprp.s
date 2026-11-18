@@ -910,8 +910,11 @@ _spr_ball:
     jmp @put
 @rot:
     lda tmp1
+    cmp #17                 ; (2.77) balle de 6 px : un seul dessin, sans
+    beq :+                  ; rotation (tuiles 18 à 20 : autre chose, balle « vide »)
     clc
     adc brot
+:   clc
     adc _ball_base
     sta btile
 @put:

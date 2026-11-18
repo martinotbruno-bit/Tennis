@@ -136,7 +136,7 @@ static void comp_next(void)
     /* l'image du tournoi (premier tour) s'affiche juste avant le début du
        match, après sa présentation (gm_ev : $FF = aucune) */
     gm_ev = COMP(comp_gm_intro, 0);
-    c_pg = 0;
+    c_pg = (u8)(c_stage == 0);          /* (2.77) ouverture du tournoi : d'abord le tableau */
     comp_screen();
 }
 u8 vis[NOPT];        /* (lu par menuart.c : accolades des groupes) */

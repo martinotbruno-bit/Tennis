@@ -151,7 +151,9 @@ static void draw_players(u8 st)
     bank_call(BANK_PODIUM, vs_build);
     bank_call(BANK_CAR, vs_texts);
     txt_at(3, 1, st == PK_P1 ? "TON JOUEUR" : partner() ? "TON PARTENAIRE" : m != MODE_1P ? "JOUEUR 2" : "TON ADVERSAIRE");
-    txt_at(13, 11, partner() ? "  ET  " : "CONTRE");
+    /* (2.77) compétition à deux joueurs humains : inscrits ensemble, pas
+       encore adversaires : « ET » plutôt que « CONTRE » */
+    txt_at(13, 11, partner() || (m == MODE_COMP && opt_val[O_CPART]) ? "  ET  " : "CONTRE");
     /* flèches autour du nom choisi (rangée 19) */
     txt_at((u8)(st == PK_P1 ? 1 : 17), 19, "<");
     {
