@@ -738,7 +738,7 @@ u8 __fastcall__ comp_draw_table(u8 y)
         for (n = c_n; n > 1; n >>= 1) ++nr;
         x0 = (u8)((32 - (nr * 7 + 5)) >> 1);
         h = (u8)((c_n - 1) * sp + 1);
-        y0 = (u8)((h >= 15 ? y - 1 : y + ((15 - h) >> 1)) - (c_nh > 1 ? 1 : 0));   /* (à plusieurs : rangée 23, à qui de jouer, comp_who) */
+        y0 = (u8)(h >= 15 ? y - 1 : y + ((15 - h) >> 1));
         for (i = 0; i < c_n; ++i) rw[i] = (u8)(i * sp);
         n = c_n;
         for (b = 0; ; ++b, n >>= 1) {                 /* tour b : n inscrits */
@@ -776,7 +776,7 @@ u8 __fastcall__ comp_path(u8 y)
     static const char * const rn[4] = { "FINALE", "DEMI", "QUART", "8E" };
     u8 n, r, i, x = 3, k;
     const char *t;
-    comp_who(23);                       /* (2.76) à deux en simple : à qui de jouer */
+    comp_who(comp_l2[0] ? 23 : 6);      /* (2.76) à plusieurs en simple : à qui de jouer (2.77h : sous le titre, si la rangée est libre) */
     switch (c_type) {
     case CT_GROUPS: case CT_LEAGUE: return 0;
     case CT_SEASON: n = 3; r = (u8)(c_stage % 3); break;

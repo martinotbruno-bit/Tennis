@@ -427,7 +427,7 @@ static void menu_soft_tick(void)
     while (rd_row < rd_n && vram_len + 40 <= VBUF_MAX) {
         i = (u8)(4 + rd_row++ - MY0);       /* rangée : 3 + rd_row */
         if (i < nvis) {
-            pad_text(vis[i] == O_P2 && (opt_val[O_MODE] == MODE_COMP || opt_val[O_MODE] == MODE_2P_TEAM) ? (const char *)"PARTENAIRE" : (const char *)opt_label[vis[i]], 13);
+            pad_text(row_label(vis[i]), 13);   /* (2.77h : JOUEURS aussi) */
             vbuf_text(3, (u8)(3 + rd_row), line, 13);
             pad_text(opt_text(vis[i]), 15);
         } else {

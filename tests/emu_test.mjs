@@ -2889,11 +2889,12 @@ console.log('Joueur personnalisé en compétition (2.75)');
   e.tap('START'); e.run(20);
   const second = scr(e), t2 = e.text(4, 4, 20);
   e.tap('START'); runUntil(e, () => scr(e) === SS.PICK, 120); e.run(40);
-  const poster = scr(e), t3 = e.text(3, 1, 10), name = e.text(2, 19, 8);
-  e.tap('A'); e.run(40); const et = e.text(13, 11, 6).trim();   // (2.77 : page du joueur 2 : « ET », pas « CONTRE »)
-  e.tap('START'); runUntil(e, () => scr(e) === SS.COMP, 200);
-  check(first === SS.CUSTOM && t1.startsWith('JOUEUR 1') && second === SS.CUSTOM && t2.startsWith('JOUEUR 2') && poster === SS.PICK && t3 === 'TON JOUEUR' && name.startsWith('Z') && et === 'ET' && scr(e) === SS.COMP,
-    `compétition : TON JOUEUR (« ${t1.trim()} », « ${t2.trim()} »), puis l'affiche avec le joueur conçu, « ${et} » (« ${name.trim()} », ${poster}, « ${t3} », ${[...Array(30).keys()].map(r => e.text(0, r, 32)).filter(l => l.includes('Z')).length}), puis le tableau (${scr(e)})`);
+  // (2.77h) plus de page de choix du joueur en compétition : la page du court
+  const poster = scr(e), t3 = e.text(0, 0, 32) + e.text(0, 1, 32) + e.text(0, 2, 32);
+  e.tap('A'); e.tap('A'); e.tap('A'); runUntil(e, () => scr(e) === SS.COMP, 200);
+  const name = [...Array(30).keys()].map(r => e.text(0, r, 32)).filter(l => /\bZ/.test(l)).length;
+  check(first === SS.CUSTOM && t1.startsWith('JOUEUR 1') && second === SS.CUSTOM && t2.startsWith('JOUEUR 2') && poster === SS.PICK && !t3.includes('TON JOUEUR') && t3.includes('LIEU') && scr(e) === SS.COMP && name >= 1,
+    `compétition : TON JOUEUR (« ${t1.trim()} », « ${t2.trim()} »), puis la page du court sans choix du joueur (${poster}, « ${t3.replace(/\s+/g, ' ').trim()} »), puis le tableau (${scr(e)}, ${name})`);
   // (profil remis d'origine pour la suite)
   e.poke('cu_sav', 0, 0);
 }
@@ -3153,6 +3154,13 @@ console.log('Version 2.77 : château au crépuscule, victoire sans bandeau');
 }
 if (sec('Version 2.77 : compétition à 4 joueurs')) {
 console.log('Version 2.77 : compétition à 4 joueurs');
+{
+  // (2.77h) en passant le mode à COMPETITION, la ligne s'appelle tout de suite JOUEURS
+  const e = boot(); toMenu(e); setOpts(e, { MODE: MODE.TEAM, TYPE: 0, CPART: 0 }); e.tap('B'); e.run(5); toMenu(e);
+  e.tap('DOWN'); e.run(5); e.tap('RIGHT'); e.run(60);
+  const r = rowOf(e, O.CPART), lbl = r >= 0 ? e.text(3, menuY(e, r), 7) : '';
+  check(e.peek('opt_val', O.MODE) === MODE.COMP && lbl === 'JOUEURS', `réglages : passage en compétition, ligne « ${lbl} » aussitôt`);
+}
 {
   // réglages : ligne JOUEURS (1 à 4) en compétition en simple ; TON JOUEUR pour
   // chacun ; tableau : les 4 joueurs répartis dans les quarts ; à tour de rôle

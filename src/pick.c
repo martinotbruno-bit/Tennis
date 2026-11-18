@@ -84,8 +84,12 @@ static u8 pk_list(u8 *l)
     u8 n = 0, m = opt_val[O_MODE], ct = opt_val[O_COMP];
     if (m == MODE_DEMO) return 0;
     if (m == MODE_COMP && ct == CT_KO) l[n++] = PK_EV;           /* d'abord le tournoi */
-    l[n++] = PK_P1;
-    if (m == MODE_1P || m == MODE_2P || m == MODE_2P_TEAM || (m == MODE_COMP && (opt_val[O_TYPE] || opt_val[O_CPART]))) l[n++] = PK_P2;   /* (2.76 : compétition à deux) */
+    /* (2.77h) en compétition, les joueurs sont choisis sur TON JOUEUR : pas
+       de page de choix du joueur (on pouvait en rechoisir un avec A) */
+    if (m != MODE_COMP) {
+        l[n++] = PK_P1;
+        if (m == MODE_1P || m == MODE_2P || m == MODE_2P_TEAM) l[n++] = PK_P2;
+    }
     (void)ct;
     if (pk_rows()) l[n++] = PK_CRT;
     return n;

@@ -823,7 +823,7 @@ Légende : ✅ réalisé et testé en émulation · 🟡 partiel · 🔧 nécess
 
 ## 5. Limitations restantes
 
-- **Version 2.77g** : dernière suite complète 429 vérifications sur 432 ; les 3 échecs venaient de tests trop dépendants du déroulement des matchs (corrigés, sections vertes).
+- **Version 2.77h** : parcours de compétition corrigé (plus de page de choix du joueur après TON JOUEUR, ligne JOUEURS aussitôt affichée, tableau à plusieurs joueurs sans chevauchement) ; suite complète : voir ci-dessous.
 
 1. **Tests sur matériel réel** (priorité 1 du CDC). Il faut flasher `dist/royal_martinot.nes` sur une cartouche MMC1/SNROM (ou un linéaire EverDrive/PowerPak) et tester sur NES NTSC, NES PAL et Famicom. Points à surveiller :
    - l'état du MMC1 à la mise sous tension ;
