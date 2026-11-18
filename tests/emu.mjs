@@ -93,7 +93,7 @@ class Emu {
       if (this.tossSkip && this.cerAddr !== undefined && this.appAddr !== undefined) {
         const m = this.nes.cpu.mem;
         if (this._tsPress) { this.nes.buttonUp(1, BTN.A); this.nes.buttonUp(2, BTN.A); this._tsPress = false; }
-        else if (m[this.appAddr] === 1 && m[this.labels['_cer']] === 11 && !this.held[0].has('A')) { this.nes.buttonDown(1, BTN.A); this.nes.buttonDown(2, BTN.A); this._tsPress = true; }
+        else if (m[this.appAddr] === 1 && (m[this.labels['_cer']] === 11 || m[this.labels['_cer']] === 13) && !this.held[0].has('A')) { this.nes.buttonDown(1, BTN.A); this.nes.buttonDown(2, BTN.A); this._tsPress = true; }
       }
       if (each) each(this);
     }

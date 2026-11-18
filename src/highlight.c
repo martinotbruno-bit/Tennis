@@ -125,6 +125,7 @@ void sun_apply(void);
 #define BAND_WAIT 48           /* délai d'apparition après le point (2.74) */
 #define CER_SEAT  5
 #define CER_CHOOSE 11            /* tirage au sort : choix du gagnant (cer.c, 2.76) */
+#define CER_RECAP 13             /* récapitulatif avant le service (cer.c, 2.76) */
 extern u8 toss_q;
 extern u8 hl_mode, cer;
 extern u8 band_hold, crowd_big;
@@ -165,6 +166,13 @@ static void band_text(u8 t)
     const char *q;
     for (i = 0; i < 28; ++i) bb[i] = ' ';
     if (band_pg == 6) {             /* (2.76) tirage au sort : le choix du gagnant */
+        if (toss_q == 3) {          /* récapitulatif : « ALEX SERT EN BAS » / « MAYA RECOIT    A : JOUER » */
+            k = (u8)(t ? sc_server ^ 1 : sc_server);
+            team_label(cfg.chr[k], cfg.doubles ? cfg.chr[k + 2] : 255, bb);
+            q = t ? "RECOIT     A : JOUER" : (((sc_server & 1) ^ sc_swap) ? "SERT EN HAUT" : "SERT EN BAS");
+            for (i = 6; *q; ) bb[i++] = *q++;
+            return;
+        }
         q = t ? (toss_q == 1 ? "A : SERVIR     B : LE COTE" : "A : RESTER     B : CHANGER")
               : (toss_q == 1 ? "GAGNE LE TIRAGE" : "CHOISIT SON COTE");
         team_label(cfg.chr[sc_server], cfg.doubles ? cfg.chr[sc_server + 2] : 255, bb + (t ? 28 : 0));
@@ -309,9 +317,9 @@ void band_draw(void)
        au lancer de balle, comme avant. */
     if (ms != MS_DEAD && ms != MS_SERVE) band_dis = 0;
     else if (!rp_pending && (pad1_new | pad2_new)) band_dis = 1;
-    if (cer == CER_CHOOSE) band_pg = 6;
+    if (cer == CER_CHOOSE || cer == CER_RECAP) band_pg = 6;
     v = (u8)(cfg.mode == GM_MATCH && !paused && !hl_mode && !sc_over &&
-             ((cer == CER_SEAT) || (cer == CER_CHOOSE && toss_q) || (cer == 4 && !band_dis) || ((!cer || cer >= 0xF0) && !band_dis && !rp_pending && (ms == MS_DEAD || ms == MS_SERVE))));
+             ((cer == CER_SEAT) || ((cer == CER_CHOOSE || cer == CER_RECAP) && toss_q) || (cer == 4 && !band_dis) || ((!cer || cer >= 0xF0) && !band_dis && !rp_pending && (ms == MS_DEAD || ms == MS_SERVE))));
     /* (2.76) cer 4 (CER_CHAIR, vers les chaises) : le bandeau reste affiché
        depuis la fin du point jusqu'aux statistiques, sans disparaître */
     /* (2.74) apparition : 48 trames après la fin du point (ou du ralenti),
@@ -329,7 +337,7 @@ void band_draw(void)
         band_t = (u8)(rp_pending || hl_mode || ms == MS_REPLAY ? BAND_WAIT : 0);
         return;
     }
-    if (cer != CER_SEAT && cer != CER_CHOOSE && band_t < BAND_WAIT) { ++band_t; return; }   /* (délai : pas encore de bandeau) */
+    if (cer != CER_SEAT && cer != CER_CHOOSE && cer != CER_RECAP && band_t < BAND_WAIT) { ++band_t; return; }   /* (délai : pas encore de bandeau) */
     if (!band_vis) { band_vis = 1; band_rows = 15; }  /* (bits 2-3 : filet du bas, bords et rangée 29, que les bandes du ralenti recouvrent) */
     if (cer == CER_SEAT) {
         if (band_human()) {
@@ -337,7 +345,7 @@ void band_draw(void)
             if ((pad1_new | pad2_new) & PAD_START) band_hold = 2;                                       /* (2.76) START : toutes passées, on reprend */
             else if ((pad1_new | pad2_new) & (PAD_A | PAD_B)) { if (band_pg >= 5) band_hold = 2; else ++band_pg; }
         } else if (++band_t >= 40) { band_t = 0; if (++band_pg > 5) band_pg = 0; }   /* (40 trames par page : les 5 statistiques passent pendant la pause assise) */
-    } else if (cer != CER_CHOOSE) band_pg = 0;
+    } else if (cer != CER_CHOOSE && cer != CER_RECAP) band_pg = 0;
     /* texte : rafraîchi quand le score change, une rangée par trame */
     if (band_last[0] != sc_points[0] || band_last[1] != sc_points[1] || band_last[2] != sc_games[0] ||
         band_last[3] != sc_games[1] || band_last[4] != sc_set_no || band_last[5] != sc_server || band_last[6] != band_pg) {
@@ -372,7 +380,7 @@ void band_draw(void)
        en retard, l'OAM envoyée au PPU est celle de la trame d'avant : elle
        doit déjà être sans les sprites du bas) */
     if (band_vis == 1) { if (band_rows) return; band_vis = 2; }
-    else if (band_vis == 2) { band_vis = 3; band_on(cer == CER_SEAT || cer == CER_CHOOSE ? BAND_LINE : BAND_LINE + 40); }
+    else if (band_vis == 2) { band_vis = 3; band_on(cer == CER_SEAT || cer == CER_CHOOSE || cer == CER_RECAP ? BAND_LINE : BAND_LINE + 40); }
     else if (cer != CER_SEAT && band_t < BAND_WAIT + 10) { ++band_t; band_on((u8)(BAND_LINE + (BAND_WAIT + 10 - band_t) * 4)); }   /* (montée) */
     /* (2.76) hl_flags bit 2 : bandeau entièrement monté (les chaises du
        changement de côté n'apparaissent qu'alors, cer.c) */

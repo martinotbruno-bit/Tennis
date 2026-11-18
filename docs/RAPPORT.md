@@ -51,6 +51,9 @@ Comme l'exige le CDC (§ 17.5), ce rapport distingue ce qui est **réalisé**, *
 | Tableau de compétition trop chargé | Deux pages : le prochain match (lignes espacées, code), puis le tableau ou le classement (DROITE / GAUCHE) |
 | Tirage au sort | Les joueurs entrent et se présentent devant l'arbitre, de part et d'autre du filet. Le gagnant choisit sur un bandeau comme celui du score, avec sa manette : A servir, B choisir le côté (puis A rester, B changer ; l'adversaire sert). L'ordinateur, s'il gagne, sert |
 | Compétition à plusieurs joueurs humains | Ligne JOUEUR 2 : MANETTE 2 en compétition simple, pour tous les types : un 2e joueur humain est inscrit dans l'autre moitié du tableau (l'autre poule). Chacun joue ses matchs (« A TOI, JOUEUR 2 (MANETTE 2) ») ; quand ils se rencontrent, le match se joue à deux manettes. Si l'un est éliminé, l'autre continue ; le mieux classé est retenu pour le podium. Limite : le code de reprise ne garde que le joueur 1 |
+| Ralenti SIMPLE | Il ne rejoue plus que les balles proches de la ligne, dedans ou dehors (zoom sur le rebond) |
+| Balles dont la trace touchait la ligne jugées dehors | La balle est bonne tant que son centre est à 2 px ou moins du bord extérieur d'une ligne : rayon de la balle au sol et épaisseur de chaque ligne (2 px pour les lignes de fond, 1 px pour les autres), pour toutes les lignes du court, carrés de service et ligne médiane compris |
+| Récapitulatif après le tirage | Les joueurs à leur place, le bandeau du score affiche « ALEX SERT EN BAS » / « MAYA RECOIT   A : JOUER » ; le service attend A (sans joueur humain : 1,5 s) |
 
 ### Version 2.75
 

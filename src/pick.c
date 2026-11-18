@@ -197,23 +197,30 @@ static void draw_court(u8 st)
     ppu_on();
 }
 
+static void pk_music(void);
 static void draw(void)
 {
     u8 st = pk_stage();
     fade_skip = 1;
     if (st == PK_EV) draw_event();
-    else if (st == PK_ENV || st == PK_SURF) draw_court(st);
-    else draw_players(st);
+    else if (st == PK_ENV || st == PK_SURF) { draw_court(st); pk_music(); }
+    else { draw_players(st); pk_music(); }
 }
 
 /* fin des pages : motifs d'origine (images, court), décor des menus */
+/* musique des menus : la polka, ou la valse du court Margaux */
+static void pk_music(void)
+{
+    u8 m = opt_val[O_ENV] == ENV_MARGAUX ? MUS_MARGAUX : MUS_TITLE;
+    if (music_cur != m) music_play(m);
+}
 static u16 leave(u8 r)
 {
     ppu_off();
     split_stop();
     chr_reload();
     spr_begin(); spr_end();
-    music_play(MUS_NONE);
+    pk_music();                         /* (après la fanfare d'un tournoi) */
     return r;
 }
 

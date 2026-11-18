@@ -46,6 +46,7 @@ extern u8 hl_flags, band_t;
 #define CER_SALUTE 10   /* salut à l'arbitre */
 #define CER_CHOOSE 11   /* tirage gagné : choix du service ou du côté, sur le bandeau (2.76) */
 #define CER_GOSRV  12   /* du filet à la place du service (2.76) */
+#define CER_RECAP  13   /* récapitulatif sur le bandeau, à valider avant le service (2.76) */
 #define CER_PEND   0xFE /* changement de côté annoncé (positions retenues) */
 #define CER_CHAIRS 0xFD /* fin de l'échange qui amène un changement de côté : les chaises apparaissent */
 
@@ -125,6 +126,7 @@ static void finish(void)
     if (sun_pend && (cer == CER_CHAIR || cer == CER_SEAT)) hl_mode = 5;   /* (changement de côté passé : le soleil quand même) */
     if (cer >= CER_ENTRY && cer <= CER_TOSS || cer == CER_CHOOSE) { toss_q = 0; cer_req = 2; }   /* (tirage passé : le gagnant sert, places du service) */
     if (cer == CER_GOSRV) for (p = 0; p < npl; ++p) { plx[p] = tx[p]; ply[p] = ty[p]; }
+    if (cer == CER_RECAP || cer == CER_GOSRV) toss_q = 0;
     all_free();
     cer = 0;
 }
@@ -284,7 +286,7 @@ void cer_tick(void)
     u8 p, done = 1, win, top;
     if (cer >= CER_CHAIRS) return;
     ++cer_t;
-    if (cer_skip || (((pad1_new | pad2_new) & (PAD_A | PAD_START)) && !(cer == CER_SEAT && cfg.mode == GM_MATCH && seat_human()))) {   /* (2.75 : assis, l'appui fait défiler les statistiques) */
+    if (cer_skip || (((pad1_new | pad2_new) & (PAD_A | PAD_START)) && cer != CER_CHOOSE && !(cer == CER_SEAT && cfg.mode == GM_MATCH && seat_human()))) {   /* (2.76 : le choix du tirage se fait par A ou B) */   /* (2.75 : assis, l'appui fait défiler les statistiques) */
         /* passer : fin du match, il reste peu de temps (sauf pour les
            tests, qui gardent la durée d'avant) */
         if (cer >= CER_JOY && !cer_skip && ms_timer > 20) ms_timer = 20;
@@ -320,7 +322,7 @@ void cer_tick(void)
             set_msg((u8)(toss_res ^ sc_server) ? "FACE !" : "PILE !", who, 70);
             sfx_clap();
         }
-        if (cer_t >= 150) { cer = CER_CHOOSE; cer_t = 0; toss_q = 1; band_rows |= 3; }
+        if (cer_t >= 150) { cer = CER_CHOOSE; cer_t = 0; toss_q = 1; band_rows |= 3; band_t = 48; }
         break;
     case CER_CHOOSE:
         /* (2.76) le gagnant du tirage choisit, avec sa manette (l'ordinateur :
@@ -341,7 +343,16 @@ void cer_tick(void)
         break;
     case CER_GOSRV:
         for (p = 0; p < npl; ++p) if (!step_to(p, tx[p], ty[p])) done = 0;
-        if (done) { all_free(); cer = 0; }
+        if (done) {
+            /* (2.76) récapitulatif : qui sert, de quel côté ; A pour jouer */
+            cer = CER_RECAP; cer_t = 0; toss_q = 3; band_rows |= 3; band_t = 48;   /* (BAND_WAIT : le bandeau monte aussitôt, en 10 trames) */
+            for (p = 0; p < npl; ++p) pose_force[p] = P_IDLE;
+        }
+        break;
+    case CER_RECAP:
+        /* validé par A ou START (passage commun, plus haut) ; sans joueur
+           humain, au bout de 90 trames */
+        if (!seat_human() && cer_t >= 90) { toss_q = 0; all_free(); cer = 0; }
         break;
     case CER_CHAIR:
         for (p = 0; p < npl; ++p)

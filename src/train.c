@@ -548,8 +548,8 @@ u16 __fastcall__ srv_box(u16 unused)
     u8 left = (u8)((srv_side == 0) == (ad == 0));
     s16 x = PX(bx), y = PX(by);
     (void)unused;
-    if (left) { if (x < IN_SL || x > CENTER_X + 1) return 0; }
-    else      { if (x < CENTER_X - 1 || x > IN_SR) return 0; }
+    if (left) { if (x < IN_SL || x > IN_CR) return 0; }    /* (ligne médiane comprise, rayon de la balle) */
+    else      { if (x < IN_CL || x > IN_SR) return 0; }
     if (srv_side == 0) return (u16)(y >= IN_TSRV && y <= NET_Y);
     return (u16)(y >= NET_Y && y <= IN_BSRV);
 }
