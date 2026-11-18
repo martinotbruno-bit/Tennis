@@ -578,6 +578,7 @@ static void label_draw(u8 y, u8 shown)
 }
 
 /* un plan : image haute définition, fond uni, sol ; palettes du joueur */
+u16 __fastcall__ hd_backdrop_f(u16 z);   /* extra2.c (banque 30) */
 static void cut_build(u8 art)
 {
     u8 i, S, O, D, z, c = (art == TZ_BALLKID || art == TZ_CROWD) ? 11 : cfg.chr[hl_sp];   /* (ramasseuse, public : tenues vertes, celles de JADE) */
@@ -600,17 +601,22 @@ static void cut_build(u8 art)
     for (i = 0; i < a->h; ++i) { vram_adr(ad); ad += 32; tz_n = a->w; tz_copy(m); m += a->w; }
     vram_adr(0x23C0); tz_n = 64; tz_copy(a->at);
     vram_adr(0x27C0); vram_fill(0, 64);
+    far_call(BANK_X2, (void *)hd_backdrop_f, z);   /* (2.77) décor sur tout l'écran, sol continu (extra2.c) */
     /* palettes (comme la bande-annonce) */
     pal_set_player(61, c);
     S = pal_buf[5]; O = pal_buf[6]; D = pal_buf[7];
-    flash(z ? 0x06 : 0x01);             /* gros plan : rouge sombre ; plan moyen : nuit bleue */
+    /* (2.77) fond noir : les contours, les yeux et la bouche des images HD
+       sont dessinés dans la couleur du fond (tools/gen_teaser.py) ; sur le
+       bleu nuit (plan moyen) ou le rouge sombre (gros plan) d'avant, le
+       joueur se fondait dans le décor et ses yeux prenaient cette couleur */
+    flash(0x0F);
     if (S >= 0x10) { pal_buf[5] = S; pal_buf[6] = (u8)(S - 0x10); } else { pal_buf[5] = (u8)(S + 0x10); pal_buf[6] = S; }
     if (O >= 0x10) { pal_buf[9] = O; pal_buf[10] = (u8)(O - 0x10); } else { pal_buf[9] = (u8)(O + 0x10); pal_buf[10] = O; }
     if (O == 0x30) pal_buf[10] = 0x10;
     pal_buf[7] = pal_buf[11] = D;
     pal_buf[13] = pal_buf[5]; pal_buf[14] = pal_buf[9]; pal_buf[15] = 0x30;
     if (z) { pal_buf[1] = pal_buf[5]; pal_buf[2] = D; pal_buf[3] = 0x30; pal_buf[14] = pal_buf[6]; pal_buf[15] = pal_buf[9]; }
-    else { pal_buf[1] = 0x0F; pal_buf[2] = 0x02; pal_buf[3] = 0x11; }
+    else { pal_buf[1] = 0x01; pal_buf[2] = 0x02; pal_buf[3] = 0x11; }   /* (tirets du décor : bleu nuit sur le fond noir) */
     pal_buf[16 + 9] = 0x0F; pal_buf[16 + 10] = 0x0F; pal_buf[16 + 11] = 0x30;   /* titre : blanc, ombre noire */
     pal_buf[16 + 13] = 0x38; pal_buf[16 + 14] = 0x27; pal_buf[16 + 15] = 0x30;  /* balle */
     pal_dirty = 1;
@@ -657,7 +663,7 @@ static void closeup_tick(void)
         /* plan moyen : travelling éclair, puis lente dérive */
         hl_cam = hl_c < 6 ? -(s16)whip_in[hl_c] : (s16)(hl_c >> 2);
         scroll_x = (u8)hl_cam; scroll_nt = (u8)((hl_cam >> 8) & 1);
-        if ((hl_c & 3) == 0 && hl_c > 2) flash(0x01);
+        if ((hl_c & 3) == 0 && hl_c > 2) flash(0x0F);   /* (2.77 : fond noir, voir cut_build) */
         /* la balle arrive sur le tamis, impact (flash), traînée : coup droit
            (elle arrive de la droite, repart vers la gauche en montant) ;
            service et smash (elle tombe d'en haut, repart vers le bas) */
@@ -1187,7 +1193,7 @@ u16 __fastcall__ champ_tick(u16 a)
     /* flashs des photographes : le fond s'illumine une trame, par salves */
     i = (u8)(hl_t & 63);
     if (hl_t > 20 && (i == 7 || i == 11 || i == 30 || i == 47 || i == 50)) flash(0x30);
-    else if (pal_buf[0] == 0x30 && hl_t > 6) flash(0x01);
+    else if (pal_buf[0] == 0x30 && hl_t > 6) flash(0x0F);
     spr_begin();
     confetti();
     if (hl_t >= 16) label_draw(221, (u8)((hl_t - 16) >> 1));   /* (sur le sol, sous les pieds : la coupe est en haut) */

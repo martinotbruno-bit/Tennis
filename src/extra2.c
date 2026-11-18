@@ -144,3 +144,31 @@ u16 __fastcall__ mark_build_f(u16 adz)
     return 0;
 }
 #pragma static-locals(pop)
+
+/* (2.77) gros plans HD (cut_build, highlight.c) : décor harmonieux. La trame
+   du fond de l'image (tuile $F8) couvre tout l'écran : elle remplace la tuile
+   du fond uni ($FB) et, là où la palette est celle du décor, la tuile vide
+   ($00) : avant, elle ne se voyait que dans le rectangle de l'image. Plan moyen (z = 0) : la bande du sol (rangées 27 à
+   29, tuile $FC) continue sous le joueur, là où la palette est celle du décor
+   (palette 0). Écran coupé. */
+#define PPU_DATA2 (*(volatile u8 *)0x2007)
+#pragma static-locals(push, off)
+u16 __fastcall__ hd_backdrop_f(u16 z)
+{
+    u8 b[32], at[64], i, r, d, t;
+    vram_adr(0xF8 << 4); d = PPU_DATA2; for (i = 0; i < 16; ++i) b[i] = PPU_DATA2;
+    vram_adr(0xFB << 4); for (i = 0; i < 16; ++i) vram_put(b[i]);
+    vram_adr(0x23C0); d = PPU_DATA2; for (i = 0; i < 64; ++i) at[i] = PPU_DATA2;
+    for (r = 0; r < 30; ++r) {
+        vram_adr(0x2000 + r * 32); d = PPU_DATA2; for (i = 0; i < 32; ++i) b[i] = PPU_DATA2;
+        for (i = 0; i < 32; ++i) {
+            if ((at[(r >> 2) * 8 + (i >> 2)] >> (((r & 2) << 1) | (i & 2))) & 3) continue;   /* (palette du joueur : inchangé) */
+            t = b[i];
+            if (!z && r >= 27) { if (t == 0 || t == 0xF8 || t == 0xFB) b[i] = 0xFC; }   /* sol */
+            else if (t == 0) b[i] = 0xF8;                                            /* trame du décor */
+        }
+        vram_adr(0x2000 + r * 32); for (i = 0; i < 32; ++i) vram_put(b[i]);
+    }
+    return 0;
+}
+#pragma static-locals(pop)
