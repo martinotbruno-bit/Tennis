@@ -1,10 +1,10 @@
-/* Royal Martinot 2.76 — pages de choix illustrées (banque 29).
+/* Royal Martinot — pages de choix illustrées (banque 29).
  *
  * Après les réglages (mode, compétition, format…), les choix qui se voient
  * se font sur des pages à part, dans l'ordre : le tournoi (compétition
  * « tournoi » : un des 7 tournois Martinot, sur l'image de son annonce),
  * le ou les joueurs (affiche VS : bustes, noms, styles), puis le court :
- * lieu, surface et météo sur la même page (2.77), le vrai court en aperçu
+ * lieu, surface et météo sur la même page, le vrai court en aperçu
  * avec ses couleurs et la lumière choisie (nuit, pluie qui tombe, couchant).
  * HAUT/BAS : ligne ; GAUCHE/DROITE : changer ; A : valider (page suivante) ;
  * B : page précédente (ou retour aux réglages) ; START : tout valider.
@@ -45,7 +45,7 @@ extern u8 cu_c[4];                      /* (gfx.c, page zéro : personnages des 
 #define PK_P1   1
 #define PK_P2   2
 #define PK_EV   3
-#define PK_CRT  4                       /* (2.77) lieu, surface et météo */
+#define PK_CRT  4                       /* lieu, surface et météo */
 /* lignes de la page du court */
 #define R_ENV   1
 #define R_SURF  2
@@ -84,7 +84,7 @@ static u8 pk_list(u8 *l)
     u8 n = 0, m = opt_val[O_MODE], ct = opt_val[O_COMP];
     if (m == MODE_DEMO) return 0;
     if (m == MODE_COMP && ct == CT_KO) l[n++] = PK_EV;           /* d'abord le tournoi */
-    /* (2.77h) en compétition, les joueurs sont choisis sur TON JOUEUR : pas
+    /* en compétition, les joueurs sont choisis sur TON JOUEUR : pas
        de page de choix du joueur (on pouvait en rechoisir un avec A) */
     if (m != MODE_COMP) {
         l[n++] = PK_P1;
@@ -151,13 +151,13 @@ static void draw_players(u8 st)
     cfg.ctrl[0] = CTRL_PAD1;
     cfg.ctrl[1] = (u8)(m == MODE_2P || ((m == MODE_2P_TEAM || m == MODE_COMP) && opt_val[O_CPART]) ? CTRL_PAD2 : CTRL_CPU);
     cfg.level[1] = opt_val[O_LEVEL];
-    if (m == MODE_COMP) far_call(BANK_CAR, (void *)cust_preview_f, 0);   /* (2.77 : le joueur conçu sur TON JOUEUR) */
+    if (m == MODE_COMP) far_call(BANK_CAR, (void *)cust_preview_f, 0);   /* (le joueur conçu sur TON JOUEUR) */
     pal_set_player(0, cfg.chr[0]);
     pal_set_player(1, cfg.chr[1]);
     bank_call(BANK_PODIUM, vs_build);
     bank_call(BANK_CAR, vs_texts);
     txt_at(3, 1, st == PK_P1 ? "TON JOUEUR" : partner() ? "TON PARTENAIRE" : m != MODE_1P ? "JOUEUR 2" : "TON ADVERSAIRE");
-    /* (2.77) compétition à deux joueurs humains : inscrits ensemble, pas
+    /* compétition à deux joueurs humains : inscrits ensemble, pas
        encore adversaires : « ET » plutôt que « CONTRE » */
     txt_at(13, 11, partner() || (m == MODE_COMP && opt_val[O_CPART]) ? "  ET  " : "CONTRE");
     /* flèches autour du nom choisi (rangée 19) */
@@ -252,9 +252,9 @@ static void draw_court(void)
     pal_set_court(cfg.surface, cfg.cond == COND_SUNSET ? COND_DAY : cfg.cond, cfg.env);
     ppu_emph = (u8)(cfg.cond == COND_SUNSET ? (is_pal ? 0x40 : 0x20) : 0);
     if (cfg.cond == COND_SUNSET && cfg.env == ENV_CASTLE) { pal_buf[9] = 0x37; pal_buf[10] = 0x27; }   /* (pierre dorée, comme en match) */
-    pal_players_match(cfg.chr[0], cfg.chr[1]);                                 /* (2.77 : comme en match) */
+    pal_players_match(cfg.chr[0], cfg.chr[1]);                                 /* (comme en match) */
     vram_adr(0x2000); vram_fill(0, 128);                 /* (rangées du score : le texte) */
-    vram_adr(0x23C0); vram_fill(0x55, 8);                /* (2.77) palette du texte sur les 4 rangées : au court Margaux, la palette rose du décor rendait les lettres baveuses */
+    vram_adr(0x23C0); vram_fill(0x55, 8);                /* palette du texte sur les 4 rangées : au court Margaux, la palette rose du décor rendait les lettres baveuses */
     rows_text(1);
     ppu_on();
 }
@@ -376,7 +376,7 @@ u16 __fastcall__ pick_tick(u16 pad)
         /* les deux joueurs sur le court, au repos */
         spr_begin();
         spr_person(120, 202, cfg.chr[0], 0, (u8)(((frame_cnt >> 5) & 1) ? POSE_IDLE : POSE_DRIBBLE), 0, 0);
-        spr_person(136, 62, cfg.chr[1], 1, POSE_IDLE, 0, 1);   /* (2.77 : sous les 3 lignes du haut) */
+        spr_person(136, 62, cfg.chr[1], 1, POSE_IDLE, 0, 1);   /* (sous les 3 lignes du haut) */
         if (cfg.cond == COND_RAIN) {
             /* pluie : 10 gouttes qui tombent en biais */
             for (n = 0; n < 10; ++n) spr1((u8)(n * 25 + 7 + (frame_cnt >> 1)), (u8)(40 + (u8)(n * 53 + (frame_cnt << 2)) % 190), 4, 3);
@@ -386,7 +386,7 @@ u16 __fastcall__ pick_tick(u16 pad)
     return 0;
 }
 
-/* (2.77, déplacé de screens.c, banque 1 pleine) réglages -> compétition */
+/* (déplacé de screens.c, banque 1 pleine) réglages -> compétition */
 #define O_FMT    9
 #define O_CSIZE  12
 #define O_CPROG  13
@@ -406,7 +406,7 @@ u16 __fastcall__ comp_opts_f(u16 unused)
     c_pl[0] = opt_val[O_P1];
     c_dbl = opt_val[O_TYPE];
     c_hum2 = (u8)(opt_val[O_TYPE] && opt_val[O_CPART]);   /* (double : partenaire à la manette 2) */
-    /* (2.77) en simple : 1 à 4 joueurs humains (O_CPART : joueurs en plus),
+    /* en simple : 1 à 4 joueurs humains (O_CPART : joueurs en plus),
        personnages : les deux choisis, puis ceux des pages TON JOUEUR 3 et 4 */
     c_nh = (u8)(opt_val[O_TYPE] ? 1 : 1 + opt_val[O_CPART]);
     c_hc[0] = opt_val[O_P1]; c_hc[1] = opt_val[O_P2]; c_hc[2] = cu_c[2]; c_hc[3] = cu_c[3];

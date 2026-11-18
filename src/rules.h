@@ -6,7 +6,7 @@ typedef unsigned char ru8;
 
 #define MAX_SETS 5
 
-/* Événements renvoyés par rules_point() (bits combinables) */
+/* Événements renvoyés par rules_point (bits combinables) */
 #define EV_POINT      0x00
 #define EV_GAME       0x01
 #define EV_SET        0x02
@@ -27,7 +27,7 @@ extern ru8 sc_sets_to_win, sc_games_per_set;
 extern ru8 sc_tb_first;       /* serveur du premier point du jeu décisif */
 extern ru8 sc_set_first_server;
 
-/* NES (2.71) : le code des règles est dans une banque commutable (place
+/* NES : le code des règles est dans une banque commutable (place
    libérée dans la banque fixe pour les voix de l'arbitre) ; les fonctions
    rules_* de la banque fixe (rules_far.c) l'appellent sous le nom rb_*. */
 #if defined(__CC65__) && defined(RULES_BANKED)

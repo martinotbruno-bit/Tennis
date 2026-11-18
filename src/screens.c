@@ -24,13 +24,13 @@
 #define SS_COMP_END  8
 #define SS_GMI      10   /* annonce d'un tournoi du Grand Martinot */
 #define SS_TEASER   11   /* bande-annonce du Grand Martinot et du Martinworld Tour */
-#define SS_FLY      12   /* survol du stade avant une finale (2.73, fly.c) */
-#define SS_CUSTOM   13   /* joueur personnalisé avant une compétition (2.75, career.c) */
-#define SS_CHAMP    14   /* le champion brandit la coupe (2.76, highlight.c) */
-#define SS_PICK     15   /* pages de choix illustrées (2.76, pick.c) */
+#define SS_FLY      12   /* survol du stade avant une finale (fly.c) */
+#define SS_CUSTOM   13   /* joueur personnalisé avant une compétition (career.c) */
+#define SS_CHAMP    14   /* le champion brandit la coupe (highlight.c) */
+#define SS_PICK     15   /* pages de choix illustrées (pick.c) */
 u16 __fastcall__ pick_begin(u16 first); u16 __fastcall__ pick_tick(u16 pad); u16 __fastcall__ comp_opts_f(u16 unused);
 u16 __fastcall__ champ_tick(u16 a);
-u16 __fastcall__ cust_build(u16 arg);   /* joueur personnalisé (career.c, banque 19, 2.75) */
+u16 __fastcall__ cust_build(u16 arg);   /* joueur personnalisé (career.c, banque 19) */
 u16 __fastcall__ cust_tick(u16 pad);
 void cust_page(void);
 void cust_apply(void);
@@ -38,7 +38,7 @@ void teaser_build(void); void teaser_tick(void);
 extern u8 teaser_done;
 #define SS_SETBREAK  9
 u8 scr_state;
-/* (2.73 : déplacées de la banque fixe, appelées seulement ici) */
+/* (déplacées de la banque fixe, appelées seulement ici) */
 extern u8 menu_bk;
 void menu_bk_pick(void)
 {
@@ -87,7 +87,7 @@ void spr_port(u8 x, u8 y, u8 base, u8 attr)
 #define O_SOUND  22   /* son : tout, bruitages seuls, aucun */
 #define O_FATIG  23   /* fatigue dans les très longs échanges */
 #define O_VIEW   24   /* vue : à plat, perspective */
-#define O_CAREER 25   /* carrière (2.72, compétitions en simple) */
+#define O_CAREER 25   /* carrière (compétitions en simple) */
 #define NOPT     26
 
 #define MODE_1P      0
@@ -99,7 +99,7 @@ void spr_port(u8 x, u8 y, u8 base, u8 attr)
 #define NMODES       6
 
 u8 opt_val[NOPT] = { 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 2, 1, 0, 1, 0, 1, 0, 1, 0, 0 };
-static const u8 opt_max[NOPT] = { 1, NMODES, 2, NCHARS, NCHARS, 3, NSURF, NENV, 4, 4, 3, NCT, 2, 2, 2, NEX, 4, 3, 3, 3, 4, 3, 3, 2, 2, 2 };   /* (O_CPART : 4 joueurs en compétition en simple, 2.77) */
+static const u8 opt_max[NOPT] = { 1, NMODES, 2, NCHARS, NCHARS, 3, NSURF, NENV, 4, 4, 3, NCT, 2, 2, 2, NEX, 4, 3, 3, 3, 4, 3, 3, 2, 2, 2 };   /* (O_CPART : 4 joueurs en compétition en simple) */
 static const char * const opt_label[NOPT] = {
     "COMMENCER", "MODE", "JEU", "JOUEUR 1", "JOUEUR 2", "NIVEAU CPU", "SURFACE", "LIEU",
     "CONDITIONS", "FORMAT", "RALENTIS", "COMPETITION", "JOUEURS", "ADVERSAIRES", "SURFACES",
@@ -130,14 +130,14 @@ void gm_intro_build(void);
 void gm_intro_tick(void);
 static void comp_screen(void);
 static void screen_begin(void);
-static u8 c_pg;                /* écran de la compétition : 0 le match, 1 le tableau ou le classement (2.76), 2 le tableau du tournoi en cours (2.77i) */
+static u8 c_pg;                /* écran de la compétition : 0 le match, 1 le tableau ou le classement, 2 le tableau du tournoi en cours */
 static u8 pg_max(void) { return (u8)(c_type == CT_SEASON || c_type >= CT_GRAND ? 2 : 1); }
 static void comp_next(void)
 {
     /* l'image du tournoi (premier tour) s'affiche juste avant le début du
        match, après sa présentation (gm_ev : $FF = aucune) */
     gm_ev = COMP(comp_gm_intro, 0);
-    c_pg = COMP(comp_open_pg, 0);       /* (2.77) ouverture du tournoi : d'abord le tableau (2.77i : celui du tournoi en cours) */
+    c_pg = COMP(comp_open_pg, 0);       /* ouverture du tournoi : d'abord le tableau (celui du tournoi en cours) */
     comp_screen();
 }
 u8 vis[NOPT];        /* (lu par menuart.c : accolades des groupes) */
@@ -157,14 +157,14 @@ static void build_visible(void)
     if (m == MODE_COMP) {
         add_opt(O_COMP);
         if (opt_val[O_COMP] == CT_CUSTOM) { add_opt(O_CSIZE); add_opt(O_CPROG); add_opt(O_CVAR); }
-        else if (!opt_val[O_TYPE]) add_opt(O_CAREER);   /* (2.72) */
+        else if (!opt_val[O_TYPE]) add_opt(O_CAREER);   /* */
         add_opt(O_TYPE);
-        add_opt(O_CPART);   /* 2e joueur : partenaire (double) ou rival (simple, 2.76), CPU ou manette 2 */
+        add_opt(O_CPART);   /* 2e joueur : partenaire (double) ou rival (simple), CPU ou manette 2 */
         add_opt(O_LEVEL);
         /* Grand Martinot, Martinworld Tour : au stade, de jour, surfaces
-           imposées, 3 sets et finale en 5. (2.76) Joueurs, tournoi, lieu et
+           imposées, 3 sets et finale en 5. Joueurs, tournoi, lieu et
            surface : pages illustrées après les réglages (pick.c) */
-        if (opt_val[O_COMP] < CT_GRAND) add_opt(O_FMT);   /* (2.77 : la météo, sur la page du court) */
+        if (opt_val[O_COMP] < CT_GRAND) add_opt(O_FMT);   /* (la météo, sur la page du court) */
         add_opt(O_REPLAY);
         add_opt(O_GSPEED);
     } else if (m == MODE_TRAIN) {
@@ -178,7 +178,7 @@ static void build_visible(void)
         if (m == MODE_2P) add_opt(O_TYPE);
         if (m == MODE_2P_TEAM) add_opt(O_CPART);   /* partenaire : CPU ou manette 2 */
         add_opt(O_LEVEL);
-        if (m == MODE_DEMO) add_opt(O_COND);   /* (2.77 : sinon sur la page du court, pick.c) */
+        if (m == MODE_DEMO) add_opt(O_COND);   /* (sinon sur la page du court, pick.c) */
         add_opt(O_FMT);
         add_opt(O_REPLAY);
         add_opt(O_GSPEED);
@@ -189,7 +189,7 @@ static void build_visible(void)
     if (cursor >= nvis) cursor = 0;
 }
 
-/* (2.77) compétition en simple : la ligne JOUEURS (1 à 4 joueurs humains) */
+/* compétition en simple : la ligne JOUEURS (1 à 4 joueurs humains) */
 static u8 comp_single(void) { return (u8)(opt_val[O_MODE] == MODE_COMP && !opt_val[O_TYPE]); }
 static const char * const cnt_name[4] = { "1", "2", "3", "4" };
 static const char *row_label(u8 o)
@@ -215,7 +215,7 @@ static const char *opt_text(u8 o)
         if (v == COND_SUNSET && (opt_val[O_ENV] == ENV_HALL || opt_val[O_MODE] == MODE_TRAIN || opt_val[O_MODE] == MODE_COMP)) return "CREP. > JOUR";
         return cond_name[v];
     case O_FMT:    return fmt_name[v];
-    case O_REPLAY: return v == 0 ? "NON" : v == 1 ? "OUI, TELE" : "OUI, SIMPLE";   /* (2.69 : 1 avec gros plan et zoom) */
+    case O_REPLAY: return v == 0 ? "NON" : v == 1 ? "OUI, TELE" : "OUI, SIMPLE";   /* (1 avec gros plan et zoom) */
     case O_COMP:   return cname(v);
     case O_CSIZE:  return v ? "8" : "4";
     case O_CPROG:  return v ? "PROGRESSIFS" : "NIVEAU FIXE";
@@ -225,7 +225,7 @@ static const char *opt_text(u8 o)
     case O_SPEED:  return speed_name[v];
     case O_SPIN:   return spin_name[v];
     case O_COUNT:  return v == 0 ? "10" : v == 1 ? "20" : "30";
-    case O_CPART:  if (comp_single()) return cnt_name[v];   /* (2.77 : JOUEURS, 1 à 4) */
+    case O_CPART:  if (comp_single()) return cnt_name[v];   /* (JOUEURS, 1 à 4) */
                    return v ? "MANETTE 2" : "CPU";
     case O_GSPEED: return gspeed_name[v];
     case O_SOUND:  return sound_name[v];
@@ -347,7 +347,7 @@ static void title_screen(void)
     deco_row = 24; bank_call(BANK_PODIUM, deco_filet);
     pal_buf[9] = 0x27; pal_buf[10] = 0x28; pal_buf[11] = 0x30;   /* logo et balle : couleurs d'origine */
     for (i = 0; i < 4; ++i) txt_at(10, (u8)(16 + i * 2), title_items[i]);
-    /* match interrompu (console éteinte) : on peut le reprendre (2.72) */
+    /* match interrompu (console éteinte) : on peut le reprendre */
     txt_at(4, 25, far_call(BANK_CAR, (void *)msave_ok, 0) ? "B : REPRENDRE LE MATCH" : "HAUT/BAS PUIS A - START");
     txt_at(4, 27, "(C) 2026 BRUNO MARTINOT");
     ppu_on();
@@ -359,7 +359,7 @@ static void title_screen(void)
 /* ---------------------------------------------------------------------- */
 /* Configuration                                                           */
 /* liste des réglages centrée verticalement entre les filets (rangées 4 à
-   21) : première rangée selon le nombre de lignes (version 2.60) */
+   21) : première rangée selon le nombre de lignes */
 #define MY0 ((u8)(4 + ((u8)(18 - nvis) >> 1)))
 static u8 rd_row, rd_n;
 static u8 hl_cur = 0xFF;      /* ligne affichée surlignée ($FF : aucune) */
@@ -415,7 +415,7 @@ static void menu_soft(void)
     u8 o = vis[cursor], i;
     build_visible();
     hl_cur = 0xFF;              /* toutes les lignes sont réécrites : surlignage ensuite */
-    /* (2.76) le curseur reste sur l'option changée, même si des lignes
+    /* le curseur reste sur l'option changée, même si des lignes
        apparaissent ou disparaissent au-dessus (il sautait d'une ligne) */
     for (i = 0; i < nvis; ++i) if (vis[i] == o) cursor = i;
     if (cursor >= nvis) cursor = 0;
@@ -428,7 +428,7 @@ static void menu_soft_tick(void)
     while (rd_row < rd_n && vram_len + 40 <= VBUF_MAX) {
         i = (u8)(4 + rd_row++ - MY0);       /* rangée : 3 + rd_row */
         if (i < nvis) {
-            pad_text(row_label(vis[i]), 13);   /* (2.77h : JOUEURS aussi) */
+            pad_text(row_label(vis[i]), 13);   /* (JOUEURS aussi) */
             vbuf_text(3, (u8)(3 + rd_row), line, 13);
             pad_text(opt_text(vis[i]), 15);
         } else {
@@ -494,7 +494,7 @@ static void cust_screen(u8 first)
 static void menu_screen(void)
 {
     u8 i;
-    bank_call(BANK_CAR, cust_reset);    /* (personnages d'origine hors compétition, 2.75) */
+    bank_call(BANK_CAR, cust_reset);    /* (personnages d'origine hors compétition) */
     build_visible();
     rd_row = rd_n = 0;
     screen_begin();
@@ -519,7 +519,7 @@ static void menu_sprites(void)
        croiserait le bas des portraits, 9 sprites sur une même ligne) */
     spr1(9, (u8)(MY0 * 8 + cursor * 8 - 1 - (cursor || MY0 > 5 ? bounce[(frame_cnt >> 2) & 7] : 0)), (u8)(ball_base + 8), 3);
     bank_call(BANK_PODIUM, menu_marks);      /* pastille de la surface, vignette du lieu */
-    /* (2.77) plus de portraits des joueurs de part et d'autre du titre : les
+    /* plus de portraits des joueurs de part et d'autre du titre : les
        joueurs se choisissent sur l'affiche VS, après les réglages (pick.c) */
     spr_end();
 }
@@ -570,7 +570,7 @@ static void setup_cfg(u8 mode)
         cfg.doubles = 1;
         /* partenaire joué par la manette 2 ou par l'ordinateur */
         cfg.ctrl[2] = opt_val[O_CPART] ? CTRL_PAD2 : CTRL_CPU;
-        if (!cfg.level[2]) cfg.level[2] = 1;   /* (2.77) équipier CPU : au moins NORMAL, réactif même contre des adversaires faciles */
+        if (!cfg.level[2]) cfg.level[2] = 1;   /* équipier CPU : au moins NORMAL, réactif même contre des adversaires faciles */
         cfg.chr[2] = opt_val[O_P2] == cfg.chr[0] ? unused_char(cfg.chr[0], 255, 255) : opt_val[O_P2];
         cfg.chr[1] = unused_char(cfg.chr[0], cfg.chr[2], 255);
         cfg.chr[3] = unused_char(cfg.chr[0], cfg.chr[1], cfg.chr[2]);
@@ -619,7 +619,7 @@ static void comp_cfg(void)
     if (cfg.env == ENV_HALL && cfg.cond == COND_RAIN) cfg.cond = COND_DAY;
     cfg.sets_to_win = (u8)(c_fmt == 1 ? 2 : c_fmt == 2 ? 3 : 1);
     cfg.games_per_set = (u8)(c_fmt == 3 ? 4 : 6);
-    COMP(comp_ctrl, o);                 /* (2.76) à deux joueurs humains : le joueur du tour, les manettes */
+    COMP(comp_ctrl, o);                 /* à deux joueurs humains : le joueur du tour, les manettes */
     last_mode = MODE_COMP;
 }
 
@@ -663,7 +663,7 @@ static void present_screen(void)
     } else txt_at(3, 1, cfg.doubles ? "MATCH DE DOUBLE" : "MATCH AMICAL");
     fin = (u8)(last_mode == MODE_COMP && is_final());   /* (avant vs_texts : la fiche écrit dans comp_l1) */
     if (vs) {
-        bank_call(BANK_CAR, vs_texts);   /* noms, manette ou niveau, style, conditions ; fiche des joueurs (career.c, 2.72) */
+        bank_call(BANK_CAR, vs_texts);   /* noms, manette ou niveau, style, conditions ; fiche des joueurs (career.c) */
         brk_t = 0; far_call(BANK_PODIUM, (void *)vs_anim, 0);   /* (« CONTRE » : écrit par l'entrée animée) */
     } else {
         team_line(0, 10);
@@ -722,14 +722,13 @@ static void comp_screen(void)
     txt_at(3, 6, comp_l2);
     COMP(comp_path, 7);
     if (c_pg) {
-        /* (2.76) page 2 : le tableau ou le classement, sous le titre ;
-           (2.77i) saison, Grand Martinot : page 3, le tableau du tournoi */
+        /* page 2 : le tableau ou le classement, sous le titre ; saison, Grand Martinot : page 3, le tableau du tournoi */
         if (c_pg == 2) COMP(comp_draw_ko, 10); else COMP(comp_draw_table, 10);
         txt_at(3, 25, "A : JOUER   B : MENU");
         txt_at(3, 26, c_pg == 2 ? "GAUCHE : LE CLASSEMENT" : pg_max() == 2 ? "< LE MATCH    LE TABLEAU >" : "GAUCHE : LE MATCH");
         goto done;
     }
-    /* page 1 : le prochain match (lignes espacées, 2.76) */
+    /* page 1 : le prochain match (lignes espacées) */
     o = COMP(comp_opponent, 0);
     team_label(c_pl[COMP(comp_me, 0)], c_pl2[0], line);
     txt_off = 0x40; txt_at(3, 11, line); txt_off = 0;
@@ -766,7 +765,7 @@ extern u8 pod_busy;             /* podium.c : cérémonie du Grand Martinot en c
 static void comp_end_screen(void)
 {
     char b[6];
-    SV(sv_comp_end);                    /* (avant l'écran : les points de la carrière, 2.72) */
+    SV(sv_comp_end);                    /* (avant l'écran : les points de la carrière) */
     screen_begin();
     was_unlocked = nude_unlocked;
     if (c_rank == 1) {
@@ -812,9 +811,9 @@ static void comp_end_sprites(void)
 
 static void start_comp(void)
 {
-    far_call(BANK_PICK, (void *)comp_opts_f, 0);   /* (réglages -> compétition : pick.c, banque 29, 2.77 : banque 1 pleine) */
+    far_call(BANK_PICK, (void *)comp_opts_f, 0);   /* (réglages -> compétition : pick.c, banque 29, banque 1 pleine) */
     COMP(comp_new, 0);
-    bank_call(BANK_CAR, cust_apply);    /* joueur personnalisé (2.75 ; 2.77 : après comp_new, qui place les joueurs humains) */
+    bank_call(BANK_CAR, cust_apply);    /* joueur personnalisé (après comp_new, qui place les joueurs humains) */
     if (c_type >= CT_GRAND) {
         /* Grand Martinot, Martinworld Tour : bande-annonce (banque 7) */
         screen_begin();
@@ -901,8 +900,8 @@ static void stat_row(u8 y, const char *label, u8 a, u8 b)
 
 u16 __fastcall__ hl_vmax_row(u16 y);                 /* (highlight.c, banque 15) */
 u16 __fastcall__ hl_rally_row(u16 y);
-u16 __fastcall__ hl_time_rows(u16 a);                /* (train.c, 2.76) */
-u16 __fastcall__ res_stats(u16 unused);                /* (train.c, banque 20, 2.75) */
+u16 __fastcall__ hl_time_rows(u16 a);                /* (train.c) */
+u16 __fastcall__ res_stats(u16 unused);                /* (train.c, banque 20) */
 
 
 /* Tableau des sets terminés : en-tête puis une ligne par équipe (rangées
@@ -935,7 +934,7 @@ static void setbreak_screen(void)
     u8 n;
     char b[5];
     screen_begin();
-    deco("FIN DE SET", 0, 24);          /* (titre et cadre comme les autres écrans, version 2.69) */
+    deco("FIN DE SET", 0, 24);          /* (titre et cadre comme les autres écrans) */
     n = sets_done();
     b[0] = (char)('0' + n); b[1] = 0;
     txt_off = 0x40;                     /* en or : « 1ER SET POUR ALEX » */
@@ -947,8 +946,8 @@ static void setbreak_screen(void)
     if (cfg.doubles) team_label(cfg.chr[n], cfg.chr[n + 2], line); else team_label(cfg.chr[n], 255, line);
     txt_at(21, 4, line);
     txt_off = 0;
-    set_table(7);                       /* (2.76 : durée rangée 6, sets 7-9, minutes 10, lignes libres 5 et 11) */
-    far_call(BANK_TRAIN, (void *)hl_time_rows, (u16)(7 | (sets_done() << 8)));   /* (2.76) durées */
+    set_table(7);                       /* (durée rangée 6, sets 7-9, minutes 10, lignes libres 5 et 11) */
+    far_call(BANK_TRAIN, (void *)hl_time_rows, (u16)(7 | (sets_done() << 8)));   /* durées */
     team_label(cfg.chr[0], 255, b); txt_at(19, 12, b);
     team_label(cfg.chr[1], 255, b); txt_at(25, 12, b);
     stat_row(13, "POINTS GAGNES", st_points[0], st_points[1]);
@@ -981,9 +980,9 @@ static void results_screen(void)
     txt_at(8, 4, "VICTOIRE DE");
     txt_at(20, 4, chr_nm(cfg.chr[w]));
     txt_off = 0;
-    set_table(6);                       /* (rangées 6 à 8 : sous le titre, version 2.69 ; rangées 2 à 4 avant, sous les lettres du titre) */
-    far_call(BANK_TRAIN, (void *)hl_time_rows, (u16)(6 | (sets_done() << 8)));   /* (2.76) durées : match (rangée 5), sets (rangée 9) */
-    far_call(BANK_TRAIN, (void *)res_stats, 0);   /* (2.76) statistiques : banque 20 (train.c) */
+    set_table(6);                       /* (rangées 6 à 8 : sous le titre ; rangées 2 à 4 avant, sous les lettres du titre) */
+    far_call(BANK_TRAIN, (void *)hl_time_rows, (u16)(6 | (sets_done() << 8)));   /* durées : match (rangée 5), sets (rangée 9) */
+    far_call(BANK_TRAIN, (void *)res_stats, 0);   /* statistiques : banque 20 (train.c) */
     far_call(BANK_TRAIN, (void *)hl_rally_row, 20);
     if (last_mode == MODE_COMP) txt_at(4, 25, "A : CONTINUER");
     else txt_at(4, 25, "A : REVANCHE   B : MENU");
@@ -995,13 +994,13 @@ static void results_screen(void)
 static void results_sprites(void)
 {
     u8 w = sc_winner, joy = (u8)((frame_cnt >> 4) & 1 ? POSE_JOY : POSE_SERVE);
-    u8 sad = (u8)(cfg.env == ENV_NUDE ? POSE_IDLE : POSE_SAD);   /* (2.76 : pas de pose triste au naturel : le perdant était rhabillé) */
+    u8 sad = (u8)(cfg.env == ENV_NUDE ? POSE_IDLE : POSE_SAD);   /* (pas de pose triste au naturel : le perdant était rhabillé) */
     spr_begin();
     /* sous les statistiques (rangées 20 à 23, libres), loin du tableau des sets */
     spr_person(60, 188, cfg.chr[w], 1, joy, 0, w);
     spr_person(196, 188, cfg.chr[w ^ 1], 1, sad, 0, (u8)(w ^ 1));
     if (cfg.doubles) {
-        spr_person(36, 188, cfg.chr[w + 2], 1, joy, 1, w);      /* (2.75 : à gauche ; l'échange le plus long est au centre) */
+        spr_person(36, 188, cfg.chr[w + 2], 1, joy, 1, w);      /* (à gauche ; l'échange le plus long est au centre) */
         spr_person(220, 188, cfg.chr[(w ^ 1) + 2], 1, sad, 1, (u8)(w ^ 1));
     }
     spr_end();
@@ -1043,7 +1042,7 @@ static void palmares_screen(void)
 extern u8 pod_buf[];
 static void after_match(void)
 {
-    pod_buf[0] = 0;                     /* match fini ou abandonné : plus de reprise (2.72) */
+    pod_buf[0] = 0;                     /* match fini ou abandonné : plus de reprise */
     if (match_quit == 2) { title_screen(); return; }        /* démonstration */
     if (match_quit) {
         music_play(MUS_NONE);
@@ -1145,9 +1144,9 @@ void screens_tick(void)
         if (pad1_new & PAD_B) { sfx_menu_back(); title_screen(); break; }
         if ((pad1_new & PAD_START) || ((pad1_new & PAD_A) && o == O_START)) {
             sfx_menu_ok();
-            /* (2.77) compétition : d'abord TON JOUEUR, puis les pages de choix */
+            /* compétition : d'abord TON JOUEUR, puis les pages de choix */
             if (opt_val[O_MODE] == MODE_COMP) { (void)far_call(BANK_X2, (void *)so_save, 0); cust_screen(1); break; }
-            /* (2.76) pages de choix illustrées (joueurs, tournoi, lieu, surface) */
+            /* pages de choix illustrées (joueurs, tournoi, lieu, surface) */
             if (far_call(BANK_PICK, (void *)pick_begin, 1)) { scr_state = SS_PICK; break; }
             menu_go();
             break;
@@ -1158,7 +1157,7 @@ void screens_tick(void)
         break;
     case SS_PICK:
         v = (u8)far_call(BANK_PICK, (void *)pick_tick, pad1_new);
-        if (opt_val[O_MODE] == MODE_COMP) { if (v == 1) start_comp(); else if (v == 2) cust_screen(1); break; }   /* (2.77 : retour à TON JOUEUR) */
+        if (opt_val[O_MODE] == MODE_COMP) { if (v == 1) start_comp(); else if (v == 2) cust_screen(1); break; }   /* (retour à TON JOUEUR) */
         if (v == 1) menu_go();
         else if (v == 2) menu_screen();
         break;
@@ -1179,7 +1178,7 @@ void screens_tick(void)
         }
         if (pad1_new & PAD_B) { sfx_menu_back(); if (last_mode == MODE_COMP) comp_screen(); else menu_screen(); break; }
         if (cfg.env != ENV_NUDE && brk_t < 48 && !fade_lvl) far_call(BANK_PODIUM, (void *)vs_anim, (u8)++brk_t);   /* (après le fondu) */
-        if (cfg.env != ENV_NUDE) bank_call(BANK_CAR, fiche_tick);       /* fiche des joueurs, en alternance (2.72) */
+        if (cfg.env != ENV_NUDE) bank_call(BANK_CAR, fiche_tick);       /* fiche des joueurs, en alternance */
         present_sprites();
         break;
     case SS_COMP:
@@ -1188,7 +1187,7 @@ void screens_tick(void)
             for (i = 0; i < 3; ++i) spr1(c_type == CT_LEAGUE ? 12 : 8, (u8)((11 + i) * 8 - 1), (u8)(ball_base + 8), i);
             spr_end();
         }
-        if (pad1_new & (PAD_LEFT | PAD_RIGHT)) {   /* (2.76) deux pages ; (2.77i) trois */
+        if (pad1_new & (PAD_LEFT | PAD_RIGHT)) {   /* deux pages ; trois */
             i = c_pg;
             if (pad1_new & PAD_RIGHT) { if (c_pg < pg_max()) ++c_pg; } else if (c_pg) --c_pg;
             if (c_pg != i) { sfx_menu_move(); fade_skip = 1; comp_screen(); }
@@ -1196,7 +1195,7 @@ void screens_tick(void)
         }
         if (pad1_new & (PAD_A | PAD_START)) {
             comp_cfg();
-            if (is_final()) { bank_call(BANK_FLY, fly_build); scr_state = SS_FLY; break; }   /* survol du stade (2.73) */
+            if (is_final()) { bank_call(BANK_FLY, fly_build); scr_state = SS_FLY; break; }   /* survol du stade */
             present_screen(); break;
         }
         if (pad1_new & PAD_B) { sfx_menu_back(); menu_screen(); }
@@ -1213,7 +1212,7 @@ void screens_tick(void)
         break;
     case SS_COMP_END:
         if ((pad1_new & (PAD_A | PAD_START)) && !pod_busy) {   /* (cérémonie en cours : A la fait avancer) */
-            /* (2.76) compétition gagnée : le champion brandit la coupe (HD) */
+            /* compétition gagnée : le champion brandit la coupe (HD) */
             if (c_rank == 1) { far_call(BANK_HL, (void *)champ_tick, 0x100); scr_state = SS_CHAMP; break; }
             title_screen();
             break;
@@ -1247,7 +1246,7 @@ void screens_tick(void)
         break;
     case SS_CUSTOM:
         v = (u8)far_call(BANK_CAR, (void *)cust_tick, (u16)(pad1_new | pad2_new));
-        if (v == 1) { if (far_call(BANK_PICK, (void *)pick_begin, 1)) scr_state = SS_PICK; else start_comp(); }   /* (2.77 : puis l'affiche) */
+        if (v == 1) { if (far_call(BANK_PICK, (void *)pick_begin, 1)) scr_state = SS_PICK; else start_comp(); }   /* (puis l'affiche) */
         else if (v == 2) { fade_skip = 1; cust_screen(0); }
         else if (v == 3) menu_screen();
         break;
@@ -1259,7 +1258,7 @@ void screens_tick(void)
             else { vbuf_reset(); vbuf_text(2, 22, "SELECT ENCORE : EFFACER", 24); }
         }
         if (pad1_new & PAD_B) { sfx_menu_back(); title_screen(); break; }
-        bank_call(BANK_TRAIN, palmares_sprites);   /* (train.c, banque 20, 2.75) */
+        bank_call(BANK_TRAIN, palmares_sprites);   /* (train.c, banque 20) */
         break;
     }
 }

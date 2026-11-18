@@ -1,5 +1,5 @@
 /* Royal Martinot — entraînement (CDC 9) : déplacé de extras.c (banque 3,
- * pleine) en banque 20, version 2.74. */
+ * pleine) en banque 20. */
 #include <string.h>
 #include "game_int.h"
 #include "app.h"
@@ -204,7 +204,7 @@ void train_event(void)
 }
 
 /* ---------------------------------------------------------------------- */
-/* Filet qui tremble en perspective (version 2.68, déplacé de highlight.c) */
+/* Filet qui tremble en perspective (déplacé de highlight.c) */
 /* ---------------------------------------------------------------------- */
 #define BANK_PNET 16
 extern const unsigned char * const persp_net[7];
@@ -233,14 +233,14 @@ void pnet_tick(void)
 }
 
 /* ---------------------------------------------------------------------- */
-/* Drapeaux des supporters (version 2.74)                                  */
+/* Drapeaux des supporters                                  */
 /* ---------------------------------------------------------------------- */
 extern u8 ola_on, oam_i, hl_mode, cer;
 #pragma zpsym("oam_i")
 extern const unsigned char flag_tile;
 static const u8 flag_x[6] = { 6, 14, 6, 242, 234, 242 };
 static const u8 flag_y[6] = { 52, 96, 168, 64, 116, 176 };
-/* (2.76) chronomètre du match : temps réel (trames de l'écran), hors pause,
+/* chronomètre du match : temps réel (trames de l'écran), hors pause,
    par set ; remis à zéro à l'entrée des joueurs (cer.c) */
 extern u16 tm_set[5];
 extern u8 tm_last, tm_sub;
@@ -266,9 +266,9 @@ void flags_draw(void)
 }
 
 /* ---------------------------------------------------------------------- */
-/* Médailles du palmarès (2.72, déplacé de highlight.c en 2.75)            */
+/* Médailles du palmarès (déplacé de highlight.c)            */
 /* ---------------------------------------------------------------------- */
-/* (2.72 : déplacée de la banque 8, pleine ; appelée par screens.c) */
+/* (déplacée de la banque 8, pleine ; appelée par screens.c) */
 extern u8 pal_page;
 #include "stats.h"
 #include "comp.h"
@@ -292,25 +292,25 @@ void palmares_sprites(void)
 }
 
 /* ---------------------------------------------------------------------- */
-/* (2.73 : déplacé de la banque fixe) message du coup gagnant (game.c) */
+/* (déplacé de la banque fixe) message du coup gagnant (game.c) */
 extern u8 hit_perf, hit_pass, hit_jump;   /* (last_shot : game_int.h) */
 void set_msg(const char *a, const char *b, u8 t);
 static /* Nom du coup gagnant affiché au centre du bandeau (15 caractères au plus) */
 const char *win_label(u8 shot, u8 pass, u8 jump)
 {
     if (hit_perf) return "COUP PARFAIT !";
-    if (shot == SH_SMASH) return bspin == SPIN_DROP ? "AMORTIE HAUTE" : jump ? "SMASH SAUTE !" : "SMASH !";   /* (2.76 : smash amorti) */
+    if (shot == SH_SMASH) return bspin == SPIN_DROP ? "AMORTIE HAUTE" : jump ? "SMASH SAUTE !" : "SMASH !";   /* (smash amorti) */
     if (shot == SH_DROP) return "AMORTIE !";
     if (shot == SH_LOB) return "LOB GAGNANT !";
     if (shot == SH_VOLLEY) return "VOLEE GAGNANTE";
-    if (rally_hits == 2) return "RETOUR GAGNANT";   /* (2.77) */
+    if (rally_hits == 2) return "RETOUR GAGNANT";   /* */
     if (pass) return "PASSING !";
     return "COUP GAGNANT !";
 }
 void win_msg(void) { set_msg(win_label(last_shot, hit_pass, hit_jump), "", 70); }
 
 /* ---------------------------------------------------------------------- */
-/* Lignes des statistiques et du palmarès (2.70-2.71, déplacées de highlight.c) */
+/* Lignes des statistiques et du palmarès (déplacées de highlight.c) */
 /* ---------------------------------------------------------------------- */
 extern u8 sp_new;      /* nouveau record de vitesse (stats.c) */
 extern u8 st_vmax[2];  /* (highlight.c) */
@@ -331,7 +331,7 @@ u16 __fastcall__ hl_vmax_row(u16 y)
     }
     return 0;
 }
-/* (2.75) écran des résultats : l'échange le plus long est commun aux deux
+/* écran des résultats : l'échange le plus long est commun aux deux
    joueurs ; hors du tableau, en or, centré entre les deux joueurs :
    « PLUS LONG / ECHANGE / 20 FRAPPES » */
 extern u8 st_longest;
@@ -364,7 +364,7 @@ void hl_rec_row(void)
 }
 
 /* ====================================================================== */
-/* Remise du trophée (2.72, podium.c, banque 8 pleine) : tribunes de chaque  */
+/* Remise du trophée (podium.c, banque 8 pleine) : tribunes de chaque  */
 /* côté du court (colonnes 0-1 et 30-31, rangées 10 à 27) ; le public est    */
 /* assis pendant les médailles, se lève quand la coupe est brandie et agite */
 /* les bras ; le finaliste lève une plaque d'argent (sprites 62-63, palette */
@@ -417,7 +417,7 @@ u16 __fastcall__ pod_extra_tick(u16 t)
     return 0;
 }
 
-/* Balle de match (2.75) : bandeau au centre de l'écran (rangées 12 à 17, les
+/* Balle de match : bandeau au centre de l'écran (rangées 12 à 17, les
    mêmes que le bandeau de la pause), dessiné d'avance sur l'écran 1 à raison
    d'une rangée par trame, puis montré par deux interruptions de ligne
    (cband_on, crt0.s) : pas d'écran coupé. Il disparaît seul après 2 s, au
@@ -471,12 +471,12 @@ void mp_tick(void)
         mp_t = 0;
         return;
     }
-    /* (2.76) rien par-dessus le bandeau (l'arbitre de chaise s'y incrustait) */
+    /* rien par-dessus le bandeau (l'arbitre de chaise s'y incrustait) */
     for (i = 0; i < 64; ++i) { r = oam_buf[i * 4]; if (r >= MP_ROW * 8 - 1 && r < (MP_ROW + 6) * 8) oam_buf[i * 4] = 0xFF; }
 }
 
 /* ---------------------------------------------------------------------- */
-/* Fin de set (2.76) : pendant que les joueurs vont s'asseoir, le bandeau   */
+/* Fin de set : pendant que les joueurs vont s'asseoir, le bandeau   */
 /* central (comme celui de la balle de match) annonce « 1ER SET » et       */
 /* « POUR ALEX 6-4 » ; puis l'écran du set en fondu (cer.c, game.c).       */
 /* st_t : 0 rien, 1 à 7 écriture, 8 affiché (remis à 0 par match_resume).   */
@@ -524,7 +524,7 @@ void st_tick(void)
 }
 
 /* ---------------------------------------------------------------------- */
-/* Rebond (2.76, appelés par ball_bounce, game.c)                          */
+/* Rebond (appelés par ball_bounce, game.c)                          */
 extern u8 sc_swap;
 #define side_of(t) ((u8)(((t) & 1) ^ sc_swap))
 /* Point de contact : le rebond est vu à la fin de la trame, la balle déjà
@@ -555,7 +555,7 @@ u16 __fastcall__ srv_box(u16 unused)
     return (u16)(y >= NET_Y && y <= IN_BSRV);
 }
 
-/* (2.76) écrans de fin de set et de résultat : « DUREE DU MATCH 1H05 » au-
+/* écrans de fin de set et de résultat : « DUREE DU MATCH 1H05 » au-
    dessus du tableau des sets (rangée y - 1), minutes de chaque set dessous
    (rangée y + 3), dans la colonne du set. a : y | (sets joués << 8) */
 static void tm_put(u8 x, u8 y, u16 v)          /* nombre à droite de x */
@@ -582,7 +582,7 @@ u16 __fastcall__ hl_time_rows(u16 a)
     return 0;
 }
 
-/* (2.76, déplacé de screens.c, banque 1 pleine) statistiques de l'écran des
+/* (déplacé de screens.c, banque 1 pleine) statistiques de l'écran des
    résultats : noms (rangée 10), lignes 11 à 18, vitesse (19) */
 static void st_row(u8 y, const char *label, u8 a, u8 b)
 {
@@ -619,7 +619,7 @@ u16 __fastcall__ res_stats(u16 unused)
     return 0;
 }
 
-/* (2.76, déplacé de la banque fixe, pleine) feux d'artifice : game.c, podium.c */
+/* (déplacé de la banque fixe, pleine) feux d'artifice : game.c, podium.c */
 static const u8 fw_pop_t2[3] = { 115, 75, 35 };
 static const u8 fw_px2[3] = { 72, 176, 124 };
 static const u8 fw_py2[3] = { 64, 80, 52 };
@@ -632,7 +632,7 @@ u16 __fastcall__ fw_draw(u16 t16)
     d = (u8)(fw_pop_t2[k] - t);                   /* trames depuis l'éclatement */
     if (d >= 14) return 0;
     x = fw_px2[k]; y = (u8)(fw_py2[k]);
-    /* (2.76) étincelles blanches (palette 2) en croix, jaunes (palette 3,
+    /* étincelles blanches (palette 2) en croix, jaunes (palette 3,
        couleur 3 passée au jaune pendant la fête) en diagonale */
     if (pal_buf[31] != 0x28) { pal_buf[31] = 0x28; pal_dirty = 1; }
     spr1((u8)(x - d), y, 3, 2);
@@ -643,7 +643,7 @@ u16 __fastcall__ fw_draw(u16 t16)
     d = (u8)((d * 3) >> 2);
     spr1((u8)(x - d), (u8)(y - d), 3, 3);
     spr1((u8)(x + d), (u8)(y - d), 3, 3);
-    if (fw_o2) return 0;                          /* (podium, 2.77 : 2 seulement, 62-63 sont la plaque du finaliste) */
+    if (fw_o2) return 0;                          /* (podium, 2 seulement, 62-63 sont la plaque du finaliste) */
     spr1((u8)(x - d), (u8)(y + d), 3, 3);
     spr1((u8)(x + d), (u8)(y + d), 3, 3);
     return 0;

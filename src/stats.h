@@ -44,14 +44,14 @@ typedef struct {
 } SaveCanon;
 extern SaveCanon sx;
 void sx_check(void);
-extern u8 opt_val[NOPT_SAVE + 2];    /* + VUE, mémorisée à part (sw_view), + CARRIERE (sw_car, 2.72) */
+extern u8 opt_val[NOPT_SAVE + 2];    /* + VUE, mémorisée à part (sw_view), + CARRIERE (sw_car) */
 u8 __fastcall__ so_load(u8 unused);    /* 1 si des réglages valides ont été copiés dans opt_val */
 u8 __fastcall__ so_save(u8 unused);
-/* Banque BANK_X2 (30, depuis la 2.76) : appel par far_call() */
+/* Banque BANK_X2 (30) : appel par far_call */
 u8 __fastcall__ sv_check(u8 unused);
 u8 __fastcall__ sv_after_match(u8 unused);
 u8 __fastcall__ sv_after_train(u8 unused);
 u8 __fastcall__ sv_comp_end(u8 unused);   /* d'après c_type, c_rank, c_pl[0], c_surf */
 u8 __fastcall__ sv_clear(u8 unused);
-#define SV(fn) ((void)far_call(BANK_X2, (void *)(fn), 0))   /* (banque 30 depuis la 2.76) */
+#define SV(fn) ((void)far_call(BANK_X2, (void *)(fn), 0))   /* (banque 30) */
 #endif

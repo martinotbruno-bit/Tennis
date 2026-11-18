@@ -9,7 +9,7 @@
 
 extern u8 tired, pl_jump[4];
 /* ---------------------------------------------------------------------- */
-/* Choix du coup (déplacé de do_hit, banque 0, version 2.42).
+/* Choix du coup (déplacé de do_hit, banque 0).
  * Entrées : sh_p (joueur), sh_pad (directions, HAUT/BAS relatifs au joueur),
  * sh_btn (PAD_A / PAD_B), sh_power (charge 0..32), sh_spread, sh_dx (balle -
  * joueur, px). Sorties : sh_depth, sh_speed, sh_grav, sh_spread, sh_short
@@ -32,12 +32,12 @@ s16 iabs(s16 v);
 
 /* ---------------------------------------------------------------------- */
 /* Frappe parfaite et messages de timing de l'entraînement (déplacés de la */
-/* banque fixe, gamefix.c, version 2.52 : place pour les nouvelles poses)  */
+/* banque fixe, gamefix.c, place pour les nouvelles poses)  */
 /* ---------------------------------------------------------------------- */
 #define PXU(v) ((u8)(((u16)(v) << 2) >> 8))      /* pixels, valeur positive */
 extern u8 st_perf[2], st_ptry[2], swing_early, perf_t, perf_x, perf_y;
 void set_msg(const char *a, const char *b, u8 t);   /* banque fixe */
-extern u8 car_acc;            /* carrière : précision (career.c, 2.72) */
+extern u8 car_acc;            /* carrière : précision (career.c) */
 /* Entraînement : écart au bon moment, en images (trames) */
 #pragma bss-name(push, "WBSS")
 static char timing_b[12];
@@ -106,22 +106,22 @@ extern u8 hit_margin;              /* game.c : angle des coups le long des ligne
 #define RESC_W 6                    /* et de largeur */
 extern u8 dive_t[4];
 #pragma bss-name(push, "ZEROPAGE")
-static s8 de;                       /* (2.77i) sauvetage : longueur mal dosée, plutôt trop longue */
+static s8 de;                       /* sauvetage : longueur mal dosée, plutôt trop longue */
 #pragma bss-name(pop)
 #pragma zpsym("de")
 void shot_select(void)
 {
     u8 p = sh_p, pad = sh_pad, power = sh_power, spread = sh_spread, speed, grav, T;
-    /* coup selon la hauteur de la balle (2.75) : avant le rebond, smash
+    /* coup selon la hauteur de la balle : avant le rebond, smash
        au-dessus de 24 px (sauté au-dessus de 40), volée en dessous ; après
        le rebond, une balle haute (lob qui retombe, au-dessus de 30 px) se
        smashe aussi, sans sauter, avec A (avec B, le lob ou l'amortie demandés
        restent possibles) */
-    u8 smash = (u8)(bounces ? (bz > 30 * FP && sh_btn != PAD_B && last_shot == SH_LOB) : bz > 24 * FP);   /* (2.76 : après le rebond, seulement un lob qui retombe ; last_shot : coup reçu) */
+    u8 smash = (u8)(bounces ? (bz > 30 * FP && sh_btn != PAD_B && last_shot == SH_LOB) : bz > 24 * FP);   /* (après le rebond, seulement un lob qui retombe ; last_shot : coup reçu) */
     u8 volley = (u8)(bounces == 0), flat = 0;
     s16 depth;
     if (sh_dx > 14 || sh_dx < -14) spread += 8;          /* frappe en extension */
-    /* (2.77i) lob de sauvetage (frappe en plongeon) : risqué, d'autant plus
+    /* lob de sauvetage (frappe en plongeon) : risqué, d'autant plus
        que le joueur est loin du filet ; souvent trop long, parfois large
        (le lob décidé, lui, ne change pas) */
     de = 0;
@@ -133,7 +133,7 @@ void shot_select(void)
     }
     sh_short = 0;
     bspin = SPIN_FLAT;
-    hit_jump = (u8)(!bounces && bz > 40 * FP);   /* (2.74 : balle haute après le rebond : frappée sans sauter) */
+    hit_jump = (u8)(!bounces && bz > 40 * FP);   /* (balle haute après le rebond : frappée sans sauter) */
     if (hit_jump) pl_jump[p] = 14;          /* le joueur saute, frappe en l'air et retombe */
     if (smash) {
         last_shot = SH_SMASH;
@@ -150,7 +150,7 @@ void shot_select(void)
         }
         sfx_crowd(5);
     } else if (sh_btn == PAD_B && (pad & PAD_UP)) {        /* lob */
-        /* version 2.59 : longueur selon l'armé (relâché vite : lob court,
+        /* longueur selon l'armé (relâché vite : lob court,
            smashable ; bouton tenu : près de la ligne de fond, risque de
            faute) ; trajectoire selon la position : du fond, lob défensif
            très haut et lent ; de l'intérieur du court, lob d'attaque plus
@@ -159,7 +159,7 @@ void shot_select(void)
         depth = (s16)(60 + T);
         T = (u8)iabs(PX(ply[p]) - NET_Y);
         speed = (u8)(T >= 80 ? 19 : T < 60 ? 31 : 24);
-        grav = 6; bspin = SPIN_TOP; last_shot = SH_LOB;   /* (rebond plafonné : lob_cap, gamefix.c, 2.74) */
+        grav = 6; bspin = SPIN_TOP; last_shot = SH_LOB;   /* (rebond plafonné : lob_cap, gamefix.c) */
     } else if (sh_btn == PAD_B && (pad & PAD_DOWN)) {      /* amortie */
         /* amortie : trajectoire basse et vive juste au-dessus du filet, puis la
            balle « meurt » au rebond (effet SPIN_DROP) ; plus elle est jouée
@@ -168,11 +168,11 @@ void shot_select(void)
         T = (u8)(iabs(PX(by) - NET_Y) >> 3);
         depth = (s16)(22 - T); speed = 40; grav = 5; bspin = SPIN_DROP; spread += T; last_shot = SH_DROP;
     } else if (sh_btn == PAD_B) {                          /* coupé */
-        depth = 66; speed = 36; grav = 5; bspin = SPIN_SLICE; last_shot = SH_SLICE;   /* (gravité 5, 4 avant la 2.61 : passe plus haut au-dessus du filet) */
+        depth = 66; speed = 36; grav = 5; bspin = SPIN_SLICE; last_shot = SH_SLICE;   /* (gravité 5, 4 avant la passe plus haut au-dessus du filet) */
     } else if (pad & PAD_UP) {                             /* à plat : tendue, rapide, risquée */
         depth = 78; speed = (u8)(54 + power); grav = 4; spread += 7; last_shot = SH_FLAT; flat = 1;
     } else if (pad & PAD_DOWN) {                           /* croisé court : en angle, carré de service */
-        /* version 2.60 : l'armé ferme l'angle (relâché vite : 14 px de la
+        /* l'armé ferme l'angle (relâché vite : 14 px de la
            ligne de côté, prudent ; bouton tenu : 6 px, dur à rattraper mais
            risqué) plutôt que d'accélérer ; il ajoute peu d'imprécision */
         T = (u8)(power > 24 ? 24 : power);
@@ -180,13 +180,13 @@ void shot_select(void)
         hit_margin = (u8)(14 - T / 3);
         power = (u8)(T >> 1);
     } else {                                               /* lifté */
-        /* version 2.60 : relâché aussitôt, lifté plus court et sûr ; armé,
+        /* relâché aussitôt, lifté plus court et sûr ; armé,
            plus de lift (trajectoire plus bombée, rebond plus haut) */
         depth = power < 4 ? 62 : 70; speed = (u8)(40 + power); grav = (u8)(7 + (power >> 3)); bspin = SPIN_TOP; last_shot = SH_DRIVE;
     }
     if (volley && !smash) {
         if (last_shot == SH_DROP) depth = (s16)(depth - 6);      /* volée de toucher : meurt près du filet */
-        else if (last_shot == SH_SHORT) depth = (s16)(depth - 2); /* volée croisée courte : franche, en angle (version 2.61) */
+        else if (last_shot == SH_SHORT) depth = (s16)(depth - 2); /* volée croisée courte : franche, en angle */
         else depth = (s16)(depth - 10);
         T = (u8)(flat && power >= 16 ? 52 : last_shot == SH_SHORT ? 48 : 42);   /* volée à plat appuyée, volée croisée : plus vives */
         if (speed > T) speed = T;
@@ -202,12 +202,12 @@ void shot_select(void)
        (tired 0..10) ; la frappe parfaite reste précise */
     else if (tired) { speed = (u8)(speed + (u8)(((u16)speed * (u8)(tired * 3)) >> 7)); spread = (u8)(spread + (tired >> 1)); }
     sh_power = power;
-    if (p == 0 && car_acc) spread = spread > car_acc ? (u8)(spread - car_acc) : 0;   /* carrière : précision (2.72) */
+    if (p == 0 && car_acc) spread = spread > car_acc ? (u8)(spread - car_acc) : 0;   /* carrière : précision */
     sh_depth = depth + de; sh_speed = speed; sh_grav = grav; sh_spread = spread;
 }
 
 /* ---------------------------------------------------------------------- */
-/* Plongeon (version 2.50), appelé par le moteur (banque 0) via bank_call.
+/* Plongeon, appelé par le moteur (banque 0) via bank_call.
  * Entrées : sh_p (joueur), sh_pad (0 : joueur humain, au lâcher du bouton ;
  * $FF : joueur de l'ordinateur). Sortie : sh_short = 1 si le plongeon part.
  * La balle est suivie trame par trame jusqu'à ce qu'elle soit frappable en
@@ -235,7 +235,7 @@ void dive_try(void)
     /* boucle de prédiction en page zéro (variables register : rapides et
        sans RAM fixe) ; appelée à chaque trame pour l'ordinateur quand la
        balle arrive loin de lui, elle coûtait près de 4 000 cycles sur la
-       pile C (version 2.59) */
+       pile C */
     register s16 x, y, py;
     u8 p = sh_p, n, lv, ok = 0;
     s16 d, a, run, reach;
@@ -250,7 +250,7 @@ void dive_try(void)
        décider, sans parcourir la boucle */
     if (y > py + 56 * FP || y < py - 60 * FP) return;
     /* balle qui s'éloigne du joueur (pas encore à portée) : elle n'y
-       arrivera pas, inutile de suivre sa course (version 2.66) */
+       arrivera pas, inutile de suivre sa course */
     if ((y <= py - 14 * FP && bvy <= 0) || (y >= py + 9 * FP && bvy >= 0)) return;
     for (n = 0; ; ++n) {
         if (n > 12) return;
@@ -274,7 +274,7 @@ void dive_try(void)
         run = (s16)(22 + (((u16)ai_spd[lv] * n * 3) >> 8));
         reach = (s16)(n > 2 ? 24 + (n - 2) * 3 : 24);
         if (reach > 42) reach = 42;
-        if (cn) reach += 8;             /* service canon : plongeon de dernière chance (2.72) */
+        if (cn) reach += 8;             /* service canon : plongeon de dernière chance */
         ok = (u8)(a > run && a <= reach && rand8() < (cn ? 250 : dive_p[lv]));
     }
     if (!ok) return;

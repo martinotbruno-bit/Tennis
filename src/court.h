@@ -18,7 +18,7 @@
    la trace du rebond le montre). Épaisseur des lignes (gen_assets.py) : 2 px
    pour les lignes de fond (TOP_BASE - 1 et TOP_BASE, BOT_BASE et
    BOT_BASE + 1), 1 px pour les lignes de côté, de service et la ligne
-   médiane. (2.76 : rayon et épaisseur comptés pour toutes les lignes ; une
+   médiane. (rayon et épaisseur comptés pour toutes les lignes ; une
    balle dont la trace touchait la ligne était parfois jugée dehors) */
 #define BALL_R   2
 #define IN_TOP   (TOP_BASE - 1 - BALL_R)

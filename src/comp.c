@@ -1,5 +1,5 @@
 /* Royal Martinot — compétitions : tournoi, poules, championnat, saison,
- * tournoi personnalisé (CDC 4.2) et le Grand Martinot (version 2.44 : 4
+ * tournoi personnalisé (CDC 4.2) et le Grand Martinot (4
  * tournois de 16 joueurs, ou 8 équipes en double, à la manière des tournois
  * du Grand Chelem).
  *
@@ -23,8 +23,7 @@ u8 c_surf, c_env, c_cond, c_fmt, c_n, c_dbl, c_hum2, c_slam;
 u8 c_pl[16], c_rt[16];
 u8 c_pl2[16];                 /* double : partenaire de chaque inscrit */
 u16 c_gres;
-/* (2.76) compétition à plusieurs joueurs humains (en simple ; 2.77 :
-   jusqu'à 4, c_nh). Le joueur k est l'inscrit hum_e[k] (le joueur 1 :
+/* compétition à plusieurs joueurs humains (en simple ; jusqu'à 4, c_nh). Le joueur k est l'inscrit hum_e[k] (le joueur 1 :
    l'inscrit 0), répartis dans le tableau (les autres moitiés, quarts,
    poules) ; ils jouent à tour de rôle ; c_me : celui dont c'est le tour, HM
    son inscrit. Ses résultats sont dans c_stage, c_results, c_gres, c_over,
@@ -109,7 +108,7 @@ u8 __fastcall__ comp_build(u8 unused)
        anciens codes redonnent ainsi exactement les mêmes tableaux */
     for (i = 0; i < 16; ++i) {
         if (i == c_pl[0] || (c_dbl && i == h2c)) continue;
-        for (j = 1; j < c_nh && c_hc[j] != i; ++j) ;     /* (2.77 : les autres joueurs humains) */
+        for (j = 1; j < c_nh && c_hc[j] != i; ++j) ;     /* (les autres joueurs humains) */
         if (j == c_nh) pool[np++] = i;
     }
     rs_seed(c_seed, 0x33);
@@ -123,9 +122,9 @@ u8 __fastcall__ comp_build(u8 unused)
     }
     /* mélange des niveaux pour que les têtes de série ne soient pas toujours au même endroit */
     for (i = (u8)(c_n - 1); i > 1; --i) { j = (u8)(1 + rn() % i); t = c_rt[i]; c_rt[i] = c_rt[j]; c_rt[j] = t; }
-    /* (2.76) second joueur humain : dans l'autre moitié du tableau (l'autre
+    /* second joueur humain : dans l'autre moitié du tableau (l'autre
        poule) ; ils ne se rencontrent qu'à la fin, ou au gré des tableaux */
-    /* (2.77) joueurs humains 2 à 4 : dans l'autre moitié, puis les autres
+    /* joueurs humains 2 à 4 : dans l'autre moitié, puis les autres
        quarts (poules : deux par poule) ; ils ne se rencontrent qu'à la fin,
        ou au gré des tableaux */
     if (c_dbl || !c_nh) c_nh = 1;
@@ -184,7 +183,7 @@ static void ko_run(u8 ev, u8 hr, u8 upto)
     }
 }
 /* index du tour atteint par chaque inscrit dans l'épreuve ev (saison, Grand
-   Martinot) : 0 perdu au premier tour .. nrounds() vainqueur */
+   Martinot) : 0 perdu au premier tour .. nrounds vainqueur */
 static u8 reach[16];
 static void ko_reach(u8 ev, u8 hr)
 {
@@ -357,7 +356,7 @@ static u8 ev_img(u8 e) { return c_type == CT_WORLD ? world_ev[e < 7 ? e : 6] : (
    vainqueur de l'autre demi-finale et adversaire de la demi-finale du
    joueur ; championnat et saison : classement final. */
 #pragma static-locals(push, off)
-/* (2.76) adversaire du joueur au tour upto (où qu'il soit dans le tableau) */
+/* adversaire du joueur au tour upto (où qu'il soit dans le tableau) */
 static u8 ko_opp(u8 ev, u8 hr, u8 upto)
 {
     u8 s = 0;
@@ -462,7 +461,7 @@ u8 __fastcall__ comp_surface(u8 unused)
     if (c_type == CT_SEASON) return (u8)(c_stage / 3);
     if (c_type >= CT_GRAND) {
         /* format imposé, comme les tournois du Grand Chelem : 3 sets, et la
-           finale en 5 sets (version 2.53) */
+           finale en 5 sets */
         c_fmt = (u8)(rd_of() == nrounds() - 1 ? 2 : 1);
         return ev_surf[ev_img(ev_of())];
     }
@@ -556,7 +555,7 @@ static u8 record1(u8 won)
     if (c_over && c_rank == 1 && c_trophies < 15) ++c_trophies;
     return c_over;
 }
-/* (2.76) résultat du match : pour le joueur dont c'est le tour ; s'il a
+/* résultat du match : pour le joueur dont c'est le tour ; s'il a
    joué contre l'autre joueur humain (à deux manettes), pour lui aussi ;
    puis le tour passe à celui qui est en retard (ou au seul encore en lice).
    Fin : quand les deux ont fini, le mieux classé est retenu (podium). */
@@ -568,7 +567,7 @@ u8 __fastcall__ comp_record(u8 won)
     record1(won);
     if (c_nh < 2) return c_over;
     if (duo) { switch_to(k); record1((u8)!won); switch_to(me); }
-    /* (2.77) le tour passe au moins avancé encore en lice (à égalité, au
+    /* le tour passe au moins avancé encore en lice (à égalité, au
        plus petit numéro) ; quand tous ont fini, le mieux classé est retenu
        (podium ; le plus petit numéro à égalité) */
     hum_save();
@@ -628,7 +627,7 @@ static u8 ent_w;                    /* largeur maximale des noms (0 : entière) 
 static void ent_at(u8 i, u8 x, u8 y)
 {
     team_label(c_pl[i], c_pl2[i], nb);
-    if (ent_w) nb[ent_w] = 0;           /* (2.77i : tableau à 16, noms de 5 lettres) */
+    if (ent_w) nb[ent_w] = 0;           /* (tableau à 16, noms de 5 lettres) */
     { u8 k; txt_off = 0; for (k = 0; k < c_nh; ++k) if (hum_e[k] == i) txt_off = 0x40; }   /* les joueurs : surlignés (or) */
     txt_at(x, y, nb);
     txt_off = 0;
@@ -674,8 +673,7 @@ u8 __fastcall__ comp_stage_name(u8 unused)
     return 0;
 }
 
-/* tableau à élimination (version 2.58 ; 2.77 : aéré et centré ; 2.77i :
-   aussi le tournoi en cours de la saison, du Grand Martinot et du
+/* tableau à élimination (aéré et centré ; aussi le tournoi en cours de la saison, du Grand Martinot et du
    Martinworld, 16 inscrits) : les inscrits à gauche ; chaque match relie
    deux noms par un trait doré jusqu'au milieu de la paire, où s'écrit le
    vainqueur (tours joués jusqu'à cur) ; tous les tours sont tracés, jusqu'à
@@ -719,7 +717,7 @@ static void ko_draw(u8 y, u8 ev, u8 hr, u8 cur)
     ent_w = 0;
 }
 #pragma static-locals(pop)
-/* (2.77i) page 3 de la saison, du Grand Martinot et du Martinworld : le
+/* page 3 de la saison, du Grand Martinot et du Martinworld : le
    tableau du tournoi en cours */
 u8 __fastcall__ comp_draw_ko(u8 y)
 {
@@ -807,7 +805,7 @@ u8 __fastcall__ comp_path(u8 y)
     static const char * const rn[4] = { "FINALE", "DEMI", "QUART", "8E" };
     u8 n, r, i, x = 3, k;
     const char *t;
-    comp_who(c_n > 8 ? 4 : comp_l2[0] ? 23 : 6);   /* (16 inscrits : le tableau descend jusqu'à la rangée 23) */      /* (2.76) à plusieurs en simple : à qui de jouer (2.77h : sous le titre, si la rangée est libre) */
+    comp_who(c_n > 8 ? 4 : comp_l2[0] ? 23 : 6);   /* (16 inscrits : le tableau descend jusqu'à la rangée 23) */      /* à plusieurs en simple : à qui de jouer (sous le titre, si la rangée est libre) */
     switch (c_type) {
     case CT_GROUPS: case CT_LEAGUE: return 0;
     case CT_SEASON: n = 3; r = (u8)(c_stage % 3); break;

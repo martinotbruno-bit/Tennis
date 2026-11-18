@@ -8,8 +8,7 @@
 ;     l'écart par trame : départ progressif, et le joueur continue sur sa
 ;     lancée (environ 6 px) quand il s'arrête ou change de sens ;
 ;   - terre battue : à l'arrêt et au demi-tour, glissade (le joueur garde
-;     les trois quarts de sa vitesse à chaque trame, environ 6 px ; version
-;     2.43, 2 px avant) ;
+;     les trois quarts de sa vitesse à chaque trame, environ 6 px) ;
 ;   - plage : pas de glissade, mais un départ lourd (la vitesse monte de
 ;     50/64 px par trame au plus, comme dans le sable) ; arrêt net ;
 ;   - autres surfaces : rien ne change.

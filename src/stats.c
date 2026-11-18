@@ -13,12 +13,12 @@ u8 sw_view[3];          /* 'V', valeur, contrôle */
 /* meilleur rang du Grand Martinot et du Martinworld Tour (types 5 et 6), bloc à
    part : SaveData n'a de place que pour les types 0 à 4 */
 u8 sw_best[4];          /* 'B', type 5, type 6, contrôle */
-/* record du service le plus rapide (2.71), bloc à part : 'S', km/h - 80, personnage, contrôle */
+/* record du service le plus rapide, bloc à part : 'S', km/h - 80, personnage, contrôle */
 u8 sw_spd[4];
-/* face-à-face (2.72) : 'H', puis pour chaque personnage adverse vos victoires
+/* face-à-face : 'H', puis pour chaque personnage adverse vos victoires
    (4 bits hauts) et défaites (4 bits bas) contre lui, en simple, contrôle */
 u8 sw_h2h[NCHARS + 2];
-/* carrière (2.72) : 'C', points (2 octets), compétitions, titres, meilleur
+/* carrière : 'C', points (2 octets), compétitions, titres, meilleur
    classement, derniers points gagnés (2 octets), option CARRIERE, -, -, contrôle */
 u8 sw_car[12];
 #pragma bss-name(pop)
@@ -73,7 +73,7 @@ void car_comp_end(void);
 u8 __fastcall__ so_save(u8 unused)
 {
     u8 i;
-    hc_check(); sw_car[8] = opt_val[NOPT_SAVE + 1]; car_commit();   /* option CARRIERE (2.72) */
+    hc_check(); sw_car[8] = opt_val[NOPT_SAVE + 1]; car_commit();   /* option CARRIERE */
     for (i = 0; i < NOPT_SAVE; ++i) so.opt[i] = opt_val[i];
     so.sig[0] = 'P'; so.sig[1] = 'O';
     sw_view[0] = 'V'; sw_view[1] = opt_val[NOPT_SAVE]; sw_view[2] = (u8)(0x5A ^ opt_val[NOPT_SAVE]);

@@ -47,7 +47,7 @@ u8 pl_btn[4];                   /* bouton armé (lu par poses.s : revers coupé)
 #pragma bss-name(pop)
 u8 pl_walk[4], pl_moving[4], pl_flip[4];
 u8 ai_delay[4];                  /* lu par les tests */
-/* (2.77) compteur des trames logiques du match : les IA alternent sur lui, et
+/* compteur des trames logiques du match : les IA alternent sur lui, et
    non sur frame_cnt (trames affichées) ; en double, la logique tourne souvent
    une trame affichée sur deux : frame_cnt y avait toujours la même parité, et
    les joueurs d'indice pair (l'équipier CPU d'un joueur humain !) n'étaient
@@ -67,7 +67,7 @@ void launch(s16 tx, s16 ty, u8 T, u8 grav);
 u16 __fastcall__ dead_hit(u16 p);   /* extra2.c */
 void win_msg(void);
 void hl_out(void);
-void lob_cap(void);                /* banque fixe (gamefix.c, 2.74) */
+void lob_cap(void);                /* banque fixe (gamefix.c) */
 extern u8 band_hold;
 #pragma zpsym("band_hold")
 void match_fx(void);
@@ -86,7 +86,7 @@ extern u8 dive_t[4], dive_f[4];        /* plongeon en cours (poses.s) */
 extern u8 cer, pose_force[4];
 void cer_entry(void); void cer_save(void); void cer_change(void); void cer_end(void);
 void cer_tick(void); void cer_draw(void); void cer_front(void); void slot_tick(void);
-void cer_pre(void); void cer_post(void); extern u8 cer_req;   /* tirage au sort (cer.c, 2.76) */
+void cer_pre(void); void cer_post(void); extern u8 cer_req;   /* tirage au sort (cer.c) */
 void poses_all(void);
 u8 hit_pass, hit_jump;                 /* dernière frappe : adversaire au filet, smash sauté */
 u8 tired;                              /* fatigue de l'échange en cours, 0..10 */
@@ -161,7 +161,7 @@ static u8 receiver_p(void)
 /* ====================================================================== */
 /* Fin d'échange                                                           */
 /* ====================================================================== */
-/* Repères du ralenti (version 2.67) : fonctions et données en banque 15
+/* Repères du ralenti : fonctions et données en banque 15
    (highlight.c) ; le premier rebond de chaque balle est noté ici */
 extern u16 hl_bf, rp_seq;
 extern u8 hl_bi, hl_bx, hl_by, hl_bin, hl_bok, hl_w, hl_sok, hl_sbok;
@@ -206,18 +206,18 @@ static void point_over(u8 winner, u8 reason)
         sfx_crowd(7);
         crowd_timer = 64;
         /* ralenti : aces, beaux échanges, et coups parfaits gagnants même en retour */
-        rp_pending = 1;   /* (2.77 : aussi le retour de service gagnant, oublié jusqu'ici : 2 frappes) */
+        rp_pending = 1;   /* (aussi le retour de service gagnant, oublié jusqu'ici : 2 frappes) */
     } else if (reason == 1) {
         ++st_errors[winner ^ 1];
         sfx_crowd(2);
     }
     if (rally_hits >= 12) { set_msg("QUEL ECHANGE !", "", 70); sfx_crowd(7); crowd_timer = 64; rp_pending = 1; HL_SELECT(winner, msg1); }
-    hl_quick = 0;                   /* (2.76 : repère du point précédent oublié) */
+    hl_quick = 0;                   /* (repère du point précédent oublié) */
     bank_call(BANK_X2, hl_out);     /* balle limite (dehors de peu, bonne sur la ligne) : zoom rapide (highlight.c) */
-    /* (2.76) ralenti SIMPLE : seulement les balles proches de la ligne,
+    /* ralenti SIMPLE : seulement les balles proches de la ligne,
        dedans ou dehors (hl_out les a retenues) */
     if (cfg.replays == 2 && !hl_quick) rp_pending = 0;
-    /* (2.76) balle de match gagnée : pas de ralenti, la fête tout de suite */
+    /* balle de match gagnée : pas de ralenti, la fête tout de suite */
     if (!cfg.replays || cfg.demo || ((sc_crit & 4) && ((sc_crit >> winner) & 1))) rp_pending = 0;
     if (rp_pending) ms_timer = 110;
 }
@@ -250,8 +250,8 @@ static void serve_fault(const char *why)
 /* ====================================================================== */
 /* Rebond et arbitrage                                                     */
 /* ====================================================================== */
-/* carré de service et point de contact du rebond : banque 20 (train.c,
-   2.76 ; place en banque 0) */
+/* carré de service et point de contact du rebond : banque 20 (train.c ;
+   place en banque 0) */
 u16 __fastcall__ srv_box(u16 unused);
 void bounce_fix(void);
 static u8 in_service_box(void) { return (u8)far_call(BANK_TRAIN, (void *)srv_box, 0); }
@@ -262,7 +262,7 @@ static void ball_bounce(void)
     u8 rest = surf_rest[cfg.surface], fric = surf_fric[cfg.surface];
     s16 x, y;
     s16 l = cfg.doubles ? IN_DL : IN_SL, r = cfg.doubles ? IN_DR : IN_SR;   /* (ligne comprise) */
-    bank_call(BANK_TRAIN, bounce_fix);   /* (2.76) balle ramenée au point de contact : jugée là où elle touche le sol */
+    bank_call(BANK_TRAIN, bounce_fix);   /* balle ramenée au point de contact : jugée là où elle touche le sol */
     half = (u8)(PX(by) < NET_Y ? 1 : 0);
     x = PX(bx); y = PX(by);
 
@@ -271,7 +271,7 @@ static void ball_bounce(void)
     if (bspin == SPIN_DROP) { rest >>= 1; fric >>= 1; }   /* amortie : rebond bas, balle freinée */
     if (cfg.cond == COND_RAIN) { rest = (u8)(rest - 20); if (fric < 248) fric += 6; }  /* court glissant */
     bvz = mulfrac(-bvz, rest);
-    lob_cap();                        /* (lob : rebond plafonné, gamefix.c, 2.74) */
+    lob_cap();                        /* (lob : rebond plafonné, gamefix.c) */
     bvx = mulfrac(bvx, fric);
     bvy = mulfrac(bvy, fric);
     bz = 0;
@@ -395,11 +395,11 @@ u8 can_hit(u8 p);
 /* nom d'équipe sur 4 lettres : banque fixe (gamefix.c) */
 void team_name(u8 t, char *out);
 u8 recap_pend, brk_pend;          /* récapitulatif du score à afficher / fin de set */
-/* récapitulatif du score (score_line, score_recap) : banque 30 (extra2.c, 2.76) */
+/* récapitulatif du score (score_line, score_recap) : banque 30 (extra2.c) */
 void score_recap(void);
 extern u8 hl_mode;                 /* 1 : gros plan, 2 : zoom en cours (highlight.c) */
 void hl_tick(void);
-#define score_recap() bank_call(BANK_X2, score_recap)   /* (extra2.c depuis la 2.76) */
+#define score_recap() bank_call(BANK_X2, score_recap)   /* (extra2.c) */
 
 u8 __fastcall__ serve_fb(s16 vz);             /* banque 13 (shots.c) */
 
@@ -581,7 +581,7 @@ static void serve_hit(u8 p, u8 pad, u8 btn, u8 quality, u8 spread)
     HL_HIT(p, 2 | 0x80);            /* (service : début du point, bit 7) */
     if (faults == 0) ++st_first_tot[t];
     launch(tx, ty, T, grav);
-    if (!p) speed += car_srv;          /* carrière : service (2.72) */
+    if (!p) speed += car_srv;          /* carrière : service */
     hl_spd = speed; hl_srv = p;     /* vitesse du service : km/h (annoncés sur un ace) et record du match, highlight.c */
     bank_call(BANK_HL, hl_serve);
     ms = MS_RALLY;
@@ -598,7 +598,7 @@ static void serve_hit(u8 p, u8 pad, u8 btn, u8 quality, u8 spread)
 /* ====================================================================== */
 /* Déplacements                                                            */
 /* ====================================================================== */
-/* déplacement vers (tx, ty) : en assembleur, banque fixe (src/fastmove.s, version 2.59) */
+/* déplacement vers (tx, ty) : en assembleur, banque fixe (src/fastmove.s) */
 void move_toward(u8 p, s16 tx, s16 ty, u8 speed);
 
 static void clamp_player(u8 p)
@@ -618,7 +618,7 @@ static void clamp_player(u8 p)
 }
 
 /* ====================================================================== */
-/* Plongeon (version 2.50) : une balle qui arrive trop loin sur le côté     */
+/* Plongeon : une balle qui arrive trop loin sur le côté     */
 /* (24 à 40 px environ) peut être rattrapée en plongeant. Le plongeon part  */
 /* AVANT la frappe ; la frappe part en vol, dès que la raquette atteint la  */
 /* balle : un sauvetage, plus lent, plus haut et moins précis. Le vol, la   */
@@ -646,7 +646,7 @@ static void human_update(u8 p, u8 pad, u8 pressed)
     u8 st = pl_state[p];
 
     if (ms == MS_SERVE && p == server_p()) {
-        if (pressed & (PAD_A | PAD_B)) { if (!band_hold) toss(p); return; }   /* (bandeau affiché : l'appui le ferme seulement, 2.74) */
+        if (pressed & (PAD_A | PAD_B)) { if (!band_hold) toss(p); return; }   /* (bandeau affiché : l'appui le ferme seulement) */
         if (pad & PAD_LEFT) plx[p] -= 64;
         if (pad & PAD_RIGHT) plx[p] += 64;
         {
@@ -703,7 +703,7 @@ static void human_update(u8 p, u8 pad, u8 pressed)
         pl_state[p] = ST_SWING;
         pl_timer[p] = 10;
     }
-    /* balle faute renvoyée quand même, hors jeu (2.76, train.c) */
+    /* balle faute renvoyée quand même, hors jeu (train.c) */
     if (ms == MS_DEAD && (st == ST_CHARGE || (st == ST_SWING && pl_timer[p] > 4)) && !pl_hit[p] && far_call(BANK_X2, (void *)dead_hit, p)) {
         pl_hit[p] = 1; pl_state[p] = st = ST_SWING; pl_timer[p] = 10;
     }
@@ -740,8 +740,8 @@ static void predict(u8 p)
         /* x 12 = x 8 + x 4 : décalages au lieu de multiplications */
         pred_x = land_x + PX((bvx << 3) + (bvx << 2));
         pred_y = land_y + PX((bvy << 3) + (bvy << 2));
-        /* joueur au filet : interception de volée ; sur un lob (version
-           2.59), il fait demi-tour vers le point de chute, pour le jouer
+        /* joueur au filet : interception de volée ; sur un lob,
+           il fait demi-tour vers le point de chute, pour le jouer
            après le rebond (Expert, une fois sur deux : il se fait aussi
            surprendre ; Facile et Normal restent au filet) */
         if (iabs(PX(ply[p]) - NET_Y) < 46 && !b_serve && !(last_shot == SH_LOB && cfg.level[p] == 2 && (ai_err[p] & 1))) {
@@ -774,7 +774,7 @@ static u8 responsible(u8 p)
     s16 dp, dm;
     if (npl != 4) return 1;
     if (ms == MS_RALLY && b_serve) return (u8)(p == receiver_p());
-    /* (2.77) équipier humain : l'ordinateur ne lui laisse plus les balles
+    /* équipier humain : l'ordinateur ne lui laisse plus les balles
        dont il est à peine plus près (le joueur, lui, ne bouge pas forcément) :
        il prend toutes celles de sa moitié du court (marge de 8 px au centre),
        et les autres s'il en est le plus près */
@@ -814,7 +814,7 @@ static void ai_update(u8 p)
                 sfx_hit(1);
                 return;
             }
-            if (band_hold) ms_timer = 40;      /* (bandeau affiché : l'ordinateur attend l'appui du joueur, 2.74) */
+            if (band_hold) ms_timer = 40;      /* (bandeau affiché : l'ordinateur attend l'appui du joueur) */
             else if (--ms_timer == 0) toss(p);
         }
         pl_moving[p] = 0;
@@ -868,7 +868,7 @@ static void ai_update(u8 p)
             /* choix tactiques selon le niveau et le style du personnage */
             if (lv >= 1 && iabs(oy - NET_Y) < 50 && rand8() < lobp) {
                 btn = PAD_B; pad |= PAD_UP;                     /* lob sur le volleyeur */
-            } else if (lv >= 1 && iabs(oy - NET_Y) > 90 && iabs(PX(ply[p]) - NET_Y) < 70 && rand8() < (u8)(sty_drop[sty] >> (2 - lv))) {   /* (de l'intérieur du court seulement, version 2.61) */
+            } else if (lv >= 1 && iabs(oy - NET_Y) > 90 && iabs(PX(ply[p]) - NET_Y) < 70 && rand8() < (u8)(sty_drop[sty] >> (2 - lv))) {   /* (de l'intérieur du court seulement) */
                 btn = PAD_B; pad |= PAD_DOWN;                   /* amortie */
             } else if (lv >= 1 && rand8() < (u8)(iabs(oy - NET_Y) < 50 ? 90 : 20)) {
                 pad |= PAD_DOWN;                                /* croisé court : passing sur le volleyeur, ou pour sortir l'adversaire du court */
@@ -878,7 +878,7 @@ static void ai_update(u8 p)
                 pad |= PAD_UP;                                  /* frappe à plat */
             }
             if ((rand8() & (ai_fault[lv] | tac_err[t])) == 0) spread += 20;   /* faute directe */
-            /* (2.77i) puissance et marge bornées à 0 : en FACILE (puissance 0),
+            /* puissance et marge bornées à 0 : en FACILE (puissance 0),
                un style ou une tactique négatifs (balle de set à sauver : -2)
                donnaient 254, soit un coup à la gravité 38 : balle très haute et
                très rapide, dehors ou dans le filet, à chaque frappe du point */
@@ -931,7 +931,7 @@ static void ai_update(u8 p)
         /* IA adaptative : se décaler vers le côté où l'humain joue le plus (±16 px) */
         if (lv >= 1 && ad_n[o] >= 6) {
             /* (multiplication et division recalculées seulement quand le
-               nombre de frappes observées change, version 2.66) */
+               nombre de frappes observées change) */
             if (ai_bias_n[o] != ad_n[o]) {
                 s16 bias = (s16)(((s16)ad_r[o] - (s16)ad_l[o]) * 24) / (s16)ad_n[o];
                 if (bias > 16) bias = 16;
@@ -958,8 +958,8 @@ static void ai_update(u8 p)
 /* ====================================================================== */
 
 /* ====================================================================== */
-/* fin du match : portrait du vainqueur (highlight.c, hl_mode 3, version
-   2.69) avant l'écran des résultats ; 1 : passer aux résultats */
+/* fin du match : portrait du vainqueur (highlight.c, hl_mode 3)
+   avant l'écran des résultats ; 1 : passer aux résultats */
 u8 hl_fin;                       /* portrait du vainqueur déjà montré (les tests le posent pour passer) */
 static u8 match_end(void)
 {
@@ -1017,11 +1017,11 @@ static void court_load(void)
     bank_call(BANK_EXTRAS, load_court);
     pal_set_court(cfg.surface, cfg.cond, cfg.env);
     bank_call(BANK_HL, court_post);    /* bandeau du score (écran 1) ; crépuscule : lumière selon les jeux joués (highlight.c) */
-    pal_players_match(cfg.chr[0], cfg.chr[1]);               /* (2.77 : contour, raquette et cheveux noirs) */
+    pal_players_match(cfg.chr[0], cfg.chr[1]);               /* (contour, raquette et cheveux noirs) */
 }
 
 /* Retour au court après un gros plan ou un zoom du ralenti (highlight.c,
-   banque 15, version 2.67) : écran du court reconstruit, rendu coupé */
+   banque 15) : écran du court reconstruit, rendu coupé */
 void court_reload(void)
 {
     court_load();
@@ -1035,7 +1035,7 @@ void match_resume(void)
 {
     music_play(MUS_NONE);              /* jamais de musique pendant le match */
     court_load();
-    bank_call(BANK_SWAP, cer_back);    /* (2.76) assis aux chaises : ils repartent sur le court */
+    bank_call(BANK_SWAP, cer_back);    /* assis aux chaises : ils repartent sur le court */
     st_t = 0;                          /* (bandeau du set : écrit à nouveau au prochain set) */
     score_recap();
     bank_call(BANK_MDRAW, match_draw);
@@ -1067,7 +1067,7 @@ static void after_point(void)
     faults = 0;
     if (cfg.mode != GM_MATCH) { place_for_serve(); return; }
     prev = sc_server;
-    blank = (u8)(!sc_tiebreak && sc_points[w ^ 1] == 0);   /* (2.76) jeu blanc si ce point gagne le jeu */
+    blank = (u8)(!sc_tiebreak && sc_points[w ^ 1] == 0);   /* jeu blanc si ce point gagne le jeu */
     ev = rules_point(w);
     /* double : quand une équipe perd le service, son autre joueur servira */
     if (sc_server != prev) srv_slot[prev] ^= 1;
@@ -1089,7 +1089,7 @@ static void after_point(void)
         /* récapitulatif : écran de fin de set (sauf démonstration), score des
            sets dans le bandeau après chaque jeu */
         if (ev & EV_SET) { set_msg("JEU ET SET", nm, 90); music_play(MUS_GAME); crowd_timer = 64; if (!cfg.demo) brk_pend = 1; }
-        else if (ev & EV_TIEBREAK) { set_msg("6 PARTOUT", "JEU DECISIF", 90); music_play(MUS_GAME); }   /* (2.76 : plus de rappel des jeux en haut : le bandeau les donne) */
+        else if (ev & EV_TIEBREAK) { set_msg("6 PARTOUT", "JEU DECISIF", 90); music_play(MUS_GAME); }   /* (plus de rappel des jeux en haut : le bandeau les donne) */
         else if (ev & EV_GAME) { set_msg(blank ? "JEU BLANC" : "JEU", nm, 70); music_play(MUS_GAME); if (blank) sfx_crowd(7); }
         else {
             if (rules_is_match_point(0) || rules_is_match_point(1)) set_msg("BALLE DE MATCH", "", 70);
@@ -1099,10 +1099,10 @@ static void after_point(void)
                 team_name((u8)(sc_points[0] > sc_points[1] ? 0 : 1), nm);
                 set_msg("AVANTAGE", nm, 60);
             }
-            /* (2.76) plus de jingle bi-ton après chaque point (avant le 1er service) */
+            /* plus de jingle bi-ton après chaque point (avant le 1er service) */
         }
     }
-    /* (2.76) fin de set : les joueurs vont s'asseoir (changement de côté ou
+    /* fin de set : les joueurs vont s'asseoir (changement de côté ou
        non), le set est annoncé au centre, puis l'écran du set en fondu */
     if (ev & EV_SET) bank_call(BANK_SWAP, cer_save);
     else if (ev & EV_CHANGE) {
@@ -1118,19 +1118,19 @@ u8 match_tick(void)
     u8 p, ctrl, pad, pressed;
 
     /* portrait du vainqueur (fin du match, banque 15), puis les résultats */
-    /* ramasseuse au changement de côté (hl_mode 4, 2.73) */
+    /* ramasseuse au changement de côté (hl_mode 4) */
     if (hl_mode >= 3) { pad = hl_mode; bank_call(BANK_HL, hl_tick); return (u8)(pad == 3 && !hl_mode); }
 
     /* démonstration : un bouton rend la main */
     if (cfg.demo && (pad1_new & (PAD_A | PAD_START))) { match_quit = 2; return 1; }
 
     /* menu de pause (START) : CONTINUER / QUITTER ; SELECT = quitter directement */
-    if ((pad1_new & PAD_START) && ms != MS_OVER && ms != MS_REPLAY && !paused && cer != 5) {   /* (2.76 : assis au changement de côté, START passe les statistiques) */
+    if ((pad1_new & PAD_START) && ms != MS_OVER && ms != MS_REPLAY && !paused && cer != 5) {   /* (assis au changement de côté, START passe les statistiques) */
         paused = 1; pause_cur = 0; hud_dirty = 1; pad1_new = 0;
-        hit_now = 0;                          /* (2.77) pause sur une trame de frappe : le dessin (et le bandeau) reprend */
+        hit_now = 0;                          /* pause sur une trame de frappe : le dessin (et le bandeau) reprend */
     }
     if (paused) {
-        if (far_call(BANK_EXTRAS, (void *)pause_input, 0)) { match_quit = 1; return 1; }   /* (touches de la pause : extras.c, 2.76) */
+        if (far_call(BANK_EXTRAS, (void *)pause_input, 0)) { match_quit = 1; return 1; }   /* (touches de la pause : extras.c) */
         if (hud_dirty) bank_call(BANK_EXTRAS, hud_update);
         return 0;
     }
@@ -1149,10 +1149,10 @@ u8 match_tick(void)
     /* séquence animée (entrée, changement de côté, fin du match) */
     if (cer && cer < 0xF0) {
         bank_call(BANK_SWAP, cer_tick);
-        if (cer_req) {                            /* (2.76) tirage au sort : places du service */
+        if (cer_req) {                            /* tirage au sort : places du service */
             bank_call(BANK_SWAP, cer_pre); place_for_serve(); bank_call(BANK_SWAP, cer_post); cer_req = 0;
         }
-        if (brk_pend == 2 || (brk_pend && !cer)) { brk_pend = 0; return 2; }   /* (2.76) fin de set : assis, puis l'écran du set */
+        if (brk_pend == 2 || (brk_pend && !cer)) { brk_pend = 0; return 2; }   /* fin de set : assis, puis l'écran du set */
         if (ms == MS_OVER) {
             if (ms_timer > 1) --ms_timer;
             if (win_party()) fw_sound(ms_timer);
@@ -1240,7 +1240,7 @@ u8 match_tick(void)
     if (msg_timer) { if (--msg_timer == 0) { hud_dirty = 1; if (recap_pend) score_recap(); } }
     if (hud_dirty) bank_call(BANK_EXTRAS, hud_update);
     /* public animé (après le score : le tampon VRAM est partagé) */
-    if (npl < 4 || (frame_cnt & 1)) bank_call(BANK_EXTRAS, crowd_tick);      /* public : suit la balle, ola, réactions (double : une trame sur deux, 2.76) */
+    if (npl < 4 || (frame_cnt & 1)) bank_call(BANK_EXTRAS, crowd_tick);      /* public : suit la balle, ola, réactions (double : une trame sur deux) */
     /* filet qui tremble (après le score : le tampon VRAM est partagé) */
     if (net_shake) bank_call(BANK_EXTRAS, net_tick);
     return 0;
@@ -1266,4 +1266,4 @@ static u8 rel_pad(u8 p, u8 pad)
 
 
 
-/* dessin du court (sprites) : mdraw.c, banque 22 (2.76 : place en banque 0) */
+/* dessin du court (sprites) : mdraw.c, banque 22 (place en banque 0) */

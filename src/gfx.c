@@ -29,23 +29,23 @@ const u8 char_pal_rom[NCHARS][3] = {
     { 0x17, 0x31, 0x0F },   /* SARA : bleu clair */
     { 0x07, 0x2C, 0x0F },   /* NOAH : cyan */
     { 0x27, 0x07, 0x0F },   /* INES : chocolat (idem) */
-    { 0x27, 0x35, 0x37 },   /* MARGAUX : rose clair, cheveux blonds ($37 : le $28 de la palette NES tire sur le vert olive, 2.73) */
+    { 0x27, 0x35, 0x37 },   /* MARGAUX : rose clair, cheveux blonds ($37 : le $28 de la palette NES tire sur le vert olive) */
     { 0x07, 0x27, 0x0F },   /* MAX : orange */
     { 0x37, 0x00, 0x07 },   /* LOLA : anthracite, cheveux châtains */
     { 0x36, 0x30, 0x10 },   /* PAPI : blanc, cheveux gris */
     { 0x27, 0x0C, 0x07 },   /* TITOU : canard foncé, cheveux châtains */
 };
 u8 char_female[NCHARS];
-#pragma bss-name(push, "ZEROPAGE")       /* (2.77 : 4 joueurs humains ; RAM interne pleine) */
+#pragma bss-name(push, "ZEROPAGE")       /* (4 joueurs humains ; RAM interne pleine) */
 u8 cu_map[4], cu_c[4];
 #pragma bss-name(pop)
 u8 cu_st[6];
-u16 tm_set[5];                          /* (2.76) durée de chaque set, en secondes (train.c) */
+u16 tm_set[5];                          /* durée de chaque set, en secondes (train.c) */
 u8 tm_last, tm_sub;                            /* écran du joueur personnalisé (career.c) : rangée, saisie du nom, lettre, joueur, nombre, (libre) */
 #pragma bss-name(push, "SAVECU")      /* (fin de la zone sauvegardée, adresse fixe : les sauvegardes des versions précédentes ne bougent pas) */
 u8 cu_sav[25];
 #pragma bss-name(pop)
-/* (2.77) profils de travail des joueurs 3 et 4 (compétition à 4) : RAM de
+/* profils de travail des joueurs 3 et 4 (compétition à 4) : RAM de
    cartouche, refaits depuis la bibliothèque à chaque compétition */
 #pragma bss-name(push, "SAVETAIL")      /* (en fin de zone : ne décale aucune adresse sauvegardée) */
 u8 cu_x[24];
@@ -80,7 +80,7 @@ static const u8 surf_pal[NSURF + 1][4] = {
     { 0x1A, 0x2A, 0x30, 0x0F },   /* gazon : vert clair, abords vert */
     { 0x02, 0x12, 0x30, 0x0F },   /* dur : bleu, abords bleu nuit */
     { 0x03, 0x13, 0x30, 0x0F },   /* moquette : violet, abords violet sombre */
-    { 0x38, 0x28, 0x16, 0x0F },   /* plage : sable jaune, abords de sable pâle (2.76 : le bleu de la mer ne collait pas) */
+    { 0x38, 0x28, 0x16, 0x0F },   /* plage : sable jaune, abords de sable pâle (le bleu de la mer ne collait pas) */
     { 0x12, 0x21, 0x30, 0x0F },   /* glace : bleu ciel, abords bleu */
     { 0x14, 0x25, 0x30, 0x0F },   /* court Margaux : rose bonbon, abords prune */
 };
@@ -133,7 +133,7 @@ void pal_set_court(u8 s, u8 cond, u8 env)
        sueur), 3 blanc (couture de la balle, étoiles) */
     pal_buf[16 + 12] = p[0]; pal_buf[16 + 13] = ball_col[env == ENV_MARGAUX ? NSURF : s]; pal_buf[16 + 14] = 0x21; pal_buf[16 + 15] = 0x30;
     if (env == ENV_MARGAUX) pal_buf[16 + 11] = 0x34;   /* robe rose de la princesse arbitre (et reflet de la balle) */
-    if (env == ENV_NUDE) pal_buf[16 + 11] = 0x37;      /* (2.76) club nudiste : l'arbitre aussi est nu (chemise couleur peau) */
+    if (env == ENV_NUDE) pal_buf[16 + 11] = 0x37;      /* club nudiste : l'arbitre aussi est nu (chemise couleur peau) */
     if (cond == 2) {
         /* pluie : ciel couvert, couleurs ternies */
         pal_buf[0] = darken(pal_buf[0]);
@@ -147,20 +147,20 @@ void pal_set_court(u8 s, u8 cond, u8 env)
         pal_buf[0] = darken(pal_buf[0]);
         for (i = 4; i < 16; i += 4) pal_buf[i] = pal_buf[0];
         pal_buf[10] = darken(pal_buf[10]); pal_buf[11] = darken(pal_buf[11]); pal_buf[9] = darken(pal_buf[9]);
-        if (env == ENV_CASTLE) pal_buf[10] = 0x0F;   /* (2.77) joints noirs : la pierre ($00) garde son relief */
+        if (env == ENV_CASTLE) pal_buf[10] = 0x0F;   /* joints noirs : la pierre ($00) garde son relief */
         pal_buf[16 + 8] = pal_buf[16 + 12] = pal_buf[0];
     }
     pal_buf[16] = pal_buf[20] = pal_buf[0];
     pal_dirty = 1;
 }
 
-/* fond des menus (version 2.59) : tiré au hasard à l'allumage parmi les
+/* fond des menus : tiré au hasard à l'allumage parmi les
    couleurs des surfaces (terre battue, gazon, dur, moquette), comme le fond
    de l'affiche VS */
 #pragma bss-name (push, "WBSS")
 u8 menu_bk;
 #pragma bss-name (pop)
-/* (menu_bk_pick : screens.c, version 2.73) */
+/* (menu_bk_pick : screens.c) */
 void pal_set_menu(void)
 {
     /* fond vert sombre (gazon) ; ombre du texte noire (couleur 1), texte surligné
@@ -181,14 +181,14 @@ void pal_set_player(u8 slot, u8 c)
 {
     u8 b = (u8)(16 + slot * 4);
     const u8 *p = char_pal_rom[c];
-    { const u8 *q = cu_find_c(c); if (q) p = q + 9; }          /* (joueur personnalisé, 2.75 ; 4 joueurs, 2.77) */
+    { const u8 *q = cu_find_c(c); if (q) p = q + 9; }          /* (joueur personnalisé ; 4 joueurs) */
     pal_buf[b + 1] = p[0];
     pal_buf[b + 2] = p[1];
     pal_buf[b + 3] = p[2];
     pal_dirty = 1;
 }
 
-/* (2.77) joueurs en match (et aperçu du court) : contour, raquette, short,
+/* joueurs en match (et aperçu du court) : contour, raquette, short,
    chaussures et cheveux en noir. La console ne donne que 3 couleurs par
    sprite (peau, tenue, sombre) ; la couleur de cheveux choisie reste celle
    des images HD, des bustes de l'affiche et des portraits. Sauf Margaux :
@@ -242,7 +242,7 @@ void vbuf_text(u8 x, u8 y, const char *s, u8 len)
     vram_len = i;
 }
 
-/* vbuf_raw : en assembleur (fastmove.s, version 2.66) */
+/* vbuf_raw : en assembleur (fastmove.s) */
 
 void num2(char *out, u8 v)
 {
@@ -317,10 +317,10 @@ void chr_reload(void)
 }
 
 /* les tuiles des personnages ont été remplacées (portraits des réglages) :
-   rechargées au prochain people_tiles() */
+   rechargées au prochain people_tiles */
 void people_dirty(void) { chr_nude = 0xFE; }
 
-/* (spr_port : screens.c, version 2.73) */
+/* (spr_port : screens.c) */
 
 void people_tiles(u8 nude)
 {

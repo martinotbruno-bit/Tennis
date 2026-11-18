@@ -1,4 +1,4 @@
-/* Royal Martinot — séquences animées du match (banque 13, version 2.52).
+/* Royal Martinot — séquences animées du match (banque 13).
  *  - entrée des joueurs : ils sortent du tunnel (en bas à droite), longent
  *    le court et gagnent leur place, saluent le public, puis l'arbitre lance
  *    une pièce : « PILE ! » ou « FACE ! », et l'équipe qui sert est annoncée ;
@@ -21,11 +21,11 @@
 #include "gfx.h"
 #include "audio.h"
 #include "assets.h"
-extern u8 hl_mode;                 /* plan de la ramasseuse (highlight.c, 2.73) */
+extern u8 hl_mode;                 /* plan de la ramasseuse (highlight.c) */
 extern u8 sun_pend;
-extern u8 st_t;                     /* bandeau du set : 8 = affiché (train.c, 2.77) */
-extern u8 brk_pend;                 /* fin de set en attente (game.c, 2.76) */
-extern u8 toss_q, cer_req, toss_c;  /* tirage au sort (plus bas, 2.76) */
+extern u8 st_t;                     /* bandeau du set : 8 = affiché (train.c) */
+extern u8 brk_pend;                 /* fin de set en attente (game.c) */
+extern u8 toss_q, cer_req, toss_c;  /* tirage au sort (plus bas) */
 
 #pragma static-locals(off)
 
@@ -45,9 +45,9 @@ extern u8 hl_flags, band_t;
 #define CER_NET    8    /* vers le filet */
 #define CER_SHAKE  9    /* poignée de main */
 #define CER_SALUTE 10   /* salut à l'arbitre */
-#define CER_CHOOSE 11   /* tirage gagné : choix du service ou du côté, sur le bandeau (2.76) */
-#define CER_GOSRV  12   /* du filet à la place du service (2.76) */
-#define CER_RECAP  13   /* récapitulatif sur le bandeau, à valider avant le service (2.76) */
+#define CER_CHOOSE 11   /* tirage gagné : choix du service ou du côté, sur le bandeau */
+#define CER_GOSRV  12   /* du filet à la place du service */
+#define CER_RECAP  13   /* récapitulatif sur le bandeau, à valider avant le service */
 #define CER_PEND   0xFE /* changement de côté annoncé (positions retenues) */
 #define CER_CHAIRS 0xFD /* fin de l'échange qui amène un changement de côté : les chaises apparaissent */
 
@@ -61,7 +61,7 @@ extern u8 hl_flags, band_t;
 
 #define TUNNEL_X  216   /* tunnel et couloir : à droite du court */
 #define CHAIR_X   46    /* chaises : à côté de l'arbitre */
-#define TOSS_X    72    /* tirage au sort : devant l'arbitre, au filet (2.76) */
+#define TOSS_X    72    /* tirage au sort : devant l'arbitre, au filet */
 
 #pragma bss-name(push, "SAVEDATA")
 u8 cer, cer_skip, pose_force[4];
@@ -143,18 +143,18 @@ void cer_entry(void)
 {
     u8 p;
     cer_skip = 0;
-    for (p = 0; p < 5; ++p) tm_set[p] = 0;   /* (2.76) chronomètre du match */
+    for (p = 0; p < 5; ++p) tm_set[p] = 0;   /* chronomètre du match */
     tm_last = frame_cnt; tm_sub = 0;
     sun_pend = 0;
     all_free();
     cer = 0;
-    /* reprise d'un match sauvegardé (2.72) : score et statistiques, pas
+    /* reprise d'un match sauvegardé : score et statistiques, pas
        d'entrée des joueurs ni de tirage au sort ; sinon, la sauvegarde
        d'un autre match est effacée */
     if (mresume) { bank_call(BANK_CAR, msave_restore); if (!mresume && pod_buf[0] == 'M') return; }
     pod_buf[0] = 0;
     if (cfg.mode != GM_MATCH || cfg.demo) return;
-    /* (2.76) les joueurs entrent et se présentent devant l'arbitre, de part
+    /* les joueurs entrent et se présentent devant l'arbitre, de part
        et d'autre du filet, pour le tirage au sort */
     for (p = 0; p < npl; ++p) {
         tx[p] = (s16)((TOSS_X + (p >= 2 ? 16 : 0)) * FP);
@@ -209,9 +209,9 @@ void cer_end(void)
 
 /* ---------------------------------------------------------------------- */
 /* Le point qui vient de finir amène-t-il un changement de côté, ou une fin
-   de set (passage aux chaises, 2.76) ? Mêmes règles que rules_point. */
+   de set (passage aux chaises) ? Mêmes règles que rules_point. */
 extern u8 pending_winner, end_reason;
-/* (2.76) fin de set (sauf balle de match gagnée) : passage aux chaises */
+/* fin de set (sauf balle de match gagnée) : passage aux chaises */
 extern u8 sc_crit;
 static u8 set_brk(u8 w) { return (u8)!((sc_crit & 4) && ((sc_crit >> w) & 1)); }
 static u8 change_next(u8 w)
@@ -231,7 +231,7 @@ static u8 change_next(u8 w)
 }
 /* à chaque trame (swap_tick) : les chaises apparaissent à la fin de
    l'échange qui amène un changement de côté ; s'il y a un ralenti,
-   seulement après lui (version 2.59 : ni avant ni pendant le ralenti) */
+   seulement après lui (ni avant ni pendant le ralenti) */
 void cer_watch(void)
 {
     if (cer == CER_CHAIRS && ms != MS_DEAD) cer = 0;
@@ -239,7 +239,7 @@ void cer_watch(void)
     if (change_next(pending_winner)) cer = CER_CHAIRS;
 }
 
-/* (2.76) tirage au sort : question posée sur le bandeau (highlight.c) ;
+/* tirage au sort : question posée sur le bandeau (highlight.c) ;
    cer_req : places du service à recalculer (game.c) */
 u8 toss_q, cer_req, toss_c;          /* (toss_c : l'équipe qui choisit) */
 extern u8 band_rows;
@@ -287,7 +287,7 @@ void cer_tick(void)
     u8 p, done = 1, win, top;
     if (cer >= CER_CHAIRS) return;
     ++cer_t;
-    if (cer_skip || (((pad1_new | pad2_new) & (PAD_A | PAD_START)) && cer != CER_CHOOSE && !(cer == CER_SEAT && cfg.mode == GM_MATCH && seat_human()))) {   /* (2.76 : le choix du tirage se fait par A ou B) */   /* (2.75 : assis, l'appui fait défiler les statistiques) */
+    if (cer_skip || (((pad1_new | pad2_new) & (PAD_A | PAD_START)) && cer != CER_CHOOSE && !(cer == CER_SEAT && cfg.mode == GM_MATCH && seat_human()))) {   /* (le choix du tirage se fait par A ou B) */   /* (assis, l'appui fait défiler les statistiques) */
         /* passer : fin du match, il reste peu de temps (sauf pour les
            tests, qui gardent la durée d'avant) */
         if (cer >= CER_JOY && !cer_skip && ms_timer > 20) ms_timer = 20;
@@ -326,7 +326,7 @@ void cer_tick(void)
         if (cer_t >= 150) { cer = CER_CHOOSE; cer_t = 0; toss_q = 1; toss_c = sc_server; band_rows |= 3; band_t = 48; }
         break;
     case CER_CHOOSE:
-        /* (2.76) tirage au sort, comme au vrai tennis : le gagnant choisit
+        /* tirage au sort, comme au vrai tennis : le gagnant choisit
            de servir (A) ou le côté (B). Qui choisit le côté désigne EN HAUT
            (A) ou EN BAS (B) ; si c'est le gagnant, le perdant choisit alors
            de servir (A) ou de recevoir (B). Chacun avec sa manette ;
@@ -335,7 +335,7 @@ void cer_tick(void)
            2 côté (perdant, après « servir »), 5 côté (gagnant), 4 servir ou
            recevoir (perdant) */
         top = toss_pad(toss_c);
-        /* ordinateur : (2.77) choix variés, servir le plus souvent (3 fois sur
+        /* ordinateur : choix variés, servir le plus souvent (3 fois sur
            4), sinon le côté ; laissé choisir, il sert 7 fois sur 8 ; le côté :
            au hasard */
         if (top == 0xFF && cer_t == 60) {
@@ -362,7 +362,7 @@ void cer_tick(void)
     case CER_GOSRV:
         for (p = 0; p < npl; ++p) if (!step_to(p, tx[p], ty[p])) done = 0;
         if (done) {
-            /* (2.76) récapitulatif : qui sert, de quel côté ; A pour jouer */
+            /* récapitulatif : qui sert, de quel côté ; A pour jouer */
             cer = CER_RECAP; cer_t = 0; toss_q = 3; band_rows |= 3; band_t = 48;   /* (BAND_WAIT : le bandeau monte aussitôt, en 10 trames) */
             for (p = 0; p < npl; ++p) pose_force[p] = P_IDLE;
         }
@@ -378,30 +378,30 @@ void cer_tick(void)
                 if (step_to(p, sx[p], sy[p])) { stage[p] = 2; pose_force[p] = POSE_SIT; }
                 else done = 0;
             }
-        if (done) { cer = CER_SEAT; cer_t = 0; band_t = 0; }   /* (2.76 : le bandeau resté affiché repart de la 1re page) */
+        if (done) { cer = CER_SEAT; cer_t = 0; band_t = 0; }   /* (le bandeau resté affiché repart de la 1re page) */
         break;
     case CER_SEAT:
         for (p = 0; p < npl; ++p) pose_force[p] = POSE_SIT;
-        /* (2.76) fin de set : une fois assis, l'écran du set (game.c) */
-        /* (2.77) avec un joueur humain, le bandeau du set attend un appui
+        /* fin de set : une fois assis, l'écran du set (game.c) */
+        /* avec un joueur humain, le bandeau du set attend un appui
            (A, B ou START), une fois affiché ; sinon 40 trames */
         if (brk_pend) {
             if (!seat_human()) { if (cer_t >= 40) brk_pend = 2; }
             else if (st_t == 8 && cer_t >= 30 && ((pad1_new | pad2_new) & (PAD_A | PAD_B | PAD_START))) { sfx_menu_ok(); brk_pend = 2; }
             break;
         }
-        /* en match, un peu plus long (2.72) : le bandeau du bas montre le
+        /* en match, un peu plus long : le bandeau du bas montre le
            score puis 4 statistiques (A ou START passe) */
-        /* (2.75) avec un joueur humain, les statistiques du bandeau défilent
+        /* avec un joueur humain, les statistiques du bandeau défilent
            à l'appui et restent affichées : les joueurs ne repartent qu'après
            la dernière page (band_hold = 2, highlight.c) */
         if (cfg.mode == GM_MATCH && seat_human()) { if (band_hold == 2) { band_hold = 0; cer_t = 250; } else if (cer_t > 200) cer_t = 200; }
         if (cer_t >= (cfg.mode == GM_MATCH ? 250 : 130)) {
             cer = CER_BACK; cer_t = 0;
-            /* un changement sur deux : la ramasseuse de balles, plan télé (2.73) */
+            /* un changement sur deux : la ramasseuse de balles, plan télé */
             if (cfg.mode == GM_MATCH && cfg.replays == 1 && cfg.env != ENV_NUDE && !cfg.demo &&
                 ((sc_games[0] + sc_games[1]) & 2)) hl_mode = 4;
-            /* crépuscule : la lumière change, plan du soleil couchant (2.76) */
+            /* crépuscule : la lumière change, plan du soleil couchant */
             if (sun_pend) hl_mode = 5;
             for (p = 0; p < npl; ++p) stage[p] = 0;
         }
@@ -482,7 +482,7 @@ void cer_draw(void)
         h = (u8)((t * (u8)(44 - t)) >> 4);
         spr1(44, (u8)(110 - h), (u8)(ball_base + ((t >> 2) & 1 ? 12 : 8)), 2);   /* pile (grande balle) / tranche (balle écrasée) */
     }
-    /* (2.76) fin de l'échange : les chaises n'apparaissent qu'une fois le
+    /* fin de l'échange : les chaises n'apparaissent qu'une fois le
        bandeau du score entièrement à l'écran (hl_flags bit 2, highlight.c) */
     if ((cer == CER_CHAIRS && (hl_flags & 4)) || cer == CER_CHAIR || cer == CER_SEAT) {
         for (p = 0; p < (u8)(npl == 4 ? 4 : 2); ++p) {
@@ -500,7 +500,7 @@ void cer_draw(void)
 }
 
 /* ---------------------------------------------------------------------- */
-/* Bustes « bras caché » pour le joueur vu de dos (version 2.52). Dans les
+/* Bustes « bras caché » pour le joueur vu de dos. Dans les
  * gestes où un bras passe devant le buste (préparations, revers, volée,
  * impact du service), le dessin commun aux deux vues montre le bras : juste
  * de face, mais de dos il barrerait le dos. Pour chaque joueur vu de dos
@@ -547,7 +547,7 @@ void slot_tick(void)
     }
 }
 
-/* reprise après l'écran du set (match_resume, 2.76) : assis aux chaises, les
+/* reprise après l'écran du set (match_resume) : assis aux chaises, les
    joueurs repartent sur le court, comme après le bandeau */
 void cer_back(void)
 {

@@ -12,7 +12,7 @@
 u8 app_state, go_req, go_arg;
 u8 is_pal, pal_acc;
 static u8 spd_acc, keep1, keep2, no_draw;
-extern u8 fc_last, ck1, ck2;            /* (2.76) rattrapage des trames manquées (page zéro, crt0.s) */
+extern u8 fc_last, ck1, ck2;            /* rattrapage des trames manquées (page zéro, crt0.s) */
 #pragma zpsym("fc_last")
 #pragma zpsym("ck1")
 #pragma zpsym("ck2")
@@ -99,13 +99,13 @@ void main(void)
 {
     /* NTSC ~1860 boucles entre deux VBlank, PAL/Dendy > 2050 */
     is_pal = (u8)(region_cnt > 1970);
-    bank_call(BANK_CAR, cust_reset);   /* personnages d'origine (2.75 ; career.c, banque 19) */
+    bank_call(BANK_CAR, cust_reset);   /* personnages d'origine (career.c, banque 19) */
     go_req = GO_INTRO;                 /* générique, puis écran titre */
     handle_go();
     for (;;) {
         wait_frame();
         pad_poll();
-        /* (2.76) rattrapage : une trame manquée (logique trop longue, double
+        /* rattrapage : une trame manquée (logique trop longue, double
            en perspective) est rattrapée par une trame logique sans dessin ;
            le jeu garde sa vitesse, seul l'affichage saute une image ; les
            appuis restent pour la trame normale */

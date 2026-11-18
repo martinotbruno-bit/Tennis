@@ -1,4 +1,4 @@
-/* Royal Martinot — habillage des menus (banque 8, version 2.57).
+/* Royal Martinot — habillage des menus (banque 8).
  *
  * Tuiles du décor libres pendant les menus (celles des courts, rétablies
  * avant le match par chr_borrow_restore, bg_dirty) :
@@ -40,7 +40,7 @@ extern u8 pal_page;
 void hl_rec_row(void);
 void car_pal_text(void);
 
-#pragma bss-name(push, "MENUBUF")     /* (2.77) superposé aux tampons du zoom (highlight.c) : jamais en même temps */
+#pragma bss-name(push, "MENUBUF")     /* superposé aux tampons du zoom (highlight.c) : jamais en même temps */
 char deco_str[24];        /* titre à écrire (copié par screens.c) */
 u8 deco_kind, deco_row;   /* type d'écran (attributs) ; rangée du filet du bas */
 static u8 dt_map[24];
@@ -114,7 +114,7 @@ void deco_title(void)
 extern const u8 port_chr[];
 void port_load(void)
 {
-    chr_copy(BANK_PICK, port_chr, 0x1100, 992);     /* et vignettes des lieux ($40-$4D) ; (2.76 : données en banque 29) */
+    chr_copy(BANK_PICK, port_chr, 0x1100, 992);     /* et vignettes des lieux ($40-$4D) ; (données en banque 29) */
     people_dirty();
 }
 
@@ -219,10 +219,10 @@ void palmares_build(void)
         txt_at(3, 17, "COMPETITIONS"); u16_at(22, 17, sv.comps);
         txt_at(3, 18, "RECORD ECHANGE"); u16_at(22, 18, sv.best_rally);
         txt_at(3, 19, "RECORD ACES/MATCH"); u16_at(22, 19, sv.best_aces);
-        /* nombre, puis pourcentage suivi de « % » (2.71 : sans ligne d'en-tête, place du record) */
+        /* nombre, puis pourcentage suivi de « % » (sans ligne d'en-tête, place du record) */
         txt_at(3, 20, "SERVICES CANON"); u16_at(17, 20, sx.ok); u16_at(22, 20, pct16(sx.ok, sx.tried)); txt_at(27, 20, "%");
         txt_at(3, 21, "COUPS PARFAITS"); u16_at(17, 21, sx.pok); u16_at(22, 21, pct16(sx.pok, sx.ptry)); txt_at(27, 21, "%");
-        bank_call(BANK_TRAIN, hl_rec_row);           /* RECORD SERVICE (2.71, highlight.c) */
+        bank_call(BANK_TRAIN, hl_rec_row);           /* RECORD SERVICE (highlight.c) */
     } else if (pal_page == 1) {
         txt_at(3, 5, "MEILLEURS RESULTATS");
         for (i = 0; i < NCT; ++i) {
@@ -243,7 +243,7 @@ void palmares_build(void)
             txt_at(3, (u8)(7 + i), ex_name[i]);
             u16_at(20, (u8)(7 + i), sv.best_train[i]);
         }
-        bank_call(BANK_CAR, car_pal_text);       /* carrière (2.72, career.c) */
+        bank_call(BANK_CAR, car_pal_text);       /* carrière (career.c) */
     }
     {   /* médailles (sprites, palmares_sprites) : or, argent, bronze */
         static const u8 med[9] = { 0x28, 0x18, 0x38,  0x10, 0x00, 0x30,  0x17, 0x07, 0x27 };
@@ -268,7 +268,7 @@ void title_court(void)
     for (i = 0; i < 8; ++i) vram_put(0xFA);
 }
 
-/* (palmares_sprites : en banque 15 depuis la version 2.72, highlight.c) */
+/* (palmares_sprites : en banque 15, highlight.c) */
 
 /* ---------------------------------------------------------------------- */
 /* Affiche VS (présentation du match) : bustes face à face, bras croisés,
@@ -317,7 +317,7 @@ static void vs_side(u8 side)
         }
     }
 }
-/* (2.75) affiche VS : la couleur « sombre » sert aussi aux contours ;
+/* affiche VS : la couleur « sombre » sert aussi aux contours ;
    cheveux clairs (joueur personnalisé) : teinte sombre de la même famille */
 static u8 hd_dark(u8 d) { return (u8)(d == 0x37 ? 0x18 : (d == 0x30 || d == 0x10) ? 0x00 : d); }
 /* palettes du joueur (couleurs de char_pal) : A et B */
@@ -326,7 +326,7 @@ static void vs_pal(u8 side)
     u8 b = (u8)(side * 8), S, O, D;
     pal_set_player(61, cfg.chr[side]);       /* (palette 1 du décor : peau, tenue, sombre) */
     S = pal_buf[5]; O = pal_buf[6]; D = pal_buf[7];
-    pal_buf[b + 1] = hd_dark(D);                                      /* (cheveux clairs : contours sombres, 2.75) */
+    pal_buf[b + 1] = hd_dark(D);                                      /* (cheveux clairs : contours sombres) */
     pal_buf[b + 2] = (u8)(S >= 0x10 ? S : S + 0x10);                 /* peau (éclairée) */
     pal_buf[b + 6] = (u8)(O >= 0x10 ? O : O + 0x10);                  /* tenue */
     pal_buf[b + 5] = (u8)((D & 0x30) >= 0x20 ? 0x07 : D);             /* B : sombre (ombre du texte : noir si cheveux clairs), tenue, blanc */
@@ -360,7 +360,7 @@ static void vs_fill(u8 b, u8 c)
    le buste droit est alors recopié dans l'écran 0 (3 appels), la séparation
    des lignes s'arrête et un éclair blanc marque la rencontre. Enfin
    « CONTRE » s'inscrit sur un flash. */
-/* décalage par pas de 8 px (version 2.65) : sur la vraie NES, le décalage
+/* décalage par pas de 8 px : sur la vraie NES, le décalage
    fin (0 à 7 px) écrit par l'interruption s'applique aussitôt, au milieu de
    la ligne en cours ; s'il différait d'une ligne à l'autre, la moitié droite
    de chaque ligne (le buste droit) tremblait. Avec un multiple de 8, il reste

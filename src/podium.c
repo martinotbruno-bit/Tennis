@@ -40,7 +40,7 @@ u16 __fastcall__ pod_extra_tick(u16 t);
 #define S_CUP    0x10          /* coupe agrandie : 16 tuiles de sprites */
 #define S_THIRD  0x20          /* 3e (double) : 24 tuiles de sprites */
 
-/* remise des médailles (compétitions classiques, version 2.53) : RAM de
+/* remise des médailles (compétitions classiques) : RAM de
    cartouche libre (bloc SAVEDATA, non sauvegardé) */
 #define S_MED    0x38          /* ruban, médailles or, argent, bronze : 4 tuiles de sprites */
 #define MED_T0   210           /* trames de la remise, avant la coupe */
@@ -50,9 +50,9 @@ static u8 gm_st, gm_qa, gm_q0;
 static u16 pod_t;
 static u8 pal_sv[16], med_x[4], med_y[4], med_ty[4], med_c[4], n_med, fl_t, medals;
 #pragma bss-name(pop)
-#pragma bss-name(push, "SAVEDATA")    /* (version 2.61 : zone de sauvegarde libre, hors du bloc sauvegardé ; libère la RAM de travail) */
+#pragma bss-name(push, "SAVEDATA")    /* (zone de sauvegarde libre, hors du bloc sauvegardé ; libère la RAM de travail) */
 u8 pod_new;
-/* src (16), out (64), at (64) : un seul bloc, pod_buf (2.72) ; hors du
+/* src (16), out (64), at (64) : un seul bloc, pod_buf ; hors du
    podium, il garde la sauvegarde du match en cours (career.c) */
 u8 pod_buf[144];
 #define src pod_buf
@@ -208,7 +208,7 @@ static void medal_at(u8 x, u8 row, u8 c)
 }
 
 /* ====================================================================== */
-/* Grand Martinot et Martinworld Tour (version 2.53) : remise du trophée,   */
+/* Grand Martinot et Martinworld Tour : remise du trophée,   */
 /* puis conférence de presse.                                               */
 /*  - tapis rouge jusqu'à la table des trophées ; ramasseurs de balles en   */
 /*    haie d'honneur ; le finaliste monte recevoir sa plaque, salue et se   */
@@ -476,7 +476,7 @@ void podium_build(void)
             medal_at((u8)((x1 + 1) * 8 + 12), 12, 1); medal_at((u8)((x2 + 1) * 8 + 12), 14, 2); medal_at((u8)((x3 + 1) * 8 + 12), 16, 3);
         }
     }
-    bank_call(BANK_TRAIN, pod_extra_build);     /* tribunes, plaque du finaliste (2.72, highlight.c) */
+    bank_call(BANK_TRAIN, pod_extra_build);     /* tribunes, plaque du finaliste (highlight.c) */
     pal_dirty = 1;
     cup_t = 0;
 }
@@ -544,7 +544,7 @@ void podium_sprites(void)
 {
     u8 i, o, cy, y;
     if (gm_st) { gm_tick(); return; }
-    far_call(BANK_TRAIN, (void *)pod_extra_tick, cup_t);   /* public debout, plaque du finaliste (2.72) */
+    far_call(BANK_TRAIN, (void *)pod_extra_tick, cup_t);   /* public debout, plaque du finaliste */
     if (pod_t < 0xFFFF) ++pod_t;
     if (medals) {
         if (pod_t == 1) for (i = 0; i < 64; ++i) oam_buf[i * 4] = 0xFF;
@@ -558,7 +558,7 @@ void podium_sprites(void)
         for (i = 0; i < 10; ++i) {
             o = (u8)(80 + i * 4);
             conf_y[i] = conf_y0[i];
-            oam_buf[o + 1] = confetti_tile; oam_buf[o + 2] = (u8)((i & 1) || c_dbl ? 2 : 0); oam_buf[o + 3] = conf_x[i];   /* or, et couleurs du vainqueur (2.72) */
+            oam_buf[o + 1] = confetti_tile; oam_buf[o + 2] = (u8)((i & 1) || c_dbl ? 2 : 0); oam_buf[o + 3] = conf_x[i];   /* or, et couleurs du vainqueur */
         }
         if (c_dbl && !medals) big_spr(120, (u8)((((32 - 22) >> 1) + 16 + 1) * 8), 128, S_THIRD, 6, 0);
     }
@@ -570,7 +570,7 @@ void podium_sprites(void)
     for (i = 0; i < 16; ++i) oam_buf[i * 4] = (u8)(cy + (i >> 2) * 8 - 1);
     /* feux d'artifice pendant que la coupe est brandie (5 fusées, ~4 s) */
     oam_buf[64] = oam_buf[68] = oam_buf[72] = oam_buf[76] = 0xFF;
-    oam_buf[240] = oam_buf[244] = 0xFF;   /* (étincelles jaunes, 2.76 ; 62-63 : la plaque du finaliste, 2.77) */
+    oam_buf[240] = oam_buf[244] = 0xFF;   /* (étincelles jaunes ; 62-63 : la plaque du finaliste) */
     if (cup_t == 24) fw_c = 131;
     if (cup_t >= 24 && cup_t < 233) {             /* arrêt après la 5e gerbe, avant une 6e fusée */
         if (--fw_c == 0) fw_c = 130;

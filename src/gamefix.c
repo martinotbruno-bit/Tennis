@@ -76,7 +76,7 @@ void launch(s16 tx, s16 ty, u8 T, u8 grav)
     b_netcord = 0;
 }
 
-/* (win_label : highlight.c, banque 15, version 2.73) */
+/* (win_label : highlight.c, banque 15) */
 
 /* ---------------------------------------------------------------------- */
 /* Petits effets du court (banque fixe, appelés à la fin de match_draw) :  */
@@ -106,7 +106,7 @@ void team_name(u8 t, char *out)
     }
 }
 
-/* lob (2.74) : au rebond, il garde son élan lifté vers le fond, mais sa
+/* lob : au rebond, il garde son élan lifté vers le fond, mais sa
    remontée est plafonnée (environ 56 px au sommet au lieu de 90 à 110) : il
    retombe dans le court, frappable jusqu'à son second rebond (can_hit :
    62 px après le rebond), au lieu de partir hors de l'écran */
@@ -133,7 +133,7 @@ u8 can_hit(u8 p)
     if (dx < -24 || dx > 24) return 0;
     if (bz > 40 * FP) {
         /* balle très haute : avant le rebond, smash sauté (joueurs humains et
-           CPU expert, hors du fond du court) ; après le rebond (2.74), un lob
+           CPU expert, hors du fond du court) ; après le rebond, un lob
            haut se reprend jusqu'à 62 px, sans sauter */
         if (bz > 62 * FP) return 0;
         if (!bounces) {
@@ -150,10 +150,9 @@ u8 can_hit(u8 p)
 /* relâché juste avant l'arrivée de la balle (3 premières trames du geste) */
 /* ---------------------------------------------------------------------- */
 
-/* timing_msg, serve_fb et perfect_hit : banque 13 (shots.c), version 2.52 */
+/* timing_msg, serve_fb et perfect_hit : banque 13 (shots.c) */
 
-/* Récapitulatif du score (score_line, score_recap) : banque 0 (game.c),
-   version 2.59 (place en banque fixe) */
+/* Récapitulatif du score (score_line, score_recap) : banque 0 (game.c) (place en banque fixe) */
 
 /* Feux d'artifice (fête de victoire sur le court, levée de coupe). t est un
    compte à rebours (ms_timer sur le court) : chaque fusée siffle en montant

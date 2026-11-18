@@ -1,4 +1,4 @@
-/* Royal Martinot — survol du stade avant une finale (banque 20, version 2.73).
+/* Royal Martinot — survol du stade avant une finale (banque 20).
  *
  * Trois bandes de 80 lignes, chacune large de deux écrans (512 px, miroir
  * vertical) : le ciel (nuages, titre), les tribunes pleines, le court vu de

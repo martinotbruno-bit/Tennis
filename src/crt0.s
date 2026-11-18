@@ -39,14 +39,14 @@ CTRL_VAL  = %10001000
 
 .segment "HEADER"
     .byte "NES", $1A
-    .byte 32            ; 32 x 16 Ko PRG (512 Ko, version 2.67)
+    .byte 32            ; 32 x 16 Ko PRG (512 Ko)
     .byte 0             ; 0 = CHR-RAM (8 Ko)
-    .byte $42           ; mapper 4 (MMC3), PRG-RAM sauvegardée par pile (version 2.62 ; MMC1 avant)
+    .byte $42           ; mapper 4 (MMC3), PRG-RAM sauvegardée par pile (MMC1 avant)
     .byte $00
     .byte $00           ; 8 Ko de PRG-RAM
     .res 7, 0
 
-; MMC3 (version 2.62) : banques de programme de 8 Ko. Mode 0 : $8000 (R6)
+; MMC3 : banques de programme de 8 Ko. Mode 0 : $8000 (R6)
 ; et $A000 (R7) commutables, $C000-$FFFF fixes (les deux dernières, soit
 ; l'ancienne banque 15 de 16 Ko). Une banque n de 16 Ko = R6 2n, R7 2n + 1 :
 ; l'organisation de la ROM ne change pas. CHR-RAM de 8 Ko : registres R0-R5
@@ -72,20 +72,20 @@ split_l2: .res 1        ; bandes du ralenti (split_on 3) : seconde interruption 
 split_ph: .res 1        ; bandes du ralenti : 0 avant la bande du haut finie, 1 ensuite
 _fly_x:   .res 2        ; survol du stade (split_on 4) : défilement des bandes 2 et 3 (tribunes, court)
 _fly_n:   .res 2        ; ... et leur écran (0 ou 1)
-_hl_flags: .res 1       ; bit 0 bandeau de pause affiché, bit 1 balle de match annoncée (highlight.c, 2.75)
-_fc_last:  .res 1       ; trame de la dernière boucle (main.c, rattrapage, 2.76)
+_hl_flags: .res 1       ; bit 0 bandeau de pause affiché, bit 1 balle de match annoncée (highlight.c)
+_fc_last:  .res 1       ; trame de la dernière boucle (main.c, rattrapage)
 _ck1:      .res 1
 _ck2:      .res 1
-_mp_t:     .res 1       ; bandeau central de la balle de match : étape, puis durée (train.c, 2.75)
-_crowd_big: .res 1      ; standing ovation demandée (highlight.c, extras.c, 2.74)
-_band_hold: .res 1      ; bandeau du score affiché, en attente d'un appui humain (highlight.c, 2.74)
+_mp_t:     .res 1       ; bandeau central de la balle de match : étape, puis durée (train.c)
+_crowd_big: .res 1      ; standing ovation demandée (highlight.c, extras.c)
+_band_hold: .res 1      ; bandeau du score affiché, en attente d'un appui humain (highlight.c)
 _frame_cnt: .res 1
 _nmi_ready: .res 1      ; 1 = le thread principal a fini la trame
 _pal_dirty: .res 1
 _fade_lvl:  .res 1      ; fondu de la palette : 0 (normal) à 64 (noir)
 _fade_skip: .res 1      ; 1 : prochaine coupure sans fondu
 _ppu_mask:  .res 1
-_ppu_emph:  .res 1     ; accentuation des couleurs (bits 5-7 de PPUMASK : crépuscule, 2.71), effacée par ppu_off
+_ppu_emph:  .res 1     ; accentuation des couleurs (bits 5-7 de PPUMASK : crépuscule), effacée par ppu_off
 _pad1:      .res 1
 _pad2:      .res 1
 _pad1_new:  .res 1
@@ -120,8 +120,8 @@ _region_cnt:.res 2      ; nombre de boucles entre deux VBlank (détection NTSC/P
 
 .segment "WBSS"
 _rp_seq:    .res 2      ; trames enregistrées (rp_record)
-_ctrl_swap: .res 1      ; tables de tuiles échangées (highlight.c, version 2.67)
-split_on: .res 1        ; 1 : glissade de l'affiche VS ; 2 : bandeau du score (2.71)
+_ctrl_swap: .res 1      ; tables de tuiles échangées (highlight.c)
+split_on: .res 1        ; 1 : glissade de l'affiche VS ; 2 : bandeau du score
 split_l:  .res 1        ; ligne de l'interruption (valeur de recharge du compteur MMC3)
 _split_o:
 split_o:  .res 1
@@ -373,7 +373,7 @@ nmi:
     beq @nosplit
     ; trame en retard (NMI sans le travail du VBlank) : l'interruption du
     ; bandeau a laissé l'écran 1 dans PPUCTRL ; on le remet pour le haut de
-    ; l'image (2.71)
+    ; l'image
     lda #CTRL_VAL
     eor _ctrl_swap
     ora _scroll_nt
@@ -419,7 +419,7 @@ nmi:
 ; chaque écriture a une fenêtre d'une ligne entière. Le décalage o est un
 ; multiple de 8 (vs_slide) : le décalage fin, qui prend effet aussitôt au
 ; milieu de la ligne, reste à 0 ; seule la colonne de départ change, copiée
-; à la colonne 257 (aucune déchirure, ni au titre au-dessus, version 2.65).
+; à la colonne 257 (aucune déchirure, ni au titre au-dessus).
 ; -------------------------------------------------------------------------
 irq:
     pha
@@ -431,7 +431,7 @@ irq:
     lda split_on
     cmp #4
     bne @nofly
-    ; survol du stade (2.73) : défilement horizontal propre à chaque bande
+    ; survol du stade : défilement horizontal propre à chaque bande
     ; (parallaxe) ; deux interruptions, comme les bandes du ralenti
     ldx split_ph
     bit PPUSTATUS
@@ -454,7 +454,7 @@ irq:
 @nofly:
     cmp #3
     bne @nolb
-    ; bandes du ralenti (2.73) : l'écran 1 (bandes noires) en haut ; à la
+    ; bandes du ralenti : l'écran 1 (bandes noires) en haut ; à la
     ; première interruption, le court (écran 0), puis l'interruption est
     ; réarmée pour le bas ; à la seconde, de nouveau l'écran 1
     lda split_ph
@@ -474,7 +474,7 @@ irq:
 @nolb:
     cmp #5
     bne @nocb
-    ; bandeau central (2.75) : écran 1 de la ligne 96 à la ligne 143, puis
+    ; bandeau central : écran 1 de la ligne 96 à la ligne 143, puis
     ; de nouveau l'écran 0 (même défilement : les rangées 12 à 17 de l'écran 1)
     lda split_ph
     bne @cb2
@@ -493,7 +493,7 @@ irq:
 @nocb:
     lsr a
     bcs @vs
-    ; bandeau du score (2.71) : écran 1 à partir de la ligne suivante (le bit
+    ; bandeau du score : écran 1 à partir de la ligne suivante (le bit
     ; horizontal de l'écran passe dans l'adresse du PPU à la fin de la ligne ;
     ; même défilement : les rangées du bas de l'écran 1 s'affichent)
     lda #CTRL_VAL | 1
@@ -568,7 +568,7 @@ _band_on:
     cli
     rts
 ; void __fastcall__ lbox_on(u8 l2) : bandes du ralenti (lignes 0-15 et 224-239
-; sur l'écran 1) : interruptions aux lignes 15 et l2 (relative), 2.73
+; sur l'écran 1) : interruptions aux lignes 15 et l2 (relative)
 _lbox_on:
     sta split_l2
     lda #15
@@ -587,7 +587,7 @@ _fly_on:
     cli
     rts
 ; void __fastcall__ cband_on(u8 l2) : bandeau central, interruptions aux
-; lignes 95 et l2 (relative), 2.75
+; lignes 95 et l2 (relative)
 _cband_on:
     sta split_l2
     lda #95
@@ -1071,7 +1071,7 @@ _spr_end:
     rts
 
 ; void __fastcall__ set_bank(u8 bank) : banque commutable en $8000
-; (banques 0 à 30 : 512 Ko, version 2.67)
+; (banques 0 à 30 : 512 Ko)
 _set_bank:
     and #$1F
     cmp _cur_bank
@@ -1253,7 +1253,7 @@ _rp_record:
     bne :+
     ldx #0
 :   stx _rp_head
-    inc _rp_seq         ; trames enregistrées depuis le démarrage (repères du ralenti, 2.67)
+    inc _rp_seq         ; trames enregistrées depuis le démarrage (repères du ralenti)
     bne :+
     inc _rp_seq+1
 :   lda _rp_count

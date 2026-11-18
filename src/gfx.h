@@ -4,8 +4,8 @@
 
 #define NCHARS 21     /* 16 + Margaux (index 16) + MAX, LOLA, PAPI, TITOU (17 à 20) */
 extern const char * const char_name[NCHARS];
-extern u8 char_female[NCHARS];   /* (2.75 : en RAM, copie de la table d'origine ; le joueur personnalisé peut changer de sexe) */
-/* Joueur personnalisé en compétition (2.75) : cu_sav (sauvegardé, pile) :
+extern u8 char_female[NCHARS];   /* (en RAM, copie de la table d'origine ; le joueur personnalisé peut changer de sexe) */
+/* Joueur personnalisé en compétition : cu_sav (sauvegardé, pile) :
    [0] contrôle CU_MAGIC, puis pour le joueur 1 et le partenaire (manette 2)
    12 octets : nom (7 lettres et 0), drapeaux (bit 0 actif, bit 1 femme),
    peau, tenue, cheveux (et short). cu_map[k] : personnage habillé + 1
@@ -14,7 +14,7 @@ extern u8 char_female[NCHARS];   /* (2.75 : en RAM, copie de la table d'origine 
 #define CU_SLOT(k) (1 + (k) * 12)
 extern u8 cu_sav[25], cu_map[4];
 #pragma zpsym("cu_map")
-u8 * __fastcall__ cu_slot(u8 k);       /* (2.77) profil de travail du joueur humain k (0 à 3) */
+u8 * __fastcall__ cu_slot(u8 k);       /* profil de travail du joueur humain k (0 à 3) */
 const char * __fastcall__ chr_nm(u8 c);   /* nom du personnage (personnalisé le cas échéant) */
 void cust_reset(void);                  /* personnages d'origine */
 extern const u8 char_style[NCHARS];
@@ -34,7 +34,7 @@ extern const char * const env_name[NENV];
 void pal_set_court(u8 surface, u8 cond, u8 env);   /* cond : 0 jour, 1 nuit, 2 pluie */
 void pal_set_menu(void);
 void pal_set_player(u8 slot, u8 character);
-void pal_players_match(u8 c0, u8 c1);          /* (2.77) palettes des joueurs en match : sombre = noir */
+void pal_players_match(u8 c0, u8 c1);          /* palettes des joueurs en match : sombre = noir */
 void spr_begin(void);
 void spr_end(void);
 void __fastcall__ spr1(u8 x, u8 y, u8 tile, u8 attr);

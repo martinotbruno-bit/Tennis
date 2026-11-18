@@ -71,7 +71,7 @@ pdy:    .res 2
 ; pose de course. Ordre de la course : 1, 3 (passage), 2, 4 (passage).
 runfr:  .byte $FF, 0, 3, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF
         .byte $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, 6, 9, $FF
-        .byte $FF, $FF, $FF, $FF, $FF          ; 22-26 : revers (version 2.42)
+        .byte $FF, $FF, $FF, $FF, $FF          ; 22-26 : revers
         .byte $FF, $FF, $FF, $FF, $FF          ; 27-31 (la 31, assis, est dessinée à part : POSE_SIT)
 POSE_SIT  = 31
 PROF_SIT  = 12                                 ; image 4 de prof_map : assis de profil
@@ -83,7 +83,7 @@ PROF_SIT  = 12                                 ; image 4 de prof_map : assis de 
 ; void spr_person_v(void) : même chose, paramètres déjà posés par l'appelant
 ; (pv_x, pv_y, pv_c, pv_front, pv_pose, pv_flip, pj_sg) : évite 8 octets
 ; poussés puis relus sur la pile C pour chaque joueur, à chaque trame
-; (match_draw, version 2.66)
+; (match_draw)
 _spr_person_v:
     lda #1
     sta pv_mode
@@ -910,7 +910,7 @@ _spr_ball:
     jmp @put
 @rot:
     lda tmp1
-    cmp #17                 ; (2.77) balle de 6 px : un seul dessin, sans
+    cmp #17                 ; balle de 6 px : un seul dessin, sans
     beq :+                  ; rotation (tuiles 18 à 20 : autre chose, balle « vide »)
     clc
     adc brot

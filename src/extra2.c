@@ -1,4 +1,4 @@
-/* Royal Martinot 2.76 — fonctions de match ajoutées en 2.76, sorties des
+/* Royal Martinot — fonctions de match, sorties des
    banques 15 et 20 pleines (banque 30) : balle faute renvoyée, annonce de
    l'ace, balle limite (zoom rapide), récapitulatif du score. */
 #include <string.h>
@@ -15,7 +15,7 @@ extern u8 sc_swap;
 void set_msg(const char *a, const char *b, u8 t);   /* banque fixe */
 
 /* ---------------------------------------------------------------------- */
-/* Balle faute renvoyée (2.76) : après un service faux ou une balle dehors */
+/* Balle faute renvoyée : après un service faux ou une balle dehors */
 /* (le point est déjà joué, MS_DEAD), le joueur humain qui a armé son coup */
 /* et a la balle à portée la renvoie quand même, mollement, vers l'autre   */
 /* camp, comme on le fait sur un vrai court. L'échange reste terminé : la  */
@@ -42,7 +42,7 @@ u16 __fastcall__ dead_hit(u16 pp)
     return 1;
 }
 
-/* annonce « ACE ! » et vitesse du service (2.76 : déplacée de highlight.c,
+/* annonce « ACE ! » et vitesse du service (déplacée de highlight.c,
    banque 15 pleine) */
 extern u8 hl_spd;
 static char ace_b[10];
@@ -54,11 +54,11 @@ void hl_ace_msg(void)
     set_msg("ACE !", ace_b, 90);
 }
 
-/* (2.76) déplacés de highlight.c (banque 15 pleine) : balle limite, puis
+/* déplacés de highlight.c (banque 15 pleine) : balle limite, puis
    récapitulatif du score */
 extern u8 hl_bx, hl_by, hl_bin, hl_bok, hl_sok, hl_sbok, hl_sbi, hl_sbx, hl_sby, hl_sbin, hl_bi, hl_quick, rp_pending;
 extern u16 hl_bf, hl_sbf;
-/* balle dehors de peu (2.73) : le point s'arrête sur une balle d'échange
+/* balle dehors de peu : le point s'arrête sur une balle d'échange
    tombée à 3 px de la ligne ou moins ; ralenti court (12 trames avant le
    rebond, rp_start), sans gros plan, droit au zoom x 2 sur l'impact
    (« DEHORS ! », 50 trames au lieu de 80), puis fin du ralenti. Appelé par
@@ -67,7 +67,7 @@ extern u8 hit_jump;
 extern u8 b_serve;
 #pragma static-locals(push, off)        /* (pile : la RAM de travail est pleine) */
 /* balle bonne sur la ligne ou à 2 px à l'intérieur du point où elle la
-   touche encore (2.74) : distance à la ligne la plus proche, 4 px au plus */
+   touche encore : distance à la ligne la plus proche, 4 px au plus */
 static u8 near_in(s16 x, s16 y)
 {
     s16 d, l = cfg.doubles ? IN_DL : IN_SL, r = cfg.doubles ? IN_DR : IN_SR;
@@ -79,7 +79,7 @@ static u8 near_in(s16 x, s16 y)
 void hl_out(void)
 {
     s16 x = hl_bx, y = hl_by, d = 0, l, r;
-    if (!hl_bok || b_serve || !cfg.replays || cfg.env == ENV_NUDE || cfg.demo) return;   /* (2.74 : prioritaire sur le ralenti complet) */
+    if (!hl_bok || b_serve || !cfg.replays || cfg.env == ENV_NUDE || cfg.demo) return;   /* (prioritaire sur le ralenti complet) */
     l = cfg.doubles ? IN_DL : IN_SL; r = cfg.doubles ? IN_DR : IN_SR;   /* (ligne comprise) */
     if (hl_bin) {
         if (!near_in(x, y)) return;
@@ -118,12 +118,12 @@ void score_recap(void)
 
 u16 __fastcall__ near_in_f(u16 xy) { return near_in((u8)xy, (u8)(xy >> 8)); }
 
-/* (2.77) trace de la balle des zooms (highlight.c) : l'empreinte exacte de
+/* trace de la balle des zooms (highlight.c) : l'empreinte exacte de
    la balle jugée, disque de 2 px du court ; voir le commentaire de
    highlight.c */
 #pragma static-locals(push, off)
 /* tuiles précalculées (contour sombre de 1 px, intérieur plein de la
-   couleur de la balle, 2.77 : la trace évidée semblait une balle vide ; disque de rayon 4 z px, 16 x 16 px, haut gauche,
+   couleur de la balle, la trace évidée semblait une balle vide ; disque de rayon 4 z px, 16 x 16 px, haut gauche,
    haut droit, bas gauche, bas droit) : x 2 puis x 4 */
 static const u8 mk_t2[64] = {
     0x00, 0x00, 0x00, 0x00, 0x00, 0x03, 0x07, 0x07, 0x00, 0x00, 0x00, 0x00, 0x03, 0x04, 0x08, 0x08,
@@ -145,7 +145,7 @@ u16 __fastcall__ mark_build_f(u16 adz)
 }
 #pragma static-locals(pop)
 
-/* (2.77) gros plans HD (cut_build, highlight.c) : décor harmonieux. La trame
+/* gros plans HD (cut_build, highlight.c) : décor harmonieux. La trame
    du fond de l'image (tuile $F8) couvre tout l'écran : elle remplace la tuile
    du fond uni ($FB) et, là où la palette est celle du décor, la tuile vide
    ($00) : avant, elle ne se voyait que dans le rectangle de l'image. Plan moyen (z = 0) : la bande du sol (rangées 27 à

@@ -1,4 +1,4 @@
-/* Royal Martinot — banque 15 (version 2.67) : récapitulatif du score (venu
+/* Royal Martinot — banque 15 : récapitulatif du score (venu
  * de la banque 0) ; mise en valeur du point pendant le ralenti : gros plan
  * de la frappe décisive et arrêt sur image zoomé au rebond. */
 #include "game_int.h"
@@ -17,7 +17,7 @@ extern u8 recap_pend;
 /* terminés puis jeux du set en cours (14 caractères pour 5 sets).        */
 /* ---------------------------------------------------------------------- */
 /* ====================================================================== */
-/* Mise en valeur du point pendant le ralenti (version 2.67)               */
+/* Mise en valeur du point pendant le ralenti               */
 /*                                                                        */
 /* Le ralenti (rp_play, banque 3) s'arrête sur deux repères posés pendant */
 /* le point (game.c) : la frappe décisive de l'équipe gagnante, puis le    */
@@ -55,7 +55,7 @@ char hl_txt[16];
 extern u8 rp_head;
 extern u16 rp_seq;
 /* frappe : pk = joueur | coup << 8 (bit 15 : service, début du point) */
-/* retour plongeant sur un service canon (2.72) : dive_canon = joueur + 1,
+/* retour plongeant sur un service canon : dive_canon = joueur + 1,
    posé par dive_try (shots.c) ; hl_cdv[t] : la dernière frappe de l'équipe t
    est ce plongeon (gros plan au ralenti s'il gagne le point, hl_select) */
 u8 dive_canon;
@@ -72,7 +72,7 @@ u16 __fastcall__ hl_hit(u16 pk)
     hl_bok = 0;                     /* nouvelle balle : pas encore de rebond */
     return 0;
 }
-/* ace (2.70) : « ACE ! » et la vitesse du service, comme à la télévision :
+/* ace : « ACE ! » et la vitesse du service, comme à la télévision :
    environ 140 km/h coupé, 170 à plat, 210 canon (1,375 x la vitesse de la
    balle + 80, à quelques km/h près) */
 u8 hl_spd, hl_srv;     /* vitesse du service (puis km/h - 80), joueur au service */
@@ -85,8 +85,8 @@ void hl_serve(void)
     hl_spd = (u8)(hl_spd + (hl_spd >> 2) + (hl_spd >> 3) + (rand8() & 7));
     if (hl_spd > st_vmax[hl_srv & 1]) { st_vmax[hl_srv & 1] = hl_spd; st_vmaxp[hl_srv & 1] = hl_srv; }
 }
-/* (hl_vmax_row, hl_rec_row : train.c, banque 20, version 2.75) */
-/* Crépuscule (2.71, CONDITIONS : CREPUSCULE) : la lumière change au fil des
+/* (hl_vmax_row, hl_rec_row : train.c, banque 20) */
+/* Crépuscule (CONDITIONS : CREPUSCULE) : la lumière change au fil des
    jeux, en 4 paliers sur environ un match moyen (sets gagnants x jeux par
    set x 1,2 jeux) : 0 plein jour ; 1 soleil bas, lumière chaude (accentuation
    du rouge de la NES : toute l'image, joueurs compris, comme un vrai
@@ -98,10 +98,10 @@ void hl_serve(void)
 extern u8 ppu_emph;
 #pragma zpsym("ppu_emph")
 u8 sun_st;
-void sun_game(void);                    /* sunset.c, banque 22 (2.76) */
+void sun_game(void);                    /* sunset.c, banque 22 */
 void sun_apply(void);
 /* ====================================================================== */
-/* Bandeau du score façon télévision (2.71)                                */
+/* Bandeau du score façon télévision                                */
 /*                                                                        */
 /* Entre deux points (temps mort après le point, joueurs assis au         */
 /* changement de côté ; pas pendant la mise en place du service, le       */
@@ -116,17 +116,17 @@ void sun_apply(void);
 /* ====================================================================== */
 #define BAND_NT   0x2400
 /* filet du bandeau : tuile $FF, jamais posée sur le court (vérifié dans tous
-   les lieux, à plat et en perspective). En 2.71-2.72 c'était $5F (« _ »),
+   les lieux, à plat et en perspective). Autrefois $5F (« _ »),
    que la vue en perspective emploie comme tuile vide au bord du court : des
    traits horizontaux apparaissaient entre le public et le court. */
 #define T_RULE    0xFF
-#define T_PCT     0xFE         /* (2.77) « % » du bandeau, aussi en perspective (où la tuile $25 dessine le court) ; $FE n'est jamais posée sur le court */
+#define T_PCT     0xFE         /* « % » du bandeau, aussi en perspective (où la tuile $25 dessine le court) ; $FE n'est jamais posée sur le court */
 #define BAND_ROW  25
 #define BAND_LINE 199          /* (valeur de recharge du compteur : réglée sur jsnes et FCEUX) */
-#define BAND_WAIT 48           /* délai d'apparition après le point (2.74) */
+#define BAND_WAIT 48           /* délai d'apparition après le point */
 #define CER_SEAT  5
-#define CER_CHOOSE 11            /* tirage au sort : choix du gagnant (cer.c, 2.76) */
-#define CER_RECAP 13             /* récapitulatif avant le service (cer.c, 2.76) */
+#define CER_CHOOSE 11            /* tirage au sort : choix du gagnant (cer.c) */
+#define CER_RECAP 13             /* récapitulatif avant le service (cer.c) */
 extern u8 toss_q, toss_c;
 extern u8 hl_mode, cer;
 extern u8 band_hold, crowd_big;
@@ -135,12 +135,12 @@ extern u8 band_hold, crowd_big;
 u8 band_vis, band_rows, band_dis;   /* band_dis : bandeau renvoyé par un appui (jusqu'au point suivant) */      /* band_vis : 0 caché, 1 texte, 2 sprites cachés, 3 affiché */
 static u8 band_last[7];
 static char bb[28];
-/* changement de côté (2.72) : le bandeau alterne le score (page 0) et des
+/* changement de côté : le bandeau alterne le score (page 0) et des
    statistiques du match, une page toutes les 50 trames (joueurs assis
    250 trames en match, cer.c) */
 u8 band_pg;
-u8 band_t;                             /* (2.76 : remis à 0 à l'arrivée sur la chaise, cer.c) */
-static const char * const band_lbl[5] = { "1ERES BALLES", "ACES", "COUPS GAGNANTS", "FAUTES", "SERVICE MAX KM/H" };   /* (FAUTES : 2.76) */
+u8 band_t;                             /* (remis à 0 à l'arrivée sur la chaise, cer.c) */
+static const char * const band_lbl[5] = { "1ERES BALLES", "ACES", "COUPS GAGNANTS", "FAUTES", "SERVICE MAX KM/H" };   
 static void band_num(u8 at, u16 v)
 {
     bb[at + 2] = (char)('0' + v % 10);
@@ -167,7 +167,7 @@ static void band_text(u8 t)
     u8 i, k;
     const char *q;
     for (i = 0; i < 28; ++i) bb[i] = ' ';
-    if (band_pg == 6) {             /* (2.76) tirage au sort : le choix du gagnant */
+    if (band_pg == 6) {             /* tirage au sort : le choix du gagnant */
         if (toss_q == 3) {          /* récapitulatif : « ALEX SERT EN BAS » / « MAYA RECOIT    A : JOUER » */
             k = (u8)(t ? sc_server ^ 1 : sc_server);
             team_label(cfg.chr[k], cfg.doubles ? cfg.chr[k + 2] : 255, bb);
@@ -194,7 +194,7 @@ static void band_text(u8 t)
             switch (band_pg) {
             case 1:
                 band_num(i, st_first_tot[k] ? (u16)(((u16)st_first_in[k] * 100) / st_first_tot[k]) : 0);
-                bb[i + 3] = (char)T_PCT;        /* « % » (2.77 : aussi en perspective, tuile $FE) */
+                bb[i + 3] = (char)T_PCT;        /* « % » (aussi en perspective, tuile $FE) */
                 break;
             case 2: band_num(i, st_aces[k]); break;
             case 3: band_num(i, st_winners[k]); break;
@@ -213,7 +213,7 @@ static void band_text(u8 t)
         bb[8 + i * 3] = (char)('0' + (i < sc_set_no ? sc_hist[i][t] : sc_games[t]));
     rules_point_label(t, bb + 24);
 }
-/* Annonces du score par l'arbitre (2.71) : « Game! » à la fin d'un jeu,
+/* Annonces du score par l'arbitre : « Game! » à la fin d'un jeu,
    « Deuce! » et « Advantage! » (hors jeu décisif). Posées à la fin du point
    (hl_point_ev, game.c), dites un peu après, quand le DMC a fini l'annonce
    en cours (« Out! », « Fault! ») : rien n'est coupé. */
@@ -238,7 +238,7 @@ u16 __fastcall__ hl_point_ev(u16 ev)
     else if (!sc_tiebreak && sc_points[0] >= 3 && sc_points[1] >= 3)
         voice_pend = sc_points[0] == sc_points[1] ? V_DEUCE : V_ADV;
     voice_t = 24;
-    bank_call(BANK_CAR, msave_write);       /* sauvegarde du match en cours (2.72, career.c) */
+    bank_call(BANK_CAR, msave_write);       /* sauvegarde du match en cours (career.c) */
     return 0;
 }
 static void voice_tick(void)
@@ -248,7 +248,7 @@ static void voice_tick(void)
     if ((ms == MS_DEAD || ms == MS_SERVE) && !((*(volatile u8 *)0x4015) & 0x10)) { sfx_umpire(voice_pend); voice_pend = 0; }
 }
 /* ====================================================================== */
-/* Bandes « cinéma » du ralenti (2.73) : rangées 0-1 et 28-29 de l'écran 1   */
+/* Bandes « cinéma » du ralenti : rangées 0-1 et 28-29 de l'écran 1   */
 /* en noir (tuile $01, palette 1 : couleur 1 = noir), avec un cartouche    */
 /* « RALENTI » et « A : PASSER » dans celle du haut ; le haut de l'image    */
 /* vient de l'écran 1 (scroll_nt = 1), l'interruption de la ligne 16 passe */
@@ -258,8 +258,8 @@ static void voice_tick(void)
 /* les bandes. lb_st : 0 rien, 0 à 3 rangées en écriture, 7 affiché.        */
 /* ====================================================================== */
 u8 lb_st;
-u8 hl_quick;                             /* ralenti rapide d'une balle dehors de peu (hl_out, 2.73) */
-/* (2.74 : bandes du ralenti retirées ; lbox_end reste, lb_st vaut toujours 0) */
+u8 hl_quick;                             /* ralenti rapide d'une balle dehors de peu (hl_out) */
+/* (bandes du ralenti retirées ; lbox_end reste, lb_st vaut toujours 0) */
 static void lbox_end(void)
 {
     if (!lb_st) return;
@@ -278,18 +278,18 @@ static u8 band_human(void)
     return 0;
 }
 #pragma static-locals(pop)
-/* drapeaux des supporters (2.74) : trois par tribune, aux couleurs des
+/* drapeaux des supporters : trois par tribune, aux couleurs des
    joueurs (palette de sprites de l'équipe : étoffe = tenue, hampe = couleur
    sombre), agités (retournés toutes les 8 trames, en décalé) pendant les
    changements de côté, la standing ovation et la fin du match ; ni au club
    nudiste ni au court Margaux (public à part). Sprites ajoutés après
    spr_end (emplacements restés libres). */
-void flags_draw(void);                  /* drapeaux des supporters : train.c, banque 20 (2.74) */
+void flags_draw(void);                  /* drapeaux des supporters : train.c, banque 20 */
 extern u8 hl_flags;
 #pragma zpsym("hl_flags")
 static void pause_tick(void);
 void mp_tick(void);
-void st_tick(void);                     /* bandeau du set (train.c, 2.76) */
+void st_tick(void);                     /* bandeau du set (train.c) */
 extern u8 brk_pend;
 extern u8 mp_t;
 #pragma zpsym("mp_t")
@@ -299,9 +299,9 @@ void band_draw(void)
     bank_call(BANK_TRAIN, flags_draw);
     pause_tick();
     if (hl_flags & 1) return;                /* (pause : son bandeau seulement) */
-    /* balle de match (2.75) : annoncée quand le serveur se met en place, à
+    /* balle de match : annoncée quand le serveur se met en place, à
        chaque balle de match (remise à zéro à la fin de chaque point) */
-    /* (2.76) fin de set : bandeau central du set pendant le passage aux
+    /* fin de set : bandeau central du set pendant le passage aux
        chaises (train.c), puis l'écran du set */
     if (brk_pend && (cer == 4 || cer == CER_SEAT)) { bank_call(BANK_TRAIN, st_tick); band_hold = 1; voice_tick(); return; }
     if (cfg.mode == GM_MATCH && !cfg.demo) {
@@ -311,7 +311,7 @@ void band_draw(void)
     }
     voice_tick();
     lbox_end();
-    /* (2.74) le bandeau du score apparaît après le point (après le ralenti
+    /* le bandeau du score apparaît après le point (après le ralenti
        s'il y en a un) et reste jusqu'à un appui d'un joueur humain : c'est
        la seule façon de le fermer, et cet appui ne lance pas la balle ;
        l'ordinateur attend pour servir (band_hold, game.c). Sans joueur
@@ -320,14 +320,14 @@ void band_draw(void)
     if (ms != MS_DEAD && ms != MS_SERVE) band_dis = 0;
     else if (!rp_pending && (pad1_new | pad2_new)) band_dis = 1;
     if (cer == CER_CHOOSE || cer == CER_RECAP) band_pg = 6;
-    /* (2.77) balle de match gagnée : pas de bandeau avant la fête (le
+    /* balle de match gagnée : pas de bandeau avant la fête (le
        score n'est compté qu'à la fin du temps mort) */
     v = (u8)(ms == MS_DEAD && end_reason == END_POINT && (sc_crit & 4) && ((sc_crit >> pending_winner) & 1));
     v = (u8)(cfg.mode == GM_MATCH && !paused && !hl_mode && !sc_over && !v &&
              ((cer == CER_SEAT) || ((cer == CER_CHOOSE || cer == CER_RECAP) && toss_q) || (cer == 4 && !band_dis) || ((!cer || cer >= 0xF0) && !band_dis && !rp_pending && (ms == MS_DEAD || ms == MS_SERVE))));
-    /* (2.76) cer 4 (CER_CHAIR, vers les chaises) : le bandeau reste affiché
+    /* cer 4 (CER_CHAIR, vers les chaises) : le bandeau reste affiché
        depuis la fin du point jusqu'aux statistiques, sans disparaître */
-    /* (2.74) apparition : 48 trames après la fin du point (ou du ralenti),
+    /* apparition : 48 trames après la fin du point (ou du ralenti),
        le temps de lire le message du point, puis le bandeau monte du bas en
        10 trames (la ligne de l'interruption remonte de 4 lignes par trame).
        Pendant ce temps l'ordinateur attend aussi, même sans joueur humain,
@@ -337,7 +337,7 @@ void band_draw(void)
     if (!v) {
         hl_flags &= (u8)~4;
         if (band_vis) { split_stop(); band_vis = 0; }
-        /* (2.76) pendant un ralenti (ou avant qu'il commence) : à sa fin,
+        /* pendant un ralenti (ou avant qu'il commence) : à sa fin,
            joué ou passé, le bandeau monte aussitôt, sans le délai de lecture */
         band_t = (u8)(rp_pending || hl_mode || ms == MS_REPLAY ? BAND_WAIT : 0);
         return;
@@ -346,8 +346,8 @@ void band_draw(void)
     if (!band_vis) { band_vis = 1; band_rows = 15; }  /* (bits 2-3 : filet du bas, bords et rangée 29, que les bandes du ralenti recouvrent) */
     if (cer == CER_SEAT) {
         if (band_human()) {
-            /* (2.75) une page par appui ; après la dernière, les joueurs repartent */
-            if ((pad1_new | pad2_new) & PAD_START) band_hold = 2;                                       /* (2.76) START : toutes passées, on reprend */
+            /* une page par appui ; après la dernière, les joueurs repartent */
+            if ((pad1_new | pad2_new) & PAD_START) band_hold = 2;                                       /* START : toutes passées, on reprend */
             else if ((pad1_new | pad2_new) & (PAD_A | PAD_B)) { if (band_pg >= 5) band_hold = 2; else ++band_pg; }
         } else if (++band_t >= 40) { band_t = 0; if (++band_pg > 5) band_pg = 0; }   /* (40 trames par page : les 5 statistiques passent pendant la pause assise) */
     } else if (cer != CER_CHOOSE && cer != CER_RECAP) band_pg = 0;
@@ -387,7 +387,7 @@ void band_draw(void)
     if (band_vis == 1) { if (band_rows) return; band_vis = 2; }
     else if (band_vis == 2) { band_vis = 3; band_on(cer == CER_SEAT || cer == CER_CHOOSE || cer == CER_RECAP ? BAND_LINE : BAND_LINE + 40); }
     else if (cer != CER_SEAT && band_t < BAND_WAIT + 10) { ++band_t; band_on((u8)(BAND_LINE + (BAND_WAIT + 10 - band_t) * 4)); }   /* (montée) */
-    /* (2.76) hl_flags bit 2 : bandeau entièrement monté (les chaises du
+    /* hl_flags bit 2 : bandeau entièrement monté (les chaises du
        changement de côté n'apparaissent qu'alors, cer.c) */
     if (band_vis == 3 && (cer == CER_SEAT || band_t >= BAND_WAIT + 10)) hl_flags |= 4; else hl_flags &= (u8)~4;
     /* sprites : rien ne descend dans le bandeau */
@@ -408,7 +408,7 @@ void band_draw(void)
     __asm__("bne band_hide");
 }
 
-/* (2.76) phases du crépuscule et lumière : sunset.c (banque 22) */
+/* phases du crépuscule et lumière : sunset.c (banque 22) */
 u8 sun_pend;
 void sun_apply(void);
 void sun_game(void);
@@ -416,8 +416,8 @@ u16 __fastcall__ sun_calc_f(u16 unused);
 /* chargement du court (court_load, game.c ; rendu coupé) : bandeau du score
    (écran 1) puis lumière du crépuscule. band_init écrit dans la VRAM : jamais
    pendant l'affichage (sun_apply, elle, est aussi appelée à la fin de chaque
-   jeu, écran allumé : en 2.71 elle appelait band_init, et ces écritures en
-   plein affichage abîmaient des tuiles du court et de la police) */
+   jeu, écran allumé : si elle appelait band_init, ces écritures en
+   plein affichage abîmeraient des tuiles du court et de la police) */
 void car_match_setup(void);           /* career.c : bonus de la carrière */
 void court_post(void)
 {
@@ -439,7 +439,7 @@ static u8 hl_fresh(u16 f)
 void hl_check(void)
 {
     if (cfg.env == ENV_NUDE) { hl_sok = hl_sbok = 0; return; }   /* (club nudiste : ni gros plan habillé, ni sprites agrandis) */
-    if (cfg.replays == 2) hl_sok = 0;   /* « OUI, SIMPLE » : pas de gros plan, mais le zoom (2.74) */
+    if (cfg.replays == 2) hl_sok = 0;   /* « OUI, SIMPLE » : pas de gros plan, mais le zoom */
     /* frappe décisive plus ancienne que le ralenti (lob, long échange
        conclu par une faute adverse) : le gros plan ouvre le ralenti (son
        image ne dépend pas de la trame) */
@@ -447,7 +447,7 @@ void hl_check(void)
     if (!hl_fresh(hl_sbf)) hl_sbok = 0;
 }
 extern u8 hit_jump;
-u16 __fastcall__ near_in_f(u16 xy);     /* extra2.c (2.76) */
+u16 __fastcall__ near_in_f(u16 xy);     /* extra2.c */
 /* fin de point : hl_w gagnant, hl_ptxt titre */
 void hl_select(void)
 {
@@ -456,8 +456,8 @@ void hl_select(void)
     hl_sok = (u8)((hl_hv >> hl_w) & 1);
     hl_si = hl_hi[hl_w]; hl_sp = hl_hp[hl_w]; hl_sk = hl_hk[hl_w]; hl_sf = hl_hf[hl_w]; hl_sbf = hl_bf;
     hl_sbok = hl_bok; hl_sbi = hl_bi; hl_sbx = hl_bx; hl_sby = hl_by; hl_sbin = hl_bin;
-    if (hl_sok && hl_sk == 1 && hit_jump) { rp_pending = 1; crowd_big |= 1; }   /* smash sauté gagnant : toujours au ralenti (2.73), standing ovation (2.74) */
-    if (rally_hits >= 12) crowd_big |= 1;                  /* (très long échange : standing ovation, 2.74) */
+    if (hl_sok && hl_sk == 1 && hit_jump) { rp_pending = 1; crowd_big |= 1; }   /* smash sauté gagnant : toujours au ralenti, standing ovation */
+    if (rally_hits >= 12) crowd_big |= 1;                  /* (très long échange : standing ovation) */
     if (hl_sok && hl_cdv[hl_w] && hl_sk == 4) {     /* plongeon gagnant sur un canon : ralenti et gros plan */
         set_msg("PLONGEON", "GAGNANT !", 70);    /* (titre du gros plan : 8 lettres, une ligne) */
         rp_pending = 1;
@@ -486,7 +486,7 @@ static const char *zl;                         /* titre du zoom : BONNE ou DEHOR
 #pragma bss-name(pop)
 
 /* tampons du zoom : zone libre de la RAM sauvegardée, après les blocs
-   sauvegardés (jamais lue au démarrage ; voir stats.c). (2.77) Superposés
+   sauvegardés (jamais lue au démarrage ; voir stats.c). Superposés
    aux tampons des menus (menuart.c, segment MENUBUF) : le zoom ne sert
    qu'en match, les menus jamais pendant un match */
 #pragma bss-name(push, "ZOOMBUF")
@@ -601,11 +601,11 @@ static void cut_build(u8 art)
     for (i = 0; i < a->h; ++i) { vram_adr(ad); ad += 32; tz_n = a->w; tz_copy(m); m += a->w; }
     vram_adr(0x23C0); tz_n = 64; tz_copy(a->at);
     vram_adr(0x27C0); vram_fill(0, 64);
-    far_call(BANK_X2, (void *)hd_backdrop_f, z);   /* (2.77) décor sur tout l'écran, sol continu (extra2.c) */
+    far_call(BANK_X2, (void *)hd_backdrop_f, z);   /* décor sur tout l'écran, sol continu (extra2.c) */
     /* palettes (comme la bande-annonce) */
     pal_set_player(61, c);
     S = pal_buf[5]; O = pal_buf[6]; D = pal_buf[7];
-    /* fond de couleur (2.77h, retour d'avant 2.77g) : gros plan rouge
+    /* fond de couleur  : gros plan rouge
        sombre, plan moyen bleu nuit. Les contours, les yeux et la bouche des
        images HD sont dessinés dans la couleur du fond (tools/gen_teaser.py) :
        ces deux couleurs, les plus sombres de la console après le noir, les
@@ -656,7 +656,7 @@ static void closeup_tick(void)
     ++hl_t;
     if (hl_t < 12) {                     /* image figée */
         if (hl_t == 9) { flash(0x30); sfx_perfect(); }
-        if (hl_t == 11) cut_build(hl_sk == 4 ? TZ_SLIDE : hl_sk == 3 ? TZ_BACKHAND : hl_sk == 1 ? TZ_SMASH_AIR : hl_sk ? TZ_SMASH : TZ_IMPACT);   /* (2.75 : smash en plein vol) */   /* plongeon : la glissade */   /* revers ; service, smash : raquette au-dessus de la tête (2.68) */
+        if (hl_t == 11) cut_build(hl_sk == 4 ? TZ_SLIDE : hl_sk == 3 ? TZ_BACKHAND : hl_sk == 1 ? TZ_SMASH_AIR : hl_sk ? TZ_SMASH : TZ_IMPACT);   /* (smash en plein vol) */   /* plongeon : la glissade */   /* revers ; service, smash : raquette au-dessus de la tête */
         return;
     }
     hl_c = (u8)(hl_t - 11);             /* temps du plan */
@@ -697,7 +697,7 @@ static void closeup_tick(void)
         return;
     }
     if (hl_t == 70) {
-        /* après un très long échange (20 frappes ou plus ; 12 en 2.73) : le public debout */
+        /* après un très long échange (20 frappes ou plus) : le public debout */
         if (rally_hits >= 20) { cut_build(TZ_CROWD); hl_cam = 0; scroll_x = 0; scroll_nt = 0; sfx_crowd(7); }
         else cut_build(TZ_VICTORY_Z);
         hl_shake = 6;
@@ -717,8 +717,8 @@ static void closeup_tick(void)
 static const u8 t_corner[16] = { 0xF0, 0x80, 0x80, 0x80, 0, 0, 0, 0,  0xF0, 0x80, 0x80, 0x80, 0, 0, 0, 0 };
 #define T_CORNER (swap_base + 20)
 static u8 zx, zy, zwx, zwy;            /* point visé dans l'image agrandie ; coin de la fenêtre (px) */
-/* (2.77) trace de la balle : l'empreinte exacte de la balle jugée. Depuis la
-   2.76, une balle est bonne si son bord (rayon BALL_R = 2 px) touche la
+/* trace de la balle : l'empreinte exacte de la balle jugée. Une balle
+   est bonne si son bord (rayon BALL_R = 2 px) touche la
    ligne : la trace est donc un disque de 2 px de rayon (du court), centré
    sur le centre du pixel de rebond, celui que juge l'arbitre. Balle bonne :
    la trace mord sur la ligne ; dehors : un écart se voit. Contour sombre
@@ -728,7 +728,7 @@ static u8 zx, zy, zwx, zwy;            /* point visé dans l'image agrandie ; co
 u16 __fastcall__ mark_build_f(u16 adz);   /* extra2.c (banque 30) : adresse des 4 tuiles | z */
 #define mark_build(ad, z) far_call(BANK_X2, (void *)mark_build_f, (u16)((ad) | (z)))
 
-/* Bandeau du score pendant la pause (2.75) : rangées 12 à 17 (filet, deux
+/* Bandeau du score pendant la pause : rangées 12 à 17 (filet, deux
    lignes du score comme le bandeau du bas, filet), écrites sur l'écran 1 une
    rangée par trame puis montrées par deux interruptions de ligne (cband_on,
    comme le bandeau de la balle de match) : ni écran coupé, ni appui perdu.
@@ -755,7 +755,7 @@ static void pause_tick(void)
                 band_text((u8)(r - 2));
                 band_pg = i;
                 vbuf_raw(BAND_NT + (PB_ROW + r) * 32 + 2, (const u8 *)bb, 28);
-                bb[0] = bb[1] = 0;               /* (2.77) bords : le décor n'y transparaît plus */
+                bb[0] = bb[1] = 0;               /* bords : le décor n'y transparaît plus */
                 vbuf_raw(BAND_NT + (PB_ROW + r) * 32, (const u8 *)bb, 2);
                 vbuf_raw(BAND_NT + (PB_ROW + r) * 32 + 30, (const u8 *)bb, 2);
             } else if (r == 6) {
@@ -769,7 +769,7 @@ static void pause_tick(void)
             }
             if (++mp_t == 8) cband_on(47);
         }
-        for (i = 0; i < 64; ++i) { r = oam_buf[i * 4]; if (r >= PB_ROW * 8 - 8 && r < (PB_ROW + 6) * 8) oam_buf[i * 4] = 0xFF; }   /* (2.77 : aussi ceux qui débordent par le haut) */
+        for (i = 0; i < 64; ++i) { r = oam_buf[i * 4]; if (r >= PB_ROW * 8 - 8 && r < (PB_ROW + 6) * 8) oam_buf[i * 4] = 0xFF; }   /* (aussi ceux qui débordent par le haut) */
     } else if (hl_flags & 1) {
         hl_flags &= (u8)~1;
         split_stop();
@@ -787,7 +787,7 @@ static void zoom_build(void)
     flash(0x30);
     fade_skip = 1; fade_lvl = 0;
     ppu_off();
-    /* (2.77) en perspective, l'image agrandie est celle du court à plat :
+    /* en perspective, l'image agrandie est celle du court à plat :
        les lignes du court en perspective et la projection du point de
        rebond s'arrondissent différemment (jusqu'à un pixel), de quoi fausser
        une balle jugée au demi-pixel. À plat, lignes et trace sont exactes ;
@@ -906,19 +906,19 @@ static void zoom_build(void)
     ppu_on();
 }
 
-/* Second temps du zoom des balles limites (2.74) : x 4 sur l'impact, sans
+/* Second temps du zoom des balles limites : x 4 sur l'impact, sans
    les joueurs (8 sprites par ligne : un joueur agrandi 4 fois ne tiendrait
    pas). Une fenêtre de 64 x 60 px du court autour de l'impact est agrandie
    à partir de l'image x 2 (voir zoom4_build). Chaque tuile de l'image agrandie couvre 2 x 2 px du court
    (4 couleurs de 2 bits : au plus 256 tuiles, quelques dizaines en
    pratique), créée à la première rencontre (zb_map). Trace de la balle :
    l'empreinte de la balle jugée (mark_build), titre BONNE / DEHORS. */
-#define Z4 26                           /* trames du premier temps (x 2) ; 40 avant la 2.76 */
+#define Z4 26                           /* trames du premier temps (x 2)  */
 
 #pragma static-locals(push, off)        /* (pile : la RAM de travail est pleine) */
 static void zoom4_build(void)
 {
-    /* (2.74) construit à partir de l'image x 2 affichée (complète : en
+    /* construit à partir de l'image x 2 affichée (complète : en
        perspective, le court rechargé n'avait pas encore ses lignes) : un
        pixel du court y occupe 2 x 2 pixels ; image x 2 : écran 0, tuiles en
        $1000 (fond pendant le zoom) ; image x 4 : écran 1, tuiles en $0000
@@ -1003,7 +1003,7 @@ static void zoom_tick(void)
     ++hl_t;
     if (hl_t < 16) {
         /* réticule : 4 coins qui se resserrent sur le point visé, par-dessus
-           l'image figée (emplacements 60 à 63 des sprites) ; (2.76) balle
+           l'image figée (emplacements 60 à 63 des sprites) ; balle
            limite : plus vite (10 trames au lieu de 15) */
         if (hl_t == 1) { hl_bk = pal_buf[0]; vbuf_raw((u16)(0x1000 + ((u16)T_CORNER << 4)), t_corner, 16); if (hl_quick) hl_t = 5; return; }
         d = (u8)(40 - hl_t * 2);
@@ -1021,13 +1021,13 @@ static void zoom_tick(void)
     /* image agrandie : trace de la balle qui clignote, titre */
     hl_c = (u8)(hl_t - 15);
     if (hl_c == 1) { if (hl_sbin) sfx_crowd(7); else sfx_out(); }
-    if (hl_quick && hl_c == Z4) { zoom4_build(); sfx_menu_ok(); }   /* balle limite : second temps, x 4 (2.74) */
+    if (hl_quick && hl_c == Z4) { zoom4_build(); sfx_menu_ok(); }   /* balle limite : second temps, x 4 */
     /* (les sprites agrandis restent ; seuls la trace et le titre changent :
        on les écrit aux emplacements 52 à 63) */
     ob = 208;
     for (i = 0; i < 12; ++i) oam_buf[ob + i * 4] = 0xFF;
     if (hl_c >= 4) {
-        /* trace (2.77) : 2 x 2 sprites centrés sur le centre du pixel de
+        /* trace : 2 x 2 sprites centrés sur le centre du pixel de
            rebond (zx, zy : son coin ; + 1 en x 2, + 2 en x 4) */
         d = (u8)(hl_quick && hl_c >= Z4 ? 2 : 1);
         for (k = 0; k < 4; ++k) {
@@ -1048,12 +1048,12 @@ static void zoom_tick(void)
     }
     if (hl_c >= (hl_quick ? Z4 + 48 : 80)) {
         back_to_court();
-        if (hl_quick) { hl_quick = 0; rp_done = 1; }   /* dehors de peu : le ralenti s'arrête là (2.73) */
+        if (hl_quick) { hl_quick = 0; rp_done = 1; }   /* dehors de peu : le ralenti s'arrête là */
     }
 }
 
 /* ---------------------------------------------------------------------- */
-/* Fin du match (hl_mode 3, version 2.69) : portrait du vainqueur avant     */
+/* Fin du match (hl_mode 3) : portrait du vainqueur avant     */
 /* l'écran des résultats : en pied, bras levés, sous les confettis, son    */
 /* nom (« ALEX GAGNE ! » ; en double « VICTOIRE ! »), puis gros plan du    */
 /* visage (en double : son partenaire). L'écran des résultats se construit */
@@ -1080,7 +1080,7 @@ static void final_end(void)
 static void final_tick(void)
 {
     u8 i, w = sc_winner;
-    /* (2.76) match perdu par le joueur humain contre l'ordinateur : le
+    /* match perdu par le joueur humain contre l'ordinateur : le
        perdant abattu, à genoux (au lieu de la joie du vainqueur) */
     u8 sad = (u8)(cfg.ctrl[w] == CTRL_CPU && cfg.ctrl[w ^ 1] != CTRL_CPU);
     if (hl_t == 0) {
@@ -1095,7 +1095,7 @@ static void final_tick(void)
         flash(sad ? 0x10 : 0x30);
     }
     ++hl_t;
-    /* en pied (3-81), poignée de main au filet (82-141, 2.73), gros plan du visage */
+    /* en pied (3-81), poignée de main au filet (82-141), gros plan du visage */
     if (hl_t == 3) cut_build(sad ? TZ_DEFEAT : TZ_VICTORY);
     if (hl_t == 80 || hl_t == 140) { flash(sad ? 0x10 : 0x30); if (!sad) sfx_winner(); }
     if (hl_t == 82) cut_build(TZ_HANDSHAKE);
@@ -1116,7 +1116,7 @@ static void final_tick(void)
 }
 
 /* ---------------------------------------------------------------------- */
-/* Ramasseuse de balles (hl_mode 4, version 2.73) : au changement de côté, */
+/* Ramasseuse de balles (hl_mode 4) : au changement de côté, */
 /* un sur deux, un plan télé avant que les joueurs ne retournent sur le    */
 /* court ; une balle roule vers elle. A, B ou START passe. Retour au court */
 /* sans ralenti.                                                           */
@@ -1168,7 +1168,7 @@ static void kid_tick(void)
 #pragma static-locals(pop)
 
 /* ---------------------------------------------------------------------- */
-/* Le champion (2.76) : après la remise du trophée d'une compétition        */
+/* Le champion : après la remise du trophée d'une compétition        */
 /* gagnée, image haute définition du joueur qui brandit la coupe d'argent   */
 /* au-dessus de sa tête, arrivée en travelling éclair, sous les confettis   */
 /* et les flashs des photographes, « CHAMPION ! ». Appelée par l'écran de   */
@@ -1205,7 +1205,7 @@ u16 __fastcall__ champ_tick(u16 a)
 }
 
 /* ---------------------------------------------------------------------- */
-/* Soleil couchant (hl_mode 5, version 2.76) : au crépuscule, quand la     */
+/* Soleil couchant (hl_mode 5) : au crépuscule, quand la     */
 /* lumière change, un plan plein écran du soleil façon jeux de course des  */
 /* années 80 (sunset.c, banques 22-27), au changement de côté ; premier   */
 /* plan selon la surface (lieux Martinot). A, B ou START passe. Au retour, */
@@ -1274,25 +1274,25 @@ void hl_tick(void)
         /* point visé : le rebond, à l'écran (projeté en perspective) ; texte */
         hl_rx = hl_sbx; hl_ry = hl_sby;
         if (persp) { proj2(hl_sbx, hl_sby); hl_rx = proj_x; hl_ry = proj_y; }   /* (réticule, sur l'image en perspective) */
-        zl = !hl_sbin ? "DEHORS !" : far_call(BANK_X2, (void *)near_in_f, (u16)(hl_sbx | (hl_sby << 8))) ? "BONNE !" : "";   /* (2.74 : « BONNE ! » seulement près de la ligne) */
+        zl = !hl_sbin ? "DEHORS !" : far_call(BANK_X2, (void *)near_in_f, (u16)(hl_sbx | (hl_sby << 8))) ? "BONNE !" : "";   /* (« BONNE ! » seulement près de la ligne) */
     }
     if (hl_mode == 1) closeup_tick(); else zoom_tick();
     if (!hl_mode) hl_t = 0;
 }
 
 /* ---------------------------------------------------------------------- */
-/* Filet qui tremble en perspective (version 2.68)                         */
+/* Filet qui tremble en perspective                         */
 /* Le générateur liste, pour chaque lieu, les tuiles dont le dessin change */
 /* quand le filet est secoué (banque 16 : nombre, puis numéro, dessin au   */
 /* repos, dessin secoué). Le filet s'affaisse tant que net_shake > 6, puis  */
 /* revient ; chaque changement est écrit par le tampon VRAM, sur une ou     */
 /* plusieurs trames (budget du VBlank), tuile après tuile.                  */
 /* ---------------------------------------------------------------------- */
-/* (pnet_tick : train.c, banque 20, version 2.74 : banque 15 pleine) */
+/* (pnet_tick : train.c, banque 20, banque 15 pleine) */
 
-/* (remise du trophée : pod_extra_build, pod_extra_tick : train.c, banque 20, version 2.75) */
+/* (remise du trophée : pod_extra_build, pod_extra_tick : train.c, banque 20) */
 #include "comp.h"
 
-/* (palmares_sprites : train.c, banque 20, version 2.75 : banque 15 pleine) */
+/* (palmares_sprites : train.c, banque 20, banque 15 pleine) */
 
-/* (win_msg : train.c, banque 20, version 2.75) */
+/* (win_msg : train.c, banque 20) */

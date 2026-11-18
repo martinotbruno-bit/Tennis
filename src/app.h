@@ -19,15 +19,15 @@
 #define BANK_SWAP 13     /* jeux de tuiles par phase (célébrations, revers) */
 #define BANK_GMI 14      /* écrans d'annonce du Grand Martinot */
 #define BANK_COURTS 12   /* tables de noms des courts (vue à plat) */
-#define BANK_FLY    20   /* survol du stade avant une finale (fly.c, 2.73) */
-#define BANK_TRAIN  20   /* entraînement (train.c, 2.74) */
-#define BANK_CAR    19   /* fiche des joueurs, face-à-face, carrière (career.c, 2.72) */
-#define BANK_RULES  18   /* règles du score (rules.c, appelées par rules_far.c, banque fixe ; 2.71) */
+#define BANK_FLY    20   /* survol du stade avant une finale (fly.c) */
+#define BANK_TRAIN  20   /* entraînement (train.c) */
+#define BANK_CAR    19   /* fiche des joueurs, face-à-face, carrière (career.c) */
+#define BANK_RULES  18   /* règles du score (rules.c, appelées par rules_far.c, banque fixe) */
 #define BANK_HL     15   /* ralenti : gros plan et arrêt sur image zoomé (highlight.c), récapitulatif du score */
-#define BANK_SUN    22   /* soleil couchant du crépuscule (sunset.c, 2.76) */
-#define BANK_MDRAW  22   /* dessin du match (mdraw.c, 2.76) */
-#define BANK_X2     30   /* fonctions de match ajoutées en 2.76 (extra2.c) */
-#define BANK_PICK   29   /* pages de choix illustrées : joueurs, lieu, surface, tournoi (pick.c, 2.76) */
+#define BANK_SUN    22   /* soleil couchant du crépuscule (sunset.c) */
+#define BANK_MDRAW  22   /* dessin du match (mdraw.c) */
+#define BANK_X2     30   /* fonctions de match ajoutées (extra2.c) */
+#define BANK_PICK   29   /* pages de choix illustrées : joueurs, lieu, surface, tournoi (pick.c) */
 
 /* état de l'application (lu par la boucle principale, banque fixe) */
 #define AS_SCREENS 0

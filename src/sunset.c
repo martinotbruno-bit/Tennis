@@ -1,4 +1,4 @@
-/* Royal Martinot 2.76 : le soleil couchant du crépuscule (banque 22).
+/* Royal Martinot le soleil couchant du crépuscule (banque 22).
    Image plein écran façon jeux de course des années 80, une par phase
    (tools/gen_sun.py) ; le plan lui-même (titre, cycle de couleurs de la
    grille, retour au court) est dans highlight.c (hl_mode 5). */
@@ -9,7 +9,7 @@
 #include "rules.h"
 #include "game.h"
 
-/* phases du crépuscule (2.76, déplacées de highlight.c, banque 15 pleine) */
+/* phases du crépuscule (déplacées de highlight.c, banque 15 pleine) */
 extern u8 sun_st, sun_pend;
 extern u8 ppu_emph;
 #pragma zpsym("ppu_emph")
@@ -56,7 +56,7 @@ static void sun_light(void)
 {
     u8 red = is_pal ? 0x40 : 0x20;
     pal_set_court(cfg.surface, sun_st == 3 ? COND_NIGHT : COND_DAY, cfg.env);
-    /* (2.77) château : sa pierre grise virait au rose puis au lilas sous
+    /* château : sa pierre grise virait au rose puis au lilas sous
        l'accentuation ; pierre dorée au couchant, brun orangé au crépuscule */
     if (cfg.env == ENV_CASTLE && sun_st && sun_st < 3) {
         pal_buf[9] = sun_st == 1 ? 0x37 : 0x27;
@@ -64,7 +64,7 @@ static void sun_light(void)
     }
     ppu_emph = sun_st == 1 ? red : sun_st == 2 ? (u8)(red | 0x80) : 0;
 }
-/* (2.76) la lumière ne change plus en plein jeu : la nouvelle phase attend
+/* la lumière ne change plus en plein jeu : la nouvelle phase attend
    le changement de côté suivant, où un plan du soleil couchant la montre
    (hl_mode 5, sun_pend) ; au chargement du court (début du match, reprise),
    la phase réelle s'applique directement, sauf si un plan est en attente */

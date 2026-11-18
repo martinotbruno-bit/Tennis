@@ -1,4 +1,4 @@
-; Royal Martinot — déplacement d'un joueur vers un point (version 2.59).
+; Royal Martinot — déplacement d'un joueur vers un point.
 ;
 ; void move_toward(u8 p, s16 tx, s16 ty, u8 speed)   (banque fixe)
 ;
@@ -168,7 +168,7 @@ _move_toward:
         jmp incsp5
 
 ; ---------------------------------------------------------------------------
-; void draw_order(void) (version 2.66) : pour match_draw, position à l'écran
+; void draw_order(void) : pour match_draw, position à l'écran
 ; de chaque joueur (dr_xs, dr_ys = (v << 2) >> 8, octet) et ordre de dessin
 ; (dr_ord : du plus bas à l'écran au plus haut, tri par insertion stable).
 ; En C, ces deux boucles coûtaient environ 1 500 cycles par trame en double.
@@ -248,7 +248,7 @@ _draw_order:
 @done:  rts
 
 ; ---------------------------------------------------------------------------
-; u8 vbuf_raw(u16 adr, const u8 *data, u8 len) (version 2.66 ; en C avant,
+; u8 vbuf_raw(u16 adr, const u8 *data, u8 len) (en C avant,
 ; environ 60 cycles par octet, ici 14) : ajoute [adr, len, données] au tampon
 ; VRAM de la trame ; 0 si le budget de la trame (VBUF_MAX) serait dépassé.
 ; Pile C : data (sp+0), adr (sp+2) ; len dans A.

@@ -1,5 +1,5 @@
 /* Royal Martinot — accès aux règles du score depuis toutes les banques
- * (2.71). Le code des règles (rules.c) est passé de la banque fixe à la
+ *. Le code des règles (rules.c) est passé de la banque fixe à la
  * banque 18 pour faire de la place aux voix de l'arbitre (le DMC ne lit que
  * $C000-$FFFF) ; ces petites fonctions de la banque fixe y passent, appellent
  * la règle et remettent la banque de l'appelant. */

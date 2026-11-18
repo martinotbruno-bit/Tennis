@@ -9,7 +9,7 @@
 #define NPAGES 13
 #define NLINES 18
 /* 17 caractères au plus par ligne (colonnes 2 à 18) : à droite, le
-   mini-court des illustrations (colonnes 20 à 29, 2.76) */
+   mini-court des illustrations (colonnes 20 à 29) */
 
 static const char * const page_title[NPAGES] = {
     "COMMANDES",
@@ -45,7 +45,7 @@ static const char * const page_text[NPAGES][NLINES] = {
 u8 page;   /* page affichée (lue par les tests) */
 
 /* ---------------------------------------------------------------------- */
-/* Illustrations (2.72, refaites en 2.76) : à droite de chaque page, un     */
+/* Illustrations : à droite de chaque page, un     */
 /* mini-court vu comme en match (colonnes 20 à 29) où se joue la scène dont */
 /* parle la page : le joueur du bas (de dos), l'adversaire du haut (de      */
 /* face), une balle qui vole en arc avec son ombre (spr_ball, comme en      */
@@ -244,7 +244,7 @@ static void draw_page(void)
     for (i = 0; i < NLINES; ++i) txt_at(2, (u8)(5 + i), page_text[page][i]);
     txt_at(2, 25, "GAUCHE/DROITE : PAGE");
     txt_at(2, 26, "B : RETOUR");
-    people_tiles(0);                    /* poses des joueurs (illustrations, 2.72) */
+    people_tiles(0);                    /* poses des joueurs (illustrations) */
     pal_set_player(0, 0); pal_set_player(1, 1);
     mini_court();
     illus_reset();

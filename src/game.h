@@ -28,7 +28,7 @@
 #define COND_DAY   0
 #define COND_NIGHT 1
 #define COND_RAIN  2
-#define COND_SUNSET 3   /* crépuscule (2.71) : jour, soleil couchant, puis nuit au fil des jeux (match seul) */
+#define COND_SUNSET 3   /* crépuscule : jour, soleil couchant, puis nuit au fil des jeux (match seul) */
 
 /* lieux */
 #define ENV_STADIUM 0
@@ -65,7 +65,7 @@ typedef struct {
 
 extern MatchCfg cfg;
 void fw_sound(u8 t);            /* feux d'artifice (banque fixe, gamefix.c) */
-u16 __fastcall__ fw_draw(u16 t);       /* (banque 20, train.c, 2.76 : far_call(BANK_TRAIN, …)) */
+u16 __fastcall__ fw_draw(u16 t);       /* (banque 20, train.c, far_call(BANK_TRAIN, …)) */
 
 /* statistiques du dernier match, par équipe */
 extern u8 st_points[2], st_aces[2], st_dfaults[2], st_winners[2], st_errors[2];

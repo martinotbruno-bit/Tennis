@@ -1,5 +1,5 @@
 /* Royal Martinot — écrans d'annonce des tournois du Grand Martinot et du
- * Martinworld Tour (banque 14, versions 2.44 et 2.47) : au premier tour de chaque tournoi, une image (images de
+ * Martinworld Tour (banque 14) : au premier tour de chaque tournoi, une image (images de
  * tools/gen_gm.py), le nom du tournoi, sa surface, le tour, et sa fanfare.
  *  - Open d'Augustralie : l'Opéra de Sydney, l'eau de la baie scintille ;
  *  - Debogarros : la tour Eiffel qui scintille, au-dessus d'un court de terre ;

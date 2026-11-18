@@ -1,5 +1,5 @@
 /* Royal Martinot — bande-annonce du Grand Martinot et du Martinworld Tour
- * (banque 7, versions 2.56 et 2.57), au lancement de la compétition, sur un
+ * (banque 7), au lancement de la compétition, sur un
  * riff de rock (MUS_ROCK), environ 6 secondes :
  *  - 7 plans de personnages dessinés en haute définition (tools/gen_teaser.py :
  *    jusqu'à 225 tuiles par image, visage, ombres, raquette cordée) : la
@@ -138,7 +138,7 @@ static void cut_build(void)
     if (S >= 0x10) { pal_buf[5] = S; pal_buf[6] = (u8)(S - 0x10); } else { pal_buf[5] = (u8)(S + 0x10); pal_buf[6] = S; }
     if (O >= 0x10) { pal_buf[9] = O; pal_buf[10] = (u8)(O - 0x10); } else { pal_buf[9] = (u8)(O + 0x10); pal_buf[10] = O; }
     if (O == 0x30) pal_buf[10] = 0x10;
-    /* (2.76) contours et yeux dans la couleur du fond : le sombre du joueur
+    /* contours et yeux dans la couleur du fond : le sombre du joueur
        ne sert qu'aux cheveux, au short, à la raquette (blond, gris, blanc tels quels) */
     pal_buf[7] = pal_buf[11] = D;
     pal_buf[13] = pal_buf[5]; pal_buf[14] = pal_buf[9]; pal_buf[15] = 0x30;

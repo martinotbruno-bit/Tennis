@@ -1,6 +1,6 @@
 /* Royal Martinot — fonctions annexes du match (banque BANK_EXTRAS) :
  * chargement du court, public animé, ralentis, exercices d'entraînement
- * et tutoriel. Appelées par le moteur via bank_call() ; elles ne peuvent
+ * et tutoriel. Appelées par le moteur via bank_call ; elles ne peuvent
  * appeler que la banque fixe et échangent leurs données par game_int.h. */
 #include <string.h>
 #include "game_int.h"
@@ -56,14 +56,14 @@ static void nude_quip(void)
     else if (starts(msg1, "LET")) set2("CHATOUILLE");
 }
 
-#pragma static-locals(push, off)        /* (2.76 : tampon sur la pile, la RAM interne est pleine) */
+#pragma static-locals(push, off)        /* (tampon sur la pile, la RAM interne est pleine) */
 static const char * const rp_lbl[3] = { "  RALENTI NON", "  RALENTI OUI", "  RALENTI SIMPLE" };
 void hud_update(void)
 {
     static char line[5];
     u8 t, x;
     vbuf_reset();
-    if (paused) {   /* (2.76) réglage des ralentis, écrit en premier (tampon du VBlank limité) */
+    if (paused) {   /* réglage des ralentis, écrit en premier (tampon du VBlank limité) */
             char b[17];
             const char *q = rp_lbl[cfg.replays < 3 ? cfg.replays : 1];
             u8 i;
@@ -79,7 +79,7 @@ void hud_update(void)
             team_name(t, line);
             vbuf_text(x, 1, line, 4);
             /* ligne 2 : points du jeu + serveur (*) ; ligne 3 : un rond (@ =
-               balle) par set gagné. (Les jeux, « J 3 » jusqu'en 2.72, sont
+               balle) par set gagné. (Les jeux, « J 3 » autrefois, sont
                dans le bandeau du bas, entre les points.) */
             rules_point_label(t, line);
             line[2] = ' ';
@@ -113,7 +113,7 @@ void hud_update(void)
     /* panneau du club (masqué pendant la pause par la crème solaire) */
     /* (le nom du club est sur le panneau à côté du score) ; ligne 3 libérée
        après la pause */
-    /* (2.77) ligne du réglage des ralentis effacée à la reprise (pause_cur 3) */
+    /* ligne du réglage des ralentis effacée à la reprise (pause_cur 3) */
     if (!paused && (cfg.env == ENV_NUDE || pause_cur == 3)) { vbuf_text(9, 3, "", 16); pause_cur = 0; }
     hud_dirty = 0;
 }
@@ -122,7 +122,7 @@ void hud_update(void)
 /* ---------------------------------------------------------------------- */
 /* Pluie : gouttes animées ; une sur deux par trame (8 sprites par ligne) */
 #define NRAIN 10
-#pragma bss-name(push, "WBSS")       /* (version 2.61 : la RAM interne est pleine) */
+#pragma bss-name(push, "WBSS")       /* (la RAM interne est pleine) */
 static u8 rain_x[NRAIN], rain_y[NRAIN];
 #pragma bss-name(pop)
 void rain_tick(void)
@@ -155,14 +155,14 @@ static void crowd_load(void);
 u8 ump_princess;                 /* 1 : arbitre princesse (court Margaux), lu par ump_draw */
 
 /* ---------------------------------------------------------------------- */
-/* Jeu de tuiles par phase (version 2.42). Une zone de tuiles de sprites
+/* Jeu de tuiles par phase. Une zone de tuiles de sprites
  * (swap_base, 34 tuiles) contient soit les célébrations (déception, rebond
  * avant le service, poing serré, colère, fatigue : jeu 1), soit le revers
  * (préparation, impact et fin à deux mains, revers coupé, volée : jeu 2).
  * Pendant le lancer, l'échange et les ralentis, le jeu 2 est chargé, une ou
  * deux tuiles par trame (budget VBlank : trois au plus) ; le reste du temps, le jeu 1. Tant
  * qu'un jeu n'est pas entièrement chargé (swap_on), poses_all et rp_play
- * montrent la pose de secours (pose_fb : celle d'avant la version 2.42). Les
+ * montrent la pose de secours (pose_fb : l'ancienne pose). Les
  * écrans montrent le jeu 1 (pose déçue des résultats) : swap_restore. */
 /* ---------------------------------------------------------------------- */
 #pragma bss-name(push, "WBSS")
@@ -176,7 +176,7 @@ u8 __fastcall__ swap_put(const u8 *src);   /* crt0.s, banque 13 (far_call) */
 extern u8 cer;                              /* séquence animée en cours (cer.c) */
 extern u8 sc_crit;
 extern u8 hl_quick;
-extern u16 hl_sbf, rp_seq;                          /* balles de set et de match (rules_far.c, 2.71) */
+extern u16 hl_sbf, rp_seq;                          /* balles de set et de match (rules_far.c) */
 extern u16 cer_t;
 extern u8 pose_now[4];
 void slot_tick(void);                       /* banque 13 (cer.c) */
@@ -213,8 +213,7 @@ static void swap_tick(void)
     u8 want = (u8)(ms == MS_TOSS || ms == MS_RALLY || ms == MS_REPLAY ? 2 : 1), k;
     /* un joueur montre encore une pose d'un jeu (revers 22-26 ; rebond de
        balle avant le service, fête : 7, 15-18) : ce jeu reste chargé tant
-       que la pose dure, sinon elle serait dessinée sans ses tuiles (version
-       2.62 ; en 2.61, seulement le revers en fin de point) */
+       que la pose dure, sinon elle serait dessinée sans ses tuiles */
     for (k = 0; k < npl; ++k) {
         u8 q = (u8)(pose_now[k] & 31);
         if ((u8)(q - 22) < 5) want = 2;
@@ -250,7 +249,7 @@ void load_court(void)
         u8 i, n = persp_ntile[cfg.env];
         const u8 *ch = persp_chr[cfg.env];
         bank_read(BANK_PERSP, proj_ram, persp_slot[cfg.env], n);   /* places (tampon : tables) */
-        tz_bank = BANK_PERSP; tz_src = ch;   /* tuiles compressées (version 2.64) */
+        tz_bank = BANK_PERSP; tz_src = ch;   /* tuiles compressées */
         for (i = 0; i < n; ++i) { vram_adr((u16)proj_ram[i] << 4); tz_n = 1; tz_unpack(tz_src); }
         vram_adr(0x2000);
         bank_unrle(BANK_PERSP, persp_rle[cfg.env]);
@@ -294,7 +293,7 @@ void load_court(void)
 /* Filet qui tremble quand la balle le touche : les tuiles des mailles
    alternent entre dessin « secoué » et « au repos » (net_shake : 14 -> 0) */
 u8 net_shake, net_state;
-void pnet_tick(void);              /* banque 20 : filet en perspective (version 2.68, train.c en 2.74) */
+void pnet_tick(void);              /* banque 20 : filet en perspective  */
 void net_tick(void)
 {
     u8 want = (u8)(net_shake > 1 && ((net_shake >> 2) & 1));
@@ -409,7 +408,7 @@ void crowd_tick(void)
         /* court Margaux : les coeurs, fleurs et étoiles scintillent ; club
            nudiste : les spectateurs se lèvent */
         if (crowd_timer && nude) {
-            /* (2.76) club nudiste : les 4 tuiles du haut d'un spectateur
+            /* club nudiste : les 4 tuiles du haut d'un spectateur
                (tête, bras) dans la même trame, sinon il avait un moment les
                bras levés et baissés à la fois ; les 2 du bas la trame d'après */
             u8 cheer = (u8)(crowd_timer >= 6 && ((crowd_timer >> 3) & 1)), j, n;
@@ -432,7 +431,7 @@ void crowd_tick(void)
         if (crowd_timer > cr_prev_t && ola_on < 2) { ola_on = 1; ola_o = 0; }
         if (crowd_timer) --crowd_timer;
         cr_prev_t = crowd_timer;
-        /* standing ovation (2.74) : sur un grand point (crowd_big) ou à la
+        /* standing ovation : sur un grand point (crowd_big) ou à la
            fin du match, toutes les rangées se lèvent (une par trame), restent
            debout 90 trames, puis se rassoient ; elle remplace l'ola */
         /* (crowd_big : bit 0 demandée, bit 7 celle de la fin du match déjà faite) */
@@ -441,7 +440,7 @@ void crowd_tick(void)
         if (ola_on == 2) { if (ola_row(ola_o, 1) && ++ola_o == 26) { ola_on = 3; ola_o = 0; } }
         else if (ola_on == 3) { if (++ola_o >= 90) { ola_on = 4; ola_o = 0; } }
         else if (ola_on == 4) { if (ola_row(ola_o, 0) && ++ola_o == 26) ola_on = 0; }
-        /* une rangée par trame (version 2.59 : les deux la même trame
+        /* une rangée par trame (les deux la même trame
            faisaient déborder la trame) : trame paire, la rangée qui se
            lève ; impaire, celle qui se rassoit, puis on avance */
         if (ola_on == 1) {
@@ -510,12 +509,12 @@ u8 rp_left;                     /* (lu par hl_check, banque 15) */
 void hl_check(void);
 extern u8 hl_mode, hl_sok, hl_si, hl_sbok, hl_sbi;   /* repères du ralenti (game.c, highlight.c) */
 
-/* rp_record() : en assembleur dans la banque fixe (crt0.s), appelée à chaque trame */
+/* rp_record : en assembleur dans la banque fixe (crt0.s), appelée à chaque trame */
 
 void rp_start(void)
 {
     rp_left = rp_count < RP_SHOW ? rp_count : RP_SHOW;
-    if (hl_quick) {                  /* dehors de peu : 12 trames avant le rebond seulement (2.73) */
+    if (hl_quick) {                  /* dehors de peu : 12 trames avant le rebond seulement */
         u16 k = (u16)(rp_seq - hl_sbf) + 12;
         if (k < rp_left) rp_left = (u8)k;
     }
@@ -553,7 +552,7 @@ void rp_play(void)
     /* demi-vitesse : chaque trame enregistrée est montrée deux fois */
     rp_slow ^= 1;
     if (!rp_slow) {
-        /* mise en valeur (version 2.67) : à la trame de la frappe décisive,
+        /* mise en valeur : à la trame de la frappe décisive,
            gros plan ; à celle du rebond, arrêt sur image zoomé (banque 15) */
         if (hl_sok && rp_pos == hl_si) { hl_sok = 0; hl_mode = 1; }
         else if (hl_sbok && rp_pos == hl_sbi) { hl_sbok = 0; hl_mode = 2; }
@@ -563,7 +562,7 @@ void rp_play(void)
 }
 
 /* ---------------------------------------------------------------------- */
-/* (entraînement : train.c, banque 20, version 2.74 : banque 3 pleine) */
+/* (entraînement : train.c, banque 20, banque 3 pleine) */
 
 /* ---------------------------------------------------------------------- */
 /* Poses des joueurs (appelé par match_draw avant de dessiner les joueurs) */
@@ -710,7 +709,7 @@ void ai_tactic(void)
         o = (u8)(t ^ 1);
         pw = 0; mg = 0; net = 0; err = 0; safe = 0;
         d = (s8)(sc_games[t] - sc_games[o]) + (s8)(3 * ((s8)sc_sets[t] - (s8)sc_sets[o]));
-        if ((sc_crit >> o) & 1) { mg = 6; pw = -2; err = 0x10; }          /* balle de set ou de match (sc_crit, 2.71) */
+        if ((sc_crit >> o) & 1) { mg = 6; pw = -2; err = 0x10; }          /* balle de set ou de match (sc_crit) */
         else if ((sc_crit >> t) & 1) { pw = 4; net = 60; }
         else if (d <= -2) { pw = 5; mg = -3; net = 50; }
         else if (d >= 2) { mg = 3; err = 0x10; }
@@ -721,7 +720,7 @@ void ai_tactic(void)
 }
 
 
-/* (2.76) touches du menu de pause (game.c) : CONTINUER, QUITTER, RALENTI
+/* touches du menu de pause (game.c) : CONTINUER, QUITTER, RALENTI
    (NON, OUI, SIMPLE ; GAUCHE/DROITE ou A), retenu pour les matchs suivants
    (opt_val). Rend 1 pour quitter le match. */
 extern u8 opt_val[];                     /* (screens.c ; 10 : RALENTIS) */

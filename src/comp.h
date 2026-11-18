@@ -9,12 +9,12 @@
 #define CT_SEASON  3   /* saison : 4 tournois (4 surfaces), classement aux points */
 #define CT_CUSTOM  4   /* tournoi personnalisé */
 #define CT_GRAND   5   /* le Grand Martinot : 4 tournois de 16 (8 équipes en double) */
-#define CT_WORLD   6   /* le Martinworld Tour : 7 tournois de 8, un par surface (version 2.47) */
+#define CT_WORLD   6   /* le Martinworld Tour : 7 tournois de 8, un par surface */
 #define NCT        7
 u8 __fastcall__ comp_cname(u8 t);
-u8 __fastcall__ comp_me(u8 unused);    /* (2.76) inscrit du joueur dont c'est le tour */
-u8 __fastcall__ comp_ctrl(u8 o);       /* (2.76) manettes du match */
-u8 __fastcall__ comp_who(u8 y);        /* (2.76) « A TOI, JOUEUR 2 » */
+u8 __fastcall__ comp_me(u8 unused);    /* inscrit du joueur dont c'est le tour */
+u8 __fastcall__ comp_ctrl(u8 o);       /* manettes du match */
+u8 __fastcall__ comp_who(u8 y);        /* « A TOI, JOUEUR 2 » */
 extern u8 c_h2;
 #pragma zpsym("c_h2")           /* banque 5 : nom de la compétition t dans comp_l2 */
 
@@ -27,7 +27,7 @@ extern u8 c_active, c_type, c_stage, c_seed, c_results, c_trophies, c_opts, c_lv
 extern u8 c_surf, c_env, c_cond, c_fmt;
 extern u8 c_pl[16], c_rt[16], c_n;
 extern u8 c_pl2[16], c_dbl, c_hum2;
-/* (2.77) compétition en simple à 1-4 joueurs humains (page zéro, comp.c) */
+/* compétition en simple à 1-4 joueurs humains (page zéro, comp.c) */
 extern u8 c_nh, hum_e[4], c_hc[4];
 #pragma zpsym("c_nh")
 #pragma zpsym("hum_e")
@@ -37,7 +37,7 @@ extern u8 c_slam;    /* Grand Chelem : tous les tournois gagnés (Grand Martinot
 
 extern char comp_l1[32], comp_l2[32];   /* libellés de l'étape (comp_stage_name) */
 
-/* Banque BANK_COMP : appel depuis une autre banque par far_call(). */
+/* Banque BANK_COMP : appel depuis une autre banque par far_call. */
 u8 __fastcall__ comp_new(u8 unused);        /* c_type, c_pl[0], c_seed déjà réglés */
 u8 __fastcall__ comp_build(u8 unused);
 u8 __fastcall__ comp_opponent(u8 unused);
@@ -47,7 +47,7 @@ u8 __fastcall__ comp_record(u8 won);
 u8 __fastcall__ comp_stage_name(u8 unused); /* remplit comp_l1 / comp_l2 */
 u8 __fastcall__ comp_path(u8 y);            /* parcours du tournoi, tour en cours surligné */
 u8 __fastcall__ comp_draw_table(u8 y);
-u8 __fastcall__ comp_draw_ko(u8 y);         /* (2.77i) tableau du tournoi en cours (saison, Grand Martinot) */
+u8 __fastcall__ comp_draw_ko(u8 y);         /* tableau du tournoi en cours (saison, Grand Martinot) */
 u8 __fastcall__ comp_open_pg(u8 unused);     /* page à l'ouverture d'un tournoi */
 u8 __fastcall__ comp_podium(u8 unused);    /* remplit c_pod (compétition gagnée) */
 u8 __fastcall__ comp_desc(u8 k);

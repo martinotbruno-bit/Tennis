@@ -1,6 +1,6 @@
 /* Royal Martinot : dessin du match (sprites des joueurs, de la balle, des
    effets), appelé à chaque trame par la boucle principale. En banque 22
-   depuis la version 2.76 (la banque 0, celle du moteur, était pleine). */
+   (la banque 0, celle du moteur, était pleine). */
 #include "game_int.h"
 #include "app.h"
 #include "rules.h"
@@ -38,7 +38,7 @@ void match_draw(void)
     if (hit_now || ms == MS_REPLAY || hl_mode) return;   /* (portrait du vainqueur : la banque 15 dessine) */
     party = win_party();
     /* tri par profondeur : le joueur le plus bas à l'écran passe devant ;
-       positions à l'écran en octets (draw_order, assembleur, version 2.66) */
+       positions à l'écran en octets (draw_order, assembleur) */
     draw_order();
     /* au moins 3 joueurs sur une même bande de 24 px (double) : plus de 8
        sprites par ligne possibles ; on fait tourner l'ordre des sprites pour
@@ -84,7 +84,7 @@ void match_draw(void)
     if (party) { win_fx(); far_call(BANK_TRAIN, (void *)fw_draw, ms_timer); }
     if (cfg.cond == COND_RAIN) bank_call(BANK_EXTRAS, rain_draw);
     spr_end();
-    bank_call(BANK_HL, band_draw);      /* bandeau du score entre les points (highlight.c, 2.71) */
+    bank_call(BANK_HL, band_draw);      /* bandeau du score entre les points (highlight.c) */
 }
 #undef ord
 #undef ys

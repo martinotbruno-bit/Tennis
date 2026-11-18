@@ -50,7 +50,7 @@ extern u8 last_shot, last_aim;
 #define TEV_SERVE_FAULT 5
 extern u8 tr_ev, tr_done, tr_human_serves, tr_step, tr_target, tr_streak;
 extern s16 ev_x, ev_y;
-/* balle du lanceur, calculée par train_feed() puis lancée par le moteur */
+/* balle du lanceur, calculée par train_feed puis lancée par le moteur */
 extern s16 feed_x, feed_y, feed_z, feed_tx, feed_ty;
 extern u8 feed_T, feed_g, feed_spin, feed_px_set;
 extern s16 feed_px, feed_py;    /* position imposée au joueur (volée) */
