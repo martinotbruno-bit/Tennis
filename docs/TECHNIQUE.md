@@ -712,6 +712,10 @@ python3 tools/contrast.py 25    # liste les paires sous le seuil (aucune actuell
 
 Les pages lieu et surface sont fusionnées en une page `PK_CRT` : `pk_rows()` donne les lignes proposées (bits `R_ENV`, `R_SURF`, `R_COND`) selon le mode, `pk_row` (WBSS) la ligne courante. HAUT/BAS réécrit seulement les 3 lignes de texte par le tampon VBlank (`rows_text(0)`, 3 × 31 octets), GAUCHE/DROITE redessine le court (`draw_court`). `cond_ok()` écarte les météos impossibles. Le crépuscule de l'aperçu pose `ppu_emph` (remis à 0 par `leave`) ; la pluie est dessinée par 10 sprites de gouttes. O_COND n'est plus une ligne des réglages, sauf en démo.
 
+### Profils de joueur et RAM sauvegardée (version 2.77)
+
+La RAM de cartouche $7800-$7FFF (sauvegardée) est découpée ainsi : SAVE ($7800-$7AFF : statistiques et réglages sauvegardés, puis tampons de travail des écrans), OVLZ et OVLM superposés à $7B00 (tampons du zoom, highlight.c, segment ZOOMBUF ; tampons des menus, menuart.c, segment MENUBUF : jamais utilisés en même temps), SAVEL ($7F80-$7FE6 : bibliothèque des profils, career.c, segment SAVELIB : 2 octets de contrôle, le profil choisi par chaque joueur, 8 profils de 12 octets) et SAVEX ($7FE7 : profils de travail cu_sav, adresse inchangée depuis la 2.75).
+
 ## 6. Audio
 
 Le jeu n'utilise que l'APU natif :

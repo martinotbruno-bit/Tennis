@@ -2899,7 +2899,7 @@ console.log('Joueur personnalisé en compétition (2.75)');
   e.tap('DOWN'); e.tap('RIGHT'); e.tap('RIGHT'); e.tap('RIGHT');
   e.tap('DOWN'); e.tap('RIGHT'); e.tap('RIGHT'); e.tap('RIGHT'); e.tap('RIGHT');
   const sav = Array.from({ length: 12 }, (_, i) => e.peek('cu_sav', 1 + i));
-  check(e.text(13, 7, 9) === 'PERSONNEL' && String.fromCharCode(...sav.slice(0, 7)) === 'BRUNO  ' && sav[8] === 3 && sav[9] === 0x07 && sav[10] === 0x35 && sav[11] === 0x37,
+  check(e.text(13, 7, 9) === 'PERSO 1/1' && String.fromCharCode(...sav.slice(0, 7)) === 'BRUNO  ' && sav[8] === 3 && sav[9] === 0x07 && sav[10] === 0x35 && sav[11] === 0x37,
     `profil : BRUNO, femme, peau ébène, tenue rose, cheveux blonds (${sav.map(v => v.toString(16)).join(' ')})`);
   e.tap('START'); e.run(40);
   check(scr(e) === SS.COMP && e.peek('cu_map', 0) === 1 && e.peek('char_female', 0) === 1 && e.text(0, 0, 32 * 30 > 0 ? 32 : 32) !== null &&
@@ -2915,10 +2915,28 @@ console.log('Joueur personnalisé en compétition (2.75)');
   if (scr(e) !== SS.MENU) { e.tap('B'); runUntil(e, () => scr(e) === SS.MENU, 200); e.run(20); }
   check(e.peek('cu_map', 0) === 0 && e.peek('char_female', 0) === 0 && e.peek('cu_sav', 0) === 0xC5, 'hors compétition : ALEX d\'origine, profil gardé dans la sauvegarde');
   e.tap('START'); e.run(20);
-  check(scr(e) === SS.CUSTOM && e.text(13, 9, 5) === 'BRUNO' && e.text(13, 7, 9) === 'PERSONNEL', 'compétition suivante : le profil revient');
-  e.tap('RIGHT');                       // (curseur sur PROFIL : PERSONNEL -> D'ORIGINE)
+  check(scr(e) === SS.CUSTOM && e.text(13, 9, 5) === 'BRUNO' && e.text(13, 7, 9) === 'PERSO 1/1', 'compétition suivante : le profil revient');
+  e.tap('LEFT');                        // (curseur sur PROFIL : PERSO 1/1 -> D'ORIGINE, 2.77)
   e.tap('START'); e.run(40);
   check(scr(e) === SS.COMP && e.peek('cu_map', 0) === 0 && [...Array(30).keys()].some(r => e.text(0, r, 32).includes('ALEX')), 'profil « D\'ORIGINE » : ALEX tel quel (sans obligation)');
+}
+{
+  // (2.77) bibliothèque des profils : NOUVEAU, création à la première
+  // modification, défilement, suppression par SELECT
+  const e = boot(); e.customSkip = false; toMenu(e); setOpts(e, { MODE: MODE.COMP, COMP: 1, P1: 0, FMT: 3 }); e.tap('START'); e.run(30);
+  const row = () => e.text(13, 7, 10).replace(/\0/g, ' ').trim(), nm = () => e.text(13, 9, 7).replace(/\0/g, ' ').trim();
+  const seen = [];
+  e.tap('RIGHT'); seen.push(row());                                           // NOUVEAU
+  for (let i = 0; i < 5; i++) e.tap('DOWN'); e.tap('RIGHT'); for (let i = 0; i < 5; i++) e.tap('UP'); seen.push(row());   // tenue : PERSO 1/1
+  e.tap('RIGHT'); e.tap('RIGHT'); seen.push(row());                          // D'ORIGINE
+  e.tap('DOWN'); e.tap('A'); let n = 0; while (e.peek('cu_sav', 1) !== 'Z'.charCodeAt(0) && n++ < 40) e.tap('UP', 1, 1, 2); e.tap('A'); e.tap('UP');
+  seen.push(row() + ' ' + nm());                                              // PERSO 2/2 ZLEX
+  e.tap('RIGHT'); e.tap('RIGHT'); e.tap('RIGHT'); seen.push(row() + ' ' + nm());   // PERSO 1/2 ALEX
+  e.tap('RIGHT'); seen.push(row() + ' ' + nm());                              // PERSO 2/2 ZLEX
+  e.tap('SELECT'); seen.push(row());                                          // D'ORIGINE
+  e.tap('RIGHT'); seen.push(row());                                           // PERSO 1/1
+  const want = ['NOUVEAU', 'PERSO 1/1', "D'ORIGINE", 'PERSO 2/2 ZLEX', 'PERSO 1/2 ALEX', 'PERSO 2/2 ZLEX', "D'ORIGINE", 'PERSO 1/1'];
+  check(seen.join('|') === want.join('|'), `profils : nouveau, création, défilement, suppression (${seen.join(', ')})`);
 }
 }
 if (sec('Version 2.76 : lignes, bandeau, smash')) {

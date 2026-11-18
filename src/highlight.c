@@ -486,8 +486,10 @@ static const char *zl;                         /* titre du zoom : BONNE ou DEHOR
 #pragma bss-name(pop)
 
 /* tampons du zoom : zone libre de la RAM sauvegardée, après les blocs
-   sauvegardés (jamais lue au démarrage ; voir stats.c) */
-#pragma bss-name(push, "SAVEDATA")
+   sauvegardés (jamais lue au démarrage ; voir stats.c). (2.77) Superposés
+   aux tampons des menus (menuart.c, segment MENUBUF) : le zoom ne sert
+   qu'en match, les menus jamais pendant un match */
+#pragma bss-name(push, "ZOOMBUF")
 static u8 zb_nt[240];          /* fenêtre de 16 x 15 tuiles du court */
 static u8 zb_at[64];           /* attributs de l'écran du court */
 static u8 zb_map[256];         /* tuile source -> entrée de zb_q (0xFF : pas encore) */

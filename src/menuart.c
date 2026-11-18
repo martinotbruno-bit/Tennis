@@ -40,7 +40,7 @@ extern u8 pal_page;
 void hl_rec_row(void);
 void car_pal_text(void);
 
-#pragma bss-name(push, "SAVEDATA")
+#pragma bss-name(push, "MENUBUF")     /* (2.77) superposé aux tampons du zoom (highlight.c) : jamais en même temps */
 char deco_str[24];        /* titre à écrire (copié par screens.c) */
 u8 deco_kind, deco_row;   /* type d'écran (attributs) ; rangée du filet du bas */
 static u8 dt_map[24];
