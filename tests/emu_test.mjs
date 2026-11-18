@@ -98,7 +98,8 @@ function passCustom(e) {
 // (2.76) pages de choix : depuis les réglages, START puis A jusqu'à la page
 // dont le titre (rangées 0 à 2) contient « mot » ; START du banc coupé
 function toPick(e, mot) {
-  e.pickSkip = false; e.tap('START');
+  e.pickSkip = false; e.run(1);   /* (pk_off remis à 0 avant l'appui) */
+  e.tap('START');
   runUntil(e, () => scr(e) === SS.PICK, 120); e.run(40);
   for (let k = 0; k < 6; k++) {
     if ([0, 1, 2].some(y => e.text(0, y, 32).includes(mot))) return true;
