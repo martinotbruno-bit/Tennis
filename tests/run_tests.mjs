@@ -48,10 +48,20 @@ const outText = {}, measured = {};
 let spChecks = 0, crashed = 0;
 await Promise.all(shards.map(sh => new Promise(res => {
   const p = spawn(process.execPath, [TEST, rom, '--sections=' + sh.idx.join(',')], { env: { ...process.env, TEST_MARKS: '1' } });
-  let buf = '';
-  p.stdout.on('data', d => { buf += d; });
-  p.stderr.on('data', d => { buf += d; });
+  let buf = '', last = Date.now(), stuck = '';
+  p.stdout.on('data', d => { buf += d; last = Date.now(); });
+  p.stderr.on('data', d => { buf += d; last = Date.now(); });
+  // (2.76) garde-fou : un processus muet pendant 5 minutes (une section qui
+  // boucle sans fin) est arrêté et signalé, au lieu de tourner indéfiniment
+  const dog = setInterval(() => {
+    if (Date.now() - last < 5 * 60 * 1000) return;
+    const m = buf.match(/§S (\d+)\n(?![\s\S]*§S )/);
+    stuck = m ? (todo.find(t => t.i === Number(m[1])) || {}).name || m[1] : '?';
+    p.kill();
+  }, 10000);
   p.on('close', code => {
+    clearInterval(dog);
+    if (stuck) console.log(`section bloquée (arrêtée au bout de 5 minutes sans sortie) : ${stuck}`);
     let cur = null, done = false;
     for (const line of buf.split('\n')) {
       let m;

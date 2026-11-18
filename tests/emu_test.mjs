@@ -431,7 +431,7 @@ console.log('Court Margaux');
   toPick(e, 'LIEU');
   const seen = new Set(); for (let i = 0; i < 6; i++) { e.tap('RIGHT'); e.run(30); seen.add(e.peek('opt_val', O.ENV)); }
   check(seen.has(4) && !seen.has(3), 'court Margaux proposé d\'emblée (club nudiste toujours verrouillé)');
-  while (e.peek('opt_val', O.ENV) !== 4) { e.tap('RIGHT'); e.run(30); }
+  for (let k = 0; k < 10 && e.peek('opt_val', O.ENV) !== 4; k++) { e.tap('RIGHT'); e.run(30); }   /* (borné : jamais de boucle sans fin) */
   e.tap('START'); runUntil(e, () => scr(e) === SS.PRESENT && litScr(e), 120);
   check(e.text(2, 3, 26) === 'BIENVENUE AU COURT MARGAUX', 'présentation du court Margaux');
   e.tap('A'); e.run(30);
