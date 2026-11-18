@@ -2868,6 +2868,26 @@ for (const view of [0, 1]) {
 if (sec('Joueur personnalisé en compétition (2.75)')) {
 console.log('Joueur personnalisé en compétition (2.75)');
 {
+  // (2.77) ordre : TON JOUEUR (joueur 1, puis joueur 2 humain), puis l'affiche
+  // VS, qui montre le joueur conçu, puis le tableau
+  const e = boot(); e.customSkip = false; e.pickSkip = false; toMenu(e);
+  setOpts(e, { MODE: MODE.COMP, COMP: 1, TYPE: 0, CPART: 1, P1: 0, P2: 1, FMT: 3 }); e.poke('pk_off', 0); e.run(1);   // (sans saut automatique : pages de choix montrées)
+  e.tap('START'); e.run(20);
+  const first = scr(e), t1 = e.text(4, 4, 20);
+  e.tap('DOWN'); e.tap('A'); let n = 0;
+  while (e.peek('cu_sav', 1 + e.peek('cu_st', 2)) !== 'Z'.charCodeAt(0) && n++ < 40) e.tap('UP', 1, 1, 2);
+  e.tap('A');
+  e.tap('START'); e.run(20);
+  const second = scr(e), t2 = e.text(4, 4, 20);
+  e.tap('START'); runUntil(e, () => scr(e) === SS.PICK, 120); e.run(40);
+  const poster = scr(e), t3 = e.text(3, 1, 10), name = e.text(2, 19, 8);
+  e.tap('START'); runUntil(e, () => scr(e) === SS.COMP, 200);
+  check(first === SS.CUSTOM && t1.startsWith('JOUEUR 1') && second === SS.CUSTOM && t2.startsWith('JOUEUR 2') && poster === SS.PICK && t3 === 'TON JOUEUR' && name.startsWith('Z') && scr(e) === SS.COMP,
+    `compétition : TON JOUEUR (« ${t1.trim()} », « ${t2.trim()} »), puis l'affiche VS avec le joueur conçu (« ${name.trim()} », ${poster}, « ${t3} », ${[...Array(30).keys()].map(r => e.text(0, r, 32)).filter(l => l.includes('Z')).length}), puis le tableau (${scr(e)})`);
+  // (profil remis d'origine pour la suite)
+  e.poke('cu_sav', 0, 0);
+}
+{
   const e = boot(); e.customSkip = false; toMenu(e); setOpts(e, { MODE: MODE.COMP, COMP: 0, P1: 0, FMT: 3 }); e.tap('START'); e.run(20);
   check(scr(e) === SS.CUSTOM && e.text(3, 7, 6) === 'PROFIL' && e.text(13, 7, 9) === "D'ORIGINE", 'compétition : écran « TON JOUEUR » avant le tableau, profil d\'origine par défaut');
   // nom BRUNO, femme, peau ébène, cheveux blonds, tenue rose

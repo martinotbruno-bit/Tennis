@@ -180,6 +180,7 @@ Pour chaque ligne, lancez un match et regardez l'écran pendant une dizaine de s
 | 10.42 | Pause (version 2.77) | Bandeau central net (aucun public ni sprite au travers), même si START est pressé juste après une frappe ; à la reprise, la ligne RALENTI disparaît | ☐ |
 | 10.43 | Victoire et château (version 2.77) | Balle de match gagnée : la fête sans bandeau du score avant ; château au crépuscule : pierre dorée puis brun orangé, pas rose | ☐ |
 | 10.44 | Fin de set (version 2.77) | Le bandeau du set reste affiché jusqu'à un appui (A, B ou START), puis l'écran du set | ☐ |
+| 10.45 | Compétition (version 2.77) | TON JOUEUR d'abord (joueur 1, puis joueur 2), puis l'affiche VS avec le joueur conçu, puis le court et le tableau | ☐ |
 
 ## 11. Ce qu'il faut renvoyer
 

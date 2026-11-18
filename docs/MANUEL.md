@@ -240,7 +240,7 @@ Conditions :
 
 ### Compétitions
 
-**Ton joueur (version 2.75)** : au lancement d'une compétition, l'écran « TON JOUEUR » permet, sans obligation, d'habiller le personnage choisi : NOM (A sur la ligne, puis HAUT/BAS pour chaque lettre, GAUCHE/DROITE pour passer à la suivante, A pour finir), GENRE, PEAU, CHEVEUX, TENUE (GAUCHE/DROITE). PROFIL repasse en D'ORIGINE d'un geste. START joue, B revient aux réglages. En double, le partenaire à la manette 2 a sa page. Le profil est gardé par la cartouche et revient à la compétition suivante. Les cheveux ont la couleur du short et de la raquette (limite de la console).
+**Ton joueur (version 2.75)** : au lancement d'une compétition, l'écran « TON JOUEUR » permet, sans obligation, d'habiller le personnage choisi : NOM (A sur la ligne, puis HAUT/BAS pour chaque lettre, GAUCHE/DROITE pour passer à la suivante, A pour finir), GENRE, PEAU, CHEVEUX, TENUE (GAUCHE/DROITE). PROFIL repasse en D'ORIGINE d'un geste. START valide, B revient aux réglages. Le joueur 2 à la manette 2 a sa page (partenaire en double, rival en simple, version 2.77). **Depuis la version 2.77, cet écran vient en premier** : après START dans les réglages, on conçoit son joueur (puis le joueur 2), puis viennent les pages illustrées (tournoi, affiche VS qui montre le joueur conçu sur le personnage choisi, court) ; B sur la première page illustrée revient à TON JOUEUR. Le profil est gardé par la cartouche et revient à la compétition suivante. Les cheveux ont la couleur du short et de la raquette (limite de la console).
 
 
 | Compétition | Déroulement |

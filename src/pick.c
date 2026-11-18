@@ -54,6 +54,7 @@ static u8 pk_i, pk_t, pk_ev, pk_row;
 u8 pk_off;                              /* (banc d'essai : pages sautées, parcours d'avant) */
 #pragma bss-name(pop)
 
+u16 __fastcall__ cust_preview_f(u16 unused); void cust_reset(void);   /* career.c (BANK_CAR) */
 void vs_build(void); void vs_texts(void); u8 __fastcall__ vs_anim(u8 t);   /* banques 8 et 19 */
 void menu_deco_begin(void);
 void load_court(void);                                                  /* banque 3 */
@@ -144,6 +145,7 @@ static void draw_players(u8 st)
     cfg.ctrl[0] = CTRL_PAD1;
     cfg.ctrl[1] = (u8)(m == MODE_2P || ((m == MODE_2P_TEAM || m == MODE_COMP) && opt_val[O_CPART]) ? CTRL_PAD2 : CTRL_CPU);
     cfg.level[1] = opt_val[O_LEVEL];
+    if (m == MODE_COMP) far_call(BANK_CAR, (void *)cust_preview_f, 0);   /* (2.77 : le joueur conçu sur TON JOUEUR) */
     pal_set_player(0, cfg.chr[0]);
     pal_set_player(1, cfg.chr[1]);
     bank_call(BANK_PODIUM, vs_build);
@@ -272,6 +274,7 @@ static u16 leave(u8 r)
     ppu_off();
     split_stop();
     ppu_emph = 0;
+    bank_call(BANK_CAR, cust_reset);    /* (profils : appliqués par la compétition elle-même) */
     chr_reload();
     spr_begin(); spr_end();
     pk_music();                         /* (après la fanfare d'un tournoi) */
@@ -373,5 +376,31 @@ u16 __fastcall__ pick_tick(u16 pad)
         }
         spr_end();
     }
+    return 0;
+}
+
+/* (2.77, déplacé de screens.c, banque 1 pleine) réglages -> compétition */
+#define O_FMT    9
+#define O_CSIZE  12
+#define O_CPROG  13
+#define O_CVAR   14
+u16 __fastcall__ comp_opts_f(u16 unused)
+{
+    (void)unused;
+    c_type = opt_val[O_COMP];
+    c_opts = (u8)((opt_val[O_CSIZE] ? CO_SIZE8 : 0) | (opt_val[O_CPROG] ? CO_PROG : 0) | (opt_val[O_CVAR] ? CO_VARIED : 0));
+    c_lvl = opt_val[O_LEVEL];
+    c_surf = (u8)(opt_val[O_SURF] > 3 && (c_type == CT_SEASON || c_type >= CT_GRAND) ? 0 : opt_val[O_SURF]);
+    c_env = opt_val[O_ENV];
+    c_cond = opt_val[O_COND];
+    if (c_cond == COND_SUNSET) c_cond = COND_DAY;   /* (le mot de passe ne code que 3 conditions) */
+    if (c_type >= CT_GRAND) { c_env = ENV_STADIUM; c_cond = 0; }   /* Grand Martinot, Martinworld Tour : toujours au stade, de jour */
+    c_fmt = opt_val[O_FMT];
+    c_pl[0] = opt_val[O_P1];
+    c_dbl = opt_val[O_TYPE];
+    c_hum2 = opt_val[O_CPART];          /* (2.76 : en simple, un 2e joueur humain inscrit) */
+    c_pl2[0] = opt_val[O_P2];
+    if (c_dbl && c_pl2[0] == c_pl[0]) c_pl2[0] = (u8)((c_pl[0] + 1) % NCHARS);
+    c_seed = (u8)(rand8() ^ frame_cnt);
     return 0;
 }

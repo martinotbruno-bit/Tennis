@@ -28,7 +28,7 @@
 #define SS_CUSTOM   13   /* joueur personnalisé avant une compétition (2.75, career.c) */
 #define SS_CHAMP    14   /* le champion brandit la coupe (2.76, highlight.c) */
 #define SS_PICK     15   /* pages de choix illustrées (2.76, pick.c) */
-u16 __fastcall__ pick_begin(u16 first); u16 __fastcall__ pick_tick(u16 pad);
+u16 __fastcall__ pick_begin(u16 first); u16 __fastcall__ pick_tick(u16 pad); u16 __fastcall__ comp_opts_f(u16 unused);
 u16 __fastcall__ champ_tick(u16 a);
 u16 __fastcall__ cust_build(u16 arg);   /* joueur personnalisé (career.c, banque 19, 2.75) */
 u16 __fastcall__ cust_tick(u16 pad);
@@ -806,21 +806,7 @@ static void comp_end_sprites(void)
 
 static void start_comp(void)
 {
-    c_type = opt_val[O_COMP];
-    c_opts = (u8)((opt_val[O_CSIZE] ? CO_SIZE8 : 0) | (opt_val[O_CPROG] ? CO_PROG : 0) | (opt_val[O_CVAR] ? CO_VARIED : 0));
-    c_lvl = opt_val[O_LEVEL];
-    c_surf = (u8)(opt_val[O_SURF] > 3 && (c_type == CT_SEASON || c_type >= CT_GRAND) ? 0 : opt_val[O_SURF]);
-    c_env = opt_val[O_ENV];
-    c_cond = opt_val[O_COND];
-    if (c_cond == COND_SUNSET) c_cond = COND_DAY;   /* (le mot de passe ne code que 3 conditions) */
-    if (c_type >= CT_GRAND) { c_env = ENV_STADIUM; c_cond = 0; }   /* Grand Martinot, Martinworld Tour : toujours au stade, de jour */
-    c_fmt = opt_val[O_FMT];
-    c_pl[0] = opt_val[O_P1];
-    c_dbl = opt_val[O_TYPE];
-    c_hum2 = opt_val[O_CPART];          /* (2.76 : en simple, un 2e joueur humain inscrit) */
-    c_pl2[0] = opt_val[O_P2];
-    if (c_dbl && c_pl2[0] == c_pl[0]) c_pl2[0] = (u8)((c_pl[0] + 1) % NCHARS);
-    c_seed = (u8)(rand8() ^ frame_cnt);
+    far_call(BANK_PICK, (void *)comp_opts_f, 0);   /* (réglages -> compétition : pick.c, banque 29, 2.77 : banque 1 pleine) */
     bank_call(BANK_CAR, cust_apply);    /* joueur personnalisé (2.75) */
     COMP(comp_new, 0);
     if (c_type >= CT_GRAND) {
@@ -1151,6 +1137,8 @@ void screens_tick(void)
         if (pad1_new & PAD_B) { sfx_menu_back(); title_screen(); break; }
         if ((pad1_new & PAD_START) || ((pad1_new & PAD_A) && o == O_START)) {
             sfx_menu_ok();
+            /* (2.77) compétition : d'abord TON JOUEUR, puis les pages de choix */
+            if (opt_val[O_MODE] == MODE_COMP) { (void)far_call(BANK_X2, (void *)so_save, 0); cust_screen(1); break; }
             /* (2.76) pages de choix illustrées (joueurs, tournoi, lieu, surface) */
             if (far_call(BANK_PICK, (void *)pick_begin, 1)) { scr_state = SS_PICK; break; }
             menu_go();
@@ -1162,6 +1150,7 @@ void screens_tick(void)
         break;
     case SS_PICK:
         v = (u8)far_call(BANK_PICK, (void *)pick_tick, pad1_new);
+        if (opt_val[O_MODE] == MODE_COMP) { if (v == 1) start_comp(); else if (v == 2) cust_screen(1); break; }   /* (2.77 : retour à TON JOUEUR) */
         if (v == 1) menu_go();
         else if (v == 2) menu_screen();
         break;
@@ -1245,7 +1234,7 @@ void screens_tick(void)
         break;
     case SS_CUSTOM:
         v = (u8)far_call(BANK_CAR, (void *)cust_tick, (u16)(pad1_new | pad2_new));
-        if (v == 1) start_comp();
+        if (v == 1) { if (far_call(BANK_PICK, (void *)pick_begin, 1)) scr_state = SS_PICK; else start_comp(); }   /* (2.77 : puis l'affiche) */
         else if (v == 2) { fade_skip = 1; cust_screen(0); }
         else if (v == 3) menu_screen();
         break;

@@ -416,7 +416,7 @@ void cust_page(void)
 {
     u8 r;
     txt_off = 0x40;
-    txt_at(4, 4, cu_k ? "PARTENAIRE : MANETTE 2" : (cu_n > 1 ? "JOUEUR 1 : MANETTE 1" : "NOM ET TENUE, FACULTATIF"));
+    txt_at(4, 4, cu_k ? (opt_val[2] ? "PARTENAIRE : MANETTE 2" : "JOUEUR 2 : MANETTE 2") : (cu_n > 1 ? "JOUEUR 1 : MANETTE 1" : "NOM ET TENUE, FACULTATIF"));
     txt_off = 0;
     for (r = 0; r < CU_ROWS; ++r) { txt_at(3, CU_Y(r), cu_lbl[r]); cu_value(r, 0); }
     txt_at(1, CU_Y(cu_row), ">");
@@ -435,7 +435,7 @@ u16 __fastcall__ cust_build(u16 first)
     if (!first) { cust_page(); return 0; }
     cu_c[0] = opt_val[3];                       /* (O_P1 ; O_P2 4, O_TYPE 2, O_CPART 20 : screens.c) */
     cu_c[1] = opt_val[4] == cu_c[0] ? (u8)((cu_c[0] + 1) % NCHARS) : opt_val[4];
-    cu_n = (u8)(opt_val[2] && opt_val[20] ? 2 : 1);
+    cu_n = (u8)(opt_val[20] ? 2 : 1);          /* (2.77 : 2e joueur humain, partenaire en double ou rival en simple) */
     if (cu_sav[0] != CU_MAGIC) { cu_from_char(0, cu_c[0]); cu_from_char(1, cu_n > 1 ? cu_c[1] : 0); cu_sav[0] = CU_MAGIC; }
     /* profil inactif : repart du personnage choisi */
     for (k = 0; k < cu_n; ++k) if (!(cu_sav[CU_SLOT(k) + 8] & 1)) cu_from_char(k, cu_c[k]);
@@ -504,6 +504,22 @@ u16 __fastcall__ cust_tick(u16 pad)
     return 0;
 }
 
+/* (2.77) aperçu sur l'affiche VS des pages de choix (pick.c), après la page
+   TON JOUEUR : les profils actifs appliqués aux personnages choisis */
+u16 __fastcall__ cust_preview_f(u16 unused)
+{
+    u8 k, c, *s;
+    (void)unused;
+    cust_reset();
+    if (cu_sav[0] != CU_MAGIC) return 0;
+    for (k = 0; k < 2; ++k) {
+        c = k ? (opt_val[20] ? opt_val[4] : 255) : opt_val[3];
+        s = cu_sav + CU_SLOT(k);
+        if (c < NCHARS && (s[8] & 1)) { cu_map[k] = (u8)(c + 1); char_female[c] = (u8)((s[8] >> 1) & 1); }
+    }
+    return 0;
+}
+
 /* reprise d'un match de compétition sauvegardé : profil d'après cfg */
 static void cust_resume(void)
 {
@@ -511,7 +527,7 @@ static void cust_resume(void)
     cust_reset();
     if (pod_buf[1] != 3 || cu_sav[0] != CU_MAGIC) return;   /* (3 : MODE_COMP, screens.c) */
     for (k = 0; k < 2; ++k) {
-        c = k ? (cfg.doubles && cfg.ctrl[2] == CTRL_PAD2 ? cfg.chr[2] : 255) : cfg.chr[0];
+        c = k ? (cfg.doubles ? (cfg.ctrl[2] == CTRL_PAD2 ? cfg.chr[2] : 255) : (cfg.ctrl[1] == CTRL_PAD2 ? cfg.chr[1] : 255)) : cfg.chr[0];   /* (2.77 : rival humain en simple) */
         t = cu_sav + CU_SLOT(k);
         if (c < NCHARS && (t[8] & 1)) { cu_map[k] = (u8)(c + 1); char_female[c] = (u8)((t[8] >> 1) & 1); }
     }
