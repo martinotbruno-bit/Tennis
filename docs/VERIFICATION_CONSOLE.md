@@ -186,6 +186,8 @@ Pour chaque ligne, lancez un match et regardez l'écran pendant une dizaine de s
 | 10.48 | Ralentis HD (version 2.77h) | Gros plan de la frappe décisive : fond bleu nuit à tirets noirs (plan moyen), rouge sombre (gros plan) ; aucun carré noir autour du joueur | ☐ |
 | 10.49 | Jupe sur la cuisse (version 2.77i) | Glissade d'une joueuse (ralenti) et ramasseuse : la jupe couvre le dessus de la cuisse tendue, aucune bande de peau au-dessus du tissu | ☐ |
 | 10.50 | Arborescence (version 2.77i) | Grand Martinot : au premier tour, l'écran s'ouvre sur le tableau des 16 inscrits ; GAUCHE : classement, puis match ; DROITE revient ; saison : tableau des 8 | ☐ |
+| 10.51 | Ordinateur en FACILE (version 2.77i) | Un set contre l'ordinateur en FACILE : aucune série de balles très hautes et très rapides qui sortent ou vont dans le filet, même sur balle de set | ☐ |
+| 10.52 | Lob de sauvetage (version 2.77i) | Plongeons depuis le fond du court : une partie des lobs de sauvetage sortent (surtout trop longs) ; le lob décidé (B + HAUT) reste aussi sûr qu'avant | ☐ |
 
 ## 11. Ce qu'il faut renvoyer
 

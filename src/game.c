@@ -878,8 +878,16 @@ static void ai_update(u8 p)
                 pad |= PAD_UP;                                  /* frappe à plat */
             }
             if ((rand8() & (ai_fault[lv] | tac_err[t])) == 0) spread += 20;   /* faute directe */
-            hit_margin = (u8)(ai_margin[lv] + sty_margin[sty] + tac_margin[t]);
-            do_hit(p, pad, btn, (u8)(ai_power[lv] + sty_pow[sty] + tac_pow[t]), spread);
+            /* (2.77i) puissance et marge bornées à 0 : en FACILE (puissance 0),
+               un style ou une tactique négatifs (balle de set à sauver : -2)
+               donnaient 254, soit un coup à la gravité 38 : balle très haute et
+               très rapide, dehors ou dans le filet, à chaque frappe du point */
+            {
+                s8 v = (s8)((s8)ai_margin[lv] + sty_margin[sty] + tac_margin[t]);
+                hit_margin = (u8)(v < 0 ? 0 : v);
+                v = (s8)((s8)ai_power[lv] + sty_pow[sty] + tac_pow[t]);
+                do_hit(p, pad, btn, (u8)(v < 0 ? 0 : v), spread);
+            }
             pl_state[p] = ST_SWING;
             pl_timer[p] = 12;
             /* montée au filet après une frappe à l'intérieur du court */

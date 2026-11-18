@@ -3155,6 +3155,21 @@ console.log('Version 2.77 : château au crépuscule, victoire sans bandeau');
 if (sec('Version 2.77 : compétition à 4 joueurs')) {
 console.log('Version 2.77 : compétition à 4 joueurs');
 {
+  // (2.77i) FACILE : puissance de l'ordinateur bornée à 0 (une tactique ou un
+  // style négatifs donnaient 254 : balles très hautes et rapides, dehors ou
+  // dans le filet, plusieurs fois de suite)
+  const e = boot(); startWith(e, { FMT: 3, LEVEL: 0 }); allCpu(e);
+  const c = e.addr('cfg'); for (let i = 0; i < 2; i++) e.nes.cpu.mem[c + CFG.LEVEL + i] = 0;
+  let hits = 0, bad = 0, ph = e.peek('hitter_p');
+  for (let f = 0; f < 60 * 60 * 4 && app(e) === AS.MATCH; f++) {
+    e.run(1);
+    const hp = e.peek('hitter_p');
+    if (e.peek('b_live') && hp !== ph && !e.peek('b_serve')) { hits++; if (e.peek('sh_power') > 100 || e.peek('sh_grav') > 20) bad++; }
+    ph = hp;
+  }
+  check(hits > 50 && bad === 0, `FACILE : aucune frappe à puissance débordée (${bad} sur ${hits})`);
+}
+{
   // (2.77i) saison, Grand Martinot : page 3, l'arborescence du tournoi en
   // cours ; ouverture du tournoi sur cette page ; GAUCHE/DROITE entre les 3 pages
   const brk = (e, y0, y1) => { const vm = e.nes.ppu.vramMem; let n = 0; for (let y = y0; y <= y1; y++) for (let x = 0; x < 32; x++) if (vm[0x2000 + y * 32 + x] === 0xA9) n++; return n; };

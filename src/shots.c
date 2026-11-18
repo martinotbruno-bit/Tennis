@@ -102,6 +102,13 @@ u8 perfect_hit(u8 p, s16 dx)
 
 
 extern u8 hit_margin;              /* game.c : angle des coups le long des lignes */
+#define RESC_R 16                   /* sauvetage : écart de longueur, de base */
+#define RESC_W 6                    /* et de largeur */
+extern u8 dive_t[4];
+#pragma bss-name(push, "ZEROPAGE")
+static s8 de;                       /* (2.77i) sauvetage : longueur mal dosée, plutôt trop longue */
+#pragma bss-name(pop)
+#pragma zpsym("de")
 void shot_select(void)
 {
     u8 p = sh_p, pad = sh_pad, power = sh_power, spread = sh_spread, speed, grav, T;
@@ -114,6 +121,16 @@ void shot_select(void)
     u8 volley = (u8)(bounces == 0), flat = 0;
     s16 depth;
     if (sh_dx > 14 || sh_dx < -14) spread += 8;          /* frappe en extension */
+    /* (2.77i) lob de sauvetage (frappe en plongeon) : risqué, d'autant plus
+       que le joueur est loin du filet ; souvent trop long, parfois large
+       (le lob décidé, lui, ne change pas) */
+    de = 0;
+    if (dive_t[p]) {
+        T = (u8)(iabs(PX(ply[p]) - NET_Y) >> 2);          /* 0 au filet, 21 du fond */
+        spread = (u8)(spread + RESC_W + T);
+        T = (u8)(RESC_R + (T << 2));                      /* écart de longueur : de -1/4 à +3/4 */
+        de = (s8)(rand8() % T - (T >> 2));
+    }
     sh_short = 0;
     bspin = SPIN_FLAT;
     hit_jump = (u8)(!bounces && bz > 40 * FP);   /* (2.74 : balle haute après le rebond : frappée sans sauter) */
@@ -186,7 +203,7 @@ void shot_select(void)
     else if (tired) { speed = (u8)(speed + (u8)(((u16)speed * (u8)(tired * 3)) >> 7)); spread = (u8)(spread + (tired >> 1)); }
     sh_power = power;
     if (p == 0 && car_acc) spread = spread > car_acc ? (u8)(spread - car_acc) : 0;   /* carrière : précision (2.72) */
-    sh_depth = depth; sh_speed = speed; sh_grav = grav; sh_spread = spread;
+    sh_depth = depth + de; sh_speed = speed; sh_grav = grav; sh_spread = spread;
 }
 
 /* ---------------------------------------------------------------------- */
