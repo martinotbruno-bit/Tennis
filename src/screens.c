@@ -130,13 +130,14 @@ void gm_intro_build(void);
 void gm_intro_tick(void);
 static void comp_screen(void);
 static void screen_begin(void);
-static u8 c_pg;                /* écran de la compétition : 0 le match, 1 le tableau (2.76) */
+static u8 c_pg;                /* écran de la compétition : 0 le match, 1 le tableau ou le classement (2.76), 2 le tableau du tournoi en cours (2.77i) */
+static u8 pg_max(void) { return (u8)(c_type == CT_SEASON || c_type >= CT_GRAND ? 2 : 1); }
 static void comp_next(void)
 {
     /* l'image du tournoi (premier tour) s'affiche juste avant le début du
        match, après sa présentation (gm_ev : $FF = aucune) */
     gm_ev = COMP(comp_gm_intro, 0);
-    c_pg = (u8)(c_stage == 0);          /* (2.77) ouverture du tournoi : d'abord le tableau */
+    c_pg = COMP(comp_open_pg, 0);       /* (2.77) ouverture du tournoi : d'abord le tableau (2.77i : celui du tournoi en cours) */
     comp_screen();
 }
 u8 vis[NOPT];        /* (lu par menuart.c : accolades des groupes) */
@@ -721,10 +722,11 @@ static void comp_screen(void)
     txt_at(3, 6, comp_l2);
     COMP(comp_path, 7);
     if (c_pg) {
-        /* (2.76) page 2 : le tableau ou le classement, sous le titre */
-        COMP(comp_draw_table, 10);
+        /* (2.76) page 2 : le tableau ou le classement, sous le titre ;
+           (2.77i) saison, Grand Martinot : page 3, le tableau du tournoi */
+        if (c_pg == 2) COMP(comp_draw_ko, 10); else COMP(comp_draw_table, 10);
         txt_at(3, 25, "A : JOUER   B : MENU");
-        txt_at(3, 26, "GAUCHE : LE MATCH");
+        txt_at(3, 26, c_pg == 2 ? "GAUCHE : LE CLASSEMENT" : pg_max() == 2 ? "< LE MATCH    LE TABLEAU >" : "GAUCHE : LE MATCH");
         goto done;
     }
     /* page 1 : le prochain match (lignes espacées, 2.76) */
@@ -744,7 +746,7 @@ static void comp_screen(void)
     for (o = 0; o < PW_LEN; ++o) { vram_put((u8)code_buf[o]); if (o == 3 || o == 7) vram_put(' '); }
     if (c_dbl) txt_at(3, 23, c_hum2 ? "DOUBLE A 2 JOUEURS" : "COMPETITION EN DOUBLE");
     txt_at(3, 25, "A : JOUER   B : MENU");
-    txt_at(3, 26, "DROITE : LE TABLEAU");
+    txt_at(3, 26, pg_max() == 2 ? "DROITE : LE CLASSEMENT" : "DROITE : LE TABLEAU");
 done:
     {   /* médailles des 3 premiers (classements) : or, argent, bronze */
         static const u8 med[9] = { 0x28, 0x18, 0x38,  0x10, 0x00, 0x30,  0x17, 0x07, 0x27 };   /* (couleur 1 : disque, 3 : reflet) */
@@ -1181,12 +1183,17 @@ void screens_tick(void)
         present_sprites();
         break;
     case SS_COMP:
-        if (c_pg && (c_type == CT_LEAGUE || c_type == CT_SEASON || c_type >= CT_GRAND)) {
+        if (c_pg == 1 && (c_type == CT_LEAGUE || c_type == CT_SEASON || c_type >= CT_GRAND)) {
             spr_begin();
             for (i = 0; i < 3; ++i) spr1(c_type == CT_LEAGUE ? 12 : 8, (u8)((11 + i) * 8 - 1), (u8)(ball_base + 8), i);
             spr_end();
         }
-        if (pad1_new & (PAD_LEFT | PAD_RIGHT)) { c_pg = (u8)((pad1_new & PAD_RIGHT) ? 1 : 0); sfx_menu_move(); fade_skip = 1; comp_screen(); break; }   /* (2.76) deux pages */
+        if (pad1_new & (PAD_LEFT | PAD_RIGHT)) {   /* (2.76) deux pages ; (2.77i) trois */
+            i = c_pg;
+            if (pad1_new & PAD_RIGHT) { if (c_pg < pg_max()) ++c_pg; } else if (c_pg) --c_pg;
+            if (c_pg != i) { sfx_menu_move(); fade_skip = 1; comp_screen(); }
+            break;
+        }
         if (pad1_new & (PAD_A | PAD_START)) {
             comp_cfg();
             if (is_final()) { bank_call(BANK_FLY, fly_build); scr_state = SS_FLY; break; }   /* survol du stade (2.73) */

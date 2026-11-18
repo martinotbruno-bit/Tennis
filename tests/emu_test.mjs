@@ -3155,6 +3155,22 @@ console.log('Version 2.77 : château au crépuscule, victoire sans bandeau');
 if (sec('Version 2.77 : compétition à 4 joueurs')) {
 console.log('Version 2.77 : compétition à 4 joueurs');
 {
+  // (2.77i) saison, Grand Martinot : page 3, l'arborescence du tournoi en
+  // cours ; ouverture du tournoi sur cette page ; GAUCHE/DROITE entre les 3 pages
+  const brk = (e, y0, y1) => { const vm = e.nes.ppu.vramMem; let n = 0; for (let y = y0; y <= y1; y++) for (let x = 0; x < 32; x++) if (vm[0x2000 + y * 32 + x] === 0xA9) n++; return n; };
+  const out = [];
+  for (const [ct, want] of [[5, 15], [3, 7]]) {
+    const e = boot(); toMenu(e); setOpts(e, { MODE: MODE.COMP, COMP: ct, TYPE: 0, CPART: 0, P1: 0, FMT: 3 }); e.tap('START');
+    runUntil(e, () => scr(e) === SS.COMP, 1500); skipIntro(e); e.run(30);
+    const pg0 = e.peek('c_pg'), n0 = brk(e, 8, 23);
+    e.tap('LEFT'); e.run(30); const t1 = e.text(3, 10, 10);
+    e.tap('LEFT'); e.run(30); const pg2 = e.peek('c_pg');
+    e.tap('RIGHT'); e.run(30); e.tap('RIGHT'); e.run(30); const n3 = brk(e, 8, 23);
+    out.push({ ct, ok: pg0 === 2 && n0 === want && t1 === 'CLASSEMENT' && pg2 === 0 && n3 === want, pg0, n0, t1, pg2, n3 });
+  }
+  check(out.every(o => o.ok), `saison et Grand Martinot : tableau du tournoi en cours à l'ouverture, 3 pages (${JSON.stringify(out)})`);
+}
+{
   // (2.77h) en passant le mode à COMPETITION, la ligne s'appelle tout de suite JOUEURS
   const e = boot(); toMenu(e); setOpts(e, { MODE: MODE.TEAM, TYPE: 0, CPART: 0 }); e.tap('B'); e.run(5); toMenu(e);
   e.tap('DOWN'); e.run(5); e.tap('RIGHT'); e.run(60);

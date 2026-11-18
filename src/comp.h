@@ -47,6 +47,8 @@ u8 __fastcall__ comp_record(u8 won);
 u8 __fastcall__ comp_stage_name(u8 unused); /* remplit comp_l1 / comp_l2 */
 u8 __fastcall__ comp_path(u8 y);            /* parcours du tournoi, tour en cours surligné */
 u8 __fastcall__ comp_draw_table(u8 y);
+u8 __fastcall__ comp_draw_ko(u8 y);         /* (2.77i) tableau du tournoi en cours (saison, Grand Martinot) */
+u8 __fastcall__ comp_open_pg(u8 unused);     /* page à l'ouverture d'un tournoi */
 u8 __fastcall__ comp_podium(u8 unused);    /* remplit c_pod (compétition gagnée) */
 u8 __fastcall__ comp_desc(u8 k);
 u8 __fastcall__ comp_gm_intro(u8 unused);   /* Grand Martinot, Martinworld Tour : tournoi à annoncer, ou $FF */

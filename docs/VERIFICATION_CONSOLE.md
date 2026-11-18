@@ -185,6 +185,7 @@ Pour chaque ligne, lancez un match et regardez l'écran pendant une dizaine de s
 | 10.47 | Parcours d'une compétition (version 2.77h) | Réglages : MODE sur COMPETITION, la ligne s'appelle aussitôt JOUEURS ; START : TON JOUEUR, puis choix du tournoi et court, sans page de choix du joueur (A n'y ramène pas) ; tableau à 2 ou 4 joueurs : « A TOI… » sous le titre, le tableau ne touche ni le titre ni l'aide | ☐ |
 | 10.48 | Ralentis HD (version 2.77h) | Gros plan de la frappe décisive : fond bleu nuit à tirets noirs (plan moyen), rouge sombre (gros plan) ; aucun carré noir autour du joueur | ☐ |
 | 10.49 | Jupe sur la cuisse (version 2.77i) | Glissade d'une joueuse (ralenti) et ramasseuse : la jupe couvre le dessus de la cuisse tendue, aucune bande de peau au-dessus du tissu | ☐ |
+| 10.50 | Arborescence (version 2.77i) | Grand Martinot : au premier tour, l'écran s'ouvre sur le tableau des 16 inscrits ; GAUCHE : classement, puis match ; DROITE revient ; saison : tableau des 8 | ☐ |
 
 ## 11. Ce qu'il faut renvoyer
 
