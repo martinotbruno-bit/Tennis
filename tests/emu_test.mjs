@@ -632,7 +632,7 @@ console.log('Version 2.72 : carrière, fiche, reprise, cérémonie');
   while (e.peek16('pod_t') < 330) e.run(1);
   const nt = e.nes.ppu.vramMem;
   const fans = nt[0x2000 + 12 * 32] >= 0xB1 && nt[0x2000 + 12 * 32] <= 0xB2 && nt[0x2000 + 12 * 32 + 31] >= 0xB1;
-  check(fans && e.peek('oam_buf', 249) === 0x3C && e.peek('oam_buf', 248) < 0xF0, 'podium : tribunes, plaque du finaliste');
+  check(fans && e.peek('oam_buf', 249) === 0x3C && e.peek('oam_buf', 248) < 0xF0, `podium : tribunes, plaque du finaliste (${fans}, ${e.peek('oam_buf', 249).toString(16)}, ${e.peek('oam_buf', 248)}, coupe ${e.peek('cup_t')}, t ${e.peek16('pod_t')}, écran ${scr(e)})`);
 }
 {
   // mode d'emploi illustré
@@ -1780,7 +1780,7 @@ console.log('Margaux jouable et fatigue');
   const hush = log.includes('silence');
   // balle dehors de 2 px (couloir gauche du simple)
   e.poke('ms', 2); e.run(1); log.length = 0;
-  s16('bx', 72 * 64); s16('by', 100 * 64); e.poke('end_reason', 2); e.poke('ump_arm', 1); e.poke('ms', 3); e.poke('ms_timer', 80); e.run(40);
+  s16('bx', 70 * 64); s16('by', 100 * 64); e.poke('end_reason', 2); e.poke('ump_arm', 1); e.poke('ms', 3); e.poke('ms_timer', 80); e.run(40);   // (2 px dehors : ligne et rayon de la balle compris, 2.76)
   const ooh = log.includes('b/5');
   e.poke('ms', 2); e.run(1); log.length = 0; e.poke('st_dfaults', e.peek('st_dfaults', 0) + 1, 0); e.poke('ump_arm', 0); e.poke('ms', 3); e.run(40);
   const groan = log.includes('9/9');
@@ -2321,7 +2321,7 @@ console.log('IA : tactique selon le score');
   // balle de break contre le serveur
   const srv = e.peek('sc_server');
   e.poke('sc_points', 3, srv ^ 1); e.poke('sc_points', 1, srv); e.poke('sc_games', 2, 0); e.poke('sc_games', 2, 1);
-  runUntil(e, () => e.peek('ms') === 2, 600); runUntil(e, () => e.peek('ms') === 3, 3000); runUntil(e, () => e.peek('ms') === 0, 400);
+  runUntil(e, () => e.peek('ms') === 2, 600); runUntil(e, () => e.peek('ms') === 3, 3000); runUntil(e, () => e.peek('ms') === 0, 1500);   /* (bandeau du score et ralenti : plus de 400 trames) */
   const s2 = e.peek('sc_server'), bp = e.peek('sc_points', s2 ^ 1) >= 3 && e.peek('sc_points', s2 ^ 1) > e.peek('sc_points', s2);
   check(!bp || e.peek('tac_safe', s2) === 1, `balle de break contre le serveur : première balle assurée (${bp ? 'balle de break' : 'situation passée'})`);
 }
@@ -2527,7 +2527,7 @@ console.log('Plongeon');
       if (t > prev[p]) {
         dives++; cur = p; rh = e.peek('rally_hits');
         const lx = e.peekS16('land_x'), ly = e.peekS16('land_y');
-        if (e.peek('bounces') === 0 && e.peek('ms') === 2 && (lx < 73 || lx > 183 || ly < 46 || ly > 218)) outDive++;   /* (limites des règles : ligne touchée = bonne) */
+        if (e.peek('bounces') === 0 && e.peek('ms') === 2 && (lx < 72 || lx > 184 || ly < 45 || ly > 219)) outDive++;   /* (limites des règles, 2.76 : ligne et rayon de la balle compris) */
       }
       if (p === cur && t >= 30 && e.peek('rally_hits') !== rh && e.peek('hitter') === (p & 1)) { touched++; cur = -1; }
       prev[p] = t;
