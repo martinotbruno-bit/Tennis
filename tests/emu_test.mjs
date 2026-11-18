@@ -1171,7 +1171,9 @@ console.log('Compétitions');
       let exp = 0; for (let b = 0; b < 4; b++) if (s0 & (0x80 >> b)) exp |= 0xC0 >> (b * 2);
       if (d0 !== exp) okz = false; } }
   check(okz, 'podium : agrandissement exact (pixel doublé, sans décalage de lecture)');
-  e.tap('A'); runUntil(e, () => scr(e) === SS.TITLE && e.peek('ppu_mask') !== 0, 200); e.run(10);
+  // (2.76 : l'écran du champion, puis la conférence de presse, entre le podium et le titre)
+  for (let k = 0; k < 8 && !(scr(e) === SS.TITLE && e.peek('ppu_mask') !== 0); k++) { e.tap('A'); runUntil(e, () => scr(e) === SS.TITLE && e.peek('ppu_mask') !== 0, 200); }
+  e.run(10);
   const rom2 = e.nes.rom.rom[2]; let diff = 0; for (let i = 0; i < 8192; i++) if (chr[i] !== rom2[i] && !(i >= 0x600 && i < 0xCE0)) diff++;   // ($60-$CD : tuiles des menus)
   check(scr(e) === SS.TITLE && diff === 0, `retour au titre : motifs d'origine rétablis (${diff} octet(s) différent(s))`);
 }
