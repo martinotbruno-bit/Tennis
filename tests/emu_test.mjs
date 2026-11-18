@@ -3277,7 +3277,7 @@ console.log('Version 2.76 : parcours, tirage, fin de set, compétition à deux')
     runUntil(e, () => app(e) === AS.SCREENS, 60); e.run(20);
     e.tap('A'); e.run(40); skipIntro(e);
   }
-  check(e.peek('c_h2') === 4 && seq.join('') === '01100' && duo === 1 && scr(e) === SS.COMP_END && e.peek('c_rank') === 1,
+  check(e.peek('hum_e', 1) === 4 && seq.join('') === '01010' && duo === 1 && scr(e) === SS.COMP_END && e.peek('c_rank') === 1,
     `compétition à deux : tours ${seq.join('')} (0 joueur 1, 1 joueur 2), finale à deux manettes (${duo}), podium`);
 }
 }

@@ -94,6 +94,7 @@ if (!only && !crashed) {
   for (const s of list) if (measured[s.i] !== undefined) t[s.name] = measured[s.i];
   fs.writeFileSync(TIMES, JSON.stringify(t, null, 1) + '\n');
 }
+if (crashed) { console.log(`  ECHEC ${crashed} processus interrompu(s) en cours de section`); fails += crashed; }   // (une section coupée en route comptait 0 échec)
 const dt = (Date.now() - t0) / 1000;
 console.log(`\n${passes} vérifications réussies, ${fails} échec(s) ; pile contrôlée ${spChecks} fois`
   + ` ; ${todo.length} section(s), ${n} processus, ${dt < 120 ? dt.toFixed(0) + ' s' : (dt / 60).toFixed(1) + ' min'}`);
