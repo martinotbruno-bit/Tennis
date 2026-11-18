@@ -3155,6 +3155,19 @@ console.log('Version 2.76 : parcours, tirage, fin de set, compétition à deux')
   check(st && seated && toScreen && e.peek('cer') === 6, `fin de set : bandeau du set (${st}), assis (${seated}), écran du set (${toScreen}), retour aux places depuis les chaises (cer ${e.peek('cer')})`);
 }
 {
+  // (2.77) avec un joueur humain, le bandeau du set attend un appui avant
+  // l'écran du set
+  const e = boot(); e.cerSkip = false; e.bandSkip = false; startWith(e, { FMT: 1, REPLAY: 0 }); allCpu(e);
+  runUntil(e, () => e.peek('ms') === 2, 3000, () => { if ([1, 2, 3, 11, 13].includes(e.peek('cer'))) e.poke('cer_skip', 1); });
+  e.poke('cer_skip', 0); e.poke('sc_games', 5, 0); e.poke('sc_games', 0, 1); e.poke('sc_points', 3, 0); e.poke('sc_points', 0, 1);
+  const shown = runUntil(e, () => e.peek('cer') === 5 && e.peek('brk_pend') === 1 && e.peek('st_t') === 8, 60 * 60 * 6);
+  e.poke('cfg', 0, CFG.CTRL);                     /* (un joueur prend la manette) */
+  e.run(300);
+  const waits = e.peek('cer') === 5 && e.peek('brk_pend') === 1 && app(e) === AS.MATCH;
+  e.tap('A'); runUntil(e, () => app(e) === AS.SCREENS && scr(e) === SS.SETBREAK, 300);
+  check(shown && waits && scr(e) === SS.SETBREAK, `fin de set avec un joueur : le bandeau du set attend l'appui (${shown}, ${waits}), puis l'écran du set (${scr(e)})`);
+}
+{
   // compétition à deux joueurs humains : chacun ses matchs, puis la finale à deux manettes
   const e = boot(); startWith(e, { MODE: MODE.COMP, COMP: 0, TYPE: 0, CPART: 1, P1: 0, P2: 5, FMT: 3 });
   skipIntro(e);

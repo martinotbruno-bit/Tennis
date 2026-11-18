@@ -22,6 +22,7 @@ Comme l'exige le CDC (§ 17.5), ce rapport distingue ce qui est **réalisé**, *
 | Texte baveux sur la page du court Margaux | Les lignes 2 et 3 du texte prenaient la palette rose du décor : les 4 rangées du haut ont la palette du texte. « COURT MARGAUX » s'affiche en entier (13 caractères) |
 | Château de nuit sans relief | La palette de nuit assombrissait la pierre ($10 → $00) jusqu'à la couleur des joints ($00) : les joints sont noirs ($0F) |
 | Podium : plaque du finaliste invisible | Les étincelles jaunes des feux d'artifice (2.76) prenaient ses sprites : 2 étincelles jaunes au podium, la plaque revient |
+| Fin de set : valider le bandeau avant les statistiques | Avec un joueur humain, le bandeau central du set (« 1ER SET / POUR ALEX 6-4 ») reste affiché, les joueurs assis, jusqu'à un appui sur A, B ou START ; puis vient l'écran du set et ses statistiques. Entre ordinateurs, l'enchaînement reste automatique. Test ajouté |
 | Quand apparaît la ramasseuse ? | (Réponse) Au changement de côté, quand les joueurs se lèvent de leur chaise, un changement sur deux (3e, 7e, 11e jeu…), avec les ralentis réglés sur OUI, TELE (pas en SIMPLE ni NON), hors club nudiste et démo. Au crépuscule, le plan du soleil couchant passe avant elle |
 
 ### Version 2.76

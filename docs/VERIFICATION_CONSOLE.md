@@ -179,6 +179,7 @@ Pour chaque ligne, lancez un match et regardez l'écran pendant une dizaine de s
 | 10.41 | Page du court (version 2.77) | Lieu, surface et météo sur le même écran : HAUT/BAS change de ligne (« > »), GAUCHE/DROITE la valeur ; l'aperçu suit (nuit, pluie qui tombe, couchant). Pas de pluie ni de crépuscule en salle | ☐ |
 | 10.42 | Pause (version 2.77) | Bandeau central net (aucun public ni sprite au travers), même si START est pressé juste après une frappe ; à la reprise, la ligne RALENTI disparaît | ☐ |
 | 10.43 | Victoire et château (version 2.77) | Balle de match gagnée : la fête sans bandeau du score avant ; château au crépuscule : pierre dorée puis brun orangé, pas rose | ☐ |
+| 10.44 | Fin de set (version 2.77) | Le bandeau du set reste affiché jusqu'à un appui (A, B ou START), puis l'écran du set | ☐ |
 
 ## 11. Ce qu'il faut renvoyer
 

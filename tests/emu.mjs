@@ -82,6 +82,7 @@ class Emu {
         const m = this.nes.cpu.mem;
         if (m[this.bandHold] === 1) { m[this.bandDis] = 1; m[this.bandHold] = 0; }
         if (m[this.labels['_cer']] === 5) m[this.bandHold] = 2;   /* (2.75 : assis, statistiques passées d'office) */
+        if (m[this.labels['_cer']] === 5 && m[this.labels['_brk_pend']] === 1 && m[this.labels['_st_t']] === 8) m[this.labels['_brk_pend']] = 2;   /* (2.77 : bandeau du set validé d'office) */
       }
       if ((this.customSkip || this.pickSkip) && this.scrAddr !== undefined) {
         const m = this.nes.cpu.mem;

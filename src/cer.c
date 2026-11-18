@@ -23,6 +23,7 @@
 #include "assets.h"
 extern u8 hl_mode;                 /* plan de la ramasseuse (highlight.c, 2.73) */
 extern u8 sun_pend;
+extern u8 st_t;                     /* bandeau du set : 8 = affiché (train.c, 2.77) */
 extern u8 brk_pend;                 /* fin de set en attente (game.c, 2.76) */
 extern u8 toss_q, cer_req, toss_c;  /* tirage au sort (plus bas, 2.76) */
 
@@ -376,7 +377,13 @@ void cer_tick(void)
     case CER_SEAT:
         for (p = 0; p < npl; ++p) pose_force[p] = POSE_SIT;
         /* (2.76) fin de set : une fois assis, l'écran du set (game.c) */
-        if (brk_pend) { if (cer_t >= 40) brk_pend = 2; break; }
+        /* (2.77) avec un joueur humain, le bandeau du set attend un appui
+           (A, B ou START), une fois affiché ; sinon 40 trames */
+        if (brk_pend) {
+            if (!seat_human()) { if (cer_t >= 40) brk_pend = 2; }
+            else if (st_t == 8 && cer_t >= 30 && ((pad1_new | pad2_new) & (PAD_A | PAD_B | PAD_START))) { sfx_menu_ok(); brk_pend = 2; }
+            break;
+        }
         /* en match, un peu plus long (2.72) : le bandeau du bas montre le
            score puis 4 statistiques (A ou START passe) */
         /* (2.75) avec un joueur humain, les statistiques du bandeau défilent
