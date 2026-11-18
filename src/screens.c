@@ -569,6 +569,7 @@ static void setup_cfg(u8 mode)
         cfg.doubles = 1;
         /* partenaire joué par la manette 2 ou par l'ordinateur */
         cfg.ctrl[2] = opt_val[O_CPART] ? CTRL_PAD2 : CTRL_CPU;
+        if (!cfg.level[2]) cfg.level[2] = 1;   /* (2.77) équipier CPU : au moins NORMAL, réactif même contre des adversaires faciles */
         cfg.chr[2] = opt_val[O_P2] == cfg.chr[0] ? unused_char(cfg.chr[0], 255, 255) : opt_val[O_P2];
         cfg.chr[1] = unused_char(cfg.chr[0], cfg.chr[2], 255);
         cfg.chr[3] = unused_char(cfg.chr[0], cfg.chr[1], cfg.chr[2]);

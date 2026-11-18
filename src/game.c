@@ -765,6 +765,13 @@ static u8 responsible(u8 p)
     s16 dp, dm;
     if (npl != 4) return 1;
     if (ms == MS_RALLY && b_serve) return (u8)(p == receiver_p());
+    /* (2.77) équipier humain : l'ordinateur ne lui laisse plus les balles
+       dont il est à peine plus près (le joueur, lui, ne bouge pas forcément) :
+       il prend toutes celles de sa moitié du court (marge de 8 px au centre),
+       et les autres s'il en est le plus près */
+    if (cfg.ctrl[m] != CTRL_CPU) {
+        if (PX(plx[p]) < PX(plx[m]) ? pred_x < CENTER_X + 8 : pred_x > CENTER_X - 8) return 1;
+    }
     dp = iabs(PX(plx[p]) - pred_x) + iabs(PX(ply[p]) - pred_y);
     dm = iabs(PX(plx[m]) - pred_x) + iabs(PX(ply[m]) - pred_y);
     if (dp == dm) return (u8)(p < m);
