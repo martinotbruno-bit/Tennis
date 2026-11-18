@@ -26,6 +26,7 @@ extern const char * const surf_name[NSURF];
 #define NENV 7          /* stade, club, salle, club nudiste (à débloquer), court Margaux, château, parc */
 #define ENV_NUDE 3
 #define ENV_MARGAUX 4
+#define ENV_CASTLE  5   /* (même valeur que game.h) */
 extern const char * const env_name[NENV];
 
 void pal_set_court(u8 surface, u8 cond, u8 env);   /* cond : 0 jour, 1 nuit, 2 pluie */

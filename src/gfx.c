@@ -132,6 +132,7 @@ void pal_set_court(u8 s, u8 cond, u8 env)
         pal_buf[0] = darken(pal_buf[0]);
         for (i = 4; i < 16; i += 4) pal_buf[i] = pal_buf[0];
         pal_buf[10] = darken(pal_buf[10]); pal_buf[11] = darken(pal_buf[11]); pal_buf[9] = darken(pal_buf[9]);
+        if (env == ENV_CASTLE) pal_buf[10] = 0x0F;   /* (2.77) joints noirs : la pierre ($00) garde son relief */
         pal_buf[16 + 8] = pal_buf[16 + 12] = pal_buf[0];
     }
     pal_buf[16] = pal_buf[20] = pal_buf[0];

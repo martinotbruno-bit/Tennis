@@ -209,7 +209,7 @@ static void rows_text(u8 now)
         q = r == 0 ? env_name[opt_val[O_ENV]] : r == 1 ? surf_name[opt_val[O_SURF]] : cond_nm[opt_val[O_COND]];
         for (n = 0; q[n]; ++n) ;
         while (n && q[n - 1] == ' ') --n;               /* (noms de surface complétés d'espaces) */
-        i = 12; b[i++] = '<'; b[i++] = ' ';
+        i = 11; b[i++] = '<'; b[i++] = ' ';               /* (13 caractères : COURT MARGAUX) */
         while (n-- && i < 26) b[i++] = *q++;
         b[i + 1] = '>';
         if (now) txt_at(2, y, b); else vbuf_text(2, y, b, 28);
@@ -245,6 +245,7 @@ static void draw_court(void)
     pal_set_player(0, cfg.chr[0]);
     pal_set_player(1, cfg.chr[1]);
     vram_adr(0x2000); vram_fill(0, 128);                 /* (rangées du score : le texte) */
+    vram_adr(0x23C0); vram_fill(0x55, 8);                /* (2.77) palette du texte sur les 4 rangées : au court Margaux, la palette rose du décor rendait les lettres baveuses */
     rows_text(1);
     ppu_on();
 }

@@ -120,6 +120,7 @@ void sun_apply(void);
    que la vue en perspective emploie comme tuile vide au bord du court : des
    traits horizontaux apparaissaient entre le public et le court. */
 #define T_RULE    0xFF
+#define T_PCT     0xFE         /* (2.77) « % » du bandeau, aussi en perspective (où la tuile $25 dessine le court) ; $FE n'est jamais posée sur le court */
 #define BAND_ROW  25
 #define BAND_LINE 199          /* (valeur de recharge du compteur : réglée sur jsnes et FCEUX) */
 #define BAND_WAIT 48           /* délai d'apparition après le point (2.74) */
@@ -152,6 +153,7 @@ static void band_init(void)
     u8 i;
     vram_adr((u16)T_RULE << 4);
     for (i = 0; i < 16; ++i) vram_put(rule[i]);
+    chr_copy(BANK_CHR, chr_data + (0x25 << 4), (u16)T_PCT << 4, 16);   /* « % » de la police */
     vram_adr(BAND_NT + 24 * 32); vram_fill(0, 32);
     vram_put(0); vram_fill(T_RULE, 30); vram_put(0);          /* rangée 25 : filet */
     vram_fill(0, 64);                                       /* rangées 26-27 : texte */
@@ -192,7 +194,7 @@ static void band_text(u8 t)
             switch (band_pg) {
             case 1:
                 band_num(i, st_first_tot[k] ? (u16)(((u16)st_first_in[k] * 100) / st_first_tot[k]) : 0);
-                if (!persp) bb[i + 3] = 0x25;   /* « % » ; pas en perspective : sa tuile y dessine le court (PERSP_NOTXT, gen_assets.py) */
+                bb[i + 3] = (char)T_PCT;        /* « % » (2.77 : aussi en perspective, tuile $FE) */
                 break;
             case 2: band_num(i, st_aces[k]); break;
             case 3: band_num(i, st_winners[k]); break;
@@ -703,15 +705,19 @@ static void closeup_tick(void)
 /* Arrêt sur image zoomé                                                   */
 /* ---------------------------------------------------------------------- */
 static const u8 t_corner[16] = { 0xF0, 0x80, 0x80, 0x80, 0, 0, 0, 0,  0xF0, 0x80, 0x80, 0x80, 0, 0, 0, 0 };
-/* trace de la balle (2.69) : ellipse de 6 x 4 px centrée sur le point de
-   rebond (le centre de la balle, celui que juge l'arbitre), intérieur de la
-   couleur de la balle (couleur 1), contour sombre (couleur 2) ; la balle
-   agrandie n'est pas dessinée : plus large que le point jugé, elle
-   chevaucherait la ligne d'une balle dehors */
-static const u8 t_mark[16] =   { 0x00, 0x3C, 0x3C, 0x00, 0x00, 0x00, 0x00, 0x00,  0x3C, 0x42, 0x42, 0x3C, 0x00, 0x00, 0x00, 0x00 };
 #define T_CORNER (swap_base + 20)
-#define T_MARK   (swap_base + 21)
 static u8 zx, zy, zwx, zwy;            /* point visé dans l'image agrandie ; coin de la fenêtre (px) */
+/* (2.77) trace de la balle : l'empreinte exacte de la balle jugée. Depuis la
+   2.76, une balle est bonne si son bord (rayon BALL_R = 2 px) touche la
+   ligne : la trace est donc un disque de 2 px de rayon (du court), centré
+   sur le centre du pixel de rebond, celui que juge l'arbitre. Balle bonne :
+   la trace mord sur la ligne ; dehors : un écart se voit. Contour sombre
+   (couleur 2), anneau de la couleur de la balle (couleur 1), centre
+   transparent : la ligne se voit au travers. 2 x 2 sprites (16 x 16 px),
+   tuiles hl_n à hl_n + 3, le titre ensuite. (L'image agrandie est
+   toujours celle du court à plat : voir zoom_build.) */
+u16 __fastcall__ mark_build_f(u16 adz);   /* extra2.c (banque 30) : adresse des 4 tuiles | z */
+#define mark_build(ad, z) far_call(BANK_X2, (void *)mark_build_f, (u16)((ad) | (z)))
 
 /* Bandeau du score pendant la pause (2.75) : rangées 12 à 17 (filet, deux
    lignes du score comme le bandeau du bas, filet), écrites sur l'écran 1 une
@@ -762,6 +768,7 @@ static void pause_tick(void)
     }
 }
 
+void load_court(void);                  /* banque 3 (extras.c) */
 static void zoom_build(void)
 {
     register u8 i;
@@ -771,6 +778,19 @@ static void zoom_build(void)
     flash(0x30);
     fade_skip = 1; fade_lvl = 0;
     ppu_off();
+    /* (2.77) en perspective, l'image agrandie est celle du court à plat :
+       les lignes du court en perspective et la projection du point de
+       rebond s'arrondissent différemment (jusqu'à un pixel), de quoi fausser
+       une balle jugée au demi-pixel. À plat, lignes et trace sont exactes ;
+       les joueurs (placés en perspective) n'y sont pas. Le retour au court
+       recharge la perspective (back_to_court). */
+    src = persp;                        /* (src : réutilisé plus bas pour les tuiles) */
+    if (src) {
+        k = cfg.view; cfg.view = 0;
+        vram_adr(0x2000); bank_call(BANK_EXTRAS, load_court);
+        cfg.view = k;
+        hl_rx = hl_sbx; hl_ry = hl_sby;
+    }
     /* fenêtre de 128 x 120 px autour du point visé, alignée sur les tuiles,
        dans le court (rangées 4 à 29) */
     a = (u8)(hl_rx < 64 ? 0 : (u8)((hl_rx - 64) >> 3)); tx0 = a > 16 ? 16 : a;
@@ -779,7 +799,7 @@ static void zoom_build(void)
     zx = (u8)((hl_rx - zwx) << 1); zy = (u8)((hl_ry - zwy) << 1);
     /* sprites de la trame figée dans la fenêtre (balle d'abord : elle est en
        tête), sans les coins du réticule (emplacements 60 à 63) */
-    for (i = 0; i < 60 && ns < ZS; ++i) {
+    for (i = 0; i < 60 && ns < ZS && !src; ++i) {
         u8 y = oam_buf[i * 4], x = oam_buf[i * 4 + 3];
         if (y >= 0xEF || (oam_buf[i * 4 + 2] & 2)) continue;   /* (seulement les joueurs, palettes 0 et 1 : ni ombres ni poussière, ni la balle : la trace la remplace) */
         ++y;
@@ -862,11 +882,11 @@ static void zoom_build(void)
         }
     }
     /* trace de la balle et titre (police) */
-    vwrite((u16)next << 4, t_mark, 16);
+    mark_build((u16)next << 4, 2);
     hl_n = next;
     for (i = 0; zl[i]; ++i)
         if ((u8)zl[i] > ' ' && (u8)zl[i] < 0x60)
-            chr_copy(BANK_CHR, chr_data + ((u16)(u8)zl[i] << 4), (u16)(next + 1 + i) << 4, 16);
+            chr_copy(BANK_CHR, chr_data + ((u16)(u8)zl[i] << 4), (u16)(next + 4 + i) << 4, 16);
     lbl_n = i; lbl_brk = 0xFF;
     spr_end();
     ctrl_swap = 0x18;
@@ -883,11 +903,9 @@ static void zoom_build(void)
    à partir de l'image x 2 (voir zoom4_build). Chaque tuile de l'image agrandie couvre 2 x 2 px du court
    (4 couleurs de 2 bits : au plus 256 tuiles, quelques dizaines en
    pratique), créée à la première rencontre (zb_map). Trace de la balle :
-   ellipse de 12 x 8 px (deux sprites), titre BONNE / DEHORS. */
+   l'empreinte de la balle jugée (mark_build), titre BONNE / DEHORS. */
 #define Z4 26                           /* trames du premier temps (x 2) ; 40 avant la 2.76 */
-static const u8 t_mark4[32] = {
-    0x00, 0x07, 0x1F, 0x1F, 0x1F, 0x1F, 0x07, 0x00, 0x07, 0x18, 0x20, 0x20, 0x20, 0x20, 0x18, 0x07,
-    0x00, 0xE0, 0xF8, 0xF8, 0xF8, 0xF8, 0xE0, 0x00, 0xE0, 0x18, 0x04, 0x04, 0x04, 0x04, 0x18, 0xE0 };
+
 #pragma static-locals(push, off)        /* (pile : la RAM de travail est pleine) */
 static void zoom4_build(void)
 {
@@ -958,12 +976,11 @@ static void zoom4_build(void)
         }
     /* sprites (table $1000) : trace (tuiles 0 et 15), titre (1...) */
     spr_begin(); spr_end();
-    vwrite(0x1000, t_mark4, 16);
-    vwrite(0x1000 + (15 << 4), t_mark4 + 16, 16);
+    mark_build(0x1000, 4);
     hl_n = 0;
     for (j = 0; zl[j]; ++j)
         if ((u8)zl[j] > ' ' && (u8)zl[j] < 0x60)
-            chr_copy(BANK_CHR, chr_data + ((u16)(u8)zl[j] << 4), 0x1000 + ((u16)(1 + j) << 4), 16);
+            chr_copy(BANK_CHR, chr_data + ((u16)(u8)zl[j] << 4), 0x1000 + ((u16)(4 + j) << 4), 16);
     ctrl_swap = 0;                      /* (fond en $0000, sprites en $1000 : comme d'habitude) */
     scroll_x = 0; scroll_y = 0; scroll_nt = 1;
     flash(hl_bk);
@@ -1000,20 +1017,22 @@ static void zoom_tick(void)
        on les écrit aux emplacements 52 à 63) */
     ob = 208;
     for (i = 0; i < 12; ++i) oam_buf[ob + i * 4] = 0xFF;
-    if (hl_c >= 4) {                    /* trace : centrée sur le point de rebond */
-        oam_buf[ob] = (u8)(zy - 3);     /* (y de l'OAM : une ligne plus haut) */
-        oam_buf[ob + 1] = hl_n; oam_buf[ob + 2] = 3; oam_buf[ob + 3] = (u8)(zx - 4);
-        if (hl_quick && hl_c >= Z4) {   /* x 4 : ellipse de 12 x 8 en deux sprites */
-            oam_buf[ob] = oam_buf[ob + 4] = (u8)(zy - 5);
-            oam_buf[ob + 3] = (u8)(zx - 8); oam_buf[ob + 5] = 15; oam_buf[ob + 6] = 3; oam_buf[ob + 7] = zx;
+    if (hl_c >= 4) {
+        /* trace (2.77) : 2 x 2 sprites centrés sur le centre du pixel de
+           rebond (zx, zy : son coin ; + 1 en x 2, + 2 en x 4) */
+        d = (u8)(hl_quick && hl_c >= Z4 ? 2 : 1);
+        for (k = 0; k < 4; ++k) {
+            oam_buf[ob + k * 4] = (u8)(zy + d - 9 + ((k & 2) << 2));   /* (y de l'OAM : une ligne plus haut) */
+            oam_buf[ob + k * 4 + 1] = (u8)(hl_n + k); oam_buf[ob + k * 4 + 2] = 3;
+            oam_buf[ob + k * 4 + 3] = (u8)(zx + d - 8 + ((k & 1) << 3));
         }
     }
     if (hl_c > 10) {
         /* titre sur une partie unie du court, loin du point visé */
         u8 x = (u8)(128 - lbl_n * 4), ly = (u8)(zy > 120 ? 79 : 159);
-        for (i = 0, k = 2; zl[i] && k < 12; ++i, x += 8) {
+        for (i = 0, k = 4; zl[i] && k < 12; ++i, x += 8) {
             if (zl[i] == ' ') continue;
-            oam_buf[ob + k * 4] = ly; oam_buf[ob + k * 4 + 1] = (u8)(hl_n + 1 + i);
+            oam_buf[ob + k * 4] = ly; oam_buf[ob + k * 4 + 1] = (u8)(hl_n + 4 + i);
             oam_buf[ob + k * 4 + 2] = 2; oam_buf[ob + k * 4 + 3] = x;
             ++k;
         }
@@ -1245,7 +1264,7 @@ void hl_tick(void)
     if (hl_t == 0 && hl_mode == 2) {
         /* point visé : le rebond, à l'écran (projeté en perspective) ; texte */
         hl_rx = hl_sbx; hl_ry = hl_sby;
-        if (persp) { proj2(hl_sbx, hl_sby); hl_rx = proj_x; hl_ry = proj_y; }
+        if (persp) { proj2(hl_sbx, hl_sby); hl_rx = proj_x; hl_ry = proj_y; }   /* (réticule, sur l'image en perspective) */
         zl = !hl_sbin ? "DEHORS !" : far_call(BANK_X2, (void *)near_in_f, (u16)(hl_sbx | (hl_sby << 8))) ? "BONNE !" : "";   /* (2.74 : « BONNE ! » seulement près de la ligne) */
     }
     if (hl_mode == 1) closeup_tick(); else zoom_tick();

@@ -3054,9 +3054,9 @@ console.log('Version 2.77 : château au crépuscule, victoire sans bandeau');
   e.poke('sc_games', 2, 0); e.poke('sc_games', 0, 1);   // (1 set de 6 jeux : 3e jeu, phase 1)
   let sun = false;
   runUntil(e, () => { if (e.peek('hl_mode') === 5) sun = true; return sun && e.peek('hl_mode') === 0; }, 60 * 60 * 6, () => { if (e.peek('cer') >= 4 && e.peek('cer') <= 6) e.poke('cer_skip', 1); });
-  e.run(10);
+  e.run(60);   /* (fondu du retour au court terminé) */
   const st = e.peek('sun_st'), c = [e.peek('pal_buf', 9), e.peek('pal_buf', 10)];
-  check(st === 1 && c[0] === 0x37 && c[1] === 0x27, `château au couchant : pierre dorée (phase ${st}, couleurs ${c.map(x => x.toString(16))})`);
+  check((st === 1 && c[0] === 0x37 && c[1] === 0x27) || (st === 2 && c[0] === 0x27 && c[1] === 0x17), `château au couchant : pierre dorée puis brun orangé (phase ${st}, couleurs ${c.map(x => x.toString(16))})`);
 }
 {
   // balle de match gagnée : aucun bandeau du score entre le point et la fête
@@ -3071,6 +3071,27 @@ console.log('Version 2.77 : château au crépuscule, victoire sans bandeau');
     if (e.peek('sc_over')) done = true;
   }
   check(done && band === 0, `balle de match gagnée : pas de bandeau du score avant la fête (${band} trame(s), fin ${done})`);
+}
+{
+  // (2.77) zoom x 4 des balles limites : la trace est l'empreinte exacte de
+  // la balle jugée (rayon 2 px du court) ; bonne de justesse, elle mord sur
+  // la ligne ; dehors de justesse, elle ne la touche pas (à plat et en
+  // perspective : l'image agrandie y est celle du court à plat)
+  const res = [];
+  for (const view of [0, 1]) for (const [x, y, want] of [[72, 160, 1], [71, 160, 0], [128, 219, 1], [128, 220, 0]]) {
+    const e = boot(); startWith(e, { FMT: 3, REPLAY: 1, VIEW: view }); allCpu(e);
+    runUntil(e, () => e.peek('ms') === 0 && e.peek('cer') === 0, 3000); e.run(30);
+    e.poke('hl_sbx', x); e.poke('hl_sby', y); e.poke('hl_sbin', 1); e.poke('hl_quick', 1); e.poke('hl_t', 0); e.poke('rp_done', 0);
+    e.poke('hl_mode', 2); e.poke('ms', 5);
+    runUntil(e, () => e.peek('hl_c') === 40, 300); e.run(1);
+    const vm = e.nes.ppu.vramMem;
+    const white = (px, py) => { const t = vm[0x2400 + (py >> 3) * 32 + (px >> 3)], a = t * 16 + (py & 7); const c = ((vm[a] >> (7 - (px & 7))) & 1) | (((vm[a + 8] >> (7 - (px & 7))) & 1) << 1); const at = vm[0x27C0 + (py >> 5) * 8 + (px >> 5)], pal = (at >> ((((py >> 4) & 1) << 2) | (((px >> 4) & 1) << 1))) & 3; const col = c ? vm[0x3F00 + pal * 4 + c] : vm[0x3F00]; return col === 0x30 || col === 0x20; };
+    let touch = 0, spr = 0;
+    for (let k = 52; k < 56; k++) { const sy = e.peek('oam_buf', k * 4) + 1, t = e.peek('oam_buf', k * 4 + 1), sx = e.peek('oam_buf', k * 4 + 3);
+      for (let j = 0; j < 8; j++) for (let i = 0; i < 8; i++) { const a = 0x1000 + t * 16 + j; if (((vm[a] >> (7 - i)) & 1) | ((vm[a + 8] >> (7 - i)) & 1)) { spr++; if (white(sx + i, sy + j)) touch++; } } }
+    res.push({ view, x, y, want, touch, spr, ok: spr > 100 && (want ? touch > 0 : touch === 0) });
+  }
+  check(res.every(r => r.ok), `zoom x 4 : trace fidèle à l'arbitrage, bonne = sur la ligne, dehors = à côté (${res.map(r => `${r.view ? 'persp' : 'plat'} ${r.x},${r.y} ${r.want ? 'bonne' : 'dehors'} ${r.touch}`).join(' ; ')})`);
 }
 }
 if (sec('Version 2.76 : parcours, tirage, fin de set, compétition à deux')) {
