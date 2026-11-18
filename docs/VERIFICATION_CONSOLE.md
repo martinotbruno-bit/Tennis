@@ -183,6 +183,7 @@ Pour chaque ligne, lancez un match et regardez l'écran pendant une dizaine de s
 | 10.45 | Compétition (version 2.77) | TON JOUEUR d'abord (joueur 1, puis joueur 2), puis l'affiche VS avec le joueur conçu, puis le court et le tableau | ☐ |
 | 10.46 | Profils (version 2.77) | TON JOUEUR : PROFIL fait défiler D'ORIGINE, les profils et NOUVEAU ; une modification crée ou met à jour un profil ; SELECT le supprime ; les profils restent après extinction | ☐ |
 | 10.47 | Parcours d'une compétition (version 2.77h) | Réglages : MODE sur COMPETITION, la ligne s'appelle aussitôt JOUEURS ; START : TON JOUEUR, puis choix du tournoi et court, sans page de choix du joueur (A n'y ramène pas) ; tableau à 2 ou 4 joueurs : « A TOI… » sous le titre, le tableau ne touche ni le titre ni l'aide | ☐ |
+| 10.48 | Ralentis HD (version 2.77h) | Gros plan de la frappe décisive : fond bleu nuit à tirets noirs (plan moyen), rouge sombre (gros plan) ; aucun carré noir autour du joueur | ☐ |
 
 ## 11. Ce qu'il faut renvoyer
 

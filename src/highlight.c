@@ -605,18 +605,20 @@ static void cut_build(u8 art)
     /* palettes (comme la bande-annonce) */
     pal_set_player(61, c);
     S = pal_buf[5]; O = pal_buf[6]; D = pal_buf[7];
-    /* (2.77) fond noir : les contours, les yeux et la bouche des images HD
-       sont dessinés dans la couleur du fond (tools/gen_teaser.py) ; sur le
-       bleu nuit (plan moyen) ou le rouge sombre (gros plan) d'avant, le
-       joueur se fondait dans le décor et ses yeux prenaient cette couleur */
-    flash(0x0F);
+    /* fond de couleur (2.77h, retour d'avant 2.77g) : gros plan rouge
+       sombre, plan moyen bleu nuit. Les contours, les yeux et la bouche des
+       images HD sont dessinés dans la couleur du fond (tools/gen_teaser.py) :
+       ces deux couleurs, les plus sombres de la console après le noir, les
+       teintent le moins possible ; un fond noir laissait des carrés noirs
+       autour du joueur sur le décor (tuiles du bord de l'image) */
+    flash(z ? 0x06 : 0x01);
     if (S >= 0x10) { pal_buf[5] = S; pal_buf[6] = (u8)(S - 0x10); } else { pal_buf[5] = (u8)(S + 0x10); pal_buf[6] = S; }
     if (O >= 0x10) { pal_buf[9] = O; pal_buf[10] = (u8)(O - 0x10); } else { pal_buf[9] = (u8)(O + 0x10); pal_buf[10] = O; }
     if (O == 0x30) pal_buf[10] = 0x10;
     pal_buf[7] = pal_buf[11] = D;
     pal_buf[13] = pal_buf[5]; pal_buf[14] = pal_buf[9]; pal_buf[15] = 0x30;
     if (z) { pal_buf[1] = pal_buf[5]; pal_buf[2] = D; pal_buf[3] = 0x30; pal_buf[14] = pal_buf[6]; pal_buf[15] = pal_buf[9]; }
-    else { pal_buf[1] = 0x01; pal_buf[2] = 0x02; pal_buf[3] = 0x11; }   /* (tirets du décor : bleu nuit sur le fond noir) */
+    else { pal_buf[1] = 0x0F; pal_buf[2] = 0x02; pal_buf[3] = 0x11; }   /* (tirets du décor : noirs sur le bleu nuit) */
     pal_buf[16 + 9] = 0x0F; pal_buf[16 + 10] = 0x0F; pal_buf[16 + 11] = 0x30;   /* titre : blanc, ombre noire */
     pal_buf[16 + 13] = 0x38; pal_buf[16 + 14] = 0x27; pal_buf[16 + 15] = 0x30;  /* balle */
     pal_dirty = 1;
@@ -663,7 +665,7 @@ static void closeup_tick(void)
         /* plan moyen : travelling éclair, puis lente dérive */
         hl_cam = hl_c < 6 ? -(s16)whip_in[hl_c] : (s16)(hl_c >> 2);
         scroll_x = (u8)hl_cam; scroll_nt = (u8)((hl_cam >> 8) & 1);
-        if ((hl_c & 3) == 0 && hl_c > 2) flash(0x0F);   /* (2.77 : fond noir, voir cut_build) */
+        if ((hl_c & 3) == 0 && hl_c > 2) flash(0x01);
         /* la balle arrive sur le tamis, impact (flash), traînée : coup droit
            (elle arrive de la droite, repart vers la gauche en montant) ;
            service et smash (elle tombe d'en haut, repart vers le bas) */
@@ -1193,7 +1195,7 @@ u16 __fastcall__ champ_tick(u16 a)
     /* flashs des photographes : le fond s'illumine une trame, par salves */
     i = (u8)(hl_t & 63);
     if (hl_t > 20 && (i == 7 || i == 11 || i == 30 || i == 47 || i == 50)) flash(0x30);
-    else if (pal_buf[0] == 0x30 && hl_t > 6) flash(0x0F);
+    else if (pal_buf[0] == 0x30 && hl_t > 6) flash(0x01);
     spr_begin();
     confetti();
     if (hl_t >= 16) label_draw(221, (u8)((hl_t - 16) >> 1));   /* (sur le sol, sous les pieds : la coupe est en haut) */
