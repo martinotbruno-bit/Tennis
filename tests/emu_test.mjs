@@ -2940,6 +2940,12 @@ console.log('Joueur personnalisé en compétition (2.75)');
   e.tap('SELECT'); seen.push(row());                                          // D'ORIGINE
   e.tap('RIGHT'); seen.push(row());                                           // PERSO 1/1
   const want = ['NOUVEAU', 'PERSO 1/1', "D'ORIGINE", 'PERSO 2/2 ZLEX', 'PERSO 1/2 ALEX', 'PERSO 2/2 ZLEX', "D'ORIGINE", 'PERSO 1/1'];
+  // (2.77) NOM : GAUCHE/DROITE fait défiler les joueurs existants, puis les
+  // profils rangés (qui reprennent leur personnage de base)
+  e.tap('LEFT'); e.tap('DOWN');                                               // D'ORIGINE, curseur sur NOM
+  const names = []; for (let k = 0; k < 22; k++) { e.tap('RIGHT'); names.push(e.text(13, 9, 7).replace(/\0/g, ' ').trim() + (e.text(13, 7, 5) === 'PERSO' ? '*' + e.peek('opt_val', O.P1) : '')); }
+  check(names[0] === 'MAYA' && names[19] === 'TITOU' && names[20] === 'ALEX*0' && names[21] === 'ALEX' && e.text(13, 7, 9) === "D'ORIGINE",
+    `NOM : défilement des joueurs puis des profils rangés (${names.join(' ')})`);
   check(seen.join('|') === want.join('|'), `profils : nouveau, création, défilement, suppression (${seen.join(', ')})`);
 }
 }

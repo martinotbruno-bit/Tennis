@@ -376,7 +376,7 @@ static void cu_from_char(u8 k, u8 c)
 #define CL_N 8
 #pragma bss-name(push, "SAVELIB")
 u8 cl_magic[2], cl_sel[2];
-u8 cl_p[CL_N][12];                      /* octet 8 : bit 0 emplacement occupé, bit 1 femme */
+u8 cl_p[CL_N][12];                      /* octet 7 : personnage de base + 1 ; octet 8 : bit 0 emplacement occupé, bit 1 femme */
 #pragma bss-name(pop)
 static void cl_init(void)
 {
@@ -395,7 +395,13 @@ static void cl_init(void)
 static void cl_load(u8 k)               /* profil choisi -> page du joueur k */
 {
     u8 *s = cu_sav + CU_SLOT(k), v = cl_sel[k];
-    if (v >= 1 && v <= CL_N && (cl_p[v - 1][8] & 1)) { memcpy(s, cl_p[v - 1], 12); s[8] = (u8)((s[8] & 2) | 1); return; }
+    if (v >= 1 && v <= CL_N && (cl_p[v - 1][8] & 1)) {
+        memcpy(s, cl_p[v - 1], 12); s[8] = (u8)((s[8] & 2) | 1);
+        /* octet 7 : son personnage de base + 1 (style de jeu), 0 : inconnu ; dans la page, la fin du nom */
+        if (s[7] && s[7] <= NCHARS) { cu_c[k] = (u8)(s[7] - 1); opt_val[k ? 4 : 3] = cu_c[k]; }
+        s[7] = 0;
+        return;
+    }
     if (v != 9) cl_sel[k] = 0;
     cu_from_char(k, cu_c[k]);
     if (v == 9) s[8] |= 1;
@@ -409,6 +415,7 @@ static void cl_store(u8 k)              /* page du joueur k -> son profil (cré�
         cl_sel[k] = v = (u8)(j + 1);
     }
     memcpy(cl_p[v - 1], s, 12);
+    cl_p[v - 1][7] = (u8)(cu_c[k] + 1);   /* (son personnage de base) */
     cl_p[v - 1][8] = (u8)(1 | (s[8] & 2));
 }
 static void cl_cycle(u8 k, u8 d)        /* PROFIL : D'ORIGINE, profils rangés, NOUVEAU */
@@ -420,6 +427,23 @@ static void cl_cycle(u8 k, u8 d)        /* PROFIL : D'ORIGINE, profils rangés, 
         if (v == 0 || (v == 9 && free) || (v <= CL_N && (cl_p[v - 1][8] & 1))) break;
     }
     cl_sel[k] = v;
+    cl_load(k);
+}
+
+/* (2.77) NOM : GAUCHE/DROITE fait défiler les personnages (le joueur
+   d'origine change : opt_val), puis les profils rangés */
+static void cl_pick(u8 k, u8 d)
+{
+    u8 o = k ? opt_val[3] : ((opt_val[2] || opt_val[20]) ? opt_val[4] : 255);   /* (l'autre joueur : jamais le même) */
+    u8 n = NCHARS + CL_N, pos, i;
+    pos = (cl_sel[k] >= 1 && cl_sel[k] <= CL_N) ? (u8)(NCHARS + cl_sel[k] - 1) : cu_c[k];
+    for (i = 0; i < n; ++i) {
+        pos = d ? (u8)((pos + 1) % n) : (u8)((pos + n - 1) % n);
+        if (pos < NCHARS) { if (pos != o) break; }
+        else if (cl_p[pos - NCHARS][8] & 1) break;
+    }
+    if (pos < NCHARS) { cu_c[k] = pos; opt_val[k ? 4 : 3] = pos; cl_sel[k] = 0; }
+    else cl_sel[k] = (u8)(pos - NCHARS + 1);
     cl_load(k);
 }
 
@@ -483,7 +507,7 @@ void cust_page(void)
     for (r = 0; r < CU_ROWS; ++r) { txt_at(3, CU_Y(r), cu_lbl[r]); cu_value(r, 0); }
     txt_at(1, CU_Y(cu_row), ">");
     txt_at(3, 21, "GAUCHE/DROITE : CHANGER");
-    txt_at(3, 22, "A SUR LE NOM : L'ECRIRE");
+    txt_at(3, 22, "NOM : A POUR L'ECRIRE");
     txt_at(3, 23, "SELECT : SUPPRIMER LE PROFIL");
     txt_at(2, 25, "START : JOUER   B : RETOUR");
     cu_live();
@@ -561,8 +585,10 @@ u16 __fastcall__ cust_tick(u16 pad)
     if (pad & (PAD_LEFT | PAD_RIGHT | PAD_A)) {
         u8 d = (u8)((pad & PAD_LEFT) ? 0 : 1);
         switch (r) {
+        case 1:                         /* (2.77) NOM : joueurs existants, puis profils rangés */
         case 0:                         /* (2.77) profil suivant ou précédent : toute la page change */
-            cl_cycle(cu_k, d); sfx_menu_val(d);
+            if (r) cl_pick(cu_k, d); else cl_cycle(cu_k, d);
+            sfx_menu_val(d);
             for (i = 0; i < 6; ++i) cu_value(i, 1);
             cu_live();
             return 0;
