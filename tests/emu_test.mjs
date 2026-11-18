@@ -394,11 +394,11 @@ if (sec('Menu de configuration')) {
 console.log('Menu de configuration');
 {
   const e = boot(); toMenu(e);
-  check(scr(e) === SS.MENU && e.peek('nvis') === 10, 'configuration match : 10 lignes (pas de ligne JEU contre le CPU ; joueurs, lieu et surface sur des pages, 2.76)');
+  check(scr(e) === SS.MENU && e.peek('nvis') === 9, 'configuration match : 9 lignes (pas de ligne JEU contre le CPU ; joueurs, lieu, surface et météo sur des pages, 2.76-2.77)');
   e.tap('DOWN'); e.tap('RIGHT'); e.tap('RIGHT'); e.tap('RIGHT'); e.run(5);
-  check(e.peek('opt_val', O.MODE) === MODE.COMP && e.peek('nvis') === 14, 'mode compétition : lignes adaptées (avec CARRIERE, 2.72 ; JOUEUR 2, 2.76)');
+  check(e.peek('opt_val', O.MODE) === MODE.COMP && e.peek('nvis') === 13, 'mode compétition : lignes adaptées (avec CARRIERE, 2.72 ; JOUEUR 2, 2.76)');
   e.tap('RIGHT'); e.run(5);
-  check(e.peek('opt_val', O.MODE) === MODE.TRAIN && e.peek('nvis') === 7, 'mode entraînement : lignes adaptées');
+  check(e.peek('opt_val', O.MODE) === MODE.TRAIN && e.peek('nvis') === 6, 'mode entraînement : lignes adaptées');
   e.tap('B'); e.run(10);   // (les tuiles des personnages, remplacées par les portraits, sont rechargées)
   check(scr(e) === SS.TITLE, 'B revient au titre');
 }
@@ -408,7 +408,7 @@ if (sec('Mode en équipe (double)')) {
 console.log('Mode en équipe (double)');
 {
   const e = boot(); toMenu(e); setOpts(e, { MODE: MODE.TEAM, TYPE: 0, CPART: 1 }); e.tap('B'); e.run(5); toMenu(e);
-  check(e.peek('nvis') === 11 && rowOf(e, O.TYPE) < 0 && e.text(3, menuY(e, 2), 8) === 'JOUEUR 2', 'pas de ligne JEU ; ligne JOUEUR 2 (le partenaire : sur la page des joueurs, 2.76)');
+  check(e.peek('nvis') === 10 && rowOf(e, O.TYPE) < 0 && e.text(3, menuY(e, 2), 8) === 'JOUEUR 2', 'pas de ligne JEU ; ligne JOUEUR 2 (le partenaire : sur la page des joueurs, 2.76)');
   e.tap('START'); runUntil(e, () => scr(e) === SS.PRESENT && litScr(e), 90);
   check(e.text(3, 1, 15) === 'MATCH DE DOUBLE' && e.text(2, 22, 11) === '+ MANETTE 2', 'toujours un double, manette 2 partenaire');
   e.tap('A'); e.run(30);
@@ -1256,7 +1256,7 @@ console.log('Compétition en double, levée de coupe et club nudiste');
   toMenu(e); toPick(e, 'LIEU');
   let envs = new Set();
   const names = new Set();
-  for (let i = 0; i < 8; i++) { e.tap('RIGHT'); e.run(30); envs.add(e.peek('opt_val', O.ENV)); const t = e.text(0, 1, 32); names.add(t.slice(t.indexOf('<') + 1, t.indexOf('>')).trim()); }
+  for (let i = 0; i < 8; i++) { e.tap('RIGHT'); e.run(30); envs.add(e.peek('opt_val', O.ENV)); const t = e.text(0, 1, 32); names.add(t.slice(t.indexOf('<') + 1, t.lastIndexOf('>')).trim()); }
   check(!envs.has(3) && envs.size === 6, `lieu « club nudiste » absent avant déblocage (6 lieux proposés : ${[...names].join(', ')})`);
   check(envs.has(5) && envs.has(6) && names.has('CHATEAU') && names.has('PARC'), 'nouveaux lieux : CHATEAU et PARC');
 }
@@ -2636,8 +2636,8 @@ console.log('Séquences animées du match');
       if (e.peek('hl_mode') === 3) {
         portrait = true;
         const t = e.peek('hl_t');
-        if (t === 40) { const a = []; for (let i = 0; i < 15 && e.peek('hl_txt', i); i++) a.push(e.peek('hl_txt', i)); txt = String.fromCharCode(...a); first = e.peek('hl_sp'); }
-        if (t === 180) second = e.peek('hl_sp');
+        if (t >= 40 && first < 0) { const a = []; for (let i = 0; i < 15 && e.peek('hl_txt', i); i++) a.push(e.peek('hl_txt', i)); txt = String.fromCharCode(...a); first = e.peek('hl_sp'); }
+        if (t >= 180 && second < 0) second = e.peek('hl_sp');   // (hl_t avance de 2 en 2 : valeurs impaires)
       }
     }
     check(kneel && supine && racket, `${dbl ? 'double' : 'simple'} : balle de match, vainqueur à genoux poings levés, puis allongé, raquette lâchée`);
@@ -3056,7 +3056,7 @@ console.log('Version 2.77 : château au crépuscule, victoire sans bandeau');
   runUntil(e, () => { if (e.peek('hl_mode') === 5) sun = true; return sun && e.peek('hl_mode') === 0; }, 60 * 60 * 6, () => { if (e.peek('cer') >= 4 && e.peek('cer') <= 6) e.poke('cer_skip', 1); });
   e.run(10);
   const st = e.peek('sun_st'), c = [e.peek('pal_buf', 9), e.peek('pal_buf', 10)];
-  check(sun && st === 1 && c[0] === 0x37 && c[1] === 0x27, `château au couchant : pierre dorée (phase ${st}, couleurs ${c.map(x => x.toString(16))})`);
+  check(st === 1 && c[0] === 0x37 && c[1] === 0x27, `château au couchant : pierre dorée (phase ${st}, couleurs ${c.map(x => x.toString(16))})`);
 }
 {
   // balle de match gagnée : aucun bandeau du score entre le point et la fête

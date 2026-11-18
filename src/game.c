@@ -197,7 +197,7 @@ static void point_over(u8 winner, u8 reason)
         sfx_crowd(7);
         crowd_timer = 64;
         /* ralenti : aces, beaux échanges, et coups parfaits gagnants même en retour */
-        if (rally_hits >= 3 || rally_hits == 1 || hit_perf) rp_pending = 1;
+        rp_pending = 1;   /* (2.77 : aussi le retour de service gagnant, oublié jusqu'ici : 2 frappes) */
     } else if (reason == 1) {
         ++st_errors[winner ^ 1];
         sfx_crowd(2);

@@ -303,6 +303,7 @@ const char *win_label(u8 shot, u8 pass, u8 jump)
     if (shot == SH_DROP) return "AMORTIE !";
     if (shot == SH_LOB) return "LOB GAGNANT !";
     if (shot == SH_VOLLEY) return "VOLEE GAGNANTE";
+    if (rally_hits == 2) return "RETOUR GAGNANT";   /* (2.77) */
     if (pass) return "PASSING !";
     return "COUP GAGNANT !";
 }
