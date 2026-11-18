@@ -107,6 +107,7 @@ function toPick(e, mot) {
   }
   return false;
 }
+function openOpts(e) { e.poke('cursor', rowOf(e, 27)); e.tap('A'); e.run(30); }
 function allCpu(e) { const c = e.addr('cfg'); for (let i = 0; i < 4; i++) e.nes.cpu.mem[c + CFG.CTRL + i] = 2; }
 // Attentes à plafond adaptatif : chaque appel (repéré par sa ligne) retient
 // le nombre de trames qu'il a pris quand il a abouti (until_frames.json) ; son
@@ -394,11 +395,18 @@ if (sec('Menu de configuration')) {
 console.log('Menu de configuration');
 {
   const e = boot(); toMenu(e);
-  check(scr(e) === SS.MENU && e.peek('nvis') === 9, 'configuration match : 9 lignes (pas de ligne JEU contre le CPU ; joueurs, lieu, surface et météo sur des pages, 2.76-2.77)');
-  e.tap('DOWN'); e.tap('RIGHT'); e.tap('RIGHT'); e.tap('RIGHT'); e.run(5);
-  check(e.peek('opt_val', O.MODE) === MODE.COMP && e.peek('nvis') === 13, 'mode compétition : lignes adaptées (avec CARRIERE, 2.72 ; JOUEUR 2, 2.76)');
+  check(scr(e) === SS.MENU && e.peek('nvis') === 6, 'configuration match : 6 lignes (COMMENCER, MODE, JEU, NIVEAU, FORMAT, OPTIONS ; joueurs, lieu, surface et météo sur des pages)');
+  e.tap('DOWN'); e.tap('RIGHT'); e.tap('RIGHT'); e.run(5);
+  check(e.peek('opt_val', O.MODE) === MODE.COMP && e.peek('opt_val', O.CAREER) === 0 && e.peek('nvis') === 8, 'mode compétition : lignes adaptées (COMPETITION, JEU, HUMAINS)');
   e.tap('RIGHT'); e.run(5);
-  check(e.peek('opt_val', O.MODE) === MODE.TRAIN && e.peek('nvis') === 6, 'mode entraînement : lignes adaptées');
+  check(e.peek('opt_val', O.MODE) === MODE.COMP && e.peek('opt_val', O.CAREER) === 1 && e.peek('nvis') === 6 && e.text(16, menuY(e, 1), 9).includes('CARRIERE'), 'mode CARRIERE : compétition qui compte, en simple, sans JEU ni HUMAINS');
+  e.tap('RIGHT'); e.run(5);
+  check(e.peek('opt_val', O.MODE) === MODE.TRAIN && e.peek('nvis') === 4, 'mode entraînement : lignes adaptées');
+  openOpts(e);
+  const ov = [...Array(e.peek('nvis')).keys()].map(i => e.peek('vis', i)).join(',');
+  e.tap('B'); e.run(30);
+  check(ov === '0,21,24,22,28' && e.peek('menu_pg') === 0 && e.peek('vis', e.peek('cursor')) === 27 && scr(e) === SS.MENU,
+    `page OPTIONS (${ov}) : B revient aux réglages, curseur sur OPTIONS`);
   e.tap('B'); e.run(10);   // (les tuiles des personnages, remplacées par les portraits, sont rechargées)
   check(scr(e) === SS.TITLE, 'B revient au titre');
 }
@@ -408,7 +416,7 @@ if (sec('Mode en équipe (double)')) {
 console.log('Mode en équipe (double)');
 {
   const e = boot(); toMenu(e); setOpts(e, { MODE: MODE.TEAM, TYPE: 0, CPART: 1 }); e.tap('B'); e.run(5); toMenu(e);
-  check(e.peek('nvis') === 10 && rowOf(e, O.TYPE) < 0 && e.text(3, menuY(e, 2), 8) === 'JOUEUR 2', 'pas de ligne JEU ; ligne JOUEUR 2 (le partenaire : sur la page des joueurs, 2.76)');
+  check(e.peek('nvis') === 6 && rowOf(e, O.TYPE) < 0 && e.text(3, menuY(e, 2), 7) === 'FORMULE' && e.text(16, menuY(e, 2), 8) === 'ENSEMBLE', '2 JOUEURS ENSEMBLE : pas de ligne JEU ; ligne FORMULE (le partenaire : sur la page des joueurs)');
   e.tap('START'); runUntil(e, () => scr(e) === SS.PRESENT && litScr(e), 90);
   check(e.text(3, 1, 15) === 'MATCH DE DOUBLE' && e.text(2, 22, 11) === '+ MANETTE 2', 'toujours un double, manette 2 partenaire');
   e.tap('A'); e.run(30);
@@ -553,7 +561,7 @@ console.log('Version 2.72 : carrière, fiche, reprise, cérémonie');
   const pts = e.peek('sw_car', 1) | (e.peek('sw_car', 2) << 8);
   check(pts === 400 && e.peek('sw_car', 3) === 1 && e.peek('sw_car', 4) === 1 && e.peek('sw_car', 5) === 60, `carrière : tournoi gagné, ${pts} points, ${e.peek('sw_car', 5)}e`);
   const f = boot(); toMenu(f); setOpts(f, { MODE: MODE.COMP, COMP: 0, CAREER: 1 }); f.tap('B'); f.run(30); toMenu(f); f.run(10);
-  check(rowOf(f, 25) > 0, 'carrière : ligne CARRIERE dans les réglages d\'une compétition en simple');
+  check(rowOf(f, 25) < 0 && f.text(16, menuY(f, 1), 9).includes('CARRIERE'), 'carrière : le mode CARRIERE dans les réglages');
   f.poke('sw_car', 0x43, 0); f.poke('sw_car', 2000 & 255, 1); f.poke('sw_car', 2000 >> 8, 2);
   let c = 0x3B; for (let i = 0; i < 11; i++) c = (((c << 1) | (c >> 7)) & 255) ^ f.peek('sw_car', i); f.poke('sw_car', c, 11);
   f.tap('START'); f.run(60); skipIntro(f); toMatch(f);
@@ -1633,7 +1641,7 @@ console.log('Finitions : ralentis, IA, effets, son, réglages mémorisés');
 }
 {
   // réglage SON et réglages mémorisés dans la cartouche
-  const e = boot(); toMenu(e);
+  const e = boot(); toMenu(e); openOpts(e);
   const row = (o) => { for (let i = 0; i < e.peek('nvis'); i++) if (e.peek('vis', i) === o) return i; return -1; };
   e.poke('cursor', row(O.SOUND)); e.tap('RIGHT'); e.run(5);
   check(e.peek('snd_mode') === 1 && e.peek16('mel_ptr') === 0, 'SON : bruitages seuls, musique arrêtée');
@@ -1660,12 +1668,15 @@ console.log('Margaux jouable et fatigue');
   // 1 joueur contre CPU : toujours en simple (le double avec partenaire CPU
   // est le mode en équipe) ; la ligne JEU n'existe qu'à 2 joueurs adversaires
   const t = boot(); toMenu(t);
-  check(t.peek('opt_val', O.MODE) === MODE.P1 && rowOf(t, O.TYPE) < 0 && t.text(3, menuY(t, 2), 10) === 'NIVEAU CPU', '1 joueur contre CPU : pas de ligne JEU (simple seulement)');
+  check(t.peek('opt_val', O.MODE) === MODE.P1 && t.text(3, menuY(t, 2), 3) === 'JEU' && t.text(16, menuY(t, 2), 6) === 'SIMPLE', '1 joueur contre CPU : ligne JEU (simple ; double avec un partenaire CPU)');
+  t.poke('cursor', 2); t.tap('RIGHT'); t.run(20);
+  const dbl = t.peek('opt_val', O.MODE) === MODE.TEAM && t.peek('opt_val', O.CPART) === 0 && t.text(16, menuY(t, 2), 6) === 'DOUBLE';
+  t.tap('RIGHT'); t.run(20);
   t.poke('cursor', 1); t.tap('RIGHT');
   let dark = 0; for (let n = 0; n < 20; n++) { t.run(1); if (!t.nes.ppu.f_bgVisibility) dark++; }
-  check(t.peek('opt_val', O.MODE) === MODE.P2 && t.text(3, menuY(t, 2), 3) === 'JEU' && dark === 0, `2 joueurs adversaires : ligne JEU ; menu redessiné sans couper l'écran (${dark} trame(s) noire(s))`);
+  check(dbl && t.peek('opt_val', O.MODE) === MODE.P2 && t.text(3, menuY(t, 2), 7) === 'FORMULE' && dark === 0, `1 joueur en double (partenaire CPU), puis 2 JOUEURS : ligne FORMULE ; menu redessiné sans couper l'écran (${dark} trame(s) noire(s))`);
   t.tap('LEFT'); t.run(20);
-  check(t.text(3, menuY(t, 2), 10) === 'NIVEAU CPU' && t.text(3, menuY(t, t.peek('nvis')), 13).replace(/[\0 ]/g, '') === '' && t.text(3, menuY(t, -1), 13).replace(/[\0 ]/g, '') === '', 'retour à 1 joueur : lignes réécrites et recentrées, anciennes lignes effacées');
+  check(t.text(3, menuY(t, 2), 3) === 'JEU' && t.text(3, menuY(t, t.peek('nvis')), 13).replace(/[\0 ]/g, '') === '' && t.text(3, menuY(t, -1), 13).replace(/[\0 ]/g, '') === '', 'retour à 1 joueur : lignes réécrites et recentrées, anciennes lignes effacées');
   const u = boot(); startWith(u, { MODE: MODE.P1, TYPE: 1 });
   check(app(u) === AS.MATCH && u.peek('npl') === 2, `1 joueur contre CPU avec un ancien réglage « double » : match en simple (${u.peek('npl')} joueurs)`);
   // Margaux (personnage 16) : menu, présentation, code de reprise
@@ -2409,7 +2420,7 @@ console.log('Vue en perspective (option VUE)');
 }
 {
   // menu : ligne VUE, à plat par défaut
-  const m = boot(); toMenu(m);
+  const m = boot(); toMenu(m); openOpts(m);
   const r = rowOf(m, 24);
   check(r > 0 && m.text(3, menuY(m, r), 3) === 'VUE' && m.text(16, menuY(m, r), 6) === 'A PLAT', 'menu : ligne VUE (à plat par défaut)');
   m.poke('cursor', r); m.tap('RIGHT'); m.run(5);
@@ -3188,9 +3199,9 @@ console.log('Version 2.77 : compétition à 4 joueurs');
 {
   // (2.77h) en passant le mode à COMPETITION, la ligne s'appelle tout de suite JOUEURS
   const e = boot(); toMenu(e); setOpts(e, { MODE: MODE.TEAM, TYPE: 0, CPART: 0 }); e.tap('B'); e.run(5); toMenu(e);
-  e.tap('DOWN'); e.run(5); e.tap('RIGHT'); e.run(60);
+  e.tap('DOWN'); e.run(5); e.tap('RIGHT'); e.run(10); e.tap('RIGHT'); e.run(60);
   const r = rowOf(e, O.CPART), lbl = r >= 0 ? e.text(3, menuY(e, r), 7) : '';
-  check(e.peek('opt_val', O.MODE) === MODE.COMP && lbl === 'JOUEURS', `réglages : passage en compétition, ligne « ${lbl} » aussitôt`);
+  check(e.peek('opt_val', O.MODE) === MODE.COMP && lbl === 'HUMAINS', `réglages : passage en compétition, ligne « ${lbl} » aussitôt`);
 }
 {
   // réglages : ligne JOUEURS (1 à 4) en compétition en simple ; TON JOUEUR pour
@@ -3217,7 +3228,7 @@ console.log('Version 2.77 : compétition à 4 joueurs');
   }
   const want = 'J1t0:02 J2t0:12 J3t0:02 J4t0:12 J1t1:01 J2t1:10 J1t2:01';
   const ranks = [0, 1, 2, 3].map(k => e.peek('os_rk', k)).join('');
-  check(lbl === 'JOUEURS' && pages.length === 4 && pages[3].startsWith('JOUEUR 4 : MANETTE 2') && hum.join() === '0,4,2,6' &&
+  check(lbl === 'HUMAINS' && pages.length === 4 && pages[3].startsWith('JOUEUR 4 : MANETTE 2') && hum.join() === '0,4,2,6' &&
         log.join(' ') === want && scr(e) === SS.COMP_END && e.peek('c_rank') === 1 && ranks === '1233',
     `4 joueurs : ligne ${lbl}, ${pages.length} pages TON JOUEUR, inscrits ${hum}, tours ${log.join(' ')}, rangs ${ranks}, écran ${scr(e)}`);
 }
