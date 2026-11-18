@@ -415,3 +415,136 @@ u16 __fastcall__ comp_opts_f(u16 unused)
     c_seed = (u8)(rand8() ^ frame_cnt);
     return 0;
 }
+
+/* ---------------------------------------------------------------------- */
+/* Menu des réglages (déplacé de screens.c, banque 1 pleine) : lignes
+   visibles, modes affichés, valeur expliquée par l'aide. menu_f(op << 8 | v) :
+   op 0 lignes visibles, 1 mode affiché, 2 choisir le mode affiché v,
+   3 valeur de la ligne v pour l'aide */
+#define O_START  0
+#define O_REPLAY 10
+#define O_EX     15
+#define O_SIDE   16
+#define O_SPEED  17
+#define O_SPIN   18
+#define O_COUNT  19
+#define O_GSPEED 21
+#define O_SOUND  22
+#define O_FATIG  23
+#define O_VIEW   24
+#define O_CAREER 25
+#define NOPT     26
+#define O_VERSUS 26
+#define O_OPTS   27
+#define O_BACK   28
+#define NMODES   6
+extern u8 vis[], nvis, cursor, menu_pg;
+static void __fastcall__ add_opt(u8 o) { vis[nvis++] = o; }
+/* Modes affichés (le mode interne, opt_val[O_MODE], ne change pas : moteur
+   et sauvegardes) : 1 JOUEUR (simple ; en double, avec un partenaire CPU :
+   mode interne en équipe), 2 JOUEURS (CONTRE : mode 2 joueurs ; ENSEMBLE :
+   en équipe, partenaire à la manette 2), COMPETITION, CARRIERE (compétition
+   qui compte pour la carrière : opt_val[O_CAREER], toujours en simple, à un
+   joueur), ENTRAINEMENT, DEMO */
+#define D_1P    0
+#define D_2P    1
+#define D_COMP  2
+#define D_CAR   3
+static u8 dmode(void)
+{
+    u8 m = opt_val[O_MODE];
+    if (m == MODE_2P_TEAM) return (u8)(opt_val[O_CPART] ? D_2P : D_1P);
+    if (m == MODE_COMP) return (u8)(opt_val[O_CAREER] ? D_CAR : D_COMP);
+    return m;
+}
+static void __fastcall__ set_dmode(u8 d)
+{
+    static const u8 im[NMODES] = { MODE_1P, MODE_2P, MODE_COMP, MODE_COMP, MODE_TRAIN, MODE_DEMO };
+    opt_val[O_MODE] = im[d];
+    opt_val[O_CAREER] = (u8)(d == D_CAR);
+    if (d == D_CAR) { opt_val[O_TYPE] = 0; opt_val[O_CPART] = 0; if (opt_val[O_COMP] == CT_CUSTOM) opt_val[O_COMP] = 0; }
+}
+static void build_visible(void)
+{
+    u8 m = opt_val[O_MODE], d = dmode();
+    if (d == D_CAR) set_dmode(D_CAR);   /* (réglages d'avant : la carrière, toujours en simple, à un joueur) */
+    nvis = 0;
+    add_opt(O_START);
+    if (menu_pg) {
+        /* options : ce qui se règle une fois pour toutes */
+        if (m != MODE_TRAIN) add_opt(O_REPLAY);
+        add_opt(O_GSPEED);
+        if (m != MODE_TRAIN) add_opt(O_FATIG);
+        add_opt(O_VIEW);
+        add_opt(O_SOUND);
+        add_opt(O_BACK);
+        if (cursor >= nvis) cursor = 0;
+        return;
+    }
+    add_opt(O_MODE);
+    if (d == D_COMP || d == D_CAR) {
+        add_opt(O_COMP);
+        if (opt_val[O_COMP] == CT_CUSTOM) { add_opt(O_CSIZE); add_opt(O_CPROG); add_opt(O_CVAR); }
+        if (d == D_COMP) {
+            add_opt(O_TYPE);
+            add_opt(O_CPART);   /* HUMAINS : 1 à 4 en simple, 1 ou 2 en double */
+        }
+        add_opt(O_LEVEL);
+        /* Grand Martinot, Martinworld Tour : au stade, de jour, surfaces
+           imposées, 3 sets et finale en 5. Joueurs, tournoi, lieu et
+           surface : pages illustrées après les réglages (pick.c) */
+        if (opt_val[O_COMP] < CT_GRAND) add_opt(O_FMT);   /* (la météo, sur la page du court) */
+    } else if (m == MODE_TRAIN) {
+        add_opt(O_EX);
+        if (opt_val[O_EX] == EX_CUSTOM) { add_opt(O_SIDE); add_opt(O_SPEED); add_opt(O_SPIN); add_opt(O_COUNT); }
+    } else {
+        if (d == D_2P) add_opt(O_VERSUS);
+        if (d == D_1P || m == MODE_2P) add_opt(O_TYPE);
+        add_opt(O_LEVEL);
+        if (m == MODE_DEMO) add_opt(O_COND);   /* (sinon sur la page du court, pick.c) */
+        add_opt(O_FMT);
+    }
+    add_opt(O_OPTS);
+    if (cursor >= nvis) cursor = 0;
+}
+/* valeur expliquée par l'aide (lignes sans valeur rangée, modes affichés) */
+static u8 __fastcall__ help_val(u8 o)
+{
+    if (o == O_MODE) return dmode();
+    if (o == O_VERSUS || (o == O_TYPE && dmode() == D_1P)) return (u8)(opt_val[O_MODE] == MODE_2P_TEAM);
+    if (o >= NOPT) return 0;
+    return opt_val[o];
+}
+/* touches sur les lignes propres au menu (p : touches pressées) : 0 rien,
+   1 lignes à refaire, 2 lignes à refaire, curseur sur OPTIONS */
+static u8 __fastcall__ menu_keys(u8 p)
+{
+    u8 o = vis[cursor], d = dmode();
+    /* page des options : l'ouvrir (A ou DROITE), en revenir (A, GAUCHE ou B) */
+    if ((o == O_OPTS && (p & (PAD_A | PAD_RIGHT))) || (menu_pg && ((p & PAD_B) || (o == O_BACK && (p & (PAD_A | PAD_LEFT)))))) {
+        sfx_menu_ok();
+        menu_pg ^= 1;
+        cursor = 0;
+        return (u8)(menu_pg ? 1 : 2);
+    }
+    /* lignes dont la valeur est le mode interne */
+    if ((o == O_MODE || o == O_VERSUS || (o == O_TYPE && d == D_1P)) && (p & (PAD_LEFT | PAD_RIGHT))) {
+        if (o == O_MODE) set_dmode((u8)((p & PAD_RIGHT) ? (d + 1 == NMODES ? 0 : d + 1) : (d ? d - 1 : NMODES - 1)));
+        else if (opt_val[O_MODE] == MODE_2P_TEAM) opt_val[O_MODE] = (u8)(d == D_2P ? MODE_2P : MODE_1P);
+        else { opt_val[O_MODE] = MODE_2P_TEAM; opt_val[O_CPART] = (u8)(d == D_2P); }
+        sfx_menu_val((u8)(p & PAD_RIGHT));
+        return 1;
+    }
+    return 0;
+}
+u16 __fastcall__ menu_f(u16 a)
+{
+    u8 v = (u8)a;
+    switch ((u8)(a >> 8)) {
+    case 0: build_visible(); return 0;
+    case 1: return dmode();
+    case 2: set_dmode(v); return 0;
+    case 3: return help_val(v);
+    default: return menu_keys(v);
+    }
+}

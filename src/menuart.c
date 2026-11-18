@@ -162,7 +162,7 @@ void menu_marks(void)
    même groupe : partie (mode, compétition, exercice), joueurs, match (lieu,
    conditions, format...), options (vue, son). Tuile de la ligne i. */
 
-static const u8 grp_of[26] = { 0, 1, 2, 2, 2, 2, 3, 3, 3, 3, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 3, 4, 3, 4, 1 };
+static const u8 grp_of[29] = { 0, 1, 2, 2, 2, 2, 3, 3, 3, 3, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 3, 4, 3, 4, 1, 1, 0, 0 };   /* (26 FORMULE, 27 OPTIONS, 28 RETOUR) */
 u8 __fastcall__ grp_tile(u8 i)
 {
     u8 g, up, dn;

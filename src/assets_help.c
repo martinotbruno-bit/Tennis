@@ -8,17 +8,17 @@
 #pragma bss-name ("WBSS")      /* (RAM de cartouche, variables locales comprises : la RAM interne est pleine) */
 u8 help_o, help_v;           /* ligne (option) et valeur à expliquer */
 
-static const char * const help_s[155] = {
+static const char * const help_s[161] = {
     "LANCE LA PARTIE AVEC CES",
     "REGLAGES (OU START).",
-    "VOUS CONTRE L'ORDINATEUR,",
-    "EN SIMPLE.",
-    "DEUX JOUEURS FACE A FACE ;",
-    "EN DOUBLE : PARTENAIRES CPU.",
-    "EN DOUBLE CONTRE 2 CPU, AVEC",
-    "UN PARTENAIRE (CPU OU J2).",
+    "VOUS CONTRE L'ORDINATEUR ;",
+    "EN DOUBLE : PARTENAIRE CPU.",
+    "DEUX AMIS : L'UN CONTRE",
+    "L'AUTRE, OU ENSEMBLE.",
     "TOURNOI, POULES, SAISON ET",
     "GRANDS CHELEMS MARTINOT.",
+    "DES COMPETITIONS QUI",
+    "COMPTENT : POINTS, QUALITES.",
     "EXERCICES POUR PROGRESSER :",
     "FRAPPES, SERVICE, VOLEE...",
     "L'ORDINATEUR JOUE SEUL.",
@@ -127,10 +127,8 @@ static const char * const help_s[155] = {
     "LIFTE, COUPE OU LOB.",
     "NOMBRE DE BALLES DE",
     "L'EXERCICE.",
-    "LE 2E JOUEUR (PARTENAIRE EN",
-    "DOUBLE) : L'ORDINATEUR.",
-    "UN AMI A LA MANETTE 2 : TON",
-    "PARTENAIRE OU TON RIVAL.",
+    "JOUEURS HUMAINS : 1 ET 3 A",
+    "LA MANETTE 1, 2 ET 4 A LA 2.",
     "75 % : POUR DEBUTER ; UNE",
     "CROIX MONTRE LE REBOND.",
     "VITESSE NORMALE.",
@@ -155,6 +153,14 @@ static const char * const help_s[155] = {
     "PAS POUR LA CARRIERE.",
     "POINTS, CLASSEMENT ET",
     "QUALITES (VOIR PALMARES).",
+    "FACE A FACE, EN SIMPLE OU",
+    "EN DOUBLE (PARTENAIRES CPU).",
+    "DANS LA MEME EQUIPE, EN",
+    "DOUBLE CONTRE 2 CPU.",
+    "RALENTIS, VITESSE, FATIGUE,",
+    "VUE ET SON.",
+    "RETOUR AUX REGLAGES",
+    "(OU B).",
     "BON PARTOUT, SANS FAIBLESSE.",
     "LONGS ECHANGES DU FOND.",
     "FRAPPES FORTES ET LOURDES.",
@@ -165,8 +171,8 @@ static const char * const help_s[155] = {
     "VISE LES LIGNES, PRECIS.",
     "VARIE TOUT : AMORTIES, LOBS.",
 };
-static const u8 help_first[26] = { 0, 1, 7, 255, 255, 9, 12, 18, 25, 29, 33, 36, 37, 39, 41, 43, 52, 56, 57, 58, 59, 61, 64, 67, 69, 71 };
-static const u8 help_n[26] = { 1, 6, 2, 0, 0, 3, 6, 7, 4, 4, 3, 1, 2, 2, 2, 9, 4, 1, 1, 1, 2, 3, 3, 2, 2, 2 };
+static const u8 help_first[29] = { 0, 1, 7, 255, 255, 9, 12, 18, 25, 29, 33, 36, 37, 39, 41, 43, 52, 56, 57, 58, 59, 60, 63, 66, 68, 70, 72, 74, 75 };
+static const u8 help_n[29] = { 1, 6, 2, 0, 0, 3, 6, 7, 4, 4, 3, 1, 2, 2, 2, 9, 4, 1, 1, 1, 1, 3, 3, 2, 2, 2, 2, 1, 1 };
 
 /* remplit comp_l1 (28 caractères) avec la ligne r (0, 1) de l'aide */
 u8 __fastcall__ menu_help(u8 r)
@@ -176,7 +182,7 @@ u8 __fastcall__ menu_help(u8 r)
     u = ""; i = 0; k = help_first[help_o];
     if (k == 255) {             /* joueur : son style */
         if (r == 0) { t = "STYLE : "; u = style_name[char_style[help_v]]; }
-        else t = help_s[146 + char_style[help_v]];
+        else t = help_s[152 + char_style[help_v]];
     } else {
         if (help_n[help_o] > 1) k += help_v;
         t = help_s[k * 2 + r];

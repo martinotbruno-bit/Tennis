@@ -89,6 +89,10 @@ void spr_port(u8 x, u8 y, u8 base, u8 attr)
 #define O_VIEW   24   /* vue : à plat, perspective */
 #define O_CAREER 25   /* carrière (compétitions en simple) */
 #define NOPT     26
+/* lignes du menu sans valeur rangée (hors opt_val) */
+#define O_VERSUS 26   /* 2 JOUEURS : CONTRE ou ENSEMBLE (modes internes 2 joueurs et en équipe) */
+#define O_OPTS   27   /* ouvre la page des options */
+#define O_BACK   28   /* page des options : retour */
 
 #define MODE_1P      0
 #define MODE_2P      1
@@ -104,8 +108,6 @@ static const char * const opt_label[NOPT] = {
     "COMMENCER", "MODE", "JEU", "JOUEUR 1", "JOUEUR 2", "NIVEAU CPU", "SURFACE", "LIEU",
     "CONDITIONS", "FORMAT", "RALENTIS", "COMPETITION", "JOUEURS", "ADVERSAIRES", "SURFACES",
     "EXERCICE", "COTE", "VITESSE", "EFFET", "BALLES", "JOUEUR 2", "VITESSE JEU", "SON", "FATIGUE", "VUE", "CARRIERE" };
-static const char * const mode_name[NMODES] = {
-    "1 JOUEUR VS CPU", "2 J. ADVERSAIRES", "EN EQUIPE", "COMPETITION", "ENTRAINEMENT", "DEMO CPU" };
 static const char * const cond_name[4] = { "JOUR", "NUIT", "PLUIE", "CREPUSCULE" };
 static const char * const level_name[3] = { "FACILE", "NORMAL", "EXPERT" };
 static const char * const fmt_name[4] = { "1 SET", "3 SETS", "5 SETS", "RAPIDE 4 JEUX" };
@@ -146,63 +148,41 @@ static u8 last_mode, demo_dbl;
 static u16 idle;
 static char line[32];
 
-/* ajoute une ligne au menu (appel court : la banque 1 est pleine) */
-static void __fastcall__ add_opt(u8 o) { vis[nvis++] = o; }
-static void build_visible(void)
-{
-    u8 m = opt_val[O_MODE];
-    nvis = 0;
-    add_opt(O_START);
-    add_opt(O_MODE);
-    if (m == MODE_COMP) {
-        add_opt(O_COMP);
-        if (opt_val[O_COMP] == CT_CUSTOM) { add_opt(O_CSIZE); add_opt(O_CPROG); add_opt(O_CVAR); }
-        else if (!opt_val[O_TYPE]) add_opt(O_CAREER);   /* */
-        add_opt(O_TYPE);
-        add_opt(O_CPART);   /* 2e joueur : partenaire (double) ou rival (simple), CPU ou manette 2 */
-        add_opt(O_LEVEL);
-        /* Grand Martinot, Martinworld Tour : au stade, de jour, surfaces
-           imposées, 3 sets et finale en 5. Joueurs, tournoi, lieu et
-           surface : pages illustrées après les réglages (pick.c) */
-        if (opt_val[O_COMP] < CT_GRAND) add_opt(O_FMT);   /* (la météo, sur la page du court) */
-        add_opt(O_REPLAY);
-        add_opt(O_GSPEED);
-    } else if (m == MODE_TRAIN) {
-        add_opt(O_EX);
-        if (opt_val[O_EX] == EX_CUSTOM) { add_opt(O_SIDE); add_opt(O_SPEED); add_opt(O_SPIN); add_opt(O_COUNT); }
-        add_opt(O_GSPEED);
-    } else {
-        /* simple ou double : seulement à 2 joueurs adversaires. « 2 J. EQUIPE »
-           est toujours en double ; « 1 joueur contre CPU » toujours en simple
-           (son double, avec un partenaire CPU, est le mode en équipe) */
-        if (m == MODE_2P) add_opt(O_TYPE);
-        if (m == MODE_2P_TEAM) add_opt(O_CPART);   /* partenaire : CPU ou manette 2 */
-        add_opt(O_LEVEL);
-        if (m == MODE_DEMO) add_opt(O_COND);   /* (sinon sur la page du court, pick.c) */
-        add_opt(O_FMT);
-        add_opt(O_REPLAY);
-        add_opt(O_GSPEED);
-    }
-    if (m != MODE_TRAIN) add_opt(O_FATIG);
-    add_opt(O_VIEW);
-    add_opt(O_SOUND);
-    if (cursor >= nvis) cursor = 0;
-}
+/* Modes affichés, lignes visibles du menu : banque 29 (pick.c, menu_f) */
+#define D_1P    0
+#define D_2P    1
+#define D_COMP  2
+#define D_CAR   3
+static const char * const dmode_name[NMODES] = {
+    "1 JOUEUR VS CPU", "2 JOUEURS", "COMPETITION", "CARRIERE", "ENTRAINEMENT", "DEMO CPU" };
+u16 __fastcall__ menu_f(u16 a);
+#define MENU(op, v) far_call(BANK_PICK, (void *)menu_f, (u16)(((op) << 8) | (v)))
+#define dmode() ((u8)MENU(1, 0))
+#define set_dmode(d) MENU(2, d)
+u8 menu_pg;                 /* 0 : réglages ; 1 : page des options */
+static void build_visible(void) { MENU(0, 0); }
 
 /* compétition en simple : la ligne JOUEURS (1 à 4 joueurs humains) */
 static u8 comp_single(void) { return (u8)(opt_val[O_MODE] == MODE_COMP && !opt_val[O_TYPE]); }
 static const char * const cnt_name[4] = { "1", "2", "3", "4" };
 static const char *row_label(u8 o)
 {
-    if (o == O_P2 && (opt_val[O_MODE] == MODE_COMP || opt_val[O_MODE] == MODE_2P_TEAM)) return "PARTENAIRE";
-    if (o == O_CPART && comp_single()) return "JOUEURS";
+    if (o == O_VERSUS) return "FORMULE";
+    if (o == O_OPTS) return "OPTIONS";
+    if (o == O_BACK) return "RETOUR";
+    if (o == O_CPART) return "HUMAINS";
     return opt_label[o];
 }
+/* valeur expliquée par l'aide (lignes sans valeur rangée, modes affichés) */
+#define help_val(o) ((u8)MENU(3, o))
 static const char *opt_text(u8 o)
 {
-    u8 v = opt_val[o];
+    u8 v = help_val(o);
     switch (o) {
-    case O_MODE:   return mode_name[v];
+    case O_MODE:   return dmode_name[v];
+    case O_VERSUS: return v ? "ENSEMBLE" : "CONTRE";
+    case O_OPTS:   return "A : OUVRIR";
+    case O_BACK:   return "A : REGLAGES";
     case O_TYPE:   return v ? "DOUBLE" : "SIMPLE";
     case O_P1:
     case O_P2:     return chr_nm(v);
@@ -225,8 +205,7 @@ static const char *opt_text(u8 o)
     case O_SPEED:  return speed_name[v];
     case O_SPIN:   return spin_name[v];
     case O_COUNT:  return v == 0 ? "10" : v == 1 ? "20" : "30";
-    case O_CPART:  if (comp_single()) return cnt_name[v];   /* (JOUEURS, 1 à 4) */
-                   return v ? "MANETTE 2" : "CPU";
+    case O_CPART:  return cnt_name[v];   /* (HUMAINS : 1 à 4) */
     case O_GSPEED: return gspeed_name[v];
     case O_SOUND:  return sound_name[v];
     case O_FATIG:
@@ -461,7 +440,8 @@ static void info_line(u8 r)
 static void menu_info_tick(void)
 {
     u8 o = vis[cursor];
-    if (o != info_o || opt_val[o] != info_v) { info_o = o; info_v = opt_val[o]; info_row = 0; }
+    u8 v = help_val(o);
+    if (o != info_o || v != info_v) { info_o = o; info_v = v; info_row = 0; }
     while (info_row < 4 && vram_len + 32 <= VBUF_MAX) {
         info_line(info_row);
         vbuf_text(2, (u8)(24 + info_row), comp_l1, 28);
@@ -495,6 +475,7 @@ static void menu_screen(void)
 {
     u8 i;
     bank_call(BANK_CAR, cust_reset);    /* (personnages d'origine hors compétition) */
+    menu_pg = 0;
     build_visible();
     rd_row = rd_n = 0;
     screen_begin();
@@ -1110,12 +1091,22 @@ void screens_tick(void)
         if (pad1_new & PAD_UP)   { cursor = (u8)(cursor ? cursor - 1 : nvis - 1); sfx_menu_move(); }
         if (pad1_new & PAD_DOWN) { cursor = (u8)(cursor + 1 == nvis ? 0 : cursor + 1); sfx_menu_move(); }
         o = vis[cursor];
+        /* page des options, mode affiché, 1 JOUEUR en simple ou en double,
+           2 JOUEURS contre ou ensemble : pick.c (menu_f) */
+        if ((v = (u8)MENU(4, pad1_new)) != 0) {
+            vbuf_reset();
+            menu_soft();
+            if (v == 2) for (i = 0; i < nvis; ++i) if (vis[i] == O_OPTS) cursor = i;
+            break;
+        }
+        if (o == O_OPTS || o == O_BACK) o = O_START;
         if (o != O_START && (pad1_new & (PAD_LEFT | PAD_RIGHT))) {
             v = opt_val[o];
             i = opt_max[o];
             if (o == O_CPART && !comp_single()) i = 2;   /* (CPU ou MANETTE 2) */
             if (pad1_new & PAD_RIGHT) v = (u8)(v + 1 == i ? 0 : v + 1);
             else v = (u8)(v ? v - 1 : i - 1);
+            if (o == O_COMP && v == CT_CUSTOM && opt_val[O_CAREER]) v = (u8)((pad1_new & PAD_RIGHT) ? v + 1 : v - 1);   /* (la carrière : pas de tournoi personnalisé) */
             /* le club nudiste n'apparaît qu'une fois débloqué */
             /* Margaux ne va jamais au club nudiste : ni ce lieu avec elle, ni
                elle dans ce lieu */
@@ -1142,7 +1133,7 @@ void screens_tick(void)
             if (o == O_P2) far_call(BANK_PODIUM, (void *)port_pal, (u8)(32 + v));
         }
         if (pad1_new & PAD_B) { sfx_menu_back(); title_screen(); break; }
-        if ((pad1_new & PAD_START) || ((pad1_new & PAD_A) && o == O_START)) {
+        if ((pad1_new & PAD_START) || ((pad1_new & PAD_A) && vis[cursor] == O_START)) {
             sfx_menu_ok();
             /* compétition : d'abord TON JOUEUR, puis les pages de choix */
             if (opt_val[O_MODE] == MODE_COMP) { (void)far_call(BANK_X2, (void *)so_save, 0); cust_screen(1); break; }
