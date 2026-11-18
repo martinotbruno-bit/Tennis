@@ -500,23 +500,17 @@ static void menu_screen(void)
     menu_music();
 }
 
-static u8 __fastcall__ port_base(u8 c) { return (u8)(c == 19 ? 0x34 : !char_female[c] ? 0x10 : c == 16 ? 0x28 : 0x1C); }
 static void menu_sprites(void)
 {
     static const u8 bounce[8] = { 0, 1, 2, 3, 3, 2, 1, 0 };
-    register u8 i;               /* (page zéro : la RAM est pleine) */
     menu_hl_tick();
     spr_begin();
     /* balle qui rebondit (sur la première ligne, sans monter : elle
        croiserait le bas des portraits, 9 sprites sur une même ligne) */
     spr1(9, (u8)(MY0 * 8 + cursor * 8 - 1 - (cursor || MY0 > 5 ? bounce[(frame_cnt >> 2) & 7] : 0)), (u8)(ball_base + 8), 3);
     bank_call(BANK_PODIUM, menu_marks);      /* pastille de la surface, vignette du lieu */
-    /* portraits des joueurs, de part et d'autre du titre (tuiles $10 homme, $1C femme, $28 Margaux, $34 Papi) */
-    /* portraits : plus bas quand la liste laisse de la place au-dessus d'elle */
-    i = (u8)(MY0 * 8 - 30); if (i > 16) i = 16; if (i < 7) i = 7;
-    spr_port(16, i, port_base(opt_val[O_P1]), 0);
-    if (opt_val[O_MODE] <= MODE_2P_TEAM || opt_val[O_MODE] == MODE_DEMO || (opt_val[O_MODE] == MODE_COMP && opt_val[O_TYPE]))
-        spr_port(208, i, port_base(opt_val[O_P2]), 0x41);       /* (compétition en double : le partenaire) */
+    /* (2.77) plus de portraits des joueurs de part et d'autre du titre : les
+       joueurs se choisissent sur l'affiche VS, après les réglages (pick.c) */
     spr_end();
 }
 
