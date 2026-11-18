@@ -15,6 +15,7 @@ Comme l'exige le CDC (§ 17.5), ce rapport distingue ce qui est **réalisé**, *
 | Pause : le public apparaissait à travers le bandeau central | Trois causes : les colonnes de bord des lignes de texte du bandeau n'étaient pas réécrites (le décor y restait) ; les sprites qui débordaient par le haut n'étaient pas masqués ; une pause prise juste après une frappe gelait le dessin du match, et le bandeau ne se posait jamais (court Margaux notamment). Les trois sont corrigées. Test ajouté (pause sur une trame de frappe) |
 | Pas de bandeau du score juste après la victoire | Le score de la balle de match n'est compté qu'à la fin du temps mort : le bandeau avait le temps de monter une vingtaine de trames avant la fête. Il ne monte plus sur une balle de match gagnée. Test ajouté |
 | Château au crépuscule peu flatteur | L'accentuation rouge du couchant teintait sa pierre grise en rose, puis en lilas. Au château, la pierre devient dorée au couchant ($37/$27), puis brun orangé au crépuscule ($27/$17), aussi dans l'aperçu de la page du court. Test ajouté |
+| Pas de ralenti sur un retour de service gagnant | La règle des ralentis prenait les aces et les échanges de 3 frappes ou plus, mais oubliait le retour gagnant (2 frappes). Il a maintenant son ralenti (gros plan et zoom selon le réglage) et le message « RETOUR GAGNANT » |
 | Quand apparaît la ramasseuse ? | (Réponse) Au changement de côté, quand les joueurs se lèvent de leur chaise, un changement sur deux (3e, 7e, 11e jeu…), avec les ralentis réglés sur OUI, TELE (pas en SIMPLE ni NON), hors club nudiste et démo. Au crépuscule, le plan du soleil couchant passe avant elle |
 
 ### Version 2.76
@@ -754,7 +755,7 @@ Pour loger ce contenu, la cartouche passe de NROM (32 Ko) à **MMC1** : 128 Ko d
 | Relecture des textes (`check_texts.py`) | 0 problème |
 | Contraste (`contrast.py 25`) | 0 paire sous ΔE 25 (personnages, courts, balle, tenues) |
 | Profil CPU, double, 6 000 trames | 27 trames d'échange en dépassement (0,45 %), sans défaut d'image |
-| Compilation | Reproductible : SHA-256 `7295e35bdff9fe1d03911b93ec1e58bd6143d73ccc4af0434e17675f661cc8c2` sur deux compilations propres |
+| Compilation | Reproductible : SHA-256 `9550ef99647c6c22b8f59c4bbebe7074afc932bcd0f300404a5d2b5204169677` sur deux compilations propres |
 
 ## 3. Conformité par section du CDC
 
@@ -801,7 +802,7 @@ Légende : ✅ réalisé et testé en émulation · 🟡 partiel · 🔧 nécess
 
 ## 5. Limitations restantes
 
-- **Version 2.76 livrée en cours de vérification** : la suite de tests n'a pas encore été entièrement adaptée au nouveau parcours (pages de choix, tirage au sort) ; les tests propres aux nouveautés passent, une partie des anciens tests du menu (lignes joueurs, lieu, surface désormais sur des pages) reste à réécrire.
+- **Version 2.77 livrée en cours de vérification** : dernière suite complète, 410 vérifications réussies et 17 échecs ; 4 tests de menus et 2 du portrait du vainqueur sont déjà corrigés dans les tests. Les autres échecs viennent surtout des durées d'attente mémorisées par les tests (until_frames.json), trop courtes depuis le nouveau parcours : elles sont en cours de réapprentissage.
 
 1. **Tests sur matériel réel** (priorité 1 du CDC). Il faut flasher `dist/royal_martinot.nes` sur une cartouche MMC1/SNROM (ou un linéaire EverDrive/PowerPak) et tester sur NES NTSC, NES PAL et Famicom. Points à surveiller :
    - l'état du MMC1 à la mise sous tension ;
