@@ -643,6 +643,7 @@ u16 __fastcall__ fw_draw(u16 t16)
     d = (u8)((d * 3) >> 2);
     spr1((u8)(x - d), (u8)(y - d), 3, 3);
     spr1((u8)(x + d), (u8)(y - d), 3, 3);
+    if (fw_o2) return 0;                          /* (podium, 2.77 : 2 seulement, 62-63 sont la plaque du finaliste) */
     spr1((u8)(x - d), (u8)(y + d), 3, 3);
     spr1((u8)(x + d), (u8)(y + d), 3, 3);
     return 0;
