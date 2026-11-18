@@ -3045,24 +3045,59 @@ console.log('Version 2.76 : crépuscule et balle faute renvoyée');
   check(shown && okNt && stAfter === stBefore + 1, `crépuscule : plan du soleil couchant au changement de côté (image ${okNt ? 'chargée' : 'absente'}), lumière ${stBefore} -> ${stAfter}`);
 }
 }
+if (sec('Version 2.77 : château au crépuscule, victoire sans bandeau')) {
+console.log('Version 2.77 : château au crépuscule, victoire sans bandeau');
+{
+  // château au couchant : pierre dorée ($37/$27), plus la pierre grise qui
+  // virait au rose sous l'accentuation rouge
+  const e = boot(); startWith(e, { FMT: 0, ENV: 5, COND: 3 }); allCpu(e); e.run(20);
+  e.poke('sc_games', 2, 0); e.poke('sc_games', 0, 1);   // (1 set de 6 jeux : 3e jeu, phase 1)
+  let sun = false;
+  runUntil(e, () => { if (e.peek('hl_mode') === 5) sun = true; return sun && e.peek('hl_mode') === 0; }, 60 * 60 * 6, () => { if (e.peek('cer') >= 4 && e.peek('cer') <= 6) e.poke('cer_skip', 1); });
+  e.run(10);
+  const st = e.peek('sun_st'), c = [e.peek('pal_buf', 9), e.peek('pal_buf', 10)];
+  check(sun && st === 1 && c[0] === 0x37 && c[1] === 0x27, `château au couchant : pierre dorée (phase ${st}, couleurs ${c.map(x => x.toString(16))})`);
+}
+{
+  // balle de match gagnée : aucun bandeau du score entre le point et la fête
+  const e = boot(); startWith(e, { FMT: 3, REPLAY: 1 }); allCpu(e); e.run(20);
+  e.poke('sc_sets', 1, 0); e.poke('sc_sets', 0, 1); e.poke('sc_games', 5, 0); e.poke('sc_games', 0, 1);
+  let band = 0, done = false;
+  for (let f = 0; f < 60 * 60 * 6 && !done; f++) {
+    if (e.peek('ms') === 0 && e.peek('sc_points', 0) < 3) { e.poke('sc_points', 3, 0); e.poke('sc_points', 0, 1); }
+    e.run(1);
+    const crit = e.peek('sc_crit'), pw = e.peek('pending_winner');
+    if (e.peek('ms') === 3 && (crit & 4) && ((crit >> pw) & 1) && e.peek('band_vis')) band++;
+    if (e.peek('sc_over')) done = true;
+  }
+  check(done && band === 0, `balle de match gagnée : pas de bandeau du score avant la fête (${band} trame(s), fin ${done})`);
+}
+}
 if (sec('Version 2.76 : parcours, tirage, fin de set, compétition à deux')) {
 console.log('Version 2.76 : parcours, tirage, fin de set, compétition à deux');
 {
-  // pages de choix après les réglages : joueurs (affiche VS), lieu, surface
-  const e = boot(); e.pickSkip = false; toMenu(e); setOpts(e, { MODE: MODE.P1, P1: 0, P2: 1, ENV: 0, SURF: 0 });
-  check(rowOf(e, O.P1) < 0 && rowOf(e, O.SURF) < 0 && rowOf(e, O.ENV) < 0, 'réglages : plus de lignes joueurs, lieu, surface');
+  // pages de choix après les réglages : joueurs (affiche VS), puis le court :
+  // lieu, surface et météo sur la même page (2.77), HAUT/BAS pour la ligne
+  const e = boot(); e.pickSkip = false; toMenu(e); setOpts(e, { MODE: MODE.P1, P1: 0, P2: 1, ENV: 0, SURF: 0, COND: 0 });
+  check(rowOf(e, O.P1) < 0 && rowOf(e, O.SURF) < 0 && rowOf(e, O.ENV) < 0 && rowOf(e, O.COND) < 0, 'réglages : plus de lignes joueurs, lieu, surface, météo');
   e.tap('START'); runUntil(e, () => scr(e) === SS.PICK, 60); e.run(40);
   const t1 = e.text(3, 1, 10);
   e.tap('RIGHT'); e.run(40);
   const p1 = e.peek('opt_val', O.P1);
   e.tap('A'); e.run(40); const t2 = e.text(3, 1, 14);
-  e.tap('A'); e.run(30); const t3 = e.text(2, 1, 28);
+  e.tap('A'); e.run(30); const rows = [1, 2, 3].map(y => e.text(2, y, 28));
   e.tap('RIGHT'); e.run(30); const env = e.peek('opt_val', O.ENV);
-  e.tap('A'); e.run(30); const t4 = e.text(2, 1, 28);
-  e.tap('B'); e.run(30); const back = e.text(2, 1, 28);
+  e.tap('DOWN'); e.run(4); const cur = e.text(2, 2, 2);
+  e.tap('RIGHT'); e.run(30); const surf = e.peek('opt_val', O.SURF);
+  e.tap('DOWN'); e.tap('RIGHT'); e.run(30); const cond = e.peek('opt_val', O.COND), emph = e.peek('ppu_emph');
+  e.tap('RIGHT'); e.run(30); const cond2 = e.peek('opt_val', O.COND), rain = e.peek('cfg', 0) >= 0 && [...Array(64).keys()].filter(i => e.peek('oam_buf', i * 4 + 1) === 4 && e.peek('oam_buf', i * 4) < 0xF0).length;
+  e.tap('B'); e.run(40); const back = e.text(3, 1, 14);
+  e.tap('A'); e.run(30);
   e.tap('START'); runUntil(e, () => scr(e) === SS.PRESENT, 120);
-  check(t1 === 'TON JOUEUR' && p1 !== 0 && p1 !== 1 && t2.startsWith('TON ADVERSAIRE') && t3.includes('LIEU') && env === 1 && t4.includes('SURFACE') && back.includes('LIEU') && scr(e) === SS.PRESENT,
-    `pages : joueur (${p1}), adversaire, lieu (${env}), surface ; B revient, START valide (« ${t1} », « ${t2.trim()} », « ${t3.trim()} », « ${t4.trim()} »)`);
+  check(t1 === 'TON JOUEUR' && p1 !== 0 && p1 !== 1 && t2.startsWith('TON ADVERSAIRE') && rows[0].includes('LIEU') && rows[1].includes('SURFACE') && rows[2].includes('METEO') &&
+    env === 1 && cur.includes('>') && surf === 1 && cond === 1 && cond2 === 2 && rain >= 5 && back.startsWith('TON ADVERSAIRE') && scr(e) === SS.PRESENT && e.peek('cfg', 0) >= 0,
+    `pages : joueur (${p1}), adversaire, puis le court : lieu (${env}), surface (${surf}), météo (nuit ${cond}, pluie ${cond2} : ${rain} gouttes) sur la même page ; B revient, START valide (« ${rows.map(r => r.trim()).join(' / ')} »)`);
+  void emph;
 }
 {
   // tirage au sort : devant l'arbitre, le gagnant (humain) choisit sur le bandeau

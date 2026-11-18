@@ -163,13 +163,12 @@ static void build_visible(void)
         /* Grand Martinot, Martinworld Tour : au stade, de jour, surfaces
            imposées, 3 sets et finale en 5. (2.76) Joueurs, tournoi, lieu et
            surface : pages illustrées après les réglages (pick.c) */
-        if (opt_val[O_COMP] < CT_GRAND) { add_opt(O_COND); add_opt(O_FMT); }
+        if (opt_val[O_COMP] < CT_GRAND) add_opt(O_FMT);   /* (2.77 : la météo, sur la page du court) */
         add_opt(O_REPLAY);
         add_opt(O_GSPEED);
     } else if (m == MODE_TRAIN) {
         add_opt(O_EX);
         if (opt_val[O_EX] == EX_CUSTOM) { add_opt(O_SIDE); add_opt(O_SPEED); add_opt(O_SPIN); add_opt(O_COUNT); }
-        add_opt(O_COND);
         add_opt(O_GSPEED);
     } else {
         /* simple ou double : seulement à 2 joueurs adversaires. « 2 J. EQUIPE »
@@ -178,7 +177,7 @@ static void build_visible(void)
         if (m == MODE_2P) add_opt(O_TYPE);
         if (m == MODE_2P_TEAM) add_opt(O_CPART);   /* partenaire : CPU ou manette 2 */
         add_opt(O_LEVEL);
-        add_opt(O_COND);
+        if (m == MODE_DEMO) add_opt(O_COND);   /* (2.77 : sinon sur la page du court, pick.c) */
         add_opt(O_FMT);
         add_opt(O_REPLAY);
         add_opt(O_GSPEED);

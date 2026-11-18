@@ -220,7 +220,7 @@ void msave_write(void);
 #define V_GAME  5
 #define V_ADV   6
 u8 voice_pend, voice_t;       /* (globales : lues par les tests) */
-extern u8 sc_crit;
+extern u8 sc_crit, pending_winner;
 u16 __fastcall__ hl_point_ev(u16 ev)
 {
     u8 t;
@@ -318,7 +318,10 @@ void band_draw(void)
     if (ms != MS_DEAD && ms != MS_SERVE) band_dis = 0;
     else if (!rp_pending && (pad1_new | pad2_new)) band_dis = 1;
     if (cer == CER_CHOOSE || cer == CER_RECAP) band_pg = 6;
-    v = (u8)(cfg.mode == GM_MATCH && !paused && !hl_mode && !sc_over &&
+    /* (2.77) balle de match gagnée : pas de bandeau avant la fête (le
+       score n'est compté qu'à la fin du temps mort) */
+    v = (u8)(ms == MS_DEAD && end_reason == END_POINT && (sc_crit & 4) && ((sc_crit >> pending_winner) & 1));
+    v = (u8)(cfg.mode == GM_MATCH && !paused && !hl_mode && !sc_over && !v &&
              ((cer == CER_SEAT) || ((cer == CER_CHOOSE || cer == CER_RECAP) && toss_q) || (cer == 4 && !band_dis) || ((!cer || cer >= 0xF0) && !band_dis && !rp_pending && (ms == MS_DEAD || ms == MS_SERVE))));
     /* (2.76) cer 4 (CER_CHAIR, vers les chaises) : le bandeau reste affiché
        depuis la fin du point jusqu'aux statistiques, sans disparaître */

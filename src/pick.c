@@ -3,9 +3,10 @@
  * Après les réglages (mode, compétition, format…), les choix qui se voient
  * se font sur des pages à part, dans l'ordre : le tournoi (compétition
  * « tournoi » : un des 7 tournois Martinot, sur l'image de son annonce),
- * le ou les joueurs (affiche VS : bustes, noms, styles), puis le lieu et la
- * surface (le vrai court en aperçu, avec ses couleurs et la lumière du
- * moment). GAUCHE/DROITE : changer ; A : valider (page suivante) ;
+ * le ou les joueurs (affiche VS : bustes, noms, styles), puis le court :
+ * lieu, surface et météo sur la même page (2.77), le vrai court en aperçu
+ * avec ses couleurs et la lumière choisie (nuit, pluie qui tombe, couchant).
+ * HAUT/BAS : ligne ; GAUCHE/DROITE : changer ; A : valider (page suivante) ;
  * B : page précédente (ou retour aux réglages) ; START : tout valider.
  *
  * screens.c appelle pick_begin (0 : aucune page, on continue), puis
@@ -42,11 +43,14 @@ extern u8 opt_val[];
 #define PK_P1   1
 #define PK_P2   2
 #define PK_EV   3
-#define PK_ENV  4
-#define PK_SURF 5
+#define PK_CRT  4                       /* (2.77) lieu, surface et météo */
+/* lignes de la page du court */
+#define R_ENV   1
+#define R_SURF  2
+#define R_COND  4
 
 #pragma bss-name(push, "WBSS")
-static u8 pk_i, pk_t, pk_ev;
+static u8 pk_i, pk_t, pk_ev, pk_row;
 u8 pk_off;                              /* (banc d'essai : pages sautées, parcours d'avant) */
 #pragma bss-name(pop)
 
@@ -56,10 +60,22 @@ void load_court(void);                                                  /* banqu
 extern u8 gm_ev;
 void gm_intro_build(void); void gm_intro_tick(void);                     /* banque 14 */
 extern u8 persp;
+extern u8 ppu_emph;
+#pragma zpsym("ppu_emph")
 
 /* les 7 tournois Martinot (ordre des images d'annonce, gmintro.c) : surface */
 static const u8 ev_surf[7] = { 2, 0, 1, 2, 5, 4, 3 };
 
+/* lignes de la page du court selon le mode : en compétition, le lieu et
+   la surface du tournoi Martinot (ou de la saison) sont imposés */
+static u8 pk_rows(void)
+{
+    u8 m = opt_val[O_MODE], ct = opt_val[O_COMP];
+    if (m != MODE_COMP) return R_ENV | R_SURF | R_COND;
+    if (ct == CT_KO) return R_COND;
+    if (ct >= CT_GRAND) return 0;
+    return (u8)(ct == CT_SEASON ? R_ENV | R_COND : R_ENV | R_SURF | R_COND);
+}
 static u8 pk_list(u8 *l)
 {
     u8 n = 0, m = opt_val[O_MODE], ct = opt_val[O_COMP];
@@ -67,9 +83,8 @@ static u8 pk_list(u8 *l)
     if (m == MODE_COMP && ct == CT_KO) l[n++] = PK_EV;           /* d'abord le tournoi */
     l[n++] = PK_P1;
     if (m == MODE_1P || m == MODE_2P || m == MODE_2P_TEAM || (m == MODE_COMP && (opt_val[O_TYPE] || opt_val[O_CPART]))) l[n++] = PK_P2;   /* (2.76 : compétition à deux) */
-    if (m == MODE_COMP) {
-        if (ct != CT_KO && ct < CT_GRAND) { l[n++] = PK_ENV; if (ct != CT_SEASON) l[n++] = PK_SURF; }
-    } else { l[n++] = PK_ENV; l[n++] = PK_SURF; }
+    (void)ct;
+    if (pk_rows()) l[n++] = PK_CRT;
     return n;
 }
 static u8 pk_stage(void) { u8 l[6]; return pk_i < pk_list(l) ? l[pk_i] : 0; }
@@ -168,19 +183,54 @@ static void draw_event(void)
     ppu_on();
 }
 
-/* le court en aperçu (vue à plat), lieu et surface choisis, lumière du
-   moment ; le texte dans le haut de l'écran (zone du score) */
-static void draw_court(u8 st)
+/* météo possible : pas de pluie ni de crépuscule en salle ; crépuscule
+   en match seulement (ni entraînement, ni compétition) */
+static u8 cond_ok(u8 v)
+{
+    u8 m = opt_val[O_MODE];
+    if (opt_val[O_ENV] == ENV_HALL && v >= COND_RAIN) return 0;
+    return (u8)(v != COND_SUNSET || (m != MODE_TRAIN && m != MODE_COMP));
+}
+static const char * const cond_nm[4] = { "JOUR", "NUIT", "PLUIE", "CREPUSCULE" };
+
+/* les lignes du haut (zone du score) : curseur, nom, valeur entre flèches */
+static void rows_text(u8 now)
+{
+    static const char * const lbl[3] = { "LIEU", "SURFACE", "METEO" };
+    char b[29];
+    const char *q, *t;
+    u8 r, i, n, y = 1, rs = pk_rows();
+    for (r = 0; r < 3; ++r) {
+        if (!(rs & (1 << r))) continue;
+        for (i = 0; i < 28; ++i) b[i] = ' ';
+        b[28] = 0;
+        if (pk_row == r) b[1] = '>';
+        for (t = lbl[r], i = 3; *t; ) b[i++] = *t++;
+        q = r == 0 ? env_name[opt_val[O_ENV]] : r == 1 ? surf_name[opt_val[O_SURF]] : cond_nm[opt_val[O_COND]];
+        for (n = 0; q[n]; ++n) ;
+        while (n && q[n - 1] == ' ') --n;               /* (noms de surface complétés d'espaces) */
+        i = 12; b[i++] = '<'; b[i++] = ' ';
+        while (n-- && i < 26) b[i++] = *q++;
+        b[i + 1] = '>';
+        if (now) txt_at(2, y, b); else vbuf_text(2, y, b, 28);
+        ++y;
+    }
+}
+
+/* le court en aperçu (vue à plat), lieu, surface et lumière choisis ; le
+   texte dans le haut de l'écran (zone du score) */
+static void draw_court(void)
 {
     u8 v = cfg.view;
     ppu_off();
     vbuf_reset();
     spr_begin(); spr_end();
     scroll_x = 0; scroll_y = 0; scroll_nt = 0;
+    if (!cond_ok(opt_val[O_COND])) opt_val[O_COND] = COND_DAY;
+    while (!(pk_rows() & (1 << pk_row))) pk_row = (u8)((pk_row + 1) % 3);
     cfg.surface = opt_val[O_SURF];
     cfg.env = opt_val[O_ENV];
     cfg.cond = opt_val[O_COND];
-    if (cfg.env == ENV_HALL && cfg.cond >= COND_RAIN) cfg.cond = COND_DAY;
     cfg.chr[0] = opt_val[O_P1];
     cfg.chr[1] = opt_val[O_P2];
     cfg.view = 0;
@@ -188,13 +238,14 @@ static void draw_court(u8 st)
     bank_call(BANK_EXTRAS, load_court);
     cfg.view = v;
     persp = 0;
-    pal_set_court(cfg.surface, cfg.cond, cfg.env);
+    /* crépuscule : la lumière du couchant (accentuation rouge) */
+    pal_set_court(cfg.surface, cfg.cond == COND_SUNSET ? COND_DAY : cfg.cond, cfg.env);
+    ppu_emph = (u8)(cfg.cond == COND_SUNSET ? (is_pal ? 0x40 : 0x20) : 0);
+    if (cfg.cond == COND_SUNSET && cfg.env == ENV_CASTLE) { pal_buf[9] = 0x37; pal_buf[10] = 0x27; }   /* (pierre dorée, comme en match) */
     pal_set_player(0, cfg.chr[0]);
     pal_set_player(1, cfg.chr[1]);
-    vram_adr(0x2000); vram_fill(0, 96);                  /* (rangées du score : le texte) */
-    if (st == PK_ENV) with_arrows2(1, "LIEU : ", env_name[cfg.env]);
-    else with_arrows2(1, "SURFACE : ", surf_name[cfg.surface]);
-    line_at(2, "A : VALIDER   B : RETOUR");
+    vram_adr(0x2000); vram_fill(0, 128);                 /* (rangées du score : le texte) */
+    rows_text(1);
     ppu_on();
 }
 
@@ -204,7 +255,7 @@ static void draw(void)
     u8 st = pk_stage();
     fade_skip = 1;
     if (st == PK_EV) draw_event();
-    else if (st == PK_ENV || st == PK_SURF) { draw_court(st); pk_music(); }
+    else if (st == PK_CRT) { draw_court(); pk_music(); }
     else { draw_players(st); pk_music(); }
 }
 
@@ -219,6 +270,7 @@ static u16 leave(u8 r)
 {
     ppu_off();
     split_stop();
+    ppu_emph = 0;
     chr_reload();
     spr_begin(); spr_end();
     pk_music();                         /* (après la fanfare d'un tournoi) */
@@ -231,6 +283,7 @@ u16 __fastcall__ pick_begin(u16 first)
     u8 l[6], e;
     (void)first;
     pk_i = 0;
+    pk_row = 0;
     if (pk_off || !pk_list(l)) return 0;
     /* tournoi : celui de la surface choisie la dernière fois */
     pk_ev = 0;
@@ -265,6 +318,14 @@ u16 __fastcall__ pick_tick(u16 pad)
         draw();
         return 0;
     }
+    /* page du court : HAUT/BAS change de ligne (sans redessiner le court) */
+    if (st == PK_CRT && (p & (PAD_UP | PAD_DOWN))) {
+        n = pk_rows();
+        do pk_row = (u8)((pk_row + ((p & PAD_DOWN) ? 1 : 2)) % 3); while (!(n & (1 << pk_row)));
+        sfx_menu_move();
+        rows_text(0);
+        return 0;
+    }
     if (p & (PAD_LEFT | PAD_RIGHT)) {
         d = (s8)((p & PAD_RIGHT) ? 1 : -1);
         sfx_menu_val((u8)(p & PAD_RIGHT));
@@ -272,12 +333,19 @@ u16 __fastcall__ pick_tick(u16 pad)
             pk_ev = (u8)((pk_ev + 7 + d) % 7);
             opt_val[O_SURF] = ev_surf[pk_ev];
             opt_val[O_ENV] = (u8)(pk_ev == 6 ? ENV_HALL : ENV_STADIUM);   /* (Deborcy : en salle) */
-        } else if (st == PK_ENV) {
-            v = opt_val[O_ENV];
-            do v = (u8)((v + NENV + d) % NENV); while (bad_env(v));
-            opt_val[O_ENV] = v;
-        } else if (st == PK_SURF) {
-            opt_val[O_SURF] = (u8)((opt_val[O_SURF] + NSURF + d) % NSURF);
+        } else if (st == PK_CRT) {
+            if (pk_row == 0) {
+                v = opt_val[O_ENV];
+                do v = (u8)((v + NENV + d) % NENV); while (bad_env(v));
+                opt_val[O_ENV] = v;
+                if (!cond_ok(opt_val[O_COND])) opt_val[O_COND] = COND_DAY;
+            } else if (pk_row == 1) {
+                opt_val[O_SURF] = (u8)((opt_val[O_SURF] + NSURF + d) % NSURF);
+            } else {
+                v = opt_val[O_COND];
+                do v = (u8)((v + 4 + d) & 3); while (!cond_ok(v));
+                opt_val[O_COND] = v;
+            }
         } else {
             o = (u8)(st == PK_P1 ? O_P1 : O_P2);
             v = opt_val[o];
@@ -297,7 +365,11 @@ u16 __fastcall__ pick_tick(u16 pad)
         /* les deux joueurs sur le court, au repos */
         spr_begin();
         spr_person(120, 202, cfg.chr[0], 0, (u8)(((frame_cnt >> 5) & 1) ? POSE_IDLE : POSE_DRIBBLE), 0, 0);
-        spr_person(136, 46, cfg.chr[1], 1, POSE_IDLE, 0, 1);
+        spr_person(136, 62, cfg.chr[1], 1, POSE_IDLE, 0, 1);   /* (2.77 : sous les 3 lignes du haut) */
+        if (cfg.cond == COND_RAIN) {
+            /* pluie : 10 gouttes qui tombent en biais */
+            for (n = 0; n < 10; ++n) spr1((u8)(n * 25 + 7 + (frame_cnt >> 1)), (u8)(40 + (u8)(n * 53 + (frame_cnt << 2)) % 190), 4, 3);
+        }
         spr_end();
     }
     return 0;
