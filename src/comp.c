@@ -683,31 +683,43 @@ u8 __fastcall__ comp_draw_table(u8 y)
             txt_at(15, (u8)(y + 1 + i), line);
         }
         break;
-    default:
-        /* tableau à élimination (version 2.58) : les inscrits à gauche, un
-           par rangée ; chaque match relie deux noms par un trait doré jusqu'au
-           vainqueur, écrit au milieu des deux (au premier tour, sur la rangée
-           du second) ; tours joués seulement (c_stage). rw[] : rangée de
-           chaque nom du tour en cours */
-        head_at(3, y, "TABLEAU");
-        for (i = 0; i < c_n; ++i) rw[i] = i;
+    default: {
+        /* tableau à élimination (version 2.58 ; 2.77 : aéré et centré) : les
+           inscrits à gauche, une rangée sur deux ; chaque match relie deux
+           noms par un trait doré jusqu'au milieu de la paire, où s'écrit le
+           vainqueur (tours joués seulement, c_stage) ; tous les tours sont
+           tracés, jusqu'à la colonne du vainqueur. rw[] : rangée de chaque
+           nom du tour en cours ; colonnes de 7 (noms de 5 en double) */
+        u8 sp = (u8)(c_n > 8 ? 1 : 2), nr = 0, x0, y0, h;
+        for (n = c_n; n > 1; n >>= 1) ++nr;
+        x0 = (u8)((32 - (nr * 7 + 5)) >> 1);
+        h = (u8)((c_n - 1) * sp + 1);
+        y0 = (u8)(h >= 15 ? y - 1 : y + ((15 - h) >> 1));
+        for (i = 0; i < c_n; ++i) rw[i] = (u8)(i * sp);
         n = c_n;
         for (b = 0; ; ++b, n >>= 1) {                 /* tour b : n inscrits */
             ko_run(0, 3, b);
-            a = (u8)(2 + b * 6);                      /* colonne des noms du tour */
-            for (i = 0; i < n; ++i)
-                if (b <= c_stage) ent_at(ko_cur[i], a, (u8)(y + 1 + rw[i]));
+            a = (u8)(x0 + b * 7);                     /* colonne des noms du tour */
+            for (i = 0; i < n; ++i) {
+                /* le nom (tour joué), puis un trait jusqu'au crochet ; tour
+                   à jouer : la place, en trait */
+                h = 0;                        /* (h : longueur du nom ; RAM pleine) */
+                if (b <= c_stage) { ent_at(ko_cur[i], a, (u8)(y0 + rw[i])); while (nb[h]) ++h; }
+                vram_adr(NTADR(a + h, y0 + rw[i]));
+                for (; h < (u8)(n == 1 ? 5 : 6); ++h) vram_put(0xA8);
+            }
             if (n == 1) break;
             for (i = 0; i < n; i += 2) {
                 u8 r0 = rw[i], r1 = rw[i + 1], m = (u8)((r0 + r1 + 1) >> 1), r;
                 for (r = r0; r <= r1; ++r) {
-                    vram_adr(NTADR(a + 5, y + 1 + r));
+                    vram_adr(NTADR(a + 6, y0 + r));
                     vram_put(r == r0 ? 0xA9 : r == r1 ? (r == m ? 0xAB : 0xAC) : r == m ? 0xAD : 0xAA);
                 }
                 rw[i >> 1] = m;
             }
         }
         break;
+    }
     }
     return 0;
 }
