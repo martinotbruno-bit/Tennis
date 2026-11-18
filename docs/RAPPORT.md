@@ -1,10 +1,21 @@
-# Royal Martinot — Rapport de réalisation (version 2.76)
+# Royal Martinot — Rapport de réalisation (version 2.77)
 
 Comme l'exige le CDC (§ 17.5), ce rapport distingue ce qui est **réalisé**, **testé**, **validé sur matériel réel**, **validé uniquement en émulation**, **dépendant d'une extension**, et les **limitations restantes**.
 
 > **Validation matérielle : aucune.** Aucun test n'a été fait sur console réelle (NES, Famicom, PAL, cartouche MMC3). Toutes les validations ont eu lieu en émulation (jsnes ; depuis la version 2.69, aussi FCEUX pour les effets sensibles) et par des tests unitaires sur PC. Les critères « vérifié sur console physique » (CDC § 2.1, 15.4, 16.A) **ne sont pas remplis**. Ce point ne peut pas être traité dans l'environnement de développement utilisé.
 
 ## 1. Évolutions
+
+### Version 2.77
+
+| Demande | Réalisation |
+|---|---|
+| Lieu, surface et météo sur le même écran, avec illustration | Une seule page « court » remplace les pages lieu et surface : trois lignes en haut (LIEU, SURFACE, METEO), HAUT/BAS pour la ligne, GAUCHE/DROITE pour la valeur. Le court en aperçu change à chaque choix : décor, couleurs, nuit, pluie qui tombe (gouttes animées), teinte du couchant. La météo quitte les réglages (sauf en démo). En compétition, seules les lignes libres sont proposées. Les météos impossibles (pluie ou crépuscule en salle, crépuscule hors match) ne sont pas proposées. Test réécrit |
+| Pause : le réglage RALENTI restait affiché à la reprise | La 3e ligne du menu de pause est effacée à la reprise. Test ajouté |
+| Pause : le public apparaissait à travers le bandeau central | Trois causes : les colonnes de bord des lignes de texte du bandeau n'étaient pas réécrites (le décor y restait) ; les sprites qui débordaient par le haut n'étaient pas masqués ; une pause prise juste après une frappe gelait le dessin du match, et le bandeau ne se posait jamais (court Margaux notamment). Les trois sont corrigées. Test ajouté (pause sur une trame de frappe) |
+| Pas de bandeau du score juste après la victoire | Le score de la balle de match n'est compté qu'à la fin du temps mort : le bandeau avait le temps de monter une vingtaine de trames avant la fête. Il ne monte plus sur une balle de match gagnée. Test ajouté |
+| Château au crépuscule peu flatteur | L'accentuation rouge du couchant teintait sa pierre grise en rose, puis en lilas. Au château, la pierre devient dorée au couchant ($37/$27), puis brun orangé au crépuscule ($27/$17), aussi dans l'aperçu de la page du court. Test ajouté |
+| Quand apparaît la ramasseuse ? | (Réponse) Au changement de côté, quand les joueurs se lèvent de leur chaise, un changement sur deux (3e, 7e, 11e jeu…), avec les ralentis réglés sur OUI, TELE (pas en SIMPLE ni NON), hors club nudiste et démo. Au crépuscule, le plan du soleil couchant passe avant elle |
 
 ### Version 2.76
 

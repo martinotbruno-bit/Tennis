@@ -45,7 +45,7 @@ Depuis la version 2.59, le fond des menus change à chaque allumage : terre batt
 **Depuis la version 2.76**, les choix qui se voient ne sont plus dans cette liste : après **START**, des **pages illustrées** se suivent, dans l'ordre :
 1. **le tournoi** (compétition TOURNOI : un des 7 tournois Martinot, sur son image d'annonce ; il impose la surface et le lieu) ;
 2. **les joueurs** : l'affiche du match, avec les bustes, les noms et les styles ; le joueur que l'on choisit est entre flèches (en compétition, il se choisit donc après le type de compétition) ;
-3. **le lieu**, puis **la surface** : le vrai court en aperçu, avec la lumière des conditions choisies.
+3. **le court** (version 2.77) : **lieu, surface et météo sur le même écran**, le vrai court en aperçu qui change à chaque choix : ses couleurs, son décor et la lumière (nuit, pluie qui tombe, teinte du couchant). **HAUT/BAS** choisit la ligne (repérée par « > »), **GAUCHE/DROITE** change la valeur. En compétition, seules les lignes libres s'affichent (la météo seule pour un tournoi Martinot, sans surface en saison) ; au Grand Martinot et au Martinworld Tour, tout est imposé et la page n'apparaît pas.
 
 **GAUCHE/DROITE** change le choix, **A** passe à la page suivante, **B** revient à la précédente (ou aux réglages), **START** valide tout d'un coup. La ligne **JOUEUR 2** (CPU ou MANETTE 2) choisit qui joue le partenaire en double, ou, en compétition en simple, inscrit **un 2e joueur humain** (voir § 7).
 
@@ -57,7 +57,7 @@ Depuis la version 2.59, le fond des menus change à chaque allumage : terre batt
 | NIVEAU CPU | Facile · Normal · Expert |
 | SURFACE | Terre battue · Gazon · Dur · Moquette · Plage · Glace (les deux dernières sont des terrains fantaisie) |
 | LIEU | Stade (tribunes pleines) · Club (extérieur, arbres) · Salle (intérieur) · Club nudiste (bonus à débloquer, voir § 9 bis ; panneau « BRONZES » à côté du score) · Court Margaux (court rose, décor de cœurs, fleurs et étoiles, petit panneau « MARGAUX » à côté du score) · **Château** (murs de pierre, bannières royales, torches, spectateurs aux balcons) · **Parc** (arbres aux couleurs de l'automne) |
-| CONDITIONS | Jour · Nuit · Pluie · Crépuscule (depuis la version 2.71). Il ne pleut pas en salle : la pluie y devient « jour ». Le crépuscule est réservé aux matchs hors compétition, en plein air : ailleurs il devient « jour » (« CREP. > JOUR ») |
+| MÉTÉO (page du court) | Jour · Nuit · Pluie · Crépuscule (depuis la version 2.71). Depuis la version 2.77, elle se choisit sur la page du court, avec l'aperçu, et non plus dans les réglages (sauf en démo, ligne CONDITIONS). Il ne pleut pas en salle, et le crépuscule est réservé aux matchs hors compétition, en plein air : ces choix ne sont alors pas proposés |
 | FORMAT | 1 set · 3 sets · 5 sets · Rapide (sets de 4 jeux) |
 | RALENTIS | Ralenti automatique après les plus beaux points : NON ; OUI, TELE (avec gros plan du coup et zoom sur le rebond, depuis la version 2.67) ; OUI, SIMPLE (le ralenti seul, plus court, version 2.69) |
 | VITESSE JEU | Lent (75 %, idéal pour débuter ou pour les enfants) · Normal · Rapide (125 %). Aussi en compétition et à l'entraînement. En Lent, une petite croix montre une demi-seconde où va tomber la balle adverse |

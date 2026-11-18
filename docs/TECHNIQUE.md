@@ -708,6 +708,10 @@ L'outil contrôle aussi la balle sur chaque court, contre la surface et les abor
 python3 tools/contrast.py 25    # liste les paires sous le seuil (aucune actuellement)
 ```
 
+### Page du court (pick.c, version 2.77)
+
+Les pages lieu et surface sont fusionnées en une page `PK_CRT` : `pk_rows()` donne les lignes proposées (bits `R_ENV`, `R_SURF`, `R_COND`) selon le mode, `pk_row` (WBSS) la ligne courante. HAUT/BAS réécrit seulement les 3 lignes de texte par le tampon VBlank (`rows_text(0)`, 3 × 31 octets), GAUCHE/DROITE redessine le court (`draw_court`). `cond_ok()` écarte les météos impossibles. Le crépuscule de l'aperçu pose `ppu_emph` (remis à 0 par `leave`) ; la pluie est dessinée par 10 sprites de gouttes. O_COND n'est plus une ligne des réglages, sauf en démo.
+
 ## 6. Audio
 
 Le jeu n'utilise que l'APU natif :

@@ -176,6 +176,9 @@ Pour chaque ligne, lancez un match et regardez l'écran pendant une dizaine de s
 | 10.38 | Fin de set (version 2.76) | Les joueurs s'assoient, bandeau « 1ER SET », écran du set en fondu, musique douce ; au retour, les deux (ou quatre) joueurs repartent sur le court | ☐ |
 | 10.39 | Tirage au sort (version 2.76) | Les joueurs face à l'arbitre au filet ; bandeau de choix du gagnant net, manette du gagnant seulement | ☐ |
 | 10.40 | Compétition à deux (version 2.76) | JOUEUR 2 : MANETTE 2 en simple : chacun joue ses matchs avec sa manette ; match entre les deux à deux manettes | ☐ |
+| 10.41 | Page du court (version 2.77) | Lieu, surface et météo sur le même écran : HAUT/BAS change de ligne (« > »), GAUCHE/DROITE la valeur ; l'aperçu suit (nuit, pluie qui tombe, couchant). Pas de pluie ni de crépuscule en salle | ☐ |
+| 10.42 | Pause (version 2.77) | Bandeau central net (aucun public ni sprite au travers), même si START est pressé juste après une frappe ; à la reprise, la ligne RALENTI disparaît | ☐ |
+| 10.43 | Victoire et château (version 2.77) | Balle de match gagnée : la fête sans bandeau du score avant ; château au crépuscule : pierre dorée puis brun orangé, pas rose | ☐ |
 
 ## 11. Ce qu'il faut renvoyer
 
