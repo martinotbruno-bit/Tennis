@@ -524,7 +524,7 @@ void cust_page(void)
     txt_at(1, CU_Y(cu_row), ">");
     txt_at(3, 21, "GAUCHE/DROITE : CHANGER");
     txt_at(3, 22, "NOM : A POUR L'ECRIRE");
-    txt_at(3, 23, "SELECT : SUPPRIMER LE PROFIL");
+    txt_at(3, 23, "SELECT : EFFACER LE PROFIL");
     txt_at(2, 25, "START : JOUER   B : RETOUR");
     cu_live();
 }
