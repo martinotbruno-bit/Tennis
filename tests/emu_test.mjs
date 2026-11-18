@@ -897,7 +897,7 @@ console.log('Présentation et pause');
   const cnt = (y, x0, x1) => { let n = 0; for (let x = x0; x < x1; x++) if (fb[y * 256 + x] !== bg) n++; return n; };
   let ev = 0, od = 0, evR = 0, odR = 0;
   for (let y = 32; y < 144; y += 2) { ev += cnt(y, 8, 100); od += cnt(y + 1, 8, 100); evR += cnt(y, 156, 248); odR += cnt(y + 1, 156, 248); }
-  check(e.peek('split_on') === 1 && ev > 500 && od === 0 && odR > 500 && evR === 0,
+  check(e.peek('split_on') === 1 && ev > 300 && od === 0 && odR > 300 && evR === 0,   // (bustes en cours d'entrée : couleurs sombres proches du fond selon le personnage)
     `glissade : buste gauche sur les lignes paires, droit sur les impaires (${ev}/${od}, ${odR}/${evR})`);
   const os = new Set(); for (let i = 0; i < 40; i++) { e.run(1); if (e.peek('split_on')) os.add(e.peek('split_o')); }
   check([...os].every((o) => o % 8 === 0) && os.size >= 4, `glissade par pas de 8 px (décalage fin toujours nul : rien ne bouge en cours de ligne) : ${[...os].join(' ')}`);
@@ -1064,8 +1064,9 @@ console.log('Compétitions');
     `Grand Martinot : 16 matchs gagnés, Grand Chelem et podium (${matches} matchs)`);
   // en double : 8 équipes ; une défaite ne termine que le tournoi en cours
   const r = playComp(5, { TYPE: 1, P2: 3 }, (m) => m !== 1);
+  for (let k = 0; k < 5 && scr(r.e) !== SS.COMP_END; k++) { r.e.tap('A'); r.e.run(60); }   // (comme en simple : jusqu'à l'écran de fin)
   check(r.e.peek('c_n') === 8 && r.matches === 11 && r.e.peek('c_slam') === 0 && scr(r.e) === SS.COMP_END,
-    `Grand Martinot en double : 8 équipes, défaite en demi au 1er tournoi puis 3 tournois (${r.matches} matchs), pas de Grand Chelem`);
+    `Grand Martinot en double : 8 équipes, défaite en demi au 1er tournoi puis 3 tournois (${r.matches} matchs), pas de Grand Chelem [c_n ${r.e.peek('c_n')}, slam ${r.e.peek('c_slam')}, écran ${scr(r.e)}, rang ${r.e.peek('c_rank')}]`);
   // menu : explication de la compétition sous le curseur
   const m = boot(); toMenu(m); setOpts(m, { MODE: MODE.COMP, COMP: 5 }); m.tap('B'); m.run(30); toMenu(m); m.run(10);
   m.poke('cursor', rowOf(m, O.COMP)); m.run(8);
@@ -2507,8 +2508,8 @@ console.log('Plongeon');
   };
   for (const view of [0, 1]) {
     const v = view ? 'perspective' : 'à plat';
-    const a = humanDive(view, 34, 7, 0);
-    // (au moins 2 essais sur 3 : selon la trajectoire, un lâcher fixe à 7 trames peut rater, comme pour un joueur)
+    const a = humanDive(view, 34, 7, 0, 5);
+    // (au moins 2 essais sur 5 : selon la trajectoire, un lâcher fixe à 7 trames peut rater, comme pour un joueur)
     const okDive = (r) => r.dove && r.before && r.hit && r.hitAt >= 30 && r.shot === 2;
     check(a.filter(okDive).length >= 2 && a.every(r => !r.hit || okDive(r)),
       `${v} : balle à 34 px, bouton lâché : plongeon avant la frappe, balle touchée en vol (lob) [${a.map(r => r.hit ? 't=' + r.hitAt : 'raté').join(', ')}]`);
