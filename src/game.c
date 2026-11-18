@@ -47,6 +47,15 @@ u8 pl_btn[4];                   /* bouton armé (lu par poses.s : revers coupé)
 #pragma bss-name(pop)
 u8 pl_walk[4], pl_moving[4], pl_flip[4];
 u8 ai_delay[4];                  /* lu par les tests */
+/* (2.77) compteur des trames logiques du match : les IA alternent sur lui, et
+   non sur frame_cnt (trames affichées) ; en double, la logique tourne souvent
+   une trame affichée sur deux : frame_cnt y avait toujours la même parité, et
+   les joueurs d'indice pair (l'équipier CPU d'un joueur humain !) n'étaient
+   jamais mis à jour pendant l'échange */
+#pragma bss-name(push, "ZEROPAGE")
+u8 ai_tick;
+#pragma bss-name(pop)
+#pragma zpsym("ai_tick")
 static u8 ai_net[4];
 /* Fonctions utilitaires et calcul de trajectoire : banque fixe (gamefix.c),
    pour libérer la banque du moteur */
@@ -721,7 +730,7 @@ static void human_update(u8 p, u8 pad, u8 pressed)
 static s16 pred_x, pred_y;
 static void predict(u8 p)
 {
-    if (((u8)(frame_cnt + p) & 3) != 0 && ai_delay[p] == 0 && pcache_y[p] != 0x7FFF) {
+    if (((u8)(ai_tick + p) & 3) != 0 && ai_delay[p] == 0 && pcache_y[p] != 0x7FFF) {
         pred_x = pcache_x[p]; pred_y = pcache_y[p];
         return;
     }
@@ -888,7 +897,7 @@ static void ai_update(u8 p)
            le déplacement vers la dernière destination a lieu à chaque trame */
         /* double (ai_x2) : les deux IA d'une équipe sont mises à jour la même
            trame ; elles décident en alternance (une décision par trame) */
-        if (((u8)((ai_x2 ? (frame_cnt >> 1) ^ (p >> 1) : frame_cnt ^ p)) & 1) == 0 || ai_gy[p] == 0x7FFF) {
+        if (((u8)((ai_x2 ? (ai_tick >> 1) ^ (p >> 1) : ai_tick ^ p)) & 1) == 0 || ai_gy[p] == 0x7FFF) {
             predict(p);
             if (responsible(p)) {
                 tx = pred_x; ty = pred_y;
@@ -1148,6 +1157,7 @@ u8 match_tick(void)
     }
 
     hit_now = 0;
+    ++ai_tick;
     /* fatigue (option) : au-delà de 10 frappes dans l'échange, tous les
        joueurs ralentissent peu à peu (niveau 0..10), puis récupèrent au point suivant */
     tired = 0;
@@ -1169,7 +1179,7 @@ u8 match_tick(void)
                 /* trame de frappe (calcul de trajectoire) : les IA restantes
                    attendent la trame suivante */
                 if (hit_now) continue;
-                if (((u8)(frame_cnt ^ p) & 1) == 0) { ai_x2 = 1; ai_update(p); ai_x2 = 0; }
+                if (((u8)(ai_tick ^ p) & 1) == 0) { ai_x2 = 1; ai_update(p); ai_x2 = 0; }
             } else ai_update(p);
         }
         else {
