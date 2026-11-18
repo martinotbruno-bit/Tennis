@@ -2933,6 +2933,21 @@ console.log('Version 2.76 : pause');
   e.tap('UP'); e.tap('UP'); e.tap('A'); e.run(4);
   check(r === 2 && o === 2 && still && !e.peek('paused'), `pause : RALENTI réglé à SIMPLE (${r}, réglage ${o}), puis CONTINUER`);
 }
+{
+  // (2.77) reprise : la ligne RALENTI est effacée ; pause juste après une
+  // frappe : le bandeau se pose quand même, bords compris, sans sprite dessus
+  const e = boot(); startWith(e, { FMT: 3, REPLAY: 0, VIEW: 1 }); allCpu(e); e.run(200);
+  e.tap('START'); e.run(6); e.tap('START'); e.run(6);
+  const l3 = e.text(9, 3, 16);
+  check(!e.peek('paused') && !l3.includes('RALENTI'), `pause : ligne RALENTI effacée à la reprise (« ${l3.replace(/\0/g, ' ')} »)`);
+  runUntil(e, () => e.peek('hit_now') === 1, 60 * 60);
+  e.down('START'); e.run(1); e.up('START'); e.run(20);
+  const v = e.nes.ppu.vramMem, edge = [14, 15].flatMap(y => [0, 1, 30, 31].map(x => v[0x2400 + y * 32 + x]));
+  let over = 0;
+  for (let i = 0; i < 64; i++) { const y = e.peek('oam_buf', i * 4); if (y >= 88 && y < 144) over++; }
+  check(e.peek('paused') && (e.peek('hl_flags') & 1) && e.peek('mp_t') === 8 && edge.every(t => t === 0) && over === 0,
+    `pause sur une trame de frappe : bandeau posé (${e.peek('hl_flags') & 1}, ${e.peek('mp_t')}), bords vides [${edge}], ${over} sprite(s) dessus`);
+}
 }
 if (sec('Version 2.76 : balle de match et changement de côté')) {
 console.log('Version 2.76 : balle de match et changement de côté');

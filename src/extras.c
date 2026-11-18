@@ -113,7 +113,8 @@ void hud_update(void)
     /* panneau du club (masqué pendant la pause par la crème solaire) */
     /* (le nom du club est sur le panneau à côté du score) ; ligne 3 libérée
        après la pause */
-    if (cfg.env == ENV_NUDE && !paused) vbuf_text(9, 3, "", 14);
+    /* (2.77) ligne du réglage des ralentis effacée à la reprise (pause_cur 3) */
+    if (!paused && (cfg.env == ENV_NUDE || pause_cur == 3)) { vbuf_text(9, 3, "", 16); pause_cur = 0; }
     hud_dirty = 0;
 }
 #pragma static-locals(pop)
@@ -734,6 +735,6 @@ u16 __fastcall__ pause_input(u16 unused)
         opt_val[10] = cfg.replays; hud_dirty = 1; sfx_menu_val(1);
     }
     else if ((pad1_new & PAD_SELECT) || ((pad1_new & PAD_A) && pause_cur == 1)) return 1;
-    else if (pad1_new & (PAD_START | PAD_B) || ((pad1_new & PAD_A) && !pause_cur)) { paused = 0; hud_dirty = 1; }
+    else if (pad1_new & (PAD_START | PAD_B) || ((pad1_new & PAD_A) && !pause_cur)) { paused = 0; pause_cur = 3; hud_dirty = 1; }
     return 0;
 }

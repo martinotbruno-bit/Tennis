@@ -729,7 +729,7 @@ static void pause_tick(void)
             mp_t = 1;
         }
         if (mp_t < 8) {
-            if (vram_len + 40 > VBUF_MAX) return;
+            if (vram_len + 44 > VBUF_MAX) return;
             r = (u8)(mp_t - 1);
             for (i = 0; i < 16; ++i) bb[i] = (char)(r == 1 || r == 4 ? T_RULE : 0);
             if (r == 2 || r == 3) {
@@ -737,6 +737,9 @@ static void pause_tick(void)
                 band_text((u8)(r - 2));
                 band_pg = i;
                 vbuf_raw(BAND_NT + (PB_ROW + r) * 32 + 2, (const u8 *)bb, 28);
+                bb[0] = bb[1] = 0;               /* (2.77) bords : le décor n'y transparaît plus */
+                vbuf_raw(BAND_NT + (PB_ROW + r) * 32, (const u8 *)bb, 2);
+                vbuf_raw(BAND_NT + (PB_ROW + r) * 32 + 30, (const u8 *)bb, 2);
             } else if (r == 6) {
                 for (i = 0; i < 16; ++i) bb[i] = 0x55;
                 vbuf_raw(BAND_NT + 0x3C0 + 24, (const u8 *)bb, 16);
@@ -748,7 +751,7 @@ static void pause_tick(void)
             }
             if (++mp_t == 8) cband_on(47);
         }
-        for (i = 0; i < 64; ++i) { r = oam_buf[i * 4]; if (r >= PB_ROW * 8 - 1 && r < (PB_ROW + 6) * 8) oam_buf[i * 4] = 0xFF; }
+        for (i = 0; i < 64; ++i) { r = oam_buf[i * 4]; if (r >= PB_ROW * 8 - 8 && r < (PB_ROW + 6) * 8) oam_buf[i * 4] = 0xFF; }   /* (2.77 : aussi ceux qui débordent par le haut) */
     } else if (hl_flags & 1) {
         hl_flags &= (u8)~1;
         split_stop();
