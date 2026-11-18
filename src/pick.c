@@ -47,6 +47,7 @@ extern u8 opt_val[];
 
 #pragma bss-name(push, "WBSS")
 static u8 pk_i, pk_t, pk_ev;
+u8 pk_off;                              /* (banc d'essai : pages sautées, parcours d'avant) */
 #pragma bss-name(pop)
 
 void vs_build(void); void vs_texts(void); u8 __fastcall__ vs_anim(u8 t);   /* banques 8 et 19 */
@@ -230,7 +231,7 @@ u16 __fastcall__ pick_begin(u16 first)
     u8 l[6], e;
     (void)first;
     pk_i = 0;
-    if (!pk_list(l)) return 0;
+    if (pk_off || !pk_list(l)) return 0;
     /* tournoi : celui de la surface choisie la dernière fois */
     pk_ev = 0;
     for (e = 0; e < 7; ++e) if (ev_surf[e] == opt_val[O_SURF]) { pk_ev = e; break; }

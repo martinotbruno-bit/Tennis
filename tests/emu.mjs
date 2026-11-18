@@ -87,6 +87,7 @@ class Emu {
         const m = this.nes.cpu.mem;
         if (this._cuPress) { this.nes.buttonUp(1, BTN.START); this._cuPress = false; }
         else if (((this.customSkip && m[this.scrAddr] === 13) || (this.pickSkip && m[this.scrAddr] === 15)) && m[this.appAddr] === 0 && !this.held[0].has('START')) { this.nes.buttonDown(1, BTN.START); this._cuPress = true; }
+        if (this.labels['_pk_off'] !== undefined) m[this.labels['_pk_off']] = this.pickSkip ? 1 : 0;   /* (2.76 : pages de choix sautées, comme avant) */
       }
       // (2.76) tirage au sort : le gagnant humain choisit de servir (A, sur
       // ses deux manettes possibles), sauf pour les tests qui le regardent
