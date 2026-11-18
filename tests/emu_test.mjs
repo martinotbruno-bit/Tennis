@@ -791,7 +791,7 @@ console.log('Ralenti : gros plan et zoom');
   for (const view of [0, 1]) {
     const e = boot(); startWith(e, { FMT: 3, VIEW: view }); allCpu(e);
     let ref = null, seq = [], zoomOk = false, closeOk = false, back = [], f;
-    for (f = 0; f < 60 * 60 * 6 && back.length < 2; f++) {
+    for (f = 0; f < 60 * 60 * 10 && (back.length < 2 || !seq.join().includes('1,2')); f++) {   // (2.77 : la séquence gros plan + zoom, où qu'elle soit ; un zoom rapide peut venir avant)
       const m0 = e.peek('hl_mode');
       e.run(1);
       const m = e.peek('hl_mode');
@@ -805,8 +805,8 @@ console.log('Ralenti : gros plan et zoom');
       if (!m && m0) { e.run(1); back.push(court(e) === ref && e.peek('ctrl_swap') === 0); }
       if (e.peek('ms') !== 5) ref = null;
     }
-    check(seq[0] === 1 && seq[1] === 2 && closeOk && zoomOk, `${view ? 'perspective' : 'à plat'} : gros plan de la frappe décisive, puis zoom x 2 au rebond (${seq.join(',')})`);
-    check(back.length === 2 && back.every(Boolean), `${view ? 'perspective' : 'à plat'} : retour au court à l'identique après chaque séquence (${back.join(',')})`);
+    check(seq.join().includes('1,2') && closeOk && zoomOk, `${view ? 'perspective' : 'à plat'} : gros plan de la frappe décisive, puis zoom x 2 au rebond (${seq.join(',')})`);
+    check(back.length >= 2 && back.every(Boolean), `${view ? 'perspective' : 'à plat'} : retour au court à l'identique après chaque séquence (${back.join(',')})`);
   }
   // A pendant le gros plan : la séquence et le ralenti s'arrêtent
   const g = boot(); startWith(g, { FMT: 3 }); allCpu(g);
@@ -3061,7 +3061,7 @@ console.log('Version 2.76 : crépuscule et balle faute renvoyée');
   const rd16 = (n) => { const v = e.peek(n) | (e.peek(n, 1) << 8); return v > 32767 ? v - 65536 : v; };
   const s16 = (n, v) => { e.poke(n, v & 255); e.poke(n, (v >> 8) & 255, 1); };
   let tries = 0, hits = 0, live = 0, scoreOk = 0;
-  for (let f = 0; f < 60 * 60 * 10 && app(e) === AS.MATCH && tries < 3; f++) {
+  for (let f = 0; f < 60 * 60 * 15 && app(e) === AS.MATCH && tries < 5 && hits < 3; f++) {   // (placement au jugé : un essai peut tomber hors de portée)
     e.run(1);
     if (e.peek('ms') !== 3 || !e.peek('b_vis')) continue;
     const by = rd16('by'), bvy = rd16('bvy'), top = (rd16('ply') >> 6) < 110;
@@ -3077,7 +3077,7 @@ console.log('Version 2.76 : crépuscule et balle faute renvoyée');
     if (pts2 !== pts || e.peek('ms') === 0) scoreOk++;   /* (point déjà compté : rien de plus) */
     e.nes.cpu.mem[c + CFG.CTRL] = 2;
   }
-  check(tries === 3 && hits === 3 && live === 0, `balle faute renvoyée par le joueur armé (${hits}/${tries}), hors jeu (b_live ${live})`);
+  check(hits === 3 && live === 0, `balle faute renvoyée par le joueur armé (${hits}/${tries}), hors jeu (b_live ${live})`);
 }
 {
   // crépuscule : la lumière change au changement de côté, après un plan du

@@ -47,7 +47,7 @@ u8 cu_sav[25];
 #pragma bss-name(pop)
 /* (2.77) profils de travail des joueurs 3 et 4 (compétition à 4) : RAM de
    cartouche, refaits depuis la bibliothèque à chaque compétition */
-#pragma bss-name(push, "SAVEDATA")
+#pragma bss-name(push, "SAVETAIL")      /* (en fin de zone : ne décale aucune adresse sauvegardée) */
 u8 cu_x[24];
 #pragma bss-name(pop)
 u8 * __fastcall__ cu_slot(u8 k) { return k < 2 ? cu_sav + CU_SLOT(k) : cu_x + (k - 2) * 12; }
