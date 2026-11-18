@@ -1775,7 +1775,7 @@ def _persp_check_texts():
     modules du match (seuls les écrans de menu, qui rechargent la police, les
     emploient) : sinon leur tuile, prise par une ligne du court, s'afficherait"""
     import glob, re as _re
-    menus = {'screens.c', 'menuart.c', 'manual.c', 'comp.c', 'intro.c', 'credits.c', 'podium.c', 'teaser.c'}
+    menus = {'screens.c', 'menuart.c', 'manual.c', 'comp.c', 'intro.c', 'credits.c', 'podium.c', 'teaser.c', 'pick.c'}
     for f in glob.glob(os.path.join(ROOT, 'src', '*.c')):
         b = os.path.basename(f)
         if b in menus or b.startswith('assets') or b == 'music_data.c': continue
