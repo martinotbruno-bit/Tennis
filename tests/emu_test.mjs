@@ -3150,6 +3150,38 @@ console.log('Version 2.77 : château au crépuscule, victoire sans bandeau');
   check(res.every(r => r.ok), `zoom x 4 : trace fidèle à l'arbitrage, bonne = sur la ligne, dehors = à côté (${res.map(r => `${r.view ? 'persp' : 'plat'} ${r.x},${r.y} ${r.want ? 'bonne' : 'dehors'} ${r.touch}`).join(' ; ')})`);
 }
 }
+if (sec('Version 2.77 : compétition à 4 joueurs')) {
+console.log('Version 2.77 : compétition à 4 joueurs');
+{
+  // réglages : ligne JOUEURS (1 à 4) en compétition en simple ; TON JOUEUR pour
+  // chacun ; tableau : les 4 joueurs répartis dans les quarts ; à tour de rôle
+  // (manettes 1, 2, 1, 2), matchs entre joueurs humains à deux manettes,
+  // enregistrés pour les deux ; à la fin, le mieux classé (podium)
+  const e = boot(); e.customSkip = false; toMenu(e);
+  setOpts(e, { MODE: MODE.COMP, COMP: 0, TYPE: 0, CPART: 3, P1: 0, P2: 1, FMT: 3 }); e.tap('B'); e.run(5); toMenu(e);   // (lignes refaites)
+  const lbl = rowOf(e, O.CPART) >= 0 ? e.text(3, menuY(e, rowOf(e, O.CPART)), 7) : '';
+  e.tap('START'); e.run(30);
+  const pages = [];
+  for (let k = 0; k < 5 && scr(e) === SS.CUSTOM; k++) { pages.push(e.text(4, 4, 20).replace(/\0/g, ' ').trim()); e.tap('START'); e.run(30); }
+  runUntil(e, () => scr(e) === SS.COMP, 600); skipIntro(e);
+  const hum = [0, 1, 2, 3].map(k => e.peek('hum_e', k));
+  const log = [];
+  for (let m = 0; m < 12 && scr(e) === SS.COMP; m++) {
+    const me = e.peek('c_me'), st = e.peek('c_stage');
+    toMatch(e);
+    if (app(e) !== AS.MATCH) break;
+    const c = e.addr('cfg');
+    log.push(`J${me + 1}t${st}:${e.nes.cpu.mem[c + 2]}${e.nes.cpu.mem[c + 3]}`);
+    e.poke('sc_winner', 0); e.poke('sc_over', 1); e.poke('ms', 4); e.poke('hl_fin', 1); e.poke('ms_timer', 2);
+    runUntil(e, () => app(e) === AS.SCREENS, 120); e.run(20); e.tap('A'); e.run(40); skipIntro(e);
+  }
+  const want = 'J1t0:02 J2t0:12 J3t0:02 J4t0:12 J1t1:01 J2t1:10 J1t2:01';
+  const ranks = [0, 1, 2, 3].map(k => e.peek('os_rk', k)).join('');
+  check(lbl === 'JOUEURS' && pages.length === 4 && pages[3].startsWith('JOUEUR 4 : MANETTE 2') && hum.join() === '0,4,2,6' &&
+        log.join(' ') === want && scr(e) === SS.COMP_END && e.peek('c_rank') === 1 && ranks === '1233',
+    `4 joueurs : ligne ${lbl}, ${pages.length} pages TON JOUEUR, inscrits ${hum}, tours ${log.join(' ')}, rangs ${ranks}, écran ${scr(e)}`);
+}
+}
 if (sec('Version 2.76 : parcours, tirage, fin de set, compétition à deux')) {
 console.log('Version 2.76 : parcours, tirage, fin de set, compétition à deux');
 {

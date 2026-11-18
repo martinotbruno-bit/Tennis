@@ -36,18 +36,33 @@ const u8 char_pal_rom[NCHARS][3] = {
     { 0x27, 0x0C, 0x07 },   /* TITOU : canard foncé, cheveux châtains */
 };
 u8 char_female[NCHARS];
-u8 cu_map[2];
-u8 cu_st[6], cu_c[2];
+#pragma bss-name(push, "ZEROPAGE")       /* (2.77 : 4 joueurs humains ; RAM interne pleine) */
+u8 cu_map[4], cu_c[4];
+#pragma bss-name(pop)
+u8 cu_st[6];
 u16 tm_set[5];                          /* (2.76) durée de chaque set, en secondes (train.c) */
 u8 tm_last, tm_sub;                            /* écran du joueur personnalisé (career.c) : rangée, saisie du nom, lettre, joueur, nombre, (libre) */
 #pragma bss-name(push, "SAVECU")      /* (fin de la zone sauvegardée, adresse fixe : les sauvegardes des versions précédentes ne bougent pas) */
 u8 cu_sav[25];
 #pragma bss-name(pop)
+/* (2.77) profils de travail des joueurs 3 et 4 (compétition à 4) : RAM de
+   cartouche, refaits depuis la bibliothèque à chaque compétition */
+#pragma bss-name(push, "SAVEDATA")
+u8 cu_x[24];
+#pragma bss-name(pop)
+u8 * __fastcall__ cu_slot(u8 k) { return k < 2 ? cu_sav + CU_SLOT(k) : cu_x + (k - 2) * 12; }
+#pragma static-locals(push, off)
+static const u8 *cu_find_c(u8 c)
+{
+    u8 k;
+    for (k = 0; k < 4; ++k) if (cu_map[k] == (u8)(c + 1)) return cu_slot(k);
+    return 0;
+}
+#pragma static-locals(pop)
 const char * __fastcall__ chr_nm(u8 c)
 {
-    if (cu_map[0] == (u8)(c + 1)) return (const char *)cu_sav + CU_SLOT(0);
-    if (cu_map[1] == (u8)(c + 1)) return (const char *)cu_sav + CU_SLOT(1);
-    return char_name[c];
+    const u8 *s = cu_find_c(c);
+    return s ? (const char *)s : char_name[c];
 }
 const char * const style_name[NSTYLES] = {
     "EQUILIBRE", "FOND DE COURT", "PUISSANCE", "FILET",
@@ -166,8 +181,7 @@ void pal_set_player(u8 slot, u8 c)
 {
     u8 b = (u8)(16 + slot * 4);
     const u8 *p = char_pal_rom[c];
-    if (cu_map[0] == (u8)(c + 1)) p = cu_sav + CU_SLOT(0) + 9;          /* (joueur personnalisé, 2.75) */
-    else if (cu_map[1] == (u8)(c + 1)) p = cu_sav + CU_SLOT(1) + 9;
+    { const u8 *q = cu_find_c(c); if (q) p = q + 9; }          /* (joueur personnalisé, 2.75 ; 4 joueurs, 2.77) */
     pal_buf[b + 1] = p[0];
     pal_buf[b + 2] = p[1];
     pal_buf[b + 3] = p[2];

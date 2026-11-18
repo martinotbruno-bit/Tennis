@@ -38,6 +38,8 @@
 #define MODE_TRAIN   4
 #define MODE_DEMO    5
 extern u8 opt_val[];
+extern u8 cu_c[4];                      /* (gfx.c, page zéro : personnages des pages TON JOUEUR) */
+#pragma zpsym("cu_c")
 
 /* pages */
 #define PK_P1   1
@@ -399,7 +401,11 @@ u16 __fastcall__ comp_opts_f(u16 unused)
     c_fmt = opt_val[O_FMT];
     c_pl[0] = opt_val[O_P1];
     c_dbl = opt_val[O_TYPE];
-    c_hum2 = opt_val[O_CPART];          /* (2.76 : en simple, un 2e joueur humain inscrit) */
+    c_hum2 = (u8)(opt_val[O_TYPE] && opt_val[O_CPART]);   /* (double : partenaire à la manette 2) */
+    /* (2.77) en simple : 1 à 4 joueurs humains (O_CPART : joueurs en plus),
+       personnages : les deux choisis, puis ceux des pages TON JOUEUR 3 et 4 */
+    c_nh = (u8)(opt_val[O_TYPE] ? 1 : 1 + opt_val[O_CPART]);
+    c_hc[0] = opt_val[O_P1]; c_hc[1] = opt_val[O_P2]; c_hc[2] = cu_c[2]; c_hc[3] = cu_c[3];
     c_pl2[0] = opt_val[O_P2];
     if (c_dbl && c_pl2[0] == c_pl[0]) c_pl2[0] = (u8)((c_pl[0] + 1) % NCHARS);
     c_seed = (u8)(rand8() ^ frame_cnt);

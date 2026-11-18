@@ -12,7 +12,9 @@ extern u8 char_female[NCHARS];   /* (2.75 : en RAM, copie de la table d'origine 
    (0 : aucun), posé pendant une compétition seulement. */
 #define CU_MAGIC 0xC5
 #define CU_SLOT(k) (1 + (k) * 12)
-extern u8 cu_sav[25], cu_map[2];
+extern u8 cu_sav[25], cu_map[4];
+#pragma zpsym("cu_map")
+u8 * __fastcall__ cu_slot(u8 k);       /* (2.77) profil de travail du joueur humain k (0 à 3) */
 const char * __fastcall__ chr_nm(u8 c);   /* nom du personnage (personnalisé le cas échéant) */
 void cust_reset(void);                  /* personnages d'origine */
 extern const u8 char_style[NCHARS];

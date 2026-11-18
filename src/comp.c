@@ -23,36 +23,48 @@ u8 c_surf, c_env, c_cond, c_fmt, c_n, c_dbl, c_hum2, c_slam;
 u8 c_pl[16], c_rt[16];
 u8 c_pl2[16];                 /* double : partenaire de chaque inscrit */
 u16 c_gres;
-/* (2.76) compétition à deux joueurs humains (en simple) : le second est
-   l'inscrit c_h2, dans l'autre moitié du tableau (0 : aucun). Chacun joue
-   ses matchs ; c_me : celui dont c'est le tour (0 : le joueur 1, 1 : le
-   joueur 2). Les résultats de celui dont c'est le tour sont dans c_stage,
-   c_results, c_gres, c_over, c_rank ; ceux de l'autre dans o_*. */
+/* (2.76) compétition à plusieurs joueurs humains (en simple ; 2.77 :
+   jusqu'à 4, c_nh). Le joueur k est l'inscrit hum_e[k] (le joueur 1 :
+   l'inscrit 0), répartis dans le tableau (les autres moitiés, quarts,
+   poules) ; ils jouent à tour de rôle ; c_me : celui dont c'est le tour, HM
+   son inscrit. Ses résultats sont dans c_stage, c_results, c_gres, c_over,
+   c_rank ; ceux des autres dans os_*[k]. */
 #pragma bss-name(pop)
 #pragma bss-name(push, "ZEROPAGE")       /* (RAM de travail pleine : page zéro) */
-u8 c_h2, c_me, o_stage, o_results, o_over, o_rank;
-u8 HM, HO;                                /* le joueur dont c'est le tour ; l'autre joueur humain (si c_h2) */
-u16 o_gres;
+u8 c_nh, c_me, HM;
+u8 hum_e[4], c_hc[4];                     /* inscrit et personnage de chaque joueur humain */
+u8 os_st[4], os_res[4], os_ov[4], os_rk[4];
+u16 os_gr[4];
 #pragma bss-name(pop)
+#pragma zpsym("c_nh")
 #pragma zpsym("c_me")
-#pragma zpsym("o_stage")
-#pragma zpsym("o_results")
-#pragma zpsym("o_over")
-#pragma zpsym("o_rank")
 #pragma zpsym("HM")
-#pragma zpsym("HO")
-#pragma zpsym("o_gres")
+#pragma zpsym("hum_e")
+#pragma zpsym("c_hc")
+#pragma zpsym("os_st")
+#pragma zpsym("os_res")
+#pragma zpsym("os_ov")
+#pragma zpsym("os_rk")
+#pragma zpsym("os_gr")
 #pragma static-locals(push, off)
-static void swap_me(void)
+static void hum_save(void)
 {
-    u8 t; u16 w;
-    t = c_stage; c_stage = o_stage; o_stage = t;
-    t = c_results; c_results = o_results; o_results = t;
-    t = c_over; c_over = o_over; o_over = t;
-    t = c_rank; c_rank = o_rank; o_rank = t;
-    w = c_gres; c_gres = o_gres; o_gres = w;
-    c_me ^= 1;
-    t = HM; HM = HO; HO = t;
+    u8 k = c_me;
+    os_st[k] = c_stage; os_res[k] = c_results; os_ov[k] = c_over; os_rk[k] = c_rank; os_gr[k] = c_gres;
+}
+static void hum_load(u8 k)
+{
+    c_stage = os_st[k]; c_results = os_res[k]; c_over = os_ov[k]; c_rank = os_rk[k]; c_gres = os_gr[k];
+    c_me = k; HM = hum_e[k];
+}
+static void switch_to(u8 k) { hum_save(); hum_load(k); }
+/* l'inscrit e est-il un autre joueur humain que celui dont c'est le tour ?
+   (son numéro, sinon $FF) */
+static u8 hum_of(u8 e)
+{
+    u8 k;
+    for (k = 0; k < c_nh; ++k) if (k != c_me && hum_e[k] == e) return k;
+    return 0xFF;
 }
 #pragma static-locals(pop)
 char comp_l1[32], comp_l2[32];
@@ -95,7 +107,11 @@ u8 __fastcall__ comp_build(u8 unused)
     /* adversaires tirés parmi les 16 personnages d'origine : Margaux (16) est
        la joueuse que l'on choisit, jamais une adversaire tirée au sort ; les
        anciens codes redonnent ainsi exactement les mêmes tableaux */
-    for (i = 0; i < 16; ++i) if (i != c_pl[0] && (!(c_dbl || c_hum2) || i != h2c)) pool[np++] = i;
+    for (i = 0; i < 16; ++i) {
+        if (i == c_pl[0] || (c_dbl && i == h2c)) continue;
+        for (j = 1; j < c_nh && c_hc[j] != i; ++j) ;     /* (2.77 : les autres joueurs humains) */
+        if (j == c_nh) pool[np++] = i;
+    }
     rs_seed(c_seed, 0x33);
     for (i = np - 1; i > 0; --i) { j = (u8)(rn() % (u8)(i + 1)); t = pool[i]; pool[i] = pool[j]; pool[j] = t; }
     c_rt[0] = 1;
@@ -109,9 +125,18 @@ u8 __fastcall__ comp_build(u8 unused)
     for (i = (u8)(c_n - 1); i > 1; --i) { j = (u8)(1 + rn() % i); t = c_rt[i]; c_rt[i] = c_rt[j]; c_rt[j] = t; }
     /* (2.76) second joueur humain : dans l'autre moitié du tableau (l'autre
        poule) ; ils ne se rencontrent qu'à la fin, ou au gré des tableaux */
-    c_h2 = 0; c_me = 0; o_stage = o_results = o_over = o_rank = 0; o_gres = 0; HM = 0;
-    if (!c_dbl && c_hum2) { c_h2 = (u8)(c_n >> 1); c_pl[c_h2] = h2c == c_pl[0] ? pool[np - 1] : h2c; c_rt[c_h2] = 1; }
-    HO = c_h2;
+    /* (2.77) joueurs humains 2 à 4 : dans l'autre moitié, puis les autres
+       quarts (poules : deux par poule) ; ils ne se rencontrent qu'à la fin,
+       ou au gré des tableaux */
+    if (c_dbl || !c_nh) c_nh = 1;
+    c_me = 0; HM = 0; hum_e[0] = 0;
+    for (i = 0; i < 4; ++i) { os_st[i] = os_res[i] = os_ov[i] = os_rk[i] = 0; os_gr[i] = 0; }
+    for (i = 1; i < c_nh; ++i) {
+        j = (u8)(i == 1 ? c_n >> 1 : i == 2 ? c_n >> 2 : (c_n >> 1) + (c_n >> 2));
+        hum_e[i] = j;
+        c_pl[j] = c_hc[i] == c_pl[0] ? pool[np - i] : c_hc[i];
+        c_rt[j] = 1;
+    }
     (void)unused;
     c_active = 1;
     c_over = 0;
@@ -136,7 +161,7 @@ u8 __fastcall__ comp_new(u8 unused)
 #pragma bss-name(push, "WBSS")
 static u8 ko_cur[16];
 #pragma bss-name(pop)
-static u8 o_reach(u8 e);
+static u8 o_reach(u8 k, u8 e);
 static void ko_run(u8 ev, u8 hr, u8 upto)
 {
     u8 m = c_n, r, i, a, b, w, t, j;
@@ -150,7 +175,8 @@ static void ko_run(u8 ev, u8 hr, u8 upto)
         for (i = 0; i < (u8)(m >> 1); ++i) {
             a = ko_cur[i * 2]; b = ko_cur[i * 2 + 1];
             if (a == HM || b == HM) w = (u8)((r < hr) == (a == HM) ? a : b);
-            else if (c_h2 && (a == HO || b == HO)) w = (u8)((r < o_reach(ev)) == (a == HO) ? a : b);   /* (l'autre joueur humain) */
+            else if ((t = hum_of(a)) != 0xFF) w = (u8)(r < o_reach(t, ev) ? a : b);   /* (un autre joueur humain) */
+            else if ((t = hum_of(b)) != 0xFF) w = (u8)(r < o_reach(t, ev) ? b : a);
             else w = sim_win(a, b, (u8)(c_type == CT_GRAND ? ev * 64 + r * 8 + i : ev * 16 + r * 4 + i)) ? a : b;
             ko_cur[i] = w;
         }
@@ -185,14 +211,16 @@ static u8 lg_pair(u8 d, u8 k, u8 *a, u8 *b)
 }
 static u8 wins[8];
 /* résultat de a contre b ; joueur : bit du jour dans c_results */
+#pragma static-locals(push, off)
 static u8 rr_win(u8 a, u8 b, u8 day, u8 salt)
 {
     if (a == HM) return (u8)((c_results >> day) & 1);
     if (b == HM) return (u8)(!((c_results >> day) & 1));
-    if (c_h2 && a == HO) return (u8)((o_results >> day) & 1);
-    if (c_h2 && b == HO) return (u8)(!((o_results >> day) & 1));
+    { u8 k = hum_of(a); if (k != 0xFF) return (u8)((os_res[k] >> day) & 1);
+      k = hum_of(b); if (k != 0xFF) return (u8)(!((os_res[k] >> day) & 1)); }
     return sim_win(a, b, salt);
 }
+#pragma static-locals(pop)
 static void groups_wins(u8 days)
 {
     u8 d, g, k, a, b, base;
@@ -299,7 +327,7 @@ static void season_points(u8 events)
         hr = human_reach(e);
         ko_reach(e, hr);
         reach[HM] = hr;
-        if (c_h2) reach[HO] = o_reach(e);
+        for (k = 0; k < c_nh; ++k) if (k != c_me) reach[hum_e[k]] = o_reach(k, e);
         for (i = 0; i < c_n; ++i) {
             k = reach[i];
             if (c_type >= CT_GRAND) pts[i] += grand_pts[c_n == 16 ? k : k + 1];
@@ -341,22 +369,24 @@ static u8 ko_opp(u8 ev, u8 hr, u8 upto)
    résultat ; il a gagné s'il est passé en finale) */
 static u8 semi_w(u8 k)
 {
-    u8 a = sf_a[k], b = sf_b[k];
-    if (c_h2 && (a == HO || b == HO)) return (u8)((o_stage > 3) == (a == HO) ? a : b);
+    u8 a = sf_a[k], b = sf_b[k], h = hum_of(a);
+    if (h != 0xFF) return os_st[h] > 3 ? a : b;
+    h = hum_of(b);
+    if (h != 0xFF) return os_st[h] > 3 ? b : a;
     return sim_win(a, b, 0x70) ? a : b;
 }
-/* tours gagnés par l'autre joueur humain dans l'épreuve e */
-static u8 o_reach(u8 e)
+/* tours gagnés par le joueur humain h (pas celui dont c'est le tour) dans l'épreuve e */
+static u8 o_reach(u8 h, u8 e)
 {
-    u8 n = nrounds(), st = 0, k = e;
+    u8 n = nrounds(), st = 0, k = e, os = os_st[h];
     if (c_type == CT_SEASON) n = 3;
     while (k) { st = (u8)(st + n); --k; }
-    if (c_type < CT_SEASON || c_type == CT_CUSTOM) return o_stage;    /* un seul tableau */
-    if (o_stage >= (u8)(st + n) || (o_over && o_stage >= st)) {
-        if (c_type == CT_SEASON) return (u8)((o_results >> (e * 2)) & 3);
-        return gres_getv(o_gres, e);
+    if (c_type < CT_SEASON || c_type == CT_CUSTOM) return os;          /* un seul tableau */
+    if (os >= (u8)(st + n) || (os_ov[h] && os >= st)) {
+        if (c_type == CT_SEASON) return (u8)((os_res[h] >> (e * 2)) & 3);
+        return gres_getv(os_gr[h], e);
     }
-    return o_stage > st ? (u8)(o_stage - st) : 0;
+    return os > st ? (u8)(os - st) : 0;
 }
 #pragma static-locals(pop)
 u8 c_pod[3];
@@ -533,32 +563,44 @@ static u8 record1(u8 won)
 #pragma static-locals(push, off)
 u8 __fastcall__ comp_record(u8 won)
 {
-    u8 duo = (u8)(c_h2 && !o_over && o_stage == c_stage && comp_opponent(0) == HO);
+    u8 k = hum_of(comp_opponent(0)), me = c_me, best;
+    u8 duo = (u8)(k != 0xFF && !os_ov[k] && os_st[k] == c_stage);
     record1(won);
-    if (!c_h2) return c_over;
-    if (duo) { swap_me(); record1((u8)!won); swap_me(); }
-    if (c_over && !o_over) swap_me();                    /* il a fini : l'autre continue */
-    else if (!o_over && o_stage < c_stage) swap_me();    /* l'autre est en retard */
-    if (c_over && o_over) {
-        if (o_rank < c_rank || (o_rank == c_rank && c_me)) swap_me();   /* le mieux classé (le joueur 1 à égalité) */
-        return c_over;
-    }
-    return 0;
+    if (c_nh < 2) return c_over;
+    if (duo) { switch_to(k); record1((u8)!won); switch_to(me); }
+    /* (2.77) le tour passe au moins avancé encore en lice (à égalité, au
+       plus petit numéro) ; quand tous ont fini, le mieux classé est retenu
+       (podium ; le plus petit numéro à égalité) */
+    hum_save();
+    best = 0xFF;
+    for (k = 0; k < c_nh; ++k) if (!os_ov[k] && (best == 0xFF || os_st[k] < os_st[best])) best = k;
+    if (best != 0xFF) { hum_load(best); return 0; }
+    best = 0;
+    for (k = 1; k < c_nh; ++k) if (os_rk[k] < os_rk[best]) best = k;
+    hum_load(best);
+    return c_over;
 }
 /* à deux en simple : à qui de jouer (écran de l'étape) */
 u8 __fastcall__ comp_who(u8 y)
 {
-    if (c_h2) txt_at(3, y, c_me ? "A TOI, JOUEUR 2 (MANETTE 2)" : "A TOI, JOUEUR 1 (MANETTE 1)");
+    char b[28];
+    u8 i;
+    const char *q = "A TOI, JOUEUR 1 (MANETTE 1)";
+    if (c_nh < 2) return 0;
+    for (i = 0; (b[i] = q[i]) != 0; ++i) ;
+    b[14] = (char)('1' + c_me);
+    b[25] = (char)((c_me & 1) ? '2' : '1');   /* (joueurs 1 et 3 : manette 1 ; 2 et 4 : manette 2) */
+    txt_at(3, y, b);
     return 0;
 }
 /* pour screens.c : le joueur dont c'est le tour ; commandes du match */
 u8 __fastcall__ comp_me(u8 unused) { (void)unused; return HM; }
 u8 __fastcall__ comp_ctrl(u8 o)
 {
-    if (!c_h2) return 0;
+    if (c_nh < 2) return 0;
     cfg.chr[0] = c_pl[HM];
-    cfg.ctrl[0] = c_me ? CTRL_PAD2 : CTRL_PAD1;
-    if (o == HO) cfg.ctrl[1] = c_me ? CTRL_PAD1 : CTRL_PAD2;   /* les deux joueurs humains : deux manettes */
+    cfg.ctrl[0] = (c_me & 1) ? CTRL_PAD2 : CTRL_PAD1;
+    if (hum_of(o) != 0xFF) cfg.ctrl[1] = (c_me & 1) ? CTRL_PAD1 : CTRL_PAD2;   /* deux joueurs humains : deux manettes */
     return 0;
 }
 #pragma static-locals(pop)
@@ -578,13 +620,15 @@ static void num5(char *o, u16 v)
     }
     o[5] = 0;
 }
+#pragma static-locals(push, off)
 static void ent_at(u8 i, u8 x, u8 y)
 {
     team_label(c_pl[i], c_pl2[i], nb);
-    txt_off = (u8)(i == 0 || (c_h2 && i == c_h2) ? 0x40 : 0);   /* les joueurs : surlignés (or) */
+    { u8 k; txt_off = 0; for (k = 0; k < c_nh; ++k) if (hum_e[k] == i) txt_off = 0x40; }   /* les joueurs : surlignés (or) */
     txt_at(x, y, nb);
     txt_off = 0;
 }
+#pragma static-locals(pop)
 /* en-tête de tableau, en or */
 static void head_at(u8 x, u8 y, const char *s) { txt_off = 0x40; txt_at(x, y, s); txt_off = 0; }
 
@@ -694,7 +738,7 @@ u8 __fastcall__ comp_draw_table(u8 y)
         for (n = c_n; n > 1; n >>= 1) ++nr;
         x0 = (u8)((32 - (nr * 7 + 5)) >> 1);
         h = (u8)((c_n - 1) * sp + 1);
-        y0 = (u8)(h >= 15 ? y - 1 : y + ((15 - h) >> 1));
+        y0 = (u8)((h >= 15 ? y - 1 : y + ((15 - h) >> 1)) - (c_nh > 1 ? 1 : 0));   /* (à plusieurs : rangée 23, à qui de jouer, comp_who) */
         for (i = 0; i < c_n; ++i) rw[i] = (u8)(i * sp);
         n = c_n;
         for (b = 0; ; ++b, n >>= 1) {                 /* tour b : n inscrits */

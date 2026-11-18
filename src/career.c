@@ -330,7 +330,8 @@ extern u8 cu_st[6];
 #define cu_pos cu_st[2]
 #define cu_k   cu_st[3]
 #define cu_n   cu_st[4]
-extern u8 cu_c[2];
+extern u8 cu_c[4];
+#pragma zpsym("cu_c")
 #define CU_ROWS 7
 #define CU_VX   13
 #define CU_Y(r) (u8)(7 + (r) * 2)
@@ -351,7 +352,7 @@ const u8 char_female0[NCHARS] = { 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1
 void cust_reset(void)
 {
     memcpy(char_female, char_female0, NCHARS);
-    cu_map[0] = cu_map[1] = 0;
+    cu_map[0] = cu_map[1] = cu_map[2] = cu_map[3] = 0;
 }
 
 static u8 cu_find(const u8 *t, u8 n, u8 v) { u8 i; for (i = 0; i < n; ++i) if (t[i] == v) return i; return 0; }
@@ -359,7 +360,7 @@ static u8 cu_find(const u8 *t, u8 n, u8 v) { u8 i; for (i = 0; i < n; ++i) if (t
 /* profil k d'après le personnage c (nom, sexe, couleurs d'origine) ; inactif */
 static void cu_from_char(u8 k, u8 c)
 {
-    u8 *s = cu_sav + CU_SLOT(k), i;
+    u8 *s = cu_slot(k), i;
     const char *n = char_name[c];
     for (i = 0; i < 7; ++i) s[i] = (u8)(*n > ' ' ? *n++ : ' ');
     s[7] = 0;
@@ -372,47 +373,52 @@ static void cu_from_char(u8 k, u8 c)
    et NOUVEAU. Toute modification (nom, genre, peau, cheveux, tenue) est
    rangée aussitôt dans le profil choisi ; depuis D'ORIGINE ou NOUVEAU, elle
    crée un profil (8 au plus). SELECT sur PROFIL supprime le profil choisi.
-   cl_sel[k] : 0 d'origine, 1 à 8 un profil, 9 nouveau (pas encore rangé). */
+   cl_sel(k) : 0 d'origine, 1 à 8 un profil, 9 nouveau (pas encore rangé). */
 #define CL_N 8
 #pragma bss-name(push, "SAVELIB")
-u8 cl_magic[2], cl_sel[2];
+u8 cl_magic[2], cl_selA[2];
 u8 cl_p[CL_N][12];                      /* octet 7 : personnage de base + 1 ; octet 8 : bit 0 emplacement occupé, bit 1 femme */
+u8 cl_selB[2];                          /* (2.77 : joueurs 3 et 4, après les profils : bibliothèque d'avant inchangée) */
 #pragma bss-name(pop)
+#define cl_sel(k) (*((k) < 2 ? &cl_selA[k] : &cl_selB[(k) - 2]))
 static void cl_init(void)
 {
     u8 k, j = 0, *s;
-    if (cl_magic[0] == 0x52 && cl_magic[1] == 0x4D) return;
+    if (cl_magic[0] == 0x52 && cl_magic[1] == 0x4D) {
+        if (cl_magic[1] == 0x4D && (cl_selB[0] > 9 || cl_selB[1] > 9)) cl_selB[0] = cl_selB[1] = 0;   /* (2.77 : zone ajoutée) */
+        return;
+    }
     memset(cl_p, 0, sizeof(cl_p));
-    cl_sel[0] = cl_sel[1] = 0;
+    cl_selA[0] = cl_selA[1] = cl_selB[0] = cl_selB[1] = 0;
     /* profils des versions précédentes (un par joueur) : rangés */
     if (cu_sav[0] == CU_MAGIC)
         for (k = 0; k < 2; ++k) {
-            s = cu_sav + CU_SLOT(k);
-            if (s[8] & 1) { memcpy(cl_p[j], s, 12); cl_p[j][8] = (u8)(1 | (s[8] & 2)); cl_sel[k] = (u8)(++j); }
+            s = cu_slot(k);
+            if (s[8] & 1) { memcpy(cl_p[j], s, 12); cl_p[j][8] = (u8)(1 | (s[8] & 2)); cl_sel(k) = (u8)(++j); }
         }
     cl_magic[0] = 0x52; cl_magic[1] = 0x4D;
 }
 static void cl_load(u8 k)               /* profil choisi -> page du joueur k */
 {
-    u8 *s = cu_sav + CU_SLOT(k), v = cl_sel[k];
+    u8 *s = cu_slot(k), v = cl_sel(k);
     if (v >= 1 && v <= CL_N && (cl_p[v - 1][8] & 1)) {
         memcpy(s, cl_p[v - 1], 12); s[8] = (u8)((s[8] & 2) | 1);
         /* octet 7 : son personnage de base + 1 (style de jeu), 0 : inconnu ; dans la page, la fin du nom */
-        if (s[7] && s[7] <= NCHARS) { cu_c[k] = (u8)(s[7] - 1); opt_val[k ? 4 : 3] = cu_c[k]; }
+        if (s[7] && s[7] <= NCHARS) { cu_c[k] = (u8)(s[7] - 1); if (k < 2) opt_val[k ? 4 : 3] = cu_c[k]; }
         s[7] = 0;
         return;
     }
-    if (v != 9) cl_sel[k] = 0;
+    if (v != 9) cl_sel(k) = 0;
     cu_from_char(k, cu_c[k]);
     if (v == 9) s[8] |= 1;
 }
 static void cl_store(u8 k)              /* page du joueur k -> son profil (créé au besoin) */
 {
-    u8 *s = cu_sav + CU_SLOT(k), v = cl_sel[k], j;
+    u8 *s = cu_slot(k), v = cl_sel(k), j;
     if (v == 0 || v == 9) {
         for (j = 0; j < CL_N && (cl_p[j][8] & 1); ++j) ;
         if (j == CL_N) return;          /* (bibliothèque pleine : modification pour cette compétition seulement) */
-        cl_sel[k] = v = (u8)(j + 1);
+        cl_sel(k) = v = (u8)(j + 1);
     }
     memcpy(cl_p[v - 1], s, 12);
     cl_p[v - 1][7] = (u8)(cu_c[k] + 1);   /* (son personnage de base) */
@@ -420,13 +426,13 @@ static void cl_store(u8 k)              /* page du joueur k -> son profil (cré�
 }
 static void cl_cycle(u8 k, u8 d)        /* PROFIL : D'ORIGINE, profils rangés, NOUVEAU */
 {
-    u8 v = cl_sel[k], i, free = 0;
+    u8 v = cl_sel(k), i, free = 0;
     for (i = 0; i < CL_N; ++i) if (!(cl_p[i][8] & 1)) free = 1;
     for (i = 0; i < 10; ++i) {
         if (d) v = (u8)(v == 9 ? 0 : v + 1); else v = (u8)(v == 0 ? 9 : v - 1);
         if (v == 0 || (v == 9 && free) || (v <= CL_N && (cl_p[v - 1][8] & 1))) break;
     }
-    cl_sel[k] = v;
+    cl_sel(k) = v;
     cl_load(k);
 }
 
@@ -434,16 +440,18 @@ static void cl_cycle(u8 k, u8 d)        /* PROFIL : D'ORIGINE, profils rangés, 
    d'origine change : opt_val), puis les profils rangés */
 static void cl_pick(u8 k, u8 d)
 {
-    u8 o = k ? opt_val[3] : ((opt_val[2] || opt_val[20]) ? opt_val[4] : 255);   /* (l'autre joueur : jamais le même) */
-    u8 n = NCHARS + CL_N, pos, i;
-    pos = (cl_sel[k] >= 1 && cl_sel[k] <= CL_N) ? (u8)(NCHARS + cl_sel[k] - 1) : cu_c[k];
+    u8 n = NCHARS + CL_N, pos, i, j;
+    pos = (cl_sel(k) >= 1 && cl_sel(k) <= CL_N) ? (u8)(NCHARS + cl_sel(k) - 1) : cu_c[k];
     for (i = 0; i < n; ++i) {
         pos = d ? (u8)((pos + 1) % n) : (u8)((pos + n - 1) % n);
-        if (pos < NCHARS) { if (pos != o) break; }
+        if (pos < NCHARS) {
+            for (j = 0; j < cu_n && (j == k || cu_c[j] != pos); ++j) ;   /* (les autres joueurs : jamais le même) */
+            if (j == cu_n) break;
+        }
         else if (cl_p[pos - NCHARS][8] & 1) break;
     }
-    if (pos < NCHARS) { cu_c[k] = pos; opt_val[k ? 4 : 3] = pos; cl_sel[k] = 0; }
-    else cl_sel[k] = (u8)(pos - NCHARS + 1);
+    if (pos < NCHARS) { cu_c[k] = pos; if (k < 2) opt_val[k ? 4 : 3] = pos; cl_sel(k) = 0; }
+    else cl_sel(k) = (u8)(pos - NCHARS + 1);
     cl_load(k);
 }
 
@@ -453,16 +461,17 @@ void cust_apply(void)
     u8 k, c, *s;
     cust_reset();
     if (cu_sav[0] != CU_MAGIC) return;
-    for (k = 0; k < 2; ++k) {
-        c = k ? (c_hum2 ? c_pl2[0] : 255) : c_pl[0];
-        s = cu_sav + CU_SLOT(k);
+    for (k = 0; k < 4; ++k) {
+        /* (2.77) le joueur k : son inscrit (après comp_new) */
+        c = k == 0 ? c_pl[0] : c_dbl ? (k == 1 && c_hum2 ? c_pl2[0] : 255) : (k < c_nh ? c_pl[hum_e[k]] : 255);
+        s = cu_slot(k);
         if (c < NCHARS && (s[8] & 1)) { cu_map[k] = (u8)(c + 1); char_female[c] = (u8)((s[8] >> 1) & 1); }
     }
 }
 
 static void cu_live(void)                       /* aperçu : profil en cours appliqué */
 {
-    u8 *s = cu_sav + CU_SLOT(cu_k), c = cu_c[cu_k];
+    u8 *s = cu_slot(cu_k), c = cu_c[cu_k];
     cust_reset();
     if (s[8] & 1) { cu_map[cu_k] = (u8)(c + 1); char_female[c] = (u8)((s[8] >> 1) & 1); }
     pal_set_player(0, c);
@@ -470,14 +479,14 @@ static void cu_live(void)                       /* aperçu : profil en cours app
 
 static void cu_value(u8 r, u8 now)              /* valeur de la rangée r (now : pendant l'affichage) */
 {
-    u8 *s = cu_sav + CU_SLOT(cu_k), i;
+    u8 *s = cu_slot(cu_k), i;
     char b[11];
     const char *v = "";
     for (i = 0; i < 10; ++i) b[i] = ' ';
     b[10] = 0;
     switch (r) {
     case 0:                             /* (2.77) profil : rang dans la bibliothèque */
-        i = cl_sel[cu_k];
+        i = cl_sel(cu_k);
         if (!i) v = "D'ORIGINE";
         else if (i == 9) v = "NOUVEAU";
         else { u8 n = 0, r2 = 0, j; for (j = 0; j < CL_N; ++j) if (cl_p[j][8] & 1) { ++n; if (j + 1 == i) r2 = n; }
@@ -502,7 +511,14 @@ void cust_page(void)
 {
     u8 r;
     txt_off = 0x40;
-    txt_at(4, 4, cu_k ? (opt_val[2] ? "PARTENAIRE : MANETTE 2" : "JOUEUR 2 : MANETTE 2") : (cu_n > 1 ? "JOUEUR 1 : MANETTE 1" : "NOM ET TENUE, FACULTATIF"));
+    if (cu_k && opt_val[2]) txt_at(4, 4, "PARTENAIRE : MANETTE 2");
+    else if (cu_n > 1) {
+        char b[21];
+        const char *q = "JOUEUR 1 : MANETTE 1";
+        for (r = 0; (b[r] = q[r]) != 0; ++r) ;
+        b[7] = (char)('1' + cu_k); b[19] = (char)((cu_k & 1) ? '2' : '1');   /* (joueurs 1 et 3 : manette 1 ; 2 et 4 : manette 2) */
+        txt_at(4, 4, b);
+    } else txt_at(4, 4, "NOM ET TENUE, FACULTATIF");
     txt_off = 0;
     for (r = 0; r < CU_ROWS; ++r) { txt_at(3, CU_Y(r), cu_lbl[r]); cu_value(r, 0); }
     txt_at(1, CU_Y(cu_row), ">");
@@ -522,7 +538,17 @@ u16 __fastcall__ cust_build(u16 first)
     if (!first) { cust_page(); return 0; }
     cu_c[0] = opt_val[3];                       /* (O_P1 ; O_P2 4, O_TYPE 2, O_CPART 20 : screens.c) */
     cu_c[1] = opt_val[4] == cu_c[0] ? (u8)((cu_c[0] + 1) % NCHARS) : opt_val[4];
-    cu_n = (u8)(opt_val[20] ? 2 : 1);          /* (2.77 : 2e joueur humain, partenaire en double ou rival en simple) */
+    /* (2.77) joueurs humains : en double, le partenaire à la manette 2 ;
+       en simple, 1 à 4 (O_CPART : joueurs en plus) */
+    cu_n = (u8)(opt_val[2] ? (opt_val[20] ? 2 : 1) : 1 + opt_val[20]);
+    for (k = 2; k < 4; ++k) {                   /* joueurs 3 et 4 : un personnage libre */
+        u8 c = cu_c[k], j, t;
+        for (t = 0; t < NCHARS; ++t, c = (u8)((c + 1) % NCHARS)) {
+            for (j = 0; j < k && cu_c[j] != c; ++j) ;
+            if (j == k) break;
+        }
+        cu_c[k] = c;
+    }
     cl_init();                                  /* (2.77 : bibliothèque des profils) */
     if (cu_sav[0] != CU_MAGIC) { cu_from_char(0, cu_c[0]); cu_from_char(1, cu_n > 1 ? cu_c[1] : 0); cu_sav[0] = CU_MAGIC; }
     for (k = 0; k < cu_n; ++k) cl_load(k);       /* le profil choisi la dernière fois */
@@ -535,7 +561,7 @@ u16 __fastcall__ cust_build(u16 first)
    3 retour au menu */
 u16 __fastcall__ cust_tick(u16 pad)
 {
-    u8 *s = cu_sav + CU_SLOT(cu_k), r = cu_row, i, ch;
+    u8 *s = cu_slot(cu_k), r = cu_row, i, ch;
     spr_begin();
     spr_person(212, 150, cu_c[cu_k], 1, (frame_cnt & 64) ? POSE_JOY : POSE_IDLE, 0, 0);
     spr_end();
@@ -575,8 +601,8 @@ u16 __fastcall__ cust_tick(u16 pad)
         return 0;
     }
     if ((pad & PAD_A) && r == 1) { cu_ed = 1; cu_pos = 0; s[8] |= 1; cl_store(cu_k); sfx_menu_ok(); cu_value(0, 1); cu_value(1, 1); cu_live(); return 0; }
-    if ((pad & PAD_SELECT) && r == 0 && cl_sel[cu_k] >= 1 && cl_sel[cu_k] <= CL_N) {   /* (2.77) supprimer le profil choisi */
-        cl_p[cl_sel[cu_k] - 1][8] = 0; cl_sel[cu_k] = 0; cl_load(cu_k);
+    if ((pad & PAD_SELECT) && r == 0 && cl_sel(cu_k) >= 1 && cl_sel(cu_k) <= CL_N) {   /* (2.77) supprimer le profil choisi */
+        cl_p[cl_sel(cu_k) - 1][8] = 0; cl_sel(cu_k) = 0; cl_load(cu_k);
         sfx_menu_back();
         for (i = 0; i < 6; ++i) cu_value(i, 1);
         cu_live();
@@ -616,7 +642,7 @@ u16 __fastcall__ cust_preview_f(u16 unused)
     if (cu_sav[0] != CU_MAGIC) return 0;
     for (k = 0; k < 2; ++k) {
         c = k ? (opt_val[20] ? opt_val[4] : 255) : opt_val[3];
-        s = cu_sav + CU_SLOT(k);
+        s = cu_slot(k);
         if (c < NCHARS && (s[8] & 1)) { cu_map[k] = (u8)(c + 1); char_female[c] = (u8)((s[8] >> 1) & 1); }
     }
     return 0;
@@ -630,7 +656,7 @@ static void cust_resume(void)
     if (pod_buf[1] != 3 || cu_sav[0] != CU_MAGIC) return;   /* (3 : MODE_COMP, screens.c) */
     for (k = 0; k < 2; ++k) {
         c = k ? (cfg.doubles ? (cfg.ctrl[2] == CTRL_PAD2 ? cfg.chr[2] : 255) : (cfg.ctrl[1] == CTRL_PAD2 ? cfg.chr[1] : 255)) : cfg.chr[0];   /* (2.77 : rival humain en simple) */
-        t = cu_sav + CU_SLOT(k);
+        t = cu_slot(k);
         if (c < NCHARS && (t[8] & 1)) { cu_map[k] = (u8)(c + 1); char_female[c] = (u8)((t[8] >> 1) & 1); }
     }
 }

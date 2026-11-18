@@ -27,6 +27,11 @@ extern u8 c_active, c_type, c_stage, c_seed, c_results, c_trophies, c_opts, c_lv
 extern u8 c_surf, c_env, c_cond, c_fmt;
 extern u8 c_pl[16], c_rt[16], c_n;
 extern u8 c_pl2[16], c_dbl, c_hum2;
+/* (2.77) compétition en simple à 1-4 joueurs humains (page zéro, comp.c) */
+extern u8 c_nh, hum_e[4], c_hc[4];
+#pragma zpsym("c_nh")
+#pragma zpsym("hum_e")
+#pragma zpsym("c_hc")
 extern u16 c_gres;   /* tours gagnés à chaque tournoi : Grand Martinot 3 bits, Martinworld Tour 2 bits */
 extern u8 c_slam;    /* Grand Chelem : tous les tournois gagnés (Grand Martinot, Martinworld Tour) */
 

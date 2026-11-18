@@ -99,7 +99,7 @@ void spr_port(u8 x, u8 y, u8 base, u8 attr)
 #define NMODES       6
 
 u8 opt_val[NOPT] = { 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 2, 1, 0, 1, 0, 1, 0, 1, 0, 0 };
-static const u8 opt_max[NOPT] = { 1, NMODES, 2, NCHARS, NCHARS, 3, NSURF, NENV, 4, 4, 3, NCT, 2, 2, 2, NEX, 4, 3, 3, 3, 2, 3, 3, 2, 2, 2 };
+static const u8 opt_max[NOPT] = { 1, NMODES, 2, NCHARS, NCHARS, 3, NSURF, NENV, 4, 4, 3, NCT, 2, 2, 2, NEX, 4, 3, 3, 3, 4, 3, 3, 2, 2, 2 };   /* (O_CPART : 4 joueurs en compétition en simple, 2.77) */
 static const char * const opt_label[NOPT] = {
     "COMMENCER", "MODE", "JEU", "JOUEUR 1", "JOUEUR 2", "NIVEAU CPU", "SURFACE", "LIEU",
     "CONDITIONS", "FORMAT", "RALENTIS", "COMPETITION", "JOUEURS", "ADVERSAIRES", "SURFACES",
@@ -188,6 +188,15 @@ static void build_visible(void)
     if (cursor >= nvis) cursor = 0;
 }
 
+/* (2.77) compétition en simple : la ligne JOUEURS (1 à 4 joueurs humains) */
+static u8 comp_single(void) { return (u8)(opt_val[O_MODE] == MODE_COMP && !opt_val[O_TYPE]); }
+static const char * const cnt_name[4] = { "1", "2", "3", "4" };
+static const char *row_label(u8 o)
+{
+    if (o == O_P2 && (opt_val[O_MODE] == MODE_COMP || opt_val[O_MODE] == MODE_2P_TEAM)) return "PARTENAIRE";
+    if (o == O_CPART && comp_single()) return "JOUEURS";
+    return opt_label[o];
+}
 static const char *opt_text(u8 o)
 {
     u8 v = opt_val[o];
@@ -215,7 +224,8 @@ static const char *opt_text(u8 o)
     case O_SPEED:  return speed_name[v];
     case O_SPIN:   return spin_name[v];
     case O_COUNT:  return v == 0 ? "10" : v == 1 ? "20" : "30";
-    case O_CPART:  return v ? "MANETTE 2" : "CPU";
+    case O_CPART:  if (comp_single()) return cnt_name[v];   /* (2.77 : JOUEURS, 1 à 4) */
+                   return v ? "MANETTE 2" : "CPU";
     case O_GSPEED: return gspeed_name[v];
     case O_SOUND:  return sound_name[v];
     case O_FATIG:
@@ -357,8 +367,7 @@ static void menu_draw_row(u8 i, u8 direct)
     txt_off = (u8)(i == cursor ? 0x40 : 0);   /* ligne choisie : police surlignée */
     pad_text(opt_text(vis[i]), 15);
     if (direct) {
-        if (vis[i] == O_P2 && (opt_val[O_MODE] == MODE_COMP || opt_val[O_MODE] == MODE_2P_TEAM)) txt_at(3, (u8)(MY0 + i), "PARTENAIRE");
-        else txt_at(3, (u8)(MY0 + i), opt_label[vis[i]]);
+        txt_at(3, (u8)(MY0 + i), row_label(vis[i]));
         txt_at(16, (u8)(MY0 + i), line);
         vram_adr(NTADR(2, MY0 + i)); vram_put((u8)far_call(BANK_PODIUM, (void *)grp_tile, i));
         if (i == cursor) hl_cur = i;
@@ -376,7 +385,7 @@ static u8 menu_hl_row(u8 i, u8 on)
     static const char ar[2][2] = { { ' ', ' ' }, { '<', '>' } };
     if (vram_len + 50 > VBUF_MAX) return 0;
     txt_off = (u8)(on ? 0x40 : 0);
-    pad_text(vis[i] == O_P2 && (opt_val[O_MODE] == MODE_COMP || opt_val[O_MODE] == MODE_2P_TEAM) ? (const char *)"PARTENAIRE" : (const char *)opt_label[vis[i]], 13);
+    pad_text(row_label(vis[i]), 13);
     vbuf_text(3, (u8)(MY0 + i), line, 13);
     pad_text(opt_text(vis[i]), 15);
     vbuf_text(16, (u8)(MY0 + i), line, 15);
@@ -801,8 +810,8 @@ static void comp_end_sprites(void)
 static void start_comp(void)
 {
     far_call(BANK_PICK, (void *)comp_opts_f, 0);   /* (réglages -> compétition : pick.c, banque 29, 2.77 : banque 1 pleine) */
-    bank_call(BANK_CAR, cust_apply);    /* joueur personnalisé (2.75) */
     COMP(comp_new, 0);
+    bank_call(BANK_CAR, cust_apply);    /* joueur personnalisé (2.75 ; 2.77 : après comp_new, qui place les joueurs humains) */
     if (c_type >= CT_GRAND) {
         /* Grand Martinot, Martinworld Tour : bande-annonce (banque 7) */
         screen_begin();
@@ -853,10 +862,10 @@ static void code_tick(void)
             c_type = pw.type; c_stage = pw.stage; c_seed = pw.seed; c_pl[0] = pw.chr;
             c_surf = pw.surf; c_fmt = pw.fmt; c_cond = pw.cond; c_env = pw.env; c_lvl = pw.lvl;
             c_results = pw.results; c_opts = pw.opts; c_trophies = pw.trophies; c_gres = pw.gres; c_slam = 0;
-            c_dbl = pw.doubles; c_pl2[0] = pw.partner; c_hum2 = pw.hum2;
-            bank_call(BANK_CAR, cust_apply);
+            c_dbl = pw.doubles; c_pl2[0] = pw.partner; c_hum2 = pw.hum2; c_nh = 1;   /* (le code reprend le joueur 1 seul) */
             if (c_trophies) nude_unlocked = 1;     /* un trophée débloque le club nudiste */
             COMP(comp_build, 0);
+            bank_call(BANK_CAR, cust_apply);
             opt_val[O_P1] = c_pl[0];
             sfx_menu_ok();
             comp_next();
@@ -1102,6 +1111,7 @@ void screens_tick(void)
         if (o != O_START && (pad1_new & (PAD_LEFT | PAD_RIGHT))) {
             v = opt_val[o];
             i = opt_max[o];
+            if (o == O_CPART && !comp_single()) i = 2;   /* (CPU ou MANETTE 2) */
             if (pad1_new & PAD_RIGHT) v = (u8)(v + 1 == i ? 0 : v + 1);
             else v = (u8)(v ? v - 1 : i - 1);
             /* le club nudiste n'apparaît qu'une fois débloqué */
@@ -1112,6 +1122,7 @@ void screens_tick(void)
             if ((o == O_P1 || o == O_P2) && v == 16 && opt_val[O_ENV] == ENV_NUDE)
                 v = (u8)((pad1_new & PAD_RIGHT) ? 0 : 15);
             opt_val[o] = v;
+            if (!comp_single() && opt_val[O_CPART] > 1) opt_val[O_CPART] = 1;
             sfx_menu_val((u8)(pad1_new & PAD_RIGHT));
             if (o == O_MODE || o == O_COMP || o == O_EX || (o == O_TYPE && opt_val[O_MODE] == MODE_COMP)) {
                 vbuf_reset();
