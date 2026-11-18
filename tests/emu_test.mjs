@@ -2578,8 +2578,13 @@ console.log('Séquences animées du match');
       if (e.peek('cer') === 3 && (oamHas(e, e.peek('ball_base') + 8) || oamHas(e, e.peek('ball_base') + 12))) coin = true;
       if (/^(PILE|FACE) !$/.test(msg(e))) toss = msg(e);
     }
-    check(e.peek('cer') === 0 && start[0] === 216 && start[1] >= 230 && wave && upBack && JSON.stringify([pos(e, 0), pos(e, 1)]) === JSON.stringify(want) && e.peek('ms') === 0,
-      `${v} : entrée depuis le tunnel ${JSON.stringify(start)}, le joueur du fond vu de dos en s'éloignant, salut, puis chacun à sa place ${JSON.stringify(want)}`);
+    // (2.77 : l'ordinateur qui gagne le tirage ne sert plus toujours : les
+    // places dépendent de son choix ; chacun sur sa ligne de fond, de part et
+    // d'autre du filet, comme dans une partie sans séquence)
+    const got = [pos(e, 0), pos(e, 1)], base = (p) => p[1] >= 216 || p[1] <= 50;
+    const placed = (JSON.stringify(got) === JSON.stringify(want)) || (base(got[0]) && base(got[1]) && (got[0][1] > 132) !== (got[1][1] > 132));
+    check(e.peek('cer') === 0 && start[0] === 216 && start[1] >= 230 && wave && upBack && placed && e.peek('ms') === 0,
+      `${v} : entrée depuis le tunnel ${JSON.stringify(start)}, le joueur du fond vu de dos en s'éloignant, salut, puis chacun à sa place ${JSON.stringify(got)}`);
     // tirage au sort : pile ou face attribués aux deux joueurs, la pièce, puis
     // le résultat ; le gagnant (celui à qui on a attribué le côté sorti) sert
     const srvName = calls.split(' / ')[e.peek('sc_server')] ?? '';

@@ -335,7 +335,13 @@ void cer_tick(void)
            2 côté (perdant, après « servir »), 5 côté (gagnant), 4 servir ou
            recevoir (perdant) */
         top = toss_pad(toss_c);
-        if (top == 0xFF) top = (u8)(cer_t == 60 ? (toss_q == 2 || toss_q == 5 ? ((((toss_c & 1) ^ sc_swap)) ? PAD_A : PAD_B) : PAD_A) : 0);
+        /* ordinateur : (2.77) choix variés, servir le plus souvent (3 fois sur
+           4), sinon le côté ; laissé choisir, il sert 7 fois sur 8 ; le côté :
+           au hasard */
+        if (top == 0xFF && cer_t == 60) {
+            win = rand8();
+            top = (u8)(toss_q == 1 ? (win < 192 ? PAD_A : PAD_B) : toss_q == 4 ? (win < 224 ? PAD_A : PAD_B) : (win & 1) ? PAD_A : PAD_B);
+        } else if (top == 0xFF) top = 0;
         if (!(top & (PAD_A | PAD_B))) break;
         win = toss_c;
         if (toss_q == 1) {
