@@ -3050,21 +3050,24 @@ console.log('Version 2.76 : parcours, tirage, fin de set, compétition à deux')
 }
 {
   // tirage au sort : devant l'arbitre, le gagnant (humain) choisit sur le bandeau
-  const e = boot(); e.cerSkip = false; toMenu(e); setOpts(e, { MODE: MODE.P1, FMT: 0 }); e.tap('START');
+  const e = boot(); e.cerSkip = false; e.tossSkip = false; toMenu(e); setOpts(e, { MODE: MODE.P1, FMT: 0 }); e.tap('START');
   passCustom(e); runUntil(e, () => scr(e) === SS.PRESENT, 120); e.run(10); e.tap('A'); runUntil(e, () => app(e) === AS.MATCH, 100);
   const c = e.addr('cfg'); e.nes.cpu.mem[c + CFG.CTRL + 1] = 0;   // (les deux joueurs à la manette 1 : le gagnant est humain)
   let atNet = false, band = false;
   runUntil(e, () => { if (e.peek('cer') === 3 && Math.abs((e.peek('ply', 0) | (e.peek('ply', 1) << 8)) / 64 - 132) < 20) atNet = true; return e.peek('cer') === 11 && e.peek('band_vis') === 3; }, 900);
   const nt1 = (y) => String.fromCharCode(...e.nes.ppu.vramMem.slice(0x2400 + y * 32 + 2, 0x2400 + y * 32 + 30));
   band = e.peek('band_vis') === 3 && nt1(26).includes('GAGNE LE TIRAGE');
-  const srv = e.peek('sc_server'), sw = e.peek('sc_swap');
-  e.tap('B'); e.run(20); const q2 = nt1(27);
-  e.tap('B'); runUntil(e, () => e.peek('cer') === 13 && e.peek('band_vis') === 3, 400); e.run(10);
+  const w = e.peek('sc_server');
+  e.tap('B'); e.run(20); const q2 = nt1(27);                       // le gagnant choisit le côté
+  e.tap('A'); e.run(20); const q4 = nt1(27);                       // EN HAUT
+  const topOk = (((w & 1) ^ e.peek('sc_swap')) === 1);
+  e.tap('A');                                                      // le perdant sert
+  runUntil(e, () => e.peek('cer') === 13 && e.peek('band_vis') === 3, 400); e.run(10);
   const rc = nt1(26), rc2 = nt1(27); e.run(120); const waits = e.peek('cer') === 13;
   e.tap('A'); runUntil(e, () => e.peek('cer') === 0, 60);
+  check(atNet && band && q2.includes('EN HAUT') && q4.includes('RECEVOIR') && topOk && e.peek('sc_server') === (w ^ 1) && e.peek('ms') === 0,
+    `tirage : au filet, « GAGNE LE TIRAGE » ; le gagnant choisit le côté (EN HAUT), le perdant sert (« ${q2.trim()} », « ${q4.trim()} »)`);
   check(rc.includes('SERT EN') && rc2.includes('RECOIT') && rc2.includes('A : JOUER') && waits, `récapitulatif avant le service (« ${rc.trim()} », « ${rc2.trim()} »), attend A`);
-  check(atNet && band && q2.includes('CHANGER') && e.peek('sc_swap') === (sw ^ 1) && e.peek('sc_server') === (srv ^ 1) && e.peek('ms') === 0,
-    `tirage : au filet, bandeau « GAGNE LE TIRAGE », B puis B : côtés changés, l'adversaire sert (« ${q2.trim()} »)`);
 }
 {
   // fin de set : les joueurs s'assoient, bandeau du set, puis l'écran du set ;

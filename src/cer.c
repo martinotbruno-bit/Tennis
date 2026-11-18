@@ -24,7 +24,7 @@
 extern u8 hl_mode;                 /* plan de la ramasseuse (highlight.c, 2.73) */
 extern u8 sun_pend;
 extern u8 brk_pend;                 /* fin de set en attente (game.c, 2.76) */
-extern u8 toss_q, cer_req;          /* tirage au sort (plus bas, 2.76) */                /* crépuscule : nouvelle lumière en attente (highlight.c, 2.76) */
+extern u8 toss_q, cer_req, toss_c;  /* tirage au sort (plus bas, 2.76) */
 
 #pragma static-locals(off)
 
@@ -240,7 +240,7 @@ void cer_watch(void)
 
 /* (2.76) tirage au sort : question posée sur le bandeau (highlight.c) ;
    cer_req : places du service à recalculer (game.c) */
-u8 toss_q, cer_req;
+u8 toss_q, cer_req, toss_c;          /* (toss_c : l'équipe qui choisit) */
 extern u8 band_rows;
 /* appui de la manette d'un joueur humain de l'équipe t ($FF : ordinateur) */
 static u8 toss_pad(u8 t)
@@ -322,24 +322,35 @@ void cer_tick(void)
             set_msg((u8)(toss_res ^ sc_server) ? "FACE !" : "PILE !", who, 70);
             sfx_clap();
         }
-        if (cer_t >= 150) { cer = CER_CHOOSE; cer_t = 0; toss_q = 1; band_rows |= 3; band_t = 48; }
+        if (cer_t >= 150) { cer = CER_CHOOSE; cer_t = 0; toss_q = 1; toss_c = sc_server; band_rows |= 3; band_t = 48; }
         break;
     case CER_CHOOSE:
-        /* (2.76) le gagnant du tirage choisit, avec sa manette (l'ordinateur :
-           il sert) : A servir, B choisir le côté (puis A rester, B changer ;
-           l'adversaire sert alors) */
-        win = sc_server;
-        top = toss_pad(win);
-        if (top == 0xFF) top = (u8)(cer_t == 60 ? PAD_A : 0);
+        /* (2.76) tirage au sort, comme au vrai tennis : le gagnant choisit
+           de servir (A) ou le côté (B). Qui choisit le côté désigne EN HAUT
+           (A) ou EN BAS (B) ; si c'est le gagnant, le perdant choisit alors
+           de servir (A) ou de recevoir (B). Chacun avec sa manette ;
+           l'ordinateur choisit seul (il sert ; il garde son côté).
+           toss_c : l'équipe qui choisit ; toss_q : 1 service ou côté (gagnant),
+           2 côté (perdant, après « servir »), 5 côté (gagnant), 4 servir ou
+           recevoir (perdant) */
+        top = toss_pad(toss_c);
+        if (top == 0xFF) top = (u8)(cer_t == 60 ? (toss_q == 2 || toss_q == 5 ? ((((toss_c & 1) ^ sc_swap)) ? PAD_A : PAD_B) : PAD_A) : 0);
+        if (!(top & (PAD_A | PAD_B))) break;
+        win = toss_c;
         if (toss_q == 1) {
-            if (top & PAD_A) { toss_q = 0; }
-            else if (top & PAD_B) { toss_q = 2; band_rows |= 3; sfx_menu_move(); cer_t = 0; }
-        } else if (top & (PAD_A | PAD_B)) {
-            if (top & PAD_B) sc_swap ^= 1;
-            sc_server = (u8)(win ^ 1);
+            if (top & PAD_A) { sc_server = win; toss_c = (u8)(win ^ 1); toss_q = 2; }
+            else toss_q = 5;
+        } else if (toss_q == 4) {
+            sc_server = (u8)((top & PAD_A) ? win : win ^ 1);
             toss_q = 0;
+        } else {
+            sc_swap = (u8)((top & PAD_A) ? (win & 1) ^ 1 : win & 1);   /* (côté de l'équipe : (t ^ sc_swap), 1 en haut) */
+            if (toss_q == 5) { toss_c = (u8)(win ^ 1); toss_q = 4; }
+            else toss_q = 0;
         }
-        if (!toss_q) { sfx_menu_ok(); cer_req = 1; }   /* (game.c : places du service, puis CER_GOSRV) */
+        cer_t = 0;
+        if (toss_q) { band_rows |= 3; sfx_menu_move(); }
+        else { sfx_menu_ok(); cer_req = 1; }   /* (game.c : places du service, puis CER_GOSRV) */
         break;
     case CER_GOSRV:
         for (p = 0; p < npl; ++p) if (!step_to(p, tx[p], ty[p])) done = 0;

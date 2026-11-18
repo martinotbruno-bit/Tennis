@@ -126,7 +126,7 @@ void sun_apply(void);
 #define CER_SEAT  5
 #define CER_CHOOSE 11            /* tirage au sort : choix du gagnant (cer.c, 2.76) */
 #define CER_RECAP 13             /* récapitulatif avant le service (cer.c, 2.76) */
-extern u8 toss_q;
+extern u8 toss_q, toss_c;
 extern u8 hl_mode, cer;
 extern u8 band_hold, crowd_big;
 #pragma zpsym("band_hold")
@@ -173,9 +173,9 @@ static void band_text(u8 t)
             for (i = 6; *q; ) bb[i++] = *q++;
             return;
         }
-        q = t ? (toss_q == 1 ? "A : SERVIR     B : LE COTE" : "A : RESTER     B : CHANGER")
-              : (toss_q == 1 ? "GAGNE LE TIRAGE" : "CHOISIT SON COTE");
-        team_label(cfg.chr[sc_server], cfg.doubles ? cfg.chr[sc_server + 2] : 255, bb + (t ? 28 : 0));
+        q = t ? (toss_q == 1 ? "A : SERVIR     B : LE COTE" : toss_q == 4 ? "A : SERVIR   B : RECEVOIR" : "A : EN HAUT    B : EN BAS")
+              : (toss_q == 1 ? "GAGNE LE TIRAGE" : toss_q == 4 ? "SERT OU RECOIT ?" : "CHOISIT SON COTE");
+        team_label(cfg.chr[toss_c], cfg.doubles ? cfg.chr[toss_c + 2] : 255, bb + (t ? 28 : 0));
         for (i = (u8)(t ? 1 : 6); *q; ) bb[i++] = *q++;
         return;
     }
