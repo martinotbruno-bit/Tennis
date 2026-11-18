@@ -768,7 +768,7 @@ Pour loger ce contenu, la cartouche passe de NROM (32 Ko) à **MMC1** : 128 Ko d
 | Relecture des textes (`check_texts.py`) | 0 problème |
 | Contraste (`contrast.py 25`) | 0 paire sous ΔE 25 (personnages, courts, balle, tenues) |
 | Profil CPU, double, 6 000 trames | 27 trames d'échange en dépassement (0,45 %), sans défaut d'image |
-| Compilation | Reproductible : SHA-256 `8e3a8ed0988da6ec4e7c094b3c95055a7f4bfb56f8de1853994da250ea032307` sur deux compilations propres |
+| Compilation | Reproductible : SHA-256 `370e9e44e502a410598be815d9d19bf6bb65457616f547b2fd9a3c8a5faa51bf` sur deux compilations propres |
 
 ## 3. Conformité par section du CDC
 
@@ -815,7 +815,7 @@ Légende : ✅ réalisé et testé en émulation · 🟡 partiel · 🔧 nécess
 
 ## 5. Limitations restantes
 
-- **Version 2.77d** : suite complète verte (430 vérifications, 56 sections).
+- **Version 2.77e** : suite complète verte (431 vérifications, 56 sections).
 
 1. **Tests sur matériel réel** (priorité 1 du CDC). Il faut flasher `dist/royal_martinot.nes` sur une cartouche MMC1/SNROM (ou un linéaire EverDrive/PowerPak) et tester sur NES NTSC, NES PAL et Famicom. Points à surveiller :
    - l'état du MMC1 à la mise sous tension ;

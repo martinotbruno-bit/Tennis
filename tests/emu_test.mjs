@@ -1681,6 +1681,7 @@ console.log('Margaux jouable et fatigue');
   check(scr(g) === SS.PRESENT && g.text(2, 19, 7) === 'MARGAUX' && g.text(2, 20, 1) === '+' && g.text(4, 20, 3) !== '   ',
     `présentation en double : MARGAUX, partenaire sur la ligne suivante (${g.text(2, 20, 6).replace(/\0/g, " ")})`);
   const c = boot(); startWith(c, { MODE: MODE.COMP, COMP: 0, FMT: 3, P1: 16, TYPE: 1, P2: 7 });
+  c.tap('LEFT'); c.run(20);   // (2.77 : ouverture sur le tableau ; le code est sur la page du match)
   const code = c.text(10, 22, 15).replace(/ /g, '');
   check(scr(c) === SS.COMP && c.text(3, 11, 5) === 'MX/EM', `équipe abrégée « MX/EM » (pas de confusion avec MAYA « MA ») ; code ${code}`);
   const h = boot(); h.tap('UP'); h.tap('A'); h.run(10);
