@@ -379,6 +379,18 @@ def body(f, j, female, face, front=('armR', 'legL'), racket_hand='L', racket_dir
         elif abs(dr[1]) < 0.6 * Lr:
             m_ = lerp(hpR, kr, 0.65); hem_r = (m_[0], m_[1] + 6); in_r = (lerp(hpR, kr, 0.3)[0], lerp(hpR, kr, 0.3)[1] + 8)
             h2 = lerp(hpL, kl, 0.5); hem_l = (h2[0] + nl[0] * 6, h2[1] + nl[1] * 6); in_l = (h2[0] - nl[0] * 4, h2[1] + 2)
+        # (2.77h) cuisse presque à l'horizontale (glissade, fente) : la jupe
+        # repose SUR la cuisse : son bord suit le dessus de la cuisse jusqu'au
+        # delà de mi-longueur (avant, le bord allait de la taille à l'ourlet
+        # sous la cuisse, et le haut de la cuisse passait par-dessus le tissu)
+        drape = []
+        for hp_, kn_, d_, L_ in ((hpL, kl, dl, Ll), (hpR, kr, dr, Lr)):
+            if abs(d_[1]) < 0.6 * L_:
+                up = (d_[1] / L_, -d_[0] / L_)
+                if up[1] > 0: up = (-up[0], -up[1])           # normale vers le haut
+                for t_, w_ in ((0.2, 10.0), (0.4, 9.5), (0.6, 8.5), (0.72, 7.0)):
+                    q = lerp(hp_, kn_, t_)
+                    drape.append((q[0] + up[0] * w_, q[1] + up[1] * w_))
         # cuisse levée : le haut arrondi de la cuisse, à la hanche, déborde de
         # la jupe vers l'arrière ; elle l'englobe (sans monter au-dessus de la taille)
         cover = []
@@ -395,7 +407,7 @@ def body(f, j, female, face, front=('armR', 'legL'), racket_hand='L', racket_dir
             for fr in (0.1, 0.25, 0.42, 0.6, 0.8):
                 prof.append((A[0] + (B[0] - A[0]) * fr ** 0.7, A[1] + (B[1] - A[1]) * fr))
         sk = hull([(top_l[0] + 2, top_l[1]), (top_r[0] - 2, top_r[1]), hem_l, hem_r,
-                   in_l, in_r] + prof + cover
+                   in_l, in_r] + prof + cover + drape
                   + [(hp_[0] + math.cos(math.radians(a_)) * 8.5, hp_[1] + math.sin(math.radians(a_)) * 8.5)
                      for hp_ in (hpL, hpR) for a_ in range(0, 181, 30)])
         sm = f.m_poly(sk)
