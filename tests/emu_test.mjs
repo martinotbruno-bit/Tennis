@@ -736,7 +736,7 @@ console.log('Version 2.73 : bandes du ralenti, survol, bandeau, dehors de peu');
   // de 24 px, volée en dessous ; après le rebond, smash au-dessus de 30 px
   const e = boot(); startWith(e, { FMT: 2, REPLAY: 0 }); allCpu(e);
   let bad = [], hi = 0;
-  for (let f = 0; f < 60 * 60 * 6; f++) {
+  for (let f = 0; f < 60 * 60 * 15 && hi < 3; f++) {   /* (balles hautes plus rares depuis la 2.77i : jusqu'à 3 smashs, 15 min au plus) */
     const z = e.peekS16('bz') >> 6, b = e.peek('bounces'), h0 = e.peek('hitter'), inc = e.peek('last_shot');
     e.run(1);
     if (e.peek('hitter') !== h0 && e.peek('ms') === 2 && !e.peek('b_serve')) {

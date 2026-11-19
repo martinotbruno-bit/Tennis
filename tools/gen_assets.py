@@ -1799,6 +1799,12 @@ def persp_rail(ty, side):
 def tile_at(bmp, ty, tx):
     return [list(bmp[ty * 8 + y][tx * 8:tx * 8 + 8]) for y in range(8)]
 
+HALL_NB = {}                  # (2.79) salle en perspective : colonnes de public par rangée (côté, rangée)
+HALL_BAND = (10, 11, 18, 19, 26, 27)   # (2.79) salle en perspective : rangées des bandeaux lumineux (paires alignées sur les blocs ; pas de drapeau)
+# bandeau lumineux (palette 2 de la salle : 1 gris, 2 vert, 3 noir) : cadre
+# gris, écrans verts séparés par un trait noir ; moitiés haute et basse
+BAND_T = [[1] * 8, [1] * 8] + [[2] * 7 + [3] for _ in range(6)]
+BAND_B = [[2] * 7 + [3] for _ in range(6)] + [[1] * 8, [3] * 8]
 def persp_sides(e, bmp, w):
     """Écrit dans w (image perspective) les tribunes des deux côtés.
     Renvoie {(ty, tx): palette} pour les blocs d'attributs à corriger."""
@@ -1820,7 +1826,7 @@ def persp_sides(e, bmp, w):
             def filler(x, y):
                 if e == 0: return 2
                 if e in (1, 5) and crowd_row: return 0
-                if e == 2: return 3 if (y // 8) % 6 == 0 else 1   # salle : mur et bandeau
+                if e == 2: return 1                              # salle : allée sombre le long de la rambarde (2.79 : le public va jusqu'à elle)
                 if e == 1: return 1 if (((x % 8) * 7 + (y % 8) * 3) % 11) else 2
                 if e == 5:
                     ry = y % 8; off = 0 if ry < 4 else 4
@@ -1844,7 +1850,20 @@ def persp_sides(e, bmp, w):
             # court, et un bloc tronqué en bas à droite)
             ia = 3
             shift = (not crowd_row and e != 4)            # décor sans public : glissé vers le court
-            if shift and nins == 0 and xr == (31 if side == 0 else 225):
+            hall = (e == 2)
+            if hall:
+                # (2.79) salle : du public sur toute la tribune, du bord de
+                # l'écran à la rambarde (petits spectateurs vers le fond, comme
+                # au stade), traversée par des bandeaux lumineux horizontaux
+                # (panneaux verts sur cadre gris) aux rangées HALL_BAND, où ne
+                # passe aucun drapeau des supporters
+                n_ = 3 + max(nins, 0)
+                HALL_NB[(side, ty)] = n_
+                if ty in HALL_BAND:
+                    seq = [[r[:] for r in (BAND_T if ty % 2 == 0 else BAND_B)] for _ in range(n_)]
+                else:
+                    seq = [[r[:] for r in CROWDB[(ty * 5 + k * 2 + side) % 6]] for k in range(n_)]
+            elif shift and nins == 0 and xr == (31 if side == 0 else 225):
                 seq = outer[:]                            # comme à plat
                 nins = -1
             elif shift and nins >= 1:
@@ -1914,8 +1933,26 @@ def persp_sides(e, bmp, w):
                     xe = 128 + ((DBL_L - 6 if side == 0 else DBL_R + 6) - 128) * sc
                     assert (xe > bxi * 16 + 15) if side == 0 else (xe < bxi * 16), ('tribune et court dans un même bloc', e, by)
                 fix[(bxi, by)] = court_attr(bxo, by, e)
-    # (salle, 2.79 : plus de tribunes entières en palette 3 ; le mur et les
-    # panneaux gardent les palettes de la vue à plat)
+    # (salle, 2.79) : public en palette 3, bandeaux lumineux en palette 2,
+    # sur tous les blocs de la tribune (jamais de surface de jeu dedans)
+    if e == 2:
+        for by in range(2, 15):
+            for side in (0, 1):
+                n_ = max(HALL_NB.get((side, t), 0) for t in (by * 2, by * 2 + 1))
+                for k in range(4):
+                    bx = k if side == 0 else 15 - k
+                    if side == 0 and bx == CHAIR_X // 16 and CHAIR_Y // 16 <= by < CHAIR_Y // 16 + 2:
+                        continue
+                    if k * 2 > n_:
+                        continue
+                    ok = True
+                    for y in range(by * 16, by * 16 + 16):
+                        sc = 1 / (1 + PERSP_A * persp_d(y))
+                        xe = 128 + ((DBL_L - 6 if side == 0 else DBL_R + 6) - 128) * sc
+                        if (side == 0 and xe <= bx * 16 + 15) or (side == 1 and xe >= bx * 16):
+                            ok = False
+                    if ok:
+                        fix[(bx, by)] = 2 if by * 2 in HALL_BAND else 3
     return fix
 
 def persp_build(e):
