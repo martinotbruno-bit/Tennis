@@ -881,6 +881,9 @@ POSES['handshake'] = dict(
            armL=(100, 95), armR=(30, -8), tilt=0.0, turn=0.3,
            order=['legL', 'legR', 'armL', 'racket', 'torso', 'head', 'armR']),
     face='joy', hand='L', rdir=95, rlen=50, extra=_shake_extra)
+# (2.80) la même poignée de main, visage triste (le joueur humain qui a
+# perdu) : seules les tuiles qui changent sont gardées (sad_patch)
+POSES['handshake_sad'] = dict(POSES['handshake'], face='sad')
 
 # 9. public en gros plan (version 2.73, après un très long échange) : trois
 #    spectateurs debout qui applaudissent, bras levés, maillots différents
@@ -1521,9 +1524,57 @@ def vs_preview(arts, dst):
     sheet.resize((sheet.width * 3, sheet.height * 3), I.NEAREST).save(dst)
 
 
+# (2.80) poignée de main du perdant : visage triste. Plutôt qu'une image
+# entière (8 Ko de plus), les cases de 8 x 8 qui diffèrent de l'image
+# souriante : (case de l'écran, tuile, 16 octets) ; une tuile propre à la
+# case est réécrite, sinon une tuile libre (après celles de l'image) est
+# prise et la case pointée dessus (extra2.c, shake_sad_f)
+def sad_patch(out):
+    name, pose, k, cen, zoom = [sh for sh in SHOTS if sh[0] == 'handshake'][0]
+    blobs, tot = [], 0
+    for key in ((0,), (1,), (2,), (0, 'n'), (1, 'n')):
+        female, nude = key[0], len(key) > 1
+        base = out[('handshake', female) + (('n',) if nude else ())]
+        NUDE[0] = nude
+        try:
+            f, _ = render('handshake_sad', female, k, cen)
+            sad = build(f, zoom)
+        finally:
+            NUDE[0] = False
+        cnt = {}
+        for row in base['nt']:
+            for v in row:
+                cnt[v] = cnt.get(v, 0) + 1
+        spare = FIRST_TILE + len(base['tiles'])
+        data = []
+        for ty in range(len(base['nt'])):
+            for tx in range(32):
+                tj, ts = tile_bytes(base['idx'], tx, ty), tile_bytes(sad['idx'], tx, ty)
+                if tj == ts:
+                    continue
+                assert base['attr'][ty // 2, tx // 2] == sad['attr'][ty // 2, tx // 2], ('palette', key, tx, ty)
+                t = base['nt'][ty][tx]
+                if not t or t >= T_STREAK or cnt[t] > 1:
+                    t = spare; spare += 1
+                    assert spare <= MAX_TILES + 1, 'plus de tuile libre'
+                ad = 0x2000 + ty * 32 + tx
+                data += [ad & 255, ad >> 8, t] + list(ts)
+        blobs.append(data); tot += len(data)
+        print('poignée de main triste %s%s : %d cases' % ('HFG'[female], ' nu' if nude else '', len(data) // 19))
+    L = ['/* Fichier généré par tools/gen_teaser.py — ne pas modifier. */',
+         '/* Poignée de main du perdant : cases du visage triste (extra2.c). */', '']
+    for i, d in enumerate(blobs):
+        L.append('static const unsigned char sad_p%d[%d] = { %s };' % (i, len(d) + 1, ', '.join(str(v) for v in [len(d) // 19] + d)))
+    L.append('#define SAD_ART %d   /* TZ_HANDSHAKE */' % [sh[0] for sh in SHOTS].index('handshake'))
+    L.append('static const unsigned char * const sad_pt[5] = { sad_p0, sad_p1, sad_p2, sad_p3, sad_p4 };   /* homme, femme, Margaux, homme nu, femme nue */')
+    open(os.path.join(ROOT, 'src', 'assets_sad.h'), 'w').write('\n'.join(L) + '\n')
+    print('poignée de main triste : %d octets' % tot)
+
+
 if __name__ == '__main__':
     out, sheet = main()
     export(out)
+    sad_patch(out)
     vs_preview(vs_export(), os.path.join(ROOT, 'assets', 'preview_vs.png'))
     cols = len(sheet[0])
     w, h = sheet[0][0].size

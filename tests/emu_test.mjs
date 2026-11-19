@@ -834,6 +834,22 @@ console.log('Ralenti : gros plan et zoom');
     check(np === 4 && a === w && b === w + 2 && String.fromCharCode(...tx) === 'VICTOIRE !' && scr(d) === SS.RESULTS,
       `double : portrait du vainqueur, puis gros plan de son partenaire (« ${String.fromCharCode(...tx)} »), puis les résultats`);
   }
+  // (2.80) joueur humain battu par l'ordinateur : poignée de main au
+  // visage triste (cases du visage réécrites, extra2.c shake_sad_f)
+  {
+    const d = boot(); startWith(d, { FMT: 3, REPLAY: 0, P1: 0 });
+    const c = d.addr('cfg'); d.nes.cpu.mem[c + CFG.CTRL] = 0; d.nes.cpu.mem[c + CFG.CTRL + 1] = 2;
+    let f = 0; runUntil(d, () => d.peek('hl_mode') === 3, 60 * 60 * 10, () => { if (d.peek('cer') >= 4) d.poke('cer_skip', 1); if ((++f & 31) === 0) d.tap('A'); });
+    runUntil(d, () => d.peek('hl_t') === 110, 300);
+    const r = d.nes.rom.rom[30], o = d.addr('sad_p0') - 0x8000, v = d.nes.ppu.vramMem, n = r[o];
+    let ok = n > 3;
+    for (let k = 0; k < n; k++) {
+      const q = o + 1 + k * 19, ad = r[q] | (r[q + 1] << 8), t = r[q + 2];
+      if (v[ad] !== t) ok = false;
+      for (let b = 0; b < 16; b++) if (v[t * 16 + b] !== r[q + 3 + b]) ok = false;
+    }
+    check(ok && d.peek('sc_winner') === 1 && d.peek('hl_sp') === 0, `défaite : poignée de main au visage triste (${n} cases, vainqueur ${d.peek('sc_winner')})`);
+  }
   // club nudiste (2.79) : gros plans comme ailleurs, censurés : mosaïque
   // ($F9/$FA) sur le corps, tenue couleur de peau
   const n = boot(); n.poke('nude_unlocked', 1); startWith(n, { FMT: 3, ENV: 3 }); allCpu(n);

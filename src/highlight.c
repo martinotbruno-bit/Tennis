@@ -628,7 +628,7 @@ static void cut_build(u8 art)
     scroll_x = (u8)hl_cam; scroll_nt = (u8)((hl_cam >> 8) & 1); scroll_y = 0;
     spr_begin(); spr_end();
     label_load();                       /* (lettres du titre, rendu coupé) */
-    if (cfg.env == ENV_NUDE) far_call(BANK_X2, (void *)cens_hd_f, z);   /* (club nudiste : mosaïque, extra2.c) */
+    far_call(BANK_X2, (void *)cens_hd_f, (u8)(z | (art << 1) | (g << 6)));   /* (club nudiste : mosaïque ; perdant : visage triste, extra2.c) */
     ppu_on();
 }
 

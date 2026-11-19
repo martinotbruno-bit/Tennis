@@ -490,6 +490,22 @@ static u8 cn_art, cn_g;
 #pragma zpsym("tz_nd")
 #pragma zpsym("cn_art")
 #pragma zpsym("cn_g")
+/* (2.80) poignée de main du perdant (joueur humain battu) : visage triste.
+   Les cases qui diffèrent de l'image souriante (tools/gen_teaser.py,
+   sad_patch) : tuile réécrite, case de l'écran pointée dessus ; rendu
+   coupé (highlight.c cut_build). v : 0 homme, 1 femme, 2 Margaux, 3 homme
+   nu, 4 femme nue */
+#include "assets_sad.h"
+static void shake_sad(u8 v)
+{
+    const u8 *p = sad_pt[v];
+    u8 n = *p++, i;
+    for (; n; --n, p += 19) {
+        vram_adr((u16)p[2] << 4); for (i = 3; i < 19; ++i) vram_put(p[i]);
+        vram_adr((u16)(p[0] | (p[1] << 8))); vram_put(p[2]);
+    }
+}
+
 u16 __fastcall__ nude_art_f(u16 a)
 {
     cn_art = (u8)a; cn_g = (u8)((a >> 8) & 1);
@@ -499,13 +515,17 @@ u16 __fastcall__ nude_art_f(u16 a)
 /* gros plan (rendu coupé) : z (gros plan zoomé) ; image : nude_art_f */
 u16 __fastcall__ cens_hd_f(u16 a)
 {
+    /* a : z (bit 0), image (bits 1 à 5), g (bits 6 et 7) ; appelée après
+       chaque chargement d'image HD (highlight.c cut_build) */
     const u8 *r = tz_cens[cn_art][cn_g];
-    u8 k;
+    u8 k, z = (u8)(a & 1), g = (u8)((u8)a >> 6);
+    if ((u8)((u8)a >> 1 & 31) == SAD_ART && cfg.ctrl[sc_winner] == CTRL_CPU && cfg.ctrl[sc_winner ^ 1] != CTRL_CPU) shake_sad((u8)(cfg.env == ENV_NUDE ? g + 3 : g));   /* (2.80 : joueur humain battu par l'ordinateur, visage triste ; comme sad, highlight.c final_tick) */
+    if (cfg.env != ENV_NUDE) return 0;
     cens_tiles(0xF9);
     for (k = 0; k < 4 && r[2]; ++k, r += 4) cens_rect(NTADR(r[0], r[1]), r[2], r[3], 0xF9, 1, 0xF6);
     /* tenue couleur de peau */
     pal_buf[9] = pal_buf[5]; pal_buf[10] = pal_buf[6];
-    if (a) pal_buf[15] = pal_buf[9]; else pal_buf[14] = pal_buf[9];
+    if (z) pal_buf[15] = pal_buf[9]; else pal_buf[14] = pal_buf[9];
     pal_dirty = 1;
     return 0;
 }
