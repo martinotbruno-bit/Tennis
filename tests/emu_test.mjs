@@ -2664,7 +2664,7 @@ console.log('Séquences animées du match');
   for (const dbl of [0, 1]) {
     // fin du match : à genoux, allongé (raquette au sol), poignée de main, salut
     const e = boot(); startWith(e, { FMT: 3, SURF: 1, TYPE: dbl }); allCpu(e); e.run(20);
-    runUntil(e, () => e.peek('ms') === 4, 60 * 60 * 20, () => { if (e.peek('cer') >= 4 && e.peek('cer') <= 6) e.poke('cer_skip', 1); });
+    runUntil(e, () => e.peek('ms') === 4, 60 * 60 * 40, /* (match de 20 min environ : marge) */ () => { if (e.peek('cer') >= 4 && e.peek('cer') <= 6) e.poke('cer_skip', 1); });
     e.cerSkip = false; e.poke('cer_skip', 0);
     const w = e.peek('sc_winner'), n = e.peek('npl');
     let kneel = false, supine = false, racket = false, shake = false, close = false, salute = false, frames = 0;
