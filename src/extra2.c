@@ -181,7 +181,7 @@ u16 __fastcall__ hd_backdrop_f(u16 z)
 /*   sombres, panneaux allumés ;                                           */
 /* - décor animé (decor_tick, chaque trame du match) : au château, les     */
 /*   flammes des torches et les bannières vacillent ; au club et au parc,  */
-/*   le feuillage frémit par rafales ; en salle, les panneaux s'allument    */
+/*   (2.83 : plus de rafale sur le feuillage) ; en salle, les panneaux s'allument */
 /*   quand le public réagit ;                                              */
 /* - feuilles d'automne qui tombent sur les côtés du parc (decor_draw) ;   */
 /* - ambiance sonore sur le 2e canal carré, libre pendant le match (pas de */
@@ -300,7 +300,7 @@ void decor_tick(void)
     if (up && (e == ENV_STADIUM || e == ENV_HALL)) dk_fx = 120;   /* (2.80) flashs des photographes */
     /* décor animé : une couleur du décor (palette 2) qui varie */
     if (e == ENV_CASTLE || e == ENV_MARGAUX) idx = 11;
-    else if (e == ENV_PARK || e == ENV_HALL) idx = 10;   /* (2.83 : plus de rafale au club, elle ressemblait à un défaut d'affichage) */
+    else if (e == ENV_HALL) idx = 10;   /* (2.83 : plus de rafale sur le feuillage du club et du parc, elle ressemblait à un défaut d'affichage) */
     if (idx) {
         if (pal_buf[idx] != dk_last) dk_base = pal_buf[idx];   /* (palette refaite : nuit, crépuscule, pluie) */
         v = dk_base;
@@ -309,7 +309,7 @@ void decor_tick(void)
         else if (e == ENV_HALL) {
             if (up) dk_fl = 40;
             if (dk_fl) { --dk_fl; if ((dk_fl & 8) && v < 0x30) v += 0x10; }
-        } else if ((dk_t & 0xC0) == 0xC0 && (dk_t & 8)) v = (u8)(v >= 0x10 ? v - 0x10 : v);   /* rafale (parc) */
+        }
         if (v != pal_buf[idx]) { pal_buf[idx] = v; pal_dirty = 1; }
         dk_last = v;
     }

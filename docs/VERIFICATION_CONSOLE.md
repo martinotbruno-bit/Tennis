@@ -194,7 +194,7 @@ Pour chaque ligne, lancez un match et regardez l'écran pendant une dizaine de s
 | 10.56 | Petites animations des lieux (version 2.80) | Après un point : stade et salle, flashs blancs dans le public ; court Margaux, cœurs roses qui montent et étoiles qui changent de couleur ; club nudiste, papillons blancs ; château, vol de 3 oiseaux noirs (attendre quelques points) ; parc, écureuil orange qui descend un côté ; rien pendant l'échange ; sous la pluie, gouttes normales et pas de ces animations ; après le match, la pluie du menu des conditions reste des gouttes | ☐ |
 | 10.57 | Poignée de main du perdant (version 2.81) | Perdre un match contre l'ordinateur : après le portrait à genoux « DEFAITE », la poignée de main au filet montre le joueur le visage triste (yeux baissés, bouche tombante), sans case abîmée autour du visage ; gagner : sourire comme avant ; idem au club nudiste | ☐ |
 | 10.58 | Ralenti passé puis A trop tôt (version 2.82) | Pendant le gros plan d'un ralenti, appuyer sur A, puis de nouveau sur A tout de suite : le bandeau du score monte quand même ; un appui ne le ferme qu'une fois entièrement monté | ☐ |
-| 10.59 | Club : vol de petits oiseaux (version 2.83) | Au club, après quelques points : 3 petits oiseaux noirs traversent le haut de l'écran en chantant ; le feuillage ne change plus de couleur | ☐ |
+| 10.59 | Club : vol de petits oiseaux (version 2.83) | Au club, après quelques points : 3 petits oiseaux noirs traversent le haut de l'écran en chantant ; le feuillage ne change plus de couleur, ni au club ni au parc | ☐ |
 
 ## 11. Ce qu'il faut renvoyer
 
