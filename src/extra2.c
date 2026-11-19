@@ -195,8 +195,11 @@ extern u8 band_hold;
 #pragma zpsym("band_hold")
 #define CER_CHAIR 4
 #pragma bss-name(push, "ZEROPAGE")
-static u8 dk_t, dk_last, dk_base, dk_fl, dk_pc, dk_snd, dk_sp, dk_pcer, dk_pms, dk_cr, dk_fan;
+static u8 dk_t, dk_last, dk_base, dk_fl, dk_pc, dk_snd, dk_sp, dk_pcer, dk_pms, dk_cr, dk_fan, dk_h, dk_fx, dk_on;
 #pragma bss-name(pop)
+#pragma zpsym("dk_h")
+#pragma zpsym("dk_fx")
+#pragma zpsym("dk_on")
 #pragma zpsym("dk_t")
 #pragma zpsym("dk_last")
 #pragma zpsym("dk_base")
@@ -211,9 +214,21 @@ static u8 dk_t, dk_last, dk_base, dk_fl, dk_pc, dk_snd, dk_sp, dk_pcer, dk_pms, 
 
 #pragma static-locals(push, off)
 static const u8 mg_court[6] = { 0x15, 0x24, 0x25, 0x05, 0x35, 0x34 };   /* court Margaux : terre (rose foncé), gazon (fuchsia), dur (rose), moquette (bordeaux), plage (rose pâle), glace (lilas) */
-u16 __fastcall__ venue_pal_f(u16 cond)
+#include "assets_decor.h"
+u16 __fastcall__ venue_pal_f(u16 cw)
 {
-    u8 c;
+    u8 c, i, cond = (u8)cw;
+    const u8 *src;
+    /* (2.80) petites animations : 2 tuiles propres au lieu, écrites au
+       chargement du court (bit 8 : rendu coupé, game.c court_load) à la
+       place de la goutte (4) et de l'éclaboussure (8), inutilisées sans
+       pluie ; rétablies à la sortie du match (gfx.c chr_borrow_restore) */
+    dk_on = (u8)(cond != COND_RAIN && cfg.env != ENV_CLUB);
+    if ((cw & 0x100) && dk_on) {
+        src = dk_tiles + (u16)cfg.env * 32;
+        vram_adr(0x1000 + (4 << 4)); for (i = 0; i < 16; ++i) vram_put(src[i]);
+        vram_adr(0x1000 + (8 << 4)); for (i = 16; i < 32; ++i) vram_put(src[i]);
+    }
     if (cfg.env == ENV_MARGAUX) {
         c = mg_court[cfg.surface < 6 ? cfg.surface : 2];
         if (cond == COND_RAIN && c >= 0x10) c -= 0x10;
@@ -224,7 +239,7 @@ u16 __fastcall__ venue_pal_f(u16 cond)
         pal_set_court(cfg.surface, COND_DAY, ENV_HALL);
         pal_buf[9] = 0x2D; pal_buf[10] = 0x3A; pal_buf[11] = 0x0F;   /* murs sombres, panneaux allumés */
     }
-    dk_t = dk_fl = dk_snd = dk_cr = dk_fan = 0; dk_last = 0xFF;
+    dk_t = dk_fl = dk_snd = dk_cr = dk_fan = dk_h = dk_fx = 0; dk_last = 0xFF;
     dk_pc = crowd_timer; dk_pcer = cer; dk_pms = ms;
     pal_dirty = 1;
     return 0;
@@ -277,16 +292,19 @@ void decor_tick(void)
         if (dk_snd) { APU(0x4004) = 0x30; dk_snd = 0; }
         return;
     }
-    ++dk_t;
+    if (++dk_t == 0) ++dk_h;
     up = (u8)(crowd_timer > dk_pc);           /* le public vient de réagir */
     dk_pc = crowd_timer;
+    if (dk_fx) --dk_fx;
+    if (up && (e == ENV_STADIUM || e == ENV_HALL)) dk_fx = 90;   /* (2.80) flashs des photographes */
     /* décor animé : une couleur du décor (palette 2) qui varie */
-    if (e == ENV_CASTLE) idx = 11;
+    if (e == ENV_CASTLE || e == ENV_MARGAUX) idx = 11;
     else if (e == ENV_CLUB || e == ENV_PARK || e == ENV_HALL) idx = 10;
     if (idx) {
         if (pal_buf[idx] != dk_last) dk_base = pal_buf[idx];   /* (palette refaite : nuit, crépuscule, pluie) */
         v = dk_base;
         if (e == ENV_CASTLE) { if (flick[(dk_t >> 2) & 15] && v < 0x30) v += 0x10; }
+        else if (e == ENV_MARGAUX) { static const u8 twk[8] = { 0, 0, 0x38, 0, 0, 0x3C, 0, 0x37 }; if (twk[(dk_t >> 3) & 7]) v = twk[(dk_t >> 3) & 7]; }   /* (2.80) étoiles qui scintillent */
         else if (e == ENV_HALL) {
             if (up) dk_fl = 40;
             if (dk_fl) { --dk_fl; if ((dk_fl & 8) && v < 0x30) v += 0x10; }
@@ -302,30 +320,98 @@ void decor_tick(void)
     if (dk_fan) { dk_fan = 0; dk_snd = 0; snd_start(2); }
     if (dk_snd) snd_step();
     if (e == ENV_STADIUM) { if (up) dk_cr = 28; if (dk_cr && --dk_cr == 0) sfx_crowd(6); }   /* clameur prolongée */
-    if (e == ENV_CLUB || e == ENV_PARK || e == ENV_CASTLE) {
+    if (e == ENV_CLUB || e == ENV_PARK || e == ENV_CASTLE || e == ENV_NUDE) {
         if (up) dk_cr = 36;
         if (dk_cr) { --dk_cr; if (dk_cr < 24 && (dk_cr & 7) == 0) sfx_clap(); }   /* applaudissements polis */
     }
-    if ((e == ENV_CLUB || e == ENV_PARK) && ms != MS_RALLY && dk_t == 0x70) snd_start(1);   /* oiseaux entre les points */
+    if ((e == ENV_CLUB || e == ENV_PARK || e == ENV_NUDE) && ms != MS_RALLY && dk_t == 0x70) snd_start(1);   /* oiseaux entre les points */
     if (e == ENV_HALL && up) snd_start(3);
 }
 
-/* feuilles d'automne sur les côtés du parc (sprites : l'ellipse des
-   éclaboussures, orange, retournée au fil de la chute, et quelques éclats
-   jaunes ; 6 en simple, 3 en double) */
+/* Sprites du décor (fin du point, bandeau du score, pauses ; mdraw.c) :
+   - parc : feuilles d'automne sur les côtés (l'ellipse des ombres, orange,
+     retournée au fil de la chute, et quelques éclats jaunes ; 6 en simple,
+     3 en double) et, de temps en temps, un écureuil qui descend en
+     zigzag un côté du parc, avec une halte à mi-chemin ;
+   - court Margaux : petits cœurs qui montent sur les côtés ;
+   - stade et salle : flashs des photographes dans le public, nombreux
+     quand le public réagit, un de temps en temps sinon ;
+   - club nudiste : papillons qui volettent sur les côtés ;
+   - château : un vol de 3 oiseaux en V traverse l'écran de temps en temps.
+   (tuiles 4 et 8 : dessins propres au lieu, voir venue_pal_f) */
 static const u8 lf_sway[8] = { 0, 1, 2, 3, 3, 2, 1, 0 };
+static const u8 sq_hop[4] = { 0, 2, 3, 2 };
+static const s8 bd_dx[3] = { 0, -12, -12 }, bd_dy[3] = { 0, -6, 6 };
 void decor_draw(void)
 {
-    u8 i, n, x, y, t;
-    if (cfg.env != ENV_PARK || cfg.cond == COND_RAIN || hl_mode) return;
+    u8 i, n, x, y, t, k, e = cfg.env;
+    u16 ph;
+    s16 sx;
+    if (!dk_on || hl_mode) return;
     n = (u8)(npl == 4 ? 3 : 6);
-    for (i = 0; i < n; ++i) {
-        t = (u8)((frame_cnt >> 1) + i * 43);
-        y = (u8)(28 + (u8)(t % 196));
-        x = (u8)((i & 1) ? 226 + (i << 1) : 10 + (i << 1));
-        x = (u8)(x + lf_sway[((t >> 3) + i) & 7]);
-        if (i == 5) spr1(x, y, 6, 3);                                  /* (éclat jaune) */
-        else spr1(x, y, 5, (u8)(3 | ((t & 16) ? 0x40 : 0) | ((t & 32) ? 0x80 : 0)));   /* feuille qui tournoie */
+    ph = (u16)(((u16)(dk_h & 1) << 8) | dk_t);      /* (cycle de 512 trames) */
+    if (e == ENV_PARK) {
+        for (i = 0; i < n; ++i) {
+            t = (u8)((frame_cnt >> 1) + i * 43);
+            y = (u8)(28 + (u8)(t % 196));
+            x = (u8)((i & 1) ? 226 + (i << 1) : 10 + (i << 1));
+            x = (u8)(x + lf_sway[((t >> 3) + i) & 7]);
+            if (i == 5) spr1(x, y, 6, 3);                                  /* (éclat jaune) */
+            else spr1(x, y, 5, (u8)(3 | ((t & 16) ? 0x40 : 0) | ((t & 32) ? 0x80 : 0)));   /* feuille qui tournoie */
+        }
+        if (ph < 192) {                                                    /* écureuil */
+            t = (u8)ph;
+            k = (u8)((t >> 4) & 1);                                        /* sens du zigzag */
+            x = (u8)(((dk_h & 2) ? 232 : 8) + ((k ? (t & 15) : 15 - (t & 15)) >> 1));
+            if (t >= 96 && t < 128) spr1(x, 132, 4, (u8)(3 | (k ? 0 : 0x40)));   /* (halte, assis) */
+            else {
+                y = (u8)(36 + (t < 96 ? t : t - 32) - sq_hop[(t >> 1) & 3]);
+                spr1(x, y, (u8)((t & 4) ? 4 : 8), (u8)(3 | (k ? 0 : 0x40)));
+            }
+        }
+        return;
+    }
+    if (e == ENV_MARGAUX) {                                               /* cœurs qui montent */
+        for (i = 0; i < n; ++i) {
+            t = (u8)(((dk_t >> 1) | (dk_h << 7)) + i * 43);
+            y = (u8)(220 - (u8)(t % 188));
+            x = (u8)((i & 1) ? 228 + (i << 1) : 8 + (i << 1));
+            spr1((u8)(x + lf_sway[((t >> 3) + i) & 7]), y, (u8)((i & 2) ? 8 : 4), 2);
+        }
+        return;
+    }
+    if (e == ENV_STADIUM || e == ENV_HALL) {                              /* flashs des photographes */
+        n = (u8)(npl == 4 ? 2 : 4);
+        for (i = 0; i < n; ++i) {
+            if (!dk_fx && i) break;
+            t = (u8)(dk_t + i * 21);
+            k = (u8)(t & 15);
+            if (k >= 7 || (!dk_fx && ((t >> 4) & 3))) continue;
+            t = (u8)((t >> 4) * 37 + i * 91);
+            x = (u8)((t & 1) ? 230 + (t & 14) : 4 + ((t >> 1) & 14));
+            y = (u8)(36 + (u8)((u8)(t * 3) % 168));
+            spr1(x, y, (u8)(k < 3 ? 4 : 8), 3);
+        }
+        return;
+    }
+    if (e == ENV_NUDE) {                                                  /* papillons */
+        n = (u8)(npl == 4 ? 1 : 2);
+        for (i = 0; i < n; ++i) {
+            t = (u8)(dk_t + (i << 7));
+            y = (u8)(48 + (t < 128 ? t : 255 - t) + lf_sway[(t >> 1) & 7]);
+            x = (u8)((i ? 230 : 10) + (lf_sway[(t >> 2) & 7] << 1));
+            spr1(x, y, (u8)((dk_t & 4) ? 4 : 8), 3);
+        }
+        return;
+    }
+    if (e == ENV_CASTLE && ph < 150) {                                    /* vol d'oiseaux */
+        n = (u8)(npl == 4 ? 2 : 3);
+        for (k = 0; k < n; ++k) {
+            sx = (s16)((ph << 1) - 16 + bd_dx[k]);
+            if (dk_h & 2) sx = (s16)(240 - sx);
+            if (sx < 0 || sx > 247) continue;
+            spr1((u8)sx, (u8)(60 - (ph >> 3) + bd_dy[k]), (u8)((((dk_t >> 3) + k) & 1) ? 4 : 8), 2);
+        }
     }
 }
 #pragma static-locals(pop)

@@ -1017,7 +1017,7 @@ static void court_load(void)
     vram_adr(0x2000);
     bank_call(BANK_EXTRAS, load_court);
     pal_set_court(cfg.surface, cfg.cond, cfg.env);
-    far_call(BANK_X2, (void *)venue_pal_f, cfg.cond);   /* (court Margaux selon la surface, soirée en salle : extra2.c) */
+    far_call(BANK_X2, (void *)venue_pal_f, (u16)(0x100 | cfg.cond));   /* (tuiles des animations du lieu ; court Margaux selon la surface, soirée en salle : extra2.c) */
     bank_call(BANK_HL, court_post);    /* bandeau du score (écran 1) ; crépuscule : lumière selon les jeux joués (highlight.c) */
     pal_players_match(cfg.chr[0], cfg.chr[1]);               /* (contour, raquette et cheveux noirs) */
 }

@@ -1636,7 +1636,7 @@ console.log('Finitions : ralentis, IA, effets, son, réglages mémorisés');
   const loaded = tileIs(11, prin.slice(0, 16)) && tileIs(13, prin.slice(32, 48)) && tileIs(tt + 3, prin.slice(96, 112));
   g.poke('ms', 2); g.poke('ump_arm', 0); g.run(2);
   const wand = oamTiles(g).has(tt + 3) && oamTiles(g).has(13);
-  const pink = g.peek('pal_buf', 16 + 11) === 0x34;
+  const pink = g.peek('pal_buf', 16 + 11) === 0x25;   /* (2.80 : rose plus soutenu, aussi celui des cœurs du décor) */
   // ailleurs : l'arbitre habituel, sans baguette
   const n = boot(); startWith(n, { ENV: 0 }); n.run(60); n.poke('ms', 2); n.poke('ump_arm', 0); n.run(2);
   let same = true; for (let i = 0; i < 48; i++) if (n.nes.ppu.vramMem[0x1000 + 11 * 16 + i] !== rom2[0x1000 + 11 * 16 + i]) same = false;
@@ -3188,6 +3188,29 @@ console.log('Version 2.77 : compétition à 4 joueurs');
   const h = run({ ENV: 2, COND: 1 });
   check(fl.has(0x16) && fl.has(0x26) && inRally.size <= 1 && leaves >= 3 && mg[0] === 0x15 && mg[1] === 0x05 && h.peek('pal_buf', 10) === 0x3A && h.peek('pal_buf', 9) === 0x2D,
     `lieux : château ${[...fl].map(v => v.toString(16))}, feuilles du parc ${leaves}, court Margaux ${mg.map(v => v.toString(16))}, salle en soirée ${h.peek('pal_buf', 10).toString(16)}`);
+}
+{
+  // (2.80) petites animations des lieux : flashs (stade, salle), papillons
+  // (club nudiste), cœurs (court Margaux), oiseaux (château), écureuil
+  // (parc) ; tuiles 4 et 8 propres au lieu, jamais pendant l'échange ; sous
+  // la pluie, la goutte reste la goutte
+  const res = [];
+  for (const env of [0, 2, 3, 4, 5, 6]) {
+    const e = boot(); if (env === 3) e.poke('nude_unlocked', 1);
+    startWith(e, { ENV: env, FMT: 3, REPLAY: 0 }); allCpu(e);
+    const o = e.addr('oam_buf'), m = e.nes.cpu.mem; let seen = 0, inRally = 0;
+    for (let f = 0; f < 4000 && seen < 3; f++) {
+      e.run(1); if (e.peek('hl_mode')) continue;
+      let c = 0; for (let i = 0; i < 64; i++) { const t = m[o + i * 4 + 1]; if ((t === 4 || t === 8) && m[o + i * 4] < 239) c++; }
+      if (e.peek('ms') === 2) inRally += c; else if (c) seen++;
+    }
+    const v = e.nes.ppu.vramMem, r = e.nes.rom.rom[2]; let diff = 0; for (let i = 0; i < 16; i++) if (v[0x1040 + i] !== r[0x1040 + i]) diff++;
+    res.push({ env, seen, inRally, diff });
+  }
+  const w = boot(); startWith(w, { ENV: 0, COND: 2, FMT: 3 }); w.run(30);
+  let rainOk = true; for (let i = 0; i < 16; i++) if (w.nes.ppu.vramMem[0x1040 + i] !== w.nes.rom.rom[2][0x1040 + i]) rainOk = false;
+  check(res.every(r => r.seen >= 3 && r.inRally === 0 && r.diff > 0) && rainOk,
+    `petites animations des lieux, hors échange seulement : ${res.map(r => `${r.env}:${r.seen}/${r.inRally}/${r.diff}`).join(' ')} ; pluie : goutte intacte ${rainOk}`);
 }
 {
   // (2.77i) FACILE : puissance de l'ordinateur bornée à 0 (une tactique ou un

@@ -132,7 +132,7 @@ void pal_set_court(u8 s, u8 cond, u8 env)
     /* effets : 1 couleur de la balle (selon le court), 2 bleu (pluie,
        sueur), 3 blanc (couture de la balle, étoiles) */
     pal_buf[16 + 12] = p[0]; pal_buf[16 + 13] = ball_col[env == ENV_MARGAUX ? NSURF : s]; pal_buf[16 + 14] = 0x21; pal_buf[16 + 15] = 0x30;
-    if (env == ENV_MARGAUX) pal_buf[16 + 11] = 0x34;   /* robe rose de la princesse arbitre (et reflet de la balle) */
+    if (env == ENV_MARGAUX) pal_buf[16 + 11] = 0x25;   /* robe rose de la princesse arbitre (et reflet de la balle, cœurs du décor : 2.80) */
     if (env == ENV_NUDE) pal_buf[16 + 11] = 0x37;      /* club nudiste : l'arbitre aussi est nu (chemise couleur peau) */
     if (cond == 2) {
         /* pluie : ciel couvert, couleurs ternies */
@@ -306,6 +306,7 @@ void chr_borrow_restore(void)
     bg_dirty = 0;
     chr_copy(BANK_CHR, chr_data + 0x1000 + ((u16)trophy_tile << 4), 0x1000 + ((u16)trophy_tile << 4), 64);
     chr_copy(BANK_CHR, chr_data + 0x1000 + (11 << 4), 0x1000 + (11 << 4), 48);   /* arbitre (princesse au court Margaux) */
+    chr_copy(BANK_CHR, chr_data + 0x1000 + (4 << 4), 0x1000 + (4 << 4), 80);     /* goutte et éclaboussure (animations des lieux, extra2.c) */
 }
 
 /* motifs d'origine (banque 2) dans toute la CHR-RAM, rendu coupé : après le

@@ -86,7 +86,7 @@ void match_draw(void)
     bank_call(BANK_EXTRAS, match_fx);   /* ombres, poussière, arbitre, repère */
     if (party) { win_fx(); far_call(BANK_TRAIN, (void *)fw_draw, ms_timer); }
     if (cfg.cond == COND_RAIN) bank_call(BANK_EXTRAS, rain_draw);
-    else if (cfg.env == ENV_PARK && (ms == MS_DEAD || ms == MS_OVER || cer || band_hold)) bank_call(BANK_X2, decor_draw);   /* feuilles d'automne : fin du point, bandeau du score, pauses (extra2.c) */
+    else if (cfg.env != ENV_CLUB && (ms == MS_DEAD || ms == MS_OVER || cer || band_hold)) bank_call(BANK_X2, decor_draw);   /* feuilles, écureuil, cœurs, flashs, papillons, oiseaux : fin du point, bandeau du score, pauses (extra2.c) */
     spr_end();
     bank_call(BANK_HL, band_draw);      /* bandeau du score entre les points (highlight.c) */
 }
