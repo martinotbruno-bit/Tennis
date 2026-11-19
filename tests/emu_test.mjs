@@ -3166,6 +3166,19 @@ console.log('Version 2.77 : château au crépuscule, victoire sans bandeau');
 if (sec('Version 2.77 : compétition à 4 joueurs')) {
 console.log('Version 2.77 : compétition à 4 joueurs');
 {
+  // (2.79) lieux : château (bannières et flammes qui vacillent), parc
+  // (feuilles qui tombent), court Margaux (rose selon la surface), salle (la
+  // nuit devient une soirée, panneaux allumés)
+  const run = (opts, frames) => { const e = boot(); startWith(e, Object.assign({ FMT: 3, REPLAY: 0 }, opts)); allCpu(e); return e; };
+  const c = run({ ENV: 5 }); const fl = new Set(); for (let f = 0; f < 300; f++) { c.run(1); if (!c.peek('hl_mode')) fl.add(c.peek('pal_buf', 11)); }
+  const pk = run({ ENV: 6 }); let leaves = 0;
+  for (let f = 0; f < 600 && !leaves; f++) { pk.run(1); if (pk.peek('hl_mode')) continue; const o = pk.addr('oam_buf'); for (let i = 0; i < 64; i++) { const y = pk.nes.cpu.mem[o + i * 4], t = pk.nes.cpu.mem[o + i * 4 + 1], x = pk.nes.cpu.mem[o + i * 4 + 3]; if (t === 5 && y < 240 && (x < 40 || x > 216)) leaves++; } }
+  const mg = [0, 3].map(s => run({ ENV: 4, SURF: s }).peek('pal_buf', 1));
+  const h = run({ ENV: 2, COND: 1 });
+  check(fl.has(0x16) && fl.has(0x26) && leaves >= 3 && mg[0] === 0x15 && mg[1] === 0x05 && h.peek('pal_buf', 10) === 0x3A && h.peek('pal_buf', 9) === 0x2D,
+    `lieux : château ${[...fl].map(v => v.toString(16))}, feuilles du parc ${leaves}, court Margaux ${mg.map(v => v.toString(16))}, salle en soirée ${h.peek('pal_buf', 10).toString(16)}`);
+}
+{
   // (2.77i) FACILE : puissance de l'ordinateur bornée à 0 (une tactique ou un
   // style négatifs donnaient 254 : balles très hautes et rapides, dehors ou
   // dans le filet, plusieurs fois de suite)

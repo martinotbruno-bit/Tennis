@@ -753,6 +753,8 @@ Aucune musique pendant les matchs. Toutes les mélodies sont originales :
 
 Coup gagnant : un « ting » montant bref sur le carré 1 (`sfx_winner`), en plus de la réaction du public déjà présente. Le nom du coup (`win_label`, banque fixe) dépend du dernier coup du gagnant (`last_shot`), d'un adversaire au filet au moment de la frappe (`hit_pass`) et du saut (`hit_jump`).
 
+**Lieux (2.79, extra2.c, banque 30)** : `venue_pal_f(cond)` après chaque `pal_set_court` (game.c `court_load`, sunset.c, pick.c) : court Margaux selon la surface (`mg_court`), soirée en salle, feuilles orangées au parc (sprite palette 3, couleur 2). `decor_tick` (chaque trame du match, game.c) : couleur du décor qui varie (palette 2 : 11 au château, 10 au club, au parc et en salle ; base relue si la palette a été refaite), ambiances sur le 2e carré ($4004-$4007, seulement si `music_none()` et SON ≠ aucun) : oiseaux, fanfare (`dk_fan`, en attente de la fin de la musique de jeu), double bip ; clameur prolongée et applaudissements (`sfx_crowd`, `sfx_clap`). `decor_draw` (mdraw.c) : feuilles du parc (tuile 5, 6 en simple, 3 en double). Variables en page zéro (`dk_*`).
+
 ## 7. NTSC / PAL
 
 - **Détection** : au démarrage, une boucle de 16 cycles est comptée entre deux VBlank (NTSC ≈ 1 861 ; PAL > 1 970).
