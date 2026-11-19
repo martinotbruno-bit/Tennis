@@ -630,9 +630,9 @@ console.log('Version 2.72 : carrière, fiche, reprise, cérémonie');
     if (e.peek('dive_canon') && ms === 2 && e.peek('hitter') === 1 && !e.peek('b_serve')) { e.poke('plx', 0, 0); e.poke('plx', (20 << 6) >> 8, 1); }
     e.run(1);
     const d = e.peek('dive_canon'); if (d && !pd) dives++; pd = d;
-    if (e.peek('hl_mode') === 1 && e.peek('hl_sk') === 4) close = 1;
+    if ((e.peek('hl_mode') === 1 || e.peek('hl_mode') === 2) && e.peek('hl_sk') === 4) close = e.peek('hl_mode');   /* (gros plan, ou zoom quand la balle tombe près d'une ligne) */
   }
-  check(dives > 0 && close, `service canon : plongeons de dernière chance (${dives}), gros plan du plongeon gagnant`);
+  check(dives > 0 && close, `service canon : plongeons de dernière chance (${dives}), plongeon gagnant mis en valeur au ralenti (${close === 1 ? 'gros plan' : 'zoom'})`);
 }
 {
   // remise du trophée : tribunes, public debout, plaque du finaliste
@@ -695,7 +695,7 @@ console.log('Version 2.73 : bandes du ralenti, survol, bandeau, dehors de peu');
     g.run(1);
     if (g.peek('cer') === 5) { g.tap('A'); continue; }   /* (2.75 : assis, les statistiques défilent à l'appui) */
     if (g.peek('ms') === 0 && !g.peek('cer') && g.peek('band_dis') && g.peek('sc_server') === 0) { g.tap('A'); g.run(14); g.tap('A'); continue; }   /* (bandeau fermé : le joueur sert) */
-    if (g.peek('ms') !== 0 || g.peek('cer') || g.peek('band_vis') !== 3) continue;
+    if (g.peek('ms') !== 0 || g.peek('cer') || !(g.peek('hl_flags') & 4)) continue;   /* (2.82 : bandeau entièrement monté, sinon l'appui ne le ferme pas) */
     if (g.peek('sc_server') === 1) {           /* l'ordinateur sert */
       if (cpuWait !== null) { g.tap('B'); continue; }
       g.run(300); cpuWait = g.peek('ms') === 0 && g.peek('band_vis') === 3;
