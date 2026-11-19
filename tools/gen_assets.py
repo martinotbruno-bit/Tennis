@@ -1812,7 +1812,10 @@ def persp_sides(e, bmp, w):
             ce = xr // 8                                  # colonne du bord
             nins = (ce - 3) if side == 0 else (28 - ce)  # colonnes ajoutées
             outer = [tile_at(bmp, ty, (o if side == 0 else 31 - o)) for o in range(4)]
-            crowd_row = (e == 0) or (e == 2) or (e == 1 and ty in CLUB_ROWS) or (e == 5 and ty in CASTLE_ROWS)
+            # (2.79) salle : comme à plat, gradins au bord de l'écran, mur gris et
+            # panneaux verts (en 2.76-2.78, du public sur toute la tribune : elle
+            # ressemblait au stade en perspective)
+            crowd_row = (e == 0) or (e == 1 and ty in CLUB_ROWS) or (e == 5 and ty in CASTLE_ROWS)
             # fond du décor (colonne du bord et colonnes ajoutées sans public)
             def filler(x, y):
                 if e == 0: return 2
@@ -1911,13 +1914,8 @@ def persp_sides(e, bmp, w):
                     xe = 128 + ((DBL_L - 6 if side == 0 else DBL_R + 6) - 128) * sc
                     assert (xe > bxi * 16 + 15) if side == 0 else (xe < bxi * 16), ('tribune et court dans un même bloc', e, by)
                 fix[(bxi, by)] = court_attr(bxo, by, e)
-    if e == 2:                                            # (2.76) salle : tribunes entières en palette 3 (public)
-        for by in range(2, 15):
-            for bx in (1, 2, 13, 14):
-                if (bx, by) in fix or bx in (1, 14):
-                    if bx == CHAIR_X // 16 and CHAIR_Y // 16 <= by < CHAIR_Y // 16 + 2:
-                        continue
-                    fix[(bx, by)] = 3
+    # (salle, 2.79 : plus de tribunes entières en palette 3 ; le mur et les
+    # panneaux gardent les palettes de la vue à plat)
     return fix
 
 def persp_build(e):
