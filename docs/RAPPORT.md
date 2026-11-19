@@ -801,7 +801,7 @@ Pour loger ce contenu, la cartouche passe de NROM (32 Ko) à **MMC1** : 128 Ko d
 | Relecture des textes (`check_texts.py`) | 0 problème |
 | Contraste (`contrast.py 25`) | 0 paire sous ΔE 25 (personnages, courts, balle, tenues) |
 | Profil CPU, double, 6 000 trames | 27 trames d'échange en dépassement (0,45 %), sans défaut d'image |
-| Compilation | Reproductible : SHA-256 `e41266ef860db83b99294d6f4dcdcb93c24fede44a45dfdf2d41fc40d4b2b5fe` sur deux compilations propres |
+| Compilation | Reproductible : SHA-256 `636296ec903c1129962f4fff3790a7e742c37fe3166466923c0f83e5a84a6be5` sur deux compilations propres |
 
 ## 3. Conformité par section du CDC
 
@@ -852,7 +852,7 @@ Légende : ✅ réalisé et testé en émulation · 🟡 partiel · 🔧 nécess
 - **Version 2.79c** : animations des lieux aussi pendant que le bandeau du score est affiché ; suite complète : 439 vérifications réussies, 0 échec.
 - **Version 2.80** : petites animations sur tous les lieux (flashs au stade et en salle, cœurs et étoiles au court Margaux, papillons au club nudiste, vol d'oiseaux au château, écureuil au parc) ; suite complète : 440 vérifications réussies, 0 échec.
 - **Version 2.81** : poignée de main au visage triste quand le joueur humain perd ; suite complète : 441 vérifications réussies, 0 échec.
-- **Version 2.82** : le bandeau du score apparaît même après un appui trop tôt en passant le ralenti.
+- **Version 2.82** : le bandeau du score apparaît même après un appui trop tôt en passant le ralenti ; suite complète : 442 vérifications réussies, 0 échec.
 - **Version 2.79a** : animations des lieux et ambiances seulement entre les échanges ; salle en perspective redessinée (public et bandeaux lumineux) ; suite complète : 439 vérifications réussies, 0 échec.
 - **Version 2.79** : lieux plus différents (décor animé, ambiances sonores, feuilles du parc, court Margaux selon la surface, soirée en salle, affiche du club nudiste, salle reconnaissable en perspective, club nudiste : images sans vêtements et censure en mosaïque) ; pas de crépuscule en salle ; suite complète : 437 vérifications réussies sur 439, les 2 autres (changement de côté, fin de set) attendaient un temps fixe trop court pour des échanges longs entre deux ordinateurs : rendues indépendantes de cette durée, elles passent.
 - **Version 2.78** : réglages simplifiés (page OPTIONS, modes 1 JOUEUR / 2 JOUEURS / COMPETITION / CARRIERE, ligne HUMAINS), commentaires de version retirés du code ; suite complète : 438 vérifications réussies, 0 échec.
