@@ -264,6 +264,14 @@ void decor_tick(void)
     static const u8 flick[16] = { 0, 0, 1, 0, 1, 1, 0, 0, 0, 1, 0, 0, 1, 0, 1, 0 };
     u8 e = cfg.env, idx = 0, v, up;
     if (hl_mode || paused) { if (dk_snd) { APU(0x4004) = 0x30; dk_snd = 0; } return; }
+    /* (pendant l'échange, decor_tick n'est pas appelée : au lancer du
+       service, la couleur du décor reprend sa valeur et le son s'arrête) */
+    if (ms == MS_TOSS) {
+        if (dk_last != 0xFF && pal_buf[e == ENV_CASTLE ? 11 : 10] == dk_last && dk_last != dk_base) { pal_buf[e == ENV_CASTLE ? 11 : 10] = dk_base; pal_dirty = 1; }
+        dk_last = 0xFF;
+        if (dk_snd) { APU(0x4004) = 0x30; dk_snd = 0; }
+        return;
+    }
     ++dk_t;
     up = (u8)(crowd_timer > dk_pc);           /* le public vient de réagir */
     dk_pc = crowd_timer;

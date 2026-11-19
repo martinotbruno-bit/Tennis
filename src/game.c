@@ -1244,7 +1244,7 @@ u8 match_tick(void)
     if (hud_dirty) bank_call(BANK_EXTRAS, hud_update);
     /* public animé (après le score : le tampon VRAM est partagé) */
     if (npl < 4 || (frame_cnt & 1)) bank_call(BANK_EXTRAS, crowd_tick);      /* public : suit la balle, ola, réactions (double : une trame sur deux) */
-    bank_call(BANK_X2, decor_tick);     /* décor animé et ambiance du lieu (extra2.c) */
+    if (ms != MS_RALLY) bank_call(BANK_X2, decor_tick);     /* décor animé et ambiance du lieu, entre les échanges seulement (extra2.c) */
     /* filet qui tremble (après le score : le tampon VRAM est partagé) */
     if (net_shake) bank_call(BANK_EXTRAS, net_tick);
     return 0;
