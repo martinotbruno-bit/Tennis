@@ -3226,7 +3226,7 @@ console.log('Version 2.77 : compétition à 4 joueurs');
   // (parc) ; tuiles 4 et 8 propres au lieu, jamais pendant l'échange ; sous
   // la pluie, la goutte reste la goutte
   const res = [];
-  for (const env of [0, 2, 3, 4, 5, 6]) {
+  for (const env of [0, 1, 2, 3, 4, 5, 6]) {   /* (2.83 : club, vol de petits oiseaux) */
     const e = boot(); if (env === 3) e.poke('nude_unlocked', 1);
     startWith(e, { ENV: env, FMT: 3, REPLAY: 0 }); allCpu(e);
     const o = e.addr('oam_buf'), m = e.nes.cpu.mem; let seen = 0, inRally = 0;

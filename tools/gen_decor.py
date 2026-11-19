@@ -73,6 +73,23 @@ T = {
            "2......2",
            "........",
            "........"],
+ # club : petit oiseau (passereau) ailes hautes / basses (palette 2 : 2 noir)
+ 'sbird1':["........",
+           "........",
+           ".2...2..",
+           "..2.2...",
+           "...2....",
+           "........",
+           "........",
+           "........"],
+ 'sbird2':["........",
+           "........",
+           "........",
+           "...2....",
+           "..2.2...",
+           ".2...2..",
+           "........",
+           "........"],
  # parc : écureuil de profil, deux temps de course (palette 3 du parc :
  # 1 jaune, 2 orange, 3 blanc)
  'sq1':   [".22.....",
@@ -92,7 +109,7 @@ T = {
            "...2.2..",
            "...2.2.."],
 }
-SETS = [('flash', 'glow'), None, ('flash', 'glow'), ('bfly1', 'bfly2'), ('heart', 'heart2'), ('bird1', 'bird2'), ('sq1', 'sq2')]
+SETS = [('flash', 'glow'), ('sbird1', 'sbird2'), ('flash', 'glow'), ('bfly1', 'bfly2'), ('heart', 'heart2'), ('bird1', 'bird2'), ('sq1', 'sq2')]
 def chr_bytes(rows):
     lo, hi = [], []
     for r in rows:

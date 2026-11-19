@@ -224,7 +224,7 @@ u16 __fastcall__ venue_pal_f(u16 cw)
        chargement du court (bit 8 : rendu coupé, game.c court_load) à la
        place de la goutte (4) et de l'éclaboussure (8), inutilisées sans
        pluie ; rétablies à la sortie du match (gfx.c chr_borrow_restore) */
-    dk_on = (u8)(cond != COND_RAIN && cfg.env != ENV_CLUB);
+    dk_on = (u8)(cond != COND_RAIN);
     if ((cw & 0x100) && dk_on) {
         src = dk_tiles + (u16)cfg.env * 32;
         vram_adr(0x1000 + (4 << 4)); for (i = 0; i < 16; ++i) vram_put(src[i]);
@@ -300,7 +300,7 @@ void decor_tick(void)
     if (up && (e == ENV_STADIUM || e == ENV_HALL)) dk_fx = 120;   /* (2.80) flashs des photographes */
     /* décor animé : une couleur du décor (palette 2) qui varie */
     if (e == ENV_CASTLE || e == ENV_MARGAUX) idx = 11;
-    else if (e == ENV_CLUB || e == ENV_PARK || e == ENV_HALL) idx = 10;
+    else if (e == ENV_PARK || e == ENV_HALL) idx = 10;   /* (2.83 : plus de rafale au club, elle ressemblait à un défaut d'affichage) */
     if (idx) {
         if (pal_buf[idx] != dk_last) dk_base = pal_buf[idx];   /* (palette refaite : nuit, crépuscule, pluie) */
         v = dk_base;
@@ -309,7 +309,7 @@ void decor_tick(void)
         else if (e == ENV_HALL) {
             if (up) dk_fl = 40;
             if (dk_fl) { --dk_fl; if ((dk_fl & 8) && v < 0x30) v += 0x10; }
-        } else if ((dk_t & 0xC0) == 0xC0 && (dk_t & 8)) v = (u8)(e == ENV_CLUB ? v + 1 : (v >= 0x10 ? v - 0x10 : v));   /* rafale */
+        } else if ((dk_t & 0xC0) == 0xC0 && (dk_t & 8)) v = (u8)(v >= 0x10 ? v - 0x10 : v);   /* rafale (parc) */
         if (v != pal_buf[idx]) { pal_buf[idx] = v; pal_dirty = 1; }
         dk_last = v;
     }
@@ -325,7 +325,7 @@ void decor_tick(void)
         if (up) dk_cr = 36;
         if (dk_cr) { --dk_cr; if (dk_cr < 24 && (dk_cr & 7) == 0) sfx_clap(); }   /* applaudissements polis */
     }
-    if ((e == ENV_CLUB || e == ENV_PARK || e == ENV_NUDE) && ms != MS_RALLY && dk_t == 0x70) snd_start(1);   /* oiseaux entre les points */
+    if ((e == ENV_PARK || e == ENV_NUDE || (e == ENV_CLUB && !(dk_h & 1))) && ms != MS_RALLY && dk_t == 0x70) snd_start(1);   /* oiseaux entre les points (club : pendant leur vol, decor_draw) */
     if (e == ENV_HALL && up) snd_start(3);
 }
 
@@ -429,7 +429,7 @@ void decor_draw(void)
         }
         return;
     }
-    if (e == ENV_CASTLE && ph < 150) {                                    /* vol d'oiseaux */
+    if ((e == ENV_CASTLE || e == ENV_CLUB) && ph < 150) {                 /* vol d'oiseaux (club : petits oiseaux, leur chant au milieu du vol) */
         n = (u8)(npl == 4 ? 2 : 3);
         for (k = 0; k < n; ++k) {
             sx = (s16)((ph << 1) - 16 + bd_dx[k]);
