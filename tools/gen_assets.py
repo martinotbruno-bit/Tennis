@@ -2166,6 +2166,11 @@ src.append(c_array('pose_set', bytes([1 if k in SET_C else 2 if k in SET_R else 
 src.append(c_array('pose_fb', bytes([POSE_FALLBACK.get(k, k) for k in range(NPOSE)])))
 src.append('const unsigned char swap_base = 0x%02X, swap_ntile[3] = { %d, %d, %d };\nconst unsigned char ice_tile = 0x%02X, prop_tile = 0x%02X;\n' % (
     SWAP0, len(swap_sets['C'][0]), len(swap_sets['R'][0]), len(swap_sets['F'][0]), ICE_TILE, PROP0))
+# (2.79) la même valeur en constante de compilation : swap_base est rangée en
+# banque 3, et une lecture depuis une autre banque (highlight.c, banque 15)
+# lisait l'octet de cette banque-là à la même adresse
+open(os.path.join(ROOT, 'src', 'assets_swap.h'), 'w').write(
+    '/* Fichier généré par tools/gen_assets.py — ne pas modifier. */\n#define SWAP_BASE 0x%02X   /* = swap_base (banque 3), lisible de toutes les banques */\n' % SWAP0)
 # petits spectateurs (vue en perspective) : regard vers le bas / vers le haut
 for fam in ('A', 'B'):
     src.append(c_array('small_norm%s' % fam, b''.join(encode_tile(t) for sz in SIZES for t in SMALL[fam][sz]['down'])))

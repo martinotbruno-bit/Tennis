@@ -47,6 +47,10 @@ static u8 dt_map[24];
 u8 vs_row[VS_W];                /* (lu par extra2.c : mosaïque du club nudiste) */
 static u8 vs_at[64];
 static const u8 *vs_map1;      /* plan du buste droit (recopié à la fin de la glissade) */
+#pragma bss-name(push, "ZEROPAGE")
+static u8 vs_bk1;              /* sa banque (club nudiste : bustes sans vêtements ailleurs) */
+#pragma bss-name(pop)
+#pragma zpsym("vs_bk1")
 static char pb[8];
 #pragma bss-name(pop)
 
@@ -259,7 +263,7 @@ u16 __fastcall__ vs_cens_f(u16 a);
 #define vs_cens_row(side, r) far_call(BANK_X2, (void *)vs_cens_f, (u16)(((u16)(r) << 8) | (side)))
 static void vs_side(u8 side)
 {
-    u8 c = cfg.chr[side], f = char_female[c], r, i, v, n;
+    u8 c = cfg.chr[side], f = char_female[c], r, i, v, n, bk;
     const u8 *chr, *map, *ab;
     if (f && c == 16) f = 2;                            /* Margaux : silhouette de fillette */
     if (c == 19) f = 3;                                 /* Papi : cheveux gris (palettes à part) */
@@ -272,14 +276,19 @@ static void vs_side(u8 side)
         else if (f == 2) { chr = vs_gr_chr; map = vs_gr_map; ab = vs_gr_ab; n = VS_GR_N; }
         else { chr = f ? vs_fr_chr : vs_mr_chr; map = f ? vs_fr_map : vs_mr_map; ab = f ? vs_fr_ab : vs_mr_ab; n = f ? VS_FR_N : VS_MR_N; }
     }
-    tz_bank = VS_BANK;
-    if (side) vs_map1 = map;
+    bk = VS_BANK;
+    if (cfg.env == ENV_NUDE && f < 2) {   /* club nudiste : bustes sans vêtements */
+        if (side) { chr = f ? vs_frn_chr : vs_mrn_chr; map = f ? vs_frn_map : vs_mrn_map; ab = f ? vs_frn_ab : vs_mrn_ab; n = f ? VS_FRN_N : VS_MRN_N; bk = f ? VS_FRN_BANK : VS_MRN_BANK; }
+        else { chr = f ? vs_fln_chr : vs_mln_chr; map = f ? vs_fln_map : vs_mln_map; ab = f ? vs_fln_ab : vs_mln_ab; n = f ? VS_FLN_N : VS_MLN_N; bk = f ? VS_FLN_BANK : VS_MLN_BANK; }
+    }
+    tz_bank = bk;
+    if (side) { vs_map1 = map; vs_bk1 = bk; }
     if (side == 0) {
         vram_adr(0x0600); tz_n = (u8)(n > 64 ? 64 : n); tz_unpack(chr);
         if (n > 64) { vram_adr(0x0010); tz_n = (u8)(n - 64); tz_unpack(tz_src); }
     } else { vram_adr(0x0A00); tz_n = n; tz_unpack(chr); }
     for (r = 0; r < VS_H; ++r) {
-        bank_read(VS_BANK, vs_row, map + r * VS_W, VS_W);
+        bank_read(bk, vs_row, map + r * VS_W, VS_W);
         for (i = 0; i < VS_W; ++i) {
             v = vs_row[i];
             if (v) { --v; v = (u8)(side ? 0xA0 + v : v < 64 ? 0x60 + v : 0x01 + v - 64); }
@@ -291,7 +300,7 @@ static void vs_side(u8 side)
     }
     /* attributs des blocs du buste (6 x 7 blocs, rangées de blocs 2 à 8) */
     for (r = 0; r < VS_H / 2; ++r) {
-        bank_read(VS_BANK, vs_row, ab + r * 6, 6);
+        bank_read(bk, vs_row, ab + r * 6, 6);
         for (i = 0; i < 6; ++i) {
             u8 bx = (u8)(side ? 10 + i : i), by = (u8)(2 + r), q = (u8)(((by & 1) << 1) | (bx & 1)), a = (u8)((by >> 1) * 8 + (bx >> 1));
             u8 p = (u8)((side ? 2 : 0) + (vs_row[i] && !vs_in_cens(side, (u8)(i * 2), (u8)(r * 2)) ? 1 : 0));   /* (club nudiste : la mosaïque en palette A) */
@@ -299,29 +308,9 @@ static void vs_side(u8 side)
         }
     }
 }
-/* affiche VS : la couleur « sombre » sert aussi aux contours ;
-   cheveux clairs (joueur personnalisé) : teinte sombre de la même famille */
-static u8 hd_dark(u8 d) { return (u8)(d == 0x37 ? 0x18 : (d == 0x30 || d == 0x10) ? 0x00 : d); }
-/* palettes du joueur (couleurs de char_pal) : A et B */
-static void vs_pal(u8 side)
-{
-    u8 b = (u8)(side * 8), S, O, D;
-    pal_set_player(61, cfg.chr[side]);       /* (palette 1 du décor : peau, tenue, sombre) */
-    S = pal_buf[5]; O = pal_buf[6]; D = pal_buf[7];
-    pal_buf[b + 1] = hd_dark(D);                                      /* (cheveux clairs : contours sombres) */
-    pal_buf[b + 2] = (u8)(S >= 0x10 ? S : S + 0x10);                 /* peau (éclairée) */
-    pal_buf[b + 6] = (u8)(O >= 0x10 ? O : O + 0x10);                  /* tenue */
-    pal_buf[b + 5] = (u8)((D & 0x30) >= 0x20 ? 0x07 : D);             /* B : sombre (ombre du texte : noir si cheveux clairs), tenue, blanc */
-    pal_buf[b + 3] = pal_buf[b + 6];                                  /* tenue (aussi dans A : bras croisés) */
-    pal_buf[b + 7] = 0x30;
-    if (cfg.env == ENV_NUDE) pal_buf[b + 3] = pal_buf[b + 6] = (u8)(pal_buf[b + 2] >= 0x20 ? pal_buf[b + 2] - 0x10 : pal_buf[b + 2]);   /* (club nudiste : la peau, ombrée) */
-    if (cfg.chr[side] == 16 || cfg.chr[side] == 19) {   /* Margaux, Papi : A (noir, peau, cheveux clairs), B (noir, peau, tenue) */
-        pal_buf[b + 1] = pal_buf[b + 5] = 0x0F;
-        pal_buf[b + 3] = D;
-        pal_buf[b + 6] = pal_buf[b + 2];
-        pal_buf[b + 7] = (u8)(O >= 0x10 ? O : O + 0x10);
-    }
-}
+/* palettes du joueur (A et B) : vs_pal_f, extra2.c (banque 8 pleine) */
+u16 __fastcall__ vs_pal_f(u16 side);
+#define vs_pal(side) far_call(BANK_X2, (void *)vs_pal_f, side)
 /* palettes définitives de l'affiche (les deux bustes, fond de la surface) */
 static void vs_pals(void)
 {
@@ -362,7 +351,7 @@ u8 __fastcall__ vs_anim(u8 t)
         split_start(0);
         for (r = (u8)((t - 24) * 6); r < VS_H && r < (u8)((t - 23) * 6); ++r) {
             u8 i, v;
-            bank_read(VS_BANK, vs_row, vs_map1 + r * VS_W, VS_W);
+            bank_read(vs_bk1, vs_row, vs_map1 + r * VS_W, VS_W);
             for (i = 0; i < VS_W; ++i) { v = vs_row[i]; if (v) vs_row[i] = (u8)(0x9F + v); }
             vs_cens_row(1, r);
             vbuf_raw(NTADR(20, 4 + r), vs_row, VS_W);

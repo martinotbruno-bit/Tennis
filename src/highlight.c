@@ -473,7 +473,7 @@ extern u8 proj_x, proj_y;
 void __fastcall__ proj2(u8 x, u8 y);           /* sprp.s */
 void court_reload(void);                       /* banque 0 */
 void rp_play(void);                            /* banque 3 */
-extern const unsigned char swap_base;
+#include "assets_swap.h"   /* SWAP_BASE : swap_base est en banque 3, illisible d'ici */
 
 #pragma bss-name(push, "WBSS")
 u8 hl_mode;
@@ -558,7 +558,7 @@ static void label_load(void)
     for (i = 0; hl_txt[i]; ++i) {
         c = (u8)hl_txt[i];
         if (c == ' ' && lbl_brk == 0xFF && i >= 3) lbl_brk = i;
-        if (c > ' ' && c < 0x60) chr_copy(BANK_CHR, chr_data + ((u16)c << 4), 0x1000 + ((u16)(swap_base + i) << 4), 16);
+        if (c > ' ' && c < 0x60) chr_copy(BANK_CHR, chr_data + ((u16)c << 4), 0x1000 + ((u16)(SWAP_BASE + i) << 4), 16);
     }
     lbl_n = i;
     /* une seule ligne si elle tient en 8 lettres */
@@ -571,20 +571,22 @@ static void label_draw(u8 y, u8 shown)
     x = (u8)(128 - l0 * 4);
     for (i = 0; i < lbl_n && i < shown; ++i) {
         if (i == lbl_brk) { l1 = (u8)(lbl_n - i - 1); x = (u8)(128 - l1 * 4); yy = (u8)(y + 10); continue; }
-        if (hl_txt[i] != ' ') spr1(x, yy, (u8)(swap_base + i), 2);
+        if (hl_txt[i] != ' ') spr1(x, yy, (u8)(SWAP_BASE + i), 2);
         x += 8;
     }
 }
 
 /* un plan : image haute définition, fond uni, sol ; palettes du joueur */
 u16 __fastcall__ hd_backdrop_f(u16 z);   /* extra2.c (banque 30) */
-u16 __fastcall__ cens_hd_f(u16 a);       /* extra2.c : club nudiste, mosaïque */
+u16 __fastcall__ cens_hd_f(u16 a); u16 __fastcall__ nude_art_f(u16 a);   /* extra2.c : club nudiste */
 static void cut_build(u8 art)
 {
     u8 i, S, O, D, z, c = (art == TZ_BALLKID || art == TZ_CROWD) ? 11 : cfg.chr[hl_sp];   /* (ramasseuse, public : tenues vertes, celles de JADE) */
-    const tz_art_t *a = &tz_art[art][char_female[c] ? (c == 16 ? 2 : 1) : 0];
+    u8 g = (u8)(char_female[c] ? (c == 16 ? 2 : 1) : 0);
+    const tz_art_t *a = &tz_art[art][g];
     const u8 *m;
     u16 ad;
+    if (cfg.env == ENV_NUDE) a = (const tz_art_t *)far_call(BANK_X2, (void *)nude_art_f, (u16)(art | (g << 8)));   /* (club nudiste : sans vêtements, extra2.c) */
     z = a->zoom;
     flash(0x30);                        /* (écran blanc pendant le chargement) */
     fade_skip = 1; fade_lvl = 0;
@@ -626,7 +628,7 @@ static void cut_build(u8 art)
     scroll_x = (u8)hl_cam; scroll_nt = (u8)((hl_cam >> 8) & 1); scroll_y = 0;
     spr_begin(); spr_end();
     label_load();                       /* (lettres du titre, rendu coupé) */
-    if (cfg.env == ENV_NUDE) far_call(BANK_X2, (void *)cens_hd_f, (u16)(art | ((u16)(char_female[c] ? 1 : 0) << 8) | ((u16)z << 9)));   /* (club nudiste : censure, extra2.c) */
+    if (cfg.env == ENV_NUDE) far_call(BANK_X2, (void *)cens_hd_f, z);   /* (club nudiste : mosaïque, extra2.c) */
     ppu_on();
 }
 
@@ -716,7 +718,7 @@ static void closeup_tick(void)
 /* Arrêt sur image zoomé                                                   */
 /* ---------------------------------------------------------------------- */
 static const u8 t_corner[16] = { 0xF0, 0x80, 0x80, 0x80, 0, 0, 0, 0,  0xF0, 0x80, 0x80, 0x80, 0, 0, 0, 0 };
-#define T_CORNER (swap_base + 20)
+#define T_CORNER (SWAP_BASE + 20)
 static u8 zx, zy, zwx, zwy;            /* point visé dans l'image agrandie ; coin de la fenêtre (px) */
 /* trace de la balle : l'empreinte exacte de la balle jugée. Une balle
    est bonne si son bord (rayon BALL_R = 2 px) touche la

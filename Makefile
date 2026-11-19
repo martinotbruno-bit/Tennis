@@ -12,31 +12,31 @@ BANK0 = game
 BANK1 = screens
 BANK5 = comp stats password
 BANK3 = extras assets_court assets_persp3
-BANK2 = assets_tz2
+BANK2 = assets_tz2 assets_nz2
 BANK4 = manual assets_tz4
-BANK6 = assets_nude assets_gm2 assets_tz6
-BANK7 = intro teaser assets_tz7
+BANK6 = assets_nude assets_gm2 assets_tz6 assets_nz6
+BANK7 = intro teaser assets_tz7 assets_nz7
 BANK8 = podium menuart assets_menu8
-BANK9 = credits assets_tz9
-BANK10 = music_data assets_tz10 assets_vs
-BANK11 = assets_persp
-BANK12 = assets_courts12 assets_tz12 assets_menu12
+BANK9 = credits assets_tz9 assets_nz9
+BANK10 = music_data assets_tz10 assets_vs assets_nz10
+BANK11 = assets_persp assets_nz11
+BANK12 = assets_courts12 assets_tz12 assets_menu12 assets_nz12
 BANK13 = assets_swap shots cer assets_menu
 BANK14 = assets_gm gmintro assets_help
 BANK15 = highlight
-BANK16 = assets_pnet assets_tz16
-BANK17 = assets_tz17
-BANK18 = rules assets_tz18
-BANK19 = career
+BANK16 = assets_pnet assets_tz16 assets_nz16
+BANK17 = assets_tz17 assets_nz17
+BANK18 = rules assets_tz18 assets_nz18
+BANK19 = career assets_nz19
 BANK20 = fly assets_tz20 train
-BANK21 = assets_tz21
+BANK21 = assets_tz21 assets_nz21
 BANK22 = sunset mdraw assets_sun
-BANK23 = assets_sun23
-BANK24 = assets_sun24
-BANK25 = assets_sun25
-BANK26 = assets_sun26
-BANK27 = assets_sun27
-BANK28 = assets_tz28
+BANK23 = assets_sun23 assets_nz23
+BANK24 = assets_sun24 assets_nz24
+BANK25 = assets_sun25 assets_nz25
+BANK26 = assets_sun26 assets_nz26
+BANK27 = assets_sun27 assets_nz27
+BANK28 = assets_tz28 assets_nz28
 BANK29 = pick assets_port
 BANK30 = extra2
 CSRC = $(FIXED) $(BANK0) $(BANK1) $(BANK2) $(BANK3) $(BANK4) $(BANK5) $(BANK6) $(BANK7) $(BANK8) $(BANK9) $(BANK10) $(BANK11) $(BANK12) $(BANK13) $(BANK14) $(BANK15) $(BANK16) $(BANK17) $(BANK18) $(BANK19) $(BANK20) $(BANK21) $(BANK22) $(BANK23) $(BANK24) $(BANK25) $(BANK26) $(BANK27) $(BANK28) $(BANK29) $(BANK30)
@@ -57,7 +57,7 @@ src/assets_port.c: tools/gen_port.py
 src/assets_help.c: tools/gen_help.py
 	python3 tools/gen_help.py
 
-src/assets_vs.c src/assets_vs.h src/assets_tz.h src/assets_tz2.c src/assets_tz4.c src/assets_tz9.c src/assets_tz10.c src/assets_tz12.c src/assets_tz6.c src/assets_tz7.c src/assets_tz17.c src/assets_tz18.c src/assets_tz20.c src/assets_tz21.c src/assets_tz28.c: tools/gen_teaser.py
+src/assets_vs.c src/assets_vs.h src/assets_tz.h src/assets_tz2.c src/assets_tz4.c src/assets_tz9.c src/assets_tz10.c src/assets_tz12.c src/assets_tz6.c src/assets_tz7.c src/assets_tz17.c src/assets_tz18.c src/assets_tz20.c src/assets_tz21.c src/assets_tz28.c src/assets_nz2.c src/assets_nz6.c src/assets_nz7.c src/assets_nz9.c src/assets_nz11.c src/assets_nz16.c src/assets_nz17.c src/assets_nz18.c src/assets_nz19.c src/assets_nz21.c src/assets_nz23.c src/assets_nz24.c src/assets_nz25.c src/assets_nz27.c src/assets_nz28.c src/assets_nz10.c src/assets_nz12.c src/assets_nz26.c src/assets_cens.h: tools/gen_teaser.py
 	python3 tools/gen_teaser.py
 
 src/assets_sun.c src/assets_sun23.c src/assets_sun24.c src/assets_sun25.c src/assets_sun26.c src/assets_sun27.c: tools/gen_sun.py

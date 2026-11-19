@@ -349,16 +349,30 @@ void __fastcall__ cens_rect(u16 ad, u8 w, u8 h, u8 t0, u8 lo, u8 hi)
         ad += 32;
     }
 }
-/* gros plan (rendu coupé) : art | (femme << 8) | (zoom << 9) */
+/* image sans vêtements (copie de son descripteur en page zéro) : art | genre << 8 */
+#pragma bss-name(push, "ZEROPAGE")
+static tzn_t tz_nd;
+static u8 cn_art, cn_g;
+#pragma bss-name(pop)
+#pragma zpsym("tz_nd")
+#pragma zpsym("cn_art")
+#pragma zpsym("cn_g")
+u16 __fastcall__ nude_art_f(u16 a)
+{
+    cn_art = (u8)a; cn_g = (u8)((a >> 8) & 1);
+    memcpy(&tz_nd, &tz_nude[cn_art][cn_g], sizeof(tzn_t));
+    return (u16)&tz_nd;
+}
+/* gros plan (rendu coupé) : z (gros plan zoomé) ; image : nude_art_f */
 u16 __fastcall__ cens_hd_f(u16 a)
 {
-    const u8 *r = tz_cens[(u8)a][(a >> 8) & 1];
+    const u8 *r = tz_cens[cn_art][cn_g];
     u8 k;
     cens_tiles(0xF9);
     for (k = 0; k < 4 && r[2]; ++k, r += 4) cens_rect(NTADR(r[0], r[1]), r[2], r[3], 0xF9, 1, 0xF6);
     /* tenue couleur de peau */
     pal_buf[9] = pal_buf[5]; pal_buf[10] = pal_buf[6];
-    if (a & 0x200) pal_buf[15] = pal_buf[9]; else pal_buf[14] = pal_buf[9];
+    if (a) pal_buf[15] = pal_buf[9]; else pal_buf[14] = pal_buf[9];
     pal_dirty = 1;
     return 0;
 }
@@ -419,3 +433,31 @@ void menu_marks(void)
     }
 }
 
+/* (déplacé de menuart.c, banque 8 pleine) */
+#pragma static-locals(push, off)
+/* affiche VS : la couleur « sombre » sert aussi aux contours ;
+   cheveux clairs (joueur personnalisé) : teinte sombre de la même famille */
+static u8 hd_dark(u8 d) { return (u8)(d == 0x37 ? 0x18 : (d == 0x30 || d == 0x10) ? 0x00 : d); }
+/* palettes du joueur (couleurs de char_pal) : A et B */
+u16 __fastcall__ vs_pal_f(u16 sd)
+{
+    u8 side = (u8)sd;
+    u8 b = (u8)(side * 8), S, O, D;
+    pal_set_player(61, cfg.chr[side]);       /* (palette 1 du décor : peau, tenue, sombre) */
+    S = pal_buf[5]; O = pal_buf[6]; D = pal_buf[7];
+    pal_buf[b + 1] = hd_dark(D);                                      /* (cheveux clairs : contours sombres) */
+    pal_buf[b + 2] = (u8)(S >= 0x10 ? S : S + 0x10);                 /* peau (éclairée) */
+    pal_buf[b + 6] = (u8)(O >= 0x10 ? O : O + 0x10);                  /* tenue */
+    pal_buf[b + 5] = (u8)((D & 0x30) >= 0x20 ? 0x07 : D);             /* B : sombre (ombre du texte : noir si cheveux clairs), tenue, blanc */
+    pal_buf[b + 3] = pal_buf[b + 6];                                  /* tenue (aussi dans A : bras croisés) */
+    pal_buf[b + 7] = 0x30;
+    if (cfg.env == ENV_NUDE) pal_buf[b + 3] = pal_buf[b + 6] = (u8)(pal_buf[b + 2] >= 0x20 ? pal_buf[b + 2] - 0x10 : pal_buf[b + 2]);   /* (club nudiste : la peau, ombrée) */
+    if (cfg.chr[side] == 16 || cfg.chr[side] == 19) {   /* Margaux, Papi : A (noir, peau, cheveux clairs), B (noir, peau, tenue) */
+        pal_buf[b + 1] = pal_buf[b + 5] = 0x0F;
+        pal_buf[b + 3] = D;
+        pal_buf[b + 6] = pal_buf[b + 2];
+        pal_buf[b + 7] = (u8)(O >= 0x10 ? O : O + 0x10);
+    }
+    return 0;
+}
+#pragma static-locals(pop)

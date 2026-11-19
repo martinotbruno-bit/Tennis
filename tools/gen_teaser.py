@@ -31,6 +31,7 @@ PAL = [
  (236,238,236),(168,204,236),(188,188,236),(212,178,236),(236,174,236),(236,174,212),(236,180,176),(228,196,144),
  (204,210,120),(180,222,120),(168,226,144),(152,226,180),(160,214,228),(160,162,160),(0,0,0),(0,0,0)]
 
+NUDE = [False]             # (2.79) club nudiste : corps sans vêtements (le torse en peau, ni jupe ni short)
 GROUND_ROW = 28            # première rangée du sol (y = 224) : bande du bas
 FIRST_TILE = 1             # tuiles du personnage : 1 à MAX_TILES
 MAX_TILES = 0xF6           # $F7-$FF : bandes, sol, filet (teaser.c)
@@ -205,7 +206,7 @@ def body(f, j, female, face, front=('armR', 'legL'), racket_hand='L', racket_dir
     def arm(side, hold):
         sh_, el, wr = j['sh' + side], j['el' + side], j['wr' + side]
         g = f.part(f.m_caps(sh_, el, 6.5 * AW, 5.2 * AW) | f.m_caps(el, wr, 5.2 * AW, 3.8 * AW), S, s, sh=(2.5, 1.5))
-        if not female:
+        if not female and not NUDE[0]:
             # manche courte du polo
             f.part(f.m_caps(sh_, lerp(sh_, el, 0.36), 7.4, 6.8), O, o, sh=(2.5, 1.5), group=g)
         hand = j.get('hd' + side, lerp(el, wr, 1.25))
@@ -283,7 +284,10 @@ def body(f, j, female, face, front=('armR', 'legL'), racket_hand='L', racket_dir
                    (nk[0] - 3.6, nk[1] + 7), (nk[0], nk[1] + 9), (nk[0] + 3.6, nk[1] + 7),
                    (nk[0] + 4.0, nk[1] - 1.6), (nk[0] + 6.6, nk[1] - 2.9), (shR[0] - 0.5, shR[1] - 4.8), (shR[0] + 1, shR[1] + 3)]
             pts += side(shR, hpR, 1) + list(reversed(side(shL, hpL, -1))) + [(shL[0] - 1, shL[1] + 3)]
-            tid = f.part(f.m_poly(pts), O, o, sh=(4, 2))
+            tid = f.part(f.m_poly(pts), S if NUDE[0] else O, s if NUDE[0] else o, sh=(4, 2))
+            if NUDE[0]:                 # (club nudiste : torse nu, la poitrine sera masquée par la mosaïque)
+                ret['dress'] = tid
+                return
             # poitrine : volume rond, ombre douce sous chaque sein et sur le côté
             # (pas pour la fillette, female == 2 : Margaux)
             bx = abs(hpR[0] - hpL[0]) * 0.27
@@ -317,11 +321,17 @@ def body(f, j, female, face, front=('armR', 'legL'), racket_hand='L', racket_dir
                              (e[0] + n[0] * 40 - u[0] * 90, e[1] + n[1] * 40 - u[1] * 90)])
             m |= leg_ & keep
             hems.append(((e[0] + n[0] * 11, e[1] + n[1] * 11), (e[0] - n[0] * 11, e[1] - n[1] * 11), u))
-        sid = f.part(m, D, None)
-        for (a_, b_, u_) in hems:
+        if NUDE[0]:
+            # club nudiste : ni short ni polo ; bassin et torse en peau
+            sid = f.part(f.m_ell((lerp(hpL, hpR, 0.5)[0], lerp(hpL, hpR, 0.5)[1] + 2), abs(hpR[0] - hpL[0]) / 2 + 6, 8), S, s, sh=(3, 1))
+            ret['shorts'] = sid
+        else:
+          sid = f.part(m, D, None)
+        for (a_, b_, u_) in ([] if NUDE[0] else hems):
             f.paint(f.m_line([(a_[0] - u_[0] * 2.2, a_[1] - u_[1] * 2.2), (b_[0] - u_[0] * 2.2, b_[1] - u_[1] * 2.2)], 0.6), 0, within=[sid])   # ourlet
         cr = lerp(hpL, hpR, 0.5)
-        f.paint(f.m_line([(cr[0], cr[1] + 2), lerp(hems[0][0], hems[1][1], 0.5)], 0.9), 0, within=[sid])   # entrejambe
+        if not NUDE[0]:
+            f.paint(f.m_line([(cr[0], cr[1] + 2), lerp(hems[0][0], hems[1][1], 0.5)], 0.9), 0, within=[sid])   # entrejambe
         # polo, porté par-dessus le short ; flanc droit de la poitrine à la
         # hanche (2.73 : la taille creusée faisait une silhouette en sablier)
         def straight(ch_, dc, hp_, dh, w_):
@@ -336,6 +346,15 @@ def body(f, j, female, face, front=('armR', 'legL'), racket_hand='L', racket_dir
                (ch_r[0] + 2, ch_r[1]), straight(ch_r, 2, hpR, 11, wr), (hpR[0] + 11, hpR[1] - 10), (hpR[0] + 11.5, hpR[1] - 5),
                (hpL[0] - 11.5, hpL[1] - 5), (hpL[0] - 11, hpL[1] - 10), straight(ch_l, -2, hpL, -11, wl), (ch_l[0] - 2, ch_l[1]), (shL[0] - 5, shL[1] + 2)]
         tm = f.m_poly(pts)
+        if NUDE[0]:
+            # torse nu : épaules, aisselles, poitrine, taille légèrement creusée,
+            # hanches (pas la forme évasée du polo)
+            nat = [(shL[0] - 2, shL[1] - 4.5), (nk[0] - 6, nk[1] - 1), (nk[0] + 6, nk[1] - 1), (shR[0] + 2, shR[1] - 4.5),
+                   (shR[0] + 4.5, shR[1] + 2), (ch_r[0] + 1, ch_r[1]), (wr[0] - 0.5, wr[1]), (hpR[0] + 6.5, hpR[1] - 2),
+                   (hpR[0] + 6, hpR[1] + 3), (hpL[0] - 6, hpL[1] + 3), (hpL[0] - 6.5, hpL[1] - 2), (wl[0] + 0.5, wl[1]),
+                   (ch_l[0] - 1, ch_l[1]), (shL[0] - 4.5, shL[1] + 2)]
+            f.part(f.m_poly(nat), S, s, sh=(5, 2))
+            return
         tid = f.part(tm, O, o, sh=(5, 2))
         f.paint(tm & ~shift_mask(f, (0, -1.5), tm) & shift_mask(f, (0, 8), tm) | (tm & ~shift_mask(f, (0, -1.5), tm) & ~shift_mask(f, (0, 30), tm)), 4, within=[tid])   # ourlet du polo
         if CASUAL[0]:
@@ -355,6 +374,9 @@ def body(f, j, female, face, front=('armR', 'legL'), racket_hand='L', racket_dir
 
     def skirt():
         shL, shR, hpL, hpR = j['shL'], j['shR'], j['hipL'], j['hipR']
+        if NUDE[0]:                     # club nudiste : pas de jupe ; le bassin, en peau
+            ret['shorts'] = f.part(f.m_ell(lerp(hpL, hpR, 0.5), abs(hpR[0] - hpL[0]) / 2 + 8, 10), S, s, sh=(3, 1), group=ret['dress'])
+            return
         wl = lerp(shL, hpL, 0.68); wr = lerp(shR, hpR, 0.68)
         tid = ret['dress']
         # jupe plissée évasée (même tissu, d'un seul tenant avec le haut) :
@@ -486,15 +508,34 @@ def body(f, j, female, face, front=('armR', 'legL'), racket_hand='L', racket_dir
     if female:
         last = max(order.index(k_) for k_ in ('torso', 'legL', 'legR'))
         order.insert(last + 1, 'skirt')
+    n_start, head_ids, arm_ids = f.n, set(), set()
     for p in order:
         if p == 'legL': leg('L')
         elif p == 'legR': leg('R')
-        elif p == 'armL': arm('L', racket_hand == 'L')
-        elif p == 'armR': arm('R', racket_hand == 'R')
+        elif p in ('armL', 'armR'):
+            n0 = f.n; arm(p[-1], racket_hand == p[-1]); arm_ids |= set(range(n0 + 1, f.n + 1))
         elif p == 'torso': torso()
-        elif p == 'head': head()
+        elif p == 'head':
+            n0 = f.n; head(); head_ids = set(range(n0 + 1, f.n + 1))
         elif p == 'skirt': skirt()
         elif p == 'racket': racket()
+    if NUDE[0]:
+        # (2.79) club nudiste : un corps d'un seul tenant. Les pièces de peau
+        # (cou, torse, bassin, bras, mains, jambes ; pas la tête) n'en font
+        # qu'une : une seule couleur, une seule ombre sur le bord du corps,
+        # aucun contour entre elles (sinon des marches à chaque jointure)
+        ids = []
+        for pid_ in range(n_start + 1, f.n + 1):
+            if pid_ in head_ids or (VS_LINE and pid_ in arm_ids): continue   # (affiche : les bras croisés gardent leur contour)
+            m_ = f.pid == pid_
+            if m_.any() and np.isin(f.cls[m_], (S, s)).mean() > 0.6: ids.append(pid_)
+        if ids:
+            U = np.isin(f.pid, ids)
+            for pid_ in ids: f.grp[pid_] = ids[0]
+            f.cls[U] = S
+            dx, dy = int(round(3 * f.k)), int(round(1.5 * f.k))
+            sh_ = np.zeros_like(U); sh_[:f.H - dy, :f.W - dx] = U[dy:, dx:]
+            f.cls[U & ~sh_] = s
     return ret
 
 
@@ -1163,11 +1204,25 @@ def main():
                 sheet.append([preview(res, c) for c in smp[:2]])
             elif female == 1:
                 sheet[-1] += [preview(res, c) for c in smp[2:]]
+            # (2.79) club nudiste : la même image sans vêtements (homme, femme ;
+            # ni Margaux ni le public)
+            if female < 2 and name != 'crowd':
+                NUDE[0] = True
+                try:
+                    f, r = render(pose, FIXED_FEMALE.get(name, female), k, cen)
+                    res = build(f, zoom)
+                finally:
+                    NUDE[0] = False
+                out[(name, female, 'n')] = res
     return out, sheet
 
 
 # ------------------------------------------------------------------ export
 # banques libres (octets disponibles, marge comprise)
+# (2.79) banques des images sans vêtements du club nudiste (place libre, marge déduite)
+NZ_BANKS = [(2, 4390), (6, 4320), (7, 4830), (9, 4670), (11, 4720), (16, 4840), (17, 4510), (18, 5710), (19, 5210),
+            (21, 4780), (23, 4600), (24, 2440), (25, 2440), (27, 4240), (28, 5170), (10, 3320), (12, 3290), (26, 1360)]
+NZ_VS = {(0, 0): 2, (0, 1): 6, (1, 0): 27, (1, 1): 10}     # bustes sans vêtements de l'affiche (banques avec ~1,4 Ko libres après les images HD)
 BANKS = [(9, 13600), (12, 11500), (4, 12200), (10, 7050), (2, 7900), (7, 6800), (6, 5800), (17, 16000), (18, 13500), (20, 9000), (21, 15500), (16, 12500), (28, 15000)]
 
 
@@ -1266,6 +1321,56 @@ def export(out):
         C.append('    { %s },   /* %s */' % (', '.join(row), name))
     C.append('};')
     open(os.path.join(ROOT, 'src', 'assets_cens.h'), 'w').write('\n'.join(C) + '\n')
+    # (2.79) variantes sans vêtements : leurs propres données, dans les banques
+    # libres (assets_nz<b>.c), et leurs descripteurs (assets_cens.h, lus par
+    # extra2.c) ; une variante identique à l'image habillée la réutilise
+    nb, narts = [], {}
+    for name in names:
+        for female in (0, 1):
+            if (name, female, 'n') not in out:
+                continue
+            res = out[(name, female, 'n')]
+            chr_ = pack(b''.join(res['tiles']))
+            mp = bytes(res['nt'][y][x] for y in range(res['y0'], res['y1']) for x in range(res['x0'], res['x1']))
+            key = (chr_, mp, bytes(res['at']))
+            ref = [b for b in blobs if b['key'] == key]
+            if ref:
+                narts[(name, female)] = ('tz', ref[0]); continue
+            same = [b for b in nb if b['key'] == key]
+            if same:
+                narts[(name, female)] = ('nz', same[0]); continue
+            b = dict(key=key, size=len(chr_) + len(mp) + 64, id='%s_%sn' % (name, 'mf'[female]), res=res)
+            nb.append(b); narts[(name, female)] = ('nz', b)
+    nfree = dict(NZ_BANKS)
+    for b in sorted(nb, key=lambda b: -b['size']):
+        cand = [k for k in nfree if nfree[k] >= b['size']]
+        assert cand, 'plus de place pour ' + b['id']
+        k = max(cand, key=lambda k: nfree[k])
+        nfree[k] -= b['size']; b['bank'] = k
+    for bk, _ in NZ_BANKS:
+        L = ['/* Fichier généré par tools/gen_teaser.py — ne pas modifier. */',
+             '/* Club nudiste : images HD sans vêtements (banque %d). */' % bk, '']
+        for b in nb:
+            if b['bank'] == bk:
+                chr_, mp, at = b['key']
+                L += arr('tz_chr_' + b['id'], chr_) + arr('tz_map_' + b['id'], mp) + arr('tz_at_' + b['id'], at) + ['']
+        open(os.path.join(ROOT, 'src', 'assets_nz%d.c' % bk), 'w').write('\n'.join(L) + '\n')
+    C = ['', 'typedef struct { unsigned char bank, ntile, x0, w, y0, h, zoom; const unsigned char *chr, *map, *at; } tzn_t;']
+    for b in nb + blobs:
+        C.append('extern const unsigned char tz_chr_%s[], tz_map_%s[], tz_at_%s[];' % (b['id'], b['id'], b['id']))
+    C.append('static const tzn_t tz_nude[%d][2] = {   /* homme, femme ; public : l\'image habillée */' % len(names))
+    for name, pose, k, cen, zoom in SHOTS:
+        row = []
+        for female in (0, 1):
+            src, b = narts.get((name, female), ('tz', blobs[arts[(name, female)]]))
+            r = b['res']
+            row.append('{ %d, %d, %d, %d, %d, %d, %d, tz_chr_%s, tz_map_%s, tz_at_%s }' % (
+                b['bank'], len(r['tiles']), r['x0'], r['x1'] - r['x0'], r['y0'], r['y1'] - r['y0'], 1 if zoom else 0, b['id'], b['id'], b['id']))
+        C.append('    { %s,\n      %s },' % tuple(row))
+    C.append('};')
+    open(os.path.join(ROOT, 'src', 'assets_cens.h'), 'a').write('\n'.join(C) + '\n')
+    print('club nudiste : %d images sans vêtements, %d octets ; place restante %s' % (
+        len(nb), sum(b['size'] for b in nb), ', '.join('%d:%d' % kv for kv in sorted(nfree.items()))))
     tot = sum(b['size'] for b in blobs)
     print('export : %d images, %d octets, banques %s' % (len(blobs), tot,
           ', '.join('%d (%d libres)' % (k, free[k]) for k in used)))
@@ -1350,6 +1455,16 @@ def vs_export():
     for female in (0, 1, 2, 3):
         for mirror in (0, 1):
             arts[(female, mirror)] = vs_render(female, mirror)
+    # (2.79) club nudiste : bustes sans vêtements (homme, femme), rangés avec
+    # les images HD sans vêtements (assets_nz<b>.c, NZ_VS)
+    nude = {}
+    NUDE[0] = True
+    try:
+        for female in (0, 1):
+            for mirror in (0, 1):
+                nude[(female, mirror)] = vs_render(female, mirror)
+    finally:
+        NUDE[0] = False
     L = ['/* Fichier généré par tools/gen_teaser.py — ne pas modifier. */',
          '/* Affiche VS : bustes des joueurs (gauche, droite en miroir ; homme, femme), banque %d. */' % VS_BANK, '']
     H = ['/* Fichier généré par tools/gen_teaser.py — ne pas modifier. */', '',
@@ -1363,6 +1478,15 @@ def vs_export():
         H += ['#define %s_CENS %d, %d, %d, %d   /* poitrine masquée au club nudiste (x, y, l, h en tuiles du buste) */' % ((nm.upper(),) + tuple(a['cens']))]
         tot += len(chr_) + len(a['nt']) + len(a['ab'])
         print('buste %s : %d tuiles' % (nm, len(a['tiles'])))
+    for (female, mirror), a in nude.items():
+        nm = 'vs_%s%sn' % ('mf'[female], 'r' if mirror else 'l')
+        bk = NZ_VS[(female, mirror)]
+        chr_ = pack(b''.join(a['tiles']))
+        Lb = arr_c(nm + '_chr', chr_) + arr_c(nm + '_map', bytes(a['nt'])) + arr_c(nm + '_ab', bytes(a['ab'])) + ['']
+        open(os.path.join(ROOT, 'src', 'assets_nz%d.c' % bk), 'a').write('\n'.join(Lb) + '\n')
+        H += ['extern const unsigned char %s_chr[], %s_map[], %s_ab[];' % (nm, nm, nm),
+              '#define %s_N %d' % (nm.upper(), len(a['tiles'])), '#define %s_BANK %d' % (nm.upper(), bk)]
+        print('buste %s (sans vêtements, banque %d) : %d tuiles, %d octets' % (nm, bk, len(a['tiles']), len(chr_) + len(a['nt']) + len(a['ab'])))
     open(os.path.join(ROOT, 'src', 'assets_vs.c'), 'w').write('\n'.join(L))
     open(os.path.join(ROOT, 'src', 'assets_vs.h'), 'w').write('\n'.join(H) + '\n')
     print('affiche VS : %d octets' % tot)
