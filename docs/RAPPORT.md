@@ -798,7 +798,7 @@ Pour loger ce contenu, la cartouche passe de NROM (32 Ko) à **MMC1** : 128 Ko d
 | Relecture des textes (`check_texts.py`) | 0 problème |
 | Contraste (`contrast.py 25`) | 0 paire sous ΔE 25 (personnages, courts, balle, tenues) |
 | Profil CPU, double, 6 000 trames | 27 trames d'échange en dépassement (0,45 %), sans défaut d'image |
-| Compilation | Reproductible : SHA-256 `dbad656dd27d2da2befb66b740e8ef63dafcbdcdde8cd722b4257931307a8210` sur deux compilations propres |
+| Compilation | Reproductible : SHA-256 `114a823a68dca4d379db6985a5c050c63851ca9f0d66d64ae462cd89413c34dd` sur deux compilations propres |
 
 ## 3. Conformité par section du CDC
 
@@ -846,7 +846,7 @@ Légende : ✅ réalisé et testé en émulation · 🟡 partiel · 🔧 nécess
 ## 5. Limitations restantes
 
 - **Version 2.79b** : animations des lieux seulement à la fin du point et pendant les pauses ; drapeaux des supporters toujours dans le public ; suite complète : 439 vérifications réussies, 0 échec.
-- **Version 2.79c** : animations des lieux aussi pendant que le bandeau du score est affiché.
+- **Version 2.79c** : animations des lieux aussi pendant que le bandeau du score est affiché ; suite complète : 439 vérifications réussies, 0 échec.
 - **Version 2.79a** : animations des lieux et ambiances seulement entre les échanges ; salle en perspective redessinée (public et bandeaux lumineux) ; suite complète : 439 vérifications réussies, 0 échec.
 - **Version 2.79** : lieux plus différents (décor animé, ambiances sonores, feuilles du parc, court Margaux selon la surface, soirée en salle, affiche du club nudiste, salle reconnaissable en perspective, club nudiste : images sans vêtements et censure en mosaïque) ; pas de crépuscule en salle ; suite complète : 437 vérifications réussies sur 439, les 2 autres (changement de côté, fin de set) attendaient un temps fixe trop court pour des échanges longs entre deux ordinateurs : rendues indépendantes de cette durée, elles passent.
 - **Version 2.78** : réglages simplifiés (page OPTIONS, modes 1 JOUEUR / 2 JOUEURS / COMPETITION / CARRIERE, ligne HUMAINS), commentaires de version retirés du code ; suite complète : 438 vérifications réussies, 0 échec.
