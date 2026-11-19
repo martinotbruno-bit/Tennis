@@ -499,7 +499,7 @@ static void menu_sprites(void)
     /* balle qui rebondit (sur la première ligne, sans monter : elle
        croiserait le bas des portraits, 9 sprites sur une même ligne) */
     spr1(9, (u8)(MY0 * 8 + cursor * 8 - 1 - (cursor || MY0 > 5 ? bounce[(frame_cnt >> 2) & 7] : 0)), (u8)(ball_base + 8), 3);
-    bank_call(BANK_PODIUM, menu_marks);      /* pastille de la surface, vignette du lieu */
+    bank_call(BANK_X2, menu_marks);          /* pastille de la surface, vignette du lieu (extra2.c) */
     /* plus de portraits des joueurs de part et d'autre du titre : les
        joueurs se choisissent sur l'affiche VS, après les réglages (pick.c) */
     spr_end();

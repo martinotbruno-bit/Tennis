@@ -965,9 +965,32 @@ def render(pose, female, k, center, dark=True):
         f.cls[(f.cls == 5) & ~np.isin(f.pid, hair_ids)] = 0
     f.leg_ids = [r[k_] for k_ in ('legL', 'legR') if k_ in r]
     f.joints = skeleton(P['s'] if 's' in P else P['figures'][-1]['s'], female)
+    # (2.79) squelettes des personnages dessinés : zones masquées au club nudiste
+    f.skels = ([(skeleton(fs['s'], fs['female']), fs['female']) for fs in P['figures']] if 'figures' in P
+               else [(skeleton(P['s'], female), female)])
     r = {key: f.T(v) for key, v in r.items() if isinstance(v, tuple) and len(v) == 2 and not isinstance(v[0], (list, tuple))}
     return f, r
 
+
+# ------------------------------------------------------------------ censure
+def cens_rects(T, skels, cols, rows):
+    """(2.79) club nudiste : rectangles de tuiles (x, y, l, h) à couvrir d'une
+    mosaïque couleur peau : le bassin de chacun, la poitrine des femmes.
+    T : coordonnées du personnage -> pixels de l'image."""
+    out = []
+    for j, fem in skels:
+        H = [(a + b) / 2 for a, b in zip(T(j['hipL']), T(j['hipR']))]
+        S = [(a + b) / 2 for a, b in zip(T(j['shL']), T(j['shR']))]
+        tl = math.hypot(S[0] - H[0], S[1] - H[1])
+        zones = [((H[0], H[1] + 0.14 * tl), 0.30 * tl, 0.24 * tl)]          # bassin
+        if fem:
+            zones.append(((S[0] + (H[0] - S[0]) * 0.32, S[1] + (H[1] - S[1]) * 0.32), 0.40 * tl, 0.17 * tl))   # poitrine
+        for (cx, cy), hx, hy in zones:
+            x0 = max(0, int((cx - hx) // 8)); x1 = min(cols - 1, int((cx + hx) // 8))
+            y0 = max(0, int((cy - hy) // 8)); y1 = min(rows - 1, int((cy + hy) // 8))
+            if x1 >= x0 and y1 >= y0:
+                out.append((x0, y0, x1 - x0 + 1, y1 - y0 + 1))
+    return out[:4]
 
 # ------------------------------------------------------------------ tuiles
 COST = {  # coût de remplacement d'une classe par une autre (0..6)
@@ -1130,6 +1153,7 @@ def main():
                 res = build(f, zoom)
                 print('  (%s %d : contours dans la couleur du fond, faute de tuiles)' % (name, female))
             res['r'] = r
+            res['cens'] = cens_rects(f.T, f.skels, 32, GROUND_ROW)
             out[(name, female)] = res
             print('%-10s %s : %3d tuiles, colonnes %d-%d, rangées %d-%d' % (
                 name, 'HFG'[female], len(res['tiles']), res['x0'], res['x1'] - 1, res['y0'], res['y1'] - 1))
@@ -1230,6 +1254,18 @@ def export(out):
     H.append('#define TZ_GROUND_ROW %d' % GROUND_ROW)
     H.append('#define TZ_FIRST_TILE %d' % FIRST_TILE)
     open(os.path.join(ROOT, 'src', 'assets_tz.h'), 'w').write('\n'.join(H) + '\n')
+    # (2.79) zones masquées au club nudiste : 4 rectangles (x, y, l, h ; l = 0 : aucun) par image, homme et femme
+    C = ['/* Fichier généré par tools/gen_teaser.py — ne pas modifier. */',
+         '/* Club nudiste : rectangles de tuiles couverts d\'une mosaïque (images HD, extra2.c). */', '',
+         'static const unsigned char tz_cens[%d][2][16] = {' % len(names)]
+    for name in names:
+        row = []
+        for female in (0, 1):
+            rr = out[(name, female)]['cens'] + [(0, 0, 0, 0)] * 4
+            row.append('{ ' + ', '.join('%d' % v for q in rr[:4] for v in q) + ' }')
+        C.append('    { %s },   /* %s */' % (', '.join(row), name))
+    C.append('};')
+    open(os.path.join(ROOT, 'src', 'assets_cens.h'), 'w').write('\n'.join(C) + '\n')
     tot = sum(b['size'] for b in blobs)
     print('export : %d images, %d octets, banques %s' % (len(blobs), tot,
           ', '.join('%d (%d libres)' % (k, free[k]) for k in used)))
@@ -1263,8 +1299,13 @@ def vs_render(female, mirror, k=1.38):
     light = female in (2, 3)        # cheveux clairs (Margaux, Papi) : palettes à part
     if female == 3:
         female = 0
-    body(f, skeleton(POSES['bust']['s'], female), female, 'focus', racket_hand='X', racket_dir=0, racket_len=50)
+    sk = skeleton(POSES['bust']['s'], female)
+    body(f, sk, female, 'focus', racket_hand='X', racket_dir=0, racket_len=50)
     VS_LINE = False
+    # (2.79) club nudiste : la poitrine des joueuses, masquée (rectangle de tuiles)
+    cens = [r_ for r_ in cens_rects(f.T, [(sk, female in (1, 2))], VS_W, VS_H) if female in (1, 2)][1:2]
+    if mirror:
+        cens = [(VS_W - x - w, y, w, h) for x, y, w, h in cens]
     f.outline()
     # coupé au-dessus de l'ourlet du polo (ni short ni bas du vêtement)
     cut = VS_H * 8 - 10
@@ -1301,7 +1342,7 @@ def vs_render(female, mirror, k=1.38):
         for bx in range(VS_W // 2):
             a_ = attr[by, bx]
             ab.append(1 if a_ == 1 else 0)
-    return dict(tiles=tiles, nt=nt, ab=ab, idx=idx, attr=attr)
+    return dict(tiles=tiles, nt=nt, ab=ab, idx=idx, attr=attr, cens=(cens + [(0, 0, 0, 0)])[0])
 
 
 def vs_export():
@@ -1319,6 +1360,7 @@ def vs_export():
         chr_ = pack(b''.join(a['tiles']))
         L += arr_c(nm + '_chr', chr_) + arr_c(nm + '_map', bytes(a['nt'])) + arr_c(nm + '_ab', bytes(a['ab'])) + ['']
         H += ['extern const unsigned char %s_chr[], %s_map[], %s_ab[];' % (nm, nm, nm), '#define %s_N %d' % (nm.upper(), len(a['tiles']))]
+        H += ['#define %s_CENS %d, %d, %d, %d   /* poitrine masquée au club nudiste (x, y, l, h en tuiles du buste) */' % ((nm.upper(),) + tuple(a['cens']))]
         tot += len(chr_) + len(a['nt']) + len(a['ab'])
         print('buste %s : %d tuiles' % (nm, len(a['tiles'])))
     open(os.path.join(ROOT, 'src', 'assets_vs.c'), 'w').write('\n'.join(L))

@@ -452,8 +452,8 @@ console.log('Court Margaux');
   const idx = [...Array(8).keys()].map((k) => rb('sign_idx', k));
   const placed = idx.every((t, k) => nt(5 + (k % 4), 2 + (k >> 2)) === t);
   let same = true; for (let b = 0; b < 128; b++) if (e.nes.ppu.vramMem[idx[b >> 4] * 16 + (b & 15)] !== rb('sign_chr', b)) same = false;
-  check(placed && same && !/[A-Z]/.test(e.text(9, 3, 14)) && e.nes.cpu.mem[e.addr('pal_buf') + 1] === 0x25,
-    'court rose avec le petit panneau MARGAUX à côté du score');
+  check(placed && same && !/[A-Z]/.test(e.text(9, 3, 14)) && e.nes.cpu.mem[e.addr('pal_buf') + 1] === [0x15, 0x24, 0x25, 0x05, 0x35, 0x34][e.nes.cpu.mem[e.addr('cfg') + 14] % 6],
+    'court rose (teinte selon la surface, 2.79) avec le petit panneau MARGAUX à côté du score');
   allCpu(e); e.poke('crowd_timer', 60); e.run(70);
   check(e.peek('crowd_timer') === 0, 'coeurs, fleurs et étoiles scintillent puis se reposent');
 }
@@ -834,11 +834,18 @@ console.log('Ralenti : gros plan et zoom');
     check(np === 4 && a === w && b === w + 2 && String.fromCharCode(...tx) === 'VICTOIRE !' && scr(d) === SS.RESULTS,
       `double : portrait du vainqueur, puis gros plan de son partenaire (« ${String.fromCharCode(...tx)} »), puis les résultats`);
   }
-  // club nudiste : ni gros plan ni zoom
-  const n = boot(); startWith(n, { FMT: 3, ENV: 3 }); allCpu(n);
-  let rep = 0, hl = 0, pm = 0;
-  for (let f = 0; f < 60 * 60 * 4; f++) { n.run(1); const m = n.peek('ms'); if (m === 5 && pm !== 5) rep++; if (n.peek('hl_mode')) hl++; pm = m; }
-  check(rep > 0 && hl === 0, `club nudiste : ralentis (${rep}) sans gros plan ni zoom`);
+  // club nudiste (2.79) : gros plans comme ailleurs, censurés : mosaïque
+  // ($F9/$FA) sur le corps, tenue couleur de peau
+  const n = boot(); n.poke('nude_unlocked', 1); startWith(n, { FMT: 3, ENV: 3 }); allCpu(n);
+  let rep = 0, hl = 0, pm = 0, mos = 0, skin = false;
+  for (let f = 0; f < 60 * 60 * 4 && !mos; f++) {
+    n.run(1); const m = n.peek('ms'); if (m === 5 && pm !== 5) rep++; pm = m;
+    if (n.peek('hl_mode') === 1 && n.peek('hl_t') === 30) {
+      hl++; const vm = n.nes.ppu.vramMem; for (let a = 0x2000; a < 0x23C0; a++) if (vm[a] === 0xF9 || vm[a] === 0xFA) mos++;
+      skin = n.peek('pal_buf', 9) === n.peek('pal_buf', 5);
+    }
+  }
+  check(rep > 0 && hl > 0 && mos > 4 && skin, `club nudiste : ralentis (${rep}) avec gros plan censuré (${mos} tuiles de mosaïque, tenue couleur de peau ${skin})`);
   // réglage RALENTIS « OUI, SIMPLE » (2.69) : ralentis sans gros plan ni zoom
   const q = boot(); startWith(q, { FMT: 3, REPLAY: 2 }); allCpu(q);
   let rq = 0, hq = 0, zq = 0, pq = 0;
@@ -1309,7 +1316,11 @@ console.log('Compétition en double, levée de coupe et club nudiste');
   check(seen, 'lieu « club nudiste » proposé après déblocage');
   // (chargement des tuiles au naturel + fondu : écran construit en ~25 trames)
   e.tap('START'); runUntil(e, () => scr(e) === SS.PRESENT, 120); e.run(40);
-  check(e.text(4, 24, 24) === 'CLUB NUDISTE LES BRONZES', 'présentation du club nudiste');
+  {
+    const pb = (i) => e.nes.cpu.mem[e.addr('pal_buf') + i];
+    const club = [...Array(30).keys()].some(r => e.text(0, r, 32).includes('CLUB NUDISTE'));
+    check(club && pb(3) === pb(6) && pb(7) === 0x30, 'présentation du club nudiste : affiche VS, tenue couleur de peau (mosaïque sur la poitrine des joueuses, 2.79)');
+  }
   e.tap('A'); e.run(70); allCpu(e);
   const v = e.nes.ppu.vramMem;
   {

@@ -399,7 +399,7 @@ void cer_tick(void)
         if (cer_t >= (cfg.mode == GM_MATCH ? 250 : 130)) {
             cer = CER_BACK; cer_t = 0;
             /* un changement sur deux : la ramasseuse de balles, plan télé */
-            if (cfg.mode == GM_MATCH && cfg.replays == 1 && cfg.env != ENV_NUDE && !cfg.demo &&
+            if (cfg.mode == GM_MATCH && cfg.replays == 1 && !cfg.demo &&
                 ((sc_games[0] + sc_games[1]) & 2)) hl_mode = 4;
             /* crépuscule : la lumière change, plan du soleil couchant */
             if (sun_pend) hl_mode = 5;

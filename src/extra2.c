@@ -79,7 +79,7 @@ static u8 near_in(s16 x, s16 y)
 void hl_out(void)
 {
     s16 x = hl_bx, y = hl_by, d = 0, l, r;
-    if (!hl_bok || b_serve || !cfg.replays || cfg.env == ENV_NUDE || cfg.demo) return;   /* (prioritaire sur le ralenti complet) */
+    if (!hl_bok || b_serve || !cfg.replays || cfg.demo) return;   /* (prioritaire sur le ralenti complet) */
     l = cfg.doubles ? IN_DL : IN_SL; r = cfg.doubles ? IN_DR : IN_SR;   /* (ligne comprise) */
     if (hl_bin) {
         if (!near_in(x, y)) return;
@@ -316,3 +316,106 @@ void decor_draw(void)
     }
 }
 #pragma static-locals(pop)
+
+/* ---------------------------------------------------------------------- */
+/* Club nudiste (2.79) : les images HD (gros plans, portrait du vainqueur,  */
+/* ramasseuse, coupe...) sont montrées, la tenue prend la couleur de la    */
+/* peau, et une mosaïque couleur peau (deux tuiles, $F9 et $FA, libres     */
+/* pendant les gros plans) couvre le bassin, et la poitrine des joueuses : */
+/* une censure comme à la télévision. Rectangles : tools/gen_teaser.py.    */
+/* ---------------------------------------------------------------------- */
+#include "assets_cens.h"
+#pragma static-locals(push, off)
+/* mosaïque : blocs de 4 x 4 px, peau éclairée (1) et ombrée (2), deux variantes */
+static const u8 mosaic[32] = {
+    0xF0, 0xF0, 0xF0, 0xF0, 0x0F, 0x0F, 0x0F, 0x0F,   0x0F, 0x0F, 0x0F, 0x0F, 0xF0, 0xF0, 0xF0, 0xF0,
+    0x0F, 0x0F, 0x0F, 0x0F, 0xFF, 0xFF, 0xFF, 0xFF,   0xF0, 0xF0, 0xF0, 0xF0, 0x00, 0x00, 0x00, 0x00 };
+void __fastcall__ cens_tiles(u8 t0)
+{
+    u8 i;
+    vram_adr((u16)t0 << 4);
+    for (i = 0; i < 32; ++i) vram_put(mosaic[i]);
+}
+/* couvre un rectangle de la table de noms (adresse du coin), seulement là
+   où l'image a une tuile (pas le fond) */
+void __fastcall__ cens_rect(u16 ad, u8 w, u8 h, u8 t0, u8 lo, u8 hi)
+{
+    u8 x, y, t;
+    for (y = 0; y < h; ++y) {
+        for (x = 0; x < w; ++x) {
+            vram_adr((u16)(ad + x)); t = PPU_DATA2; t = PPU_DATA2;
+            if (t >= lo && t <= hi) { vram_adr((u16)(ad + x)); vram_put((u8)(t0 + ((x + y) & 1))); }
+        }
+        ad += 32;
+    }
+}
+/* gros plan (rendu coupé) : art | (femme << 8) | (zoom << 9) */
+u16 __fastcall__ cens_hd_f(u16 a)
+{
+    const u8 *r = tz_cens[(u8)a][(a >> 8) & 1];
+    u8 k;
+    cens_tiles(0xF9);
+    for (k = 0; k < 4 && r[2]; ++k, r += 4) cens_rect(NTADR(r[0], r[1]), r[2], r[3], 0xF9, 1, 0xF6);
+    /* tenue couleur de peau */
+    pal_buf[9] = pal_buf[5]; pal_buf[10] = pal_buf[6];
+    if (a & 0x200) pal_buf[15] = pal_buf[9]; else pal_buf[14] = pal_buf[9];
+    pal_dirty = 1;
+    return 0;
+}
+#pragma static-locals(pop)
+
+/* Affiche VS au club nudiste : la poitrine des joueuses, en mosaïque
+   (tuiles VS_MOS, couleurs 2 et 3 de la palette A : peau, peau ombrée) ;
+   a = op << 12 | y << 8 | x << 1 | côté : op 0 rangée y de vs_row (menuart.c),
+   op 1 le bloc (x, y) touche-t-il la mosaïque, op 2 tuiles de la mosaïque */
+#include "assets_vs.h"
+#define VS_MOS 0xFC
+extern u8 vs_row[];
+static const u8 vs_cr[2][4] = { { VS_FL_CENS }, { VS_FR_CENS } };
+#pragma static-locals(push, off)
+u16 __fastcall__ vs_cens_f(u16 a)
+{
+    u8 side = (u8)(a & 1), x = (u8)((a >> 1) & 0x7F), y = (u8)((a >> 8) & 15), op = (u8)(a >> 12), i;
+    const u8 *q = vs_cr[side];
+    if (op == 2) {
+        vram_adr((u16)VS_MOS << 4);
+        for (i = 0; i < 32; ++i) vram_put((u8)((i & 8) ? 0xFF : (((i >> 2) ^ (i >> 4)) & 1) ? 0x0F : 0xF0));
+        return 0;
+    }
+    if (cfg.env != ENV_NUDE || !char_female[cfg.chr[side]] || cfg.chr[side] == 16) return 0;
+    if (op == 1) return (u8)(x + 1 >= q[0] && x < (u8)(q[0] + q[2]) && y + 1 >= q[1] && y < (u8)(q[1] + q[3]));
+    if (y < q[1] || y >= (u8)(q[1] + q[3])) return 0;
+    for (x = q[0]; x < (u8)(q[0] + q[2]); ++x) if (vs_row[x]) vs_row[x] = (u8)(VS_MOS + ((x + y) & 1));
+    return 0;
+}
+#pragma static-locals(pop)
+
+/* (déplacé de menuart.c, banque 8 pleine) */
+/* Réglages : pastille de la couleur de la surface et vignette du lieu
+   (16 x 8, palette de sprite 3 : blanc, couleur du lieu, or), devant leur
+   valeur */
+extern u8 opt_val[], vis[], nvis;
+extern const unsigned char ball_base;
+void menu_marks(void)
+{
+    static const u8 sc[6][3] = { { 0x27, 0x17, 0x37 }, { 0x3A, 0x2A, 0x30 }, { 0x21, 0x11, 0x31 },
+                                 { 0x24, 0x14, 0x34 }, { 0x38, 0x28, 0x30 }, { 0x31, 0x21, 0x30 } };
+    static const u8 ec[7] = { 0x2A, 0x2A, 0x10, 0x16, 0x35, 0x10, 0x27 };
+    u8 k, y, e;
+    const u8 *c;
+    for (k = 0; k < nvis; ++k) {
+        y = (u8)((4 + ((u8)(18 - nvis) >> 1)) * 8 + k * 8 - 1);   /* (liste centrée, comme screens.c) */
+        if (vis[k] == 6) {              /* SURFACE */
+            c = sc[opt_val[6] < 6 ? opt_val[6] : 0];
+            if (pal_buf[25] != c[0]) { pal_buf[25] = c[0]; pal_buf[26] = c[1]; pal_buf[27] = c[2]; pal_dirty = 1; }
+            spr1(110, y, (u8)(ball_base + 8), 2);
+        }
+        if (vis[k] == 7) {              /* LIEU */
+            e = (u8)(opt_val[7] < 7 ? opt_val[7] : 0);
+            if (pal_buf[30] != ec[e]) { pal_buf[30] = ec[e]; pal_dirty = 1; }
+            spr1(104, y, (u8)(0x40 + e * 2), 3);
+            spr1(112, y, (u8)(0x41 + e * 2), 3);
+        }
+    }
+}
+

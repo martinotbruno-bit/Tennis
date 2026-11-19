@@ -966,7 +966,7 @@ static u8 match_end(void)
 {
     if (!hl_fin) {
         hl_fin = 1;
-        if (cfg.mode == GM_MATCH && !cfg.demo && cfg.env != ENV_NUDE) { hl_mode = 3; return 0; }
+        if (cfg.mode == GM_MATCH && !cfg.demo) { hl_mode = 3; return 0; }   /* (club nudiste aussi, avec la censure) */
     }
     return 1;
 }

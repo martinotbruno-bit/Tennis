@@ -44,7 +44,8 @@ void car_pal_text(void);
 char deco_str[24];        /* titre à écrire (copié par screens.c) */
 u8 deco_kind, deco_row;   /* type d'écran (attributs) ; rangée du filet du bas */
 static u8 dt_map[24];
-static u8 vs_row[VS_W], vs_at[64];
+u8 vs_row[VS_W];                /* (lu par extra2.c : mosaïque du club nudiste) */
+static u8 vs_at[64];
 static const u8 *vs_map1;      /* plan du buste droit (recopié à la fin de la glissade) */
 static char pb[8];
 #pragma bss-name(pop)
@@ -130,33 +131,7 @@ u8 __fastcall__ port_pal(u8 a)
     return 0;
 }
 
-/* Réglages : pastille de la couleur de la surface et vignette du lieu
-   (16 x 8, palette de sprite 3 : blanc, couleur du lieu, or), devant leur
-   valeur */
-extern u8 opt_val[], vis[], nvis;
-extern const unsigned char ball_base;
-void menu_marks(void)
-{
-    static const u8 sc[6][3] = { { 0x27, 0x17, 0x37 }, { 0x3A, 0x2A, 0x30 }, { 0x21, 0x11, 0x31 },
-                                 { 0x24, 0x14, 0x34 }, { 0x38, 0x28, 0x30 }, { 0x31, 0x21, 0x30 } };
-    static const u8 ec[7] = { 0x2A, 0x2A, 0x10, 0x16, 0x35, 0x10, 0x27 };
-    u8 k, y, e;
-    const u8 *c;
-    for (k = 0; k < nvis; ++k) {
-        y = (u8)((4 + ((u8)(18 - nvis) >> 1)) * 8 + k * 8 - 1);   /* (liste centrée, comme screens.c) */
-        if (vis[k] == 6) {              /* SURFACE */
-            c = sc[opt_val[6] < 6 ? opt_val[6] : 0];
-            if (pal_buf[25] != c[0]) { pal_buf[25] = c[0]; pal_buf[26] = c[1]; pal_buf[27] = c[2]; pal_dirty = 1; }
-            spr1(110, y, (u8)(ball_base + 8), 2);
-        }
-        if (vis[k] == 7) {              /* LIEU */
-            e = (u8)(opt_val[7] < 7 ? opt_val[7] : 0);
-            if (pal_buf[30] != ec[e]) { pal_buf[30] = ec[e]; pal_dirty = 1; }
-            spr1(104, y, (u8)(0x40 + e * 2), 3);
-            spr1(112, y, (u8)(0x41 + e * 2), 3);
-        }
-    }
-}
+extern u8 opt_val[], vis[], nvis;   /* (menu_marks : extra2.c, banque 30) */
 
 /* Réglages : accolade dorée en marge (colonne 2) qui réunit les lignes d'un
    même groupe : partie (mode, compétition, exercice), joueurs, match (lieu,
@@ -277,6 +252,11 @@ void title_court(void)
    visage, bras croisés sur la tenue), B (sombre, tenue, blanc) ; le texte
    blanc, ombré de sombre, s'écrit dans les blocs B. Tuiles : gauche $60-$9F puis $01-$1F, droite $A0-$FF. Rendu coupé. */
 static const u8 surf_bk[6] = { 0x07, 0x0A, 0x02, 0x05, 0x08, 0x0C };   /* fond : couleur de la surface */
+/* Club nudiste : mosaïque sur la poitrine des joueuses (extra2.c, banque 30) :
+   vs_cens_f(op << 12 | y << 8 | x << 1 | side) */
+u16 __fastcall__ vs_cens_f(u16 a);
+#define vs_in_cens(side, x, y) ((u8)far_call(BANK_X2, (void *)vs_cens_f, (u16)(0x1000 | ((u16)(y) << 8) | ((x) << 1) | (side))))
+#define vs_cens_row(side, r) far_call(BANK_X2, (void *)vs_cens_f, (u16)(((u16)(r) << 8) | (side)))
 static void vs_side(u8 side)
 {
     u8 c = cfg.chr[side], f = char_female[c], r, i, v, n;
@@ -300,19 +280,21 @@ static void vs_side(u8 side)
     } else { vram_adr(0x0A00); tz_n = n; tz_unpack(chr); }
     for (r = 0; r < VS_H; ++r) {
         bank_read(VS_BANK, vs_row, map + r * VS_W, VS_W);
-        vram_adr(NTADR(side ? 20 : 0, 4 + r) + (side ? 0x400 : 0));   /* buste droit : écran 1 (glissade) */
         for (i = 0; i < VS_W; ++i) {
             v = vs_row[i];
             if (v) { --v; v = (u8)(side ? 0xA0 + v : v < 64 ? 0x60 + v : 0x01 + v - 64); }
-            vram_put(v);
+            vs_row[i] = v;
         }
+        vs_cens_row(side, r);
+        vram_adr(NTADR(side ? 20 : 0, 4 + r) + (side ? 0x400 : 0));   /* buste droit : écran 1 (glissade) */
+        for (i = 0; i < VS_W; ++i) vram_put(vs_row[i]);
     }
     /* attributs des blocs du buste (6 x 7 blocs, rangées de blocs 2 à 8) */
     for (r = 0; r < VS_H / 2; ++r) {
         bank_read(VS_BANK, vs_row, ab + r * 6, 6);
         for (i = 0; i < 6; ++i) {
             u8 bx = (u8)(side ? 10 + i : i), by = (u8)(2 + r), q = (u8)(((by & 1) << 1) | (bx & 1)), a = (u8)((by >> 1) * 8 + (bx >> 1));
-            u8 p = (u8)((side ? 2 : 0) + (vs_row[i] && cfg.env != ENV_NUDE ? 1 : 0));   /* (club nudiste : une seule palette, la silhouette) */
+            u8 p = (u8)((side ? 2 : 0) + (vs_row[i] && !vs_in_cens(side, (u8)(i * 2), (u8)(r * 2)) ? 1 : 0));   /* (club nudiste : la mosaïque en palette A) */
             vs_at[a] = (u8)((vs_at[a] & (u8)~(3 << (q * 2))) | (p << (q * 2)));
         }
     }
@@ -332,6 +314,7 @@ static void vs_pal(u8 side)
     pal_buf[b + 5] = (u8)((D & 0x30) >= 0x20 ? 0x07 : D);             /* B : sombre (ombre du texte : noir si cheveux clairs), tenue, blanc */
     pal_buf[b + 3] = pal_buf[b + 6];                                  /* tenue (aussi dans A : bras croisés) */
     pal_buf[b + 7] = 0x30;
+    if (cfg.env == ENV_NUDE) pal_buf[b + 3] = pal_buf[b + 6] = (u8)(pal_buf[b + 2] >= 0x20 ? pal_buf[b + 2] - 0x10 : pal_buf[b + 2]);   /* (club nudiste : la peau, ombrée) */
     if (cfg.chr[side] == 16 || cfg.chr[side] == 19) {   /* Margaux, Papi : A (noir, peau, cheveux clairs), B (noir, peau, tenue) */
         pal_buf[b + 1] = pal_buf[b + 5] = 0x0F;
         pal_buf[b + 3] = D;
@@ -345,9 +328,7 @@ static void vs_pals(void)
     u8 k = surf_bk[cfg.surface < 6 ? cfg.surface : 0];
     vs_pal(1);                  /* (le côté droit d'abord : vs_pal passe par la palette 1) */
     vs_pal(0);
-    /* club nudiste : les bustes en silhouettes noires (palettes 0 et 2) ; le
-       texte garde les palettes 1 et 3 */
-    if (cfg.env == ENV_NUDE) { pal_buf[1] = pal_buf[2] = pal_buf[3] = pal_buf[9] = pal_buf[10] = pal_buf[11] = 0x0F; }
+
     pal_buf[0] = pal_buf[4] = pal_buf[8] = pal_buf[12] = pal_buf[16] = k;
     pal_dirty = 1;
 }
@@ -383,6 +364,7 @@ u8 __fastcall__ vs_anim(u8 t)
             u8 i, v;
             bank_read(VS_BANK, vs_row, vs_map1 + r * VS_W, VS_W);
             for (i = 0; i < VS_W; ++i) { v = vs_row[i]; if (v) vs_row[i] = (u8)(0x9F + v); }
+            vs_cens_row(1, r);
             vbuf_raw(NTADR(20, 4 + r), vs_row, VS_W);
         }
     } else if (t == 27) split_stop();
@@ -406,6 +388,7 @@ void vs_build(void)
     vram_adr(0x2400); vram_fill(0, 0x3C0);     /* écran 1 : le buste droit seul (glissade) */
     vs_side(0);
     vs_side(1);
+    if (cfg.env == ENV_NUDE) far_call(BANK_X2, (void *)vs_cens_f, 0x2000);   /* tuiles de la mosaïque */
     vram_adr(0x23C0);
     for (i = 0; i < 64; ++i) vram_put(vs_at[i]);
     vram_adr(0x27C0);                           /* attributs de l'écran 1 */

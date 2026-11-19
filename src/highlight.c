@@ -438,7 +438,6 @@ static u8 hl_fresh(u16 f)
 }
 void hl_check(void)
 {
-    if (cfg.env == ENV_NUDE) { hl_sok = hl_sbok = 0; return; }   /* (club nudiste : ni gros plan habillé, ni sprites agrandis) */
     if (cfg.replays == 2) hl_sok = 0;   /* « OUI, SIMPLE » : pas de gros plan, mais le zoom */
     /* frappe décisive plus ancienne que le ralenti (lob, long échange
        conclu par une faute adverse) : le gros plan ouvre le ralenti (son
@@ -579,6 +578,7 @@ static void label_draw(u8 y, u8 shown)
 
 /* un plan : image haute définition, fond uni, sol ; palettes du joueur */
 u16 __fastcall__ hd_backdrop_f(u16 z);   /* extra2.c (banque 30) */
+u16 __fastcall__ cens_hd_f(u16 a);       /* extra2.c : club nudiste, mosaïque */
 static void cut_build(u8 art)
 {
     u8 i, S, O, D, z, c = (art == TZ_BALLKID || art == TZ_CROWD) ? 11 : cfg.chr[hl_sp];   /* (ramasseuse, public : tenues vertes, celles de JADE) */
@@ -626,6 +626,7 @@ static void cut_build(u8 art)
     scroll_x = (u8)hl_cam; scroll_nt = (u8)((hl_cam >> 8) & 1); scroll_y = 0;
     spr_begin(); spr_end();
     label_load();                       /* (lettres du titre, rendu coupé) */
+    if (cfg.env == ENV_NUDE) far_call(BANK_X2, (void *)cens_hd_f, (u16)(art | ((u16)(char_female[c] ? 1 : 0) << 8) | ((u16)z << 9)));   /* (club nudiste : censure, extra2.c) */
     ppu_on();
 }
 
@@ -698,7 +699,7 @@ static void closeup_tick(void)
     }
     if (hl_t == 70) {
         /* après un très long échange (20 frappes ou plus) : le public debout */
-        if (rally_hits >= 20) { cut_build(TZ_CROWD); hl_cam = 0; scroll_x = 0; scroll_nt = 0; sfx_crowd(7); }
+        if (rally_hits >= 20 && cfg.env != ENV_NUDE) { cut_build(TZ_CROWD); hl_cam = 0; scroll_x = 0; scroll_nt = 0; sfx_crowd(7); }
         else cut_build(TZ_VICTORY_Z);
         hl_shake = 6;
     }
