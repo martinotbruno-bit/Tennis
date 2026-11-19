@@ -238,8 +238,11 @@ void pnet_tick(void)
 extern u8 ola_on, oam_i, hl_mode, cer;
 #pragma zpsym("oam_i")
 extern const unsigned char flag_tile;
-static const u8 flag_x[6] = { 6, 14, 6, 242, 234, 242 };
-static const u8 flag_y[6] = { 52, 96, 168, 64, 116, 176 };
+/* (2.79a) selon le lieu, toujours dans le public : stade et salle (public
+   partout), club et parc (bancs : rangées 6-7, 12-13, 20-21, 26-27),
+   château (balcons : rangées 12-13 et 20-21) */
+static const u8 flag_x[3][6] = { { 6, 14, 6, 242, 234, 242 }, { 6, 14, 6, 242, 234, 242 }, { 6, 14, 6, 242, 234, 242 } };
+static const u8 flag_y[3][6] = { { 52, 96, 168, 64, 116, 176 }, { 52, 98, 164, 54, 100, 164 }, { 98, 100, 164, 98, 164, 166 } };
 /* chronomètre du match : temps réel (trames de l'écran), hors pause,
    par set ; remis à zéro à l'entrée des joueurs (cer.c) */
 extern u16 tm_set[5];
@@ -254,14 +257,15 @@ static void tm_tick(void)
 }
 void flags_draw(void)
 {
-    u8 i, a;
+    u8 i, a, k;
     tm_tick();
     if (cfg.mode != GM_MATCH || cfg.env == ENV_NUDE || cfg.env == ENV_MARGAUX || hl_mode) return;
     if (!((u8)(cer - 4) < 7 || ola_on >= 2)) return;     /* (cer 4 à 10 : chaises, assis, retour ; fin du match) */
+    k = (u8)(cfg.env == ENV_CASTLE ? 2 : (cfg.env == ENV_CLUB || cfg.env == ENV_PARK) ? 1 : 0);
     for (i = 0; i < 6 && oam_i < 252; ++i) {
         a = (u8)(i < 3 ? 0 : 1);                         /* palette : équipe de gauche, de droite */
         if (((frame_cnt >> 3) + i) & 1) a |= 0x40;       /* agité */
-        spr1(flag_x[i], flag_y[i], flag_tile, a);
+        spr1(flag_x[k][i], flag_y[k][i], flag_tile, a);
     }
 }
 
