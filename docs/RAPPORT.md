@@ -794,7 +794,7 @@ Pour loger ce contenu, la cartouche passe de NROM (32 Ko) à **MMC1** : 128 Ko d
 | Relecture des textes (`check_texts.py`) | 0 problème |
 | Contraste (`contrast.py 25`) | 0 paire sous ΔE 25 (personnages, courts, balle, tenues) |
 | Profil CPU, double, 6 000 trames | 27 trames d'échange en dépassement (0,45 %), sans défaut d'image |
-| Compilation | Reproductible : SHA-256 `c2d946e93d33e9fde06525a260daf1bf98e1778009ee0a3ce9e955c2e7780313` sur deux compilations propres |
+| Compilation | Reproductible : SHA-256 `f7814e5cb4277ce5bcbaa2a74b2e501f0427f09c0d7095e639fc7e7635d587c7` sur deux compilations propres |
 
 ## 3. Conformité par section du CDC
 
@@ -841,7 +841,7 @@ Légende : ✅ réalisé et testé en émulation · 🟡 partiel · 🔧 nécess
 
 ## 5. Limitations restantes
 
-- **Version 2.79** : lieux plus différents (décor animé, ambiances sonores, feuilles du parc, court Margaux selon la surface, soirée en salle, affiche du club nudiste, salle reconnaissable en perspective, club nudiste : images sans vêtements et censure en mosaïque) ; pas de crépuscule en salle.
+- **Version 2.79** : lieux plus différents (décor animé, ambiances sonores, feuilles du parc, court Margaux selon la surface, soirée en salle, affiche du club nudiste, salle reconnaissable en perspective, club nudiste : images sans vêtements et censure en mosaïque) ; pas de crépuscule en salle ; suite complète : 437 vérifications réussies sur 439, les 2 autres (changement de côté, fin de set) attendaient un temps fixe trop court pour des échanges longs entre deux ordinateurs : rendues indépendantes de cette durée, elles passent.
 - **Version 2.78** : réglages simplifiés (page OPTIONS, modes 1 JOUEUR / 2 JOUEURS / COMPETITION / CARRIERE, ligne HUMAINS), commentaires de version retirés du code ; suite complète : 438 vérifications réussies, 0 échec.
 - **Version 2.77i** : jupe des images HD posée sur la cuisse (glissade, ramasseuse) ; arborescence du tournoi en cours (saison, Grand Martinot, Martinworld) ; puissance de l'ordinateur bornée (lobs aberrants en facile) ; lob de sauvetage plus risqué (59 % dans le court depuis le fond) ; suite complète : 436 vérifications réussies, 0 échec.
 - **Version 2.77h** : parcours de compétition corrigé (plus de page de choix du joueur après TON JOUEUR, ligne JOUEURS aussitôt affichée, tableau à plusieurs joueurs sans chevauchement) ; ralentis HD de nouveau sur fond de couleur ; un plantage de processus de test compte désormais comme un échec ; suite complète : 434 vérifications réussies, 0 échec.

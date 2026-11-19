@@ -3039,7 +3039,7 @@ console.log('Version 2.76 : balle de match et changement de côté');
   e.poke('sc_games', 0); e.poke('sc_points', 3); e.poke('sc_points', 0, 1);
   let started = false, shown = false, gaps = 0, chairEarly = 0;
   const chair = e.addr('chair_tile13') !== undefined ? null : null;
-  for (let f = 0; f < 60 * 60 * 2; f++) {
+  for (let f = 0; f < 60 * 60 * 6; f++) {   /* (échanges parfois longs entre deux ordinateurs : jusqu'à 30 s) */
     e.run(1);
     const cer = e.peek('cer'), bv = e.peek('band_vis');
     if (cer === 0xFD || cer === 4 || cer === 5) started = true;
@@ -3308,7 +3308,7 @@ console.log('Version 2.76 : parcours, tirage, fin de set, compétition à deux')
   // fin de set : les joueurs s'assoient, bandeau du set, puis l'écran du set ;
   // au retour, ils repartent des chaises
   const e = boot(); e.cerSkip = false; startWith(e, { FMT: 1, REPLAY: 0 }); allCpu(e);
-  e.poke('sc_games', 5, 0);   /* (2.77i : 5 jeux à 0, la fin du set vient vite ; les échanges sont plus longs) */
+  e.poke('sc_games', 5, 0); e.poke('sc_points', 3, 0); e.poke('sc_points', 0, 1);   /* (5 jeux à 0 et balle de set : la fin du set vient vite ; les échanges sont longs) */
   let st = 0, seated = false, toScreen = false;
   runUntil(e, () => { if (e.peek('brk_pend') && e.peek('st_t') === 8) st = 1; if (e.peek('cer') === 5 && e.peek('brk_pend')) seated = true; return app(e) === AS.SCREENS && scr(e) === SS.SETBREAK; }, 60 * 60 * 15,
     () => { if (e.peek('cer') === 1 || e.peek('cer') === 2 || e.peek('cer') === 3 || e.peek('cer') === 11) e.poke('cer_skip', 1); });
