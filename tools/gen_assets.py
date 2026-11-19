@@ -1800,7 +1800,7 @@ def tile_at(bmp, ty, tx):
     return [list(bmp[ty * 8 + y][tx * 8:tx * 8 + 8]) for y in range(8)]
 
 HALL_NB = {}                  # (2.79) salle en perspective : colonnes de public par rangée (côté, rangée)
-HALL_BAND = (10, 11, 18, 19, 26, 27)   # (2.79) salle en perspective : rangées des bandeaux lumineux (paires alignées sur les blocs ; pas de drapeau)
+HALL_BAND = (4, 5, 10, 11, 16, 17, 24, 25)   # (2.79) salle en perspective : rangées des bandeaux lumineux, environ tous les 4 rangs (paires alignées sur les blocs ; pas de drapeau)
 # bandeau lumineux (palette 2 de la salle : 1 gris, 2 vert, 3 noir) : cadre
 # gris, écrans verts séparés par un trait noir ; moitiés haute et basse
 BAND_T = [[1] * 8, [1] * 8] + [[2] * 7 + [3] for _ in range(6)]
