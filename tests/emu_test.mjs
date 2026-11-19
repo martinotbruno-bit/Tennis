@@ -850,6 +850,21 @@ console.log('Ralenti : gros plan et zoom');
     }
     check(ok && d.peek('sc_winner') === 1 && d.peek('hl_sp') === 0, `défaite : poignée de main au visage triste (${n} cases, vainqueur ${d.peek('sc_winner')})`);
   }
+  // (2.82) ralenti passé par A, puis A de nouveau avant que le bandeau du
+  // score soit monté : cet appui ne le ferme plus d'avance (il n'apparaissait pas)
+  {
+    const d = boot(); d.bandSkip = false; startWith(d, { FMT: 3 });
+    const c = d.addr('cfg'); d.nes.cpu.mem[c + CFG.CTRL] = 0; d.nes.cpu.mem[c + CFG.CTRL + 1] = 2;
+    let f = 0, res = [];
+    for (let k = 0; k < 2; k++) {
+      runUntil(d, () => d.peek('ms') === 3 && d.peek('rp_pending') === 1, 20000, () => { if ((d.peek('ms') === 0 || d.peek('band_hold')) && (++f % 40) === 0) d.tap('A', 1, 2, 0); });
+      d.run(62); d.down('A'); d.run(2); d.up('A'); d.run(30); d.down('A'); d.run(2); d.up('A');
+      runUntil(d, () => !(d.peek('ms') === 5 || (d.peek('ms') === 3 && d.peek('rp_pending'))), 3000);
+      let seen = 0; for (let i = 0; i < 150; i++) { d.run(1); if (d.peek('band_vis') === 3) seen++; }
+      res.push(seen); d.tap('A', 1, 2, 0);
+    }
+    check(res.every(v => v > 20), `ralenti passé puis A trop tôt : le bandeau du score apparaît quand même (${res.join(', ')} trames)`);
+  }
   // club nudiste (2.79) : gros plans comme ailleurs, censurés : mosaïque
   // ($F9/$FA) sur le corps, tenue couleur de peau
   const n = boot(); n.poke('nude_unlocked', 1); startWith(n, { FMT: 3, ENV: 3 }); allCpu(n);

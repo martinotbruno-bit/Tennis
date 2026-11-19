@@ -318,7 +318,7 @@ void band_draw(void)
        humain (démonstration, ordinateur contre ordinateur), il disparaît
        au lancer de balle, comme avant. */
     if (ms != MS_DEAD && ms != MS_SERVE) band_dis = 0;
-    else if (!rp_pending && (pad1_new | pad2_new)) band_dis = 1;
+    else if (!rp_pending && (hl_flags & 4) && (pad1_new | pad2_new)) band_dis = 1;   /* (2.82 : seulement bandeau entièrement monté ; un appui plus tôt, par exemple juste après avoir passé le ralenti, l'empêchait d'apparaître) */
     if (cer == CER_CHOOSE || cer == CER_RECAP) band_pg = 6;
     /* balle de match gagnée : pas de bandeau avant la fête (le
        score n'est compté qu'à la fin du temps mort) */
@@ -565,6 +565,7 @@ static void label_load(void)
     for (c = 0, i = 0; i < lbl_n; ++i) if (hl_txt[i] != ' ') ++c;
     if (c <= 8) lbl_brk = 0xFF;
 }
+static void confetti(void);
 static void label_draw(u8 y, u8 shown)
 {
     u8 i, x, l0 = lbl_brk == 0xFF ? lbl_n : lbl_brk, l1, yy = y;
@@ -707,8 +708,7 @@ static void closeup_tick(void)
     }
     /* gros plan : la joie, l'écran tremble puis s'apaise ; confettis */
     if (hl_shake) { scroll_y = (u8)((hl_t & 1) ? hl_shake : 0); if ((hl_t & 3) == 0) --hl_shake; } else scroll_y = 0;
-    for (i = 0; i < 10; ++i)
-        spr1((u8)(i * 25 + 8), (u8)(((hl_t * (1 + (i & 1)) + i * 23) & 0x9F) + 8), confetti_tile, (u8)(i & 3));
+    confetti();                         /* (la même pluie que le portrait final : place de la banque) */
     label_draw(206, 16);
     spr_end();
     if (hl_t >= 118) back_to_court();
