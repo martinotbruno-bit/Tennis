@@ -193,6 +193,7 @@ u16 __fastcall__ hd_backdrop_f(u16 z)
 extern u8 cer, hl_mode, sun_st;
 extern u8 band_hold;
 #pragma zpsym("band_hold")
+extern u8 ola_on;
 #define CER_CHAIR 4
 #pragma bss-name(push, "ZEROPAGE")
 static u8 dk_t, dk_last, dk_base, dk_fl, dk_pc, dk_snd, dk_sp, dk_pcer, dk_pms, dk_cr, dk_fan, dk_h, dk_fx, dk_on;
@@ -296,7 +297,7 @@ void decor_tick(void)
     up = (u8)(crowd_timer > dk_pc);           /* le public vient de réagir */
     dk_pc = crowd_timer;
     if (dk_fx) --dk_fx;
-    if (up && (e == ENV_STADIUM || e == ENV_HALL)) dk_fx = 90;   /* (2.80) flashs des photographes */
+    if (up && (e == ENV_STADIUM || e == ENV_HALL)) dk_fx = 120;   /* (2.80) flashs des photographes */
     /* décor animé : une couleur du décor (palette 2) qui varie */
     if (e == ENV_CASTLE || e == ENV_MARGAUX) idx = 11;
     else if (e == ENV_CLUB || e == ENV_PARK || e == ENV_HALL) idx = 10;
@@ -341,19 +342,44 @@ void decor_tick(void)
    (tuiles 4 et 8 : dessins propres au lieu, voir venue_pal_f) */
 static const u8 lf_sway[8] = { 0, 1, 2, 3, 3, 2, 1, 0 };
 static const u8 sq_hop[4] = { 0, 2, 3, 2 };
+static const u8 fl_x[16] = { 6, 236, 14, 228, 20, 242, 8, 232, 16, 240, 4, 230, 18, 236, 10, 244 };
+static const u8 fl_y[16] = { 52, 120, 176, 70, 140, 40, 200, 96, 64, 184, 112, 150, 36, 80, 164, 208 };
 static const s8 bd_dx[3] = { 0, -12, -12 }, bd_dy[3] = { 0, -6, 6 };
+/* (variables en page zéro : les locales sur la pile du C coûtent cher, et
+   la trame d'après le point est chargée) */
+#pragma bss-name(push, "ZEROPAGE")
+static u8 dd_i, dd_n, dd_x, dd_y, dd_t, dd_k, dd_e;
+static u16 dd_ph;
+static s16 dd_sx;
+#pragma bss-name(pop)
+#pragma zpsym("dd_i")
+#pragma zpsym("dd_n")
+#pragma zpsym("dd_x")
+#pragma zpsym("dd_y")
+#pragma zpsym("dd_t")
+#pragma zpsym("dd_k")
+#pragma zpsym("dd_e")
+#pragma zpsym("dd_ph")
+#pragma zpsym("dd_sx")
+#define i dd_i
+#define n dd_n
+#define x dd_x
+#define y dd_y
+#define t dd_t
+#define k dd_k
+#define e dd_e
+#define ph dd_ph
+#define sx dd_sx
 void decor_draw(void)
 {
-    u8 i, n, x, y, t, k, e = cfg.env;
-    u16 ph;
-    s16 sx;
+    e = cfg.env;
     if (!dk_on || hl_mode) return;
     n = (u8)(npl == 4 ? 3 : 6);
     ph = (u16)(((u16)(dk_h & 1) << 8) | dk_t);      /* (cycle de 512 trames) */
     if (e == ENV_PARK) {
-        for (i = 0; i < n; ++i) {
-            t = (u8)((frame_cnt >> 1) + i * 43);
-            y = (u8)(28 + (u8)(t % 196));
+        /* (sans multiplication ni division : la trame d'après le point est chargée) */
+        for (i = 0, t = (u8)(frame_cnt >> 1); i < n; ++i, t += 43) {
+            y = (u8)(28 + (t < 196 ? t : (u8)(t - 196)));
             x = (u8)((i & 1) ? 226 + (i << 1) : 10 + (i << 1));
             x = (u8)(x + lf_sway[((t >> 3) + i) & 7]);
             if (i == 5) spr1(x, y, 6, 3);                                  /* (éclat jaune) */
@@ -372,25 +398,24 @@ void decor_draw(void)
         return;
     }
     if (e == ENV_MARGAUX) {                                               /* cœurs qui montent */
-        for (i = 0; i < n; ++i) {
-            t = (u8)(((dk_t >> 1) | (dk_h << 7)) + i * 43);
-            y = (u8)(220 - (u8)(t % 188));
+        for (i = 0, t = (u8)((dk_t >> 1) | (dk_h << 7)); i < n; ++i, t += 43) {
+            y = (u8)(220 - (t < 188 ? t : (u8)(t - 188)));
             x = (u8)((i & 1) ? 228 + (i << 1) : 8 + (i << 1));
             spr1((u8)(x + lf_sway[((t >> 3) + i) & 7]), y, (u8)((i & 2) ? 8 : 4), 2);
         }
         return;
     }
     if (e == ENV_STADIUM || e == ENV_HALL) {                              /* flashs des photographes */
-        n = (u8)(npl == 4 ? 2 : 4);
+        /* (positions en table : pas de multiplication ni de division, la
+           trame de l'ola est déjà chargée) */
+        if (ola_on) return;                                               /* (après l'ola : sa trame est pleine) */
+        n = (u8)(dk_fx ? (npl == 4 ? 2 : 4) : 1);
         for (i = 0; i < n; ++i) {
-            if (!dk_fx && i) break;
-            t = (u8)(dk_t + i * 21);
+            t = (u8)(dk_t + (i << 4) + (i << 2));
             k = (u8)(t & 15);
-            if (k >= 7 || (!dk_fx && ((t >> 4) & 3))) continue;
-            t = (u8)((t >> 4) * 37 + i * 91);
-            x = (u8)((t & 1) ? 230 + (t & 14) : 4 + ((t >> 1) & 14));
-            y = (u8)(36 + (u8)((u8)(t * 3) % 168));
-            spr1(x, y, (u8)(k < 3 ? 4 : 8), 3);
+            if (k >= 7 || (!dk_fx && (t & 0x30))) continue;
+            t = (u8)(((t >> 4) + (i << 2) + i) & 15);
+            spr1(fl_x[t], fl_y[t], (u8)(k < 3 ? 4 : 8), 3);
         }
         return;
     }
@@ -414,6 +439,15 @@ void decor_draw(void)
         }
     }
 }
+#undef i
+#undef n
+#undef x
+#undef y
+#undef t
+#undef k
+#undef e
+#undef ph
+#undef sx
 #pragma static-locals(pop)
 
 /* ---------------------------------------------------------------------- */
