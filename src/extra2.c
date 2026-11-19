@@ -191,6 +191,8 @@ u16 __fastcall__ hd_backdrop_f(u16 z)
 /*   château, des applaudissements polis suivent les beaux points.         */
 /* ---------------------------------------------------------------------- */
 extern u8 cer, hl_mode, sun_st;
+extern u8 band_hold;
+#pragma zpsym("band_hold")
 #define CER_CHAIR 4
 #pragma bss-name(push, "ZEROPAGE")
 static u8 dk_t, dk_last, dk_base, dk_fl, dk_pc, dk_snd, dk_sp, dk_pcer, dk_pms, dk_cr, dk_fan;
@@ -266,9 +268,10 @@ void decor_tick(void)
     if (hl_mode || paused) { if (dk_snd) { APU(0x4004) = 0x30; dk_snd = 0; } return; }
     /* (pendant l'échange, decor_tick n'est pas appelée ; dès la mise en
        place du service, la couleur du décor reprend sa valeur et le son
-       s'arrête : les animations n'ont lieu qu'à la fin du point et pendant
-       les pauses - changement de côté, cérémonies) */
-    if ((ms == MS_SERVE && !cer) || ms == MS_TOSS) {   /* (2.79a : dès la mise en place du service) */
+       s'arrête : les animations n'ont lieu qu'à la fin du point, tant que
+       le bandeau du score est affiché, et pendant les pauses - changement
+       de côté, cérémonies) */
+    if ((ms == MS_SERVE && !cer && !band_hold) || ms == MS_TOSS) {
         if (dk_last != 0xFF && pal_buf[e == ENV_CASTLE ? 11 : 10] == dk_last && dk_last != dk_base) { pal_buf[e == ENV_CASTLE ? 11 : 10] = dk_base; pal_dirty = 1; }
         dk_last = 0xFF;
         if (dk_snd) { APU(0x4004) = 0x30; dk_snd = 0; }

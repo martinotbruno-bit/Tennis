@@ -190,6 +190,7 @@ Pour chaque ligne, lancez un match et regardez l'écran pendant une dizaine de s
 | 10.52 | Lob de sauvetage (version 2.77i) | Plongeons depuis le fond du court : une partie des lobs de sauvetage sortent (surtout trop longs) ; le lob décidé (B + HAUT) reste aussi sûr qu'avant | ☐ |
 | 10.53 | Réglages (version 2.78) | MODE : 1 JOUEUR VS CPU, 2 JOUEURS, COMPETITION, CARRIERE, ENTRAINEMENT, DEMO ; 1 JOUEUR, JEU DOUBLE : partenaire CPU ; 2 JOUEURS, FORMULE CONTRE / ENSEMBLE ; COMPETITION : ligne HUMAINS ; OPTIONS ouvre la page (RALENTIS, VITESSE JEU, FATIGUE, VUE, SON), B y revient ; les réglages sont retrouvés au rallumage | ☐ |
 | 10.54 | Lieux (version 2.79) | Château : flammes qui vacillent, fanfare au changement de côté ; parc : feuilles qui tombent sur les côtés, oiseaux ; club : feuillage, applaudissements ; salle : SOIREE (court éclairé), panneaux qui s'allument ; en perspective, public jusqu'à la rambarde et bandeaux lumineux horizontaux, drapeaux dans le public ; Margaux : rose différent selon la surface ; club nudiste : affiche, gros plans et portrait sans vêtements, mosaïque sur le bassin et la poitrine ; aucun son d'ambiance avec SON « aucun » | ☐ |
+| 10.55 | Décor animé et bandeau du score (version 2.79c) | Château ou parc : après un point, les flammes / feuilles continuent de bouger tant que le bandeau du score est affiché, même serveur en place ; elles se figent dès que le bandeau est fermé par un appui ou au lancer de balle, et restent figées pendant l'échange | ☐ |
 
 ## 11. Ce qu'il faut renvoyer
 

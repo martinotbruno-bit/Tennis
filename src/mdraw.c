@@ -11,6 +11,8 @@ void decor_draw(void);   /* extra2.c */
 
 #define side_of(t) ((u8)(((t) & 1) ^ sc_swap))   /* 0 = bas, 1 = haut */
 extern u8 hit_now, hl_mode, cer, pose_force[4], pose_now[4], pl_jump[4];
+extern u8 band_hold;
+#pragma zpsym("band_hold")
 extern u8 pose_cache[4], flip_cache[4];
 void poses_all(void); void slot_tick(void); void cer_front(void); void cer_draw(void);
 void match_fx(void); void band_draw(void);
@@ -84,7 +86,7 @@ void match_draw(void)
     bank_call(BANK_EXTRAS, match_fx);   /* ombres, poussière, arbitre, repère */
     if (party) { win_fx(); far_call(BANK_TRAIN, (void *)fw_draw, ms_timer); }
     if (cfg.cond == COND_RAIN) bank_call(BANK_EXTRAS, rain_draw);
-    else if (cfg.env == ENV_PARK && (ms == MS_DEAD || ms == MS_OVER || cer)) bank_call(BANK_X2, decor_draw);   /* feuilles d'automne : fin du point, pauses (extra2.c) */
+    else if (cfg.env == ENV_PARK && (ms == MS_DEAD || ms == MS_OVER || cer || band_hold)) bank_call(BANK_X2, decor_draw);   /* feuilles d'automne : fin du point, bandeau du score, pauses (extra2.c) */
     spr_end();
     bank_call(BANK_HL, band_draw);      /* bandeau du score entre les points (highlight.c) */
 }
