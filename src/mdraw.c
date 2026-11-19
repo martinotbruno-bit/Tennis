@@ -2,6 +2,7 @@
    effets), appelé à chaque trame par la boucle principale. En banque 22
    (la banque 0, celle du moteur, était pleine). */
 #include "game_int.h"
+void decor_draw(void);   /* extra2.c */
 #include "app.h"
 #include "rules.h"
 #include "court.h"
@@ -83,6 +84,7 @@ void match_draw(void)
     bank_call(BANK_EXTRAS, match_fx);   /* ombres, poussière, arbitre, repère */
     if (party) { win_fx(); far_call(BANK_TRAIN, (void *)fw_draw, ms_timer); }
     if (cfg.cond == COND_RAIN) bank_call(BANK_EXTRAS, rain_draw);
+    else if (cfg.env == ENV_PARK) bank_call(BANK_X2, decor_draw);   /* feuilles d'automne (extra2.c) */
     spr_end();
     bank_call(BANK_HL, band_draw);      /* bandeau du score entre les points (highlight.c) */
 }

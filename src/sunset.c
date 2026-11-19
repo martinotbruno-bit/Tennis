@@ -11,6 +11,7 @@
 
 /* phases du crépuscule (déplacées de highlight.c, banque 15 pleine) */
 extern u8 sun_st, sun_pend;
+u16 __fastcall__ venue_pal_f(u16 cond);   /* extra2.c */
 extern u8 ppu_emph;
 #pragma zpsym("ppu_emph")
 
@@ -56,6 +57,7 @@ static void sun_light(void)
 {
     u8 red = is_pal ? 0x40 : 0x20;
     pal_set_court(cfg.surface, sun_st == 3 ? COND_NIGHT : COND_DAY, cfg.env);
+    far_call(BANK_X2, (void *)venue_pal_f, sun_st == 3 ? COND_NIGHT : COND_DAY);
     /* château : sa pierre grise virait au rose puis au lilas sous
        l'accentuation ; pierre dorée au couchant, brun orangé au crépuscule */
     if (cfg.env == ENV_CASTLE && sun_st && sun_st < 3) {

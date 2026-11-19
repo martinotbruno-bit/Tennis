@@ -75,7 +75,7 @@ static void foot_text(u8 r, u8 pg)
     fb_clear(28);
     if (!pg || !fch_h2h) {
         if (r == 0) { fb_put(0, surf_name[cfg.surface]); fb_put(16, env_name[cfg.env]); }
-        else { fb_put(0, cnd_name[cfg.cond]); fb_put(16, fmt_nm[cfg.games_per_set == 4 ? 3 : cfg.sets_to_win - 1]); }
+        else { fb_put(0, cfg.cond == COND_NIGHT && cfg.env == ENV_HALL ? (const char *)"SOIREE" : cnd_name[cfg.cond]);   /* (en salle, la nuit est une soirée) */ fb_put(16, fmt_nm[cfg.games_per_set == 4 ? 3 : cfg.sets_to_win - 1]); }
         return;
     }
     v = sw_h2h[1 + cfg.chr[1]];

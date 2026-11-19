@@ -190,9 +190,9 @@ static const char *opt_text(u8 o)
     case O_SURF:   return surf_name[v];
     case O_ENV:    return env_name[v];
     case O_COND:
-        if (opt_val[O_ENV] == ENV_HALL && v == COND_RAIN) return "PLUIE > JOUR";
         /* crépuscule : en match seulement (pas en salle, ni à l'entraînement, ni en compétition) */
-        if (v == COND_SUNSET && (opt_val[O_ENV] == ENV_HALL || opt_val[O_MODE] == MODE_TRAIN || opt_val[O_MODE] == MODE_COMP)) return "CREP. > JOUR";
+        if (v == COND_SUNSET && (opt_val[O_MODE] == MODE_TRAIN || opt_val[O_MODE] == MODE_COMP)) return "CREP. > JOUR";
+        if (v == COND_NIGHT && opt_val[O_ENV] == ENV_HALL) return "SOIREE";
         return cond_name[v];
     case O_FMT:    return fmt_name[v];
     case O_REPLAY: return v == 0 ? "NON" : v == 1 ? "OUI, TELE" : "OUI, SIMPLE";   /* (1 avec gros plan et zoom) */
@@ -606,18 +606,6 @@ static void comp_cfg(void)
 
 /* ---------------------------------------------------------------------- */
 /* Présentation avant le match (CDC 7.5)                                   */
-static void team_line(u8 t, u8 y)
-{
-    /* nom complet (jusqu'à 7 lettres : MARGAUX) ; en double, le partenaire
-       sur la ligne suivante */
-    txt_at(6, y, chr_nm(cfg.chr[t]));
-    if (cfg.doubles) { txt_at(6, (u8)(y + 1), "+"); txt_at(8, (u8)(y + 1), chr_nm(cfg.chr[t + 2])); }
-    if (cfg.ctrl[t] == CTRL_CPU) txt_at(18, y, level_name[cfg.level[t]]);
-    else txt_at(18, y, cfg.ctrl[t] == CTRL_PAD1 ? "MANETTE 1" : "MANETTE 2");
-    if (cfg.doubles && cfg.ctrl[t + 2] == CTRL_PAD2) txt_at(18, (u8)(y + 1), "+ MANETTE 2");
-    else if (cfg.ctrl[t] == CTRL_CPU) txt_at(18, (u8)(y + 1), style_name[char_style[cfg.chr[t]]]);
-}
-
 void vs_build(void);
 void fly_build(void); u16 __fastcall__ fly_tick(u16 pad);   /* fly.c, banque 20 */
 void vs_texts(void); void fiche_tick(void); u16 __fastcall__ car_end_text(u16 y);   /* career.c, banque 19 */
@@ -625,17 +613,12 @@ static u16 brk_t;            /* (aussi : temps de l'entrée de l'affiche VS) */
 u8 __fastcall__ vs_anim(u8 t);
 static void present_screen(void)
 {
-    u8 vs = (u8)(cfg.env != ENV_NUDE);       /* (au club nudiste : la présentation d'origine) */
     u8 fin;
     screen_begin();
     people_tiles((u8)(cfg.env == ENV_NUDE));
     pal_set_player(0, cfg.chr[0]);
     pal_set_player(1, cfg.chr[1]);
-    if (vs) bank_call(BANK_PODIUM, vs_build);
-    if (cfg.env == ENV_NUDE) {
-        txt_at(4, 24, "CLUB NUDISTE LES BRONZES");
-        txt_at(4, 25, "TENUE EXIGEE : AUCUNE");
-    }
+    bank_call(BANK_PODIUM, vs_build);   /* (club nudiste : les bustes en silhouettes, menuart.c) */
     if (last_mode == MODE_COMP) {
         COMP(comp_cname, c_type); txt_at(3, 1, comp_l2);
         COMP(comp_stage_name, 0);
@@ -643,18 +626,8 @@ static void present_screen(void)
         txt_at(3, 3, comp_l2);
     } else txt_at(3, 1, cfg.doubles ? "MATCH DE DOUBLE" : "MATCH AMICAL");
     fin = (u8)(last_mode == MODE_COMP && is_final());   /* (avant vs_texts : la fiche écrit dans comp_l1) */
-    if (vs) {
-        bank_call(BANK_CAR, vs_texts);   /* noms, manette ou niveau, style, conditions ; fiche des joueurs (career.c) */
-        brk_t = 0; far_call(BANK_PODIUM, (void *)vs_anim, 0);   /* (« CONTRE » : écrit par l'entrée animée) */
-    } else {
-        team_line(0, 10);
-        txt_at(14, 13, "CONTRE");
-        team_line(1, 16);
-        txt_at(4, 21, surf_name[cfg.surface]);
-        txt_at(17, 21, env_name[cfg.env]);
-        txt_at(4, 22, cond_name[cfg.cond]);
-        txt_at(17, 22, fmt_name[cfg.games_per_set == 4 ? 3 : cfg.sets_to_win - 1]);
-    }
+    bank_call(BANK_CAR, vs_texts);   /* noms, manette ou niveau, style, conditions ; fiche des joueurs (career.c) */
+    brk_t = 0; far_call(BANK_PODIUM, (void *)vs_anim, 0);   /* (« CONTRE » : écrit par l'entrée animée) */
     txt_at(4, 27, "A : JOUER   B : RETOUR");
     ppu_on();
     if (fin) music_play(MUS_FINAL);
@@ -662,20 +635,6 @@ static void present_screen(void)
     scr_state = SS_PRESENT;
 }
 
-static void present_sprites(void)
-{
-    /* double : les partenaires à côté, sans recouvrir les noms (colonne 6) */
-    u8 x = (u8)(cfg.doubles ? 22 : 30);
-    if (cfg.env != ENV_NUDE) return;          /* affiche VS : les bustes, sans sprites */
-    spr_begin();
-    spr_person(x, 98, cfg.chr[0], 1, POSE_JOY, 0, 0);
-    spr_person(x, 146, cfg.chr[1], 1, POSE_JOY, 1, 1);
-    if (cfg.doubles) {
-        spr_person(39, 98, cfg.chr[2], 1, POSE_IDLE, 0, 0);
-        spr_person(39, 146, cfg.chr[3], 1, POSE_IDLE, 1, 1);
-    }
-    spr_end();
-}
 
 /* ---------------------------------------------------------------------- */
 /* Compétitions : écran d'étape avec tableau ou classement et code         */
@@ -1114,6 +1073,7 @@ void screens_tick(void)
                 v = (u8)((pad1_new & PAD_RIGHT) ? ENV_NUDE + 1 : ENV_NUDE - 1);
             if ((o == O_P1 || o == O_P2) && v == 16 && opt_val[O_ENV] == ENV_NUDE)
                 v = (u8)((pad1_new & PAD_RIGHT) ? 0 : 15);
+            if (o == O_COND && opt_val[O_ENV] == ENV_HALL && v >= COND_RAIN) v = (u8)((pad1_new & PAD_RIGHT) ? COND_DAY : COND_NIGHT);   /* (salle : ni pluie ni crépuscule) */
             opt_val[o] = v;
             if (!comp_single() && opt_val[O_CPART] > 1) opt_val[O_CPART] = 1;
             sfx_menu_val((u8)(pad1_new & PAD_RIGHT));
@@ -1168,9 +1128,8 @@ void screens_tick(void)
             go_match(); break;
         }
         if (pad1_new & PAD_B) { sfx_menu_back(); if (last_mode == MODE_COMP) comp_screen(); else menu_screen(); break; }
-        if (cfg.env != ENV_NUDE && brk_t < 48 && !fade_lvl) far_call(BANK_PODIUM, (void *)vs_anim, (u8)++brk_t);   /* (après le fondu) */
-        if (cfg.env != ENV_NUDE) bank_call(BANK_CAR, fiche_tick);       /* fiche des joueurs, en alternance */
-        present_sprites();
+        if (brk_t < 48 && !fade_lvl) far_call(BANK_PODIUM, (void *)vs_anim, (u8)++brk_t);   /* (après le fondu) */
+        bank_call(BANK_CAR, fiche_tick);       /* fiche des joueurs, en alternance */
         break;
     case SS_COMP:
         if (c_pg == 1 && (c_type == CT_LEAGUE || c_type == CT_SEASON || c_type >= CT_GRAND)) {

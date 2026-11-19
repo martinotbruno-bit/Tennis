@@ -312,7 +312,7 @@ static void vs_side(u8 side)
         bank_read(VS_BANK, vs_row, ab + r * 6, 6);
         for (i = 0; i < 6; ++i) {
             u8 bx = (u8)(side ? 10 + i : i), by = (u8)(2 + r), q = (u8)(((by & 1) << 1) | (bx & 1)), a = (u8)((by >> 1) * 8 + (bx >> 1));
-            u8 p = (u8)((side ? 2 : 0) + (vs_row[i] ? 1 : 0));
+            u8 p = (u8)((side ? 2 : 0) + (vs_row[i] && cfg.env != ENV_NUDE ? 1 : 0));   /* (club nudiste : une seule palette, la silhouette) */
             vs_at[a] = (u8)((vs_at[a] & (u8)~(3 << (q * 2))) | (p << (q * 2)));
         }
     }
@@ -345,6 +345,9 @@ static void vs_pals(void)
     u8 k = surf_bk[cfg.surface < 6 ? cfg.surface : 0];
     vs_pal(1);                  /* (le côté droit d'abord : vs_pal passe par la palette 1) */
     vs_pal(0);
+    /* club nudiste : les bustes en silhouettes noires (palettes 0 et 2) ; le
+       texte garde les palettes 1 et 3 */
+    if (cfg.env == ENV_NUDE) { pal_buf[1] = pal_buf[2] = pal_buf[3] = pal_buf[9] = pal_buf[10] = pal_buf[11] = 0x0F; }
     pal_buf[0] = pal_buf[4] = pal_buf[8] = pal_buf[12] = pal_buf[16] = k;
     pal_dirty = 1;
 }

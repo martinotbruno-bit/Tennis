@@ -401,7 +401,8 @@ extern u8 hl_mode;                 /* 1 : gros plan, 2 : zoom en cours (highligh
 void hl_tick(void);
 #define score_recap() bank_call(BANK_X2, score_recap)   /* (extra2.c) */
 
-u8 __fastcall__ serve_fb(s16 vz);             /* banque 13 (shots.c) */
+u8 __fastcall__ serve_fb(s16 vz);
+u16 __fastcall__ venue_pal_f(u16 cond); void decor_tick(void);   /* extra2.c */             /* banque 13 (shots.c) */
 
 /* pad : directions maintenues ; btn : PAD_A ou PAD_B ; power 0..32 */
 static void do_hit(u8 p, u8 pad, u8 btn, u8 power, u8 spread)
@@ -1016,6 +1017,7 @@ static void court_load(void)
     vram_adr(0x2000);
     bank_call(BANK_EXTRAS, load_court);
     pal_set_court(cfg.surface, cfg.cond, cfg.env);
+    far_call(BANK_X2, (void *)venue_pal_f, cfg.cond);   /* (court Margaux selon la surface, soirée en salle : extra2.c) */
     bank_call(BANK_HL, court_post);    /* bandeau du score (écran 1) ; crépuscule : lumière selon les jeux joués (highlight.c) */
     pal_players_match(cfg.chr[0], cfg.chr[1]);               /* (contour, raquette et cheveux noirs) */
 }
@@ -1161,6 +1163,7 @@ u8 match_tick(void)
         if (msg_timer) { if (--msg_timer == 0) { hud_dirty = 1; if (recap_pend) score_recap(); } }
         if (hud_dirty) bank_call(BANK_EXTRAS, hud_update);
         bank_call(BANK_EXTRAS, crowd_tick);
+        bank_call(BANK_X2, decor_tick);
         return 0;
     }
 
@@ -1241,6 +1244,7 @@ u8 match_tick(void)
     if (hud_dirty) bank_call(BANK_EXTRAS, hud_update);
     /* public animé (après le score : le tampon VRAM est partagé) */
     if (npl < 4 || (frame_cnt & 1)) bank_call(BANK_EXTRAS, crowd_tick);      /* public : suit la balle, ola, réactions (double : une trame sur deux) */
+    bank_call(BANK_X2, decor_tick);     /* décor animé et ambiance du lieu (extra2.c) */
     /* filet qui tremble (après le score : le tampon VRAM est partagé) */
     if (net_shake) bank_call(BANK_EXTRAS, net_tick);
     return 0;

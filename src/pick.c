@@ -17,6 +17,7 @@
 #include "game.h"
 #include "audio.h"
 #include "comp.h"
+u16 __fastcall__ venue_pal_f(u16 cond);   /* extra2.c : court Margaux selon la surface, soirée en salle */
 
 #pragma static-locals(off)          /* (RAM de cartouche presque pleine : variables sur la pile) */
 
@@ -216,7 +217,7 @@ static void rows_text(u8 now)
         b[28] = 0;
         if (pk_row == r) b[1] = '>';
         for (t = lbl[r], i = 3; *t; ) b[i++] = *t++;
-        q = r == 0 ? env_name[opt_val[O_ENV]] : r == 1 ? surf_name[opt_val[O_SURF]] : cond_nm[opt_val[O_COND]];
+        q = r == 0 ? env_name[opt_val[O_ENV]] : r == 1 ? surf_name[opt_val[O_SURF]] : (opt_val[O_COND] == COND_NIGHT && opt_val[O_ENV] == ENV_HALL ? (const char *)"SOIREE" : cond_nm[opt_val[O_COND]]);   /* (en salle : soirée) */
         for (n = 0; q[n]; ++n) ;
         while (n && q[n - 1] == ' ') --n;               /* (noms de surface complétés d'espaces) */
         i = 11; b[i++] = '<'; b[i++] = ' ';               /* (13 caractères : COURT MARGAUX) */
@@ -250,6 +251,7 @@ static void draw_court(void)
     persp = 0;
     /* crépuscule : la lumière du couchant (accentuation rouge) */
     pal_set_court(cfg.surface, cfg.cond == COND_SUNSET ? COND_DAY : cfg.cond, cfg.env);
+    far_call(BANK_X2, (void *)venue_pal_f, cfg.cond == COND_SUNSET ? COND_DAY : cfg.cond);   /* (court Margaux selon la surface, soirée en salle) */
     ppu_emph = (u8)(cfg.cond == COND_SUNSET ? (is_pal ? 0x40 : 0x20) : 0);
     if (cfg.cond == COND_SUNSET && cfg.env == ENV_CASTLE) { pal_buf[9] = 0x37; pal_buf[10] = 0x27; }   /* (pierre dorée, comme en match) */
     pal_players_match(cfg.chr[0], cfg.chr[1]);                                 /* (comme en match) */
@@ -295,6 +297,7 @@ u16 __fastcall__ pick_begin(u16 first)
     (void)first;
     pk_i = 0;
     pk_row = 0;
+    if (!cond_ok(opt_val[O_COND])) opt_val[O_COND] = COND_DAY;   /* (salle : ni pluie ni crépuscule, même d'un ancien réglage) */
     if (pk_off || !pk_list(l)) return 0;
     /* tournoi : celui de la surface choisie la dernière fois */
     pk_ev = 0;
