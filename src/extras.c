@@ -443,12 +443,16 @@ void crowd_tick(void)
         /* une rangée par trame (les deux la même trame
            faisaient déborder la trame) : trame paire, la rangée qui se
            lève ; impaire, celle qui se rassoit, puis on avance */
+        /* (2.86 : demi-pas comptés dans ola_o (bit 0) plutôt que la parité
+           de frame_cnt : une trame en retard, qui sautait toujours la même
+           moitié, laissait la vague à moitié faite) */
         if (ola_on == 1) {
-            if (!(frame_cnt & 1)) { if (ola_o < 26) (void)ola_row(ola_o, 1); }
+            k = (u8)(ola_o >> 1);
+            if (!(ola_o & 1)) { if (k < 26) (void)ola_row(k, 1); ++ola_o; }
             else {
                 m = 1;
-                if (ola_o >= 3) m = ola_row((u8)(ola_o - 3), 0);
-                if (m && ++ola_o == 29) ola_on = 0;
+                if (k >= 3) m = ola_row((u8)(k - 3), 0);
+                if (m && ++ola_o == 58) ola_on = 0;
             }
         }
         /* le public suit la balle du regard */
