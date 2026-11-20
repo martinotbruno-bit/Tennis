@@ -273,6 +273,7 @@ static void snd_step(void)
 }
 static void snd_start(u8 k) { if (!dk_snd) { dk_snd = k; dk_sp = 0; } }
 
+extern u8 noise_hold, noise_pri;
 void decor_tick(void)
 {
     static const u8 flick[16] = { 0, 0, 1, 0, 1, 1, 0, 0, 0, 1, 0, 0, 1, 0, 1, 0 };
@@ -318,8 +319,23 @@ void decor_tick(void)
     if (dk_snd) snd_step();
     if (e == ENV_STADIUM) { if (up) dk_cr = 28; if (dk_cr && --dk_cr == 0) sfx_crowd(6); }   /* clameur prolongée */
     if (e == ENV_CLUB || e == ENV_PARK || e == ENV_CASTLE || e == ENV_NUDE) {
-        if (up) dk_cr = 36;
-        if (dk_cr) { --dk_cr; if (dk_cr < 24 && (dk_cr & 7) == 0) sfx_clap(); }   /* applaudissements polis */
+        /* (2.88) applaudissements polis, seulement après un beau point (ace,
+           échange d'au moins 6 frappes) : un crépitement d'environ une
+           seconde, de salves de bruit très brèves à intervalles et hauteurs
+           irréguliers, qui s'éteint doucement (avant : trois claps réguliers,
+           « tac tac tac », à presque chaque point) */
+        if (up && (rally_hits == 1 || rally_hits >= 6)) dk_cr = 60;
+        if (dk_cr) {
+            static const u8 cr_pat[16] = { 3, 0, 1, 4, 0, 2, 0, 3, 1, 0, 4, 2, 0, 1, 3, 0 };
+            v = cr_pat[(u8)(dk_cr + (dk_t >> 2)) & 15];
+            --dk_cr;
+            if (v && !(noise_hold && noise_pri > 2)) {
+                noise_pri = 2; noise_hold = 2;
+                APU(0x400C) = (u8)(0x10 | (2 + (dk_cr >> 3)));   /* volume fixe 2 à 9, décroissant */
+                APU(0x400E) = v;
+                APU(0x400F) = 0x18;                              /* durée : une trame */
+            }
+        }
     }
     if ((e == ENV_PARK || e == ENV_NUDE || (e == ENV_CLUB && !(dk_h & 1))) && ms != MS_RALLY && dk_t == 0x70) snd_start(1);   /* oiseaux entre les points (club : pendant leur vol, decor_draw) */
     /* (2.86 : plus de double bip des panneaux en salle, entêtant à chaque point) */
