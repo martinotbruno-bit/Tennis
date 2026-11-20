@@ -359,7 +359,7 @@ static const u8 bnc_per[6] = { 0x0E, 0x0D, 0x0A, 0x0C, 0x0F, 0x07 };
 static const u8 bnc_len[6] = { 0x00, 0x48, 0x28, 0x48, 0x48, 0x28 };   /* rebond faible : durée (compteur de longueur) */
 static const u16 bnc_tri[6] = { 470, 540, 330, 420, 760, 210 };        /* poc : période du triangle */
 static const u8 bnc_lin[6] = { 4, 3, 3, 4, 3, 2 };                     /* poc : durée (quarts de trame ; 2.94 : plus court, le triangle n'a pas de volume) */
-static const u8 bnc_vol[4] = { 0x14, 0x16, 0x19, 0x1B };                /* volume fixe 4, 6, 9, 11 (2.94 : volume fixe aussi pour un coup fort, le rebond couvrait l'impact) */
+static const u8 bnc_vol[4] = { 0x13, 0x14, 0x16, 0x18 };                /* volume fixe 3, 4, 6, 8 (2.94-2.95 : le rebond couvrait l'impact ; mesures sur le son audible, au-dessus de 150 Hz) */
 u16 __fastcall__ bounce_f(u16 fw)
 {
     u8 s = cfg.surface < 6 ? cfg.surface : 2, n, f = (u8)fw;
@@ -391,6 +391,8 @@ u16 __fastcall__ bounce_f(u16 fw)
    au triangle : jugé insatisfaisant) */
 extern const u8 dpcm_addr[], dpcm_len[], dpcm_rate[];
 static const u8 hs_smp[9] = { 7, 7, 7, 7, 3, 7, 7, 3, 3 };   /* 3 tac, 7 ploc */
+extern u8 p1_hold;
+static const u8 hs_knk[9] = { 0x80, 0x80, 0xC0, 0xC0, 0x50, 0x80, 0x70, 0x48, 0x50 };   /* toc : période de départ */
 static const u8 hs_slow[9] = { 0, 0, 2, 2, 0, 0, 0, 0, 0 }; /* lob, amortie : ploc lu 2 crans plus lentement, « poc » */
 u16 __fastcall__ hit_snd_f(u16 w)
 {
@@ -405,6 +407,36 @@ u16 __fastcall__ hit_snd_f(u16 w)
     APU(0x4012) = dpcm_addr[n];
     APU(0x4013) = dpcm_len[n];
     APU(0x4015) = 0x1F;
+    /* (2.95) présence : le DMC est déjà à son maximum ; s'y ajoutent un
+       claquement de bruit très bref (2 trames, volume 11 à 15 selon la
+       puissance, seulement si le canal de bruit est libre : il ne coupe ni
+       la clameur ni un rebond) et un coup sourd très court au triangle
+       (trop bref pour qu'on entende une note) */
+    /* « toc » au carré 1 : enveloppe de 15 qui s'éteint en 4 trames,
+       hauteur qui chute très vite (balayage) : un choc, pas une note */
+    p1_hold = 6;
+    APU(0x4000) = 0x81;                 /* 50 %, enveloppe de 8 trames environ */
+    APU(0x4001) = 0x83;                 /* balayage vers le grave */
+    APU(0x4002) = hs_knk[k];
+    APU(0x4003) = 0x08;
+    /* le même au carré 2 (libre pendant l'échange : les ambiances ne jouent
+       qu'entre les points), un peu désaccordé : son plus épais */
+    if (!dk_snd) {
+        APU(0x4004) = 0x81;
+        APU(0x4005) = 0x83;
+        APU(0x4006) = (u8)(hs_knk[k] + 3);
+        APU(0x4007) = 0x08;
+    }
+    if (!noise_hold) {
+        APU(0x400C) = (u8)(0x1B + (pw > 4 ? 4 : pw));
+        APU(0x400E) = (u8)(n == 3 ? 0x03 : 0x05);
+        APU(0x400F) = 0x48;             /* (environ 4 trames) */
+    }
+    if (!trk_ptr[1]) {
+        APU(0x4008) = 6;
+        APU(0x400A) = (u8)(n == 3 ? 0x40 : 0x80);
+        APU(0x400B) = 0x09;
+    }
     return 0;
 }
 

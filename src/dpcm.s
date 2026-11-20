@@ -74,14 +74,14 @@ dpcm_let:
     .byte $40
 .align 64
 dpcm_tac:
-    .byte $FD,$FF,$FF,$FF,$FE,$FD,$2F,$00,$FF,$1F,$00,$00,$F0,$1F,$00,$00
-    .byte $E0,$FF,$FF,$01,$E0,$FF,$FF,$1F,$00,$FE,$1F,$00,$00,$F0,$3F,$20
-    .byte $00,$FA,$FF,$FF,$03,$F8,$FF,$1F,$01,$00,$FE,$07,$01,$00,$FE,$5F
-    .byte $55,$08,$FE,$FF,$57,$09,$E8,$BF,$4A,$02,$80,$BD,$55,$12,$82,$F6
-    .byte $6F,$AD,$24,$F5,$6F,$AB,$22,$A4,$6D,$55,$12,$44,$B5,$B5,$52,$92
-    .byte $B6,$B7,$B5,$92,$6A,$DB,$AA,$12,$49,$AD,$AA,$92,$A4,$AA,$B5,$AA
-    .byte $2A,$6B,$6D,$AD,$4A,$55,$B5,$AA,$92,$52,$AA,$15,$00,$00,$00,$50
-    .byte $55
+    .byte $FD,$FF,$FF,$FF,$FE,$F4,$0F,$FF,$5F,$00,$80,$1F,$00,$00,$FC,$E3
+    .byte $01,$FC,$FF,$3F,$C0,$FF,$03,$00,$F0,$01,$00,$E0,$FF,$FF,$C0,$FF
+    .byte $FF,$03,$F0,$07,$00,$00,$3F,$0D,$00,$FF,$FF,$1F,$FC,$FF,$07,$00
+    .byte $1C,$00,$00,$F8,$FF,$0F,$F0,$FF,$FF,$00,$FF,$13,$00,$00,$AB,$01
+    .byte $C0,$FF,$FF,$83,$FF,$FF,$01,$80,$4B,$01,$00,$FC,$3F,$00,$FE,$FF
+    .byte $3F,$E0,$FF,$05,$00,$A0,$2D,$00,$F0,$FF,$1F,$F0,$FF,$7F,$00,$78
+    .byte $5B,$00,$00,$FB,$06,$E0,$FF,$FF,$80,$FE,$77,$01,$00,$00,$00,$00
+    .byte $00
 .align 64
 dpcm_deuce:
     .byte $FD,$FF,$FF,$FF,$AB,$AA,$73,$A5,$DB,$FB,$0B,$00,$40,$EC,$C6,$7D
@@ -166,13 +166,13 @@ dpcm_adv:
     .byte $55
 .align 64
 dpcm_ploc:
-    .byte $FD,$FF,$FF,$FF,$FF,$FF,$03,$00,$C0,$FF,$07,$00,$00,$F0,$FF,$FF
-    .byte $0F,$00,$FC,$FF,$01,$00,$00,$FC,$FF,$7F,$04,$B0,$FF,$3F,$00,$00
-    .byte $C0,$FF,$7F,$91,$24,$F5,$FF,$13,$00,$80,$B4,$7F,$00,$00,$00,$40
+    .byte $FD,$FF,$FF,$FF,$FF,$FF,$03,$00,$FF,$07,$00,$00,$FE,$FF,$0F,$00
+    .byte $FF,$1F,$00,$00,$FC,$FF,$0F,$00,$FF,$7F,$00,$00,$F0,$FF,$09,$80
+    .byte $FF,$FF,$01,$00,$E0,$FF,$00,$80,$FF,$FF,$0F,$80,$01,$00,$00,$40
     .byte $55
 
 .segment "RODATA"
 ; $4012 = (adresse - $C000) / 64, $4013 = (longueur - 1) / 16, $4010 = fréquence
 _dpcm_addr: .byte <((dpcm_out - $C000) >> 6), <((dpcm_fault - $C000) >> 6), <((dpcm_let - $C000) >> 6), <((dpcm_tac - $C000) >> 6), <((dpcm_deuce - $C000) >> 6), <((dpcm_game - $C000) >> 6), <((dpcm_adv - $C000) >> 6), <((dpcm_ploc - $C000) >> 6)
 _dpcm_len:  .byte 19, 22, 19, 7, 18, 19, 36, 3
-_dpcm_rate: .byte 6, 6, 6, 13, 6, 6, 5, 12
+_dpcm_rate: .byte 6, 6, 6, 12, 6, 6, 5, 11

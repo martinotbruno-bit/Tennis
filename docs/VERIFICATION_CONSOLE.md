@@ -206,6 +206,7 @@ Pour chaque ligne, lancez un match et regardez l'écran pendant une dizaine de s
 | 10.68 | Impact et dribble (version 2.91) | Avant le service : le dribble est un petit souffle discret ; en jeu : frappe à plat et smash claquent (« tac »), lifté plus rond (« ploc »), amortie et lob mats (« poc ») ; un coup armé longtemps sonne plus fort | ☐ |
 | 10.69 | Impacts échantillonnés (version 2.93) | Service, frappe à plat, smash : « tac » sec ; lifté, coupé, volée : « ploc » rond ; lob, amortie : « poc » mat ; « Fault! » de l'arbitre toujours compréhensible (un peu plus rapide) ; démarrage normal de la cartouche | ☐ |
 | 10.70 | Équilibre impact et rebond (version 2.94) | Sur terre battue surtout : on entend d'abord la frappe, le rebond reste audible mais plus discret | ☐ |
+| 10.71 | Impact plus fort (version 2.95) | Pendant l'échange : chaque frappe claque nettement, plus fort que le rebond et que la clameur ; pas de note musicale | ☐ |
 
 ## 11. Ce qu'il faut renvoyer
 

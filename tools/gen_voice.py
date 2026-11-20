@@ -116,9 +116,21 @@ def impact(rate, dur, nz_amp, nz_dur, parts, seed=1):
         nz = (seed / 0x7FFFFFFF - 0.5) * 2 * nz_amp * (1 - t / nz_dur) if t < nz_dur else 0
         out.append(nz + sum(a * math.sin(2 * math.pi * f * t) * math.exp(-t * d) for f, a, d in parts))
     return compress(out, 2.2)
-TAC_RATE, PLOC_RATE = 13, 12
-tac = impact(TAC_RATE, 0.039, 1.0, 0.0018, ((620, 0.8, 90), (1250, 0.5, 140), (170, 0.6, 60)))
-ploc = impact(PLOC_RATE, 0.019, 0.5, 0.0012, ((430, 1.0, 110), (860, 0.4, 160), (200, 0.5, 80)), 7)
+TAC_RATE, PLOC_RATE = 12, 11   # (2.95 : un cran plus lent, plus long ; avant 13 et 12)
+# (2.95 : décroissance deux fois plus lente et saturation plus forte : le son
+# garde son énergie sur toute sa durée, l'impact paraissait trop faible)
+def impact2(rate, nbytes, nz_amp, nz_dur, parts, seed=1):
+    sr = RATES[rate]
+    dur = (nbytes * 8 - 64) / sr                 # place des montées et descentes (milieu 62)
+    out = []
+    for i in range(int(sr * dur)):
+        t = i / sr
+        seed = (seed * 1103515245 + 12345) & 0x7FFFFFFF
+        nz = (seed / 0x7FFFFFFF - 0.5) * 2 * nz_amp * (1 - t / nz_dur) if t < nz_dur else 0
+        out.append(nz + sum(a * math.sin(2 * math.pi * f * t) * math.exp(-t * d) for f, a, d in parts))
+    return compress(out, 4.0)
+tac = impact2(TAC_RATE, 112, 1.0, 0.0025, ((620, 0.8, 45), (1250, 0.5, 70), (170, 0.6, 30)))
+ploc = impact2(PLOC_RATE, 48, 0.5, 0.0015, ((430, 1.0, 55), (860, 0.4, 80), (200, 0.5, 40)), 7)
 samples.append(('tac', encode(tac, 1.0, 62), TAC_RATE))   # (2.94 : toute la plage du DMC, environ 2 fois plus fort)
 # annonces du score (2.71) : « Deuce! », « Advantage! », « Game! » (place
 # libérée dans la banque fixe en déplaçant les règles du score en banque 18)
