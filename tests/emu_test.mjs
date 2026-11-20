@@ -2310,7 +2310,7 @@ console.log('Animation des joueurs');
   for (let f = 0; f < 60 * 60 * 3 || (f < 60 * 60 * 10 && !poses.has(13) && !poses.has(14)); f++) {
     /* (2.74) volée et amortie sont rares (selon le hasard du match) : après
        3 minutes sans elles, le joueur 0 monte au filet */
-    if (f > 60 * 60 * 3 && e.peek('ms') === 2) e.poke('ai_net', 1, 0);
+    if (f > 60 * 30 && e.peek('ms') === 2 && !poses.has(13) && !poses.has(14)) e.poke('ai_net', 1, 0);   /* (2.93 : dès 30 s, le match de 4 jeux pouvait finir avant) */
     e.run(1);
     for (let p = 0; p < 2; p++) {
       const k = e.peek('pose_cache', p) & 31;
