@@ -871,10 +871,18 @@ def _shake_extra(f, j, female, r):
         f.paint(f.m_line([(hd[0] - 2.5, hd[1] + 1 + dy), (hd[0] + 2.5, hd[1] + 1 + dy * 1.1)], 0.45), 2, within=[hid])
     f.part(f.m_caps((hd[0] - 3, hd[1] - 3.2), (hd[0] + 4.5, hd[1] - 4.6), 1.9, 1.6), 1, 2, sh=(1, 1))   # pouce du joueur
     y0 = j['hipL'][1] - 4
-    net = f.m_poly([(-50, y0), (400, y0), (400, y0 + 90), (-50, y0 + 90)])
+    # (2.84) bande entière dans une même rangée de blocs de couleurs (16 px de
+    # l'écran) : sinon ses dernières lignes tombaient dans les blocs du short,
+    # sans blanc dans leur palette, et devenaient une ligne couleur peau
+    ts, tb = (y0 - 6 - f.oy) * f.k, (y0 + 1 - f.oy) * f.k
+    lim = (int(ts) // 16 + 1) * 16
+    if tb > lim:
+        y0 -= (tb - lim + 0.5) / f.k
+    yb = lim / f.k + f.oy - 0.01          # bas de la bande : la limite du bloc (pas de mailles blanches isolées juste dessous)
+    net = f.m_poly([(-50, yb), (400, yb), (400, y0 + 90), (-50, y0 + 90)])
     yy, xx = np.mgrid[0:f.H, 0:f.W]
     f.part(net & (((xx + yy) % 8 == 0) | ((xx - yy) % 8 == 0)), 6, None)   # mailles blanches (seules : le joueur se voit derrière ; en couleur sombre, celle des cheveux de Margaux les délavait)
-    tape = f.m_poly([(-50, y0 - 6), (400, y0 - 6), (400, y0 + 1), (-50, y0 + 1)])
+    tape = f.m_poly([(-50, y0 - 6), (400, y0 - 6), (400, yb), (-50, yb)])
     f.part(tape, 6, None)                                             # bande blanche
 POSES['handshake'] = dict(
     s=dict(pelvis=(82, 122), torso=-90, legL=(97, 94, 165), legR=(83, 86, 15),
