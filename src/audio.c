@@ -145,8 +145,16 @@ void sfx_hit(u8 power)
    feutré, glace claquante ; en match : bounce_f, extra2.c (avec le « poc »
    et le volume selon la force) */
 static const u8 bnc_per[6] = { 0x0E, 0x0D, 0x0A, 0x0C, 0x0F, 0x07 };
-static const u8 bnc_env[6] = { 0x02, 0x01, 0x00, 0x01, 0x03, 0x00 };
-void sfx_bounce(void)     { u8 s = cfg.surface < 6 ? cfg.surface : 2; noise(bnc_env[s], bnc_per[s], 1, 8); }
+void sfx_bounce(void)
+{
+    /* (2.91) dribble avant le service et balle du ramasseur : souffle bref
+       et discret (volume fixe 4, environ 2 trames), seulement si le canal
+       de bruit est libre */
+    if (noise_hold) return;
+    APU(0x400C) = 0x14;
+    APU(0x400E) = bnc_per[cfg.surface < 6 ? cfg.surface : 2];
+    APU(0x400F) = 0x28;
+}
 void sfx_net(void)        { noise(0x03, 0x0E, 3, 12); pulse1(0x83, 0x08, 900); }
 void sfx_fault(void)      { pulse1(0x84, 0x08, 1140); }
 void sfx_whistle(void)    { pulse1(0x45, 0xB1, 100); }

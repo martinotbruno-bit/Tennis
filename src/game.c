@@ -255,6 +255,7 @@ static void serve_fault(const char *why)
 u16 __fastcall__ srv_box(u16 unused);
 void bounce_fix(void);
 u16 __fastcall__ bounce_f(u16 f);   /* rebond : son (extra2.c) */
+u16 __fastcall__ hit_snd_f(u16 w);  /* impact : son (extra2.c) */
 static u8 in_service_box(void) { return (u8)far_call(BANK_TRAIN, (void *)srv_box, 0); }
 
 static void ball_bounce(void)
@@ -454,7 +455,7 @@ static void do_hit(u8 p, u8 pad, u8 btn, u8 power, u8 spread)
     pl_hit[p] = 1;
     pl_flip[p] = (u8)(dx < 0);
     launch(tx, ty, T, grav);
-    if (hit_perf) sfx_perfect(); else sfx_hit((u8)(power >> 3));
+    if (hit_perf) sfx_perfect(); else far_call(BANK_X2, (void *)hit_snd_f, (u16)((power >> 3) | ((u16)last_shot << 8)));   /* impact selon le coup et sa puissance (extra2.c) */
     /* IA adaptative : on note les habitudes des joueurs humains */
     if (cfg.ctrl[p] != CTRL_CPU && ad_n[t] < 250) {
         ++ad_n[t];
@@ -590,7 +591,7 @@ static void serve_hit(u8 p, u8 pad, u8 btn, u8 quality, u8 spread)
     pl_state[p] = ST_SWING;
     pl_timer[p] = 12;
     if (srv_canon) { sfx_canon(); set_msg("SERVICE CANON", "", 50); }
-    else sfx_hit(btn == PAD_B ? 1 : 3);
+    else far_call(BANK_X2, (void *)hit_snd_f, (u16)((btn == PAD_B ? 1 : 3) | (8 << 8)));   /* service */
     ai_delay[t ^ 1] = ai_react[cfg.level[t ^ 1]];
     if (npl == 4) ai_delay[(t ^ 1) + 2] = ai_react[cfg.level[(t ^ 1) + 2]];
     pcache_y[0] = pcache_y[1] = pcache_y[2] = pcache_y[3] = 0x7FFF;

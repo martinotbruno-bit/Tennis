@@ -203,6 +203,7 @@ Pour chaque ligne, lancez un match et regardez l'écran pendant une dizaine de s
 | 10.65 | Geste de raquette (version 2.89) | Smash et coups normaux : au relâcher du bouton, un souffle bref, sourd et discret, qui ne ressemble pas aux applaudissements | ☐ |
 | 10.66 | Clameur sur un smash (version 2.90) | Smash gagnant (aussi au stade, et smash sauté) : une seule clameur du public, au point gagné, rien à l'impact | ☐ |
 | 10.67 | Revue des sons (version 2.90) | Club, parc, club nudiste : oiseaux environ toutes les 8 secondes ; ralenti : zoom sur la ligne sans bip ; gros plan de joie, portrait du vainqueur et coupe sans carillon ; menus : sons de déplacement et de validation plus doux | ☐ |
+| 10.68 | Impact et dribble (version 2.91) | Avant le service : le dribble est un petit souffle discret ; en jeu : frappe à plat et smash claquent (« tac »), lifté plus rond (« ploc »), amortie et lob mats (« poc ») ; un coup armé longtemps sonne plus fort | ☐ |
 
 ## 11. Ce qu'il faut renvoyer
 
