@@ -186,8 +186,8 @@ u16 __fastcall__ hd_backdrop_f(u16 z)
 /* - feuilles d'automne qui tombent sur les côtés du parc (decor_draw) ;   */
 /* - ambiance sonore sur le 2e canal carré, libre pendant le match (pas de */
 /*   musique) : oiseaux au club et au parc, fanfare de trompettes au       */
-/*   château (changement de côté, fin du match), double bip des panneaux   */
-/*   en salle ; au stade, la clameur se prolonge ; au club, au parc et au  */
+/*   château (changement de côté, fin du match) ; au stade, la clameur se  */
+/*   prolonge ; au club, au parc et au                                     */
 /*   château, des applaudissements polis suivent les beaux points.         */
 /* ---------------------------------------------------------------------- */
 extern u8 cer, hl_mode, sun_st;
@@ -269,10 +269,6 @@ static void snd_step(void)
         else if (s == 30 || s == 46) { APU(0x4004) = 0x30; if (s == 46) dk_snd = 0; }
         else if (s > 32 && (s & 3) == 0) APU(0x4004) = (u8)(0x98 - ((s - 32) >> 2));   /* la dernière note s'éteint */
         break;
-    case 3:     /* panneaux de la salle : double bip */
-        if (s == 0 || s == 8) p2(0x43, 0x08, 120);
-        else if (s == 4 || s == 12) { APU(0x4004) = 0x30; if (s == 12) dk_snd = 0; }
-        break;
     }
 }
 static void snd_start(u8 k) { if (!dk_snd) { dk_snd = k; dk_sp = 0; } }
@@ -326,10 +322,10 @@ void decor_tick(void)
         if (dk_cr) { --dk_cr; if (dk_cr < 24 && (dk_cr & 7) == 0) sfx_clap(); }   /* applaudissements polis */
     }
     if ((e == ENV_PARK || e == ENV_NUDE || (e == ENV_CLUB && !(dk_h & 1))) && ms != MS_RALLY && dk_t == 0x70) snd_start(1);   /* oiseaux entre les points (club : pendant leur vol, decor_draw) */
-    if (e == ENV_HALL && up) snd_start(3);
+    /* (2.86 : plus de double bip des panneaux en salle, entêtant à chaque point) */
 }
 
-/* Rebond de la balle en match (2.85), en trois parties :
+/* Rebond de la balle en match (2.86), en trois parties :
    - souffle de bruit (période selon la surface) : terre sourde, gazon doux,
      dur sec, moquette mate, sable feutré et plus long ; glace : bruit
      périodique (bit 7), qui tinte ;
