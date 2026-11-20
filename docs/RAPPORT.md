@@ -810,7 +810,7 @@ Pour loger ce contenu, la cartouche passe de NROM (32 Ko) à **MMC1** : 128 Ko d
 | Relecture des textes (`check_texts.py`) | 0 problème |
 | Contraste (`contrast.py 25`) | 0 paire sous ΔE 25 (personnages, courts, balle, tenues) |
 | Profil CPU, double, 6 000 trames | 27 trames d'échange en dépassement (0,45 %), sans défaut d'image |
-| Compilation | Reproductible : SHA-256 `63627de1e2fec8434ec02da58d3a66dcf94c29a4f5ebd6a78df370de0824d262` sur deux compilations propres |
+| Compilation | Reproductible : SHA-256 `d3fbbbc48eafea4a35bade4761e6acad2f6a1a7933764c72203c36320c70640e` sur deux compilations propres |
 
 ## 3. Conformité par section du CDC
 
@@ -867,7 +867,7 @@ Légende : ✅ réalisé et testé en émulation · 🟡 partiel · 🔧 nécess
 - **Version 2.85** : bip grave du coup gagnant plus fort.
 - **Version 2.86** : rebond de la balle avec un « poc », un volume selon sa force et des surfaces plus typées ; plus de double bip des panneaux en salle ; suite complète : 442 vérifications réussies, 0 échec.
 - **Version 2.87** : rebond sur glace et sable revus ; la frappe ne coupe plus le rebond ni la clameur ; suite complète : 442 vérifications réussies, 0 échec.
-- **Version 2.88** : applaudissements en crépitement, seulement après les beaux points.
+- **Version 2.88** : applaudissements en crépitement, seulement après les beaux points ; suite complète : 442 vérifications réussies, 0 échec.
 - **Version 2.79a** : animations des lieux et ambiances seulement entre les échanges ; salle en perspective redessinée (public et bandeaux lumineux) ; suite complète : 439 vérifications réussies, 0 échec.
 - **Version 2.79** : lieux plus différents (décor animé, ambiances sonores, feuilles du parc, court Margaux selon la surface, soirée en salle, affiche du club nudiste, salle reconnaissable en perspective, club nudiste : images sans vêtements et censure en mosaïque) ; pas de crépuscule en salle ; suite complète : 437 vérifications réussies sur 439, les 2 autres (changement de côté, fin de set) attendaient un temps fixe trop court pour des échanges longs entre deux ordinateurs : rendues indépendantes de cette durée, elles passent.
 - **Version 2.78** : réglages simplifiés (page OPTIONS, modes 1 JOUEUR / 2 JOUEURS / COMPETITION / CARRIERE, ligne HUMAINS), commentaires de version retirés du code ; suite complète : 438 vérifications réussies, 0 échec.
