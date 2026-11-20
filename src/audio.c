@@ -127,7 +127,9 @@ void sfx_hit(u8 power)
 {
     /* « pok » : note brève qui descend, plus grave si la frappe est forte */
     pulse1(0x81, 0x8A, (u16)(120 + power * 30));
-    noise(0x01, (u8)(0x04 + power), 2, 8);
+    /* (2.87 : plus de souffle de bruit, déjà porté par le « pok »
+       échantillonné : il coupait le rebond et la clameur du public, le
+       canal de bruit étant unique) */
     /* corps du « pok » : note grave et brève au triangle (libre pendant le
        match, sans musique), plus grave quand la frappe est forte */
     dpcm(V_POK);                        /* « pok » échantillonné */

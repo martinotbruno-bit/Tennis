@@ -198,6 +198,7 @@ Pour chaque ligne, lancez un match et regardez l'écran pendant une dizaine de s
 | 10.60 | Coup gagnant et poignée de main (version 2.84) | Un coup gagnant (ace, passing) : un seul bip bref et grave, bien audible (2.85), puis la clameur, plus de carillon montant ; poignée de main HD de fin de match (homme) : la bande blanche du filet sans ligne couleur peau dessous | ☐ |
 | 10.61 | Rebond de la balle (version 2.86) | Sur dur : chaque rebond a un petit « poc » grave sous le souffle ; une amortie rebondit faiblement, une frappe forte claque ; sur terre et gazon le poc est plus sourd, sur glace le rebond tinte, sur le sable un souffle feutré sans poc ; aucun son avec SON « aucun » | ☐ |
 | 10.62 | Salle sans double bip (version 2.86) | En salle, après les points : les panneaux s'allument, sans « tudute » | ☐ |
+| 10.63 | Superposition des sons (version 2.87) | Pendant un échange : le souffle du rebond n'est plus coupé net par la frappe qui suit ; après un beau point, la clameur du public n'est pas coupée par le service suivant ; sur glace, rebond sec et claquant ; sur le sable, rebond grave et étouffé | ☐ |
 
 ## 11. Ce qu'il faut renvoyer
 

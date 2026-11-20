@@ -327,22 +327,23 @@ void decor_tick(void)
 
 /* Rebond de la balle en match (2.86), en trois parties :
    - souffle de bruit (période selon la surface) : terre sourde, gazon doux,
-     dur sec, moquette mate, sable feutré et plus long ; glace : bruit
-     périodique (bit 7), qui tinte ;
+     dur sec, moquette mate, sable grave et court, glace claquante ;
    - volume selon la force du rebond (f, 0 à 3, game.c) : une amortie ou une
      balle qui retombe doucement rebondit faiblement (volume fixe 4, 7 ou
      11, durée selon la surface), un coup fort claque (enveloppe complète) ;
    - « poc » : note grave très brève au triangle (libre pendant le match,
      sans musique), plus grave et sourde sur terre et gazon, plus claire sur
-     dur, sèche sur glace ; aucune sur le sable ; plus courte si le rebond
-     est faible. */
+     dur, très grave et étouffée sur le sable (la balle s'enfonce), aiguë et
+     brève sur glace ; plus courte si le rebond est faible.
+   (2.87 : glace et sable revus ; le bruit périodique de la glace, qui
+   tintait, et le long souffle du sable sans poc ne convainquaient pas) */
 extern u8 noise_hold, noise_pri, snd_mode;
 extern const u8 *trk_ptr[4];
-static const u8 bnc_per[6] = { 0x0E, 0x0D, 0x0A, 0x0C, 0x0F, 0x83 };
-static const u8 bnc_env[6] = { 0x02, 0x01, 0x00, 0x01, 0x05, 0x01 };   /* coup fort : vitesse de décroissance */
-static const u8 bnc_len[6] = { 0x00, 0x48, 0x28, 0x48, 0x10, 0x00 };   /* rebond faible : durée (compteur de longueur) */
-static const u16 bnc_tri[6] = { 470, 540, 330, 420, 0, 190 };          /* poc : période du triangle */
-static const u8 bnc_lin[6] = { 7, 6, 6, 7, 0, 4 };                     /* poc : durée (quarts de trame) */
+static const u8 bnc_per[6] = { 0x0E, 0x0D, 0x0A, 0x0C, 0x0F, 0x07 };
+static const u8 bnc_env[6] = { 0x02, 0x01, 0x00, 0x01, 0x01, 0x00 };   /* coup fort : vitesse de décroissance */
+static const u8 bnc_len[6] = { 0x00, 0x48, 0x28, 0x48, 0x48, 0x28 };   /* rebond faible : durée (compteur de longueur) */
+static const u16 bnc_tri[6] = { 470, 540, 330, 420, 760, 210 };        /* poc : période du triangle */
+static const u8 bnc_lin[6] = { 7, 6, 6, 7, 5, 3 };                     /* poc : durée (quarts de trame) */
 static const u8 bnc_vol[3] = { 0x14, 0x17, 0x1B };                      /* volume fixe 4, 7, 11 */
 u16 __fastcall__ bounce_f(u16 fw)
 {
@@ -350,7 +351,7 @@ u16 __fastcall__ bounce_f(u16 fw)
     u16 p;
     if (f > 3) f = 3;
     if (!(noise_hold && noise_pri > 1)) {
-        noise_pri = 1; noise_hold = 8;
+        noise_pri = 1; noise_hold = 12;   /* (toute la durée du souffle : les pas ne le coupent plus) */
         APU(0x400C) = f == 3 ? bnc_env[s] : bnc_vol[f];
         APU(0x400E) = bnc_per[s];
         APU(0x400F) = f == 3 ? 0x08 : bnc_len[s];
