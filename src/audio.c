@@ -225,8 +225,18 @@ void sfx_point(void)
     APU(0x4002) = 0x50;                 /* période $150 : environ 330 Hz */
     APU(0x4003) = 0x01;                 /* (même durée que le bip du juge de ligne) */
 }
-/* geste de raquette : souffle bref (la frappe passe devant si la balle est touchée) */
-void sfx_swing(void)      { noise(0x01, 0x02, 0, 4); }
+/* geste de raquette (au relâcher du bouton) */
+void sfx_swing(void)
+{
+    /* (2.89) souffle sourd, bref et discret (volume fixe 4, environ 2
+       trames), seulement si le canal de bruit est libre : l'ancien, aigu et
+       plus long, ressemblait aux applaudissements et s'entendait à l'impact
+       du smash */
+    if (noise_hold) return;
+    APU(0x400C) = 0x14;
+    APU(0x400E) = 0x07;
+    APU(0x400F) = 0x28;
+}
 /* feu d'artifice : sifflement de la fusée qui monte, puis « pop » */
 void sfx_fw_launch(void)  { pulse1(0x4A, 0xBB, 700); }
 void sfx_fw_pop(void)     { noise(0x04, 0x0C, 3, 12); pulse1(0x82, 0x08, 1600); }
