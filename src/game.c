@@ -254,6 +254,7 @@ static void serve_fault(const char *why)
    place en banque 0) */
 u16 __fastcall__ srv_box(u16 unused);
 void bounce_fix(void);
+u16 __fastcall__ bounce_f(u16 f);   /* rebond : son (extra2.c) */
 static u8 in_service_box(void) { return (u8)far_call(BANK_TRAIN, (void *)srv_box, 0); }
 
 static void ball_bounce(void)
@@ -275,7 +276,7 @@ static void ball_bounce(void)
     bvx = mulfrac(bvx, fric);
     bvy = mulfrac(bvy, fric);
     bz = 0;
-    if (b_vis) sfx_bounce();
+    if (b_vis) far_call(BANK_X2, (void *)bounce_f, (u16)(bvz < 64 ? 0 : bvz < 128 ? 1 : bvz < 160 ? 2 : 3));   /* rebond : poc et volume selon sa force (extra2.c) */
 
     if (!b_live) { ++bounces; return; }
 

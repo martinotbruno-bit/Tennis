@@ -91,7 +91,7 @@ static void pulse1(u8 env, u8 sweep, u16 period)
 /* canal de bruit partagé : chaque son a une priorité ; tant qu'un son plus
    important n'est pas fini (noise_hold), un son moins important est ignoré
    (un rebond ne coupe plus l'ovation, une frappe ne coupe plus le « OOOH ») */
-static u8 noise_pri;
+u8 noise_pri;   /* (aussi lu par bounce_f, extra2.c) */
 static void noise(u8 env, u8 period, u8 pri, u8 hold)
 {
     if (noise_hold && pri < noise_pri) return;
@@ -140,7 +140,8 @@ void sfx_hit(u8 power)
 }
 /* rebond : son propre à chaque surface (période du bruit, durée de
    l'enveloppe) : terre sourde, gazon doux, dur sec, moquette mate, sable
-   feutré, glace claquante */
+   feutré, glace claquante ; en match : bounce_f, extra2.c (avec le « poc »
+   et le volume selon la force) */
 static const u8 bnc_per[6] = { 0x0E, 0x0D, 0x0A, 0x0C, 0x0F, 0x07 };
 static const u8 bnc_env[6] = { 0x02, 0x01, 0x00, 0x01, 0x03, 0x00 };
 void sfx_bounce(void)     { u8 s = cfg.surface < 6 ? cfg.surface : 2; noise(bnc_env[s], bnc_per[s], 1, 8); }

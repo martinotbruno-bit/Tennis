@@ -196,6 +196,7 @@ Pour chaque ligne, lancez un match et regardez l'écran pendant une dizaine de s
 | 10.58 | Ralenti passé puis A trop tôt (version 2.82) | Pendant le gros plan d'un ralenti, appuyer sur A, puis de nouveau sur A tout de suite : le bandeau du score monte quand même ; un appui ne le ferme qu'une fois entièrement monté | ☐ |
 | 10.59 | Club : vol de petits oiseaux (version 2.83) | Au club, après quelques points : 3 petits oiseaux noirs traversent le haut de l'écran en chantant ; le feuillage ne change plus de couleur, ni au club ni au parc | ☐ |
 | 10.60 | Coup gagnant et poignée de main (version 2.84) | Un coup gagnant (ace, passing) : un seul bip bref et grave, bien audible (2.85), puis la clameur, plus de carillon montant ; poignée de main HD de fin de match (homme) : la bande blanche du filet sans ligne couleur peau dessous | ☐ |
+| 10.61 | Rebond de la balle (version 2.86) | Sur dur : chaque rebond a un petit « poc » grave sous le souffle ; une amortie rebondit faiblement, une frappe forte claque ; sur terre et gazon le poc est plus sourd, sur glace le rebond tinte, sur le sable un souffle feutré sans poc ; aucun son avec SON « aucun » | ☐ |
 
 ## 11. Ce qu'il faut renvoyer
 

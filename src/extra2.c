@@ -329,6 +329,47 @@ void decor_tick(void)
     if (e == ENV_HALL && up) snd_start(3);
 }
 
+/* Rebond de la balle en match (2.85), en trois parties :
+   - souffle de bruit (période selon la surface) : terre sourde, gazon doux,
+     dur sec, moquette mate, sable feutré et plus long ; glace : bruit
+     périodique (bit 7), qui tinte ;
+   - volume selon la force du rebond (f, 0 à 3, game.c) : une amortie ou une
+     balle qui retombe doucement rebondit faiblement (volume fixe 4, 7 ou
+     11, durée selon la surface), un coup fort claque (enveloppe complète) ;
+   - « poc » : note grave très brève au triangle (libre pendant le match,
+     sans musique), plus grave et sourde sur terre et gazon, plus claire sur
+     dur, sèche sur glace ; aucune sur le sable ; plus courte si le rebond
+     est faible. */
+extern u8 noise_hold, noise_pri, snd_mode;
+extern const u8 *trk_ptr[4];
+static const u8 bnc_per[6] = { 0x0E, 0x0D, 0x0A, 0x0C, 0x0F, 0x83 };
+static const u8 bnc_env[6] = { 0x02, 0x01, 0x00, 0x01, 0x05, 0x01 };   /* coup fort : vitesse de décroissance */
+static const u8 bnc_len[6] = { 0x00, 0x48, 0x28, 0x48, 0x10, 0x00 };   /* rebond faible : durée (compteur de longueur) */
+static const u16 bnc_tri[6] = { 470, 540, 330, 420, 0, 190 };          /* poc : période du triangle */
+static const u8 bnc_lin[6] = { 7, 6, 6, 7, 0, 4 };                     /* poc : durée (quarts de trame) */
+static const u8 bnc_vol[3] = { 0x14, 0x17, 0x1B };                      /* volume fixe 4, 7, 11 */
+u16 __fastcall__ bounce_f(u16 fw)
+{
+    u8 s = cfg.surface < 6 ? cfg.surface : 2, n, f = (u8)fw;
+    u16 p;
+    if (f > 3) f = 3;
+    if (!(noise_hold && noise_pri > 1)) {
+        noise_pri = 1; noise_hold = 8;
+        APU(0x400C) = f == 3 ? bnc_env[s] : bnc_vol[f];
+        APU(0x400E) = bnc_per[s];
+        APU(0x400F) = f == 3 ? 0x08 : bnc_len[s];
+    }
+    p = bnc_tri[s];
+    if (p && !trk_ptr[1] && snd_mode != 2) {
+        n = bnc_lin[s];
+        if (f < 2) n = (u8)(n - 2 - (f == 0));
+        APU(0x4008) = n;
+        APU(0x400A) = (u8)p;
+        APU(0x400B) = (u8)(0x08 | (p >> 8));
+    }
+    return 0;
+}
+
 /* Sprites du décor (fin du point, bandeau du score, pauses ; mdraw.c) :
    - parc : feuilles d'automne sur les côtés (l'ellipse des ombres, orange,
      retournée au fil de la chute, et quelques éclats jaunes ; 6 en simple,
