@@ -436,7 +436,7 @@ void crowd_tick(void)
            debout 90 trames, puis se rassoient ; elle remplace l'ola */
         /* (crowd_big : bit 0 demandée, bit 7 celle de la fin du match déjà faite) */
         if (sc_over && !(crowd_big & 0x80)) crowd_big = 0x81;
-        if (crowd_big & 1) { crowd_big &= 0x80; ola_on = 2; ola_o = 0; sfx_crowd(7); }
+        if (crowd_big & 1) { crowd_big &= 0x80; ola_on = 2; ola_o = 0; if (!noise_hold) sfx_crowd(7); }   /* (2.90 : pas de relance par-dessus une clameur en cours) */
         if (ola_on == 2) { if (ola_row(ola_o, 1) && ++ola_o == 26) { ola_on = 3; ola_o = 0; } }
         else if (ola_on == 3) { if (++ola_o >= 90) { ola_on = 4; ola_o = 0; } }
         else if (ola_on == 4) { if (ola_row(ola_o, 0) && ++ola_o == 26) ola_on = 0; }

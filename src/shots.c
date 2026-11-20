@@ -148,7 +148,7 @@ void shot_select(void)
             speed = (u8)(speed + (power >> 1));                      /* armé : plus fort... */
             spread = (u8)(spread + (power >> 2));                    /* ...et plus risqué */
         }
-        sfx_crowd(5);
+        /* (2.90 : plus de clameur à l'impact du smash : une seule, au point gagné) */
     } else if (sh_btn == PAD_B && (pad & PAD_UP)) {        /* lob */
         /* longueur selon l'armé (relâché vite : lob court,
            smashable ; bouton tenu : près de la ligne de fond, risque de

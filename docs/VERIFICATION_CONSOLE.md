@@ -201,6 +201,7 @@ Pour chaque ligne, lancez un match et regardez l'écran pendant une dizaine de s
 | 10.63 | Superposition des sons (version 2.87) | Pendant un échange : le souffle du rebond n'est plus coupé net par la frappe qui suit ; après un beau point, la clameur du public n'est pas coupée par le service suivant ; sur glace, rebond sec et claquant ; sur le sable, rebond grave et étouffé | ☐ |
 | 10.64 | Applaudissements (version 2.88) | Au parc ou au club : après un ace ou un long échange, un crépitement d'applaudissements d'environ une seconde qui s'éteint ; après un point ordinaire, plus de « tac tac tac » | ☐ |
 | 10.65 | Geste de raquette (version 2.89) | Smash et coups normaux : au relâcher du bouton, un souffle bref, sourd et discret, qui ne ressemble pas aux applaudissements | ☐ |
+| 10.66 | Clameur sur un smash (version 2.90) | Smash gagnant (aussi au stade, et smash sauté) : une seule clameur du public, au point gagné, rien à l'impact | ☐ |
 
 ## 11. Ce qu'il faut renvoyer
 

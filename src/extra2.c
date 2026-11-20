@@ -317,7 +317,7 @@ void decor_tick(void)
     if (snd_mode == 2 || !music_none() || cfg.mode != GM_MATCH) return;
     if (dk_fan) { dk_fan = 0; dk_snd = 0; snd_start(2); }
     if (dk_snd) snd_step();
-    if (e == ENV_STADIUM) { if (up) dk_cr = 28; if (dk_cr && --dk_cr == 0) sfx_crowd(6); }   /* clameur prolongée */
+    if (e == ENV_STADIUM) { if (up) dk_cr = 28; if (dk_cr && --dk_cr == 0 && !noise_hold) sfx_crowd(6); }   /* clameur prolongée (2.90 : pas de relance par-dessus une clameur en cours) */
     if (e == ENV_CLUB || e == ENV_PARK || e == ENV_CASTLE || e == ENV_NUDE) {
         /* (2.88) applaudissements polis, seulement après un beau point (ace,
            échange d'au moins 6 frappes) : un crépitement d'environ une
