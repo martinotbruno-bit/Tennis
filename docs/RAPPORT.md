@@ -813,7 +813,7 @@ Pour loger ce contenu, la cartouche passe de NROM (32 Ko) à **MMC1** : 128 Ko d
 | Relecture des textes (`check_texts.py`) | 0 problème |
 | Contraste (`contrast.py 25`) | 0 paire sous ΔE 25 (personnages, courts, balle, tenues) |
 | Profil CPU, double, 6 000 trames | 27 trames d'échange en dépassement (0,45 %), sans défaut d'image |
-| Compilation | Reproductible : SHA-256 `f934bc408d96cc56911f8793e620b8c41d993db65528b637e16f9a85c2828130` sur deux compilations propres |
+| Compilation | Reproductible : SHA-256 `8a9626b4ce9b1cdf8dc8adf04ab8771e39959df5950e2b040c45aae0e72fa367` sur deux compilations propres |
 
 ## 3. Conformité par section du CDC
 
@@ -873,7 +873,7 @@ Légende : ✅ réalisé et testé en émulation · 🟡 partiel · 🔧 nécess
 - **Version 2.88** : applaudissements en crépitement, seulement après les beaux points ; suite complète : 442 vérifications réussies, 0 échec.
 - **Version 2.89** : souffle du geste de raquette plus court, plus grave et plus discret ; suite complète : 441 vérifications réussies et 1 échec, le test du souffle qui attendait l'ancien son, corrigé et repassé (ROM inchangée).
 - **Version 2.90** : une seule clameur du public sur un smash gagnant ; revue des sons : oiseaux moins souvent, plus de carillon HD ni de bips du zoom, menus plus discrets ; suite complète : 442 vérifications réussies, 0 échec.
-- **Version 2.91** : dribble avant le service discret ; impact balle-raquette sec, selon le coup et sa puissance.
+- **Version 2.91** : dribble avant le service discret ; impact balle-raquette sec, selon le coup et sa puissance ; suite complète : 441 vérifications réussies et 1 échec, le test des bruitages qui attendait l'ancienne durée du corps de la frappe, corrigé et repassé (ROM inchangée).
 - **Version 2.79a** : animations des lieux et ambiances seulement entre les échanges ; salle en perspective redessinée (public et bandeaux lumineux) ; suite complète : 439 vérifications réussies, 0 échec.
 - **Version 2.79** : lieux plus différents (décor animé, ambiances sonores, feuilles du parc, court Margaux selon la surface, soirée en salle, affiche du club nudiste, salle reconnaissable en perspective, club nudiste : images sans vêtements et censure en mosaïque) ; pas de crépuscule en salle ; suite complète : 437 vérifications réussies sur 439, les 2 autres (changement de côté, fin de set) attendaient un temps fixe trop court pour des échanges longs entre deux ordinateurs : rendues indépendantes de cette durée, elles passent.
 - **Version 2.78** : réglages simplifiés (page OPTIONS, modes 1 JOUEUR / 2 JOUEURS / COMPETITION / CARRIERE, ligne HUMAINS), commentaires de version retirés du code ; suite complète : 438 vérifications réussies, 0 échec.

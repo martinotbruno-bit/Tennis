@@ -1863,7 +1863,7 @@ console.log('Margaux jouable et fatigue');
   log.length = 0; e.down('A'); e.run(8); e.up('A');
   for (let i = 0; i < 40 && e.peek('hitter') !== 0; i++) e.run(1);
   const whoosh = has(0x400E, 0x07) && has(0x400C, 0x14);   /* (2.89 : souffle sourd et discret) */
-  const pok = has(0x400B) && has(0x4008, 0x0A);
+  const pok = has(0x400B) && has(0x4008) && has(0x4002);   /* (2.91 : clic au carré 1 et corps au triangle, durée selon le coup) */
   // balle dehors pendant l'échange : bip
   e.poke('ms', 2); e.run(1); log.length = 0;
   s16('bx', 40 * 64); s16('by', 100 * 64); e.poke('end_reason', 2); e.poke('ump_arm', 1); e.poke('ms', 3); e.poke('ms_timer', 80); e.run(2);
