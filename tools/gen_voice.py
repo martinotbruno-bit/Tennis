@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 """Royal Martinot — échantillons DPCM (canal DMC de la NES) : voix de
 l'arbitre (« Out! », « Fault! », « Let! », et depuis la version 2.71 le
-score : « Deuce! », « Advantage! », « Game! ») et « pok » de la balle.
+score : « Deuce! », « Advantage! », « Game! ») et impacts de la balle sur
+la raquette (« tac », « ploc », « poc », version 2.93).
 
-Voix synthétisées par espeak-ng (voix anglaise, comme à Wimbledon) ; le
-« pok » est calculé (rebond amorti de 30 ms). Les échantillons sont écrits
+Voix synthétisées par espeak-ng (voix anglaise, comme à Wimbledon) ; les
+impacts sont calculés (attaque de bruit, cordage, corps grave). Les échantillons sont écrits
 dans src/dpcm.s (segment DPCM de la banque fixe : le DMC ne lit que
 $C000-$FFFF, à des adresses multiples de 64).
 
@@ -89,32 +90,47 @@ def encode(x, gain=1.0, mid=36):
 samples = []
 # voix : 7 919 Hz (indice 6), assez pour être compréhensible, et peu de place
 VOICE_RATE = 6
-for name, word, speed in (('out', 'Out!', 172), ('fault', 'Fault!', 175), ('let', 'Let!', 170)):
+# (2.93 : « Fault! » un peu plus vite, 190 au lieu de 175 : 64 octets de
+# moins, la place des impacts « ploc » et « poc »)
+for name, word, speed in (('out', 'Out!', 172), ('fault', 'Fault!', 190), ('let', 'Let!', 170)):
     x, sr = speak(word, speed)
     # toute la plage du DMC (0..127, autour de 64) et une saturation douce :
     # à 36 ± 32, la voix était couverte par le bip et le public
     samples.append((name, encode(compress(resample(x, sr, RATES[VOICE_RATE])), 1.0, 64), VOICE_RATE))
-# « pok » : rebond amorti (sinus de 900 Hz et une pointe de bruit), 30 ms
-POK_RATE = 13
-sr = RATES[POK_RATE]
-pok = []
-seed = 1
-for i in range(int(sr * 0.03)):
-    t = i / sr
-    seed = (seed * 1103515245 + 12345) & 0x7FFFFFFF
-    nz = (seed / 0x7FFFFFFF - 0.5) * (0.6 if t < 0.004 else 0)
-    pok.append((math.sin(2 * math.pi * 900 * t) + nz) * math.exp(-t * 120))
-samples.append(('pok', encode(pok, 0.9, 28), POK_RATE))
+# impacts balle-raquette (2.93) : trois échantillons calculés, plus riches
+# que l'ancien « pok » (un sinus amorti de 30 ms) : une attaque de bruit
+# très brève (la balle qui écrase le cordage), la résonance du cordage
+# (deux sinus amortis) et un corps grave (le cadre, le bras).
+#  - « tac » (à plat, smash, service) : sec et claquant, 21 307 Hz, ~40 ms,
+#    à la place de l'ancien « pok » (même case de 128 octets) ;
+#  - « ploc » (lifté, coupé, croisé court, volée) : plus rond, 16 885 Hz ;
+#    court (49 octets), rangé au bout de la banque fixe, après
+#    « Advantage! » ; le « poc » du lob et de l'amortie est ce même
+#    échantillon lu plus lentement (12 604 Hz) : plus grave et plus mat.
+def impact(rate, dur, nz_amp, nz_dur, parts, seed=1):
+    sr = RATES[rate]
+    out = []
+    for i in range(int(sr * dur)):
+        t = i / sr
+        seed = (seed * 1103515245 + 12345) & 0x7FFFFFFF
+        nz = (seed / 0x7FFFFFFF - 0.5) * 2 * nz_amp * (1 - t / nz_dur) if t < nz_dur else 0
+        out.append(nz + sum(a * math.sin(2 * math.pi * f * t) * math.exp(-t * d) for f, a, d in parts))
+    return compress(out, 2.2)
+TAC_RATE, PLOC_RATE = 13, 12
+tac = impact(TAC_RATE, 0.039, 1.0, 0.0018, ((620, 0.8, 90), (1250, 0.5, 140), (170, 0.6, 60)))
+ploc = impact(PLOC_RATE, 0.019, 0.5, 0.0012, ((430, 1.0, 110), (860, 0.4, 160), (200, 0.5, 80)), 7)
+samples.append(('tac', encode(tac, 1.0, 28), TAC_RATE))
 # annonces du score (2.71) : « Deuce! », « Advantage! », « Game! » (place
 # libérée dans la banque fixe en déplaçant les règles du score en banque 18)
 # (« Advantage! », le plus long, un peu plus vite et à 7 046 Hz, un cran
 # en dessous : il tient dans la place libre)
-# (« Advantage! » en dernier : le dernier échantillon n'est pas complété
-# jusqu'au multiple de 64 octets suivant)
+# (« Advantage! » puis les deux petits impacts en dernier : le dernier
+# échantillon n'est pas complété jusqu'au multiple de 64 octets suivant)
 for name, word, speed, rate in (('deuce', 'Deuce!', 205, VOICE_RATE), ('game', 'Game!', 210, VOICE_RATE),
                                 ('adv', 'Advantage!', 215, VOICE_RATE - 1)):
     x, sr = speak(word, speed)
     samples.append((name, encode(compress(resample(x, sr, RATES[rate])), 1.0, 64), rate))
+samples.append(('ploc', encode(ploc, 1.0, 28), PLOC_RATE))
 
 out = ['; Fichier généré par tools/gen_voice.py — ne pas modifier.',
        '; Échantillons DPCM (voix de l\'arbitre, « pok »), banque fixe.',

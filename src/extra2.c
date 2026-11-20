@@ -383,54 +383,29 @@ u16 __fastcall__ bounce_f(u16 fw)
     return 0;
 }
 
-/* Impact balle-raquette en match (2.91) : un son sec qui varie selon le
-   coup (k : SH_*, 8 = service) et sa puissance (pw, 0 à 5), en trois couches :
-   - « clic » d'attaque au carré 1 (rapport cyclique 12,5 %, une trame) :
-     aigu et sec pour la frappe à plat et le smash (« tac »), plus rond pour
-     le lifté (« ploc »), mat pour l'amortie et le lob (« poc ») ; plus fort
-     si le coup est puissant ;
-   - « pok » échantillonné, lu plus vite pour les coups secs et puissants ;
-   - corps grave au triangle, plus long et plus grave pour le smash, presque
-     rien pour l'amortie.
-   (avant : une petite note musicale qui descendait, toujours la même) */
+/* Impact balle-raquette en match (2.93) : un échantillon réaliste selon le
+   coup (k : SH_*, 8 = service), joué seul (tools/gen_voice.py) :
+   « tac » sec et claquant (à plat, smash, service), « ploc » plus rond
+   (lifté, coupé, croisé court, volée), « poc » mat (lob, amortie : le « ploc » lu plus lentement) ; un coup
+   puissant (pw ≥ 3) est lu un cran plus vite, plus clair. Jamais par-dessus
+   une annonce de l'arbitre. (2.91-2.92 : clic au carré 1, « pok » et corps
+   au triangle : jugé insatisfaisant) */
 extern const u8 dpcm_addr[], dpcm_len[], dpcm_rate[];
-extern u8 p1_hold;
-static const u8 hs_rate[9] = { 13, 12, 12, 11, 13, 13, 13, 14, 13 };        /* pok : vitesse de lecture (2.92 : un cran plus lent pour les coups secs : plus long) */
-static const u8 hs_clk[9]  = { 0x50, 0x40, 0x70, 0x80, 0x30, 0x48, 0x38, 0x28, 0x30 };   /* clic : période */
-static const u16 hs_tri[9] = { 300, 260, 360, 420, 230, 280, 250, 190, 220 };            /* corps : période */
-static const u8 hs_len[9]  = { 8, 6, 6, 4, 8, 7, 6, 10, 9 };                 /* corps : durée (2.92 : plus long) */
+static const u8 hs_smp[9] = { 7, 7, 7, 7, 3, 7, 7, 3, 3 };   /* 3 tac, 7 ploc */
+static const u8 hs_slow[9] = { 0, 0, 2, 2, 0, 0, 0, 0, 0 }; /* lob, amortie : ploc lu 2 crans plus lentement, « poc » */
 u16 __fastcall__ hit_snd_f(u16 w)
 {
-    u8 pw = (u8)w, k = (u8)(w >> 8), r, v;
-    if (snd_mode == 2) return 0;
-    if (pw > 5) pw = 5;
+    u8 pw = (u8)w, k = (u8)(w >> 8), n, r;
+    if (snd_mode == 2 || (APU(0x4015) & 0x10)) return 0;
     if (k > 8) k = 0;
-    /* clic (2.92) : enveloppe qui part du volume maximal et décroît en 4
-       trames environ, 8 pour un coup puissant (avant : une trame à volume
-       fixe, qui semblait coupée) */
-    (void)v;
-    p1_hold = 10;
-    APU(0x4000) = (u8)(pw >= 3 ? 0x01 : 0x00);   /* 12,5 %, enveloppe décroissante */
-    APU(0x4001) = 0x08;
-    APU(0x4002) = hs_clk[k];
-    APU(0x4003) = 0x08;
-    /* pok échantillonné (jamais par-dessus une annonce de l'arbitre) */
-    if (!(APU(0x4015) & 0x10)) {
-        r = (u8)(hs_rate[k] + (pw >= 3));
-        if (r > 15) r = 15;
-        APU(0x4015) = 0x0F;
-        APU(0x4010) = r;
-        APU(0x4012) = dpcm_addr[3];
-        APU(0x4013) = dpcm_len[3];
-        APU(0x4015) = 0x1F;
-    }
-    /* corps */
-    if (!trk_ptr[1]) {
-        u16 p = (u16)(hs_tri[k] + (pw << 3));
-        APU(0x4008) = (u8)(hs_len[k] + (pw >> 1));
-        APU(0x400A) = (u8)p;
-        APU(0x400B) = (u8)(0x08 | (p >> 8));
-    }
+    n = hs_smp[k];
+    r = (u8)(dpcm_rate[n] - hs_slow[k] + (pw >= 3));
+    if (r > 15) r = 15;
+    APU(0x4015) = 0x0F;
+    APU(0x4010) = r;
+    APU(0x4012) = dpcm_addr[n];
+    APU(0x4013) = dpcm_len[n];
+    APU(0x4015) = 0x1F;
     return 0;
 }
 

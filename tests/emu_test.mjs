@@ -1852,7 +1852,7 @@ console.log('Margaux jouable et fatigue');
   // priorités du canal de bruit (un rebond ne coupe plus l'ovation)
   const e = boot(); startWith(e, { FMT: 3, SURF: 2 }); e.run(60);
   const mm = e.nes.mmap, w = mm.write.bind(mm); const log = [];
-  mm.write = (a, v) => { if (a >= 0x4000 && a <= 0x400F) log.push([a, v]); return w(a, v); };
+  mm.write = (a, v) => { if (a >= 0x4000 && a <= 0x4013) log.push([a, v]); return w(a, v); };   /* (2.93 : avec le DMC, échantillons d'impact) */
   const has = (a, v) => log.some(([x, y]) => x === a && (v === undefined || y === v));
   const s16 = (n, v, o = 0) => { e.poke(n, v & 255, o); e.poke(n, (v >> 8) & 255, o + 1); };
   // frappe du joueur : geste (souffle) puis frappe (triangle)
@@ -1863,7 +1863,7 @@ console.log('Margaux jouable et fatigue');
   log.length = 0; e.down('A'); e.run(8); e.up('A');
   for (let i = 0; i < 40 && e.peek('hitter') !== 0; i++) e.run(1);
   const whoosh = has(0x400E, 0x07) && has(0x400C, 0x14);   /* (2.89 : souffle sourd et discret) */
-  const pok = has(0x400B) && has(0x4008) && has(0x4002);   /* (2.91 : clic au carré 1 et corps au triangle, durée selon le coup) */
+  const pok = has(0x4013) && has(0x4012);   /* (2.93 : échantillon d'impact « tac » ou « ploc ») */
   // balle dehors pendant l'échange : bip
   e.poke('ms', 2); e.run(1); log.length = 0;
   s16('bx', 40 * 64); s16('by', 100 * 64); e.poke('end_reason', 2); e.poke('ump_arm', 1); e.poke('ms', 3); e.poke('ms_timer', 80); e.run(2);
@@ -1878,7 +1878,7 @@ console.log('Margaux jouable et fatigue');
   e.poke('ms', 2); e.poke('b_live', 1); e.poke('hitter', 0); log.length = 0;
   e.down('RIGHT'); e.run(10); e.up('RIGHT'); e.down('LEFT'); e.run(10); e.up('LEFT');
   const quiet = !has(0x4007) && !has(0x4005);
-  check(whoosh && pok && beep && kept && quiet, `bruitages : souffle${whoosh ? '' : ' (absent)'}, « pok » au triangle${pok ? '' : ' (absent)'}, bip dehors${beep ? '' : ' (absent)'}, ovation non coupée${kept ? '' : ' (coupée)'}, pas de crissement${quiet ? '' : ' (présent)'}`);
+  check(whoosh && pok && beep && kept && quiet, `bruitages : souffle${whoosh ? '' : ' (absent)'}, impact échantillonné${pok ? '' : ' (absent)'}, bip dehors${beep ? '' : ' (absent)'}, ovation non coupée${kept ? '' : ' (coupée)'}, pas de crissement${quiet ? '' : ' (présent)'}`);
 }
 
 {

@@ -204,6 +204,7 @@ Pour chaque ligne, lancez un match et regardez l'écran pendant une dizaine de s
 | 10.66 | Clameur sur un smash (version 2.90) | Smash gagnant (aussi au stade, et smash sauté) : une seule clameur du public, au point gagné, rien à l'impact | ☐ |
 | 10.67 | Revue des sons (version 2.90) | Club, parc, club nudiste : oiseaux environ toutes les 8 secondes ; ralenti : zoom sur la ligne sans bip ; gros plan de joie, portrait du vainqueur et coupe sans carillon ; menus : sons de déplacement et de validation plus doux | ☐ |
 | 10.68 | Impact et dribble (version 2.91) | Avant le service : le dribble est un petit souffle discret ; en jeu : frappe à plat et smash claquent (« tac »), lifté plus rond (« ploc »), amortie et lob mats (« poc ») ; un coup armé longtemps sonne plus fort | ☐ |
+| 10.69 | Impacts échantillonnés (version 2.93) | Service, frappe à plat, smash : « tac » sec ; lifté, coupé, volée : « ploc » rond ; lob, amortie : « poc » mat ; « Fault! » de l'arbitre toujours compréhensible (un peu plus rapide) ; démarrage normal de la cartouche | ☐ |
 
 ## 11. Ce qu'il faut renvoyer
 
