@@ -1862,7 +1862,7 @@ console.log('Margaux jouable et fatigue');
   s16('bx', 138 * 64); s16('by', 155 * 64); s16('bz', 6 * 64); s16('bvx', 0); s16('bvy', 128); s16('bvz', 0);
   log.length = 0; e.down('A'); e.run(8); e.up('A');
   for (let i = 0; i < 40 && e.peek('hitter') !== 0; i++) e.run(1);
-  const whoosh = has(0x400E, 0x02);
+  const whoosh = has(0x400E, 0x07) && has(0x400C, 0x14);   /* (2.89 : souffle sourd et discret) */
   const pok = has(0x400B) && has(0x4008, 0x0A);
   // balle dehors pendant l'échange : bip
   e.poke('ms', 2); e.run(1); log.length = 0;
