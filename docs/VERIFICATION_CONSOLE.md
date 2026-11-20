@@ -205,6 +205,7 @@ Pour chaque ligne, lancez un match et regardez l'écran pendant une dizaine de s
 | 10.67 | Revue des sons (version 2.90) | Club, parc, club nudiste : oiseaux environ toutes les 8 secondes ; ralenti : zoom sur la ligne sans bip ; gros plan de joie, portrait du vainqueur et coupe sans carillon ; menus : sons de déplacement et de validation plus doux | ☐ |
 | 10.68 | Impact et dribble (version 2.91) | Avant le service : le dribble est un petit souffle discret ; en jeu : frappe à plat et smash claquent (« tac »), lifté plus rond (« ploc »), amortie et lob mats (« poc ») ; un coup armé longtemps sonne plus fort | ☐ |
 | 10.69 | Impacts échantillonnés (version 2.93) | Service, frappe à plat, smash : « tac » sec ; lifté, coupé, volée : « ploc » rond ; lob, amortie : « poc » mat ; « Fault! » de l'arbitre toujours compréhensible (un peu plus rapide) ; démarrage normal de la cartouche | ☐ |
+| 10.70 | Équilibre impact et rebond (version 2.94) | Sur terre battue surtout : on entend d'abord la frappe, le rebond reste audible mais plus discret | ☐ |
 
 ## 11. Ce qu'il faut renvoyer
 

@@ -119,7 +119,7 @@ def impact(rate, dur, nz_amp, nz_dur, parts, seed=1):
 TAC_RATE, PLOC_RATE = 13, 12
 tac = impact(TAC_RATE, 0.039, 1.0, 0.0018, ((620, 0.8, 90), (1250, 0.5, 140), (170, 0.6, 60)))
 ploc = impact(PLOC_RATE, 0.019, 0.5, 0.0012, ((430, 1.0, 110), (860, 0.4, 160), (200, 0.5, 80)), 7)
-samples.append(('tac', encode(tac, 1.0, 28), TAC_RATE))
+samples.append(('tac', encode(tac, 1.0, 62), TAC_RATE))   # (2.94 : toute la plage du DMC, environ 2 fois plus fort)
 # annonces du score (2.71) : « Deuce! », « Advantage! », « Game! » (place
 # libérée dans la banque fixe en déplaçant les règles du score en banque 18)
 # (« Advantage! », le plus long, un peu plus vite et à 7 046 Hz, un cran
@@ -130,7 +130,7 @@ for name, word, speed, rate in (('deuce', 'Deuce!', 205, VOICE_RATE), ('game', '
                                 ('adv', 'Advantage!', 215, VOICE_RATE - 1)):
     x, sr = speak(word, speed)
     samples.append((name, encode(compress(resample(x, sr, RATES[rate])), 1.0, 64), rate))
-samples.append(('ploc', encode(ploc, 1.0, 28), PLOC_RATE))
+samples.append(('ploc', encode(ploc, 1.0, 62), PLOC_RATE))
 
 out = ['; Fichier généré par tools/gen_voice.py — ne pas modifier.',
        '; Échantillons DPCM (voix de l\'arbitre, « pok »), banque fixe.',

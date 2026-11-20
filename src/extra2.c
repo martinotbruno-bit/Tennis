@@ -356,11 +356,10 @@ void decor_tick(void)
 extern u8 noise_hold, noise_pri, snd_mode;
 extern const u8 *trk_ptr[4];
 static const u8 bnc_per[6] = { 0x0E, 0x0D, 0x0A, 0x0C, 0x0F, 0x07 };
-static const u8 bnc_env[6] = { 0x02, 0x01, 0x00, 0x01, 0x01, 0x00 };   /* coup fort : vitesse de décroissance */
 static const u8 bnc_len[6] = { 0x00, 0x48, 0x28, 0x48, 0x48, 0x28 };   /* rebond faible : durée (compteur de longueur) */
 static const u16 bnc_tri[6] = { 470, 540, 330, 420, 760, 210 };        /* poc : période du triangle */
-static const u8 bnc_lin[6] = { 7, 6, 6, 7, 5, 3 };                     /* poc : durée (quarts de trame) */
-static const u8 bnc_vol[3] = { 0x14, 0x17, 0x1B };                      /* volume fixe 4, 7, 11 */
+static const u8 bnc_lin[6] = { 4, 3, 3, 4, 3, 2 };                     /* poc : durée (quarts de trame ; 2.94 : plus court, le triangle n'a pas de volume) */
+static const u8 bnc_vol[4] = { 0x14, 0x16, 0x19, 0x1B };                /* volume fixe 4, 6, 9, 11 (2.94 : volume fixe aussi pour un coup fort, le rebond couvrait l'impact) */
 u16 __fastcall__ bounce_f(u16 fw)
 {
     u8 s = cfg.surface < 6 ? cfg.surface : 2, n, f = (u8)fw;
@@ -368,14 +367,14 @@ u16 __fastcall__ bounce_f(u16 fw)
     if (f > 3) f = 3;
     if (!(noise_hold && noise_pri > 1)) {
         noise_pri = 1; noise_hold = 12;   /* (toute la durée du souffle : les pas ne le coupent plus) */
-        APU(0x400C) = f == 3 ? bnc_env[s] : bnc_vol[f];
+        APU(0x400C) = bnc_vol[f];
         APU(0x400E) = bnc_per[s];
-        APU(0x400F) = f == 3 ? 0x08 : bnc_len[s];
+        APU(0x400F) = bnc_len[s];
     }
     p = bnc_tri[s];
     if (p && !trk_ptr[1] && snd_mode != 2) {
         n = bnc_lin[s];
-        if (f < 2) n = (u8)(n - 2 - (f == 0));
+        if (f < 2) n = (u8)(n - 1 - (f == 0 && n > 2));
         APU(0x4008) = n;
         APU(0x400A) = (u8)p;
         APU(0x400B) = (u8)(0x08 | (p >> 8));
