@@ -697,7 +697,7 @@ static void closeup_tick(void)
         if (hl_c >= 26) label_draw(12, (u8)((hl_c - 26) >> 1));   /* (en haut : libre dans les deux images, sous la marge des téléviseurs) */
         if (hl_c == 26) sfx_crowd(7);
         spr_end();
-        if (hl_t == 69) { flash(0x30); sfx_winner(); }
+        if (hl_t == 69) flash(0x30);   /* (2.90 : plus de carillon) */
         return;
     }
     if (hl_t == 70) {
@@ -1017,14 +1017,14 @@ static void zoom_tick(void)
             oam_buf[ob + 2] = (u8)(2 | ((k & 1) ? 0x40 : 0) | ((k & 2) ? 0x80 : 0));
             oam_buf[ob + 3] = (u8)(hl_rx + ((k & 1) ? d - 8 : -(s8)d));
         }
-        if (hl_t == 13) { flash(0x30); sfx_menu_ok(); }
+        if (hl_t == 13) flash(0x30);   /* (2.90 : zoom sans bip) */
         if (hl_t == 15) zoom_build();
         return;
     }
     /* image agrandie : trace de la balle qui clignote, titre */
     hl_c = (u8)(hl_t - 15);
     if (hl_c == 1) { if (hl_sbin) sfx_crowd(7); else sfx_out(); }
-    if (hl_quick && hl_c == Z4) { zoom4_build(); sfx_menu_ok(); }   /* balle limite : second temps, x 4 */
+    if (hl_quick && hl_c == Z4) zoom4_build();   /* balle limite : second temps, x 4 (2.90 : sans bip) */
     /* (les sprites agrandis restent ; seuls la trace et le titre changent :
        on les écrit aux emplacements 52 à 63) */
     ob = 208;
@@ -1100,7 +1100,7 @@ static void final_tick(void)
     ++hl_t;
     /* en pied (3-81), poignée de main au filet (82-141), gros plan du visage */
     if (hl_t == 3) cut_build(sad ? TZ_DEFEAT : TZ_VICTORY);
-    if (hl_t == 80 || hl_t == 140) { flash(sad ? 0x10 : 0x30); if (!sad) sfx_winner(); }
+    if (hl_t == 80 || hl_t == 140) flash(sad ? 0x10 : 0x30);   /* (2.90 : plus de carillon) */
     if (hl_t == 82) cut_build(TZ_HANDSHAKE);
     if (hl_t == 142) { if (cfg.doubles) hl_sp = (u8)(sad ? (w ^ 1) + 2 : w + 2); cut_build(sad ? TZ_DEFEAT : TZ_VICTORY_Z); if (!sad) hl_shake = 6; }
     if (hl_t < 4) return;
@@ -1189,7 +1189,7 @@ u16 __fastcall__ champ_tick(u16 a)
         return 0;
     }
     ++hl_t;
-    if (hl_t == 3) { cut_build(TZ_TROPHY); sfx_crowd(7); sfx_winner(); }
+    if (hl_t == 3) { cut_build(TZ_TROPHY); sfx_crowd(7); }   /* (2.90 : plus de carillon) */
     if (hl_t < 4) return 0;
     if ((hl_t > 60 && ((u8)a & (PAD_A | PAD_START))) || hl_t >= 250) return 1;
     hl_c = (u8)(hl_t - 3);

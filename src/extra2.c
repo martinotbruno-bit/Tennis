@@ -337,7 +337,7 @@ void decor_tick(void)
             }
         }
     }
-    if ((e == ENV_PARK || e == ENV_NUDE || (e == ENV_CLUB && !(dk_h & 1))) && ms != MS_RALLY && dk_t == 0x70) snd_start(1);   /* oiseaux entre les points (club : pendant leur vol, decor_draw) */
+    if ((e == ENV_PARK || e == ENV_NUDE || e == ENV_CLUB) && !(dk_h & 1) && ms != MS_RALLY && dk_t == 0x70) snd_start(1);   /* oiseaux entre les points, une fois sur deux, environ toutes les 8 secondes (2.90) ; club : pendant leur vol, decor_draw */
     /* (2.86 : plus de double bip des panneaux en salle, entêtant à chaque point) */
 }
 

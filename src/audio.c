@@ -151,12 +151,19 @@ void sfx_net(void)        { noise(0x03, 0x0E, 3, 12); pulse1(0x83, 0x08, 900); }
 void sfx_fault(void)      { pulse1(0x84, 0x08, 1140); }
 void sfx_whistle(void)    { pulse1(0x45, 0xB1, 100); }
 void sfx_crowd(u8 s)      { noise((u8)(0x08 + (s & 7)), 0x02, 2, 40); }
-void sfx_menu_move(void)  { pulse1(0x81, 0x08, 240); }
-void sfx_menu_ok(void)    { pulse1(0x82, 0x89, 180); }
+/* sons des menus (2.90) : volume fixe 5, durée courte (5 trames), au lieu
+   d'une enveloppe qui part du volume maximal : plus discrets */
+static void menu_tone(u8 env, u8 sweep, u16 per)
+{
+    pulse1(env, sweep, per);
+    APU(0x4003) = (u8)(per >> 8);       /* compteur de longueur : 10 demi-trames */
+}
+void sfx_menu_move(void)  { menu_tone(0x95, 0x08, 240); }
+void sfx_menu_ok(void)    { menu_tone(0x95, 0x89, 180); }
 /* changer une valeur : petit glissando vers l'aigu (droite) ou le grave
    (gauche) ; retour : note qui descend, plus longue */
-void sfx_menu_val(u8 right) { pulse1(0x41, (u8)(right ? 0x9A : 0x92), (u16)(right ? 320 : 220)); }
-void sfx_menu_back(void)  { pulse1(0x83, 0xA3, 200); }
+void sfx_menu_val(u8 right) { menu_tone(0x55, (u8)(right ? 0x9A : 0x92), (u16)(right ? 320 : 220)); }
+void sfx_menu_back(void)  { menu_tone(0x95, 0xA3, 200); }
 void sfx_toss(void)       { pulse1(0x81, 0x8B, 400); }
 /* pas : bruit sourd très bref à faible volume constant, jamais par-dessus un
    rebond, une frappe ou le public */
@@ -168,7 +175,6 @@ void sfx_step(void)
     APU(0x400F) = 0x18;     /* durée très courte */
 }
 /* coup gagnant : « ting » bref qui monte, sur le canal des bruitages (pas de musique) */
-void sfx_winner(void)     { pulse1(0x83, 0x9A, 360); }
 
 /* réglage SON : 2 = APU muet, 1 = musique arrêtée, 0 = tout */
 void snd_set(u8 m)
@@ -206,15 +212,6 @@ void sfx_svfault(void)    { announce(V_FAULT); }   /* service faux : « Fault! �
 void sfx_let(void)        { announce(V_LET); }     /* let : « Let! » */
 void sfx_umpire(u8 k)     { announce(k); }         /* score : « Deuce! », « Game! », « Advantage! » */
 
-/* balle dehors : « bip » du juge électronique (aigu, 1/12 s) */
-void sfx_line(void)
-{
-    p1_hold = 12;
-    APU(0x4000) = 0x9A;                 /* 50 %, volume fixe 10 */
-    APU(0x4001) = 0x08;
-    APU(0x4002) = 0x5C;
-    APU(0x4003) = 0x00;                 /* durée : 10 demi-trames */
-}
 /* coup gagnant (2.84) : un seul bip bref et grave, plus grave que celui du
    juge de ligne (le carillon montant, répété à chaque point, était entêtant) */
 void sfx_point(void)
