@@ -395,23 +395,25 @@ u16 __fastcall__ bounce_f(u16 fw)
    (avant : une petite note musicale qui descendait, toujours la même) */
 extern const u8 dpcm_addr[], dpcm_len[], dpcm_rate[];
 extern u8 p1_hold;
-static const u8 hs_rate[9] = { 13, 12, 12, 11, 14, 13, 14, 15, 14 };        /* pok : vitesse de lecture */
+static const u8 hs_rate[9] = { 13, 12, 12, 11, 13, 13, 13, 14, 13 };        /* pok : vitesse de lecture (2.92 : un cran plus lent pour les coups secs : plus long) */
 static const u8 hs_clk[9]  = { 0x50, 0x40, 0x70, 0x80, 0x30, 0x48, 0x38, 0x28, 0x30 };   /* clic : période */
 static const u16 hs_tri[9] = { 300, 260, 360, 420, 230, 280, 250, 190, 220 };            /* corps : période */
-static const u8 hs_len[9]  = { 5, 3, 3, 2, 5, 4, 3, 7, 6 };                  /* corps : durée */
+static const u8 hs_len[9]  = { 8, 6, 6, 4, 8, 7, 6, 10, 9 };                 /* corps : durée (2.92 : plus long) */
 u16 __fastcall__ hit_snd_f(u16 w)
 {
     u8 pw = (u8)w, k = (u8)(w >> 8), r, v;
     if (snd_mode == 2) return 0;
     if (pw > 5) pw = 5;
     if (k > 8) k = 0;
-    /* clic */
-    v = (u8)(4 + (pw << 1)); if (v > 12) v = 12;
-    p1_hold = 4;
-    APU(0x4000) = (u8)(0x10 | v);       /* 12,5 %, volume fixe */
+    /* clic (2.92) : enveloppe qui part du volume maximal et décroît en 4
+       trames environ, 8 pour un coup puissant (avant : une trame à volume
+       fixe, qui semblait coupée) */
+    (void)v;
+    p1_hold = 10;
+    APU(0x4000) = (u8)(pw >= 3 ? 0x01 : 0x00);   /* 12,5 %, enveloppe décroissante */
     APU(0x4001) = 0x08;
     APU(0x4002) = hs_clk[k];
-    APU(0x4003) = 0x18;                 /* une trame */
+    APU(0x4003) = 0x08;
     /* pok échantillonné (jamais par-dessus une annonce de l'arbitre) */
     if (!(APU(0x4015) & 0x10)) {
         r = (u8)(hs_rate[k] + (pw >= 3));
