@@ -751,7 +751,7 @@ Aucune musique pendant les matchs. Toutes les mélodies sont originales :
 
 **Rebond selon la surface** : la période du bruit et la durée de l'enveloppe dépendent de `cfg.surface` (terre sourde, gazon doux, dur sec, moquette mate, sable feutré, glace claquante).
 
-Coup gagnant : un « ting » montant bref sur le carré 1 (`sfx_winner`), en plus de la réaction du public déjà présente. Le nom du coup (`win_label`, banque fixe) dépend du dernier coup du gagnant (`last_shot`), d'un adversaire au filet au moment de la frappe (`hit_pass`) et du saut (`hit_jump`).
+Coup gagnant : un bip bref et grave sur le carré 1 (`sfx_point`, 2.84 : période $150, volume 6 ; avant, le « ting » montant `sfx_winner`, gardé pour les images HD), en plus de la réaction du public déjà présente. Le nom du coup (`win_label`, banque fixe) dépend du dernier coup du gagnant (`last_shot`), d'un adversaire au filet au moment de la frappe (`hit_pass`) et du saut (`hit_jump`).
 
 **Poignée de main du perdant (2.81)** : `tools/gen_teaser.py` (`sad_patch`) dessine aussi la poignée de main avec `face='sad'` (homme, femme, Margaux, homme et femme nus) et ne garde que les cases de 8 x 8 qui diffèrent de l'image souriante : (adresse de la case, tuile, 16 octets) dans `src/assets_sad.h`. Une tuile propre à la case est réécrite ; sinon une tuile libre après celles de l'image est prise et la case pointée dessus. `cens_hd_f` (extra2.c), appelée après chaque chargement d'image HD (`cut_build`, argument z | image << 1 | g << 6), applique ces cases quand l'image est la poignée de main et que le joueur humain a perdu contre l'ordinateur, puis la mosaïque au club nudiste.
 

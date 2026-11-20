@@ -212,6 +212,16 @@ void sfx_line(void)
     APU(0x4002) = 0x5C;
     APU(0x4003) = 0x00;                 /* durée : 10 demi-trames */
 }
+/* coup gagnant (2.84) : un seul bip bref et grave, plus doux que celui du
+   juge de ligne (le carillon montant, répété à chaque point, était entêtant) */
+void sfx_point(void)
+{
+    p1_hold = 12;
+    APU(0x4000) = 0x96;                 /* 50 %, volume fixe 6 */
+    APU(0x4001) = 0x08;
+    APU(0x4002) = 0x50;                 /* période $150 : environ 330 Hz */
+    APU(0x4003) = 0x01;                 /* (même durée que le bip du juge de ligne) */
+}
 /* geste de raquette : souffle bref (la frappe passe devant si la balle est touchée) */
 void sfx_swing(void)      { noise(0x01, 0x02, 0, 4); }
 /* feu d'artifice : sifflement de la fusée qui monte, puis « pop » */

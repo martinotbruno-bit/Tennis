@@ -22,7 +22,8 @@ extern u8 noise_hold;          /* canal de bruit réservé (trames), audio.c */
 void sfx_ooh(void);                 /* public : balle dehors de peu */
 void sfx_groan(void);               /* public : double faute */
 void sfx_hush(void);                /* public : silence au lancer */
-void sfx_line(void);                /* bip du juge électronique (balle dehors) */
+void sfx_line(void);
+void sfx_point(void);               /* coup gagnant : bip bref et grave (2.84) */                /* bip du juge électronique (balle dehors) */
 void sfx_out(void);                 /* bip et voix « Out! » */
 void sfx_svfault(void);             /* bip et voix « Fault! » (service faux) */
 void sfx_let(void);
