@@ -829,3 +829,6 @@ Outils de mise au point :
 | `tools/check_texts.py` | Relecture des textes : caractères présents dans la police, colonnes, lignes du mode d'emploi, annonces de 14 caractères au plus |
 
 Les résultats détaillés sont dans le [rapport](RAPPORT.md).
+
+**Menu des réglages (2.96)** : plus d'accolades (`grp_tile` supprimée) ni de filets. Balle de fond : `tools/gen_menuball.py` → `src/assets_mball.h` (90 tuiles, places `SLOTS` : $CE-$FB logo, $A0-$A3 et $A5-$B1 ornements, $CA-$CD, tuiles vides ou inutilisées de la police et de sa version surlignée), `mb_draw_f` (extra2.c : tuiles, carte des rangées 3 à 29 avec la table `mb_off`, attributs des rangées 20-23 sur les palettes 1 et 2, `bg_dirty` = 1) ; le texte du menu passe par `mbt` / `mtx` (screens.c), qui remplacent les espaces écrits par la tuile de la balle (`mb_fix_buf_f` dans le tampon VRAM, `mb_fix_txt_f` en écriture directe) ; `screen_begin` remet `mb_on` à 0 et recharge tout le jeu de tuiles du fond. Bandeau du score : pas affiché si `end_reason` vaut `END_FAULT`, ni sur un let avec `faults` ; en double, nom d'équipe des statistiques en colonne 22 (débordement de `bb` qui remettait `band_pg` à 0).
+

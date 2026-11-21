@@ -132,6 +132,12 @@ void gm_intro_build(void);
 void gm_intro_tick(void);
 static void comp_screen(void);
 static void screen_begin(void);
+/* (2.96) balle de fond des réglages (extra2.c) */
+extern u8 mb_on, mb_n;
+extern const char *mb_s;
+#pragma zpsym("mb_on")
+#pragma zpsym("mb_n")
+#pragma zpsym("mb_s")
 static u8 c_pg;                /* écran de la compétition : 0 le match, 1 le tableau ou le classement, 2 le tableau du tournoi en cours */
 static u8 pg_max(void) { return (u8)(c_type == CT_SEASON || c_type >= CT_GRAND ? 2 : 1); }
 static void comp_next(void)
@@ -236,12 +242,13 @@ static u8 is_final(void)
     return (u8)((comp_l1[0] == 'F' && comp_l1[6] == 0) || (comp_l2[0] == 'F' && comp_l2[6] == 0));
 }
 
-u8 __fastcall__ grp_tile(u8 i); void port_load(void); void title_court(void); void palmares_sprites(void); void menu_marks(void); u8 __fastcall__ port_pal(u8 a);
+void port_load(void); void title_court(void); void palmares_sprites(void); void menu_marks(void); u8 __fastcall__ port_pal(u8 a);
 void menu_deco_begin(void); void deco_title(void); void deco_frame(void); void deco_filet(void); void palmares_build(void);
 extern char deco_str[24];
 extern u8 deco_kind, deco_row;
 static void screen_begin(void)
 {
+    mb_on = 0;                       /* (balle des réglages : plus d'espaces remplacés) */
     ppu_off();
     vbuf_reset();
     people_tiles(0);
@@ -340,6 +347,20 @@ static void title_screen(void)
 /* liste des réglages centrée verticalement entre les filets (rangées 4 à
    21) : première rangée selon le nombre de lignes */
 #define MY0 ((u8)(4 + ((u8)(18 - nvis) >> 1)))
+/* (2.96) balle de tennis en fond des réglages (extra2.c) : les espaces du
+   texte y laissent voir la balle */
+void mb_draw_f(void); u16 __fastcall__ mb_fix_buf_f(u16 xy); u16 __fastcall__ mb_fix_txt_f(u16 xy);
+static void mbt(u8 x, u8 y, const char *t, u8 n)
+{
+    u8 l = vram_len;
+    vbuf_text(x, y, t, n);
+    if (vram_len != l) { mb_n = n; far_call(BANK_X2, (void *)mb_fix_buf_f, (u16)(x | (y << 8))); }
+}
+static void mtx(u8 x, u8 y, const char *t)
+{
+    txt_at(x, y, t);
+    mb_s = t; far_call(BANK_X2, (void *)mb_fix_txt_f, (u16)(x | (y << 8)));
+}
 static u8 rd_row, rd_n;
 static u8 hl_cur = 0xFF;      /* ligne affichée surlignée ($FF : aucune) */
 static void menu_draw_row(u8 i, u8 direct)
@@ -347,13 +368,12 @@ static void menu_draw_row(u8 i, u8 direct)
     txt_off = (u8)(i == cursor ? 0x40 : 0);   /* ligne choisie : police surlignée */
     pad_text(opt_text(vis[i]), 15);
     if (direct) {
-        txt_at(3, (u8)(MY0 + i), row_label(vis[i]));
-        txt_at(16, (u8)(MY0 + i), line);
-        vram_adr(NTADR(2, MY0 + i)); vram_put((u8)far_call(BANK_PODIUM, (void *)grp_tile, i));
+        mtx(3, (u8)(MY0 + i), row_label(vis[i]));
+        mtx(16, (u8)(MY0 + i), line);   /* (2.96 : plus d'accolades de groupe en colonne 2) */
         if (i == cursor) hl_cur = i;
     }
     else {
-        vbuf_text(16, (u8)(MY0 + i), line, 15);
+        mbt(16, (u8)(MY0 + i), line, 15);
         if (i == cursor) hl_cur = 0xFF;     /* valeur changée : flèches redessinées */
     }
     txt_off = 0;
@@ -366,15 +386,15 @@ static u8 menu_hl_row(u8 i, u8 on)
     if (vram_len + 50 > VBUF_MAX) return 0;
     txt_off = (u8)(on ? 0x40 : 0);
     pad_text(row_label(vis[i]), 13);
-    vbuf_text(3, (u8)(MY0 + i), line, 13);
+    mbt(3, (u8)(MY0 + i), line, 13);
     pad_text(opt_text(vis[i]), 15);
-    vbuf_text(16, (u8)(MY0 + i), line, 15);
+    mbt(16, (u8)(MY0 + i), line, 15);
     txt_off = 0;
     if (vis[i] != O_START) {
         u8 n = 15;
         while (n && line[n - 1] == ' ') --n;             /* fin de la valeur */
-        line[0] = ar[on][0]; vbuf_text(15, (u8)(MY0 + i), line, 1);
-        line[0] = ar[on][1]; vbuf_text((u8)(16 + n), (u8)(MY0 + i), line, 1);
+        line[0] = ar[on][0]; mbt(15, (u8)(MY0 + i), line, 1);
+        line[0] = ar[on][1]; mbt((u8)(16 + n), (u8)(MY0 + i), line, 1);
     }
     return 1;
 }
@@ -408,16 +428,15 @@ static void menu_soft_tick(void)
         i = (u8)(4 + rd_row++ - MY0);       /* rangée : 3 + rd_row */
         if (i < nvis) {
             pad_text(row_label(vis[i]), 13);   /* (JOUEURS aussi) */
-            vbuf_text(3, (u8)(3 + rd_row), line, 13);
+            mbt(3, (u8)(3 + rd_row), line, 13);
             pad_text(opt_text(vis[i]), 15);
         } else {
             pad_text("", 13);
-            vbuf_text(3, (u8)(3 + rd_row), line, 13);
+            mbt(3, (u8)(3 + rd_row), line, 13);
             pad_text("", 15);
         }
-        vbuf_text(16, (u8)(3 + rd_row), line, 15);
-        line[0] = ' '; vbuf_text(15, (u8)(3 + rd_row), line, 1); vbuf_text(31, (u8)(3 + rd_row), line, 1);
-        line[0] = (char)(i < nvis ? far_call(BANK_PODIUM, (void *)grp_tile, i) : 0); vbuf_text(2, (u8)(3 + rd_row), line, 1);
+        mbt(16, (u8)(3 + rd_row), line, 15);
+        line[0] = ' '; mbt(15, (u8)(3 + rd_row), line, 1); mbt(31, (u8)(3 + rd_row), line, 1);
     }
 }
 
@@ -444,7 +463,7 @@ static void menu_info_tick(void)
     if (o != info_o || v != info_v) { info_o = o; info_v = v; info_row = 0; }
     while (info_row < 4 && vram_len + 32 <= VBUF_MAX) {
         info_line(info_row);
-        vbuf_text(2, (u8)(24 + info_row), comp_l1, 28);
+        mbt(2, (u8)(24 + info_row), comp_l1, 28);
         ++info_row;
     }
 }
@@ -479,11 +498,12 @@ static void menu_screen(void)
     build_visible();
     rd_row = rd_n = 0;
     screen_begin();
-    deco("REGLAGES", 1, 22);
+    deco("REGLAGES", 1, 0);                      /* (2.96 : sans filet du bas) */
+    bank_call(BANK_X2, mb_draw_f);               /* balle en fond, filet du haut effacé (extra2.c) */
     bank_call(BANK_PODIUM, port_load);
     for (i = 0; i < nvis; ++i) menu_draw_row(i, 1);
     info_o = vis[cursor]; info_v = opt_val[info_o];
-    for (info_row = 0; info_row < 4; ++info_row) { info_line(info_row); txt_at(2, (u8)(24 + info_row), comp_l1); }
+    for (info_row = 0; info_row < 4; ++info_row) { info_line(info_row); mtx(2, (u8)(24 + info_row), comp_l1); }
     far_call(BANK_PODIUM, (void *)port_pal, opt_val[O_P1]);
     far_call(BANK_PODIUM, (void *)port_pal, (u8)(32 + opt_val[O_P2]));
     ppu_on();

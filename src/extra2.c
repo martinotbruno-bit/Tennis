@@ -725,3 +725,63 @@ u16 __fastcall__ vs_pal_f(u16 sd)
     return 0;
 }
 #pragma static-locals(pop)
+
+/* ---------------------------------------------------------------------- */
+/* Écran des réglages (2.96) : grande balle de tennis tramée en fond, en    */
+/* bas à droite (tools/gen_menuball.py). mb_draw_f : tuiles et carte, rendu */
+/* coupé ; plus de filets dorés (rangées 3 et 22) ; rangées 22-23 sur les   */
+/* palettes des lignes (couleur 1 noire). Le texte du menu efface ses cases */
+/* avec des espaces : mb_fix_buf_f (tampon VRAM) et mb_fix_txt_f (écriture  */
+/* directe) y remettent la tuile de la balle. Tout est rechargé au prochain */
+/* écran (bg_dirty = 1, screen_begin).                                      */
+/* ---------------------------------------------------------------------- */
+#include "assets_mball.h"
+#pragma bss-name(push, "ZEROPAGE")
+u8 mb_on, mb_n;
+const char *mb_s;
+#pragma bss-name(pop)
+#pragma static-locals(push, off)
+static u8 mb_tile(u8 x, u8 y)
+{
+    const u8 *p;
+    u8 r;
+    if (y < MB_ROW0 || y >= MB_ROW0 + MB_ROWS) return ' ';
+    p = mb_map + mb_off[y - MB_ROW0];
+    if (x < p[0] || (u8)(x - p[0]) >= p[1]) return ' ';
+    r = p[2 + x - p[0]];
+    return r ? r : ' ';
+}
+void mb_draw_f(void)
+{
+    const u8 *p = mb_chr;
+    u8 k, i, x, r;
+    for (k = 0; k < MB_NT; ++k) {
+        vram_adr((u16)mb_id[k] << 4);
+        for (i = 0; i < 16; ++i) vram_put(*p++);
+    }
+    for (r = 0, p = mb_map; r < MB_ROWS; ++r, p += 2 + p[1]) {   /* (carte lue d'un seul passage) */
+        vram_adr(NTADR(0, MB_ROW0 + r));
+        for (x = 0; x < 32; ++x) vram_put((u8)(x >= p[0] && (u8)(x - p[0]) < p[1] ? p[2 + x - p[0]] : 0));
+    }
+    vram_adr(0x23C0 + 5 * 8);                           /* rangées 20 à 23 : palettes 1 (gauche) et 2 (droite) */
+    for (i = 0; i < 8; ++i) vram_put((u8)(i < 4 ? 0x55 : 0xAA));
+    mb_on = 1;
+    bg_dirty = 1;                                       /* (logo et police rechargés en quittant l'écran) */
+}
+u16 __fastcall__ mb_fix_buf_f(u16 xy)
+{
+    u8 x = (u8)xy, y = (u8)(xy >> 8), i, k;
+    if (!mb_on) return 0;
+    i = (u8)(vram_len - mb_n);
+    for (k = 0; k < mb_n; ++k, ++i) if (vram_buf[i] == ' ') vram_buf[i] = mb_tile((u8)(x + k), y);
+    return 0;
+}
+u16 __fastcall__ mb_fix_txt_f(u16 xy)
+{
+    u8 x = (u8)xy, y = (u8)(xy >> 8), k, t;
+    if (!mb_on) return 0;
+    for (k = 0; mb_s[k]; ++k)
+        if (mb_s[k] == ' ' && (t = mb_tile((u8)(x + k), y)) != ' ') { vram_adr(NTADR(x + k, y)); vram_put(t); }
+    return 0;
+}
+#pragma static-locals(pop)

@@ -137,19 +137,7 @@ u8 __fastcall__ port_pal(u8 a)
 
 extern u8 opt_val[], vis[], nvis;   /* (menu_marks : extra2.c, banque 30) */
 
-/* Réglages : accolade dorée en marge (colonne 2) qui réunit les lignes d'un
-   même groupe : partie (mode, compétition, exercice), joueurs, match (lieu,
-   conditions, format...), options (vue, son). Tuile de la ligne i. */
-
-static const u8 grp_of[29] = { 0, 1, 2, 2, 2, 2, 3, 3, 3, 3, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 3, 4, 3, 4, 1, 1, 0, 0 };   /* (26 FORMULE, 27 OPTIONS, 28 RETOUR) */
-u8 __fastcall__ grp_tile(u8 i)
-{
-    u8 g, up, dn;
-    if (i >= nvis || !(g = grp_of[vis[i]])) return 0;
-    up = (u8)(i && grp_of[vis[i - 1]] == g);
-    dn = (u8)(i + 1 < nvis && grp_of[vis[i + 1]] == g);
-    return (u8)(0xAE + (up ? (dn ? 1 : 2) : (dn ? 0 : 3)));
-}
+/* (2.96 : accolades de groupe du menu, en marge colonne 2, supprimées) */
 
 /* attributs de l'écran (tables de tools/gen_menu.py) : deco_kind 0 (texte,
    filet du bas rangée 24) ou 1 (configuration, filet rangée 22) */

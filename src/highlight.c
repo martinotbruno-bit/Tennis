@@ -183,9 +183,12 @@ static void band_text(u8 t)
     }
     if (band_pg) {
         if (t == 0) {               /* noms au-dessus des colonnes */
+            /* (2.96 : en double, « AL/MA » et son 0 final débordaient de bb
+               à la position 23 et remettaient band_pg à 0 : les statistiques
+               ne défilaient pas ; second nom une case plus à gauche) */
             team_label(cfg.chr[0], cfg.doubles ? cfg.chr[2] : 255, bb + 16);
-            team_label(cfg.chr[1], cfg.doubles ? cfg.chr[3] : 255, bb + 23);
-            bb[20] = bb[27] = ' ';
+            team_label(cfg.chr[1], cfg.doubles ? cfg.chr[3] : 255, bb + 23 - cfg.doubles);
+            for (i = 16; i < 28; ++i) if (!bb[i]) bb[i] = ' ';
             return;
         }
         for (q = band_lbl[band_pg - 1], i = 0; *q; ) bb[i++] = *q++;
@@ -208,7 +211,7 @@ static void band_text(u8 t)
     }
     if (sc_server == t) bb[0] = '@';                          /* balle : au service */
     team_label(cfg.chr[t], cfg.doubles ? cfg.chr[t + 2] : 255, bb + 2);
-    bb[6] = ' ';
+    bb[cfg.doubles ? 7 : 6] = ' ';   /* (2.96 : en double, 5 lettres « AL/MA » : l'espace écrasait la dernière) */
     for (i = 0; i <= sc_set_no && i < MAX_SETS; ++i)
         bb[8 + i * 3] = (char)('0' + (i < sc_set_no ? sc_hist[i][t] : sc_games[t]));
     rules_point_label(t, bb + 24);
@@ -324,7 +327,7 @@ void band_draw(void)
        score n'est compté qu'à la fin du temps mort) */
     v = (u8)(ms == MS_DEAD && end_reason == END_POINT && (sc_crit & 4) && ((sc_crit >> pending_winner) & 1));
     v = (u8)(cfg.mode == GM_MATCH && !paused && !hl_mode && !sc_over && !v &&
-             ((cer == CER_SEAT) || ((cer == CER_CHOOSE || cer == CER_RECAP) && toss_q) || (cer == 4 && !band_dis) || ((!cer || cer >= 0xF0) && !band_dis && !rp_pending && (ms == MS_DEAD || ms == MS_SERVE))));
+             ((cer == CER_SEAT) || ((cer == CER_CHOOSE || cer == CER_RECAP) && toss_q) || (cer == 4 && !band_dis) || ((!cer || cer >= 0xF0) && !band_dis && !rp_pending && end_reason != END_FAULT && !(faults && end_reason == END_LET) && (ms == MS_DEAD || ms == MS_SERVE))));   /* (2.96 : pas de bandeau quand un second service est en attente : après une première faute, ou un let sur second service ; une double faute termine le point : bandeau comme d'habitude) */
     /* cer 4 (CER_CHAIR, vers les chaises) : le bandeau reste affiché
        depuis la fin du point jusqu'aux statistiques, sans disparaître */
     /* apparition : 48 trames après la fin du point (ou du ralenti),
