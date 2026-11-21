@@ -253,6 +253,8 @@ static void serve_fault(const char *why)
 /* carré de service et point de contact du rebond : banque 20 (train.c ;
    place en banque 0) */
 u16 __fastcall__ srv_box(u16 unused);
+u16 __fastcall__ srv_pick_f(u16 a);   /* (2.97, extra2.c) */
+u16 __fastcall__ srv_walk_f(u16 p);
 void bounce_fix(void);
 u16 __fastcall__ bounce_f(u16 f);   /* rebond : son (extra2.c) */
 u16 __fastcall__ hit_snd_f(u16 w);  /* impact : son (extra2.c) */
@@ -488,6 +490,7 @@ static void place_for_serve(void)
     u8 i;
     bank_call(BANK_EXTRAS, ai_tactic);          /* tactique du CPU selon le score */
     plx[sp] = (left ? CENTER_X + 22 : CENTER_X - 22) * FP;
+    far_call(BANK_X2, (void *)srv_pick_f, (u16)(sp | (left << 8)));   /* (2.97) place variée du serveur ordinateur (extra2.c) */
     /* serveur juste derrière la ligne de fond ; en haut, le sprite se dessine
        au-dessus des pieds : 2 px de recul suffisent (8 px en bas) */
     ply[sp] = ss ? (TOP_BASE - 2) * FP : base_y(0, 8);
@@ -817,8 +820,9 @@ static void ai_update(u8 p)
                 sfx_hit(1);
                 return;
             }
-            if (band_hold) ms_timer = 40;      /* (bandeau affiché : l'ordinateur attend l'appui du joueur) */
-            else if (--ms_timer == 0) toss(p);
+            if (band_hold) { ms_timer = 40; pl_moving[p] = 0; return; }   /* (bandeau affiché : l'ordinateur attend l'appui du joueur) */
+            if (far_call(BANK_X2, (void *)srv_walk_f, p)) return;   /* (2.97) pas chassés jusqu'à sa place */
+            if (--ms_timer == 0) toss(p);
         }
         pl_moving[p] = 0;
         return;

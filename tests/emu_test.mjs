@@ -612,6 +612,30 @@ console.log('Version 2.72 : carrière, fiche, reprise, cérémonie');
   check(stay && pages.join() === '1,2,3,4,5' && still && h.peek('cer') === 6, `changement de côté : statistiques affichées jusqu'à l'appui, une page par appui (${pages}), puis retour des joueurs (${h.peek('cer')})`);
 }
 {
+  // (2.97) A appuyé tout de suite après le dernier échange (vers les chaises) :
+  // la pause assise et les statistiques ne sont plus sautées
+  const h = boot(); h.bandSkip = false; startWith(h, { FMT: 3, REPLAY: 0 }); allCpu(h);
+  h.cerSkip = false; h.poke('cer_skip', 0); h.poke('sc_games', 2); h.poke('sc_points', 3); h.poke('sc_points', 0, 1);
+  runUntil(h, () => h.peek('cer') === 4, 60 * 60 * 3);
+  h.poke('cfg', 0, CFG.CTRL);
+  for (let k = 0; k < 6; k++) { h.tap('A'); h.run(3); }
+  const seat = runUntil(h, () => h.peek('cer') === 5, 300);
+  check(seat, `changement de côté : A sur le chemin des chaises ne saute plus la pause assise (cer ${h.peek('cer')})`);
+}
+{
+  // (2.97) serveur ordinateur : place variée sur la ligne de fond avant le lancer
+  const e = boot(); startWith(e, { FMT: 0, REPLAY: 0 }); allCpu(e);
+  const xs = new Set(); let walk = 0;
+  for (let f = 0; f < 60 * 60 * 8 && xs.size < 4 && app(e) === AS.MATCH; f++) {
+    e.poke('cer_skip', e.peek('cer') >= 1 && e.peek('cer') <= 6 ? 1 : 0);
+    const was = e.peek('ms');
+    e.run(1);
+    if (e.peek('ms') === 0 && e.peek('pl_moving', e.peek('sc_server'))) walk++;
+    if (was === 0 && e.peek('ms') === 1) { const p = e.peek('sc_server'); xs.add(Math.abs((e.peek16('plx', p * 2) >> 6) - 128)); }
+  }
+  check(xs.size >= 4 && walk > 0, `serveur ordinateur : places variées sur la ligne de fond (écarts au centre ${[...xs].sort((a, b) => a - b).join(', ')}), en pas chassés`);
+}
+{
   // plongeon de dernière chance sur un service canon
   const e = boot(); startWith(e, { FMT: 2, REPLAY: 1 });
   const cfga = e.addr('cfg'); for (let i = 1; i < 4; i++) { e.nes.cpu.mem[cfga + 2 + i] = 2; e.nes.cpu.mem[cfga + 10 + i] = 2; }

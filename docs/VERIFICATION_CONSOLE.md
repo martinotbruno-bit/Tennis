@@ -210,6 +210,8 @@ Pour chaque ligne, lancez un match et regardez l'écran pendant une dizaine de s
 | 10.72 | Bandeau et service (version 2.96) | Après un premier service faux : pas de bandeau du score avant le second service ; après une double faute : bandeau comme d'habitude | ☐ |
 | 10.73 | Statistiques du double (version 2.96) | Match en double, changement de côté : noms d'équipes complets (« AL/MA ») et pages des statistiques qui défilent | ☐ |
 | 10.74 | Menu des réglages (version 2.96) | Plus d'accolades ni de traits dorés ; grande balle tramée en bas à droite, en relief, sur les quatre couleurs de fond ; retour à l'écran titre : logo intact ; écrans suivants (présentation, choix) sans tuiles abîmées | ☐ |
+| 10.75 | Changement de côté (version 2.97) | Appuyer sur A dès la fin du dernier échange avant le changement de côté : les joueurs vont quand même s'asseoir, les statistiques défilent à l'appui | ☐ |
+| 10.76 | Service de l'ordinateur (version 2.97) | Sur plusieurs points : l'ordinateur se déplace parfois en pas chassés sur la ligne avant de lancer (près du T ou vers le couloir) | ☐ |
 
 ## 11. Ce qu'il faut renvoyer
 

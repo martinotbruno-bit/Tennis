@@ -287,7 +287,7 @@ void cer_tick(void)
     u8 p, done = 1, win, top;
     if (cer >= CER_CHAIRS) return;
     ++cer_t;
-    if (cer_skip || (((pad1_new | pad2_new) & (PAD_A | PAD_START)) && cer != CER_CHOOSE && !(cer == CER_SEAT && cfg.mode == GM_MATCH && seat_human()))) {   /* (le choix du tirage se fait par A ou B) */   /* (assis, l'appui fait défiler les statistiques) */
+    if (cer_skip || (((pad1_new | pad2_new) & (PAD_A | PAD_START)) && cer != CER_CHOOSE && !((cer == CER_SEAT || cer == CER_CHAIR) && cfg.mode == GM_MATCH && seat_human()))) {   /* (le choix du tirage se fait par A ou B) */   /* (assis, l'appui fait défiler les statistiques ; 2.97 : en allant aux chaises, il ne saute plus la pause) */
         /* passer : fin du match, il reste peu de temps (sauf pour les
            tests, qui gardent la durée d'avant) */
         if (cer >= CER_JOY && !cer_skip && ms_timer > 20) ms_timer = 20;

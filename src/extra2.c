@@ -792,3 +792,38 @@ u16 __fastcall__ mb_fix_txt_f(u16 xy)
     return 0;
 }
 #pragma static-locals(pop)
+
+/* ---------------------------------------------------------------------- */
+/* (2.97) Serveur ordinateur : une fois sur deux, avant de servir, il se   */
+/* replace sur la ligne de fond (près du T ou plus écarté que d'habitude, */
+/* CENTER_X ± 6 à ± 40) : la balle part d'un autre point vers les mêmes   */
+/* cibles (extérieur, T, corps), l'angle du service change.               */
+/* ---------------------------------------------------------------------- */
+extern u8 pl_moving[4];
+#pragma bss-name(push, "BSS")
+static s16 srv_tx;
+#pragma bss-name(pop)
+#pragma static-locals(push, off)
+u16 __fastcall__ srv_pick_f(u16 a)
+{
+    static const s8 srv_dx[4] = { -16, -9, 9, 18 };
+    u8 sp = (u8)a, left = (u8)(a >> 8);
+    s8 d;
+    srv_tx = plx[sp];
+    if (cfg.ctrl[sp] == CTRL_CPU && cfg.mode != GM_TRAIN && (rand8() & 1)) {
+        d = srv_dx[rand8() & 3];
+        srv_tx = (s16)((left ? CENTER_X + 22 + d : CENTER_X - 22 - d) * FP);
+    }
+    return 0;
+}
+u16 __fastcall__ srv_walk_f(u16 a)                      /* 1 : encore en chemin (pas chassés, 1 px par trame) */
+{
+    u8 p = (u8)a;
+    if (plx[p] == srv_tx) return 0;
+    if (plx[p] < srv_tx) { plx[p] += 64; if (plx[p] > srv_tx) plx[p] = srv_tx; }
+    else { plx[p] -= 64; if (plx[p] < srv_tx) plx[p] = srv_tx; }
+    pl_moving[p] = 1;
+    if (ms_timer < 12) ms_timer = 12;                   /* (le lancer attend un instant, une fois en place) */
+    return 1;
+}
+#pragma static-locals(pop)
