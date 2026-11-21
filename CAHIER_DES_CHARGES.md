@@ -1,10 +1,37 @@
 # CAHIER DES CHARGES PROFESSIONNEL
 ## Création d'un jeu de tennis NES/Famicom de nouvelle génération
 
-**Nom du projet :** Tennis NES – Édition ultime  
+**Nom du projet :** Royal Martinot  
 **Nature du projet :** Création autonome d'un jeu vidéo de tennis 8 bits pour Nintendo Entertainment System (NES) et Famicom.  
 **Destinataire :** IA de développement autonome.  
-**Objectif :** Concevoir, programmer, optimiser, tester et livrer une évolution ambitieuse du jeu Tennis de la NES, avec un contenu considérablement enrichi et une finition maximale, tout en conservant une compatibilité réelle avec le matériel d'origine.
+**Objectif :** Concevoir, programmer, optimiser, tester et livrer un jeu de tennis 8 bits original et ambitieux, dans la tradition des jeux de tennis de la NES, avec un contenu considérablement enrichi et une finition maximale, tout en conservant une compatibilité réelle avec le matériel d'origine.
+
+| Version | Date | Statut |
+|---|---|---|
+| 1.0 | 2026-11-08 | Version initiale |
+| 1.1 | 2026-11-08 | Nom du projet : Royal Martinot |
+
+## Sommaire
+
+1. [Vision et objectifs du projet](#1-vision-et-objectifs-du-projet)
+2. [Plateformes et contraintes matérielles](#2-plateformes-et-contraintes-matérielles)
+3. [Gameplay et mécaniques de tennis](#3-gameplay-et-mécaniques-de-tennis)
+4. [Règles et formats de compétition](#4-règles-et-formats-de-compétition)
+5. [Personnages et apparence](#5-personnages-et-apparence)
+6. [Terrains et environnements](#6-terrains-et-environnements)
+7. [Graphismes et animations](#7-graphismes-et-animations)
+8. [Interface et menus](#8-interface-et-menus)
+9. [Modes d'entraînement](#9-modes-dentraînement)
+10. [Intelligence artificielle](#10-intelligence-artificielle)
+11. [Audio et musique](#11-audio-et-musique)
+12. [Statistiques, résultats et sauvegardes](#12-statistiques-résultats-et-sauvegardes)
+13. [Architecture logicielle et optimisation](#13-architecture-logicielle-et-optimisation)
+14. [Méthode de développement autonome](#14-méthode-de-développement-autonome)
+15. [Tests et validation](#15-tests-et-validation)
+16. [Critères d'acceptation](#16-critères-dacceptation)
+17. [Livrables obligatoires](#17-livrables-obligatoires)
+18. [Priorités en cas de compromis](#18-priorités-en-cas-de-compromis)
+19. [Directive finale à l'IA de développement](#19-directive-finale-à-lia-de-développement)
 
 ---
 
@@ -12,7 +39,7 @@
 
 ## 1.1 Objectif principal
 
-Développer un jeu de tennis inspiré du jeu Nintendo NES Tennis, mais considérablement amélioré dans tous les domaines possibles :
+Développer un jeu de tennis original, inspiré des jeux de tennis classiques de la NES, mais considérablement plus riche dans tous les domaines possibles :
 
 - Gameplay et profondeur des échanges.
 - Physique de la balle.
@@ -50,7 +77,7 @@ Aucune amélioration graphique ne devra rendre les commandes imprécises ou dég
 
 ## 1.3 Création originale
 
-Le jeu doit être une réalisation indépendante inspirée des principes de gameplay de Tennis NES.
+Le jeu doit être une réalisation indépendante inspirée des principes de gameplay des jeux de tennis 8 bits.
 
 Ne pas réutiliser le code source original, les graphismes propriétaires, les musiques, les sons ou les ressources protégées du jeu d'origine sans autorisation.
 
@@ -334,7 +361,7 @@ Créer une identité visuelle 8 bits soignée.
 
 Étudier :
 
-- Apparence proche de l'esprit du jeu original.
+- Apparence fidèle à l'esprit des jeux de tennis 8 bits, avec une identité visuelle propre.
 - Sprites 8 bits détaillés.
 - Plusieurs tenues.
 - Variantes de couleurs.
@@ -1113,6 +1140,6 @@ Tu dois documenter toute limitation technique et proposer la meilleure alternati
 
 Tu ne dois jamais déclarer le projet terminé tant que les critères d'acceptation et les livrables obligatoires ne sont pas vérifiés.
 
-**Résultat final attendu : un jeu de tennis 8 bits exceptionnel, considérablement supérieur au Tennis NES d'origine en contenu, en gameplay et en finition, exploitant au maximum les possibilités techniques de la NES/Famicom, tout en restant réellement compatible avec les consoles d'origine.**
+**Résultat final attendu : un jeu de tennis 8 bits exceptionnel, considérablement plus riche que les jeux de tennis 8 bits classiques en contenu, en gameplay et en finition, exploitant au maximum les possibilités techniques de la NES/Famicom, tout en restant réellement compatible avec les consoles d'origine.**
 
 **FIN DU CAHIER DES CHARGES**
