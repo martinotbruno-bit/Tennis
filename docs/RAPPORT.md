@@ -822,7 +822,7 @@ Pour loger ce contenu, la cartouche passe de NROM (32 Ko) à **MMC1** : 128 Ko d
 | Relecture des textes (`check_texts.py`) | 0 problème |
 | Contraste (`contrast.py 25`) | 0 paire sous ΔE 25 (personnages, courts, balle, tenues) |
 | Profil CPU, double, 6 000 trames | 27 trames d'échange en dépassement (0,45 %), sans défaut d'image |
-| Compilation | Reproductible : SHA-256 `807c8ec3068aa2ce36f7a3af05b6d7f683522a698f4830d50672912ad762f348` sur deux compilations propres |
+| Compilation | Reproductible : SHA-256 `c9be707c992808b4d684102dfddf2c5845bfc244ac703120ec993afff70ee714` sur deux compilations propres |
 
 ## 3. Conformité par section du CDC
 
@@ -887,7 +887,7 @@ Légende : ✅ réalisé et testé en émulation · 🟡 partiel · 🔧 nécess
 - **Version 2.93** : impacts balle-raquette en échantillons réalistes (« tac », « ploc », « poc ») ; suite complète : 441 vérifications réussies et 1 échec (le test des poses, dont le match de 4 jeux s'est fini avant toute volée ou amortie ; le joueur y monte maintenant au filet dès 30 s : section repassée, ROM inchangée).
 - **Version 2.94** : impact et rebond équilibrés (mesures : rebond de 0,3 à 0,5 fois l'impact au lieu de 1 à 1,17) ; suite complète : 442 vérifications réussies, 0 échec.
 - **Version 2.95** : impact de raquette deux fois plus fort (son audible), rebond à 0,33-0,42 de l'impact ; mesure de la 2.94 corrigée ; suite complète : 442 vérifications réussies, 0 échec.
-- **Version 2.97** : A sur le trajet des chaises ne saute plus la pause ; place variée du serveur ordinateur.
+- **Version 2.97** : A sur le trajet des chaises ne saute plus la pause ; place variée du serveur ordinateur ; suite complète : 444 vérifications réussies, 0 échec.
 - **Version 2.96** : pas de bandeau entre deux services ; statistiques du double corrigées ; menu sans accolades ni traits, avec une balle de tennis en fond (dessin rapide : écran ouvert environ 4 trames plus tard qu'en 2.95) ; suite complète : 442 vérifications réussies, 0 échec.
 - **Version 2.79a** : animations des lieux et ambiances seulement entre les échanges ; salle en perspective redessinée (public et bandeaux lumineux) ; suite complète : 439 vérifications réussies, 0 échec.
 - **Version 2.79** : lieux plus différents (décor animé, ambiances sonores, feuilles du parc, court Margaux selon la surface, soirée en salle, affiche du club nudiste, salle reconnaissable en perspective, club nudiste : images sans vêtements et censure en mosaïque) ; pas de crépuscule en salle ; suite complète : 437 vérifications réussies sur 439, les 2 autres (changement de côté, fin de set) attendaient un temps fixe trop court pour des échanges longs entre deux ordinateurs : rendues indépendantes de cette durée, elles passent.
