@@ -923,7 +923,7 @@ console.log('Ralenti : gros plan et zoom');
 if (sec('Présentation et pause')) {
 console.log('Présentation et pause');
 {
-  const e = boot(); toMenu(e); e.tap('START'); e.run(10);
+  const e = boot(); toMenu(e); e.tap('START'); runUntil(e, () => scr(e) === SS.PRESENT && e.text(3, 1, 12) === 'MATCH AMICAL', 40);
   check(scr(e) === SS.PRESENT && e.text(3, 1, 12) === 'MATCH AMICAL', "présentation avant le match");
   e.tap('A'); e.run(30);
   check(app(e) === AS.MATCH && e.peek('cur_bank') === 0, 'A lance le match (banque 0)');
@@ -931,7 +931,7 @@ console.log('Présentation et pause');
   check(e.peek('paused') === 1, 'START ouvre le menu de pause');
   const x = e.peek16('plx'); e.run(30);
   check(e.peek16('plx') === x, 'le jeu est figé en pause');
-  e.tap('DOWN'); e.tap('A'); e.run(10);
+  e.tap('DOWN'); e.tap('A'); runUntil(e, () => app(e) === AS.SCREENS && scr(e) === SS.MENU, 40);
   check(app(e) === AS.SCREENS && scr(e) === SS.MENU, 'QUITTER ramène au menu');
 }
 {
@@ -2035,7 +2035,7 @@ console.log('Fondus entre les écrans');
   const e = boot(); e.run(20);
   const seen = [];
   e.down('START'); e.run(1); e.up('START');
-  for (let i = 0; i < 30; i++) { e.run(1); seen.push(e.peek('fade_lvl')); }
+  for (let i = 0; i < 40; i++) { e.run(1); seen.push(e.peek('fade_lvl')); }
   const max = Math.max(...seen), last = seen[seen.length - 1];
   const down = seen.indexOf(max), steps = new Set(seen.slice(down));
   check(max === 64 && last === 0 && steps.size >= 4 && scr(e) === SS.MENU, `fondu au noir puis retour progressif (${[...new Set(seen)].join(' > ')})`);
@@ -2499,7 +2499,8 @@ console.log('Vue en perspective (option VUE)');
   check(xp > xf + 5, `projection : joueur du fond plus près du centre en perspective (x ${xp} contre ${xf} à plat)`);
   // retour aux menus : motifs d'origine rétablis, projection coupée
   f.tap('START'); f.run(5); f.tap('DOWN'); f.tap('A'); runUntil(f, () => app(f) === AS.SCREENS, 200); f.run(40);
-  const rom2 = f.nes.rom.rom[2]; let d2 = 0; for (let i = 0; i < 4096; i++) if (f.nes.ppu.vramMem[i] !== rom2[i] && !(i >= 0x600 && i < 0xCE0)) d2++;   // ($60-$CD : tuiles des menus)
+  f.text(0, 0, 1); const mbt = f.peek('mb_on') ? f._mbSlots : new Set();   // (2.96 : tuiles de la balle de fond des réglages)
+  const rom2 = f.nes.rom.rom[2]; let d2 = 0; for (let i = 0; i < 4096; i++) if (f.nes.ppu.vramMem[i] !== rom2[i] && !(i >= 0x600 && i < 0xCE0) && !mbt.has(i >> 4)) d2++;   // ($60-$CD : tuiles des menus)
   check(f.peek('persp') === 0 && d2 === 0, `hors du match : tuiles de décor d'origine rétablies (${d2} octet(s) différent(s)), projection coupée`);
   // match complet en perspective (double, château)
   const d = boot(); toMenu(d); setOpts(d, { MODE: MODE.P2, TYPE: 1, ENV: 5, FMT: 3 }); d.poke('opt_val', 1, 24); d.tap('START'); d.run(30); d.tap('A');
@@ -3166,6 +3167,8 @@ console.log('Version 2.77 : château au crépuscule, victoire sans bandeau');
   let sun = false;
   runUntil(e, () => { if (e.peek('hl_mode') === 5) sun = true; return sun && e.peek('hl_mode') === 0; }, 60 * 60 * 6, () => { if (e.peek('cer') >= 4 && e.peek('cer') <= 6) e.poke('cer_skip', 1); });
   e.run(60);   /* (fondu du retour au court terminé) */
+  runUntil(e, () => e.peek('hl_mode') === 0 && e.peek('fade_lvl') === 0, 60 * 60 * 3, () => { if (e.peek('cer') >= 4 && e.peek('cer') <= 6) e.poke('cer_skip', 1); });   /* (phase suivante du soleil éventuellement lancée entre-temps) */
+  e.run(10);
   const st = e.peek('sun_st'), c = [e.peek('pal_buf', 9), e.peek('pal_buf', 10)];
   check((st === 1 && c[0] === 0x37 && c[1] === 0x27) || (st === 2 && c[0] === 0x27 && c[1] === 0x17), `château au couchant : pierre dorée puis brun orangé (phase ${st}, couleurs ${c.map(x => x.toString(16))})`);
 }

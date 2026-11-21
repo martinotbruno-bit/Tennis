@@ -107,7 +107,21 @@ class Emu {
   text(x, y, len) {
     let t = '';
     // police surlignée des menus ($60-$9F) : lue comme le texte normal
-    for (let i = 0; i < len; i++) { const c = this.nes.ppu.vramMem[0x2000 + y * 32 + x + i]; t += String.fromCharCode(c >= 0x61 && c < 0xA0 ? c - 0x40 : c); }
+    // (2.96) écran des réglages : les tuiles de la balle de fond (extra2.c,
+    // mb_on) sont lues comme des espaces
+    if (this._mbSlots === undefined) {
+      this._mbSlots = new Set();
+      const a = this.labels['_mb_id'];
+      // (mb_id est en banque 30 : lu dans la ROM)
+      const b = this.labels['_mb_chr'];
+      if (a !== undefined && b !== undefined && b > a && b - a <= 128) { const r = this.nes.rom.rom[30]; for (let i = 0; i < b - a; i++) this._mbSlots.add(r[a - 0x8000 + i]); }
+    }
+    const mbOn = this.labels['_mb_on'] !== undefined && this.nes.cpu.mem[this.labels['_mb_on']];
+    for (let i = 0; i < len; i++) {
+      let c = this.nes.ppu.vramMem[0x2000 + y * 32 + x + i];
+      if (mbOn && this._mbSlots.has(c)) c = 0x20;
+      t += String.fromCharCode(c >= 0x61 && c < 0xA0 ? c - 0x40 : c);
+    }
     return t;
   }
   screenshot(file) {

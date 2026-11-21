@@ -739,49 +739,56 @@ u16 __fastcall__ vs_pal_f(u16 sd)
 #pragma bss-name(push, "ZEROPAGE")
 u8 mb_on, mb_n;
 const char *mb_s;
+static const u8 *mb_p, *mb_q;
+static u8 mb_k, mb_i, mb_x0, mb_w, mb_r;
 #pragma bss-name(pop)
 #pragma static-locals(push, off)
-static u8 mb_tile(u8 x, u8 y)
-{
-    const u8 *p;
-    u8 r;
-    if (y < MB_ROW0 || y >= MB_ROW0 + MB_ROWS) return ' ';
-    p = mb_map + mb_off[y - MB_ROW0];
-    if (x < p[0] || (u8)(x - p[0]) >= p[1]) return ' ';
-    r = p[2 + x - p[0]];
-    return r ? r : ' ';
-}
+#define MB_PPU (*(volatile u8 *)0x2007)
 void mb_draw_f(void)
 {
-    const u8 *p = mb_chr;
-    u8 k, i, x, r;
-    for (k = 0; k < MB_NT; ++k) {
-        vram_adr((u16)mb_id[k] << 4);
-        for (i = 0; i < 16; ++i) vram_put(*p++);
+    mb_p = mb_chr;
+    for (mb_k = 0; mb_k < MB_NT; mb_k += mb_w) {        /* (suites de cases consécutives : copie rapide) */
+        for (mb_w = 1; mb_k + mb_w < MB_NT && mb_id[mb_k + mb_w] == (u8)(mb_id[mb_k] + mb_w); ++mb_w) ;
+        chr_copy(BANK_X2, mb_p, (u16)mb_id[mb_k] << 4, (u16)mb_w << 4);
+        mb_p += (u16)mb_w << 4;
     }
-    for (r = 0, p = mb_map; r < MB_ROWS; ++r, p += 2 + p[1]) {   /* (carte lue d'un seul passage) */
-        vram_adr(NTADR(0, MB_ROW0 + r));
-        for (x = 0; x < 32; ++x) vram_put((u8)(x >= p[0] && (u8)(x - p[0]) < p[1] ? p[2 + x - p[0]] : 0));
+    for (mb_r = 0, mb_p = mb_map; mb_r < MB_ROWS; ++mb_r) {          /* (carte lue d'un seul passage) */
+        mb_x0 = mb_p[0]; mb_w = mb_p[1];
+        vram_adr(NTADR(0, MB_ROW0 + mb_r));
+        for (mb_i = mb_x0; mb_i; --mb_i) MB_PPU = 0;
+        if (mb_w) { tz_bank = BANK_X2; tz_n = mb_w; tz_copy(mb_p + 2); }
+        for (mb_i = (u8)(32 - mb_x0 - mb_w); mb_i; --mb_i) MB_PPU = 0;
+        mb_p += 2 + mb_w;
     }
     vram_adr(0x23C0 + 5 * 8);                           /* rangées 20 à 23 : palettes 1 (gauche) et 2 (droite) */
-    for (i = 0; i < 8; ++i) vram_put((u8)(i < 4 ? 0x55 : 0xAA));
+    for (mb_i = 0; mb_i < 8; ++mb_i) MB_PPU = (u8)(mb_i < 4 ? 0x55 : 0xAA);
     mb_on = 1;
     bg_dirty = 1;                                       /* (logo et police rechargés en quittant l'écran) */
 }
+/* (seule la partie de la ligne qui croise la balle est examinée) */
+static u8 mb_row(u8 y)                            /* mb_q : tuiles de la rangée y ; 0 hors balle */
+{
+    if (y < MB_ROW0 || y >= MB_ROW0 + MB_ROWS) return 0;
+    mb_p = mb_map + mb_off[y - MB_ROW0];
+    mb_x0 = mb_p[0]; mb_w = mb_p[1];
+    mb_q = mb_p + 2;
+    return 1;
+}
 u16 __fastcall__ mb_fix_buf_f(u16 xy)
 {
-    u8 x = (u8)xy, y = (u8)(xy >> 8), i, k;
-    if (!mb_on) return 0;
-    i = (u8)(vram_len - mb_n);
-    for (k = 0; k < mb_n; ++k, ++i) if (vram_buf[i] == ' ') vram_buf[i] = mb_tile((u8)(x + k), y);
+    if (!mb_on || !mb_row((u8)(xy >> 8))) return 0;
+    mb_k = (u8)((u8)xy - mb_x0);                        /* colonne dans la rangée de la balle */
+    mb_r = (u8)(vram_len - mb_n);
+    for (mb_i = mb_n; mb_i; --mb_i, ++mb_k, ++mb_r)
+        if (mb_k < mb_w && vram_buf[mb_r] == ' ' && mb_q[mb_k]) vram_buf[mb_r] = mb_q[mb_k];
     return 0;
 }
 u16 __fastcall__ mb_fix_txt_f(u16 xy)
 {
-    u8 x = (u8)xy, y = (u8)(xy >> 8), k, t;
-    if (!mb_on) return 0;
-    for (k = 0; mb_s[k]; ++k)
-        if (mb_s[k] == ' ' && (t = mb_tile((u8)(x + k), y)) != ' ') { vram_adr(NTADR(x + k, y)); vram_put(t); }
+    if (!mb_on || !mb_row((u8)(xy >> 8))) return 0;
+    mb_k = (u8)((u8)xy - mb_x0);
+    for (mb_p = (const u8 *)mb_s; *mb_p; ++mb_p, ++mb_k)
+        if (mb_k < mb_w && *mb_p == ' ' && mb_q[mb_k]) { vram_adr(NTADR((u8)(mb_k + mb_x0), (u8)(xy >> 8))); MB_PPU = mb_q[mb_k]; }
     return 0;
 }
 #pragma static-locals(pop)
