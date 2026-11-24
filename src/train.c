@@ -215,18 +215,24 @@ static u8 pn_pos, pn_buf[17];
 void pnet_tick(void)
 {
     const u8 *p;
-    u8 n, want = (u8)(net_shake > 6);
+    u8 n, k, want = (u8)(net_shake > 6);
+    /* (2.98) copie en cours (bit 7 : état copié) et état voulu changé : les
+       premières tuiles avaient déjà l'autre dessin ; on recommence toute la
+       copie (avant, elles restaient « secouées » pour de bon) */
+    if (pn_pos && (u8)(pn_pos >> 7) != want) { pn_pos = 0; net_state = 2; }
     if (want != net_state) {
         bank_read(BANK_PNET, &p, &persp_net[cfg.env], 2);
         bank_read(BANK_PNET, &n, p, 1);
-        while (pn_pos < n) {
-            const u8 *q = p + 1 + (u16)pn_pos * 33;
+        k = (u8)(pn_pos & 0x7F);
+        while (k < n) {
+            const u8 *q = p + 1 + (u16)k * 33;
             bank_read(BANK_PNET, pn_buf, q, 1);
             bank_read(BANK_PNET, pn_buf + 1, q + 1 + (want ? 16 : 0), 16);
             if (!vbuf_raw((u16)pn_buf[0] << 4, pn_buf + 1, 16)) break;   /* budget de la trame : la suite à la suivante */
-            ++pn_pos;
+            ++k;
         }
-        if (pn_pos >= n) { net_state = want; pn_pos = 0; }
+        if (k >= n) { net_state = want; pn_pos = 0; }
+        else pn_pos = (u8)(k | (want << 7));
     }
     /* (le filet revient au repos avant la fin du tremblement) */
     if (net_shake > 1 || net_state == 0) --net_shake;
@@ -359,7 +365,7 @@ extern u8 sw_spd[4];
 void hl_rec_row(void)
 {
     u16 k = (u16)sw_spd[1] + 80;
-    char n[5];
+    char n[6];
     txt_at(3, 22, "RECORD SERVICE");
     if (!sw_spd[1]) { txt_at(22, 22, "---"); return; }
     n[0] = (char)('0' + k / 100); n[1] = (char)('0' + (k / 10) % 10); n[2] = (char)('0' + k % 10); n[3] = 0;
@@ -424,7 +430,7 @@ u16 __fastcall__ pod_extra_tick(u16 t)
 /* Balle de match : bandeau au centre de l'écran (rangées 12 à 17, les
    mêmes que le bandeau de la pause), dessiné d'avance sur l'écran 1 à raison
    d'une rangée par trame, puis montré par deux interruptions de ligne
-   (cband_on, crt0.s) : pas d'écran coupé. Il disparaît seul après 2 s, au
+   (cband_on, crt0.s) : pas d'écran coupé. Il disparaît seul après 1 s, au
    lancer de la balle ou à un appui. Appelé par band_draw (highlight.c) ;
    mp_t : 0 rien, 1 à 7 écriture, puis 8 à 8 + MP_SHOW affiché. */
 extern u8 band_vis, band_dis, band_hold, hl_flags, mp_t, sc_crit;
@@ -433,7 +439,7 @@ extern u8 band_vis, band_dis, band_hold, hl_flags, mp_t, sc_crit;
 #pragma zpsym("mp_t")
 #define MP_ROW  12
 #define T_RULE  0xFF            /* (filet du bandeau, highlight.c) */
-#define MP_SHOW 120
+#define MP_SHOW 60    /* (2.98 : 1 s au lieu de 2) */
 void mp_tick(void)
 {
     static const char t_mp[] = "BALLE DE MATCH";

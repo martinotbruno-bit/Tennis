@@ -177,7 +177,7 @@ static void band_text(u8 t)
         }
         q = t ? (toss_q == 1 ? "A : SERVIR     B : LE COTE" : toss_q == 4 ? "A : SERVIR   B : RECEVOIR" : "A : EN HAUT    B : EN BAS")
               : (toss_q == 1 ? "GAGNE LE TIRAGE" : toss_q == 4 ? "SERT OU RECOIT ?" : "CHOISIT SON COTE");
-        team_label(cfg.chr[toss_c], cfg.doubles ? cfg.chr[toss_c + 2] : 255, bb + (t ? 28 : 0));
+        if (!t) team_label(cfg.chr[toss_c], cfg.doubles ? cfg.chr[toss_c + 2] : 255, bb);   /* (2.98 : la 2e ligne écrivait le nom après bb, sur band_pg) */
         for (i = (u8)(t ? 1 : 6); *q; ) bb[i++] = *q++;
         return;
     }
@@ -187,7 +187,7 @@ static void band_text(u8 t)
                à la position 23 et remettaient band_pg à 0 : les statistiques
                ne défilaient pas ; second nom une case plus à gauche) */
             team_label(cfg.chr[0], cfg.doubles ? cfg.chr[2] : 255, bb + 16);
-            team_label(cfg.chr[1], cfg.doubles ? cfg.chr[3] : 255, bb + 23 - cfg.doubles);
+            team_label(cfg.chr[1], cfg.doubles ? cfg.chr[3] : 255, bb + 22);   /* (2.98 : 5 lettres) */
             for (i = 16; i < 28; ++i) if (!bb[i]) bb[i] = ' ';
             return;
         }
@@ -211,7 +211,7 @@ static void band_text(u8 t)
     }
     if (sc_server == t) bb[0] = '@';                          /* balle : au service */
     team_label(cfg.chr[t], cfg.doubles ? cfg.chr[t + 2] : 255, bb + 2);
-    bb[cfg.doubles ? 7 : 6] = ' ';   /* (2.96 : en double, 5 lettres « AL/MA » : l'espace écrasait la dernière) */
+    bb[7] = ' ';   /* (2.96 : en double, 5 lettres « AL/MA » : l'espace écrasait la dernière) */
     for (i = 0; i <= sc_set_no && i < MAX_SETS; ++i)
         bb[8 + i * 3] = (char)('0' + (i < sc_set_no ? sc_hist[i][t] : sc_games[t]));
     rules_point_label(t, bb + 24);
@@ -327,7 +327,7 @@ void band_draw(void)
        score n'est compté qu'à la fin du temps mort) */
     v = (u8)(ms == MS_DEAD && end_reason == END_POINT && (sc_crit & 4) && ((sc_crit >> pending_winner) & 1));
     v = (u8)(cfg.mode == GM_MATCH && !paused && !hl_mode && !sc_over && !v &&
-             ((cer == CER_SEAT) || ((cer == CER_CHOOSE || cer == CER_RECAP) && toss_q) || (cer == 4 && !band_dis) || ((!cer || cer >= 0xF0) && !band_dis && !rp_pending && end_reason != END_FAULT && !(faults && end_reason == END_LET) && (ms == MS_DEAD || ms == MS_SERVE))));   /* (2.96 : pas de bandeau quand un second service est en attente : après une première faute, ou un let sur second service ; une double faute termine le point : bandeau comme d'habitude) */
+             ((cer == CER_SEAT) || ((cer == CER_CHOOSE || cer == CER_RECAP) && toss_q) || (cer == 4 && !band_dis) || ((!cer || cer >= 0xF0) && !band_dis && !rp_pending && (st_points[0] | st_points[1]) && end_reason != END_FAULT && !(faults && end_reason == END_LET) && (ms == MS_DEAD || ms == MS_SERVE))));   /* (2.96 : pas de bandeau quand un second service est en attente : après une première faute, ou un let sur second service ; une double faute termine le point : bandeau comme d'habitude ; 2.98 : rien au premier service du match, aucun point joué) */
     /* cer 4 (CER_CHAIR, vers les chaises) : le bandeau reste affiché
        depuis la fin du point jusqu'aux statistiques, sans disparaître */
     /* apparition : 48 trames après la fin du point (ou du ralenti),

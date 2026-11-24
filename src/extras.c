@@ -60,24 +60,43 @@ static void nude_quip(void)
 static const char * const rp_lbl[3] = { "  RALENTI NON", "  RALENTI OUI", "  RALENTI SIMPLE" };
 void hud_update(void)
 {
-    static char line[5];
+    static char line[6];
     u8 t, x;
     vbuf_reset();
-    if (paused) {   /* réglage des ralentis, écrit en premier (tampon du VBlank limité) */
-            char b[17];
+    if (!paused && pause_cur == 4) {                /* (2.98) reprise : lignes de la pause effacées d'abord (tampon du VBlank limité), le HUD normal à la trame suivante */
+        vbuf_text(6, 1, "", 20); vbuf_text(6, 2, "", 17); vbuf_text(6, 3, "", 17);
+        pause_cur = 0;
+        return;                                     /* (hud_dirty reste à 1) */
+    }
+    if (paused) {   /* réglage des ralentis et de la vue, écrits en premier (tampon du VBlank limité) */
+            /* (2.98) CONTINUER et QUITTER sur la ligne 1, RALENTI ligne 2,
+               VUE ligne 3 (colonnes 6 à 26) */
+            char b[22];
             const char *q = rp_lbl[cfg.replays < 3 ? cfg.replays : 1];
             u8 i;
             for (i = 0; i < 16 && q[i]; ++i) b[i] = q[i];
             b[i] = 0;
             if (pause_cur == 2) b[0] = '>';
-            vbuf_text(9, 3, b, 16);
+            vbuf_text(6, 2, b, 17);
+            q = cfg.view ? "  VUE PERSPECTIVE" : "  VUE A PLAT";
+            for (i = 0; q[i]; ++i) b[i] = q[i];
+            b[i] = 0;
+            if (pause_cur == 3) b[0] = '>';
+            vbuf_text(6, 3, b, 17);
+            q = "  CONTINUER  QUITTER";
+            for (i = 0; q[i]; ++i) b[i] = q[i];
+            b[i] = 0;
+            if (pause_cur == 0) b[0] = '>';
+            if (pause_cur == 1) b[11] = '>';
+            vbuf_text(6, 1, b, 20);
         }
     if (cfg.mode == GM_MATCH) {
         for (t = 0; t < 2; ++t) {
             /* panneau de l'équipe affichée en bas à gauche, l'autre à droite */
             x = (u8)(side_of(t) == 0 ? 1 : 27);   /* colonne 0 : zone de débordement TV */
-            team_name(t, line);
-            vbuf_text(x, 1, line, 4);
+            team_name(t, line);                 /* (2.98 : 5 lettres ; à droite, calé sur le bord) */
+            if (x == 27 && !line[4]) { line[4] = line[3]; line[3] = line[2]; line[2] = line[1]; line[1] = line[0]; line[0] = ' '; }   /* (nom plus court : calé à droite, la case 26 effacée) */
+            vbuf_text((u8)(x == 27 ? 26 : 1), 1, line, 5);
             /* ligne 2 : points du jeu + serveur (*) ; ligne 3 : un rond (@ =
                balle) par set gagné. (Les jeux, « J 3 » autrefois, sont
                dans le bandeau du bas, entre les points.) */
@@ -100,8 +119,6 @@ void hud_update(void)
         vbuf_text(1, 3, line, 4);
     }
     if (paused) {
-        vbuf_text(9, 1, pause_cur == 0 ? "> CONTINUER" : "  CONTINUER", 11);
-        vbuf_text(9, 2, pause_cur == 1 ? "> QUITTER" : "  QUITTER", 11);
     } else if (msg_timer) {
         if (cfg.env == ENV_NUDE) nude_quip();
         vbuf_text(9, 1, msg1, 14);
@@ -113,8 +130,7 @@ void hud_update(void)
     /* panneau du club (masqué pendant la pause par la crème solaire) */
     /* (le nom du club est sur le panneau à côté du score) ; ligne 3 libérée
        après la pause */
-    /* ligne du réglage des ralentis effacée à la reprise (pause_cur 3) */
-    if (!paused && (cfg.env == ENV_NUDE || pause_cur == 3)) { vbuf_text(9, 3, "", 16); pause_cur = 0; }
+    if (!paused && cfg.env == ENV_NUDE) vbuf_text(9, 3, "", 16);
     hud_dirty = 0;
 }
 #pragma static-locals(pop)
@@ -724,20 +740,26 @@ void ai_tactic(void)
 }
 
 
-/* touches du menu de pause (game.c) : CONTINUER, QUITTER, RALENTI
+/* touches du menu de pause (game.c) : CONTINUER, QUITTER, RALENTI, VUE (2.98 : rend 2)
    (NON, OUI, SIMPLE ; GAUCHE/DROITE ou A), retenu pour les matchs suivants
    (opt_val). Rend 1 pour quitter le match. */
 extern u8 opt_val[];                     /* (screens.c ; 10 : RALENTIS) */
 u16 __fastcall__ pause_input(u16 unused)
 {
     (void)unused;
-    if (pad1_new & PAD_UP) { pause_cur = (u8)(pause_cur ? pause_cur - 1 : 2); hud_dirty = 1; sfx_menu_move(); }
-    if (pad1_new & PAD_DOWN) { pause_cur = (u8)(pause_cur == 2 ? 0 : pause_cur + 1); hud_dirty = 1; sfx_menu_move(); }
-    if (pause_cur == 2 && (pad1_new & (PAD_LEFT | PAD_RIGHT | PAD_A))) {
+    /* (2.98) CONTINUER / QUITTER (ligne 1 : GAUCHE/DROITE aussi), RALENTI, VUE */
+    if (pad1_new & PAD_UP) { pause_cur = (u8)(pause_cur < 2 ? 3 : pause_cur == 2 ? 0 : 2); hud_dirty = 1; sfx_menu_move(); }
+    if (pad1_new & PAD_DOWN) { pause_cur = (u8)(pause_cur < 2 ? 2 : pause_cur == 2 ? 3 : 0); hud_dirty = 1; sfx_menu_move(); }
+    if (pause_cur < 2 && (pad1_new & (PAD_LEFT | PAD_RIGHT))) { pause_cur ^= 1; hud_dirty = 1; sfx_menu_move(); }
+    else if (pause_cur == 2 && (pad1_new & (PAD_LEFT | PAD_RIGHT | PAD_A))) {
         cfg.replays = (u8)((cfg.replays + ((pad1_new & PAD_LEFT) ? 2 : 1)) % 3);
         opt_val[10] = cfg.replays; hud_dirty = 1; sfx_menu_val(1);
     }
+    else if (pause_cur == 3 && (pad1_new & (PAD_LEFT | PAD_RIGHT | PAD_A))) {
+        cfg.view ^= 1; opt_val[24] = cfg.view; hud_dirty = 1; sfx_menu_val(1);
+        return 2;                                   /* court rechargé dans l'autre vue (game.c) */
+    }
     else if ((pad1_new & PAD_SELECT) || ((pad1_new & PAD_A) && pause_cur == 1)) return 1;
-    else if (pad1_new & (PAD_START | PAD_B) || ((pad1_new & PAD_A) && !pause_cur)) { paused = 0; pause_cur = 3; hud_dirty = 1; }
+    else if (pad1_new & (PAD_START | PAD_B) || ((pad1_new & PAD_A) && !pause_cur)) { paused = 0; pause_cur = 4; hud_dirty = 1; }
     return 0;
 }

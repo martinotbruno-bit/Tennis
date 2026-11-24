@@ -107,7 +107,7 @@ Avant chaque match, un **écran de présentation** rappelle l'épreuve, les joue
 | **B** + HAUT | Lob. Relâché vite : **lob court**, plus sûr mais smashable ; bouton tenu : **lob long**, près de la ligne de fond (risque de faute). Depuis le fond du court, le lob part très haut et lent (défensif) ; depuis l'intérieur du court, plus bas et plus vif (lob d'attaque) |
 | **B** + BAS | Amortie |
 | GAUCHE / DROITE à l'impact | Viser le long d'une ligne ; sans direction, le coup part croisé |
-| **START** | Pause : CONTINUER ou QUITTER (HAUT/BAS puis A), le score s'affiche dans un bandeau au milieu de l'écran. SELECT quitte directement |
+| **START** | Pause, avec le score dans un bandeau au milieu de l'écran. Ligne 1 : CONTINUER ou QUITTER (GAUCHE/DROITE puis A) ; ligne 2 : RALENTI ; ligne 3 (version 2.98) : VUE, À PLAT ou PERSPECTIVE, qui change l'affichage du court tout de suite et reste retenue pour les matchs suivants (HAUT/BAS pour changer de ligne, A ou GAUCHE/DROITE pour changer le réglage). SELECT quitte directement |
 
 **HAUT et BAS sont relatifs à votre joueur** : HAUT veut dire « vers l'adversaire » (coup long : frappe à plat, lob), BAS « vers soi » (coup court : croisé court, amortie). Quand votre joueur est en haut de l'écran, après un changement de côté par exemple, c'est donc BAS qui frappe à plat. GAUCHE et DROITE restent ceux de l'écran.
 
@@ -353,3 +353,5 @@ Le déblocage est gardé dans le palmarès (définitivement si la cartouche a un
 - Viser les lignes avec beaucoup de puissance augmente le risque de faute.
 - Contre un volleyeur (Nina, Lina) : le **lob**, bien long. L'ordinateur Expert recule parfois sur le lob pour le smasher ou le rattraper après le rebond ; Facile et Normal restent au filet. Contre un défenseur au fond (Omar, Maya) : l'**amortie**.
 - L'ordinateur s'adapte : s'il voit que vous visez toujours le même côté, il s'y place à l'avance. Si vous montez souvent au filet, il lobe davantage. Variez votre jeu.
+
+**Version 2.98** : en salle, la vue en perspective reprend le décor de la vue à plat (gradins au bord, mur gris, panneaux verts) ; le filet en perspective ne garde plus de maille abîmée après avoir tremblé ; les noms s'affichent sur 5 lettres (TITOU, MARGA ; en double « AL/MA » en entier) ; au tout premier service du match, après le tirage au sort, pas de bandeau du score (0-0) ; le bandeau « BALLE DE MATCH » s'efface seul après 1 seconde (ou à un appui).

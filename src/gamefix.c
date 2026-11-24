@@ -96,14 +96,7 @@ u8 perf_t, perf_x, perf_y;       /* éclat de la frappe parfaite (dessiné par m
    « MX », pour ne pas se confondre avec MAYA (« MA »). */
 void team_name(u8 t, char *out)
 {
-    char b[6];
-    if (cfg.doubles) {
-        team_label(cfg.chr[t], cfg.chr[t + 2], b);
-        out[0] = b[0]; out[1] = b[1]; out[2] = b[3]; out[3] = b[4];
-    } else {
-        team_label(cfg.chr[t], 255, b);
-        out[0] = b[0]; out[1] = b[1]; out[2] = b[2]; out[3] = b[3];
-    }
+    team_label(cfg.chr[t], cfg.doubles ? cfg.chr[t + 2] : 255, out);   /* (2.98 : 5 lettres, « AL/MA » en double) */
 }
 
 /* lob : au rebond, il garde son élan lifté vers le fond, mais sa

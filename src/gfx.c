@@ -341,7 +341,7 @@ void team_label(u8 a, u8 b, char *out)
 {
     const char *n = chr_nm(a);
     u8 k;
-    if (b == 255) { out[0] = n[0]; out[1] = n[1]; out[2] = n[2]; out[3] = n[3]; out[4] = 0; return; }
+    if (b == 255) { for (k = 0; k < 5; ++k) out[k] = n[k]; if (out[4] <= ' ') out[4] = 0; out[5] = 0; return; }   /* (2.98 : 5 lettres) */
     /* 2 lettres par joueur ; nom long (MARGAUX) : première et dernière
        lettres (« MX »), pour ne pas se confondre avec MAYA (« MA ») */
     for (k = 3; n[k + 1] > ' '; ++k) ;

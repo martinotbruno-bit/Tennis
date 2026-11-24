@@ -955,8 +955,22 @@ console.log('Présentation et pause');
   check(e.peek('paused') === 1, 'START ouvre le menu de pause');
   const x = e.peek16('plx'); e.run(30);
   check(e.peek16('plx') === x, 'le jeu est figé en pause');
-  e.tap('DOWN'); e.tap('A'); runUntil(e, () => app(e) === AS.SCREENS && scr(e) === SS.MENU, 40);
+  e.tap('RIGHT'); e.tap('A'); runUntil(e, () => app(e) === AS.SCREENS && scr(e) === SS.MENU, 40);   /* (2.98 : QUITTER à droite de CONTINUER) */
   check(app(e) === AS.SCREENS && scr(e) === SS.MENU, 'QUITTER ramène au menu');
+}
+{
+  // (2.98) pause : VUE change la vue du court (à plat / perspective), retenue
+  const e = boot(); e.bandSkip = false; startWith(e, { FMT: 3, VIEW: 0, REPLAY: 0 }); allCpu(e); e.run(200);
+  e.tap('START'); e.tap('DOWN'); e.tap('DOWN');
+  const lbl = e.text(6, 3, 17).trim();
+  e.tap('A'); e.run(20);
+  const p1 = e.peek('persp'), lbl2 = e.text(6, 3, 17).trim(), saved = e.peek('opt_val', 24);
+  e.tap('START'); e.run(10);
+  const clear = e.text(6, 3, 17).trim() === '' && e.peek('paused') === 0;
+  const rh = e.peek('rally_hits'); runUntil(e, () => e.peek('rally_hits') !== rh || e.peek('ms') === 0, 600);
+  e.tap('START'); e.tap('DOWN'); e.tap('DOWN'); e.tap('RIGHT'); e.run(20); const p2 = e.peek('persp'); e.tap('START'); e.run(5);
+  check(lbl === '> VUE A PLAT' && p1 === 1 && lbl2 === '> VUE PERSPECTIVE' && saved === 1 && clear && p2 === 0 && app(e) === AS.MATCH,
+    `pause : VUE passe à la perspective (« ${lbl} » > « ${lbl2} », réglage ${saved}), lignes effacées à la reprise (${clear}), puis retour à plat (${p2})`);
 }
 {
   // affiche VS (2.63) : glissade des bustes par l'interruption par ligne de la MMC3
@@ -1677,7 +1691,7 @@ console.log('Finitions : ralentis, IA, effets, son, réglages mémorisés');
   const by = g.addr('by'); g.nes.cpu.mem[by] = 0; g.nes.cpu.mem[by + 1] = 0x10; g.run(1); const up = oamTiles(g).has(12);
   g.nes.cpu.mem[by + 1] = 0x30; g.run(1); const dn = oamTiles(g).has(11);
   check(out && let_ && rest && up && dn, 'arbitre : tête qui suit la balle, bras tendu sur une faute, bras levé sur un let, au repos sinon');
-  g.tap('START'); g.run(5); g.tap('DOWN'); g.tap('A'); runUntil(g, () => scr(g) === SS.RESULTS || scr(g) === SS.MENU || scr(g) === SS.TITLE, 200); g.run(30);
+  g.tap('START'); g.run(5); g.tap('RIGHT'); g.tap('A'); runUntil(g, () => scr(g) === SS.RESULTS || scr(g) === SS.MENU || scr(g) === SS.TITLE, 200); g.run(30);
   const rom2 = g.nes.rom.rom[2]; let diff = 0; for (let i = 0; i < 48; i++) if (g.nes.ppu.vramMem[0x1000 + tt * 16 + i] !== rom2[0x1000 + tt * 16 + i]) diff++;
   check(app(g) === AS.SCREENS && diff === 0, `hors du match : tuiles de la coupe rétablies (${diff} octet(s) différent(s))`);
 }
@@ -2522,7 +2536,7 @@ console.log('Vue en perspective (option VUE)');
   const xp = xOf(f), xf = xOf(flat);
   check(xp > xf + 5, `projection : joueur du fond plus près du centre en perspective (x ${xp} contre ${xf} à plat)`);
   // retour aux menus : motifs d'origine rétablis, projection coupée
-  f.tap('START'); f.run(5); f.tap('DOWN'); f.tap('A'); runUntil(f, () => app(f) === AS.SCREENS, 200); f.run(40);
+  f.tap('START'); f.run(5); f.tap('RIGHT'); f.tap('A'); runUntil(f, () => app(f) === AS.SCREENS, 200); f.run(40);
   f.text(0, 0, 1); const mbt = f.peek('mb_on') ? f._mbSlots : new Set();   // (2.96 : tuiles de la balle de fond des réglages)
   const rom2 = f.nes.rom.rom[2]; let d2 = 0; for (let i = 0; i < 4096; i++) if (f.nes.ppu.vramMem[i] !== rom2[i] && !(i >= 0x600 && i < 0xCE0) && !mbt.has(i >> 4)) d2++;   // ($60-$CD : tuiles des menus)
   check(f.peek('persp') === 0 && d2 === 0, `hors du match : tuiles de décor d'origine rétablies (${d2} octet(s) différent(s)), projection coupée`);
@@ -3062,11 +3076,12 @@ console.log('Version 2.76 : lignes, bandeau, smash');
 if (sec('Version 2.76 : pause')) {
 console.log('Version 2.76 : pause');
 {
-  // pause : 3e ligne RALENTI (NON / OUI / SIMPLE), retenue pour les matchs suivants
+  // pause : ligne RALENTI (NON / OUI / SIMPLE), retenue pour les matchs suivants
+  // (2.98 : 2e ligne, sous CONTINUER / QUITTER)
   const e = boot(); startWith(e, { FMT: 3, REPLAY: 0 }); allCpu(e); e.run(200);
-  e.tap('START'); e.run(6); e.tap('DOWN'); e.tap('DOWN'); e.tap('RIGHT'); e.tap('RIGHT'); e.run(4);
+  e.tap('START'); e.run(6); e.tap('DOWN'); e.tap('RIGHT'); e.tap('RIGHT'); e.run(4);
   const r = e.peek('cfg', CFG.REPLAYS), o = e.peek('opt_val', O.REPLAY), still = e.peek('paused');
-  e.tap('UP'); e.tap('UP'); e.tap('A'); e.run(4);
+  e.tap('UP'); e.tap('A'); e.run(4);
   check(r === 2 && o === 2 && still && !e.peek('paused'), `pause : RALENTI réglé à SIMPLE (${r}, réglage ${o}), puis CONTINUER`);
 }
 {
@@ -3074,8 +3089,8 @@ console.log('Version 2.76 : pause');
   // frappe : le bandeau se pose quand même, bords compris, sans sprite dessus
   const e = boot(); startWith(e, { FMT: 3, REPLAY: 0, VIEW: 1 }); allCpu(e); e.run(200);
   e.tap('START'); e.run(6); e.tap('START'); e.run(6);
-  const l3 = e.text(9, 3, 16);
-  check(!e.peek('paused') && !l3.includes('RALENTI'), `pause : ligne RALENTI effacée à la reprise (« ${l3.replace(/\0/g, ' ')} »)`);
+  const l3 = e.text(6, 1, 20) + e.text(6, 2, 17) + e.text(6, 3, 17);
+  check(!e.peek('paused') && !l3.includes('RALENTI') && !l3.includes('VUE') && !l3.includes('QUITTER'), `pause : lignes RALENTI, VUE, QUITTER effacées à la reprise (« ${l3.replace(/\0/g, ' ')} »)`);
   runUntil(e, () => e.peek('hit_now') === 1, 60 * 60);
   e.down('START'); e.run(1); e.up('START'); e.run(20);
   const v = e.nes.ppu.vramMem, edge = [14, 15].flatMap(y => [0, 1, 30, 31].map(x => v[0x2400 + y * 32 + x]));
@@ -3427,6 +3442,39 @@ console.log('Version 2.76 : parcours, tirage, fin de set, compétition à deux')
   }
   check(e.peek('hum_e', 1) === 4 && seq.join('') === '01010' && duo === 1 && scr(e) === SS.COMP_END && e.peek('c_rank') === 1,
     `compétition à deux : tours ${seq.join('')} (0 joueur 1, 1 joueur 2), finale à deux manettes (${duo}), podium`);
+}
+}
+if (sec('Version 2.98 : filet et salle en perspective')) {
+console.log('Version 2.98 : filet et salle en perspective');
+{
+  // filet en perspective : un tremblement interrompu pendant la copie de ses
+  // tuiles ne laisse plus de tuile « secouée » jusqu'au contact suivant
+  const e = boot(); startWith(e, { FMT: 3, VIEW: 1, ENV: 0, REPLAY: 0 }); allCpu(e); e.run(60);
+  const vm = e.nes.ppu.vramMem, nt = (x, y) => vm[0x2000 + y * 32 + x];
+  const set = new Set(); for (let y = 14; y < 18; y++) for (let x = 6; x < 26; x++) set.add(nt(x, y));
+  const ref = {}; for (const t of set) ref[t] = vm.slice(t * 16, t * 16 + 16).join();
+  let seed = 7, run = 0, worst = 0;
+  for (let f = 0; f < 60 * 60 * 2 && app(e) === AS.MATCH; f++) {
+    seed = (seed * 1103515245 + 12345) & 0x7fffffff;
+    if (seed % 97 === 0) e.poke('net_shake', 14);
+    e.run(1);
+    const d = [...set].some(t => vm.slice(t * 16, t * 16 + 16).join() !== ref[t]);
+    run = d ? run + 1 : 0; worst = Math.max(worst, run);
+  }
+  check(worst > 0 && worst <= 30, `filet en perspective : tuiles secouées revenues au repos en ${worst} trames au plus`);
+}
+{
+  // salle : en perspective, mêmes gradins au bord, même mur gris et mêmes panneaux verts qu'à plat
+  const cols = [];
+  for (const view of [0, 1]) {
+    const e = boot(); startWith(e, { FMT: 3, VIEW: view, ENV: 2, REPLAY: 0 }); allCpu(e); e.run(30);
+    const vm = e.nes.ppu.vramMem; const c = [];
+    for (let y = 4; y < 30; y++) for (const x of [2, 29]) { const t = vm[0x2000 + y * 32 + x]; c.push(vm.slice(t * 16, t * 16 + 16).join(',')); }   /* (colonnes 2 et 29 : panneaux ; le public du bord est réduit vers le fond, le mur élargi jusqu'à la rambarde) */
+    cols.push(c);
+  }
+  const nd = cols[0].filter((v, i) => v !== cols[1][i]).length;
+  if (nd) console.log('  (différences', cols[0].map((v, i) => v !== cols[1][i] ? (4 + (i >> 1)) + ':' + [2, 29][i & 1] : '').filter(Boolean).join(' '), ')');
+  check(nd === 0, 'salle : mur gris et panneaux verts dessinés comme à plat en perspective');
 }
 }
 if (sec('Compensation 50 Hz (PAL)')) {

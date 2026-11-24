@@ -1850,7 +1850,7 @@ def persp_sides(e, bmp, w):
             # court, et un bloc tronqué en bas à droite)
             ia = 3
             shift = (not crowd_row and e != 4)            # décor sans public : glissé vers le court
-            hall = (e == 2)
+            hall = False                                  # (2.98 : salle en perspective comme à plat : gradins au bord, mur gris et panneaux verts glissés vers le court)
             if hall:
                 # (2.79) salle : du public sur toute la tribune, du bord de
                 # l'écran à la rambarde (petits spectateurs vers le fond, comme
@@ -1878,17 +1878,26 @@ def persp_sides(e, bmp, w):
                 if e == 2:
                     # salle : les gradins restent au bord de l'écran (palette 3,
                     # bloc de colonnes 0-1) ; le mur s'élargit avant les panneaux
-                    seq = outer[:2] + fill + outer[2:3] + [last]
+                    seq = outer[:3] + [last] + fill   # (2.98 : gradins et panneaux à leur place d'origine, comme à plat ; le mur s'élargit vers le court)
                 else:
                     seq = fill + outer[:3] + [last]
             elif e == 2:
                 # (2.76) salle : spectateurs sur toute la tribune, du bord de
                 # l'écran à la rambarde, comme au stade (palette 3)
-                seq = [[r[:] for r in CROWDB[(ty * 5 + k * 2 + side) % 6]] for k in range(3 + nins)]
+                seq = outer[:3 + nins]                    # (2.98 : comme à plat, le bord de la rambarde coupe le panneau)
             else:
                 seq = outer[:ia] + [ext(k) for k in range(nins)] + outer[ia:3]
             edge = [[0] * 8 for _ in range(8)]
             off = xr - ce * 8
+            # (2.98) salle, rambarde dans la colonne du panneau (aucune colonne
+            # ajoutée) : le bord garde la moitié du panneau, sans encoche
+            hall_half = None
+            if e == 2 and -3 <= nins <= 0 and not crowd_row:   # (en bas, rambarde plus à l'extérieur : le panneau est coupé net par la rambarde)
+                hall_half = [r[:] for r in outer[3 + nins]]
+                if nins == 0:
+                    for rx in ((7,) if side == 0 else (0, 1)):
+                        for y in range(8):
+                            hall_half[y][rx] = filler((3 * 8 + rx) if side == 0 else (224 + rx), ty * 8 + y)
             for y in range(8):
                 for x in range(8):
                     X = ce * 8 + x
@@ -1896,7 +1905,7 @@ def persp_sides(e, bmp, w):
                     if x == off:
                         v = 3 if e != 3 else (3 if (ty * 8 + y) % 4 < 2 else 1)
                     elif inside:
-                        v = filler(X, ty * 8 + y)
+                        v = hall_half[y][x] if hall_half else filler(X, ty * 8 + y)
                     else:
                         v = 0
                     edge[y][x] = v
@@ -1935,7 +1944,7 @@ def persp_sides(e, bmp, w):
                 fix[(bxi, by)] = court_attr(bxo, by, e)
     # (salle, 2.79) : public en palette 3, bandeaux lumineux en palette 2,
     # sur tous les blocs de la tribune (jamais de surface de jeu dedans)
-    if e == 2:
+    if False:   # (2.98 : salle comme à plat, plus de tribune pleine)
         for by in range(2, 15):
             for side in (0, 1):
                 n_ = max(HALL_NB.get((side, t), 0) for t in (by * 2, by * 2 + 1))

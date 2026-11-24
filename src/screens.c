@@ -892,7 +892,7 @@ static void set_table(u8 y)
 static void setbreak_screen(void)
 {
     u8 n;
-    char b[5];
+    char b[6];
     screen_begin();
     deco("FIN DE SET", 0, 24);          /* (titre et cadre comme les autres écrans) */
     n = sets_done();

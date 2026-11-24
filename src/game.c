@@ -1091,8 +1091,8 @@ static void after_point(void)
         return;
     }
     {
-        static char nm[5];
-        team_name(w, nm); nm[4] = 0;
+        static char nm[6];
+        team_name(w, nm);
         far_call(BANK_HL, (void *)hl_point_ev, ev);   /* crépuscule (la lumière baisse) ; annonce du score par l'arbitre */
         /* récapitulatif : écran de fin de set (sauf démonstration), score des
            sets dans le bandeau après chaque jeu */
@@ -1138,7 +1138,9 @@ u8 match_tick(void)
         hit_now = 0;                          /* pause sur une trame de frappe : le dessin (et le bandeau) reprend */
     }
     if (paused) {
-        if (far_call(BANK_EXTRAS, (void *)pause_input, 0)) { match_quit = 1; return 1; }   /* (touches de la pause : extras.c) */
+        pad = (u8)far_call(BANK_EXTRAS, (void *)pause_input, 0);   /* (touches de la pause : extras.c) */
+        if (pad == 1) { match_quit = 1; return 1; }
+        if (pad == 2) { court_reload(); ppu_on(); }  /* (2.98) vue changée pendant la pause : le court rechargé */
         if (hud_dirty) bank_call(BANK_EXTRAS, hud_update);
         return 0;
     }

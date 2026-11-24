@@ -68,7 +68,7 @@ u8 cer, cer_skip, pose_force[4];
 u16 cer_t;
 static s16 tx[4], ty[4], sx[4], sy[4], wx[4];
 static u8 stage[4], toss_res, qx, qy;
-static char nm[5], who[14], who2[14];
+static char nm[6], who[14], who2[14];
 #pragma bss-name(pop)
 
 extern u8 pl_walk[4], pl_moving[4], npl, msg_timer;
@@ -265,7 +265,7 @@ static void name_side(u8 t, char *out)
 {
     u8 i;
     const char *w = (u8)(toss_res ^ t) ? "FACE" : "PILE";
-    team_name(t, nm); nm[4] = 0;
+    team_name(t, nm);
     for (i = 0; i < 4 && nm[i]; ++i) out[i] = nm[i];
     out[i++] = ' '; out[i++] = ':'; out[i++] = ' ';
     while (*w) out[i++] = *w++;
@@ -317,7 +317,7 @@ void cer_tick(void)
             set_msg(who, who2, 64);
         }
         if (cer_t == 104) {
-            team_name(sc_server, nm); nm[4] = 0;
+            team_name(sc_server, nm);
             for (p = 0; p < 4 && nm[p]; ++p) who[p] = nm[p];
             who[p++] = ' '; who[p++] = 'G'; who[p++] = 'A'; who[p++] = 'G'; who[p++] = 'N'; who[p++] = 'E'; who[p] = 0;
             set_msg((u8)(toss_res ^ sc_server) ? "FACE !" : "PILE !", who, 70);
