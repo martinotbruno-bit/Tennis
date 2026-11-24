@@ -98,10 +98,13 @@ extern u8 recap_pend;
 void team_name(u8 t, char *out);   /* gamefix.c */
 void score_line(u8 t, char *out)
 {
-    u8 i, k;
+    u8 i, k, w;
+    team_name((u8)(t ^ 1), out);                                 /* (2.98 : noms de 4 ou 5 lettres ; les deux lignes */
+    for (w = 4; out[w]; ++w) ;                                   /*  alignées sur le plus long) */
     team_name(t, out);
-    for (k = 0; out[k]; ++k) ;                                   /* (2.98 : nom de 3 à 5 lettres) */
-    for (; k < 5; ++k) out[k] = ' ';
+    for (k = 4; out[k]; ++k) ;
+    if (k > w) w = k;
+    for (; k < w; ++k) out[k] = ' ';
     for (i = 0; i < sc_set_no && i < MAX_SETS; ++i) { out[k++] = ' '; out[k++] = (char)('0' + sc_hist[i][t]); }
     if (!sc_over && k < 14) { out[k++] = ' '; out[k++] = (char)('0' + sc_games[t]); }
     out[k] = 0;                     /* les deux lignes ont la même longueur : centrées ensemble */

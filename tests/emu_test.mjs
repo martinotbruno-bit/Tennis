@@ -718,7 +718,7 @@ console.log('Version 2.73 : bandes du ralenti, survol, bandeau, dehors de peu');
     g.poke('cer_skip', g.peek('cer') >= 1 && g.peek('cer') <= 3 ? 1 : 0);
     g.run(1);
     if (g.peek('cer') === 5) { g.tap('A'); continue; }   /* (2.75 : assis, les statistiques défilent à l'appui) */
-    if (g.peek('ms') === 0 && !g.peek('cer') && g.peek('band_dis') && g.peek('sc_server') === 0) { g.tap('A'); g.run(14); g.tap('A'); continue; }   /* (bandeau fermé : le joueur sert) */
+    if (g.peek('ms') === 0 && !g.peek('cer') && (g.peek('band_dis') || !(g.peek('st_first_tot', 0) | g.peek('st_first_tot', 1))) && g.peek('sc_server') === 0) { g.tap('A'); g.run(14); g.tap('A'); continue; }   /* (bandeau fermé, ou premier service du match, sans bandeau depuis la 2.98 : le joueur sert) */
     if (g.peek('ms') !== 0 || g.peek('cer') || !(g.peek('hl_flags') & 4)) continue;   /* (2.82 : bandeau entièrement monté, sinon l'appui ne le ferme pas) */
     if (g.peek('sc_server') === 1) {           /* l'ordinateur sert */
       if (cpuWait !== null) { g.tap('B'); continue; }
@@ -3475,6 +3475,16 @@ console.log('Version 2.98 : filet et salle en perspective');
   const nd = cols[0].filter((v, i) => v !== cols[1][i]).length;
   if (nd) console.log('  (différences', cols[0].map((v, i) => v !== cols[1][i] ? (4 + (i >> 1)) + ':' + [2, 29][i & 1] : '').filter(Boolean).join(' '), ')');
   check(nd === 0, 'salle : mur gris et panneaux verts dessinés comme à plat en perspective');
+{
+  // premier service du match (après le tirage au sort) : pas de bandeau du
+  // score ; après le premier point, le bandeau revient ; noms sur 5 lettres
+  const e = boot(); e.bandSkip = false; startWith(e, { FMT: 3, REPLAY: 0, P1: 20, P2: 16 }); allCpu(e);
+  runUntil(e, () => e.peek('ms') === 0 && !e.peek('cer'), 3000);
+  let first = 0; for (let i = 0; i < 40 && e.peek('ms') === 0; i++) { e.run(1); if (e.peek('band_vis')) first++; }
+  const later = runUntil(e, () => e.peek('band_vis') === 3, 60 * 60 * 2);
+  const hud = e.text(1, 1, 5) + '|' + e.text(26, 1, 5);
+  check(first === 0 && later && hud === 'TITOU|MARGA', `premier service : pas de bandeau (${first} trame(s)), puis bandeau après le premier point (${later}) ; noms sur 5 lettres (« ${hud} »)`);
+}
 }
 }
 if (sec('Compensation 50 Hz (PAL)')) {

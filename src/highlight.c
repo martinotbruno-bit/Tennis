@@ -327,7 +327,7 @@ void band_draw(void)
        score n'est compté qu'à la fin du temps mort) */
     v = (u8)(ms == MS_DEAD && end_reason == END_POINT && (sc_crit & 4) && ((sc_crit >> pending_winner) & 1));
     v = (u8)(cfg.mode == GM_MATCH && !paused && !hl_mode && !sc_over && !v &&
-             ((cer == CER_SEAT) || ((cer == CER_CHOOSE || cer == CER_RECAP) && toss_q) || (cer == 4 && !band_dis) || ((!cer || cer >= 0xF0) && !band_dis && !rp_pending && (st_points[0] | st_points[1]) && end_reason != END_FAULT && !(faults && end_reason == END_LET) && (ms == MS_DEAD || ms == MS_SERVE))));   /* (2.96 : pas de bandeau quand un second service est en attente : après une première faute, ou un let sur second service ; une double faute termine le point : bandeau comme d'habitude ; 2.98 : rien au premier service du match, aucun point joué) */
+             ((cer == CER_SEAT) || ((cer == CER_CHOOSE || cer == CER_RECAP) && toss_q) || (cer == 4 && !band_dis) || ((!cer || cer >= 0xF0) && !band_dis && !rp_pending && (st_first_tot[0] | st_first_tot[1]) && end_reason != END_FAULT && !(faults && end_reason == END_LET) && (ms == MS_DEAD || ms == MS_SERVE))));   /* (2.96 : pas de bandeau quand un second service est en attente : après une première faute, ou un let sur second service ; une double faute termine le point : bandeau comme d'habitude ; 2.98 : rien au premier service du match, aucun service frappé) */
     /* cer 4 (CER_CHAIR, vers les chaises) : le bandeau reste affiché
        depuis la fin du point jusqu'aux statistiques, sans disparaître */
     /* apparition : 48 trames après la fin du point (ou du ralenti),
