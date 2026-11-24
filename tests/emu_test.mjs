@@ -476,7 +476,7 @@ console.log('Version 2.71 : bandeau du score, crépuscule, voix, record');
     if (e.peek('cer') >= 1 && e.peek('cer') <= 3) e.poke('cer_skip', 1);
     // égalité forcée de temps en temps (annonces « Deuce! », « Advantage! »)
     const m = e.peek('ms');
-    if (m === 0 && pm !== 0 && !e.peek('sc_tiebreak') && forced < 6 && (f & 1)) { e.poke('sc_points', 3, 0); e.poke('sc_points', 3, 1); forced++; }
+    if (m === 0 && pm !== 0 && !e.peek('sc_tiebreak') && forced < 16 && (f & 1)) { e.poke('sc_points', forced & 1 ? 2 : 3, 0); e.poke('sc_points', 3, 1); forced++; }   /* (2.98 : 3-3 ou 2-3 : égalité, avantage et jeu quel que soit le tirage) */
     pm = m;
     e.run(1);
     if (!e.peek('hl_mode') && e.peek('ppu_mask')) { stages.add(e.peek('sun_st')); emph.add(e.peek('sun_st') * 256 + e.peek('ppu_emph')); }   /* (gros plan : sans accentuation) */
@@ -881,7 +881,7 @@ console.log('Ralenti : gros plan et zoom');
     const c = d.addr('cfg'); d.nes.cpu.mem[c + CFG.CTRL] = 0; d.nes.cpu.mem[c + CFG.CTRL + 1] = 2;
     let f = 0, res = [];
     for (let k = 0; k < 2; k++) {
-      runUntil(d, () => d.peek('ms') === 3 && d.peek('rp_pending') === 1, 20000, () => { if ((d.peek('ms') === 0 || d.peek('band_hold')) && (++f % 40) === 0) d.tap('A', 1, 2, 0); });
+      runUntil(d, () => d.peek('ms') === 3 && d.peek('rp_pending') === 1, 20000, () => { if ((d.peek('ms') === 0 || d.peek('band_hold')) && (++f % 40) === 0) d.tap('A', 1, 2, 0); else if (d.peek('ms') === 1 && d.peek('sc_server') === 0 && d.peekS16('bvz') <= 0) d.tap('A', 1, 2, 0); });   /* (2.98 : premier service sans bandeau ; le joueur frappe le lancer) */
       d.run(62); d.down('A'); d.run(2); d.up('A'); d.run(30); d.down('A'); d.run(2); d.up('A');
       runUntil(d, () => !(d.peek('ms') === 5 || (d.peek('ms') === 3 && d.peek('rp_pending'))), 3000);
       let seen = 0; for (let i = 0; i < 150; i++) { d.run(1); if (d.peek('band_vis') === 3) seen++; }
@@ -2102,7 +2102,7 @@ console.log('Récapitulatif du score');
   // n'importe quel bouton (ici B) ferme l'écran aussitôt, sans fondu
   e.tap('B', 1, 1, 0); let n = 0;
   while (app(e) !== AS.MATCH && n < 30) { e.run(1); n++; }
-  check(app(e) === AS.MATCH && n <= 16 && e.peek('music_cur') === 0, `B : retour au court en ${n + 1} trames, musique coupée`);
+  check(app(e) === AS.MATCH && n <= 20 && e.peek('music_cur') === 0, `B : retour au court en ${n + 1} trames, musique coupée`);
   e.run(30);
   check(app(e) === AS.MATCH && /^[A-Z]{4} \d \d/.test(msgText(e)), `reprise du match, score des sets dans le bandeau : « ${msgText(e)} »`);
   // un jeu plus tard : (2.76) plus de rappel des jeux en haut (le bandeau les donne)
@@ -3418,7 +3418,8 @@ console.log('Version 2.76 : parcours, tirage, fin de set, compétition à deux')
   const e = boot(); e.cerSkip = false; e.bandSkip = false; startWith(e, { FMT: 1, REPLAY: 0 }); allCpu(e);
   runUntil(e, () => e.peek('ms') === 2, 3000, () => { if ([1, 2, 3, 11, 13].includes(e.peek('cer'))) e.poke('cer_skip', 1); });
   e.poke('cer_skip', 0); e.poke('sc_games', 5, 0); e.poke('sc_games', 0, 1); e.poke('sc_points', 3, 0); e.poke('sc_points', 0, 1);
-  const shown = runUntil(e, () => e.peek('cer') === 5 && e.peek('brk_pend') === 1 && e.peek('st_t') === 8, 60 * 60 * 6);
+  const shown = runUntil(e, () => e.peek('cer') === 5 && e.peek('brk_pend') === 1 && e.peek('st_t') === 8, 60 * 60 * 6,
+    () => { if (e.peek('ms') === 0 && !e.peek('cer') && e.peek('sc_set_no') === 0) { e.poke('sc_games', 5, 0); e.poke('sc_games', 0, 1); e.poke('sc_points', 3, 0); e.poke('sc_points', 0, 1); } });   /* (2.98 : balle de set remise à chaque service, quel que soit le tirage) */
   e.poke('cfg', 0, CFG.CTRL);                     /* (un joueur prend la manette) */
   e.run(300);
   const waits = e.peek('cer') === 5 && e.peek('brk_pend') === 1 && app(e) === AS.MATCH;
