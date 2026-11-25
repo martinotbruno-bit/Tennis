@@ -217,6 +217,7 @@ Pour chaque ligne, lancez un match et regardez l'écran pendant une dizaine de s
 | 10.79 | Filet en perspective (version 2.98) | Plusieurs balles dans le filet : après chaque tremblement, le filet revient intact (pas de maille « secouée » qui reste) | ☐ |
 | 10.80 | Noms et bandeaux (version 2.98) | TITOU et MARGAUX : « TITOU » et « MARGA » en haut et dans le bandeau ; premier service du match : pas de bandeau ; balle de match : bandeau central effacé après 1 s | ☐ |
 | 10.81 | Textes (version 2.99) | Pause avec TITOU à droite : « QUITTER » et le nom séparés ; tirage au sort : « TITOU : PILE » ; SAISON : « TOURNOI 1/4 : TERRE BATTUE » ; palmarès : rien de collé après GRAND MARTINOT ; stats du changement de côté : noms au-dessus des chiffres | ☐ |
+| 10.82 | Service (version 3.00) | L'ordinateur sert tantôt à plat, tantôt coupé, sur l'extérieur, le corps ou le T, parfois court ; le joueur : BAS à l'impact, service court près du filet ; HAUT, long sur la ligne | ☐ |
 
 ## 11. Ce qu'il faut renvoyer
 

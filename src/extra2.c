@@ -847,3 +847,35 @@ u16 __fastcall__ band_name_f(u16 a)
     return 0;
 }
 #pragma static-locals(pop)
+
+/* ---------------------------------------------------------------------- */
+/* (3.00) Service de l'ordinateur : effet, cible et profondeur variés.     */
+/* Rend la croix voulue (relative au serveur : HAUT long, BAS court ;      */
+/* GAUCHE/DROITE ou rien, le corps) et, en octet haut, le bouton (A à     */
+/* plat, B coupé).                                                         */
+/* 1re balle : un service sur quatre au corps, sinon extérieur ou T ;      */
+/* à plat deux fois sur trois (PUISSANCE : toujours ; DEFENSIF et          */
+/* PLACEMENT : une fois sur deux) ; Normal et Expert le jouent parfois     */
+/* long, tous parfois court.                                               */
+/* 2e balle, ou balle de break à sauver : coupée (Expert : parfois à      */
+/* plat), au centre une fois sur deux, sinon dans un coin, parfois courte. */
+/* ---------------------------------------------------------------------- */
+extern u8 tac_safe[2];
+#pragma static-locals(push, off)
+u16 __fastcall__ srv_choose_f(u16 a)
+{
+    u8 p = (u8)a, lv = cfg.level[p], st = char_style[cfg.chr[p]], r = rand8(), pad, btn = PAD_A;
+    if (faults == 0 && !tac_safe[p & 1]) {
+        pad = (u8)((r & 3) == 0 ? 0 : (r & 4) ? PAD_LEFT : PAD_RIGHT);
+        if (st != 2 && (u8)(r >> 3) % (st == 4 || st == 7 ? 2 : 3) == 0) btn = PAD_B;
+        r = rand8();
+        if (lv && (r & 7) == 0) pad |= PAD_UP;
+        else if ((r & 7) == 1) pad |= PAD_DOWN;
+    } else {
+        btn = (u8)(lv == 2 && (r & 7) == 0 ? PAD_A : PAD_B);
+        pad = (u8)((r & 0x30) == 0 ? PAD_LEFT : (r & 0x30) == 0x10 ? PAD_RIGHT : 0);
+        if ((r & 0xC0) == 0) pad |= PAD_DOWN;
+    }
+    return (u16)(pad | (btn << 8));
+}
+#pragma static-locals(pop)

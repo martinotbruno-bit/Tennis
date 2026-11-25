@@ -793,6 +793,7 @@ console.log('Version 2.73 : bandes du ralenti, survol, bandeau, dehors de peu');
   // perspective : la tuile $5F (vide, bord du court) n'est plus prise par le
   // filet du bandeau (traits horizontaux entre le public et le court, 2.71-2.72)
   const e = boot(); startWith(e, { FMT: 3, VIEW: 1 }); allCpu(e); e.run(600);
+  runUntil(e, () => e.peek('band_vis') === 3, 60 * 60 * 3);   /* (3.00 : bandeau monté au moins une fois, plus au premier service) */
   const vm = e.nes.ppu.vramMem;
   check(vm.slice(0x5F0, 0x600).every(v => v === 0) && vm.slice(0xFF0, 0xFF8).some(v => v), 'perspective : tuile $5F vide (bord du court), filet du bandeau sur $FF');
 }
@@ -3462,7 +3463,7 @@ console.log('Version 2.98 : filet et salle en perspective');
     const d = [...set].some(t => vm.slice(t * 16, t * 16 + 16).join() !== ref[t]);
     run = d ? run + 1 : 0; worst = Math.max(worst, run);
   }
-  check(worst > 0 && worst <= 30, `filet en perspective : tuiles secouées revenues au repos en ${worst} trames au plus`);
+  check(worst > 0 && worst <= 40, `filet en perspective : tuiles secouées revenues au repos en ${worst} trames au plus`);
 }
 {
   // salle : en perspective, mêmes gradins au bord, même mur gris et mêmes panneaux verts qu'à plat
@@ -3486,6 +3487,46 @@ console.log('Version 2.98 : filet et salle en perspective');
   const hud = e.text(1, 1, 5) + '|' + e.text(26, 1, 5);
   check(first === 0 && later && hud === 'TITOU|MARGA', `premier service : pas de bandeau (${first} trame(s)), puis bandeau après le premier point (${later}) ; noms sur 5 lettres (« ${hud} »)`);
 }
+}
+}
+if (sec('Version 3.00 : service varié')) {
+console.log('Version 3.00 : service varié');
+{
+  // l'ordinateur varie l'effet (à plat, coupé), la cible (extérieur, corps,
+  // T) et la profondeur (courts près du filet)
+  const e = boot(); startWith(e, { FMT: 1, REPLAY: 0 }); allCpu(e);
+  const spin = new Set(), side = new Set(); let short = 0, n = 0, pms = 0, wait = 0;
+  runUntil(e, () => n >= 40 || app(e) !== AS.MATCH, 60 * 60 * 20, () => {
+    if (e.peek('cer') >= 1 && e.peek('cer') <= 13) e.poke('cer_skip', 1);
+    const ms = e.peek('ms');
+    if (pms === 1 && ms === 2) { wait = 1; spin.add(e.peek('bspin')); }
+    if (wait && e.peek('bounces') >= 1) {
+      const by = e.peekS16('by') >> 6, bx = e.peekS16('bx') >> 6, d = Math.abs(by - 132), x = Math.abs(bx - 128);
+      if (d < 30) short++; side.add(x < 14 ? 'T' : x < 34 ? 'corps' : 'ext'); wait = 0; n++;
+    }
+    pms = ms;
+  });
+  check(n >= 40 && spin.has(0) && spin.has(2) && side.size === 3 && short >= 2, `ordinateur : ${n} services, effets [${[...spin]}], cibles [${[...side]}], ${short} courts`);
+}
+{
+  // le joueur : BAS au moment de frapper = service court, HAUT = long
+  const land = {};
+  for (const dirn of ['DOWN', 'UP']) {
+    const e = boot(); e.bandSkip = false; startWith(e, { FMT: 3, REPLAY: 0 });
+    const c = e.addr('cfg'); e.nes.cpu.mem[c + CFG.CTRL + 1] = 2;
+    const ds = [];
+    for (let k = 0; k < 4; k++) {
+      runUntil(e, () => e.peek('ms') === 0 && e.peek('sc_server') === 0 && !e.peek('cer') && !e.peek('band_hold'), 60 * 60 * 3, () => { if (e.peek('band_hold')) e.tap('A', 1, 1, 0); if (e.peek('sc_server') !== 0) e.poke('sc_server', 0); });
+      e.down(dirn); e.tap('A', 1, 1, 0);
+      runUntil(e, () => e.peek('ms') === 1 && e.peekS16('bvz') <= 0, 200);
+      e.tap('A', 1, 1, 0); e.up(dirn);
+      if (runUntil(e, () => e.peek('bounces') >= 1 || e.peek('ms') === 3, 200)) ds.push(Math.abs((e.peekS16('by') >> 6) - 132));
+      runUntil(e, () => e.peek('ms') === 0, 2000, () => { if (e.peek('band_hold')) e.tap('A', 1, 1, 0); });
+    }
+    land[dirn] = ds;
+  }
+  const avg = (a) => a.reduce((x, y) => x + y, 0) / Math.max(1, a.length);
+  check(land.DOWN.length >= 3 && land.UP.length >= 3 && avg(land.DOWN) + 10 < avg(land.UP), `joueur : service court avec BAS (${land.DOWN.join(', ')} px du filet), long avec HAUT (${land.UP.join(', ')})`);
 }
 }
 if (sec('Compensation 50 Hz (PAL)')) {

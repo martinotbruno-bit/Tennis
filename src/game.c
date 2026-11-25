@@ -255,6 +255,7 @@ static void serve_fault(const char *why)
 u16 __fastcall__ srv_box(u16 unused);
 u16 __fastcall__ srv_pick_f(u16 a);   /* (2.97, extra2.c) */
 u16 __fastcall__ srv_walk_f(u16 p);
+u16 __fastcall__ srv_choose_f(u16 p);   /* (3.00, extra2.c) */
 void bounce_fix(void);
 u16 __fastcall__ bounce_f(u16 f);   /* rebond : son (extra2.c) */
 u16 __fastcall__ hit_snd_f(u16 w);  /* impact : son (extra2.c) */
@@ -576,7 +577,11 @@ static void serve_hit(u8 p, u8 pad, u8 btn, u8 quality, u8 spread)
     if (left) tx = (pad & PAD_LEFT) ? SGL_L + 8 : (pad & PAD_RIGHT) ? CENTER_X - 6 : CENTER_X - 26;
     else      tx = (pad & PAD_RIGHT) ? SGL_R - 8 : (pad & PAD_LEFT) ? CENTER_X + 6 : CENTER_X + 26;
     tx += rnd_spread(spread);
-    ty = NET_Y + dir * (40 + rnd_spread((u8)(spread >> 1)) + (quality >> 1));
+    /* (3.00) profondeur : HAUT (vers l'adversaire) long, sur la ligne de
+       service ; BAS court, près du filet ; sinon comme avant */
+    t = rel_pad(p, pad);
+    ty = NET_Y + dir * ((t & PAD_UP ? 43 : t & PAD_DOWN ? 25 : 40) + rnd_spread((u8)(spread >> 1)) + (quality >> 1));
+    t = (u8)(p & 1);
     dist = iabs(ty - PX(by)) + (iabs(tx - PX(bx)) >> 2);
     T = (u8)((dist * 16) / speed);
     if (T < 14) T = 14;
@@ -831,8 +836,10 @@ static void ai_update(u8 p)
         if (p == server_p() && bvz <= 0) {
             u8 q = (u8)(rand8() % (u8)(10 - lv * 3));
             /* balle de break à sauver : première balle assurée (coupée) */
-            if (faults == 0 && !tac_safe[t]) serve_hit(p, (u8)(rand8() & 1 ? PAD_LEFT : PAD_RIGHT), PAD_A, q, (u8)(ai_spread[lv] >> 2));
-            else serve_hit(p, 0, PAD_B, (u8)(q >> 1), (u8)(ai_spread[lv] >> 3));
+            /* (3.00) service choisi par srv_choose_f (extra2.c) : effet, cible, profondeur */
+            u16 c = far_call(BANK_X2, (void *)srv_choose_f, p);
+            if (faults == 0 && !tac_safe[t]) serve_hit(p, rel_pad(p, (u8)c), (u8)(c >> 8), q, (u8)(ai_spread[lv] >> 2));
+            else serve_hit(p, rel_pad(p, (u8)c), (u8)(c >> 8), (u8)(q >> 1), (u8)(ai_spread[lv] >> 3));
         }
         return;
     }
