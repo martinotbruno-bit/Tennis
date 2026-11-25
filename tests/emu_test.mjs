@@ -962,11 +962,11 @@ console.log('Présentation et pause');
   // (2.98) pause : VUE change la vue du court (à plat / perspective), retenue
   const e = boot(); e.bandSkip = false; startWith(e, { FMT: 3, VIEW: 0, REPLAY: 0 }); allCpu(e); e.run(200);
   e.tap('START'); e.tap('DOWN'); e.tap('DOWN');
-  const lbl = e.text(6, 3, 17).trim();
+  const lbl = e.text(7, 3, 18).trim();
   e.tap('A'); e.run(20);
-  const p1 = e.peek('persp'), lbl2 = e.text(6, 3, 17).trim(), saved = e.peek('opt_val', 24);
+  const p1 = e.peek('persp'), lbl2 = e.text(7, 3, 18).trim(), saved = e.peek('opt_val', 24);
   e.tap('START'); e.run(10);
-  const clear = e.text(6, 3, 17).trim() === '' && e.peek('paused') === 0;
+  const clear = e.text(7, 3, 18).trim() === '' && e.peek('paused') === 0;
   const rh = e.peek('rally_hits'); runUntil(e, () => e.peek('rally_hits') !== rh || e.peek('ms') === 0, 600);
   e.tap('START'); e.tap('DOWN'); e.tap('DOWN'); e.tap('RIGHT'); e.run(20); const p2 = e.peek('persp'); e.tap('START'); e.run(5);
   check(lbl === '> VUE A PLAT' && p1 === 1 && lbl2 === '> VUE PERSPECTIVE' && saved === 1 && clear && p2 === 0 && app(e) === AS.MATCH,
@@ -3089,7 +3089,7 @@ console.log('Version 2.76 : pause');
   // frappe : le bandeau se pose quand même, bords compris, sans sprite dessus
   const e = boot(); startWith(e, { FMT: 3, REPLAY: 0, VIEW: 1 }); allCpu(e); e.run(200);
   e.tap('START'); e.run(6); e.tap('START'); e.run(6);
-  const l3 = e.text(6, 1, 20) + e.text(6, 2, 17) + e.text(6, 3, 17);
+  const l3 = e.text(7, 1, 18) + e.text(7, 2, 18) + e.text(7, 3, 18);
   check(!e.peek('paused') && !l3.includes('RALENTI') && !l3.includes('VUE') && !l3.includes('QUITTER'), `pause : lignes RALENTI, VUE, QUITTER effacées à la reprise (« ${l3.replace(/\0/g, ' ')} »)`);
   runUntil(e, () => e.peek('hit_now') === 1, 60 * 60);
   e.down('START'); e.run(1); e.up('START'); e.run(20);

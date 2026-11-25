@@ -829,7 +829,7 @@ Pour loger ce contenu, la cartouche passe de NROM (32 Ko) à **MMC1** : 128 Ko d
 | Relecture des textes (`check_texts.py`) | 0 problème |
 | Contraste (`contrast.py 25`) | 0 paire sous ΔE 25 (personnages, courts, balle, tenues) |
 | Profil CPU, double, 6 000 trames | 27 trames d'échange en dépassement (0,45 %), sans défaut d'image |
-| Compilation | Reproductible : SHA-256 `f0638e49a1b52efeea0392a7691543025943d13073eb2c83f1ee02883d0a6d0d` sur deux compilations propres |
+| Compilation | Reproductible : SHA-256 `06038677445a501f3fd8e110d32057984fe5e8703110fd8448cd9c95f5609444` sur deux compilations propres |
 
 ## 3. Conformité par section du CDC
 
@@ -894,7 +894,7 @@ Légende : ✅ réalisé et testé en émulation · 🟡 partiel · 🔧 nécess
 - **Version 2.93** : impacts balle-raquette en échantillons réalistes (« tac », « ploc », « poc ») ; suite complète : 441 vérifications réussies et 1 échec (le test des poses, dont le match de 4 jeux s'est fini avant toute volée ou amortie ; le joueur y monte maintenant au filet dès 30 s : section repassée, ROM inchangée).
 - **Version 2.94** : impact et rebond équilibrés (mesures : rebond de 0,3 à 0,5 fois l'impact au lieu de 1 à 1,17) ; suite complète : 442 vérifications réussies, 0 échec.
 - **Version 2.95** : impact de raquette deux fois plus fort (son audible), rebond à 0,33-0,42 de l'impact ; mesure de la 2.94 corrigée ; suite complète : 442 vérifications réussies, 0 échec.
-- **Version 2.99** : relecture des textes, espaces et noms de 5 lettres corrigés partout.
+- **Version 2.99** : relecture des textes, espaces et noms de 5 lettres corrigés partout ; suite complète : 447 vérifications réussies, 1 échec (le test de la pause lisait l'ancienne colonne ; corrigé, ses sections relancées : 13 sur 13).
 - **Version 2.98** : salle en perspective comme à plat ; vue changeable dans la pause ; filet sans maille abîmée ; noms sur 5 lettres ; pas de bandeau au premier service ; balle de match 1 s ; suite complète : 448 vérifications réussies, 0 échec.
 - **Version 2.97** : A sur le trajet des chaises ne saute plus la pause ; place variée du serveur ordinateur ; suite complète : 444 vérifications réussies, 0 échec.
 - **Version 2.96** : pas de bandeau entre deux services ; statistiques du double corrigées ; menu sans accolades ni traits, avec une balle de tennis en fond (dessin rapide : écran ouvert environ 4 trames plus tard qu'en 2.95) ; suite complète : 442 vérifications réussies, 0 échec.
