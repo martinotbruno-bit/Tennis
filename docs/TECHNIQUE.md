@@ -839,3 +839,5 @@ Les résultats détaillés sont dans le [rapport](RAPPORT.md).
 **Version 2.99** : bandeau des statistiques, `band_name_f` (extra2.c) écrit le nom calé à droite dans `bb` (rendu non statique) ; pause en colonnes 7 à 24 ; `name_side` et l'annonce du gagnant du tirage copient 5 lettres (cer.c) ; `comp_stage_name` : l'espace remplace la fin de texte avant la surface (SAISON).
 
 **Version 3.00** : `serve_hit` (game.c) lit la croix relative (`rel_pad`) : profondeur visée 43 (HAUT), 25 (BAS) ou 40 px du filet. `ai_update` en `MS_TOSS` demande à `srv_choose_f` (extra2.c, banque 30) la croix (relative, repassée par `rel_pad`) et le bouton ; écarts de précision inchangés (1re balle : `ai_spread >> 2`, sinon `>> 3`).
+
+**Version 3.01** : profondeur visée par `serve_hit` : 42 (HAUT), 24 (BAS) ou 33 px du filet (ligne de service à 45). `srv_choose_f` : 1re balle longue une fois sur deux (Facile : une sur quatre), courte une sur huit.

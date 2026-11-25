@@ -883,7 +883,8 @@ console.log('Ralenti : gros plan et zoom');
     let f = 0, res = [];
     for (let k = 0; k < 2; k++) {
       runUntil(d, () => d.peek('ms') === 3 && d.peek('rp_pending') === 1, 20000, () => { if ((d.peek('ms') === 0 || d.peek('band_hold')) && (++f % 40) === 0) d.tap('A', 1, 2, 0); else if (d.peek('ms') === 1 && d.peek('sc_server') === 0 && d.peekS16('bvz') <= 0) d.tap('A', 1, 2, 0); });   /* (2.98 : premier service sans bandeau ; le joueur frappe le lancer) */
-      d.run(62); d.down('A'); d.run(2); d.up('A'); d.run(30); d.down('A'); d.run(2); d.up('A');
+      runUntil(d, () => d.peek('ms') === 5, 600); d.run(20);   /* (3.01 : appui pendant le ralenti, quelle que soit sa durée) */
+      d.down('A'); d.run(2); d.up('A'); d.run(4); d.down('A'); d.run(2); d.up('A');
       runUntil(d, () => !(d.peek('ms') === 5 || (d.peek('ms') === 3 && d.peek('rp_pending'))), 3000);
       let seen = 0; for (let i = 0; i < 150; i++) { d.run(1); if (d.peek('band_vis') === 3) seen++; }
       res.push(seen); d.tap('A', 1, 2, 0);
@@ -3458,7 +3459,7 @@ console.log('Version 2.98 : filet et salle en perspective');
   let seed = 7, run = 0, worst = 0;
   for (let f = 0; f < 60 * 60 * 2 && app(e) === AS.MATCH; f++) {
     seed = (seed * 1103515245 + 12345) & 0x7fffffff;
-    if (seed % 97 === 0) e.poke('net_shake', 14);
+    if (seed % 97 === 0) { e.poke('net_shake', 14); run = 0; }   /* (durée comptée depuis le dernier contact) */
     e.run(1);
     const d = [...set].some(t => vm.slice(t * 16, t * 16 + 16).join() !== ref[t]);
     run = d ? run + 1 : 0; worst = Math.max(worst, run);
@@ -3509,24 +3510,25 @@ console.log('Version 3.00 : service varié');
   check(n >= 40 && spin.has(0) && spin.has(2) && side.size === 3 && short >= 2, `ordinateur : ${n} services, effets [${[...spin]}], cibles [${[...side]}], ${short} courts`);
 }
 {
-  // le joueur : BAS au moment de frapper = service court, HAUT = long
+  // le joueur : BAS au moment de frapper = service court, rien = milieu du carré, HAUT = long
   const land = {};
-  for (const dirn of ['DOWN', 'UP']) {
+  for (const dirn of ['DOWN', '', 'UP']) {
     const e = boot(); e.bandSkip = false; startWith(e, { FMT: 3, REPLAY: 0 });
     const c = e.addr('cfg'); e.nes.cpu.mem[c + CFG.CTRL + 1] = 2;
     const ds = [];
     for (let k = 0; k < 4; k++) {
       runUntil(e, () => e.peek('ms') === 0 && e.peek('sc_server') === 0 && !e.peek('cer') && !e.peek('band_hold'), 60 * 60 * 3, () => { if (e.peek('band_hold')) e.tap('A', 1, 1, 0); if (e.peek('sc_server') !== 0) e.poke('sc_server', 0); });
-      e.down(dirn); e.tap('A', 1, 1, 0);
+      if (dirn) e.down(dirn); e.tap('A', 1, 1, 0);
       runUntil(e, () => e.peek('ms') === 1 && e.peekS16('bvz') <= 0, 200);
-      e.tap('A', 1, 1, 0); e.up(dirn);
+      e.tap('A', 1, 1, 0); if (dirn) e.up(dirn);
       if (runUntil(e, () => e.peek('bounces') >= 1 || e.peek('ms') === 3, 200)) ds.push(Math.abs((e.peekS16('by') >> 6) - 132));
       runUntil(e, () => e.peek('ms') === 0, 2000, () => { if (e.peek('band_hold')) e.tap('A', 1, 1, 0); });
     }
     land[dirn] = ds;
   }
   const avg = (a) => a.reduce((x, y) => x + y, 0) / Math.max(1, a.length);
-  check(land.DOWN.length >= 3 && land.UP.length >= 3 && avg(land.DOWN) + 10 < avg(land.UP), `joueur : service court avec BAS (${land.DOWN.join(', ')} px du filet), long avec HAUT (${land.UP.join(', ')})`);
+  check(land.DOWN.length >= 3 && land[''].length >= 3 && land.UP.length >= 3 && avg(land.DOWN) + 5 < avg(land['']) && avg(land['']) + 5 < avg(land.UP),
+    `joueur : service court avec BAS (${land.DOWN.join(', ')} px du filet), milieu sans direction (${land[''].join(', ')}), long avec HAUT (${land.UP.join(', ')})`);
 }
 }
 if (sec('Compensation 50 Hz (PAL)')) {

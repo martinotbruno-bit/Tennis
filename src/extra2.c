@@ -855,8 +855,8 @@ u16 __fastcall__ band_name_f(u16 a)
 /* plat, B coupé).                                                         */
 /* 1re balle : un service sur quatre au corps, sinon extérieur ou T ;      */
 /* à plat deux fois sur trois (PUISSANCE : toujours ; DEFENSIF et          */
-/* PLACEMENT : une fois sur deux) ; Normal et Expert le jouent parfois     */
-/* long, tous parfois court.                                               */
+/* PLACEMENT : une fois sur deux) ; long (sur la ligne) une fois sur deux  */
+/* (Facile : une sur quatre), court une fois sur huit, sinon au milieu.    */
 /* 2e balle, ou balle de break à sauver : coupée (Expert : parfois à      */
 /* plat), au centre une fois sur deux, sinon dans un coin, parfois courte. */
 /* ---------------------------------------------------------------------- */
@@ -869,8 +869,8 @@ u16 __fastcall__ srv_choose_f(u16 a)
         pad = (u8)((r & 3) == 0 ? 0 : (r & 4) ? PAD_LEFT : PAD_RIGHT);
         if (st != 2 && (u8)(r >> 3) % (st == 4 || st == 7 ? 2 : 3) == 0) btn = PAD_B;
         r = rand8();
-        if (lv && (r & 7) == 0) pad |= PAD_UP;
-        else if ((r & 7) == 1) pad |= PAD_DOWN;
+        if ((r & 7) == 7) pad |= PAD_DOWN;                              /* court : 1 sur 8 */
+        else if ((r & 3) < (lv ? 2 : 1)) pad |= PAD_UP;                 /* long : 1 sur 2 (Normal, Expert), 1 sur 4 (Facile) */
     } else {
         btn = (u8)(lv == 2 && (r & 7) == 0 ? PAD_A : PAD_B);
         pad = (u8)((r & 0x30) == 0 ? PAD_LEFT : (r & 0x30) == 0x10 ? PAD_RIGHT : 0);

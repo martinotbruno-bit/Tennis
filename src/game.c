@@ -577,10 +577,11 @@ static void serve_hit(u8 p, u8 pad, u8 btn, u8 quality, u8 spread)
     if (left) tx = (pad & PAD_LEFT) ? SGL_L + 8 : (pad & PAD_RIGHT) ? CENTER_X - 6 : CENTER_X - 26;
     else      tx = (pad & PAD_RIGHT) ? SGL_R - 8 : (pad & PAD_LEFT) ? CENTER_X + 6 : CENTER_X + 26;
     tx += rnd_spread(spread);
-    /* (3.00) profondeur : HAUT (vers l'adversaire) long, sur la ligne de
-       service ; BAS court, près du filet ; sinon comme avant */
+    /* (3.00) profondeur (ligne de service à 45 px du filet) : HAUT (vers
+       l'adversaire) long, sur la ligne, risqué ; rien : milieu du carré ;
+       BAS : court, près du filet */
     t = rel_pad(p, pad);
-    ty = NET_Y + dir * ((t & PAD_UP ? 43 : t & PAD_DOWN ? 25 : 40) + rnd_spread((u8)(spread >> 1)) + (quality >> 1));
+    ty = NET_Y + dir * ((t & PAD_UP ? 42 : t & PAD_DOWN ? 24 : 33) + rnd_spread((u8)(spread >> 1)) + (quality >> 1));
     t = (u8)(p & 1);
     dist = iabs(ty - PX(by)) + (iabs(tx - PX(bx)) >> 2);
     T = (u8)((dist * 16) / speed);
