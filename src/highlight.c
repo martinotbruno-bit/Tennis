@@ -134,7 +134,7 @@ extern u8 band_hold, crowd_big;
 #pragma zpsym("crowd_big")
 u8 band_vis, band_rows, band_dis;   /* band_dis : bandeau renvoyé par un appui (jusqu'au point suivant) */      /* band_vis : 0 caché, 1 texte, 2 sprites cachés, 3 affiché */
 static u8 band_last[7];
-static char bb[28];
+char bb[28];                    /* (2.98 : aussi écrit par band_name_f, extra2.c) */
 /* changement de côté : le bandeau alterne le score (page 0) et des
    statistiques du match, une page toutes les 50 trames (joueurs assis
    250 trames en match, cer.c) */
@@ -162,6 +162,7 @@ static void band_init(void)
     vram_adr(BAND_NT + 0x3C0 + 6 * 8); vram_fill(0x55, 16);  /* palette 1 (bandeau du haut) */
     band_vis = 0;
 }
+u16 __fastcall__ band_name_f(u16 a);   /* extra2.c */
 static void band_text(u8 t)
 {
     u8 i, k;
@@ -186,9 +187,8 @@ static void band_text(u8 t)
             /* (2.96 : en double, « AL/MA » et son 0 final débordaient de bb
                à la position 23 et remettaient band_pg à 0 : les statistiques
                ne défilaient pas ; second nom une case plus à gauche) */
-            team_label(cfg.chr[0], cfg.doubles ? cfg.chr[2] : 255, bb + 16);
-            team_label(cfg.chr[1], cfg.doubles ? cfg.chr[3] : 255, bb + 22);   /* (2.98 : 5 lettres) */
-            for (i = 16; i < 28; ++i) if (!bb[i]) bb[i] = ' ';
+            far_call(BANK_X2, (void *)band_name_f, 19 << 8);          /* (2.98 : noms calés à droite sur leur colonne de chiffres) */
+            far_call(BANK_X2, (void *)band_name_f, 1 | (26 << 8));
             return;
         }
         for (q = band_lbl[band_pg - 1], i = 0; *q; ) bb[i++] = *q++;

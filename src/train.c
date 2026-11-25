@@ -370,7 +370,7 @@ void hl_rec_row(void)
     if (!sw_spd[1]) { txt_at(22, 22, "---"); return; }
     n[0] = (char)('0' + k / 100); n[1] = (char)('0' + (k / 10) % 10); n[2] = (char)('0' + k % 10); n[3] = 0;
     txt_at(18, 22, n); txt_at(22, 22, "KM/H");
-    team_label(sw_spd[2], 255, n); txt_at(27, 22, n);
+    txt_at(18, 23, "PAR"); team_label(sw_spd[2], 255, n); txt_at(22, 23, n);   /* (2.98 : nom de 5 lettres sur la ligne suivante, plus de débordement en colonne 31) */
 }
 
 /* ====================================================================== */

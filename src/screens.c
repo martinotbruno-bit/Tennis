@@ -698,7 +698,7 @@ static void comp_screen(void)
     txt_at(3, 13, "ADVERSAIRE :");
     txt_at(16, 13, level_name[COMP(comp_level, 0)]);
     txt_at(3, 15, surf_name[COMP(comp_surface, 0)]);
-    txt_at(17, 15, env_name[c_env]);
+    txt_at(16, 15, env_name[c_env]);   /* (2.98 : un seul espace après TERRE BATTUE) */
     make_code();
     txt_at(3, 22, "CODE :");
     vram_adr(NTADR(10, 22));

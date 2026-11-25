@@ -657,6 +657,7 @@ u8 __fastcall__ comp_stage_name(u8 unused)
     case CT_SEASON:
         copy_txt(l1, "TOURNOI  /4 :");
         l1[8] = (char)('1' + c_stage / 3);
+        l1[13] = ' ';                   /* (2.98 : la fin du texte coupait la surface : « TOURNOI 1/4 : » seul) */
         copy_txt(l1 + 14, surf_name[c_stage / 3]);
         copy_txt(l2, ko_round_name[2 - c_stage % 3]);
         break;

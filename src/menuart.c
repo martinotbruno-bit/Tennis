@@ -153,7 +153,7 @@ void deco_frame(void)
 static const char * const ex_name[NEX] = {
     "FRAPPES/CIBLES", "DEPLACEMENTS", "REGULARITE", "PRECISION", "VOLEE", "SERVICE",
     "JOUEUR FIXE", "PERSONNALISE", "TUTORIEL" };
-static const char * const rank_txt[6] = { "", "VAINQUEUR !", "FINALISTE", "DEMI-FINALISTE", "4E", "ELIMINE" };
+static const char * const rank_txt[6] = { "", "VAINQUEUR !", "FINALISTE", "DEMI-FINALE", "4E", "ELIMINE" };   /* (2.98 : colonne 18, après GRAND MARTINOT) */
 
 static void u16_at(u8 x, u8 y, u16 v)
 {
@@ -195,14 +195,14 @@ void palmares_build(void)
         for (i = 0; i < NCT; ++i) {
             COMP(comp_cname, i); txt_at(3, (u8)(6 + i), comp_l2);
             t = i < 5 ? sv.comp_best[i] : sw_best[i - 4];
-            txt_at(17, (u8)(6 + i), t ? rank_txt[t > 5 ? 5 : t] : (const char *)"-");
+            txt_at(18, (u8)(6 + i), t ? rank_txt[t > 5 ? 5 : t] : (const char *)"-");
         }
         txt_at(3, 14, "HISTORIQUE");
         for (i = 0; i < sv.hist_n && i < 8; ++i) {
             COMP(comp_cname, sv.hist[i][0]); txt_at(3, (u8)(15 + i), comp_l2);
-            team_label(sv.hist[i][2], 255, ln); txt_at(16, (u8)(15 + i), ln);
+            team_label(sv.hist[i][2], 255, ln); txt_at(18, (u8)(15 + i), ln);   /* (2.98 : noms de 5 lettres, après GRAND MARTINOT) */
             ln[0] = (char)('0' + sv.hist[i][1]); ln[1] = 'E'; ln[2] = 0;
-            txt_at(22, (u8)(15 + i), sv.hist[i][1] == 1 ? "1ER" : ln);
+            txt_at(24, (u8)(15 + i), sv.hist[i][1] == 1 ? "1ER" : ln);
         }
     } else {
         txt_at(3, 5, "RECORDS D'ENTRAINEMENT");

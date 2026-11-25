@@ -1132,7 +1132,7 @@ u8 match_tick(void)
     /* démonstration : un bouton rend la main */
     if (cfg.demo && (pad1_new & (PAD_A | PAD_START))) { match_quit = 2; return 1; }
 
-    /* menu de pause (START) : CONTINUER / QUITTER ; SELECT = quitter directement */
+    /* menu de pause (START) : JOUER / QUITTER ; SELECT = quitter directement */
     if ((pad1_new & PAD_START) && ms != MS_OVER && ms != MS_REPLAY && !paused && cer != 5) {   /* (assis au changement de côté, START passe les statistiques) */
         paused = 1; pause_cur = 0; hud_dirty = 1; pad1_new = 0;
         hit_now = 0;                          /* pause sur une trame de frappe : le dessin (et le bandeau) reprend */

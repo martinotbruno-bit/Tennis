@@ -832,3 +832,18 @@ u16 __fastcall__ srv_walk_f(u16 a)                      /* 1 : encore en chemin 
     return 1;
 }
 #pragma static-locals(pop)
+
+/* (2.98) Bandeau des statistiques : nom de l'équipe (a & 1) calé à droite,
+   sa dernière lettre en bb[a >> 8] (au-dessus du dernier chiffre de sa colonne) */
+extern char bb[28];
+#pragma static-locals(push, off)
+u16 __fastcall__ band_name_f(u16 a)
+{
+    char b[6];
+    u8 t = (u8)(a & 1), n, i;
+    team_label(cfg.chr[t], cfg.doubles ? cfg.chr[t + 2] : 255, b);
+    for (n = 0; b[n]; ++n) ;
+    for (i = 0; i < n; ++i) bb[(u8)((a >> 8) + 1 - n + i)] = b[i];
+    return 0;
+}
+#pragma static-locals(pop)

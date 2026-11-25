@@ -452,6 +452,7 @@ void podium_build(void)
              c_type == CT_LEAGUE || c_type == CT_SEASON || c_type >= CT_GRAND ? "CHAMPION !" : "VAINQUEUR !");
     for (i = 0; i < 11; ++i) b[i] = "TROPHEES : "[i];
     num2(b + 11, c_trophies); b[13] = 0;
+    if (b[11] == ' ') { b[11] = b[12]; b[12] = 0; }   /* (2.98 : « TROPHEES : 3 », sans double espace) */
     txt_c(5, b);
     if (pod_new) txt_c(7, "MODE NUDISTE DEBLOQUE !");
     txt_c(28, "A : RETOUR AU TITRE");

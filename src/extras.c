@@ -64,31 +64,32 @@ void hud_update(void)
     u8 t, x;
     vbuf_reset();
     if (!paused && pause_cur == 4) {                /* (2.98) reprise : lignes de la pause effacées d'abord (tampon du VBlank limité), le HUD normal à la trame suivante */
-        vbuf_text(6, 1, "", 20); vbuf_text(6, 2, "", 17); vbuf_text(6, 3, "", 17);
+        vbuf_text(7, 1, "", 18); vbuf_text(7, 2, "", 18); vbuf_text(7, 3, "", 18);
         pause_cur = 0;
         return;                                     /* (hud_dirty reste à 1) */
     }
     if (paused) {   /* réglage des ralentis et de la vue, écrits en premier (tampon du VBlank limité) */
-            /* (2.98) CONTINUER et QUITTER sur la ligne 1, RALENTI ligne 2,
-               VUE ligne 3 (colonnes 6 à 26) */
+            /* (2.98) JOUER et QUITTER sur la ligne 1, RALENTI ligne 2,
+               VUE ligne 3 (colonnes 7 à 23 : une case libre de chaque côté
+               des noms de 5 lettres) */
             char b[22];
             const char *q = rp_lbl[cfg.replays < 3 ? cfg.replays : 1];
             u8 i;
             for (i = 0; i < 16 && q[i]; ++i) b[i] = q[i];
             b[i] = 0;
             if (pause_cur == 2) b[0] = '>';
-            vbuf_text(6, 2, b, 17);
+            vbuf_text(7, 2, b, 18);
             q = cfg.view ? "  VUE PERSPECTIVE" : "  VUE A PLAT";
             for (i = 0; q[i]; ++i) b[i] = q[i];
             b[i] = 0;
             if (pause_cur == 3) b[0] = '>';
-            vbuf_text(6, 3, b, 17);
-            q = "  CONTINUER  QUITTER";
+            vbuf_text(7, 3, b, 18);
+            q = "  JOUER    QUITTER";
             for (i = 0; q[i]; ++i) b[i] = q[i];
             b[i] = 0;
             if (pause_cur == 0) b[0] = '>';
-            if (pause_cur == 1) b[11] = '>';
-            vbuf_text(6, 1, b, 20);
+            if (pause_cur == 1) b[8] = '>';
+            vbuf_text(7, 1, b, 18);
         }
     if (cfg.mode == GM_MATCH) {
         for (t = 0; t < 2; ++t) {
@@ -740,14 +741,14 @@ void ai_tactic(void)
 }
 
 
-/* touches du menu de pause (game.c) : CONTINUER, QUITTER, RALENTI, VUE (2.98 : rend 2)
+/* touches du menu de pause (game.c) : JOUER, QUITTER, RALENTI, VUE (2.98 : rend 2)
    (NON, OUI, SIMPLE ; GAUCHE/DROITE ou A), retenu pour les matchs suivants
    (opt_val). Rend 1 pour quitter le match. */
 extern u8 opt_val[];                     /* (screens.c ; 10 : RALENTIS) */
 u16 __fastcall__ pause_input(u16 unused)
 {
     (void)unused;
-    /* (2.98) CONTINUER / QUITTER (ligne 1 : GAUCHE/DROITE aussi), RALENTI, VUE */
+    /* (2.98) JOUER / QUITTER (ligne 1 : GAUCHE/DROITE aussi), RALENTI, VUE */
     if (pad1_new & PAD_UP) { pause_cur = (u8)(pause_cur < 2 ? 3 : pause_cur == 2 ? 0 : 2); hud_dirty = 1; sfx_menu_move(); }
     if (pad1_new & PAD_DOWN) { pause_cur = (u8)(pause_cur < 2 ? 2 : pause_cur == 2 ? 3 : 0); hud_dirty = 1; sfx_menu_move(); }
     if (pause_cur < 2 && (pad1_new & (PAD_LEFT | PAD_RIGHT))) { pause_cur ^= 1; hud_dirty = 1; sfx_menu_move(); }

@@ -266,7 +266,7 @@ static void name_side(u8 t, char *out)
     u8 i;
     const char *w = (u8)(toss_res ^ t) ? "FACE" : "PILE";
     team_name(t, nm);
-    for (i = 0; i < 4 && nm[i]; ++i) out[i] = nm[i];
+    for (i = 0; i < 5 && nm[i]; ++i) out[i] = nm[i];
     out[i++] = ' '; out[i++] = ':'; out[i++] = ' ';
     while (*w) out[i++] = *w++;
     out[i] = 0;
@@ -318,7 +318,7 @@ void cer_tick(void)
         }
         if (cer_t == 104) {
             team_name(sc_server, nm);
-            for (p = 0; p < 4 && nm[p]; ++p) who[p] = nm[p];
+            for (p = 0; p < 5 && nm[p]; ++p) who[p] = nm[p];
             who[p++] = ' '; who[p++] = 'G'; who[p++] = 'A'; who[p++] = 'G'; who[p++] = 'N'; who[p++] = 'E'; who[p] = 0;
             set_msg((u8)(toss_res ^ sc_server) ? "FACE !" : "PILE !", who, 70);
             sfx_clap();
