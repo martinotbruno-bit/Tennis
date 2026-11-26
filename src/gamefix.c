@@ -143,7 +143,7 @@ u8 can_hit(u8 p)
 /* relâché juste avant l'arrivée de la balle (3 premières trames du geste) */
 /* ---------------------------------------------------------------------- */
 
-/* timing_msg, serve_fb et perfect_hit : banque 13 (shots.c) */
+/* perfect_hit : banque 13 (shots.c) ; timing_msg, serve_fb : banque 29 (play2.c, 3.02) */
 
 /* Récapitulatif du score (score_line, score_recap) : banque 0 (game.c) (place en banque fixe) */
 

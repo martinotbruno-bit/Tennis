@@ -108,6 +108,10 @@ function toPick(e, mot) {
   return false;
 }
 function openOpts(e) { e.poke('cursor', rowOf(e, 27)); e.tap('A'); e.run(30); }
+// (3.02) jeu décisif forcé : tant que le 3e jeu n'est pas joué, 40-0 remis à
+// chaque service (sans quoi le hasard des échanges peut mener à de longues
+// égalités et le changement de côté attendu n'arrive pas)
+function rePoke(e) { return () => { if (e.peek('ms') === 0 && !e.peek('cer') && e.peek('sc_games', 0) + e.peek('sc_games', 1) === 2) { e.poke('sc_points', 3, 0); e.poke('sc_points', 0, 1); } }; }
 function allCpu(e) { const c = e.addr('cfg'); for (let i = 0; i < 4; i++) e.nes.cpu.mem[c + CFG.CTRL + i] = 2; }
 // Attentes à plafond adaptatif : chaque appel (repéré par sa ligne) retient
 // le nombre de trames qu'il a pris quand il a abouti (until_frames.json) ; son
@@ -601,7 +605,7 @@ console.log('Version 2.72 : carrière, fiche, reprise, cérémonie');
   // les joueurs ne repartent qu'après la dernière page
   const h = boot(); h.bandSkip = false; startWith(h, { FMT: 3, REPLAY: 0 }); allCpu(h);
   h.cerSkip = false; h.poke('cer_skip', 0); h.poke('sc_games', 2); h.poke('sc_points', 3); h.poke('sc_points', 0, 1);
-  runUntil(h, () => h.peek('cer') === 5, 60 * 60 * 3);
+  runUntil(h, () => h.peek('cer') === 5, 60 * 60 * 3, rePoke(h));
   h.poke('cfg', 0, CFG.CTRL);                      /* (un joueur prend la manette) */
   h.run(400);
   const stay = h.peek('cer') === 5 && h.peek('band_pg') === 0;
@@ -616,7 +620,7 @@ console.log('Version 2.72 : carrière, fiche, reprise, cérémonie');
   // la pause assise et les statistiques ne sont plus sautées
   const h = boot(); h.bandSkip = false; startWith(h, { FMT: 3, REPLAY: 0 }); allCpu(h);
   h.cerSkip = false; h.poke('cer_skip', 0); h.poke('sc_games', 2); h.poke('sc_points', 3); h.poke('sc_points', 0, 1);
-  runUntil(h, () => h.peek('cer') === 4, 60 * 60 * 3);
+  runUntil(h, () => h.peek('cer') === 4, 60 * 60 * 3, rePoke(h));
   h.poke('cfg', 0, CFG.CTRL);
   for (let k = 0; k < 6; k++) { h.tap('A'); h.run(3); }
   const seat = runUntil(h, () => h.peek('cer') === 5, 300);
@@ -700,7 +704,7 @@ console.log('Version 2.73 : bandes du ralenti, survol, bandeau, dehors de peu');
     if (endF >= 0 && (e.peek('hl_mode') || e.peek('rp_pending'))) endF = -1;           /* (2.76 : après un ralenti ou un zoom, pas de délai) */
     if (endF >= 0 && e.peek('band_vis') === 3 && !e.peek('cer')) { minDelay = Math.min(minDelay, f - endF); endF = -1; }
     if (e.peek('band_vis') === 3 && !e.peek('cer')) rise.add(e.peek('split_l'));
-    if (!hud && m === 0 && f > 600) hud = e.text(1, 2, 4);
+    if (!hud && m === 0 && f > 600 && !e.peek('cer') && e.peek('ms_timer') < 30) hud = e.text(1, 2, 4).replace(/\0/g, ' ');   /* (3.02 : hors cérémonie, HUD posé) */
     pm = m;
   }
   check(rpF > 50 && bars === 0, `ralenti sans bandes noires (${rpF} trames, ${bars} avec bandes)`);
@@ -740,8 +744,9 @@ console.log('Version 2.73 : bandes du ralenti, survol, bandeau, dehors de peu');
   e.cerSkip = false; e.poke('cer_skip', 0); e.poke('sc_games', 2); e.poke('sc_points', 3); e.poke('sc_points', 0, 1);
   const ft = e.peek('flag_tile');
   let flags = 0;
+  const rpE = rePoke(e);
   for (let f = 0; f < 60 * 60 * 3 && !flags; f++) {
-    e.run(1);
+    rpE(); e.run(1);
     if (e.peek('cer') === 5 && e.peek('cer_t') === 60) { for (let i = 0; i < 64; i++) if (e.peek('oam_buf', i * 4 + 1) === ft && e.peek('oam_buf', i * 4) < 0xEF) flags++; }
   }
   check(flags === 6, `changement de côté : 6 drapeaux des supporters dans les tribunes (${flags})`);
@@ -913,8 +918,9 @@ console.log('Ralenti : gros plan et zoom');
     const k = boot(); startWith(k, { FMT: 3, REPLAY: 1 }); allCpu(k);
     k.cerSkip = false; k.poke('cer_skip', 0); k.poke('sc_games', 2); k.poke('sc_points', 3); k.poke('sc_points', 0, 1);
     let kid = false, pal = false, txt = '', back = false;
+    const rpK = rePoke(k);
     for (let f = 0; f < 60 * 60 * 3 && !back; f++) {
-      k.run(1);
+      rpK(); k.run(1);
       if (k.peek('cer') === 5 && k.peek('cer_t') < 240) k.poke('cer_t', 245);
       if (k.peek('hl_mode') === 4) {
         kid = true;
@@ -2605,7 +2611,7 @@ console.log('Plongeon');
     const a = humanDive(view, 34, 7, 0, 5);
     // (au moins 2 essais sur 5 : selon la trajectoire, un lâcher fixe à 7 trames peut rater, comme pour un joueur)
     const okDive = (r) => r.dove && r.before && r.hit && r.hitAt >= 30 && r.shot === 2;
-    check(a.filter(okDive).length >= 2 && a.every(r => !r.hit || okDive(r)),
+    check(a.filter(okDive).length >= 2 && a.every(r => !r.hit || okDive(r) || !r.dove),   /* (3.02 : une balle venue plus près se frappe sans plonger) */
       `${v} : balle à 34 px, bouton lâché : plongeon avant la frappe, balle touchée en vol (lob) [${a.map(r => r.hit ? 't=' + r.hitAt : 'raté').join(', ')}]`);
     check(a.filter(r => r.dove).every(r => r.kneel && r.still), `${v} : au sol puis un genou à terre, immobile jusqu'au relevé`);
     if (view) continue;
@@ -3127,7 +3133,7 @@ console.log('Version 2.76 : balle de match et changement de côté');
   // START assis : toutes les statistiques passées, reprise, sans pause
   const h = boot(); h.bandSkip = false; startWith(h, { FMT: 3, REPLAY: 0 }); allCpu(h);
   h.cerSkip = false; h.poke('cer_skip', 0); h.poke('sc_games', 2); h.poke('sc_points', 3); h.poke('sc_points', 0, 1);
-  runUntil(h, () => h.peek('cer') === 5, 60 * 60 * 3);
+  runUntil(h, () => h.peek('cer') === 5, 60 * 60 * 3, rePoke(h));
   h.poke('cfg', 0, CFG.CTRL);
   h.run(60);
   h.tap('START'); h.run(4);
@@ -3548,6 +3554,42 @@ console.log('Version 3.02 : entraînement sans adversaire');
   }
   check(seen[0].contre === '' && seen[0].right === '' && !seen[0].titles.includes('TON ADVERSAIRE') && seen[6].contre === 'CONTRE' && seen[6].titles.includes('TON ADVERSAIRE'),
     `entraînement : sans adversaire, page sans « CONTRE » ni adversaire (${JSON.stringify(seen[0])}) ; joueur fixe, adversaire à choisir (${JSON.stringify(seen[6].titles)})`);
+}
+}
+if (sec('Version 3.02 : coups')) {
+console.log('Version 3.02 : coups');
+{
+  // coupé armé : plus long et plus vif que le coupé lâché aussitôt
+  // (entraînement, balles lancées par la machine)
+  const aim = {};
+  for (const lead of [20, 140]) {
+    const e = boot(); e.pickSkip = true; e.customSkip = true; toMenu(e);
+    setOpts(e, { MODE: MODE.TRAIN, EX: 0 }); e.tap('DOWN'); e.tap('UP'); e.run(10); e.tap('START');
+    runUntil(e, () => app(e) === AS.MATCH, 900);
+    let st = 0, ph = e.peek('hitter');
+    runUntil(e, () => aim[lead] !== undefined, 60 * 60, () => {
+      const dy = Math.abs((e.peekS16('by') >> 6) - (e.peekS16('ply') >> 6));
+      if (st === 0 && e.peek('ms') === 2 && e.peek('hitter') === 1 && dy < lead) { e.down('B'); st = 1; }
+      if (st === 1 && dy < 12) { e.up('B'); st = 2; }
+      const h = e.peek('hitter');
+      if (h === 0 && ph === 1 && e.peek('last_shot') === 1 && !e.peek('hit_perf')) aim[lead] = [Math.abs(e.peekS16('land_y') - 132), e.peek('sh_speed')];
+      if (e.peek('ms') !== 2) st = 0;
+      ph = h;
+    });
+  }
+  check(aim[20] && aim[140] && aim[140][0] >= aim[20][0] + 8 && aim[140][1] > aim[20][1], `coupé armé plus long et plus vif (lâché aussitôt : ${aim[20]}, armé : ${aim[140]} ; profondeur visée, vitesse)`);
+}
+{
+  // ordinateur : frappes à plat et coups sans direction (au centre)
+  const e = boot(); startWith(e, { FMT: 1, REPLAY: 0 }); allCpu(e);
+  let flat = 0, centre = 0, n = 0, prh = 0;
+  runUntil(e, () => n >= 150 || app(e) !== AS.MATCH, 60 * 60 * 25, () => {
+    if (e.peek('cer') >= 1 && e.peek('cer') <= 13) e.poke('cer_skip', 1);
+    const rh = e.peek('rally_hits');
+    if (rh > prh && rh >= 2) { n++; if (e.peek('last_shot') === 4) flat++; if (!e.peek('last_aim')) centre++; }
+    prh = rh;
+  });
+  check(n >= 150 && flat > 0 && centre > 0, `ordinateur : ${n} frappes, dont ${flat} à plat et ${centre} sans direction`);
 }
 }
 if (sec('Compensation 50 Hz (PAL)')) {

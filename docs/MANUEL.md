@@ -101,12 +101,12 @@ Avant chaque match, un **écran de présentation** rappelle l'épreuve, les joue
 |---|---|
 | Croix | Se déplacer sur toute sa moitié de court |
 | **A** (maintenir puis relâcher) | Frappe liftée. Plus vous armez longtemps avant l'impact, plus la frappe est forte, bombée et liftée (rebond plus haut), et plus elle est risquée ; relâchée aussitôt, elle tombe un peu plus court, plus sûre |
-| **B** | Coup coupé (slice) : balle basse et lente |
+| **B** | Coup coupé (slice) : balle basse et lente. Armé (version 3.02) : plus long et plus vif, il fuse bas après le rebond, idéal pour monter au filet ; l'armé y ajoute deux fois moins d'imprécision qu'au lifté |
 | **A** + HAUT | Frappe à plat : tendue, longue et très rapide, mais moins précise. Mal placé, elle part dans le filet ou dehors |
 | **A** + BAS | Croisé court : en angle, dans le carré de service, avec du lift. Idéal pour sortir l'adversaire du court ou passer un joueur au filet. L'armé ferme l'angle : relâché vite, la balle passe à bonne distance de la ligne de côté (prudent) ; bouton tenu, elle rase la ligne, plus dure à rattraper mais plus risquée. L'ordinateur (à partir de Normal) le joue aussi |
 | **B** + HAUT | Lob. Relâché vite : **lob court**, plus sûr mais smashable ; bouton tenu : **lob long**, près de la ligne de fond (risque de faute). Depuis le fond du court, le lob part très haut et lent (défensif) ; depuis l'intérieur du court, plus bas et plus vif (lob d'attaque) |
 | **B** + BAS | Amortie |
-| GAUCHE / DROITE à l'impact | Viser le long d'une ligne ; sans direction, le coup part croisé |
+| GAUCHE / DROITE à l'impact | Viser la ligne de côté de gauche ou de droite de l'écran (à 8 px de la ligne) : c'est un coup croisé si la ligne choisie est du côté opposé à votre position, un coup le long de la ligne si elle est de votre côté. Sans direction : la balle part vers le centre du court, à peine croisée (coup sûr, peu dangereux) |
 | **START** | Pause, avec le score dans un bandeau au milieu de l'écran. Ligne 1 : JOUER (reprendre) ou QUITTER (GAUCHE/DROITE puis A) ; ligne 2 : RALENTI ; ligne 3 (version 2.98) : VUE, À PLAT ou PERSPECTIVE, qui change l'affichage du court tout de suite et reste retenue pour les matchs suivants (HAUT/BAS pour changer de ligne, A ou GAUCHE/DROITE pour changer le réglage). SELECT quitte directement |
 
 **HAUT et BAS sont relatifs à votre joueur** : HAUT veut dire « vers l'adversaire » (coup long : frappe à plat, lob), BAS « vers soi » (coup court : croisé court, amortie). Quand votre joueur est en haut de l'écran, après un changement de côté par exemple, c'est donc BAS qui frappe à plat. GAUCHE et DROITE restent ceux de l'écran.
@@ -364,3 +364,5 @@ Le déblocage est gardé dans le palmarès (définitivement si la cartouche a un
 **Version 3.01** : trois profondeurs de service bien distinctes : milieu du carré sans direction, sur la ligne avec HAUT, près du filet avec BAS (en 3.00, sans direction et HAUT tombaient presque au même endroit). L'ordinateur sert long une fois sur deux en première balle (une sur quatre en Facile) ; ses secondes balles tombent au milieu ou court.
 
 **Version 3.02** : à l'entraînement, les exercices sans adversaire (cibles, déplacements, régularité, précision, volée, service, personnalisé, tutoriel) ne montrent plus d'adversaire : la page TON JOUEUR n'affiche que votre joueur, et l'aperçu du court n'a plus de joueur en face. Pour l'exercice contre le joueur fixe, une page TON ADVERSAIRE permet de le choisir.
+
+**Version 3.02 (coups)** : coupé armé plus long et plus vif ; volée armée plus vive (jusqu'à 54, 56 pour la volée à plat) et, avec une direction, courte et en angle ; l'ordinateur varie davantage : parfois au centre, amortie de volée contre un joueur au fond, volée croisée ou à plat, smash coupé ou amorti, smash en angle, à plat sur balle courte ; le mode d'emploi explique enfin ce que font GAUCHE/DROITE (croisé ou le long de la ligne selon votre place) et le coup sans direction (vers le centre).

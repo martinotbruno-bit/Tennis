@@ -38,29 +38,9 @@ s16 iabs(s16 v);
 extern u8 st_perf[2], st_ptry[2], swing_early, perf_t, perf_x, perf_y;
 void set_msg(const char *a, const char *b, u8 t);   /* banque fixe */
 extern u8 car_acc;            /* carrière : précision (career.c) */
-/* Entraînement : écart au bon moment, en images (trames) */
-#pragma bss-name(push, "WBSS")
-static char timing_b[12];
-#pragma bss-name(pop)
-void timing_msg(u8 early, u8 n)
-{
-    char *b = timing_b;
-    if (n > 9) n = 9;
-    b[0] = (char)('0' + n);
-    b[1] = ' '; b[2] = 'I'; b[3] = 'M'; b[4] = 'A'; b[5] = 'G'; b[6] = 'E';
-    b[7] = (char)(n > 1 ? 'S' : 0); b[8] = 0;
-    set_msg(early ? "TROP TOT DE" : "TROP TARD DE", b, 45);
-}
-
-/* Entraînement, service frappé avec A : écart au sommet du lancer (vz = 4
-   ou -2 au sommet ; la vitesse verticale perd 6 par trame) */
-u8 __fastcall__ serve_fb(s16 vz)
-{
-    if (vz > 4) timing_msg(1, (u8)((u8)(vz - 4) / 6));
-    else if (vz < -2) timing_msg(0, (u8)((u8)(-2 - vz) / 6));
-    return 0;
-}
-
+/* (3.02) timing_msg et serve_fb : banque 29 (play2.c), place pour les coups */
+u16 __fastcall__ timing_f(u16 a);   /* early | (n << 8) */
+#define timing_msg(e, n) far_call(BANK_PICK, (void *)timing_f, (u16)((e) | ((u16)(n) << 8)))
 u8 perfect_hit(u8 p, s16 dx)
 {
     u8 t = (u8)(p & 1), r = 0;
@@ -168,7 +148,11 @@ void shot_select(void)
         T = (u8)(iabs(PX(by) - NET_Y) >> 3);
         depth = (s16)(22 - T); speed = 40; grav = 5; bspin = SPIN_DROP; spread += T; last_shot = SH_DROP;
     } else if (sh_btn == PAD_B) {                          /* coupé */
-        depth = 66; speed = 36; grav = 5; bspin = SPIN_SLICE; last_shot = SH_SLICE;   /* (gravité 5, 4 avant la passe plus haut au-dessus du filet) */
+        /* (3.02) armé : plus long et plus vif, il fuse bas (rebond coupé) ;
+           l'armé ajoute deux fois moins d'imprécision */
+        T = (u8)(power > 24 ? 24 : power);
+        depth = (s16)(66 + (T >> 1)); speed = (u8)(36 + (T / 3)); grav = 5; bspin = SPIN_SLICE; last_shot = SH_SLICE;   /* (gravité 5, 4 avant la passe plus haut au-dessus du filet) */
+        power = (u8)(T >> 1);
     } else if (pad & PAD_UP) {                             /* à plat : tendue, rapide, risquée */
         depth = 78; speed = (u8)(54 + power); grav = 4; spread += 7; last_shot = SH_FLAT; flat = 1;
     } else if (pad & PAD_DOWN) {                           /* croisé court : en angle, carré de service */
@@ -188,8 +172,9 @@ void shot_select(void)
         if (last_shot == SH_DROP) depth = (s16)(depth - 6);      /* volée de toucher : meurt près du filet */
         else if (last_shot == SH_SHORT) depth = (s16)(depth - 2); /* volée croisée courte : franche, en angle */
         else depth = (s16)(depth - 10);
-        T = (u8)(flat && power >= 16 ? 52 : last_shot == SH_SHORT ? 48 : 42);   /* volée à plat appuyée, volée croisée : plus vives */
+        T = (u8)(flat && power >= 16 ? 56 : last_shot == SH_SHORT ? 48 : 42 + (power >> 1));   /* volée à plat appuyée, volée croisée, (3.02) volée armée : plus vives */
         if (speed > T) speed = T;
+        if (power >= 12 && (pad & (PAD_LEFT | PAD_RIGHT))) { depth = (s16)(depth - 8); hit_margin = 6; }   /* (3.02) volée armée dirigée : courte et en angle */
         if (last_shot == SH_DRIVE || last_shot == SH_FLAT) last_shot = SH_VOLLEY;
     }
     /* frappe parfaite (lifté, à plat, coupé, croisé court, lob ; banque fixe) :

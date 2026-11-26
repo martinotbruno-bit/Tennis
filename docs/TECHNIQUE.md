@@ -843,3 +843,5 @@ Les résultats détaillés sont dans le [rapport](RAPPORT.md).
 **Version 3.01** : profondeur visée par `serve_hit` : 42 (HAUT), 24 (BAS) ou 33 px du filet (ligne de service à 45). `srv_choose_f` : 1re balle longue une fois sur deux (Facile : une sur quatre), courte une sur huit.
 
 **Version 3.02** : pick.c, `SOLO()` (entraînement, exercice autre que `EX_STATIC`) : `draw_players` vide les colonnes 12 à 31 des rangées 3 à 22 et coupe l'animation du buste droit (`pk_t` 27) ; l'aperçu du court ne dessine pas le joueur d'en face ; `pk_list` ajoute `PK_P2` pour `EX_STATIC` (titre TON ADVERSAIRE).
+
+**Version 3.02 (coups)** : `shot_select` (shots.c) : coupé, `depth = 66 + T/2`, `speed = 36 + T/3`, puissance retenue `T/2` (T = armé borné à 24) ; volée, plafond `42 + power/2` (56 à plat armée), volée dirigée armée (`power >= 12`) : `depth - 8`, `hit_margin = 6`. Ordinateur : `ai_choose_f` (play2.c, banque 29, nouveau fichier) rend croix et bouton ; `timing_f` et `serve_fb` y sont aussi (banque 13 pleine).

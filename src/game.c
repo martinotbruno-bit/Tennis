@@ -406,7 +406,8 @@ extern u8 hl_mode;                 /* 1 : gros plan, 2 : zoom en cours (highligh
 void hl_tick(void);
 #define score_recap() bank_call(BANK_X2, score_recap)   /* (extra2.c) */
 
-u8 __fastcall__ serve_fb(s16 vz);
+u16 __fastcall__ serve_fb(u16 vz);   /* (play2.c, banque 29) */
+u16 __fastcall__ ai_choose_f(u16 a);  /* (3.02, play2.c) */
 u16 __fastcall__ venue_pal_f(u16 cond); void decor_tick(void);   /* extra2.c */             /* banque 13 (shots.c) */
 
 /* pad : directions maintenues ; btn : PAD_A ou PAD_B ; power 0..32 */
@@ -675,7 +676,7 @@ static void human_update(u8 p, u8 pad, u8 pressed)
     if (ms == MS_TOSS && p == server_p()) {
         if (pressed & (PAD_A | PAD_B)) {
             s16 q = iabs(bvz) >> 3;          /* 0 au sommet du lancer */
-            if (cfg.mode == GM_TRAIN && (pressed & PAD_A)) far_call(BANK_SWAP, (void *)serve_fb, (u16)bvz);   /* entraînement : timing */
+            if (cfg.mode == GM_TRAIN && (pressed & PAD_A)) far_call(BANK_PICK, (void *)serve_fb, (u16)bvz);   /* entraînement : timing */
             serve_hit(p, pad, (u8)(pressed & PAD_A ? PAD_A : PAD_B), (u8)(q > 20 ? 20 : q), 3);
         }
         return;
@@ -868,29 +869,13 @@ static void ai_update(u8 p)
             u8 sty = char_style[cfg.chr[p]];
             u8 spread = (u8)(ai_spread[lv] + sty_spread[sty]);
             u8 o = (u8)(t ^ 1);
-            s16 ox = PX(plx[o]), oy = PX(ply[o]);
             u8 lobp = sty_lob[sty];
             /* IA adaptative : contre un adversaire qui monte souvent au filet, plus de lobs */
             if (lv >= 1 && ad_n[o] >= 6 && ad_net[o] * 3 > ad_n[o]) lobp = (u8)(lobp > 175 ? 255 : lobp + 80);
-            if (npl == 4) {
-                /* viser l'adversaire du fond ou le trou entre les deux */
-                ox = (PX(plx[o]) + PX(plx[o + 2])) >> 1;
-                if (iabs(PX(ply[o + 2]) - NET_Y) > iabs(oy - NET_Y)) oy = PX(ply[o + 2]);
-            }
-            if (ox > CENTER_X + 10) pad = PAD_LEFT;
-            else if (ox < CENTER_X - 10) pad = PAD_RIGHT;
-            else pad = (u8)(rand8() & 1 ? PAD_LEFT : PAD_RIGHT);
-            /* choix tactiques selon le niveau et le style du personnage */
-            if (lv >= 1 && iabs(oy - NET_Y) < 50 && rand8() < lobp) {
-                btn = PAD_B; pad |= PAD_UP;                     /* lob sur le volleyeur */
-            } else if (lv >= 1 && iabs(oy - NET_Y) > 90 && iabs(PX(ply[p]) - NET_Y) < 70 && rand8() < (u8)(sty_drop[sty] >> (2 - lv))) {   /* (de l'intérieur du court seulement) */
-                btn = PAD_B; pad |= PAD_DOWN;                   /* amortie */
-            } else if (lv >= 1 && rand8() < (u8)(iabs(oy - NET_Y) < 50 ? 90 : 20)) {
-                pad |= PAD_DOWN;                                /* croisé court : passing sur le volleyeur, ou pour sortir l'adversaire du court */
-            } else if (rand8() < sty_slice[sty]) {
-                btn = PAD_B;                                    /* coupé de variation */
-            } else if (sty_pow[sty] > 4 && (rand8() & 3) == 0) {
-                pad |= PAD_UP;                                  /* frappe à plat */
+            /* (3.02) coup et direction : ai_choose_f (play2.c, banque 29) */
+            {
+                u16 c = far_call(BANK_PICK, (void *)ai_choose_f, (u16)(p | ((u16)lobp << 8)));
+                pad = (u8)c; btn = (u8)(c >> 8);
             }
             if ((rand8() & (ai_fault[lv] | tac_err[t])) == 0) spread += 20;   /* faute directe */
             /* puissance et marge bornées à 0 : en FACILE (puissance 0),

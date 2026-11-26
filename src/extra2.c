@@ -879,3 +879,4 @@ u16 __fastcall__ srv_choose_f(u16 a)
     return (u16)(pad | (btn << 8));
 }
 #pragma static-locals(pop)
+
