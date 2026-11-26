@@ -841,3 +841,5 @@ Les résultats détaillés sont dans le [rapport](RAPPORT.md).
 **Version 3.00** : `serve_hit` (game.c) lit la croix relative (`rel_pad`) : profondeur visée 43 (HAUT), 25 (BAS) ou 40 px du filet. `ai_update` en `MS_TOSS` demande à `srv_choose_f` (extra2.c, banque 30) la croix (relative, repassée par `rel_pad`) et le bouton ; écarts de précision inchangés (1re balle : `ai_spread >> 2`, sinon `>> 3`).
 
 **Version 3.01** : profondeur visée par `serve_hit` : 42 (HAUT), 24 (BAS) ou 33 px du filet (ligne de service à 45). `srv_choose_f` : 1re balle longue une fois sur deux (Facile : une sur quatre), courte une sur huit.
+
+**Version 3.02** : pick.c, `SOLO()` (entraînement, exercice autre que `EX_STATIC`) : `draw_players` vide les colonnes 12 à 31 des rangées 3 à 22 et coupe l'animation du buste droit (`pk_t` 27) ; l'aperçu du court ne dessine pas le joueur d'en face ; `pk_list` ajoute `PK_P2` pour `EX_STATIC` (titre TON ADVERSAIRE).

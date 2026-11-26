@@ -37,6 +37,9 @@ u16 __fastcall__ venue_pal_f(u16 cond);   /* extra2.c : court Margaux selon la s
 #define MODE_2P_TEAM 2
 #define MODE_COMP    3
 #define MODE_TRAIN   4
+#define O_EX_      15                  /* (exercice d'entraînement) */
+/* (3.02) entraînement sans adversaire (tous les exercices sauf le joueur fixe) */
+#define SOLO() (opt_val[O_MODE] == MODE_TRAIN && opt_val[O_EX_] != EX_STATIC)
 #define MODE_DEMO    5
 extern u8 opt_val[];
 extern u8 cu_c[4];                      /* (gfx.c, page zéro : personnages des pages TON JOUEUR) */
@@ -89,7 +92,7 @@ static u8 pk_list(u8 *l)
        de page de choix du joueur (on pouvait en rechoisir un avec A) */
     if (m != MODE_COMP) {
         l[n++] = PK_P1;
-        if (m == MODE_1P || m == MODE_2P || m == MODE_2P_TEAM) l[n++] = PK_P2;
+        if (m == MODE_1P || m == MODE_2P || m == MODE_2P_TEAM || (m == MODE_TRAIN && !SOLO())) l[n++] = PK_P2;   /* (3.02 : entraînement contre le joueur fixe : on le choisit) */
     }
     (void)ct;
     if (pk_rows()) l[n++] = PK_CRT;
@@ -157,7 +160,7 @@ static void draw_players(u8 st)
     pal_set_player(1, cfg.chr[1]);
     bank_call(BANK_PODIUM, vs_build);
     bank_call(BANK_CAR, vs_texts);
-    txt_at(3, 1, st == PK_P1 ? "TON JOUEUR" : partner() ? "TON PARTENAIRE" : m != MODE_1P ? "JOUEUR 2" : "TON ADVERSAIRE");
+    txt_at(3, 1, st == PK_P1 ? "TON JOUEUR" : partner() ? "TON PARTENAIRE" : m != MODE_1P && m != MODE_TRAIN ? "JOUEUR 2" : "TON ADVERSAIRE");
     /* compétition à deux joueurs humains : inscrits ensemble, pas
        encore adversaires : « ET » plutôt que « CONTRE » */
     txt_at(13, 11, partner() || (m == MODE_COMP && opt_val[O_CPART]) ? "  ET  " : "CONTRE");
@@ -172,6 +175,11 @@ static void draw_players(u8 st)
     line_at(25, "A : VALIDER    B : RETOUR");
     line_at(27, "START : TOUT VALIDER");
     pk_t = 23;                          /* (affiche déjà en place : recopie du buste droit) */
+    if (SOLO()) {                       /* (3.02) entraînement sans adversaire : la moitié droite vide */
+        u8 y;
+        for (y = 3; y < 23; ++y) { vram_adr(NTADR(12, y)); vram_fill(0, 20); }
+        pk_t = 27;
+    }
     ppu_on();
 }
 
@@ -379,7 +387,7 @@ u16 __fastcall__ pick_tick(u16 pad)
         /* les deux joueurs sur le court, au repos */
         spr_begin();
         spr_person(120, 202, cfg.chr[0], 0, (u8)(((frame_cnt >> 5) & 1) ? POSE_IDLE : POSE_DRIBBLE), 0, 0);
-        spr_person(136, 62, cfg.chr[1], 1, POSE_IDLE, 0, 1);   /* (sous les 3 lignes du haut) */
+        if (!SOLO()) spr_person(136, 62, cfg.chr[1], 1, POSE_IDLE, 0, 1);   /* (sous les 3 lignes du haut ; 3.02 : pas d'adversaire à l'entraînement sans adversaire) */
         if (cfg.cond == COND_RAIN) {
             /* pluie : 10 gouttes qui tombent en biais */
             for (n = 0; n < 10; ++n) spr1((u8)(n * 25 + 7 + (frame_cnt >> 1)), (u8)(40 + (u8)(n * 53 + (frame_cnt << 2)) % 190), 4, 3);

@@ -3531,6 +3531,25 @@ console.log('Version 3.00 : service varié');
     `joueur : service court avec BAS (${land.DOWN.join(', ')} px du filet), milieu sans direction (${land[''].join(', ')}), long avec HAUT (${land.UP.join(', ')})`);
 }
 }
+if (sec('Version 3.02 : entraînement sans adversaire')) {
+console.log('Version 3.02 : entraînement sans adversaire');
+{
+  // exercice sans adversaire : la page TON JOUEUR ne montre plus d'adversaire,
+  // et aucune page TON ADVERSAIRE ; joueur fixe : on peut le choisir
+  const seen = {};
+  for (const ex of [0, 6]) {
+    const e = boot(); toMenu(e); setOpts(e, { MODE: MODE.TRAIN, EX: ex }); e.tap('DOWN'); e.tap('UP'); e.run(10);
+    e.pickSkip = false; e.run(1); e.tap('START'); runUntil(e, () => scr(e) === SS.PICK, 120); e.run(40);
+    const tx = (x, y, n) => e.text(x, y, n).replace(/\0/g, ' ').trim();
+    const contre = tx(13, 11, 6), right = tx(17, 19, 10);
+    const titles = [tx(3, 1, 16)];
+    for (let k = 0; k < 4 && app(e) === AS.SCREENS; k++) { e.tap('A'); e.run(40); if (app(e) === AS.SCREENS && scr(e) === SS.PICK) titles.push(tx(3, 1, 16)); }
+    seen[ex] = { contre, right, titles };
+  }
+  check(seen[0].contre === '' && seen[0].right === '' && !seen[0].titles.includes('TON ADVERSAIRE') && seen[6].contre === 'CONTRE' && seen[6].titles.includes('TON ADVERSAIRE'),
+    `entraînement : sans adversaire, page sans « CONTRE » ni adversaire (${JSON.stringify(seen[0])}) ; joueur fixe, adversaire à choisir (${JSON.stringify(seen[6].titles)})`);
+}
+}
 if (sec('Compensation 50 Hz (PAL)')) {
 console.log('Compensation 50 Hz (PAL)');
 {
