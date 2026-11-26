@@ -248,7 +248,7 @@ void dive_try(void)
         /* humain, au lâcher du bouton : bien placé (la balle passera à portée,
            en comptant le pas glissé pendant le geste), frappe normale ; trop
            loin (jusqu'à 45 px), plongeon */
-        ok = (u8)(a > (s16)(24 + (n >> 1)) && a < (cn ? 54 : 46));   /* (service canon : allonge de dernière chance) */
+        ok = (u8)(a > (s16)(22 + (n >> 1)) && a < (cn ? 54 : 46));   /* (service canon : allonge de dernière chance ; 3.03 : portée 22) */
     } else {
         lv = cfg.level[p];
         /* balle qui va sortir (pas encore rebondi) : on la laisse */

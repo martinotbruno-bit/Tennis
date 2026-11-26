@@ -244,7 +244,7 @@ Le CPU Expert sait l'utiliser. Sur un lob adverse peu profond, il vise le point 
   | Imprécision d'anticipation (px, tirée à chaque frappe adverse) | ±18 | ±12 | ±5 |
   | Faute directe | 1 frappe sur 4 | 1 sur 8 | 1 sur 16 |
 
-  Zone de frappe (tous les joueurs) : ±24 px en largeur, de -15 à +10 px en profondeur, jusqu'à 40 px de hauteur.
+  Zone de frappe (tous les joueurs) : ±24 px en largeur (±22 depuis la 3.03, avec un pas vers la balle au-delà de 15 px : `step_f`, play2.c), de -15 à +10 px en profondeur, jusqu'à 40 px de hauteur.
 
   **Calibrage** (versions 2.3 puis 2.4, après deux retours de test : « Normal un peu trop difficile », puis « encore très difficile ») : `tests/calib.mjs` fait jouer un robot « humain » contre l'IA. Ce robot réagit en 9 à 16 trames, se place avec une erreur qui se corrige à l'approche de la balle et frappe dans des directions variées. Sur 4 parties par niveau (v2.4), il gagne environ 94 % des points contre Normal, avec des échanges bien plus courts qu'avant, et environ 53 % contre Expert. Le robot étant plus régulier qu'un humain, Normal doit maintenant être abordable et Expert rester exigeant.
 
@@ -845,3 +845,5 @@ Les résultats détaillés sont dans le [rapport](RAPPORT.md).
 **Version 3.02** : pick.c, `SOLO()` (entraînement, exercice autre que `EX_STATIC`) : `draw_players` vide les colonnes 12 à 31 des rangées 3 à 22 et coupe l'animation du buste droit (`pk_t` 27) ; l'aperçu du court ne dessine pas le joueur d'en face ; `pk_list` ajoute `PK_P2` pour `EX_STATIC` (titre TON ADVERSAIRE).
 
 **Version 3.02 (coups)** : `shot_select` (shots.c) : coupé, `depth = 66 + T/2`, `speed = 36 + T/3`, puissance retenue `T/2` (T = armé borné à 24) ; volée, plafond `42 + power/2` (56 à plat armée), volée dirigée armée (`power >= 12`) : `depth - 8`, `hit_margin = 6`. Ordinateur : `ai_choose_f` (play2.c, banque 29, nouveau fichier) rend croix et bouton ; `timing_f` et `serve_fb` y sont aussi (banque 13 pleine).
+
+**Version 3.03** : `can_hit` (gamefix.c) : largeur ±22 px. `step_f` (play2.c, banque 29), appelé pour chaque joueur à chaque trame de l'échange tant qu'il n'a pas frappé : balle dans son camp, à moins de 40 px en profondeur et qui vient vers lui, balle visible passant entre 17 et 26 px sur le côté : le joueur glisse de 2 px par trame vers elle (arrêt à 15 ou 16 px d'écart : la frappe reste en extension). Plongeon humain : seuil `22 + n/2` (24 avant).

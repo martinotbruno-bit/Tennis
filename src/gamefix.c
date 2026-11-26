@@ -119,11 +119,13 @@ u8 can_hit(u8 p)
     if ((PX(by) < NET_Y ? 1 : 0) != (u8)((t & 1) ^ sc_swap)) return 0;
     if (b_serve && bounces == 0) return 0;      /* le retour se joue après rebond */
     /* zone de frappe généreuse : les balles un peu loin partent quand même
-       (la profondeur d'abord : le plus souvent, elle suffit à conclure) */
+       (la profondeur d'abord : le plus souvent, elle suffit à conclure) ;
+       (3.03) largeur ±22 px (±24 depuis la 2.4), le joueur faisant un pas
+       vers la balle au-delà de 15 px (step_f, play2.c) */
     dy = PX(by) - PX(ply[p]);
     if (dy < -15 || dy > 10) return 0;
     dx = PX(bx) - PX(plx[p]);
-    if (dx < -24 || dx > 24) return 0;
+    if (dx < -22 || dx > 22) return 0;
     if (bz > 40 * FP) {
         /* balle très haute : avant le rebond, smash sauté (joueurs humains et
            CPU expert, hors du fond du court) ; après le rebond, un lob

@@ -3592,6 +3592,22 @@ console.log('Version 3.02 : coups');
   check(n >= 150 && flat > 0 && centre > 0, `ordinateur : ${n} frappes, dont ${flat} à plat et ${centre} sans direction`);
 }
 }
+if (sec('Version 3.03 : pas vers la balle')) {
+console.log('Version 3.03 : pas vers la balle');
+{
+  // portée ±22 px ; au-delà de 15 px, le joueur glisse vers la balle : presque
+  // plus de frappe avec la balle loin de la raquette
+  const e = boot(); startWith(e, { FMT: 1, REPLAY: 0 }); allCpu(e);
+  let n = 0, far = 0, max = 0, prh = 0, bx = 0;
+  runUntil(e, () => n >= 200 || app(e) !== AS.MATCH, 60 * 60 * 25, () => {
+    if (e.peek('cer') >= 1 && e.peek('cer') <= 13) e.poke('cer_skip', 1);
+    const rh = e.peek('rally_hits');
+    if (rh > prh && rh >= 2) { const p = e.peek('hitter_p'), d = Math.abs(bx - (e.peekS16('plx', p * 2) >> 6)); n++; if (d >= 18) far++; if (d > max) max = d; }
+    prh = rh; bx = e.peekS16('bx') >> 6;
+  });
+  check(n >= 200 && far * 100 <= n * 5 && max <= 23, `${n} frappes : ${far} avec la balle à 18 px ou plus du joueur (au plus ${max} px)`);
+}
+}
 if (sec('Compensation 50 Hz (PAL)')) {
 console.log('Compensation 50 Hz (PAL)');
 {

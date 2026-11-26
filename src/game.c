@@ -408,6 +408,7 @@ void hl_tick(void);
 
 u16 __fastcall__ serve_fb(u16 vz);   /* (play2.c, banque 29) */
 u16 __fastcall__ ai_choose_f(u16 a);  /* (3.02, play2.c) */
+u16 __fastcall__ step_f(u16 p);       /* (3.03, play2.c) */
 u16 __fastcall__ venue_pal_f(u16 cond); void decor_tick(void);   /* extra2.c */             /* banque 13 (shots.c) */
 
 /* pad : directions maintenues ; btn : PAD_A ou PAD_B ; power 0..32 */
@@ -1200,6 +1201,7 @@ u8 match_tick(void)
             hit_margin = 8;
             human_update(p, pad, pressed);
         }
+        if (ms == MS_RALLY && b_live && hitter != (u8)(p & 1)) far_call(BANK_PICK, (void *)step_f, p);   /* (3.03) pas vers une balle un peu loin (play2.c) */
         if (pl_moving[p]) ++pl_walk[p];
     }
     bank_call(BANK_EXTRAS, slip_tick);   /* dérapages : glace, terre battue, sable (src/slip.s) */

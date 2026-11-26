@@ -98,4 +98,31 @@ u16 __fastcall__ ai_choose_f(u16 a)
     }
     return (u16)(pad | (btn << 8));
 }
+
+/* ---------------------------------------------------------------------- */
+/* (3.03) Pas vers la balle : la frappe part jusqu'à 22 px du centre du    */
+/* joueur, mais la raquette n'atteint qu'environ 14 px. Quand la balle     */
+/* arrive vers lui (moins de 40 px en profondeur) et passera entre 16 et   */
+/* 26 px sur le côté, le joueur glisse de 2 px par trame vers elle, en    */
+/* s'arrêtant à 15 ou 16 px d'écart (la frappe en extension garde son imprécision) : */
+/* la raquette touche vraiment la balle. Ni pendant un plongeon ni en      */
+/* l'air.                                                                  */
+/* ---------------------------------------------------------------------- */
+extern u8 dive_t[4], pl_jump[4], pl_moving[4], sc_swap;
+u16 __fastcall__ step_f(u16 a)
+{
+    u8 p = (u8)a, t = (u8)(p & 1);
+    s16 dx, dy, s;
+    if (!b_vis || bounces > 1 || dive_t[p] || pl_jump[p]) return 0;
+    if ((u8)(PX(by) < NET_Y ? 1 : 0) != (u8)(t ^ sc_swap)) return 0;   /* balle dans son camp */
+    dy = PX(by) - PX(ply[p]);
+    if (dy < -40 || dy > 30) return 0;
+    if ((dy < 0 && bvy < 0) || (dy > 0 && bvy > 0)) return 0;           /* elle s'éloigne */
+    dx = PX(bx) - PX(plx[p]);
+    s = dx < 0 ? -dx : dx;
+    if (s <= 16 || s > 26) return 0;                                   /* (arrêt à 15 ou 16 px : la frappe reste en extension) */
+    plx[p] += dx < 0 ? -128 : 128;
+    pl_moving[p] = 1;
+    return 0;
+}
 #pragma static-locals(pop)
