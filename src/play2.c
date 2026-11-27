@@ -131,11 +131,12 @@ u16 __fastcall__ step_f(u16 a)
 /* rebond décisif (premier rebond de la dernière balle, dans le camp du   */
 /* receveur) est près d'une ligne - bonne à 4 px ou moins de la ligne la   */
 /* plus proche, dehors à 6 px ou moins -, sa marque reste au sol (dessinée */
-/* par match_fx, extras.c) jusqu'au lancer du service suivant.            */
+/* par match_fx, extras.c) jusqu'à ce que le bandeau du score disparaisse */
+/* (3.06 ; au plus tard au lancer du service suivant).                    */
 /* ---------------------------------------------------------------------- */
 extern u8 opt_val[];
 extern u8 hl_bx, hl_by, hl_bin, hl_bok;
-u8 mk_on, mk_x, mk_y;
+u8 mk_on, mk_x, mk_y;                     /* (mk_on : 1 marque montrée, 2 et le bandeau du score déjà vu) */
 u16 __fastcall__ mk_set_f(u16 a)
 {
     s16 x = hl_bx, y = hl_by, d, l = cfg.doubles ? IN_DL : IN_SL, r = cfg.doubles ? IN_DR : IN_SR;

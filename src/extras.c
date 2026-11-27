@@ -630,14 +630,16 @@ static void pj(u8 x, u8 y)
 }
 
 extern u8 mk_on, mk_x, mk_y;              /* (3.05) marque au sol (play2.c) */
+extern u8 band_vis;                       /* (highlight.c) */
 void match_fx(void)
 {
     u8 i, j;
     /* (3.05) marque d'une balle près d'une ligne : jusqu'au lancer suivant,
        pas pendant le ralenti ni les gros plans */
     if (mk_on) {
-        if (ms == MS_TOSS || ms == MS_RALLY || cer) mk_on = 0;
-        else if (ms != MS_REPLAY && !hl_mode && (frame_cnt & 0x18)) { pj(mk_x, mk_y); spr1((u8)(qx - 4), (u8)(qy - 4), 5, 2); }   /* (clignote : trois trames sur quatre) */
+        if (band_vis == 3) mk_on = 2;               /* (3.06) effacée avec le bandeau du score */
+        if (ms == MS_TOSS || ms == MS_RALLY || cer || (mk_on == 2 && !band_vis)) mk_on = 0;
+        else if (ms != MS_REPLAY && !hl_mode && (frame_cnt & 0x18)) { pj(mk_x, mk_y); spr1((u8)(qx - 3), (u8)(qy - 4), 2, 2); }   /* (3.06 : petite marque de 4 x 2 px ; clignote, trois trames sur quatre) */
     }
     /* rebond : poussière sur terre et sable, éclaboussure sous la pluie */
     if (bounces != fx_bounces) {

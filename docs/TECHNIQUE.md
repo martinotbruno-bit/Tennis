@@ -851,3 +851,5 @@ Les résultats détaillés sont dans le [rapport](RAPPORT.md).
 **Version 3.04** : `persp_sides` : `hall = (e == 2)` rétabli (tribune pleine, `HALL_BAND`, attributs public en palette 3, bandeaux en palette 2) ; sur les rangées de bandeau, le bord de la rambarde reprend le dessin du bandeau (`hall_half`).
 
 **Version 3.05** : option `O_MARK` = 26 (`NOPT` 27 ; lignes sans valeur décalées : VERSUS 27, OPTIONS 28, RETOUR 29), sauvegardée dans `sw_view[1]` bit 1 (1 = NON). `mk_set_f` (play2.c), appelée par `point_over` après `hl_out` : `mk_on`, `mk_x`, `mk_y` depuis `hl_bx/hl_by/hl_bin` (bonne ≤ 4 px de la ligne, dehors ≤ 6 px, camp du receveur, pas de service bon). `match_fx` (extras.c) dessine la tuile d'ombre (5, palette 2) projetée (`pj`) trois trames sur quatre, l'efface au lancer (`MS_TOSS`), à l'échange ou pendant une cérémonie.
+
+**Version 3.06** : marque dessinée avec la tuile 2 (ovale 4 × 2 px) ; `mk_on` passe à 2 quand le bandeau est affiché (`band_vis == 3`) et revient à 0 quand il disparaît (`band_vis == 0`).
