@@ -225,6 +225,7 @@ Pour chaque ligne, lancez un match et regardez l'écran pendant une dizaine de s
 | 10.87 | Salle en perspective (version 3.04) | Public sur toute la tribune jusqu'à la rambarde, plus petit vers le fond ; bandeaux verts horizontaux qui vont jusqu'à la rambarde, sans carré gris au bord | ☐ |
 | 10.88 | Marque au sol (version 3.05) | OPTIONS, MARQUE OUI : un point qui finit sur une balle près d'une ligne laisse une marque clignotante à l'impact jusqu'au service suivant ; MARQUE NON : aucune ; réglage retenu après extinction | ☐ |
 | 10.89 | Marque au sol (version 3.06) | Petite marque (un trait) ; elle disparaît au même instant que le bandeau du score (appui sur A) | ☐ |
+| 10.90 | Lancer non frappé (version 3.07) | Fermer le bandeau du score, lancer la balle sans frapper : la balle retombe, le bandeau ne revient pas ; un coup gagnant tombé un peu à l'intérieur d'une ligne laisse sa marque | ☐ |
 
 ## 11. Ce qu'il faut renvoyer
 

@@ -129,7 +129,7 @@ u16 __fastcall__ step_f(u16 a)
 /* ---------------------------------------------------------------------- */
 /* (3.05) Marque au sol (option MARQUE) : à la fin d'un point dont le     */
 /* rebond décisif (premier rebond de la dernière balle, dans le camp du   */
-/* receveur) est près d'une ligne - bonne à 4 px ou moins de la ligne la   */
+/* receveur) est près d'une ligne - bonne à 10 px ou moins de la ligne la  */
 /* plus proche, dehors à 6 px ou moins -, sa marque reste au sol (dessinée */
 /* par match_fx, extras.c) jusqu'à ce que le bandeau du score disparaisse */
 /* (3.06 ; au plus tard au lancer du service suivant).                    */
@@ -150,7 +150,7 @@ u16 __fastcall__ mk_set_f(u16 a)
         if (y - IN_TOP < d) d = y - IN_TOP;
         if (IN_BOT - y < d) d = IN_BOT - y;
         if (b_serve) return 0;                      /* (service bon : les lignes du carré ne sont pas vérifiées ici) */
-        if (d > 4) return 0;
+        if (d > 10) return 0;                       /* (3.07 : 10 px au lieu de 4 pour une balle bonne) */
     } else {
         d = 0;
         if (x < l) d = l - x; else if (x > r) d = x - r;

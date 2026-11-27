@@ -3616,6 +3616,24 @@ console.log('Version 3.05 : marque au sol');
   check(res[1].shown > 0 && res[1].cleared && res[0].shown === 0, `marque au sol : affichée près des lignes avec l'option (${res[1].shown} trames sur ${res[1].pts} points), effacée au service suivant (${res[1].cleared}), jamais sans l'option (${res[0].shown})`);
 }
 }
+if (sec('Version 3.07 : lancer non frappé')) {
+console.log('Version 3.07 : lancer non frappé');
+{
+  // le joueur ferme le bandeau, lance la balle sans la frapper : elle retombe,
+  // le bandeau ne revient pas
+  const e = boot(); e.bandSkip = false; startWith(e, { FMT: 3, REPLAY: 0 });
+  const c = e.addr('cfg'); e.nes.cpu.mem[c + CFG.CTRL + 1] = 2;
+  e.poke('st_first_tot', 1, 0);                               /* (pas le premier service du match : bandeau attendu) */
+  let ok = runUntil(e, () => e.peek('ms') === 0 && !e.peek('cer') && e.peek('sc_server') === 0 && (e.peek('hl_flags') & 4), 60 * 60 * 3, () => { if (e.peek('sc_server') !== 0) e.poke('sc_server', 0); });
+  e.tap('A', 1, 1, 0); e.run(10);                              /* ferme le bandeau */
+  const closed = e.peek('band_vis') === 0;
+  e.tap('A', 1, 1, 0);                                         /* lance la balle, sans frapper */
+  const tossed = runUntil(e, () => e.peek('ms') === 1, 30);
+  runUntil(e, () => e.peek('ms') === 0, 200);
+  let back = 0; for (let i = 0; i < 120; i++) { e.run(1); if (e.peek('band_vis')) back++; }
+  check(ok && closed && tossed && back === 0, `lancer non frappé : le bandeau fermé ne revient pas (${back} trame(s) affiché)`);
+}
+}
 if (sec('Compensation 50 Hz (PAL)')) {
 console.log('Compensation 50 Hz (PAL)');
 {

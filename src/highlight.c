@@ -320,7 +320,7 @@ void band_draw(void)
        l'ordinateur attend pour servir (band_hold, game.c). Sans joueur
        humain (démonstration, ordinateur contre ordinateur), il disparaît
        au lancer de balle, comme avant. */
-    if (ms != MS_DEAD && ms != MS_SERVE) band_dis = 0;
+    if (ms != MS_DEAD && ms != MS_SERVE && ms != MS_TOSS) band_dis = 0;   /* (3.07 : lancer non frappé, retour à la mise en place : le bandeau fermé ne revient pas) */
     else if (!rp_pending && (hl_flags & 4) && (pad1_new | pad2_new)) band_dis = 1;   /* (2.82 : seulement bandeau entièrement monté ; un appui plus tôt, par exemple juste après avoir passé le ralenti, l'empêchait d'apparaître) */
     if (cer == CER_CHOOSE || cer == CER_RECAP) band_pg = 6;
     /* balle de match gagnée : pas de bandeau avant la fête (le
