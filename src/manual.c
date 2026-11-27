@@ -210,7 +210,7 @@ static void mini_court(void)
             if (r == 14) t = 7;                                   /* filet */
             else if (r == 22) t = (c >= 21 && c <= 28) ? 8 : 0;   /* ligne de fond du bas */
             else if (r >= 6 && r <= 21 && c >= 21 && c <= 28) {
-                if (r == 6 || r == 10 || r == 18) t = c == 21 ? 5 : c == 28 ? 6 : (c == 25 && r != 6) ? 5 : 2;
+                if (r == 6 || r == 10 || r == 18) t = c == 21 ? 5 : c == 28 ? 6 : (c == 25 && r == 10) ? 5 : 2;   /* (3.08 : la ligne médiane s'arrête à la ligne de service du bas, elle dépassait d'une tuile) */
                 else t = c == 21 ? 3 : c == 28 ? 4 : (c == 25 && r > 10 && r < 18) ? 3 : 1;
             }
             vram_put((u8)(T_OUT + t));

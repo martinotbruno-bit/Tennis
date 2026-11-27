@@ -490,7 +490,10 @@ console.log('Version 2.71 : bandeau du score, crépuscule, voix, record');
       shown++;
       const row = String.fromCharCode(...vm.slice(0x2400 + 26 * 32 + 4, 0x2400 + 26 * 32 + 8));
       if (/^[A-Z][A-Z ]{3}$/.test(row)) okText++;
-      let low = 0; for (let i = 0; i < 64; i++) { const y = e.nes.ppu.spriteMem[i * 4]; if (y >= 192 && y < 240) low++; }   /* (OAM envoyée au PPU)*/
+      /* (3.08 : pendant la montée, seuls les sprites sous le bord du bandeau
+         sont cachés : celui de la trame d'avant, 199 + 4 x reste - 7) */
+      const cut = (e.peek('hl_flags') & 4) || e.peek('band_t') >= 58 ? 192 : Math.min(192 + (59 - e.peek('band_t')) * 4, 232);
+      let low = 0; for (let i = 0; i < 64; i++) { const y = e.nes.ppu.spriteMem[i * 4]; if (y >= cut && y < 240) low++; }   /* (OAM envoyée au PPU)*/
       if (!low) okSpr++; else if (process.env.DBG) { const l = []; for (let i = 0; i < 64; i++) { const y = e.nes.ppu.spriteMem[i * 4]; if (y >= 192 && y < 240) l.push(y + ':' + e.nes.ppu.spriteMem[i * 4 + 1].toString(16)); } console.log('spr', f, e.peek('cer'), e.peek('ms'), e.peek('ms_timer'), l.join(' ')); }
       if (e.peek('ms') === 0 && e.peek('ms_timer') === 0 && e.peek('cer') === 0) badServe++;
     }
@@ -3632,6 +3635,84 @@ console.log('Version 3.07 : lancer non frappé');
   runUntil(e, () => e.peek('ms') === 0, 200);
   let back = 0; for (let i = 0; i < 120; i++) { e.run(1); if (e.peek('band_vis')) back++; }
   check(ok && closed && tossed && back === 0, `lancer non frappé : le bandeau fermé ne revient pas (${back} trame(s) affiché)`);
+}
+}
+if (sec('Version 3.08 : parc, mode d\'emploi, marque, bandeau, goutte')) {
+console.log('Version 3.08 : parc, mode d\'emploi, marque, bandeau, goutte');
+{
+  // parc en perspective : la standing ovation ne lève pas les tuiles 5-8
+  // (spectateurs du stade absents de ce court : la végétation en bas à gauche)
+  const e = boot(); startWith(e, { FMT: 1, REPLAY: 0, ENV: 6, VIEW: 1 }); allCpu(e);
+  runUntil(e, () => e.peek('ms') === 3, 60 * 60);
+  const nt = e.nes.ppu.vramMem, cells = [];
+  for (let r = 4; r < 30; r++) for (const c of [0, 1, 2, 3, 4, 5, 26, 27, 28, 29, 30, 31]) cells.push([0x2000 + r * 32 + c, nt[0x2000 + r * 32 + c]]);
+  e.poke('crowd_big', e.peek('crowd_big') | 1);
+  let up = 0, bad = 0;
+  for (let f = 0; f < 260; f++) { e.run(1); if (e.peek('ola_on') >= 2) up++; for (const [a, t] of cells) if (t >= 5 && t <= 8 && nt[a] !== t) bad++; }
+  check(up > 100 && bad === 0 && cells.some(([, t]) => t >= 5 && t <= 8), `parc en perspective : ovation (${up} trames) sans toucher les tuiles de la végétation (${bad} changement(s))`);
+}
+{
+  // mode d'emploi : la ligne médiane s'arrête à la ligne de service du bas
+  const e = boot(); runUntil(e, () => scr(e) === SS.TITLE, 100); e.run(30);
+  e.tap('DOWN'); e.tap('A'); e.run(30);
+  const nt = e.nes.ppu.vramMem, at = (r, c) => nt[0x2000 + r * 32 + c];
+  check(at(10, 25) === 0xA5 && at(18, 25) === 0xA2 && at(17, 25) === 0xA3, `mini-court : croisement en haut, simple ligne de service en bas (${at(10, 25).toString(16)} ${at(18, 25).toString(16)} ${at(17, 25).toString(16)})`);
+}
+{
+  // marque au sol : balle dehors, au moins un pixel d'écart avec la ligne ;
+  // balle bonne qui touche une ligne : la marque la recouvre (à plat :
+  // marque de x - 2 à x + 1, de y - 1 à y)
+  const e = boot(); startWith(e, { FMT: 1, REPLAY: 0, MARK: 1 }); allCpu(e);
+  const L0 = 74, R0 = 182, linePx = (x, y) => ((x === L0 || x === R0) && y >= 47 && y <= 217) || ((y === 47 || y === 48 || y === 216 || y === 217) && x >= L0 && x <= R0);
+  const hit = (x0, x1, y0, y1) => { for (let x = x0; x <= x1; x++) for (let y = y0; y <= y1; y++) if (linePx(x, y)) return true; return false; };
+  let n = 0, nin = 0, nout = 0, bad = [], pm = 0, pms = 0, pts = 0;
+  runUntil(e, () => pts >= 60 || app(e) !== AS.MATCH, 60 * 60 * 30, () => {
+    if (e.peek('cer') >= 1 && e.peek('cer') <= 13) e.poke('cer_skip', 1);
+    const m = e.peek('mk_on'), ms = e.peek('ms');
+    if (pms !== 2 && ms === 2) pts++;
+    pms = ms;
+    if (m && !pm) {
+      const x = e.peek('mk_x'), y = e.peek('mk_y'), bx = e.peek('hl_bx'), by = e.peek('hl_by'), bin = e.peek('hl_bin');
+      const r = [x - 2, x + 1, y - 1, y]; n++;
+      if (!bin) { nout++; if (hit(r[0] - 1, r[1] + 1, r[2] - 1, r[3] + 1)) bad.push(`dehors ${bx},${by}`); }
+      else {
+        const touch = (bx >= L0 - 2 && bx <= L0 + 2) || (bx >= R0 - 2 && bx <= R0 + 2) || (by >= 45 && by <= 50) || (by >= 214 && by <= 219);
+        if (touch) { nin++; if (!hit(...r)) bad.push(`bonne ${bx},${by}`); }
+      }
+    }
+    pm = m;
+  });
+  check(n >= 3 && bad.length === 0, `marque au sol fidèle au jugement : ${n} marque(s), ${nout} dehors (écart visible), ${nin} bonne(s) sur la ligne (la recouvrent) ${bad.join(' ')}`);
+}
+{
+  // bandeau qui monte : les sprites ne sont cachés que sous son bord (le bas
+  // du joueur du bas restait effacé avant d'être recouvert)
+  const e = boot(); e.bandSkip = false; startWith(e, { FMT: 3, REPLAY: 0 }); allCpu(e);
+  e.poke('st_first_tot', 1, 0);
+  let seen = 0, kept = 0, rises = 0, pb = 0;
+  const low = () => { let k = 0; for (let i = 0; i < 64; i++) { const y = e.peek('oam_buf', i * 4); if (y >= 192 && y < 0xEF) k++; } return k; };
+  runUntil(e, () => rises >= 6 || app(e) !== AS.MATCH, 60 * 60 * 10, () => {
+    const b = e.peek('band_vis');
+    if (b === 2 || (b === 3 && !(e.peek('hl_flags') & 4))) { const k = low(); if (k) kept++; seen++; }
+    if (b === 3 && pb !== 3) rises++;
+    pb = b;
+  });
+  check(rises >= 3 && kept > 0, `bandeau qui monte : sprites encore visibles sous l'écran pendant la montée (${kept} trame(s) sur ${seen}, ${rises} montées)`);
+}
+{
+  // goutte de sueur : pas pendant le changement de côté (ni les cérémonies) ;
+  // chaque échange est rendu long (fatigue au maximum)
+  const e = boot(); startWith(e, { FMT: 2, REPLAY: 0, FATIG: 1 }); allCpu(e);
+  e.cerSkip = false; e.poke('cer_skip', 0); e.poke('sc_games', 2); e.poke('sc_points', 3); e.poke('sc_points', 0, 1);   /* (jeu suivant : changement de côté) */
+  let on = 0, nc = 0, bad = 0, cf = 0;
+  runUntil(e, () => nc >= 150 || app(e) !== AS.MATCH, 60 * 60 * 20, () => {
+    if (e.peek('ms') === 2) e.poke('rally_hits', 20);
+    const c = e.peek('cer'), t = oamTiles(e).has(14);
+    cf = c ? cf + 1 : 0;
+    if (!c && t) on++;
+    if (c >= 4 && c <= 10 && cf > 2) { nc++; if (t) bad++; }
+  });
+  check(on > 0 && nc >= 150 && bad === 0, `goutte de sueur pendant les échanges (${on} trames), jamais pendant le changement de côté (${bad} sur ${nc} trames)`);
 }
 }
 if (sec('Compensation 50 Hz (PAL)')) {

@@ -377,3 +377,5 @@ Le déblocage est gardé dans le palmarès (définitivement si la cartouche a un
 **Version 3.06** : la marque au sol est plus petite et disparaît en même temps que le bandeau du score.
 
 **Version 3.07** : un lancer de service non frappé ne fait plus revenir le bandeau du score déjà fermé ; la marque au sol apparaît aussi pour les coups gagnants tombés jusqu'à 10 px d'une ligne (4 avant).
+
+**Version 3.08** : en perspective au parc, la végétation en bas à gauche ne s'abîme plus pendant l'ovation du public ; le terrain du mode d'emploi a sa ligne médiane correcte ; la marque au sol suit exactement le jugement de l'arbitre (balle dehors : un écart se voit avec la ligne ; balle bonne qui touche la ligne : la marque mord dessus) ; quand le bandeau du score monte, le joueur du bas reste entier jusqu'à ce que le bandeau le recouvre ; la goutte de sueur disparaît pendant le changement de côté.

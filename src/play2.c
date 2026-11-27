@@ -157,6 +157,29 @@ u16 __fastcall__ mk_set_f(u16 a)
         if (y < IN_TOP) d += IN_TOP - y; else if (y > IN_BOT) d += y - IN_BOT;
         if (b_serve || d == 0 || d > 6) return 0;
     }
+    /* (3.08) marque recalée sur le jugement : elle couvre x - 2 à x + 1 et
+       y - 1 à y (extras.c) ; l'empreinte de la balle (2 px de rayon) n'en
+       diffère que d'un demi-pixel, de quoi qu'une balle dehors semble
+       toucher la ligne de droite, ou qu'une balle bonne du haut semble
+       ne pas toucher sa ligne de fond. Balle dehors : au moins un pixel
+       d'écart avec la ligne ; balle bonne qui touche la ligne : la marque
+       mord sur la ligne */
+    l += BALL_R; r -= BALL_R;                       /* (pixels des lignes de côté) */
+    if (hl_bin) {
+        /* balle qui touche une ligne (son disque la recouvre, d'un côté ou
+           de l'autre) : marque ramenée sur la ligne */
+        a = (u8)(persp ? 1 : 0);                    /* (perspective : arrondis de la projection, un pixel de plus) */
+        if (x <= l + 2) { if (x < l - 1 + (s16)a) x = l - 1 + a; else if (x > l + 2 - (s16)a) x = l + 2 - a; }
+        if (x >= r - 2) { if (x < r - 1 + (s16)a) x = r - 1 + a; else if (x > r + 2 - (s16)a) x = r + 2 - a; }
+        if (y <= TOP_BASE + 2) { if (y < TOP_BASE - 1) y = TOP_BASE - 1; else if (y > TOP_BASE + 1) y = TOP_BASE + 1; }
+        if (y >= BOT_BASE - 2) { if (y < BOT_BASE + 1) y = BOT_BASE + 1; else if (y > BOT_BASE + 2) y = BOT_BASE + 2; }
+    } else {
+        a = (u8)(persp ? 2 : 0);                    /* (perspective : arrondis de la projection, un écart de plus) */
+        if (x > r + 2 && x < r + 4 + (s16)a) x = r + 4 + a;
+        if (x < l - 2 && x > l - 3 - (s16)a) x = l - 3 - a;
+        if (y > BOT_BASE + 3 && y < BOT_BASE + 4 + (s16)a) y = BOT_BASE + 4 + a;
+        if (y < TOP_BASE - 3 && y > TOP_BASE - 4 - (s16)a) y = TOP_BASE - 4 - a;
+    }
     mk_x = (u8)x; mk_y = (u8)y; mk_on = 1;
     return 0;
 }

@@ -390,6 +390,13 @@ void band_draw(void)
     if (band_vis == 1) { if (band_rows) return; band_vis = 2; }
     else if (band_vis == 2) { band_vis = 3; band_on(cer == CER_SEAT || cer == CER_CHOOSE || cer == CER_RECAP ? BAND_LINE : BAND_LINE + 40); }
     else if (cer != CER_SEAT && band_t < BAND_WAIT + 10) { ++band_t; band_on((u8)(BAND_LINE + (BAND_WAIT + 10 - band_t) * 4)); }   /* (montée) */
+    /* (3.08) hauteur de coupe des sprites : le haut du bandeau à cette
+       trame, moins 4 lignes (une trame en retard montre l'OAM d'avant),
+       et non plus 192 dès l'écriture du texte : le bas du corps du joueur
+       du bas disparaissait avant que le bandeau monte le recouvrir */
+    v = 192;
+    if (band_vis == 2) v = 232;
+    else if (cer != CER_SEAT && band_t < BAND_WAIT + 10) v = (u8)(188 + (BAND_WAIT + 10 - band_t) * 4);
     /* hl_flags bit 2 : bandeau entièrement monté (les chaises du
        changement de côté n'apparaissent qu'alors, cer.c) */
     if (band_vis == 3 && (cer == CER_SEAT || band_t >= BAND_WAIT + 10)) hl_flags |= 4; else hl_flags &= (u8)~4;
@@ -398,7 +405,7 @@ void band_draw(void)
        quatre en double en perspective) */
     __asm__("ldx #0");
     __asm__("band_hide: lda %v,x", oam_buf);
-    __asm__("cmp #192");
+    __asm__("cmp %v", v);
     __asm__("bcc band_keep");
     __asm__("cmp #240");
     __asm__("bcs band_keep");

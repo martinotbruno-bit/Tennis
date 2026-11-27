@@ -393,8 +393,11 @@ static u8 ola_row(u8 o, u8 up)
             /* bras levés = tuile + 4 : public du stade (5-8), du club et de
                la salle (13-16), spectateurs plus petits de la perspective
                (3 tailles x 8 places dès ps_idx[0] : 4 dessins, 4 bras levés) ;
-               vérifié par tools/gen_assets.py */
-            if (up && ((u8)(t - 5) < 4 || (u8)(t - 13) < 4 || (k && (u8)(t - k) < 24 && !((u8)(t - k) & 4)))) t += 4;
+               vérifié par tools/gen_assets.py ; 3.08 : pas les tuiles 5-8 ni
+               13-16 quand ces spectateurs ne sont pas sur le court en
+               perspective (persp_free) : elles y dessinent autre chose, par
+               exemple la végétation en bas à gauche du parc) */
+            if (up && (((u8)(t - 5) < 4 && !(persp_free & 4)) || ((u8)(t - 13) < 4 && !(persp_free & 8)) || (k && (u8)(t - k) < 24 && !((u8)(t - k) & 4)))) t += 4;
             rowbuf[c] = t;
         }
         if (!vbuf_raw(NTADR(s ? 32 - n : 0, 4 + o), rowbuf, n)) return 0;
@@ -681,7 +684,7 @@ void match_fx(void)
     }
     /* fatigue : goutte de sueur au-dessus des joueurs (clignote) ; en double,
        seulement pour les joueurs humains (limite de sprites par ligne) */
-    if (tired >= 4 && (frame_cnt & 16)) {
+    if (tired >= 4 && (frame_cnt & 16) && !cer) {   /* (3.08 : pas pendant le changement de côté ni les cérémonies) */
         for (i = 0; i < npl; ++i) {
             if (npl == 4 && cfg.ctrl[i] == CTRL_CPU) continue;
             if (persp) { qx = psh_x[i]; qy = psh_y[i]; } else { qx = PXU(plx[i]); qy = PXU(ply[i]); }
