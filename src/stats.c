@@ -76,7 +76,7 @@ u8 __fastcall__ so_save(u8 unused)
     hc_check(); sw_car[8] = opt_val[NOPT_SAVE + 1]; car_commit();   /* option CARRIERE */
     for (i = 0; i < NOPT_SAVE; ++i) so.opt[i] = opt_val[i];
     so.sig[0] = 'P'; so.sig[1] = 'O';
-    sw_view[0] = 'V'; sw_view[1] = opt_val[NOPT_SAVE]; sw_view[2] = (u8)(0x5A ^ opt_val[NOPT_SAVE]);
+    sw_view[0] = 'V'; sw_view[1] = (u8)(opt_val[NOPT_SAVE] | (opt_val[NOPT_SAVE + 2] ? 0 : 2)); sw_view[2] = (u8)(0x5A ^ sw_view[1]);   /* (3.05 : bit 1, marque refusée ; les anciennes sauvegardes la gardent) */
     so.sum = so_sum();
     return unused;
 }
@@ -87,7 +87,7 @@ u8 __fastcall__ so_load(u8 unused)
     (void)unused;
     if (so.sig[0] != 'P' || so.sig[1] != 'O' || so.sum != so_sum()) return 0;
     for (i = 0; i < NOPT_SAVE; ++i) opt_val[i] = so.opt[i];
-    if (sw_view[0] == 'V' && sw_view[1] < 2 && sw_view[2] == (u8)(0x5A ^ sw_view[1])) opt_val[NOPT_SAVE] = sw_view[1];
+    if (sw_view[0] == 'V' && sw_view[1] < 4 && sw_view[2] == (u8)(0x5A ^ sw_view[1])) { opt_val[NOPT_SAVE] = (u8)(sw_view[1] & 1); opt_val[NOPT_SAVE + 2] = (u8)!(sw_view[1] & 2); }
     hc_check(); opt_val[NOPT_SAVE + 1] = (u8)(sw_car[8] == 1);
     return 1;
 }

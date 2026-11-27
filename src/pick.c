@@ -444,10 +444,11 @@ u16 __fastcall__ comp_opts_f(u16 unused)
 #define O_FATIG  23
 #define O_VIEW   24
 #define O_CAREER 25
-#define NOPT     26
-#define O_VERSUS 26
-#define O_OPTS   27
-#define O_BACK   28
+#define O_MARK   26                  /* (3.05) marque de la balle près des lignes */
+#define NOPT     27
+#define O_VERSUS 27
+#define O_OPTS   28
+#define O_BACK   29
 #define NMODES   6
 extern u8 vis[], nvis, cursor, menu_pg;
 static void __fastcall__ add_opt(u8 o) { vis[nvis++] = o; }
@@ -487,6 +488,7 @@ static void build_visible(void)
         add_opt(O_GSPEED);
         if (m != MODE_TRAIN) add_opt(O_FATIG);
         add_opt(O_VIEW);
+        if (m != MODE_TRAIN) add_opt(O_MARK);
         add_opt(O_SOUND);
         add_opt(O_BACK);
         if (cursor >= nvis) cursor = 0;

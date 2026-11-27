@@ -125,4 +125,38 @@ u16 __fastcall__ step_f(u16 a)
     pl_moving[p] = 1;
     return 0;
 }
+
+/* ---------------------------------------------------------------------- */
+/* (3.05) Marque au sol (option MARQUE) : à la fin d'un point dont le     */
+/* rebond décisif (premier rebond de la dernière balle, dans le camp du   */
+/* receveur) est près d'une ligne - bonne à 4 px ou moins de la ligne la   */
+/* plus proche, dehors à 6 px ou moins -, sa marque reste au sol (dessinée */
+/* par match_fx, extras.c) jusqu'au lancer du service suivant.            */
+/* ---------------------------------------------------------------------- */
+extern u8 opt_val[];
+extern u8 hl_bx, hl_by, hl_bin, hl_bok;
+u8 mk_on, mk_x, mk_y;
+u16 __fastcall__ mk_set_f(u16 a)
+{
+    s16 x = hl_bx, y = hl_by, d, l = cfg.doubles ? IN_DL : IN_SL, r = cfg.doubles ? IN_DR : IN_SR;
+    u8 recv = (u8)(hitter ^ 1);
+    (void)a;
+    mk_on = 0;
+    if (!opt_val[26] || !hl_bok || cfg.demo) return 0;
+    if ((u8)(y < NET_Y ? 1 : 0) != (u8)((recv ^ sc_swap) & 1)) return 0;   /* (balle restée dans le camp du frappeur : filet) */
+    if (hl_bin) {
+        d = x - l; if (r - x < d) d = r - x;
+        if (y - IN_TOP < d) d = y - IN_TOP;
+        if (IN_BOT - y < d) d = IN_BOT - y;
+        if (b_serve) return 0;                      /* (service bon : les lignes du carré ne sont pas vérifiées ici) */
+        if (d > 4) return 0;
+    } else {
+        d = 0;
+        if (x < l) d = l - x; else if (x > r) d = x - r;
+        if (y < IN_TOP) d += IN_TOP - y; else if (y > IN_BOT) d += y - IN_BOT;
+        if (b_serve || d == 0 || d > 6) return 0;
+    }
+    mk_x = (u8)x; mk_y = (u8)y; mk_on = 1;
+    return 0;
+}
 #pragma static-locals(pop)

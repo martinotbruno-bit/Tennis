@@ -33,7 +33,7 @@ function check(cond, msg) {
 const AS = { SCREENS: 0, MATCH: 1, MANUAL: 2 };
 const SS = { TITLE: 0, MENU: 1, RESULTS: 2, PRESENT: 3, COMP: 4, CODE: 5, PALMARES: 6, TRAIN_RES: 7, COMP_END: 8, SETBREAK: 9, CUSTOM: 13, CHAMP: 14, PICK: 15 };
 const O = { MODE: 1, TYPE: 2, P1: 3, P2: 4, LEVEL: 5, SURF: 6, ENV: 7, COND: 8, FMT: 9, REPLAY: 10, COMP: 11,
-            CSIZE: 12, CPROG: 13, CVAR: 14, EX: 15, SIDE: 16, SPEED: 17, SPIN: 18, COUNT: 19, CPART: 20, GSPEED: 21, SOUND: 22, FATIG: 23, VIEW: 24, CAREER: 25 };
+            CSIZE: 12, CPROG: 13, CVAR: 14, EX: 15, SIDE: 16, SPEED: 17, SPIN: 18, COUNT: 19, CPART: 20, GSPEED: 21, SOUND: 22, FATIG: 23, VIEW: 24, CAREER: 25, MARK: 26 };
 const MODE = { P1: 0, P2: 1, TEAM: 2, COMP: 3, TRAIN: 4, DEMO: 5 };
 const CFG = { CTRL: 2, LEVEL: 10, GAMES: 17, REPLAYS: 19 };
 
@@ -107,7 +107,7 @@ function toPick(e, mot) {
   }
   return false;
 }
-function openOpts(e) { e.poke('cursor', rowOf(e, 27)); e.tap('A'); e.run(30); }
+function openOpts(e) { e.poke('cursor', rowOf(e, 28)); e.tap('A'); e.run(30); }   /* (3.05 : OPTIONS = 28, après MARQUE) */
 // (3.02) jeu décisif forcé : tant que le 3e jeu n'est pas joué, 40-0 remis à
 // chaque service (sans quoi le hasard des échanges peut mener à de longues
 // égalités et le changement de côté attendu n'arrive pas)
@@ -409,7 +409,7 @@ console.log('Menu de configuration');
   openOpts(e);
   const ov = [...Array(e.peek('nvis')).keys()].map(i => e.peek('vis', i)).join(',');
   e.tap('B'); e.run(30);
-  check(ov === '0,21,24,22,28' && e.peek('menu_pg') === 0 && e.peek('vis', e.peek('cursor')) === 27 && scr(e) === SS.MENU,
+  check(ov === '0,21,24,22,29' && e.peek('menu_pg') === 0 && e.peek('vis', e.peek('cursor')) === 28 && scr(e) === SS.MENU,
     `page OPTIONS (${ov}) : B revient aux réglages, curseur sur OPTIONS`);
   e.tap('B'); e.run(10);   // (les tuiles des personnages, remplacées par les portraits, sont rechargées)
   check(scr(e) === SS.TITLE, 'B revient au titre');
@@ -3592,6 +3592,28 @@ console.log('Version 3.03 : pas vers la balle');
     prh = rh; bx = e.peekS16('bx') >> 6;
   });
   check(n >= 200 && far * 100 <= n * 5 && max <= 23, `${n} frappes : ${far} avec la balle à 18 px ou plus du joueur (au plus ${max} px)`);
+}
+}
+if (sec('Version 3.05 : marque au sol')) {
+console.log('Version 3.05 : marque au sol');
+{
+  // option MARQUE : une balle décisive près d'une ligne laisse sa marque au
+  // sol jusqu'au service suivant ; option NON : jamais
+  const res = {};
+  for (const mk of [1, 0]) {
+    const e = boot(); startWith(e, { FMT: 1, REPLAY: 0, MARK: mk }); allCpu(e);
+    let shown = 0, near = 0, cleared = true, pts = 0, pms = 0;
+    runUntil(e, () => pts >= 40 || app(e) !== AS.MATCH, 60 * 60 * 20, () => {
+      if (e.peek('cer') >= 1 && e.peek('cer') <= 13) e.poke('cer_skip', 1);
+      const ms = e.peek('ms');
+      if (pms === 2 && ms === 3) pts++;
+      if (e.peek('mk_on') && ms === 3) shown++;
+      if (e.peek('mk_on') && ms === 2) cleared = false;
+      pms = ms;
+    });
+    res[mk] = { shown, cleared, pts };
+  }
+  check(res[1].shown > 0 && res[1].cleared && res[0].shown === 0, `marque au sol : affichée près des lignes avec l'option (${res[1].shown} trames sur ${res[1].pts} points), effacée au service suivant (${res[1].cleared}), jamais sans l'option (${res[0].shown})`);
 }
 }
 if (sec('Compensation 50 Hz (PAL)')) {

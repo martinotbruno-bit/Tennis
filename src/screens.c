@@ -88,11 +88,12 @@ void spr_port(u8 x, u8 y, u8 base, u8 attr)
 #define O_FATIG  23   /* fatigue dans les très longs échanges */
 #define O_VIEW   24   /* vue : à plat, perspective */
 #define O_CAREER 25   /* carrière (compétitions en simple) */
-#define NOPT     26
+#define O_MARK   26   /* (3.05) marque de la balle près des lignes : oui, non */
+#define NOPT     27
 /* lignes du menu sans valeur rangée (hors opt_val) */
-#define O_VERSUS 26   /* 2 JOUEURS : CONTRE ou ENSEMBLE (modes internes 2 joueurs et en équipe) */
-#define O_OPTS   27   /* ouvre la page des options */
-#define O_BACK   28   /* page des options : retour */
+#define O_VERSUS 27   /* 2 JOUEURS : CONTRE ou ENSEMBLE (modes internes 2 joueurs et en équipe) */
+#define O_OPTS   28   /* ouvre la page des options */
+#define O_BACK   29   /* page des options : retour */
 
 #define MODE_1P      0
 #define MODE_2P      1
@@ -102,12 +103,12 @@ void spr_port(u8 x, u8 y, u8 base, u8 attr)
 #define MODE_DEMO    5
 #define NMODES       6
 
-u8 opt_val[NOPT] = { 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 2, 1, 0, 1, 0, 1, 0, 1, 0, 0 };
-static const u8 opt_max[NOPT] = { 1, NMODES, 2, NCHARS, NCHARS, 3, NSURF, NENV, 4, 4, 3, NCT, 2, 2, 2, NEX, 4, 3, 3, 3, 4, 3, 3, 2, 2, 2 };   /* (O_CPART : 4 joueurs en compétition en simple) */
+u8 opt_val[NOPT] = { 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 2, 1, 0, 1, 0, 1, 0, 1, 0, 0, 1 };
+static const u8 opt_max[NOPT] = { 1, NMODES, 2, NCHARS, NCHARS, 3, NSURF, NENV, 4, 4, 3, NCT, 2, 2, 2, NEX, 4, 3, 3, 3, 4, 3, 3, 2, 2, 2, 2 };   /* (O_CPART : 4 joueurs en compétition en simple) */
 static const char * const opt_label[NOPT] = {
     "COMMENCER", "MODE", "JEU", "JOUEUR 1", "JOUEUR 2", "NIVEAU CPU", "SURFACE", "LIEU",
     "CONDITIONS", "FORMAT", "RALENTIS", "COMPETITION", "JOUEURS", "ADVERSAIRES", "SURFACES",
-    "EXERCICE", "COTE", "VITESSE", "EFFET", "BALLES", "JOUEUR 2", "VITESSE JEU", "SON", "FATIGUE", "VUE", "CARRIERE" };
+    "EXERCICE", "COTE", "VITESSE", "EFFET", "BALLES", "JOUEUR 2", "VITESSE JEU", "SON", "FATIGUE", "VUE", "CARRIERE", "MARQUE" };
 static const char * const cond_name[4] = { "JOUR", "NUIT", "PLUIE", "CREPUSCULE" };
 static const char * const level_name[3] = { "FACILE", "NORMAL", "EXPERT" };
 static const char * const fmt_name[4] = { "1 SET", "3 SETS", "5 SETS", "RAPIDE 4 JEUX" };
@@ -215,6 +216,7 @@ static const char *opt_text(u8 o)
     case O_GSPEED: return gspeed_name[v];
     case O_SOUND:  return sound_name[v];
     case O_FATIG:
+    case O_MARK:
     case O_CAREER: return v ? "OUI" : "NON";
     case O_VIEW:   return v ? "PERSPECTIVE" : "A PLAT";
     }

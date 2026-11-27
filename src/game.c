@@ -180,6 +180,7 @@ void hl_select(void);
 #define HL_SELECT(w, t) { hl_w = (w); hl_ptxt = (t); bank_call(BANK_HL, hl_select); }   /* (t en RAM : msg1) */
 extern u8 sc_crit;               /* balles de set et de match (rules_far.c) */
 extern u8 hl_quick;              /* balle proche de la ligne (highlight.c) */
+u16 __fastcall__ mk_set_f(u16 a);     /* (3.05, play2.c) */
 static void point_over(u8 winner, u8 reason)
 {
     /* reason : 0 normal, 1 faute adverse (filet/dehors), 2 coup gagnant */
@@ -214,6 +215,7 @@ static void point_over(u8 winner, u8 reason)
     if (rally_hits >= 12) { set_msg("QUEL ECHANGE !", "", 70); sfx_crowd(7); crowd_timer = 64; rp_pending = 1; HL_SELECT(winner, msg1); }
     hl_quick = 0;                   /* (repère du point précédent oublié) */
     bank_call(BANK_X2, hl_out);     /* balle limite (dehors de peu, bonne sur la ligne) : zoom rapide (highlight.c) */
+    far_call(BANK_PICK, (void *)mk_set_f, 0);   /* (3.05) marque au sol d'une balle près d'une ligne (play2.c) */
     /* ralenti SIMPLE : seulement les balles proches de la ligne,
        dedans ou dehors (hl_out les a retenues) */
     if (cfg.replays == 2 && !hl_quick) rp_pending = 0;
