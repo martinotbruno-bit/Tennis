@@ -847,3 +847,5 @@ Les résultats détaillés sont dans le [rapport](RAPPORT.md).
 **Version 3.02 (coups)** : `shot_select` (shots.c) : coupé, `depth = 66 + T/2`, `speed = 36 + T/3`, puissance retenue `T/2` (T = armé borné à 24) ; volée, plafond `42 + power/2` (56 à plat armée), volée dirigée armée (`power >= 12`) : `depth - 8`, `hit_margin = 6`. Ordinateur : `ai_choose_f` (play2.c, banque 29, nouveau fichier) rend croix et bouton ; `timing_f` et `serve_fb` y sont aussi (banque 13 pleine).
 
 **Version 3.03** : `can_hit` (gamefix.c) : largeur ±22 px. `step_f` (play2.c, banque 29), appelé pour chaque joueur à chaque trame de l'échange tant qu'il n'a pas frappé : balle dans son camp, à moins de 40 px en profondeur et qui vient vers lui, balle visible passant entre 17 et 26 px sur le côté : le joueur glisse de 2 px par trame vers elle (arrêt à 15 ou 16 px d'écart : la frappe reste en extension). Plongeon humain : seuil `22 + n/2` (24 avant).
+
+**Version 3.04** : `persp_sides` : `hall = (e == 2)` rétabli (tribune pleine, `HALL_BAND`, attributs public en palette 3, bandeaux en palette 2) ; sur les rangées de bandeau, le bord de la rambarde reprend le dessin du bandeau (`hall_half`).

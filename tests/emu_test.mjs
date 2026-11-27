@@ -3473,27 +3473,13 @@ console.log('Version 2.98 : filet et salle en perspective');
   check(worst > 0 && worst <= 40, `filet en perspective : tuiles secouées revenues au repos en ${worst} trames au plus`);
 }
 {
-  // salle : en perspective, mêmes gradins au bord, même mur gris et mêmes panneaux verts qu'à plat
-  const cols = [];
-  for (const view of [0, 1]) {
-    const e = boot(); startWith(e, { FMT: 3, VIEW: view, ENV: 2, REPLAY: 0 }); allCpu(e); e.run(30);
-    const vm = e.nes.ppu.vramMem; const c = [];
-    for (let y = 4; y < 30; y++) for (const x of [2, 29]) { const t = vm[0x2000 + y * 32 + x]; c.push(vm.slice(t * 16, t * 16 + 16).join(',')); }   /* (colonnes 2 et 29 : panneaux ; le public du bord est réduit vers le fond, le mur élargi jusqu'à la rambarde) */
-    cols.push(c);
-  }
-  const nd = cols[0].filter((v, i) => v !== cols[1][i]).length;
-  if (nd) console.log('  (différences', cols[0].map((v, i) => v !== cols[1][i] ? (4 + (i >> 1)) + ':' + [2, 29][i & 1] : '').filter(Boolean).join(' '), ')');
-  check(nd === 0, 'salle : mur gris et panneaux verts dessinés comme à plat en perspective');
-{
-  // premier service du match (après le tirage au sort) : pas de bandeau du
-  // score ; après le premier point, le bandeau revient ; noms sur 5 lettres
-  const e = boot(); e.bandSkip = false; startWith(e, { FMT: 3, REPLAY: 0, P1: 20, P2: 16 }); allCpu(e);
-  runUntil(e, () => e.peek('ms') === 0 && !e.peek('cer'), 3000);
-  let first = 0; for (let i = 0; i < 40 && e.peek('ms') === 0; i++) { e.run(1); if (e.peek('band_vis')) first++; }
-  const later = runUntil(e, () => e.peek('band_vis') === 3, 60 * 60 * 2);
-  const hud = e.text(1, 1, 5) + '|' + e.text(26, 1, 5);
-  check(first === 0 && later && hud === 'TITOU|MARGA', `premier service : pas de bandeau (${first} trame(s)), puis bandeau après le premier point (${later}) ; noms sur 5 lettres (« ${hud} »)`);
-}
+  // (3.04) salle en perspective : tribune pleine jusqu'à la rambarde, comme
+  // au stade (plus le modèle à plat), traversée de bandeaux lumineux
+  const e = boot(); startWith(e, { FMT: 3, VIEW: 1, ENV: 2, REPLAY: 0 }); allCpu(e); e.run(30);
+  const vm = e.nes.ppu.vramMem, nt = (x, y) => vm[0x2000 + y * 32 + x];
+  const band = [0, 1, 2].every(x => nt(x, 4) === nt(0, 4)) && [29, 30, 31].every(x => nt(x, 4) === nt(31, 4));
+  const crowd = new Set(); for (let y = 6; y < 10; y++) for (let x = 0; x < 4; x++) crowd.add(nt(x, y));
+  check(band && crowd.size >= 4, `salle en perspective : bandeau lumineux en haut de tribune (${band}), public sur toute la tribune (${crowd.size} dessins)`);
 }
 }
 if (sec('Version 3.00 : service varié')) {

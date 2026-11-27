@@ -222,6 +222,7 @@ Pour chaque ligne, lancez un match et regardez l'écran pendant une dizaine de s
 | 10.84 | Entraînement (version 3.02) | Exercice CIBLES : la page TON JOUEUR ne montre que votre joueur, pas de joueur en face sur le court ; exercice JOUEUR FIXE : page TON ADVERSAIRE après TON JOUEUR | ☐ |
 | 10.85 | Coups (version 3.02) | B tenu longtemps : coupé plus long et plus rapide qu'un B lâché aussitôt ; au filet, A armé avec GAUCHE/DROITE : volée vive et en angle ; l'ordinateur joue parfois à plat, au centre, des amorties de volée et des smashs coupés | ☐ |
 | 10.86 | Pas vers la balle (version 3.03) | Balle qui passe un peu à côté : le joueur glisse vers elle et la raquette la touche ; plus de frappe avec la balle loin de la raquette | ☐ |
+| 10.87 | Salle en perspective (version 3.04) | Public sur toute la tribune jusqu'à la rambarde, plus petit vers le fond ; bandeaux verts horizontaux qui vont jusqu'à la rambarde, sans carré gris au bord | ☐ |
 
 ## 11. Ce qu'il faut renvoyer
 

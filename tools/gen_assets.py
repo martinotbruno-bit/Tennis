@@ -1800,6 +1800,13 @@ def tile_at(bmp, ty, tx):
     return [list(bmp[ty * 8 + y][tx * 8:tx * 8 + 8]) for y in range(8)]
 
 HALL_NB = {}                  # (2.79) salle en perspective : colonnes de public par rangée (côté, rangée)
+HALL_CW = {}                  # (3.04) salle en perspective : colonnes de gradins ajoutées (côté, rangée)
+def hall_nins(ty, side):
+    xr = persp_rail(ty, side)
+    if side == 0 and CHAIR_Y // 8 <= ty < CHAIR_Y // 8 + 4:
+        xr = 31
+    ce = xr // 8
+    return (ce - 3) if side == 0 else (28 - ce)
 HALL_BAND = (4, 5, 10, 11, 16, 17, 24, 25)   # (2.79) salle en perspective : rangées des bandeaux lumineux, environ tous les 4 rangs (paires alignées sur les blocs ; pas de drapeau)
 # bandeau lumineux (palette 2 de la salle : 1 gris, 2 vert, 3 noir) : cadre
 # gris, écrans verts séparés par un trait noir ; moitiés haute et basse
@@ -1850,7 +1857,7 @@ def persp_sides(e, bmp, w):
             # court, et un bloc tronqué en bas à droite)
             ia = 3
             shift = (not crowd_row and e != 4)            # décor sans public : glissé vers le court
-            hall = False                                  # (2.98 : salle en perspective comme à plat : gradins au bord, mur gris et panneaux verts glissés vers le court)
+            hall = (e == 2)                               # (3.04 : tribune pleine jusqu'à la rambarde, comme au stade, traversée de bandeaux lumineux ; en 2.98-3.03 : comme à plat)
             if hall:
                 # (2.79) salle : du public sur toute la tribune, du bord de
                 # l'écran à la rambarde (petits spectateurs vers le fond, comme
@@ -1878,7 +1885,15 @@ def persp_sides(e, bmp, w):
                 if e == 2:
                     # salle : les gradins restent au bord de l'écran (palette 3,
                     # bloc de colonnes 0-1) ; le mur s'élargit avant les panneaux
-                    seq = outer[:3] + [last] + fill   # (2.98 : gradins et panneaux à leur place d'origine, comme à plat ; le mur s'élargit vers le court)
+                    # (3.04) comme à plat (gradins, mur gris, panneaux), mais
+                    # le public s'élargit vers le fond comme les tribunes :
+                    # colonnes de gradins ajoutées côté écran, par paires
+                    # (blocs d'attributs de 16 px : public en palette 3,
+                    # panneaux en palette 2), le mur comble jusqu'à la rambarde
+                    nb = min(hall_nins(ty & ~1, side), hall_nins(ty | 1, side))
+                    cw = min(2 * ((nb - 1) // 2) if nb >= 1 else 0, nins - 1)
+                    HALL_CW[(side, ty)] = cw
+                    seq = [ext(k) for k in range(cw)] + outer[:3] + [last] + fill[:nins - 1 - cw]
                 else:
                     seq = fill + outer[:3] + [last]
             elif e == 2:
@@ -1892,7 +1907,9 @@ def persp_sides(e, bmp, w):
             # (2.98) salle, rambarde dans la colonne du panneau (aucune colonne
             # ajoutée) : le bord garde la moitié du panneau, sans encoche
             hall_half = None
-            if e == 2 and -3 <= nins <= 0 and not crowd_row:   # (en bas, rambarde plus à l'extérieur : le panneau est coupé net par la rambarde)
+            if hall and ty in HALL_BAND:                  # (3.04) bandeau lumineux : prolongé jusqu'à la rambarde (le bord n'est plus un carré gris)
+                hall_half = [r[:] for r in (BAND_T if ty % 2 == 0 else BAND_B)]
+            elif e == 2 and not hall and -3 <= nins <= 0 and not crowd_row:   # (en bas, rambarde plus à l'extérieur : le panneau est coupé net par la rambarde)
                 hall_half = [r[:] for r in outer[3 + nins]]
                 if nins == 0:
                     for rx in ((7,) if side == 0 else (0, 1)):
@@ -1944,7 +1961,7 @@ def persp_sides(e, bmp, w):
                 fix[(bxi, by)] = court_attr(bxo, by, e)
     # (salle, 2.79) : public en palette 3, bandeaux lumineux en palette 2,
     # sur tous les blocs de la tribune (jamais de surface de jeu dedans)
-    if False:   # (2.98 : salle comme à plat, plus de tribune pleine)
+    if e == 2:   # (tribune pleine : public en palette 3, bandeaux en palette 2)
         for by in range(2, 15):
             for side in (0, 1):
                 n_ = max(HALL_NB.get((side, t), 0) for t in (by * 2, by * 2 + 1))
