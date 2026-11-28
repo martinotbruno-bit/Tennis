@@ -1,0 +1,6 @@
+{
+  "name": "pixel-open-tests",
+  "private": true,
+  "description": "Tests automatiques de la ROM sur émulateur (jsnes)",
+  "dependencies": { "jsnes": "2.1.0", "pngjs": "7.0.0" }
+}

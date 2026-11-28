@@ -1,0 +1,778 @@
+/* Royal Martinot — fonctions annexes du match (banque BANK_EXTRAS) :
+ * chargement du court, public animé, ralentis, exercices d'entraînement
+ * et tutoriel. Appelées par le moteur via bank_call ; elles ne peuvent
+ * appeler que la banque fixe et échangent leurs données par game_int.h. */
+#include <string.h>
+#include "game_int.h"
+#include "app.h"
+#include "rules.h"
+#include "court.h"
+#include "gfx.h"
+#include "audio.h"
+#include "assets.h"
+
+#define side_of(t) ((u8)(((t) & 1) ^ sc_swap))
+
+#pragma static-locals(on)
+
+/* ---------------------------------------------------------------------- */
+/* Score : deux panneaux dans les coins supérieurs, au-dessus des tribunes
+ * (les joueurs n'y vont jamais) ; annonces au centre du bandeau. */
+/* nom d'équipe sur 4 lettres : banque fixe (gamefix.c) */
+void team_name(u8 t, char *out);
+
+static const char * const ex_short[NEX] = {
+    "FRAP", "DEPL", "SERI", "PREC", "VOLE", "SERV", "ECHG", "PERS", "TUTO" };
+
+/* Club nudiste : l'arbitre ajoute son grain de sel aux annonces. */
+static u8 starts(const char *a, const char *b)
+{
+    while (*a == ' ') ++a;          /* annonces centrées */
+    while (*b) if (*a++ != *b++) return 0;
+    return 1;
+}
+static void set2(const char *s) { center14(msg2, s); }
+static void nude_quip(void)
+{
+    u8 i, empty = 1;
+    for (i = 0; i < 14; ++i) if (msg2[i] != ' ') empty = 0;
+    if (!empty && !starts(msg1, "JEU, SET") && !starts(msg1, "CHANGEMENT")) return;
+    if (starts(msg1, "CHANGEMENT")) set2("ET DE CREME !");
+    if (starts(msg1, "JEU !")) set2("TENUE : AUCUNE");
+    else if (starts(msg1, "FAUTE")) set2("PAS DE POCHE !");
+    else if (starts(msg1, "ACE")) set2("ACE AU NATUREL");
+    else if (starts(msg1, "COUP GAGNANT")) set2("BRONZAGE TOTAL");
+    else if (starts(msg1, "SMASH")) set2("PLEIN SOLEIL !");
+    else if (starts(msg1, "AMORTIE")) set2("EN DOUCEUR...");
+    else if (starts(msg1, "LOB")) set2("VERS LE SOLEIL");
+    else if (starts(msg1, "PASSING")) set2("RIEN A CACHER");
+    else if (starts(msg1, "VOLEE")) set2("AIR FRAIS !");
+    else if (starts(msg1, "EGALITE")) set2("NU A NU");
+    else if (starts(msg1, "FILET")) set2("ATTENTION...");
+    else if (starts(msg1, "DEHORS")) set2("COMME NOUS");
+    else if (starts(msg1, "QUEL ECHANGE")) set2("TOUT EN NUDITE");
+    else if (starts(msg1, "JEU, SET")) set2("ET SERVIETTE !");
+    else if (starts(msg1, "BALLE DE MATCH")) set2("SANS FILET");
+    else if (starts(msg1, "LET")) set2("CHATOUILLE");
+}
+
+#pragma static-locals(push, off)        /* (tampon sur la pile, la RAM interne est pleine) */
+static const char * const rp_lbl[3] = { "  RALENTI NON", "  RALENTI OUI", "  RALENTI SIMPLE" };
+void hud_update(void)
+{
+    static char line[6];
+    u8 t, x;
+    vbuf_reset();
+    if (!paused && pause_cur == 4) {                /* (2.98) reprise : lignes de la pause effacées d'abord (tampon du VBlank limité), le HUD normal à la trame suivante */
+        vbuf_text(7, 1, "", 18); vbuf_text(7, 2, "", 18); vbuf_text(7, 3, "", 18);
+        pause_cur = 0;
+        return;                                     /* (hud_dirty reste à 1) */
+    }
+    if (paused) {   /* réglage des ralentis et de la vue, écrits en premier (tampon du VBlank limité) */
+            /* (2.98) JOUER et QUITTER sur la ligne 1, RALENTI ligne 2,
+               VUE ligne 3 (colonnes 7 à 23 : une case libre de chaque côté
+               des noms de 5 lettres) */
+            char b[22];
+            const char *q = rp_lbl[cfg.replays < 3 ? cfg.replays : 1];
+            u8 i;
+            for (i = 0; i < 16 && q[i]; ++i) b[i] = q[i];
+            b[i] = 0;
+            if (pause_cur == 2) b[0] = '>';
+            vbuf_text(7, 2, b, 18);
+            q = cfg.view ? "  VUE PERSPECTIVE" : "  VUE A PLAT";
+            for (i = 0; q[i]; ++i) b[i] = q[i];
+            b[i] = 0;
+            if (pause_cur == 3) b[0] = '>';
+            vbuf_text(7, 3, b, 18);
+            q = "  JOUER    QUITTER";
+            for (i = 0; q[i]; ++i) b[i] = q[i];
+            b[i] = 0;
+            if (pause_cur == 0) b[0] = '>';
+            if (pause_cur == 1) b[8] = '>';
+            vbuf_text(7, 1, b, 18);
+        }
+    if (cfg.mode == GM_MATCH) {
+        for (t = 0; t < 2; ++t) {
+            /* panneau de l'équipe affichée en bas à gauche, l'autre à droite */
+            x = (u8)(side_of(t) == 0 ? 1 : 27);   /* colonne 0 : zone de débordement TV */
+            team_name(t, line);                 /* (2.98 : 5 lettres ; à droite, calé sur le bord) */
+            if (x == 27 && !line[4]) { line[4] = line[3]; line[3] = line[2]; line[2] = line[1]; line[1] = line[0]; line[0] = ' '; }   /* (nom plus court : calé à droite, la case 26 effacée) */
+            vbuf_text((u8)(x == 27 ? 26 : 1), 1, line, 5);
+            /* ligne 2 : points du jeu + serveur (*) ; ligne 3 : un rond (@ =
+               balle) par set gagné. (Les jeux, « J 3 » autrefois, sont
+               dans le bandeau du bas, entre les points.) */
+            rules_point_label(t, line);
+            line[2] = ' ';
+            line[3] = (char)(sc_server == t ? '*' : ' ');
+            vbuf_text(x, 2, line, 4);
+            line[0] = (char)(sc_sets[t] >= 1 ? '@' : ' ');
+            line[1] = (char)(sc_sets[t] >= 2 ? '@' : ' ');
+            line[2] = line[3] = ' ';
+            vbuf_text(x, 3, line, 4);
+        }
+    } else {
+        vbuf_text(1, 1, ex_short[cfg.ex], 4);
+        num2(line, tr_score); line[2] = 'P'; line[3] = ' ';
+        vbuf_text(1, 2, line, 4);
+        if (cfg.ex == EX_STREAK) { line[0] = 'X'; num2(line + 1, tr_streak); }
+        else { line[0] = '/'; num2(line + 1, tr_total); }
+        line[3] = ' ';
+        vbuf_text(1, 3, line, 4);
+    }
+    if (paused) {
+    } else if (msg_timer) {
+        if (cfg.env == ENV_NUDE) nude_quip();
+        vbuf_text(9, 1, msg1, 14);
+        vbuf_text(9, 2, msg2, 14);
+    } else {
+        vbuf_text(9, 1, "", 14);
+        vbuf_text(9, 2, sc_tiebreak ? " JEU DECISIF" : "", 14);
+    }
+    /* panneau du club (masqué pendant la pause par la crème solaire) */
+    /* (le nom du club est sur le panneau à côté du score) ; ligne 3 libérée
+       après la pause */
+    if (!paused && cfg.env == ENV_NUDE) vbuf_text(9, 3, "", 16);
+    hud_dirty = 0;
+}
+#pragma static-locals(pop)
+
+/* ---------------------------------------------------------------------- */
+/* Pluie : gouttes animées ; une sur deux par trame (8 sprites par ligne) */
+#define NRAIN 10
+#pragma bss-name(push, "WBSS")       /* (la RAM interne est pleine) */
+static u8 rain_x[NRAIN], rain_y[NRAIN];
+#pragma bss-name(pop)
+void rain_tick(void)
+{
+    u8 p;
+    for (p = 0; p < NRAIN; ++p) {
+        rain_y[p] += 5;
+        rain_x[p] -= 1;
+        if (rain_y[p] > 230 || rain_y[p] < 24) { rain_y[p] = (u8)(32 + (rand8() & 127)); rain_x[p] = (u8)(40 + (rand8() % 180)); }
+    }
+}
+void rain_draw(void)
+{
+    u8 i;
+    for (i = (u8)(frame_cnt & 1); i < NRAIN; i += 2) spr1(rain_x[i], rain_y[i], 4, 3);
+}
+
+/* ---------------------------------------------------------------------- */
+extern u8 net_state;
+/* copie n tuiles (16 octets chacune) en CHR-RAM, écran coupé */
+static void tiles_load(const u8 *idx, u8 n, const u8 *src)
+{
+    u8 i, j;
+    for (i = 0; i < n; ++i) {
+        vram_adr((u16)idx[i] << 4);
+        for (j = 0; j < 16; ++j) vram_put(*src++);
+    }
+}
+static void crowd_load(void);
+u8 ump_princess;                 /* 1 : arbitre princesse (court Margaux), lu par ump_draw */
+
+/* ---------------------------------------------------------------------- */
+/* Jeu de tuiles par phase. Une zone de tuiles de sprites
+ * (swap_base, 34 tuiles) contient soit les célébrations (déception, rebond
+ * avant le service, poing serré, colère, fatigue : jeu 1), soit le revers
+ * (préparation, impact et fin à deux mains, revers coupé, volée : jeu 2).
+ * Pendant le lancer, l'échange et les ralentis, le jeu 2 est chargé, une ou
+ * deux tuiles par trame (budget VBlank : trois au plus) ; le reste du temps, le jeu 1. Tant
+ * qu'un jeu n'est pas entièrement chargé (swap_on), poses_all et rp_play
+ * montrent la pose de secours (pose_fb : l'ancienne pose). Les
+ * écrans montrent le jeu 1 (pose déçue des résultats) : swap_restore. */
+/* ---------------------------------------------------------------------- */
+#pragma bss-name(push, "WBSS")
+u8 swap_on, swap_nude;              /* jeu chargé et complet (0 : en cours) ; tenues au naturel */
+u8 row1_ovr[4];                     /* buste « bras caché » du joueur vu de dos (slot_tick, cer.c), 0 : aucun */
+u8 view_x[4];                       /* 1 : vue de face et de dos inversée (séquences : marche, cer.c) */
+static u8 swap_want, swap_pos;
+u16 swp_dst;                        /* destination de swap_put (crt0.s) */
+#pragma bss-name(pop)
+u8 __fastcall__ swap_put(const u8 *src);   /* crt0.s, banque 13 (far_call) */
+extern u8 cer;                              /* séquence animée en cours (cer.c) */
+extern u8 sc_crit;
+extern u8 hl_quick;
+extern u16 hl_sbf, rp_seq;                          /* balles de set et de match (rules_far.c) */
+extern u16 cer_t;
+extern u8 pose_now[4];
+void slot_tick(void);                       /* banque 13 (cer.c) */
+void cer_watch(void);
+static const u8 *swap_src(u8 set)
+{
+    if (set == 1) return swap_nude ? swap_nudeC : swap_chrC;
+    if (set == 3) return swap_nude ? swap_nudeF : swap_chrF;
+    return swap_nude ? swap_nudeR : swap_chrR;
+}
+/* chargement immédiat (rendu coupé) */
+static void swap_sync(u8 set)
+{
+    chr_copy(BANK_SWAP, swap_src(set), 0x1000 + ((u16)swap_base << 4), (u16)swap_ntile[set - 1] << 4);
+    swap_on = swap_want = set;
+}
+void swap_restore(void)
+{
+    row1_ovr[0] = row1_ovr[1] = row1_ovr[2] = row1_ovr[3] = 0;   /* écrans : dessins communs */
+    view_x[0] = view_x[1] = view_x[2] = view_x[3] = 0;
+    if (swap_on == 1 && !swap_nude) return;
+    swap_nude = 0;
+    swap_sync(1);
+}
+/* à chaque trame du match : jeu voulu selon la phase, chargé tuile par tuile */
+/* pose affichable : son jeu de tuiles est chargé, sinon pose de secours */
+static u8 pose_ok(u8 k)
+{
+    u8 s = pose_set[k];
+    return (u8)(s == 0 || s == swap_on ? k : pose_fb[k]);
+}
+static void swap_tick(void)
+{
+    u8 want = (u8)(ms == MS_TOSS || ms == MS_RALLY || ms == MS_REPLAY ? 2 : 1), k;
+    /* un joueur montre encore une pose d'un jeu (revers 22-26 ; rebond de
+       balle avant le service, fête : 7, 15-18) : ce jeu reste chargé tant
+       que la pose dure, sinon elle serait dessinée sans ses tuiles */
+    for (k = 0; k < npl; ++k) {
+        u8 q = (u8)(pose_now[k] & 31);
+        if ((u8)(q - 22) < 5) want = 2;
+        else if (q == 7 || (u8)(q - 15) < 4) want = 1;
+    }
+    /* séquences animées (cer.c) : jeu F ; en fin de match, après la fête
+       habituelle (jeu C) */
+    /* (dès la 2e trame de la séquence : à la 1re, la pose d'avant est encore dessinée) */
+    if (cer && cer < 0xF0 && cer_t && (cer != 7 || cer_t >= 50)) want = 3;
+    if (want != swap_want) { swap_want = want; swap_on = 0; swap_pos = 0; }
+    for (k = 0; k < 3 && !swap_on; ++k) {
+        swp_dst = 0x1000 + ((u16)(swap_base + swap_pos) << 4);
+        if (!(u8)far_call(BANK_SWAP, (void *)swap_put, (u16)(swap_src(want) + ((u16)swap_pos << 4)))) break;
+        if (++swap_pos == swap_ntile[want - 1]) swap_on = want;
+    }
+}
+
+#pragma bss-name(push, "WBSS")
+static u8 ps_idx[12];
+#pragma bss-name(push, "WBSS")
+static u8 persp_free;               /* persp_flags du lieu (perspective), 0 à plat */
+#pragma bss-name(pop)                /* perspective : places des petits spectateurs, puis bras levés */
+#pragma bss-name(pop)
+
+void load_court(void)
+{
+    u8 nude = (u8)(cfg.env == ENV_NUDE);
+    if (bg_dirty) { chr_copy(BANK_CHR, chr_data, 0x0000, 4096); bg_dirty = 0; vram_adr(0x2000); }   /* tuiles des menus : courts d'origine */
+    if (cfg.view) {
+        /* vue en perspective : tuiles du court déformé (à la place de tuiles
+           inutilisées sur ce lieu), puis le court, puis les tables de
+           projection ; tout est rétabli par chr_borrow_restore hors du match */
+        u8 i, n = persp_ntile[cfg.env];
+        const u8 *ch = persp_chr[cfg.env];
+        bank_read(BANK_PERSP, proj_ram, persp_slot[cfg.env], n);   /* places (tampon : tables) */
+        tz_bank = BANK_PERSP; tz_src = ch;   /* tuiles compressées */
+        for (i = 0; i < n; ++i) { vram_adr((u16)proj_ram[i] << 4); tz_n = 1; tz_unpack(tz_src); }
+        vram_adr(0x2000);
+        bank_unrle(BANK_PERSP, persp_rle[cfg.env]);
+        bank_read(BANK_PERSP, ps_idx, persp_ps[cfg.env], 12);
+        persp_free = persp_flags[cfg.env];       /* tuiles prises par les lignes fines : ne pas les charger */
+        bank_read(BANK_PERSP, proj_ram, proj_tab, 512 + 640);
+        bg_dirty = 1;
+        persp = 1;
+    } else {
+        bank_unrle(BANK_COURTS, court_nt_rle[cfg.env]);
+        persp = 0;
+        persp_free = 0;
+    }
+    people_tiles(nude);
+    swap_nude = nude;
+    swap_sync(1);                    /* jeu des célébrations */
+    /* panneaux à côté du score, dans 8 tuiles distinctes inutilisées sur leur
+       court (choisies par l'outil de génération : public d'un autre lieu) ;
+       ailleurs, on rétablit leur dessin d'origine */
+    if (!(persp_free & 1)) tiles_load(sign_idx, 8, cfg.env == ENV_MARGAUX ? sign_chr : sign_orig);
+    if (!(persp_free & 2)) tiles_load(sign2_idx, 8, nude ? sign2_chr : sign2_orig);
+    /* filet au repos (au cas où on aurait quitté un match pendant qu'il tremblait) */
+    tiles_load(net_idx, 2, net_norm);
+    /* arbitre de chaise (une princesse au court Margaux) : têtes et buste
+       en tuiles 11 à 13, et 4 tuiles prises à la coupe (inutile pendant le
+       match), rétablies hors du match par chr_borrow_restore */
+    {
+        u8 j;
+        const u8 *u = ump_chr + (cfg.env == ENV_MARGAUX ? 112 : 0);
+        ump_princess = (u8)(cfg.env == ENV_MARGAUX);
+        vram_adr(0x1000 + (11 << 4));
+        for (j = 0; j < 48; ++j) vram_put(u[j]);
+        vram_adr((u16)(0x1000 + ((u16)trophy_tile << 4)));
+        for (j = 48; j < 112; ++j) vram_put(u[j]);
+    }
+    net_state = 0;
+    net_shake = 0;
+    crowd_load();                    /* public : copie des tribunes, regard vers le bas */
+}
+
+/* Filet qui tremble quand la balle le touche : les tuiles des mailles
+   alternent entre dessin « secoué » et « au repos » (net_shake : 14 -> 0) */
+u8 net_shake, net_state;
+void pnet_tick(void);              /* banque 20 : filet en perspective  */
+void net_tick(void)
+{
+    u8 want = (u8)(net_shake > 1 && ((net_shake >> 2) & 1));
+    if (persp) { bank_call(BANK_TRAIN, pnet_tick); return; }
+    if (want != net_state) {
+        const u8 *s = want ? net_shk : net_norm;
+        if (!vbuf_raw((u16)net_idx[0] << 4, s, 16)) return;      /* budget VBlank : trame suivante */
+        if (!vbuf_raw((u16)net_idx[1] << 4, s + 16, 16)) return;
+        net_state = want;
+    }
+    --net_shake;
+}
+
+/* ---------------------------------------------------------------------- */
+/* Public.
+ *  - Il suit la balle : les 6 tuiles de spectateurs passent de « regard vers
+ *    le bas » à « regard vers le haut » (CHR-RAM, une tuile par trame) quand
+ *    la balle change de moitié du court.
+ *  - Ola après les beaux points (stade, club, salle) : une bande de 3
+ *    rangées de spectateurs bras levés (6 tuiles propres) descend les deux
+ *    tribunes, une rangée toutes les 2 trames, puis chaque rangée reprend
+ *    son dessin d'origine (copié à l'écran du court par crowd_load).
+ *  - Réactions : « OOOH » sur une balle dehors de peu, soupir sur une
+ *    double faute, applaudissements rythmés avant une balle de match,
+ *    silence au lancer du service.
+ *  - Court Margaux et club nudiste : leurs motifs scintillent ou se lèvent,
+ *    comme avant. */
+#pragma bss-name(push, "WBSS")
+static u8 st_map[26 * 12];           /* tribunes : rangées 4 à 29, colonnes 0-5 et 26-31 */
+static u8 cr_cur[18], rowbuf[6];
+extern u8 crowd_big;
+#pragma zpsym("crowd_big")
+u8 ola_on;                          /* (0 rien, 1 ola, 2 à 4 standing ovation : lu par flags_draw, highlight.c) */
+static u8 ola_o, cr_prev_t, cr_prev_ms, cr_df, cr_mp, cr_clap, cr_react, cr_all;
+#pragma bss-name(pop)
+
+#define PPU_DATA (*(volatile u8 *)0x2007)
+/* écran du court construit (rendu coupé) : copie des tribunes, tuiles de
+   spectateurs remises « regard vers le bas » */
+static void crowd_load(void)
+{
+    u8 r, c, s;
+    for (r = 0; r < 26; ++r)
+        for (s = 0; s < 2; ++s) {
+            vram_adr(NTADR(s ? 26 : 0, 4 + r));
+            st_map[r * 12 + s * 6] = PPU_DATA;           /* lecture à vide */
+            for (c = 0; c < 6; ++c) st_map[r * 12 + s * 6 + c] = PPU_DATA;
+        }
+    for (c = 0; c < 6; ++c) {
+        if (!(persp_free & 4)) {
+            vram_adr((u16)crowd_idx[c] << 4);
+            for (r = 0; r < 16; ++r) vram_put(crowd_norm[c * 16 + r]);
+        }
+        if (!(persp_free & 8)) {
+            vram_adr((u16)crowdb_idx[c] << 4);
+            for (r = 0; r < 16; ++r) vram_put(crowdb_norm[c * 16 + r]);
+        }
+        cr_cur[c] = 0;
+    }
+    memset(cr_cur + 6, 0, 12);
+    if (!persp) ps_idx[0] = 0;
+    else if (ps_idx[0])
+        for (c = 0; c < 12; ++c) {
+            vram_adr((u16)(ps_idx[0] + ((c >> 2) << 3) + (c & 3)) << 4);
+            for (r = 0; r < 16; ++r) vram_put((cfg.env == ENV_STADIUM ? small_normA : small_normB)[c * 16 + r]);
+        }
+    ola_on = 0; crowd_big = 0; cr_prev_t = 0; cr_prev_ms = 0xFF; cr_mp = 0; cr_clap = 0; cr_react = 0; cr_all = 0;
+    cr_df = (u8)(st_dfaults[0] + st_dfaults[1]);
+}
+
+/* rangée o des deux tribunes, debout (bras levés) ou d'origine ; en
+   perspective, les tribunes s'avancent jusqu'à 6 colonnes */
+static u8 ola_row(u8 o, u8 up)
+{
+    u8 s, c, t, n = (u8)(persp ? 6 : 4), k = ps_idx[0];
+    const u8 *m = st_map + o * 12;
+    for (s = 0; s < 2; ++s) {
+        for (c = 0; c < n; ++c) {
+            t = m[s ? 6 + (6 - n) + c : c];
+            /* bras levés = tuile + 4 : public du stade (5-8), du club et de
+               la salle (13-16), spectateurs plus petits de la perspective
+               (3 tailles x 8 places dès ps_idx[0] : 4 dessins, 4 bras levés) ;
+               vérifié par tools/gen_assets.py ; 3.08 : pas les tuiles 5-8 ni
+               13-16 quand ces spectateurs ne sont pas sur le court en
+               perspective (persp_free) : elles y dessinent autre chose, par
+               exemple la végétation en bas à gauche du parc) */
+            if (up && (((u8)(t - 5) < 4 && !(persp_free & 4)) || ((u8)(t - 13) < 4 && !(persp_free & 8)) || (k && (u8)(t - k) < 24 && !((u8)(t - k) & 4)))) t += 4;
+            rowbuf[c] = t;
+        }
+        if (!vbuf_raw(NTADR(s ? 32 - n : 0, 4 + o), rowbuf, n)) return 0;
+    }
+    return 1;
+}
+
+/* distance (px) de la balle hors du court (0 : dedans) */
+static s16 out_by(void)
+{
+    s16 x = PX(bx), y = PX(by), d = 0;
+    s16 l = cfg.doubles ? IN_DL : IN_SL, r = cfg.doubles ? IN_DR : IN_SR;   /* (ligne comprise) */
+    if (x < l) d = l - x; else if (x > r) d = x - r;
+    if (y < IN_TOP) d += IN_TOP - y; else if (y > IN_BOT) d += y - IN_BOT;
+    return d;
+}
+/* balle hors du court de peu (moins de 5 px) : le public retient son souffle */
+static u8 near_miss(void)
+{
+    s16 d = out_by();
+    return (u8)(d > 0 && d < 5);
+}
+
+void crowd_tick(void)
+{
+    u8 nude = (u8)(cfg.env == ENV_NUDE), girly = (u8)(cfg.env == ENV_MARGAUX), k, m;
+    if (nude || girly) {
+        /* court Margaux : les coeurs, fleurs et étoiles scintillent ; club
+           nudiste : les spectateurs se lèvent */
+        if (crowd_timer && nude) {
+            /* club nudiste : les 4 tuiles du haut d'un spectateur
+               (tête, bras) dans la même trame, sinon il avait un moment les
+               bras levés et baissés à la fois ; les 2 du bas la trame d'après */
+            u8 cheer = (u8)(crowd_timer >= 6 && ((crowd_timer >> 3) & 1)), j, n;
+            k = (u8)(crowd_timer % 6);
+            j = (u8)((k >> 1) * 6 + ((k & 1) ? 4 : 0));
+            n = (u8)((k & 1) ? 2 : 4);
+            if (vram_len + n * 19 <= VBUF_MAX) {
+                for (m = 0; m < n; ++m, ++j)
+                    vbuf_raw((u16)crowd_idx3[j] << 4, (cheer ? crowd_cheer3 : crowd_norm3) + (j << 4), 16);
+                --crowd_timer;
+            }
+        } else if (crowd_timer) {
+            u8 cheer = (u8)(crowd_timer >= 3 && ((crowd_timer >> 3) & 1));
+            k = (u8)(crowd_timer % 3);
+            if (vbuf_raw((u16)crowd_idx4[k] << 4, (cheer ? crowd_cheer4 : crowd_norm4) + (k << 4), 16))
+                --crowd_timer;
+        }
+    } else {
+        /* ola : relancée chaque fois que le jeu ranime le public */
+        if (crowd_timer > cr_prev_t && ola_on < 2) { ola_on = 1; ola_o = 0; }
+        if (crowd_timer) --crowd_timer;
+        cr_prev_t = crowd_timer;
+        /* standing ovation : sur un grand point (crowd_big) ou à la
+           fin du match, toutes les rangées se lèvent (une par trame), restent
+           debout 90 trames, puis se rassoient ; elle remplace l'ola */
+        /* (crowd_big : bit 0 demandée, bit 7 celle de la fin du match déjà faite) */
+        if (sc_over && !(crowd_big & 0x80)) crowd_big = 0x81;
+        if (crowd_big & 1) { crowd_big &= 0x80; ola_on = 2; ola_o = 0; if (!noise_hold) sfx_crowd(7); }   /* (2.90 : pas de relance par-dessus une clameur en cours) */
+        if (ola_on == 2) { if (ola_row(ola_o, 1) && ++ola_o == 26) { ola_on = 3; ola_o = 0; } }
+        else if (ola_on == 3) { if (++ola_o >= 90) { ola_on = 4; ola_o = 0; } }
+        else if (ola_on == 4) { if (ola_row(ola_o, 0) && ++ola_o == 26) ola_on = 0; }
+        /* une rangée par trame (les deux la même trame
+           faisaient déborder la trame) : trame paire, la rangée qui se
+           lève ; impaire, celle qui se rassoit, puis on avance */
+        /* (2.86 : demi-pas comptés dans ola_o (bit 0) plutôt que la parité
+           de frame_cnt : une trame en retard, qui sautait toujours la même
+           moitié, laissait la vague à moitié faite) */
+        if (ola_on == 1) {
+            k = (u8)(ola_o >> 1);
+            if (!(ola_o & 1)) { if (k < 26) (void)ola_row(k, 1); ++ola_o; }
+            else {
+                m = 1;
+                if (k >= 3) m = ola_row((u8)(k - 3), 0);
+                if (m && ++ola_o == 58) ola_on = 0;
+            }
+        }
+        /* le public suit la balle du regard */
+        if (b_vis) {
+            /* jeu A au stade, jeu B au club et en salle */
+            u8 a = (u8)(cfg.env == ENV_STADIUM), n = (u8)(ps_idx[0] ? 18 : 6);
+            m = (u8)(by < NET_Y * FP);
+            if (cr_all != m) {
+            for (k = 0; k < n; ++k)
+                if (cr_cur[k] != m) {
+                    u8 ok;
+                    if (k < 6 && (persp_free & (a ? 4 : 8))) ok = 1;   /* (ces spectateurs ne sont pas sur ce court) */
+                    else if (k < 6)
+                        ok = vbuf_raw((u16)(a ? crowd_idx : crowdb_idx)[k] << 4,
+                                      (a ? (m ? crowd_up : crowd_norm) : (m ? crowdb_up : crowdb_norm)) + (k << 4), 16);
+                    else      /* petits spectateurs (perspective) */
+                        ok = vbuf_raw((u16)(ps_idx[0] + (((k - 6) >> 2) << 3) + ((k - 6) & 3)) << 4,
+                                      (a ? (m ? small_upA : small_normA) : (m ? small_upB : small_normB)) + ((k - 6) << 4), 16);
+                    if (ok) cr_cur[k] = m;
+                    break;
+                }
+            if (k == n) cr_all = m;         /* tous tournés : plus rien à vérifier */
+            }
+        }
+    }
+    bank_call(BANK_SWAP, cer_watch);   /* chaises dès la fin de l'échange (changement de côté) */
+    swap_tick();       /* jeu de tuiles par phase : après le public (budget VBlank restant) */
+    /* réactions */
+    if (cr_react && !noise_hold) { if (cr_react == 1) sfx_ooh(); else sfx_groan(); cr_react = 0; }
+    m = ms;
+    if (m != cr_prev_ms) {
+        if (m == MS_DEAD) {
+            if (end_reason == END_POINT && ump_arm && out_by()) sfx_out();    /* balle dehors : bip et « Out! » */
+            /* « OOOH » et soupir : après l'annonce de l'arbitre (le public
+               se tait pendant la voix ; sinon ils étaient perdus) */
+            if (end_reason == END_POINT && ump_arm && near_miss()) cr_react = 1;
+            k = (u8)(st_dfaults[0] + st_dfaults[1]);
+            if (k != cr_df) { cr_df = k; cr_react = 2; }
+        }
+        if (m == MS_SERVE) { cr_mp = (u8)(cfg.mode == GM_MATCH && (sc_crit & 4)); cr_clap = 0; }
+        if (m == MS_TOSS) sfx_hush();            /* silence au lancer */
+        cr_prev_ms = m;
+    }
+    if (m == MS_SERVE && cr_mp && ++cr_clap >= 18) { cr_clap = 0; sfx_clap(); }   /* clap… clap… clap… */
+}
+
+/* ---------------------------------------------------------------------- */
+/* Ralentis : tampon circulaire de 160 trames dans la RAM de cartouche.
+ * Une trame = balle (x, y, z, visible) + 4 joueurs (x, y, pose). */
+#pragma bss-name(push, "WBSS")
+#define RP_LEN 160
+#define RP_SHOW 140
+u8 rp_buf[RP_LEN][16];
+#pragma bss-name(pop)
+u8 rp_head, rp_count;
+static u8 rp_pos, rp_slow;
+u8 rp_left;                     /* (lu par hl_check, banque 15) */
+void hl_check(void);
+extern u8 hl_mode, hl_sok, hl_si, hl_sbok, hl_sbi;   /* repères du ralenti (game.c, highlight.c) */
+
+/* rp_record : en assembleur dans la banque fixe (crt0.s), appelée à chaque trame */
+
+void rp_start(void)
+{
+    rp_left = rp_count < RP_SHOW ? rp_count : RP_SHOW;
+    if (hl_quick) {                  /* dehors de peu : 12 trames avant le rebond seulement */
+        u16 k = (u16)(rp_seq - hl_sbf) + 12;
+        if (k < rp_left) rp_left = (u8)k;
+    }
+    rp_pos = (u8)(rp_head >= rp_left ? rp_head - rp_left : rp_head + RP_LEN - rp_left);
+    rp_slow = 0;
+    rp_done = (u8)(rp_left == 0);
+    bank_call(BANK_HL, hl_check);   /* repères dans les trames rejouées (banque 15) */
+}
+
+void rp_play(void)
+{
+    u8 *e = rp_buf[rp_pos];
+    u8 ord[4], i, j, k, p, a;
+    if (pad1_new & (PAD_A | PAD_B | PAD_START)) { rp_done = 1; rp_count = 0; return; }
+    swap_tick();                     /* jeu des revers pendant le ralenti */
+    spr_begin();
+    if (e[3]) spr_ball(e[0], (s16)e[1] - e[2] - 3, e[1], e[2]);
+    for (i = 0; i < npl; ++i) ord[i] = i;
+    for (i = 1; i < npl; ++i) {
+        k = ord[i];
+        for (j = i; j > 0 && e[5 + ord[j - 1] * 3] < e[5 + k * 3]; --j) ord[j] = ord[j - 1];
+        ord[j] = k;
+    }
+    /* bustes « bras caché » des joueurs vus de dos (poses du ralenti) */
+    for (p = 0; p < npl; ++p) pose_now[p] = pose_ok((u8)(e[6 + p * 3] & 31));
+    bank_call(BANK_SWAP, slot_tick);
+    for (i = 0; i < npl; ++i) {
+        p = ord[i];
+        a = e[6 + p * 3];
+        k = (u8)(a >> 6);           /* saut enregistré (j/4) : hauteur j²/16 = k² */
+        spr_person(e[4 + p * 3], (s16)e[5 + p * 3] - k * k + (POSE_LOW(a & 31) ? 4 : 0), cfg.chr[p], side_of(p), pose_ok((u8)(a & 31)), (u8)((a >> 5) & 1), p);
+    }
+    ump_draw();                      /* l'arbitre reste sur sa chaise pendant le ralenti */
+    spr_end();
+    /* demi-vitesse : chaque trame enregistrée est montrée deux fois */
+    rp_slow ^= 1;
+    if (!rp_slow) {
+        /* mise en valeur : à la trame de la frappe décisive,
+           gros plan ; à celle du rebond, arrêt sur image zoomé (banque 15) */
+        if (hl_sok && rp_pos == hl_si) { hl_sok = 0; hl_mode = 1; }
+        else if (hl_sbok && rp_pos == hl_sbi) { hl_sbok = 0; hl_mode = 2; }
+        if (++rp_pos == RP_LEN) rp_pos = 0;
+        if (--rp_left == 0) { rp_done = 1; rp_count = 0; }
+    }
+}
+
+/* ---------------------------------------------------------------------- */
+/* (entraînement : train.c, banque 20, banque 3 pleine) */
+
+/* ---------------------------------------------------------------------- */
+/* Poses des joueurs (appelé par match_draw avant de dessiner les joueurs) */
+/*  - attente : rebond d'1 px ; split-step quand l'adversaire frappe ;      */
+/*  - préparation : coup droit ou revers armé pendant que la balle arrive ; */
+/*  - frappe : armé (coup droit, revers, extension, plongeon, volée, smash),*/
+/*    impact, puis accompagnement propre au coup (lob, amortie, volée) ;    */
+/*  - course en 4 temps, pas chassés près de la balle, glissade sur terre   */
+/*    et sur glace ;                                                        */
+/*  - service : rebonds de la balle avant de servir ; receveur genoux       */
+/*    fléchis qui se balance ;                                              */
+/*  - après le point : joie propre au personnage (pirouette de Margaux),    */
+/*    colère après une faute, mains sur les genoux après un long échange.   */
+/* ---------------------------------------------------------------------- */
+/* calcul des poses : poses_all, en assembleur (src/poses.s) */
+
+
+/* ---------------------------------------------------------------------- */
+/* Petits effets du court (banque 3, appelés à la fin de match_draw) :     */
+/* ombres des joueurs, poussière ou éclaboussures au rebond, arbitre de    */
+/* chaise, repère d'atterrissage en vitesse « lent », éclat de la frappe   */
+/* parfaite, traînée du service canon, goutte de sueur. Les sprites sont   */
+/* ajoutés après les joueurs : ils passent derrière eux. (Déplacés de la    */
+/* banque fixe pour faire la place des échantillons DPCM.)                  */
+/* ---------------------------------------------------------------------- */
+#define PXU(v) ((u8)(((u16)(v) << 2) >> 8))      /* pixels, valeur positive */
+extern u8 dr_xs[4], dr_ys[4];                   /* match_draw (draw_order, fastmove.s) */
+extern u8 perf_t, perf_x, perf_y, tired, pl_jump[4];
+#pragma bss-name(push, "WBSS")
+static u8 fx_t, fx_x, fx_y, fx_kind, fx_bounces, fx_hits, mk_t;
+#pragma bss-name(pop)
+/* point du court à plat -> écran (vue en perspective) : résultat dans qx, qy */
+
+extern u8 proj_x, proj_y;
+#pragma zpsym("proj_x")
+#pragma zpsym("proj_y")
+void __fastcall__ proj2(u8 x, u8 y);           /* sprp.s */
+static u8 qx, qy;
+extern u8 psh_x[4], psh_y[4];   /* sprp.s */
+static void pj(u8 x, u8 y)
+{
+    if (persp) { proj2(x, y); qx = proj_x; qy = proj_y; }
+    else { qx = x; qy = y; }
+}
+
+extern u8 mk_on, mk_x, mk_y;              /* (3.05) marque au sol (play2.c) */
+extern u8 band_vis;                       /* (highlight.c) */
+void match_fx(void)
+{
+    u8 i, j;
+    /* (3.05) marque d'une balle près d'une ligne : jusqu'au lancer suivant,
+       pas pendant le ralenti ni les gros plans */
+    if (mk_on) {
+        if (band_vis == 3) mk_on = 2;               /* (3.06) effacée avec le bandeau du score */
+        if (ms == MS_TOSS || ms == MS_RALLY || cer || (mk_on == 2 && !band_vis)) mk_on = 0;
+        else if (ms != MS_REPLAY && !hl_mode && (frame_cnt & 0x18)) { pj(mk_x, mk_y); spr1((u8)(qx - 3), (u8)(qy - 4), 2, 2); }   /* (3.06 : petite marque de 4 x 2 px ; clignote, trois trames sur quatre) */
+    }
+    /* rebond : poussière sur terre et sable, éclaboussure sous la pluie */
+    if (bounces != fx_bounces) {
+        fx_bounces = bounces;
+        if (bounces && bounces < 3 && b_vis) {
+            fx_kind = 0;
+            if (cfg.cond == COND_RAIN) fx_kind = 8;
+            else if ((cfg.surface == 0 || cfg.surface == 4) && cfg.env != ENV_MARGAUX) fx_kind = 6;
+            if (fx_kind) { fx_t = 12; fx_x = PXU(bx); fx_y = PXU(by); }
+        }
+    }
+    if (fx_t) {
+        --fx_t;
+        pj(fx_x, fx_y);
+        spr1((u8)(qx - 4), (u8)(qy - 6), (u8)(fx_kind + (fx_t < 6)), (u8)(fx_kind == 8 ? 3 : 2));
+    }
+    /* ombres de tous les joueurs ; en double, quand trop de sprites
+       partagent une ligne, la rotation de l'ordre des sprites (match_draw)
+       évite qu'un sprite disparaisse */
+    for (i = 0; i < npl; ++i) {
+        if (cfg.mode == GM_TRAIN && i == 1 && cfg.ex != EX_STATIC) continue;   /* lanceur invisible */
+        /* perspective : x projeté par spr_person, y du sol lu dans la table */
+        /* (positions à l'écran déjà calculées par draw_order, match_draw) */
+        if (persp) { qx = psh_x[i]; qy = proj_ram[dr_ys[i]]; } else { qx = dr_xs[i]; qy = dr_ys[i]; }
+        spr1((u8)(qx - 3), qy, 5, 2);   /* sous les pieds, décalée vers la droite */
+    }
+    /* repère d'atterrissage (lent) : 30 trames après chaque frappe vers un
+       joueur humain */
+    if (rally_hits != fx_hits) {
+        fx_hits = rally_hits;
+        j = (u8)(hitter ^ 1);
+        mk_t = 0;
+        if (cfg.gspeed == 0 && rally_hits &&
+            (cfg.ctrl[j] != CTRL_CPU || (npl == 4 && cfg.ctrl[j + 2] != CTRL_CPU))) mk_t = 30;
+    }
+    if (mk_t) {
+        --mk_t;
+        if (b_live && bounces == 0) { pj((u8)land_x, (u8)land_y); spr1((u8)(qx - 4), (u8)(qy - 4), 10, 3); }
+    }
+    /* fatigue : goutte de sueur au-dessus des joueurs (clignote) ; en double,
+       seulement pour les joueurs humains (limite de sprites par ligne) */
+    if (tired >= 4 && (frame_cnt & 16) && !cer) {   /* (3.08 : pas pendant le changement de côté ni les cérémonies) */
+        for (i = 0; i < npl; ++i) {
+            if (npl == 4 && cfg.ctrl[i] == CTRL_CPU) continue;
+            if (persp) { qx = psh_x[i]; qy = psh_y[i]; } else { qx = PXU(plx[i]); qy = PXU(ply[i]); }
+            spr1((u8)(qx + 6), (u8)(qy - 30), 14, 3);
+        }
+    }
+    /* frappe parfaite : petit éclat près de la raquette */
+    if (perf_t) { --perf_t; pj(perf_x, perf_y); spr1(qx, qy, 3, 2); }
+    /* cible d'entraînement (projetée en perspective : centre du sprite) */
+    if (tgt_x) { pj((u8)(tgt_x + 4), (u8)(tgt_y + 4)); spr1((u8)(qx - 4), (u8)(qy - 4), 3, 3); }   /* blanc : visible sur tous les courts */
+    /* service canon : traînée de deux points derrière la balle */
+    if (srv_canon && b_serve && b_live && bounces == 0) {
+        for (j = 2; j < 6; j += 3) {
+            s16 z = bz - bvz * j;
+            if (z < 0) z = 0;
+            pj(PXU(bx - bvx * j), PXU(by - bvy * j));
+            spr1((u8)(qx - 2), (u8)(qy - PXU(z) - 2), 1, 3);
+        }
+    }
+    /* arbitre de chaise (tous les lieux), assis de profil sur sa chaise
+       (décor, x 16-31), tourné vers le court : bras tendu sur une faute ou
+       une balle dehors ; bras levé qui s'agite sur un let ; bras levé en
+       grand à la fin du match. Tuiles : 11 tête, 12 buste, 13 bras tendu ;
+       coupe + 0 main, + 1 bras levé, + 2 buste bras levé */
+    ump_draw();      /* assembleur (src/sprp.s) : 3 sprites au plus, sans appel coûteux */
+}
+
+/* ---------------------------------------------------------------------- */
+/* Tactique du CPU selon le score (appelée une fois par point, au moment   */
+/* de se placer pour servir). Pour chaque équipe :                        */
+/*  - l'adversaire a une balle de set ou de match : défendre (marge de    */
+/*    sécurité, frappe un peu moins forte, deux fois moins de fautes) ;   */
+/*  - balle de set ou de match pour soi : conclure (plus fort, au filet) ; */
+/*  - mené de 2 jeux ou plus (un set compte pour 3 jeux) : prendre des    */
+/*    risques (plus fort, moins de marge, montées au filet) ;            */
+/*  - devant de 2 jeux ou plus : jouer placé (marge, moins de fautes) ;   */
+/*  - balle de break contre soi au service : première balle assurée,      */
+/*    échange prudent ; balle de break pour soi en retour : attaquer.     */
+/* ---------------------------------------------------------------------- */
+#pragma bss-name(push, "WBSS")
+s8 tac_pow[2], tac_margin[2];
+u8 tac_net[2], tac_err[2], tac_safe[2];
+#pragma bss-name(pop)
+static u8 game_pt(u8 t)
+{
+    u8 a = sc_points[t], b = sc_points[t ^ 1];
+    return (u8)(sc_tiebreak ? (a >= 6 && a > b) : (a >= 3 && a > b));
+}
+void ai_tactic(void)
+{
+    u8 t, o;
+    s8 d, pw, mg;
+    u8 net, err, safe;
+    for (t = 0; t < 2; ++t) {
+        o = (u8)(t ^ 1);
+        pw = 0; mg = 0; net = 0; err = 0; safe = 0;
+        d = (s8)(sc_games[t] - sc_games[o]) + (s8)(3 * ((s8)sc_sets[t] - (s8)sc_sets[o]));
+        if ((sc_crit >> o) & 1) { mg = 6; pw = -2; err = 0x10; }          /* balle de set ou de match (sc_crit) */
+        else if ((sc_crit >> t) & 1) { pw = 4; net = 60; }
+        else if (d <= -2) { pw = 5; mg = -3; net = 50; }
+        else if (d >= 2) { mg = 3; err = 0x10; }
+        if (game_pt(o) && sc_server == t) { safe = 1; mg += 4; err = 0x10; }   /* balle de break à sauver */
+        else if (game_pt(t) && sc_server == o) { pw += 3; net += 30; }          /* balle de break */
+        tac_pow[t] = pw; tac_margin[t] = mg; tac_net[t] = net; tac_err[t] = err; tac_safe[t] = safe;
+    }
+}
+
+
+/* touches du menu de pause (game.c) : JOUER, QUITTER, RALENTI, VUE (2.98 : rend 2)
+   (NON, OUI, SIMPLE ; GAUCHE/DROITE ou A), retenu pour les matchs suivants
+   (opt_val). Rend 1 pour quitter le match. */
+extern u8 opt_val[];                     /* (screens.c ; 10 : RALENTIS) */
+u16 __fastcall__ pause_input(u16 unused)
+{
+    (void)unused;
+    /* (2.98) JOUER / QUITTER (ligne 1 : GAUCHE/DROITE aussi), RALENTI, VUE */
+    if (pad1_new & PAD_UP) { pause_cur = (u8)(pause_cur < 2 ? 3 : pause_cur == 2 ? 0 : 2); hud_dirty = 1; sfx_menu_move(); }
+    if (pad1_new & PAD_DOWN) { pause_cur = (u8)(pause_cur < 2 ? 2 : pause_cur == 2 ? 3 : 0); hud_dirty = 1; sfx_menu_move(); }
+    if (pause_cur < 2 && (pad1_new & (PAD_LEFT | PAD_RIGHT))) { pause_cur ^= 1; hud_dirty = 1; sfx_menu_move(); }
+    else if (pause_cur == 2 && (pad1_new & (PAD_LEFT | PAD_RIGHT | PAD_A))) {
+        cfg.replays = (u8)((cfg.replays + ((pad1_new & PAD_LEFT) ? 2 : 1)) % 3);
+        opt_val[10] = cfg.replays; hud_dirty = 1; sfx_menu_val(1);
+    }
+    else if (pause_cur == 3 && (pad1_new & (PAD_LEFT | PAD_RIGHT | PAD_A))) {
+        cfg.view ^= 1; opt_val[24] = cfg.view; hud_dirty = 1; sfx_menu_val(1);
+        return 2;                                   /* court rechargé dans l'autre vue (game.c) */
+    }
+    else if ((pad1_new & PAD_SELECT) || ((pad1_new & PAD_A) && pause_cur == 1)) return 1;
+    else if (pad1_new & (PAD_START | PAD_B) || ((pad1_new & PAD_A) && !pause_cur)) { paused = 0; pause_cur = 4; hud_dirty = 1; }
+    return 0;
+}

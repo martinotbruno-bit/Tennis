@@ -1,0 +1,383 @@
+# Royal Martinot — Manuel du joueur
+
+Royal Martinot est un jeu de tennis 8 bits original pour NES et Famicom. Il se joue seul contre l'ordinateur ou à deux, en simple comme en double, en match, en compétition ou à l'entraînement.
+
+Ce manuel est aussi intégré au jeu : à l'écran titre, choisissez **MODE D'EMPLOI** (8 pages ; GAUCHE/DROITE pour changer de page, B pour revenir).
+
+![Aperçu](img/apercu.png)
+
+## 0. Générique de lancement
+
+À l'allumage, un générique d'une trentaine de secondes rappelle à tous l'importance de l'événement… et tourne un peu mal. La fanfare commence majestueuse, puis déraille : fausses notes, accélération, arpèges affolés, glissade jusqu'au grave, silence gêné et « pouet » final.
+1. « BRUNO MARTINOT PRESENTS » ;
+2. « IN ASSOCIATION WITH AUGUSTIN MARTINOT — CHIEF EXECUTIVE SON » ;
+3. « A ROYAL MARTINOT PRODUCTION — FILMED IN GLORIOUS 8-BIT TECHNICOLOR » ;
+4. « LOADING PRESTIGE… » : la barre de chargement monte à 99 %, hésite, puis grimpe à **117 %** et déborde de son cadre (« OVERLOAD ! ») ;
+5. la critique : cinq étoiles, « MAGNIFIQUE. » (Bruno Martinot), « THE GREATEST TENNIS GAME EVER MADE IN THIS HOUSE. » (Augustin Martinot), « WINNER - BEST GAME 2026 (CATEGORY: OUR LIVING ROOM) » ;
+6. les mentions légales : « NO TENNIS BALLS WERE HARMED DURING PRODUCTION », « RATED A FOR AUGUSTIN », « POWERED BY 1.79 MHZ OF PURE LUXURY », « OFFICIAL SPONSOR : THE FAMILY FRIDGE », « 0 % CALORIES » ;
+7. la révélation du logo : chaque lettre géante tombe avec un « boum », l'or scintille, confettis… et l'ovation se réduit à un seul « *CLAP* ». Puis une balle de tennis fait tomber le N de MARTINOT ; le stagiaire arrive, s'excuse (« OOPS. SORRY. ») et le remet en place : « (PRESTIGE RESTORED) ».
+
+**Passer le générique** : au premier bouton, le jeu se vexe (« ARE YOU SURE? THIS IS VERY PRESTIGIOUS. ») ; au second, il cède (« FINE. ») et l'écran titre apparaît. Le réglage SON mémorisé s'applique dès le générique.
+
+## 1. Écran titre
+
+**HAUT/BAS** choisit une entrée et **A** la valide. **START** ouvre directement la configuration. La grosse balle du titre est posée sur un court en perspective (lignes blanches).
+
+| Entrée | Rôle |
+|---|---|
+| JOUER | Configuration de la partie |
+| MODE D'EMPLOI | Les commandes et les règles, dans le jeu |
+| PALMARÈS | Statistiques cumulées, titres, historique, records |
+| CODE DE REPRISE | Reprendre une compétition avec son code |
+
+Sans action pendant 20 secondes, une démonstration démarre (alternativement en simple et en double). **A** ou **START** rend la main.
+
+Depuis la version 2.57, les menus sont habillés : fond vert gazon, titres en grandes lettres dorées entre des filets dorés, reflet qui passe sur le logo et la balle, petite balle qui sautille devant l'entrée choisie ; chaque écran glisse vers sa place en s'ouvrant.
+
+## 2. Configuration (écran RÉGLAGES)
+
+La liste est centrée sur l'écran, devant une grande balle de tennis en relief (version 2.96). Les libellés sont en bleu pâle, les valeurs en jaune ; la ligne choisie s'allume (libellé en or, valeur en blanc, flèches **<** **>** autour de la valeur) et une balle rebondit devant elle. Une pastille de la couleur de la surface accompagne la ligne SURFACE ; les deux joueurs choisis encadrent le titre.
+
+Depuis la version 2.59, le fond des menus change à chaque allumage : terre battue, gazon, dur ou moquette. Depuis la version 2.58 : en bas de l'écran, deux lignes expliquent la **ligne choisie** et sa valeur (pour un joueur : son style de jeu) ; une **accolade dorée** dans la marge réunit les lignes de chaque groupe (partie, joueurs, match, options) ; (jusqu'à la version 2.76, les portraits des joueurs encadraient le titre ; depuis la 2.77, les joueurs, le lieu et la surface se choisissent sur les pages illustrées qui suivent). Un petit son monte ou descend quand une valeur change, et une note descend quand on revient avec B.
+
+**HAUT/BAS** choisit une ligne, **GAUCHE/DROITE** change la valeur. **START** lance la partie, **B** revient au titre. Les lignes affichées dépendent du mode. Tout le contenu est disponible dès le départ.
+
+**Page OPTIONS (version 2.78)** : ce qui se règle une fois pour toutes (RALENTIS, VITESSE JEU, FATIGUE, VUE, SON) est sur une page à part. La dernière ligne des réglages, **OPTIONS**, l'ouvre (A ou DROITE) ; **RETOUR** (A ou GAUCHE) ou **B** ramène aux réglages. START lance la partie depuis les deux pages.
+
+**Depuis la version 2.76**, les choix qui se voient ne sont plus dans cette liste : après **START**, des **pages illustrées** se suivent, dans l'ordre :
+1. **le tournoi** (compétition TOURNOI : un des 7 tournois Martinot, sur son image d'annonce ; il impose la surface et le lieu) ;
+2. **les joueurs** : l'affiche du match, avec les bustes, les noms et les styles ; le joueur que l'on choisit est entre flèches (en compétition, il se choisit donc après le type de compétition) ;
+3. **le court** (version 2.77) : **lieu, surface et météo sur le même écran**, le vrai court en aperçu qui change à chaque choix : ses couleurs, son décor et la lumière (nuit, pluie qui tombe, teinte du couchant). **HAUT/BAS** choisit la ligne (repérée par « > »), **GAUCHE/DROITE** change la valeur. En compétition, seules les lignes libres s'affichent (la météo seule pour un tournoi Martinot, sans surface en saison) ; au Grand Martinot et au Martinworld Tour, tout est imposé et la page n'apparaît pas.
+
+**GAUCHE/DROITE** change le choix, **A** passe à la page suivante, **B** revient à la précédente (ou aux réglages), **START** valide tout d'un coup. En compétition, la ligne **HUMAINS** (version 2.78) dit combien de joueurs humains jouent ; autrefois, la ligne **JOUEUR 2** (CPU ou MANETTE 2) choisissait qui joue le partenaire en double ; en compétition en simple, elle devenait **JOUEURS** (1 à 4, version 2.77) : le nombre de joueurs humains inscrits (voir § 7).
+
+| Ligne | Choix |
+|---|---|
+| MODE | 1 joueur VS CPU · 2 joueurs · Compétition · Carrière · Entraînement · Démo (version 2.78) |
+| JEU | Simple · Double. À 1 joueur, le double se joue avec un partenaire CPU ; à 2 joueurs CONTRE, chacun a un partenaire CPU |
+| FORMULE (2 joueurs) | CONTRE : face à face, en simple ou en double · ENSEMBLE : dans la même équipe, en double contre 2 CPU (version 2.78) |
+| HUMAINS (compétition) | Nombre de joueurs humains : 1 à 4 en simple, 1 ou 2 en double ; les joueurs 1 et 3 jouent avec la manette 1, les joueurs 2 et 4 avec la manette 2 (version 2.78, au lieu de JOUEUR 2 / JOUEURS) |
+| JOUEUR 1 / JOUEUR 2 | 21 personnages (11 hommes, 10 femmes, dont **Margaux**, et les nouveaux **MAX**, **LOLA**, **PAPI** et **TITOU**), chacun avec son style de jeu. En compétition de double, JOUEUR 2 devient PARTENAIRE |
+| NIVEAU CPU | Facile · Normal · Expert |
+| SURFACE | Terre battue · Gazon · Dur · Moquette · Plage · Glace (les deux dernières sont des terrains fantaisie) |
+| LIEU | Stade (tribunes pleines) · Club (extérieur, arbres) · Salle (intérieur) · Club nudiste (bonus à débloquer, voir § 9 bis ; panneau « BRONZES » à côté du score) · Court Margaux (court rose, décor de cœurs, fleurs et étoiles, petit panneau « MARGAUX » à côté du score) · **Château** (murs de pierre, bannières royales, torches, spectateurs aux balcons) · **Parc** (arbres aux couleurs de l'automne) |
+| MÉTÉO (page du court) | Jour · Nuit (en salle : SOIREE, court éclairé, version 2.79) · Pluie · Crépuscule (depuis la version 2.71). Depuis la version 2.77, elle se choisit sur la page du court, avec l'aperçu, et non plus dans les réglages (sauf en démo, ligne CONDITIONS). Il ne pleut pas en salle, et le crépuscule est réservé aux matchs hors compétition, en plein air : ces choix ne sont alors pas proposés |
+| FORMAT | 1 set · 3 sets · 5 sets · Rapide (sets de 4 jeux) |
+| RALENTIS (page OPTIONS) | Ralenti automatique après les plus beaux points : NON ; OUI, TELE (avec gros plan du coup et zoom sur le rebond, depuis la version 2.67) ; OUI, SIMPLE (le ralenti seul, plus court, version 2.69) |
+| VITESSE JEU (page OPTIONS) | Lent (75 %, idéal pour débuter ou pour les enfants) · Normal · Rapide (125 %). Aussi en compétition et à l'entraînement. En Lent, une petite croix montre une demi-seconde où va tomber la balle adverse |
+| FATIGUE (page OPTIONS) | Oui/Non. Au-delà de 10 frappes dans un échange, tous les joueurs (humains et CPU) ralentissent peu à peu, jusqu'à environ 20 %, et une goutte de sueur clignote au-dessus d'eux. Faute de jambes, ils frappent plus fort pour conclure (jusqu'à +23 %), mais moins précisément. Seule la frappe parfaite reste précise : c'est la meilleure façon de finir un long échange. Tout redevient normal au point suivant. Pas de fatigue à l'entraînement |
+| VUE (page OPTIONS) | À plat (vue d'origine) · Perspective : le court et les tribunes se resserrent de 15 % vers le fond, comme vus depuis le haut des gradins ; au fond, les spectateurs sont plus petits. Depuis la version 2.64, les lignes obliques du court sont tracées au pixel près. Le jeu est exactement le même (règles, vitesse, commandes) ; seul l'affichage change |
+| MARQUE (page OPTIONS, version 3.05) | OUI (par défaut) · NON. Avec OUI, quand un point se termine sur une balle tombée près d'une ligne (bonne à 10 px ou moins de la ligne depuis la version 3.07, 4 avant ; dehors à 6 px ou moins), une petite marque (4 × 2 px, version 3.06) reste au sol à l'endroit de l'impact, en clignotant, et disparaît en même temps que le bandeau du score. Pas en entraînement |
+| SON (page OPTIONS) | Musique + sons · Bruitages seuls · Aucun. L'écran titre et le menu partagent une petite polka de cirque, sautillante et ridicule : « Bruitages seuls » la fait taire |
+
+**Ce qui distingue les lieux (version 2.79)** : au château, les flammes et les bannières vacillent et une fanfare sonne au changement de côté et à la fin du match ; au club, un vol de petits oiseaux passe en chantant entre les points et le public applaudit poliment après les beaux points (ace, long échange) ; au parc, les oiseaux chantent et le public applaudit aussi ; au parc, des feuilles d'automne tombent ; au stade, la clameur dure plus longtemps ; en salle, les panneaux s'allument (en silence) quand le public réagit, et la nuit devient une soirée ; au court Margaux, le court prend un rose différent selon la surface, des petits cœurs montent sur les côtés et les étoiles scintillent ; au stade et en salle, les photographes mitraillent après les beaux points ; au château, un vol d'oiseaux passe de temps en temps ; au parc, un écureuil descend parfois le long du court ; au club nudiste, l'affiche du match, les gros plans des ralentis, le portrait du vainqueur et la ramasseuse montrent les joueurs nus, avec une mosaïque de censure sur le bassin et la poitrine des joueuses, comme à la télévision. Des papillons y volettent, les oiseaux chantent et le public applaudit. Ces animations et ces sons n'ont lieu qu'à la fin des points, tant que le bandeau du score est affiché, et pendant les pauses (changement de côté, cérémonies), jamais pendant le lancer du service ni l'échange. Le lieu ne change rien au jeu lui-même (seules la surface et la météo comptent). En salle, ni pluie ni crépuscule.
+
+Les réglages du menu sont **mémorisés** au lancement de chaque partie. Sur une cartouche à pile, ils sont retrouvés au prochain allumage ; le palmarès n'est pas touché.
+
+Selon le mode, d'autres lignes apparaissent :
+- **Compétition** : type de compétition et, pour le tournoi personnalisé, le nombre de joueurs, la progression des adversaires et la variété des surfaces ;
+- **Entraînement** : l'exercice et, pour l'exercice personnalisé, le côté, la vitesse, l'effet et le nombre de balles.
+
+Le style de jeu ne concerne que les personnages joués par l'ordinateur. Pour un joueur à la manette, le personnage ne change que l'apparence (couleurs, silhouette, gestes de fête) : vitesse, puissance et coups sont les mêmes pour tous.
+
+| Personnage | Style |
+|---|---|
+| Alex, Ines | Équilibré |
+| Maya, Luca | Fond de court |
+| Leon, Ivan | Puissance |
+| Nina, Lina | Filet (service-volée) |
+| Omar, Jade | Défensif |
+| Zoé, Tom | Offensif |
+| Hugo, Noah | Tactique (lobs, amorties) |
+| Emma, Sara | Placement (précision) |
+| **Margaux** | Fantaisie : varie tout, adore l'amortie et le lob, monte volontiers au filet. Cheveux longs, blonds et bouclés ; tenue rose clair, la seule de cette couleur, choisie pour rester visible sur tous les courts, y compris le sien. Elle ne joue jamais au club nudiste, et c'est toujours vous qui la choisissez : elle n'est jamais tirée au sort comme adversaire |
+
+Avant chaque match, un **écran de présentation** rappelle l'épreuve, les joueurs, leur niveau et leur style, la surface, le lieu, les conditions et le format. **A** lance le match.
+
+## 3. Commandes
+
+### Pendant l'échange
+
+| Commande | Action |
+|---|---|
+| Croix | Se déplacer sur toute sa moitié de court |
+| **A** (maintenir puis relâcher) | Frappe liftée. Plus vous armez longtemps avant l'impact, plus la frappe est forte, bombée et liftée (rebond plus haut), et plus elle est risquée ; relâchée aussitôt, elle tombe un peu plus court, plus sûre |
+| **B** | Coup coupé (slice) : balle basse et lente. Armé (version 3.02) : plus long et plus vif, il fuse bas après le rebond, idéal pour monter au filet ; l'armé y ajoute deux fois moins d'imprécision qu'au lifté |
+| **A** + HAUT | Frappe à plat : tendue, longue et très rapide, mais moins précise. Mal placé, elle part dans le filet ou dehors |
+| **A** + BAS | Croisé court : en angle, dans le carré de service, avec du lift. Idéal pour sortir l'adversaire du court ou passer un joueur au filet. L'armé ferme l'angle : relâché vite, la balle passe à bonne distance de la ligne de côté (prudent) ; bouton tenu, elle rase la ligne, plus dure à rattraper mais plus risquée. L'ordinateur (à partir de Normal) le joue aussi |
+| **B** + HAUT | Lob. Relâché vite : **lob court**, plus sûr mais smashable ; bouton tenu : **lob long**, près de la ligne de fond (risque de faute). Depuis le fond du court, le lob part très haut et lent (défensif) ; depuis l'intérieur du court, plus bas et plus vif (lob d'attaque) |
+| **B** + BAS | Amortie |
+| GAUCHE / DROITE à l'impact | Viser la ligne de côté de gauche ou de droite de l'écran (à 8 px de la ligne) : c'est un coup croisé si la ligne choisie est du côté opposé à votre position, un coup le long de la ligne si elle est de votre côté. Sans direction : la balle part vers le centre du court, à peine croisée (coup sûr, peu dangereux) |
+| **START** | Pause, avec le score dans un bandeau au milieu de l'écran. Ligne 1 : JOUER (reprendre) ou QUITTER (GAUCHE/DROITE puis A) ; ligne 2 : RALENTI ; ligne 3 (version 2.98) : VUE, À PLAT ou PERSPECTIVE, qui change l'affichage du court tout de suite et reste retenue pour les matchs suivants (HAUT/BAS pour changer de ligne, A ou GAUCHE/DROITE pour changer le réglage). SELECT quitte directement |
+
+**HAUT et BAS sont relatifs à votre joueur** : HAUT veut dire « vers l'adversaire » (coup long : frappe à plat, lob), BAS « vers soi » (coup court : croisé court, amortie). Quand votre joueur est en haut de l'écran, après un changement de côté par exemple, c'est donc BAS qui frappe à plat. GAUCHE et DROITE restent ceux de l'écran.
+
+La frappe part toute seule quand la balle entre dans votre zone de frappe pendant que vous armez, ou juste après avoir relâché le bouton.
+
+Le type de coup dépend aussi de la situation :
+- balle prise avant le rebond : **volée**. Vos choix de coup restent valables (lob, amortie, coupé, à plat, croisé court, lifté), en plus court et moins appuyé ; une volée à plat bien armée part plus vite ; l'amortie volée meurt tout près du filet ;
+- balle avant le rebond, au-dessus de la tête (plus de 24 px de haut) : **smash**. A : smash à plat ; A + HAUT : vers la ligne de fond ; A + BAS : dans l'angle court. B : smash coupé, plus lent ; B + BAS : smash amorti, qui surprend l'adversaire resté au fond. Plus vous armez (bouton tenu), plus le smash est fort, mais moins il est précis ;
+- balle très haute (lob un peu court), si vous êtes dans les deux tiers avant de votre moitié de court : **smash sauté**, le joueur saute et frappe plus fort et plus à plat (le CPU Expert sait aussi le faire) ;
+- balle loin du corps : frappe en extension, moins précise ;
+- **frappe parfaite** (lifté, à plat, coupé, croisé court ou lob, après le rebond) : la balle passe **à côté du corps**, ni collée ni en extension, et vous avez **relâché le bouton juste avant** qu'elle n'arrive (fenêtre de 3 images, 1/20 de seconde). La balle part environ 40 % plus vite (le lob parfait, lui, part aussi lent mais tombe plus loin et pile où vous visez), presque sans écart, avec un « tchak » sec et un petit éclat blanc près de la raquette. Si ce coup est gagnant, le bandeau annonce « COUP PARFAIT ! ». Si vous gardez le bouton enfoncé jusqu'à l'impact, la frappe reste normale. Ordre de grandeur pour un adulte : 15 à 20 % de vos coups au début, 30 à 40 % avec l'habitude. Le palmarès donne votre pourcentage.
+
+### Au service
+
+1. Placez-vous derrière la ligne de fond avec GAUCHE/DROITE.
+2. **A** ou **B** lance la balle.
+3. Au sommet du lancer, **A** frappe un service puissant, **B** un service coupé plus sûr.
+   - Plus la frappe est proche du sommet, plus le service est précis.
+   - GAUCHE/DROITE à l'impact vise l'extérieur ou le T.
+   - Profondeur (version 3.01) : sans HAUT ni BAS, le service tombe au milieu du carré (le plus sûr) ; HAUT à l'impact (vers l'adversaire) : service long, sur la ligne de service, plus dur à retourner mais plus risqué ; BAS : service court, près du filet, qui surprend.
+   - Si vous ne frappez pas, la balle retombe et le lancer est à refaire, sans pénalité.
+   - Votre place sur la ligne change l'angle : la balle part de l'endroit où vous êtes vers la zone visée (extérieur, T ou corps). Écarté vers le couloir, le service vers l'extérieur est plus croisé et sort davantage l'adversaire du court ; près du centre, le service au T est plus direct. L'ordinateur, lui, change parfois de place avant de servir (version 2.97).
+4. **Service canon** : **A** frappé **pile au sommet** du lancer, dans une fenêtre de 2 images (1/30 de seconde). La balle part environ 50 % plus vite et presque sans écart, toujours dans le carré, avec le bandeau « SERVICE CANON », un « boum » et une petite traînée. Près du sommet, la balle ne bouge presque plus à l'écran : le canon se trouve au **rythme**, environ une demi-seconde après le lancer. En deuxième balle, il est un peu moins précis. Le CPU Expert en réussit parfois ; Facile et Normal jamais.
+   - Ordre de grandeur pour un adulte : environ un service canon sur quatre au début, un sur trois à un sur deux avec l'entraînement.
+   - Le palmarès compte vos services canon et leur pourcentage parmi vos services frappés avec A ; l'écran de résultats donne le nombre par match.
+
+Le lancer reste visible quelle que soit votre position, y compris quand vous servez du haut de l'écran.
+
+## 4. Règles
+
+- Points 0, 15, 30, 40, égalité, avantage ; il faut deux points d'écart pour gagner le jeu.
+- Sets de 6 jeux avec deux jeux d'écart ; **jeu décisif** en 7 points à 6-6 (à 4-4 en format rapide).
+- Le service alterne à chaque jeu, du côté droit puis gauche.
+- **Fautes** : deux fautes de service font une **double faute**. Un service qui touche la bande du filet puis tombe dans le bon carré est un **let** : il est à remettre, sans faute. Depuis la version 2.76, une balle faute (service faux, balle dehors) peut être renvoyée si votre coup est armé et qu'elle est à portée, comme on le fait sur un vrai court : le point reste joué. Une balle qui touche la ligne, même du bord, est bonne. En ralenti SIMPLE, seules les balles proches de la ligne sont rejouées.
+- Une balle qui touche la bande pendant l'échange et passe reste en jeu.
+- **Changement de côté** après chaque jeu impair, tous les 6 points du jeu décisif, et en fin de set si le total de jeux est impair.
+- **En double** :
+  - les couloirs sont en jeu, sauf au service ;
+  - les partenaires servent à tour de rôle ;
+  - chacun reçoit de son côté (égalité ou avantage).
+
+## 5. Affichage
+
+- Les deux **panneaux de score** occupent les coins supérieurs, au-dessus des tribunes ; les joueurs ne peuvent pas les masquer.
+  - Coin gauche : l'équipe qui joue en bas de l'écran ; coin droit : celle du haut.
+  - Chaque panneau ne concerne qu'un joueur (ou une équipe) :
+    - ligne 1 : le nom ;
+    - ligne 2 : les jeux gagnés dans le set en cours (« J 3 »), suivis de `*` si ce joueur sert ;
+    - ligne 3 : les points du jeu en cours (0, 15, 30, 40, AV), suivis d'un rond plein par set gagné.
+- **L'arbitre parle** : « Out! » sur une balle dehors, « Fault! » sur un service faux, « Let! » sur un let, et depuis la version 2.71 il annonce le score : « Deuce! » (égalité), « Advantage! » (avantage) et « Game! » (fin d'un jeu), juste après l'annonce de la faute, sans la couper. Au court Margaux, la princesse annonce d'une voix plus aiguë.
+- **Statistiques au changement de côté** (version 2.72) : pendant que les joueurs sont assis, le bandeau du bas montre le score, puis les premières balles, les aces, les coups gagnants et le service le plus rapide de chacun (A ou START passe).
+- **Plongeon de dernière chance** (version 2.72) : sur un service canon, le receveur peut plonger un peu plus loin que d'habitude (l'ordinateur le tente presque toujours) ; un retour réussi est salué (« PLONGEON ! SUR LE CANON »), et s'il gagne le point, le ralenti montre le gros plan du plongeon.
+- **Bandeau du score façon télévision** (version 2.71) : après chaque point, et pendant que les joueurs sont assis au changement de côté, un bandeau s'affiche en bas de l'écran avec le score détaillé : une balle devant le serveur, les noms, les jeux de chaque set (le set en cours compris) et les points du jeu. Depuis la version 2.74, il reste jusqu'à ce que vous appuyiez sur un bouton (voir plus bas). Les coins du haut de l'écran ne montrent plus que le nom, les points, le serveur (*) et les sets gagnés (@).
+- **Ralentis** (version 2.73) : un smash sauté gagnant est toujours rejoué. Une balle dehors de très peu (3 pixels ou moins) a droit à un contrôle rapide : zoom sur l'impact, « DEHORS ! », en deux ou trois secondes.
+- **Bandeau du score** (version 2.74) : un peu moins d'une seconde après un point (après le ralenti s'il y en a un), il monte du bas de l'écran et reste jusqu'à ce que vous appuyiez sur un bouton ; l'ordinateur attend cet appui pour servir. L'appui ferme seulement le bandeau : appuyez à nouveau pour servir.
+- **Ralentis** (version 2.74) : plus de bandes noires. Une balle qui finit le point juste dehors, ou bonne sur la ligne, a toujours droit à un zoom rapide sur son impact, en deux temps : x 2, puis x 4 sur la ligne (« DEHORS ! » ou « BONNE ! »). En « OUI, SIMPLE », le ralenti garde le zoom sur le rebond, sans les gros plans.
+- **Public** (version 2.74) : standing ovation après un très long échange, un smash sauté gagnant et à la fin du match ; drapeaux aux couleurs des joueurs dans les tribunes pendant les changements de côté et la fin du match.
+- **Changement de côté** (version 2.75) : les statistiques restent affichées ; appuyez sur un bouton pour passer à la suivante, puis pour reprendre le jeu.
+- **Smash** (version 2.75) : une balle haute se smashe aussi après son rebond (un lob qui retombe) ; avant le rebond, smash au-dessus de la tête, smash sauté si elle est très haute, volée plus bas.
+- **Lob** (version 2.74) : après son rebond, le lob retombe dans le court ; on peut le reprendre juste après le rebond, au sommet ou en redescendant, avant le second rebond.
+- **Balle sur la ligne** (version 2.73) : comme au vrai tennis, une balle qui touche la ligne est bonne (le zoom montre sa trace sur la ligne).
+- **Plans télé** (version 2.73) : la ramasseuse de balles au changement de côté (un sur deux, ralentis activés), la poignée de main au filet dans le portrait du vainqueur (si vous perdez contre l'ordinateur, vous la donnez le visage triste), le public debout après un long échange (12 frappes ou plus). A passe.
+- **Survol du stade** (version 2.73) : avant chaque finale, la caméra survole le stade (ciel, tribunes, court, à des vitesses différentes) ; A passe.
+- Les **annonces** de l'arbitre s'affichent au centre du bandeau : faute, let, égalité, avantage, balle de set ou de match, jeu décisif, changement de côté, ace, coup gagnant… Sur un ace, la **vitesse du service** s'affiche sous « ACE ! », comme à la télévision (par exemple « 174 KM/H » ; depuis la version 2.70).
+- Les **coups gagnants** sont nommés : SMASH SAUTÉ, SMASH, AMORTIE, LOB GAGNANT, VOLÉE GAGNANTE, PASSING (adversaire au filet) ou COUP GAGNANT, avec un bref « ting » ; sans autre son ajouté et toujours sans musique pendant le match.
+- **Bruitages** : le geste de raquette fait un souffle, la frappe un « pok » avec du corps (plus grave quand elle est forte), une balle dehors ou un service faux déclenche le « bip » du juge électronique. Le public n'est plus coupé par un simple rebond.
+- **Son** : les musiques jouent à 4 voix (mélodie, basse, harmonie et percussions). L'arbitre annonce de vive voix « **Out!** » sur une balle dehors, « **Fault!** » sur un service faux et « **Let!** » sur un let ; au court Margaux, la princesse arbitre a une petite voix aiguë. Chaque frappe fait un vrai bruit d'impact échantillonné (version 2.93) : un « tac » claquant pour la frappe à plat et le smash, un « ploc » plus rond pour le lifté, un « poc » mat pour l'amortie et le lob, plus fort quand le coup est puissant. Chaque rebond a son petit « poc » (version 2.86, glace et sable revus en 2.87) : sourd sur terre et gazon, plus clair sur dur, sec et claquant sur glace, grave et étouffé sur le sable ; une amortie rebondit doucement, une frappe forte claque. Un coup gagnant se termine par un bip grave.
+- **L'ordinateur adapte sa tactique au score** : mené, il prend des risques (frappe plus fort, monte au filet) ; devant, il joue placé ; face à une balle de set ou de match, il ne fait presque plus de fautes ; sur une balle de break contre lui, il assure sa première balle de service.
+- Les joueurs sont **animés** : ils arment leur coup pendant que la balle arrive (revers à deux mains, ou à une main pour le revers coupé), frappent bras tendus, accompagnent le geste (volée sèche, amortie retenue, lob vers le ciel), plongent sur les balles trop lointaines (voir **Le plongeon** ci-dessous) et glissent sur la terre battue et la glace. Avant de servir, le serveur fait rebondir la balle ; le receveur attend genoux fléchis. Après le point, le gagnant fête à sa façon (Margaux fait une pirouette) ; le perdant tape le sol de sa raquette après une faute, ou souffle mains sur les genoux après un long échange.
+- **Le plongeon** : il se décide **au lâcher du bouton** (A ou B), sans rien faire de plus. Si vous êtes bien placé, la frappe est normale ; si la balle va passer **trop loin sur le côté** (jusqu'à environ 40 px au-delà de votre portée habituelle), votre joueur **plonge vers elle**, frappe **en vol** et renvoie un **lob de sauvetage**, plus lent et moins précis. Lâchez le bouton au bon moment : un plongeon trop tôt ou trop tard rate la balle, et une balle vraiment trop loin reste hors de portée. Le prix à payer : le joueur retombe, reste au sol, se relève **un genou à terre**, et ne peut pas bouger pendant environ une demi-seconde. L'ordinateur plonge aussi quand il n'arrivera pas à temps en courant (souvent en Expert, rarement en Facile), jamais sur une balle qui sort.
+- Sur le court : chaque joueur a une **ombre** (en double, seulement pendant un saut, car la NES n'affiche que 8 sprites par ligne). La balle soulève un peu de **poussière** en rebondissant sur la terre battue et le sable, et fait une **éclaboussure** sous la pluie. Dans tous les lieux, l'**arbitre de chaise** est assis de profil sur sa petite chaise blanche, au bord du court, contre le poteau gauche du filet, tourné vers le court. Il suit la balle du regard, tend le bras sur une faute ou une balle dehors, agite le bras sur un let et lève le bras pour saluer à la fin du match. Il reste sur sa chaise pendant les ralentis. Au **court Margaux**, l'arbitre est une **princesse** : couronne, robe rose et baguette magique à étoile, qu'elle pointe sur les fautes et lève sur les lets. Le bruit du rebond change selon la surface : sourd sur la terre, sec sur le dur, feutré sur le sable…
+- **Récapitulatif du score** :
+  - après chaque jeu, le bandeau affiche pendant 2 secondes le score set par set, une ligne par équipe : « ALEX 6 3 » / « MAYA 4 1 » (sets terminés, puis jeux du set en cours) ;
+  - à la fin de chaque set, un écran fait le point : tableau des sets, vainqueur du set, statistiques du match jusque-là, joueur au service pour la suite, sur une petite musique d'interlude. **N'importe quel bouton** (manette 1 ou 2) ferme l'écran aussitôt et reprend le match, sans fondu ; sinon, reprise automatique au bout de 10 secondes. La musique s'arrête dès la reprise ;
+  - en fin de match, l'écran des résultats commence par le tableau complet des sets.
+- **Victoire** : quand vous gagnez le match, pendant « JEU, SET ET MATCH ! », votre joueur (et votre partenaire en double) **sautille de joie**, raquette levée, sous une **pluie d'étoiles et de confettis**, sur une **fanfare de victoire** qui dure toute la fête. Trois **feux d'artifice** partent : la fusée siffle en montant, fait « pop » et éclate en étoiles. Pas de fête quand c'est le CPU qui vous bat (petite mélodie triste à la place).
+- Le **public** suit la balle du regard : toute la tribune tourne la tête vers le haut ou vers le bas du court. Après les beaux points, il fait la **ola** : une vague de bras levés descend les tribunes. Il retient son souffle (« OOOH ») quand une balle sort de peu, soupire sur une double faute, applaudit en rythme avant une balle de match (annoncée par un bandeau au milieu de l'écran), et se tait au lancer du service. En salle, des gradins bordent le court ; au club, des bancs de spectateurs ponctuent les haies. Après un ace, un coup gagnant, une frappe parfaite gagnante ou un long échange, un **ralenti** rejoue le point (A pour le passer). Depuis la version 2.67, il met le point en valeur, comme à la télévision :
+  - **gros plan de la frappe décisive** : l'image se fige, flash, puis le joueur qui a gagné le point apparaît en grand, à ses couleurs, en pleine frappe (coup droit, revers à deux mains, ou raquette au-dessus de la tête sur un service ou un smash, depuis la version 2.68) (la caméra arrive en travelling, la balle frappe le tamis et repart en traînée, le nom du coup s'inscrit lettre par lettre : ACE, COUP GAGNANT, SMASH, LOB GAGNANT…), puis en gros plan, bras levés, sous les confettis ;
+  - **arrêt sur image zoomé au rebond** : de retour au ralenti, au moment où la balle touche le sol, un viseur se resserre sur le point d'impact, puis l'image est agrandie deux fois (court, lignes, joueurs proches), avec la trace de la balle au point jugé par l'arbitre : on voit si elle est sur la ligne, avec BONNE ! ou DEHORS !. Depuis la version 2.77, la trace est l'**empreinte exacte de la balle jugée** (son rayon compris, comme la règle) : bonne de justesse, elle mord sur la ligne ; dehors de justesse, un écart se voit. En perspective, l'image agrandie montre le court vu de dessus, où lignes et trace sont exactes ;
+  - si la frappe décisive est plus ancienne que les trames rejouées (long lob, long échange conclu par une faute), le gros plan ouvre le ralenti. Au club nudiste, le ralenti reste simple.
+- À la fin du match, avant les résultats, le **vainqueur** apparaît en grand, à ses couleurs : en pied, bras levés sous les confettis, avec son nom (« MAYA GAGNE ! » ; en double « VICTOIRE ! »), puis en gros plan (en double, son partenaire). A ou START passe.
+- **En fin de match** :
+  - le vainqueur célèbre et le perdant baisse la tête ;
+  - l'écran de résultats donne les statistiques : points gagnés, aces, doubles fautes, coups gagnants, fautes, pourcentage de premières balles, plus long échange, services canon, coups parfaits et, depuis la version 2.70, le service le plus rapide de chacun (SERVICE MAX KM/H ; « KM/H : RECORD ! » en or quand vous battez votre record, version 2.71) ;
+  - **A** relance une revanche, **B** revient au menu.
+
+### Les moments du match (version 2.52)
+
+- **Entrée des joueurs** : au début de chaque match, les joueurs sortent du tunnel (en bas à droite), longent le court jusqu'à leur place et saluent le public, raquette levée. Puis vient le **tirage au sort** : l'arbitre attribue pile ou face à chaque joueur (par exemple « ALEX : FACE », « MAYA : PILE »), lance la pièce et annonce le résultat (« FACE ! ALEX SERT ») : le gagnant sert le premier jeu. En marchant, un joueur qui s'éloigne vers le fond est vu de dos.
+- **Changement de côté** : dès la fin de l'échange, les chaises apparaissent près de l'arbitre ; les joueurs s'y rendent (depuis la version 2.97, un appui pendant ce trajet ne saute plus la pause) et s'assoient, de profil, tournés vers le court, serviette autour du cou, et boivent à la gourde pendant que le score s'affiche ; puis ils rejoignent l'autre côté du court en passant à côté du poteau du filet. À la fin d'un set (version 2.76), les joueurs vont aussi s'asseoir, un bandeau au milieu de l'écran annonce le set (« 1ER SET / POUR ALEX 6-4 ») ; avec un joueur humain, il reste affiché jusqu'à un appui sur **A**, **B** ou **START** (version 2.77), puis l'écran de fin de set arrive en fondu, sur une musique d'ambiance douce ; à sa fermeture, les joueurs repartent des chaises vers le court.
+- **Balle de match** : le vainqueur fête d'abord le point comme d'habitude, puis tombe à genoux, poings levés, et s'allonge sur le dos, raquette lâchée près de lui. Ensuite, tous vont au filet se serrer la main, puis se tournent vers l'arbitre pour le saluer.
+- **A** ou **START** passe chacune de ces séquences.
+
+### L'affiche du match (version 2.57)
+
+**Fiche des joueurs** (version 2.72) : en simple, sous chaque buste, les lignes manette, niveau et style alternent avec la fiche du joueur : taille, main forte, classement (ou celui de votre carrière) ; en bas, les conditions du match alternent avec votre face-à-face contre cet adversaire (victoires et défaites, gardées au palmarès, quand la manette 1 joue contre l'ordinateur).
+
+Avant chaque match, une affiche **VS** (depuis la version 2.63, les deux bustes glissent depuis les bords de l'écran, en lignes entrelacées, se rejoignent sur un éclair blanc, puis « CONTRE » s'inscrit sur un flash) : les deux joueurs en buste, bras croisés, face à face (dessinés en grand, à leurs couleurs), « CONTRE » au centre, sur un fond de la couleur de la surface (les femmes avec une ombre douce sous la poitrine, Margaux en fillette) ; sous chaque buste, le nom, la manette ou le niveau et le style ; en bas, la surface, le lieu, les conditions et le format. Au club nudiste, la présentation reste celle d'origine.
+
+### La bande-annonce (version 2.56)
+
+Au lancement d'un **Grand Martinot** ou d'un **Martinworld Tour**, une bande-annonce d'environ 7 secondes, sur un riff de rock, avec vos joueurs dessinés en grand et en détail (polo et short pour les hommes, robe de tennis pour les femmes) : la frappe en gros plan (flash à l'impact), la glissade sur terre battue dans une gerbe de poussière, en pied puis zoomée, les bras levés au ciel sous les confettis, puis zoom sur le buste, la raquette fracassée au sol, puis zoom brutal sur le visage qui crie ; la caméra passe d'un plan à l'autre en travellings éclair. Puis le nom de la compétition qui apparaît lettre par lettre, entre deux filets dorés, avant son sous-titre ; le titre reste affiché encore une seconde. **A** ou **START** la passe. Vient ensuite l'écran de la compétition.
+
+### Les cérémonies (version 2.52)
+
+- **Compétition classique gagnée** (tournoi, poules, championnat, saison, personnalisé) : remise des médailles. Les trois premiers apparaissent un à un sur le podium, les médailles de bronze, d'argent et d'or descendent sur leur ruban, l'hymne retentit sous les flashs des photographes, puis le vainqueur brandit la coupe.
+- **Grand Martinot ou Martinworld Tour gagné** : remise du trophée sur un tapis rouge, entre deux rangées de ramasseurs de balles. Le finaliste reçoit sa plaque, puis le vainqueur reçoit la coupe, l'embrasse et la soulève sous les confettis. **A** passe à la **conférence de presse** : trois questions, une par appui sur A, puis le générique de fin.
+
+## 6. Surfaces, lieux et conditions
+
+| Surface | Comportement |
+|---|---|
+| Terre battue (brique) | Rebond haut, balle ralentie : échanges longs. Les joueurs glissent à l'arrêt et quand ils font demi-tour (environ 6 px), dans un nuage de poussière : on glisse jusqu'à la balle, mais il faut anticiper ses arrêts |
+| Gazon | Rebond bas, balle qui fuse : avantage au service-volée |
+| Dur | Compromis équilibré |
+| Moquette | Rapide et assez bas |
+| Plage (fantaisie) | Sable : balle très lente, rebond très haut. Départ un peu lourd (on s'enfonce), arrêt net, gerbe de sable |
+| Glace (fantaisie) | Balle qui file au ras du sol. Les joueurs démarrent doucement et glissent sur leur lancée quand ils s'arrêtent ou font demi-tour (environ 5 px) : anticipez ! Éclats de glace et rayure au départ de la glissade |
+
+L'effet modifie aussi le rebond : le lifté rebondit plus haut, le coupé reste bas.
+
+La balle grossit quand elle monte et rapetisse près du sol ; son ombre indique toujours où elle se trouve sur le court, et rétrécit quand la balle est haute (lob, chandelle). La balle s'aplatit en rebondissant. Regardez sa **couture blanche** : elle tourne dans le sens du déplacement sur un lifté, en sens inverse sur un coupé (et vite sur une amortie), et reste immobile sur une balle à plat. Dans le camp d'en face, une balle basse près du filet se voit à travers les mailles. La balle est jaune comme une vraie balle de tennis ; sur le sable de la plage, elle est vert-jaune pour rester visible.
+
+Les joueurs courent de profil quand ils se déplacent sur le côté, et l'on entend discrètement leurs pas.
+
+Conditions :
+- **Nuit** : décor assombri.
+- **Pluie** : gouttes à l'écran, rebonds plus bas et balle qui glisse.
+- **Crépuscule** (version 2.71) : le soleil se couche pendant le match. Au fil des jeux, la lumière passe du plein jour à une lumière chaude de fin d'après-midi, puis rose-violette au coucher du soleil, plus sombre ; enfin les projecteurs s'allument (la lumière d'un match de nuit). Toute l'image change de teinte, joueurs compris, comme sous un vrai éclairage. Depuis la version 2.76, à chaque changement de lumière, au changement de côté suivant, un plan plein écran montre le soleil couchant façon jeux de course des années 80 (soleil rayé, ciel en dégradé) : SOLEIL COUCHANT, SOLEIL ROUGE, LA NUIT TOMBE ; le premier plan dépend de la surface et du lieu Martinot (tour Eiffel, Big Ben, gratte-ciel, montagnes enneigées, ou la mer et le Pain de Sucre de Rio). A, B ou START le passe.
+
+## 7. Modes
+
+- **Match** : simple ou double, contre l'ordinateur ou à deux.
+  - **En équipe** : toujours en double (la ligne JEU n'est pas proposée), contre deux joueurs CPU. PARTENAIRE choisit le personnage de votre coéquipier, et JOUE PAR décide qui le contrôle : l'ordinateur ou la manette 2.
+  - **2 joueurs adversaires** : en double, chacun a un partenaire CPU.
+- **Démo** : l'ordinateur joue seul.
+- **Carrière** (mode à part entière depuis la version 2.78 ; option CARRIERE OUI/NON dans la compétition de la version 2.72 à 2.77) : MODE CARRIERE propose les mêmes compétitions que le mode COMPETITION (sauf la compétition personnalisée), toujours en simple, à un joueur ; chacune compte pour votre carrière ; en mode COMPETITION, elles ne comptent pas. Vous débutez 100e ; chaque compétition rapporte des points selon votre rang final, le type de compétition et le niveau (400 pour un tournoi gagné en Normal ; davantage en championnat, en saison, au Grand Martinot et au Martinworld Tour, ou en Expert). Le classement monte avec les points (60e à 400, 10e vers 5 400, 1er au-delà de 58 800). Tous les 400 points, une qualité progresse à tour de rôle — service (balle plus rapide), vitesse de course, précision — jusqu'à 5 crans chacune ; elles ne jouent que dans les matchs d'une compétition en carrière. Les points gagnés et le classement s'affichent à la fin de la compétition ; le palmarès (page des records) montre le classement, le meilleur classement, les points, les compétitions, les titres et les qualités. Sans l'option, rien ne change.
+
+### Compétitions
+
+**Ton joueur (version 2.75)** : au lancement d'une compétition, l'écran « TON JOUEUR » permet, sans obligation, d'habiller le personnage choisi : NOM (A sur la ligne, puis HAUT/BAS pour chaque lettre, GAUCHE/DROITE pour passer à la suivante, A pour finir), GENRE, PEAU, CHEVEUX, TENUE (GAUCHE/DROITE). **PROFIL** (version 2.77) fait défiler, avec GAUCHE/DROITE, D'ORIGINE (le personnage tel quel), les profils rangés (« PERSO 1/3 »…, jusqu'à 8, gardés par la cartouche) et NOUVEAU ; choisir un profil remplit toute la page. Toute modification (nom, genre, peau, cheveux, tenue) est rangée aussitôt dans le profil affiché ; depuis D'ORIGINE ou NOUVEAU, elle crée un nouveau profil. **SELECT** sur la ligne PROFIL supprime le profil affiché. START valide, B revient aux réglages. Le joueur 2 à la manette 2 a sa page (partenaire en double, rival en simple, version 2.77). **Depuis la version 2.77, cet écran vient en premier** : après START dans les réglages, on conçoit son joueur (puis le joueur 2), puis viennent les pages illustrées (choix du tournoi, court) ; depuis la version 2.77h, il n'y a plus de page de choix du joueur en compétition : le joueur est celui de TON JOUEUR, et l'affiche VS, avant chaque match, le montre face à son adversaire. B sur la première page illustrée revient à TON JOUEUR. Le profil est gardé par la cartouche et revient à la compétition suivante. Sur la ligne **NOM** (version 2.77), GAUCHE/DROITE fait défiler les joueurs existants puis tes profils rangés ; A permet d'écrire le nom. En match, contour, raquette, short et cheveux des joueurs sont noirs (limite de la console : 3 couleurs par sprite) ; la couleur de cheveux choisie se voit dans les images HD, sur l'affiche et les portraits.
+
+
+| Compétition | Déroulement |
+|---|---|
+| Tournoi | 8 joueurs, élimination directe : quart, demi, finale |
+| Poules | 2 poules de 4 (3 journées). Les 2 premiers de chaque poule vont en demi-finales croisées, puis en finale |
+| Championnat | 6 joueurs, toutes rondes (5 journées). Classement aux victoires, départage par confrontation directe |
+| Saison | 4 tournois de 8 joueurs sur terre, gazon, dur puis moquette. Points : 45 (quart), 90 (demi), 150 (finale), 250 (victoire). Classement général à la fin |
+| Personnalisé | 4 ou 8 joueurs ; adversaires de niveau fixe ou progressif ; même surface ou surface différente à chaque tour |
+| **Le Grand Martinot** | 4 tournois de 16 joueurs (8 équipes en double), comme les tournois du Grand Chelem, toujours **au stade, de jour**, dans l'ordre : **Open d'Augustralie** (dur), **Debogarros** (terre battue), **Martinbledon** (gazon), **US Opaul** (dur). Huitièmes, quarts, demis, finale ; une défaite ne termine que le tournoi en cours. **Format imposé**, comme les vrais tournois du Grand Chelem : matchs en 3 sets, **finales en 5 sets** (la ligne FORMAT n'apparaît pas au menu). Points : 180 (huitième), 360 (quart), 720 (demi), 1 200 (finale), 2 000 (vainqueur). Classement général à la fin. Au premier match de chaque tournoi, juste avant le début du match (après sa présentation), l'image du tournoi s'affiche avec sa fanfare : l'Opéra de Sydney, la tour Eiffel, Big Ben ou la statue de la Liberté (raquette au poing). Gagner les 4 tournois, c'est le **Grand Chelem** : il est annoncé sur le podium, et le générique de fin suit |
+| **Le Martinworld Tour** (MARTINWORLD dans le menu) | Un autre Grand Chelem, sur **toutes les surfaces** du jeu : 7 tournois de 8 joueurs (8 équipes en double), toujours **au stade, de jour**, dans l'ordre : **Open d'Augustralie** (dur), **Margaux-les-Neiges**, **Debogarros** (terre battue), **Martinbledon** (gazon), **Rio de Bruneiro** (plage), **US Opaul** (dur), **Deborcy Masters** (moquette). Quarts, demis, finale : 3 matchs par tournoi ; une défaite ne termine que le tournoi en cours. Matchs en 3 sets, **finales en 5 sets** (format imposé). Points : 360 (quart), 720 (demi), 1 200 (finale), 2 000 (vainqueur). Au premier match de chaque tournoi, juste avant le début du match, l'image du tournoi et sa fanfare : les 4 images du Grand Martinot, plus les Alpes sous la neige, la baie de Rio avec le Pain de Sucre, et le palais de Bercy la nuit. Gagner les 7 tournois, c'est le **Grand Chelem** |
+
+Dans le menu, quand le curseur est sur la ligne COMPETITION, le **fonctionnement de la compétition choisie** est expliqué en quatre lignes, en bas de l'écran.
+
+Toutes les compétitions se jouent **en simple ou en double** (ligne JEU) :
+- en double, vous choisissez votre partenaire (sur la page des joueurs), puis qui le joue (ligne JOUEUR 2) : l'ordinateur ou la **manette 2**. À deux joueurs humains, vous formez une seule équipe contre les équipes CPU ;
+- **en simple, jusqu'à 4 joueurs humains (version 2.76 à deux, 2.77 jusqu'à 4)** : la ligne JOUEURS (1 à 4) inscrit vos amis. Chacun conçoit son joueur sur sa page TON JOUEUR (personnage, profil). Ils sont répartis dans le tableau (l'autre moitié, puis les autres quarts ; en poules, deux par poule). Chacun joue ses matchs **à tour de rôle**, le moins avancé d'abord : l'écran d'étape indique, sous le titre, « A TOI, JOUEUR 3 (MANETTE 1) » ; les joueurs 1 et 3 jouent avec la manette 1, les joueurs 2 et 4 avec la manette 2 (on se passe la manette). Quand deux joueurs humains se rencontrent, le match se joue à deux manettes et compte pour les deux. Un joueur éliminé laisse les autres continuer ; à la fin, le mieux classé monte sur le podium. Le code de reprise ne garde que le joueur 1 ;
+- les autres équipes sont tirées au sort parmi les 16 personnages d'origine, qui sont tous différents (Margaux, MAX, LOLA, PAPI et TITOU sont réservés aux joueurs).
+
+Au début de chaque match, les joueurs entrent et se présentent devant l'arbitre, de part et d'autre du filet, pour le **tirage au sort** (version 2.76). Comme au vrai tennis, le gagnant choisit sur un bandeau, avec sa manette : **A** servir, ou **B** le côté. Celui qui choisit le côté désigne **A** EN HAUT ou **B** EN BAS : le perdant, si le gagnant a choisi de servir ; le gagnant lui-même sinon, et le perdant choisit alors **A** servir ou **B** recevoir. Chacun choisit avec sa manette ; l'ordinateur choisit seul (il sert, ou garde son côté). Quand chacun est à sa place, un récapitulatif (qui sert, de quel côté, qui reçoit) attend **A** pour lancer le premier service. A ou START passe la cérémonie (le gagnant sert).
+
+Quand vous gagnez une compétition, vous montez sur le **podium**, au centre de l'écran et sur le court de la compétition. Vous êtes sur la plus haute marche, le finaliste (ou le 2e du classement) à gauche, le 3e à droite, tous **en grand**. La coupe géante est brandie au-dessus de votre tête sous une pluie de confettis, sur la fanfare de victoire, pendant que **5 feux d'artifice** éclatent. Les noms sont écrits sous les marches. En double, vous montez à deux sur la plus haute marche ; pour les autres équipes, seul le capitaine monte, et le nom de l'équipe est écrit dessous. Ensuite, place au calme : l'écran reste affiché jusqu'à A. Puis (version 2.76) une image en haute définition : **le champion brandit la coupe** au-dessus de sa tête, sous les flashs des photographes et les confettis.
+
+L'écran d'étape montre, sur une première page, le prochain adversaire (niveau, surface, lieu) et le **code de reprise** ; **DROITE** affiche le tableau ou le classement (en saison, au Grand Martinot et au Martinworld Tour, une troisième page montre l'arborescence du tournoi en cours, version 2.77i ; l'écran s'ouvre dessus au premier tour de chaque tournoi), **GAUCHE** revient (version 2.76). À l'ouverture du tournoi (version 2.77), il s'ouvre directement sur le tableau ; **GAUCHE** montre le premier match. Dans un tournoi à élimination, le **tableau** relie les joueurs par des traits dorés jusqu'au vainqueur de chaque tour déjà joué ; votre joueur est en or. Les matchs entre joueurs CPU sont simulés selon leur niveau.
+
+### Entraînement
+
+| Exercice | Contenu |
+|---|---|
+| Frappes / cibles | 20 balles ; 1 point par balle dans le court, 2 dans la zone de l'étoile |
+| Déplacements | Balles alternées dans les deux coins |
+| Régularité | Série sans faute la plus longue (jusqu'à 50) |
+| Précision | Seule la zone désignée (fond ou court, gauche ou droite) rapporte des points |
+| Volée | Vous êtes au filet ; balles tendues à volleyer |
+| Service | 20 services ; bonus si le service tombe à l'extérieur ou au T |
+| Joueur fixe | Échanges contre un adversaire immobile qui renvoie les balles au centre |
+| Personnalisé | Côté (coup droit, revers, alterné, aléatoire), vitesse, effet (lifté, coupé, lob) et nombre de balles (10, 20, 30) |
+| Tutoriel | Leçon guidée : frapper, amortie, lob, viser, servir |
+
+Votre meilleur score de chaque exercice est conservé dans le palmarès.
+
+À l'entraînement, chaque coup donne un **retour sur le timing**, pour apprendre le service canon et la frappe parfaite :
+- au service frappé avec A : « SERVICE CANON », ou « TROP TÔT DE 3 IMAGES », « TROP TARD DE 1 IMAGE »… ;
+- sur les coups lifté, à plat et coupé : « COUP PARFAIT ! », « TROP TÔT DE 2 IMAGES » (bouton relâché trop tôt), « RELÂCHEZ LE BOUTON AVANT » (bouton gardé jusqu'à l'impact), ou « BALLE TROP PRÈS / LOIN DU CORPS » (placement).
+
+## 7 bis. Générique de fin
+
+Quand vous gagnez une **saison**, et seulement elle, l'écran du podium est suivi, sur A, d'un **générique de fin**. Il défile de bas en haut comme au cinéma, sur un hymne solennel joué au kazoo. On y trouve :
+- le champion de la saison, c'est-à-dire vous (votre équipe en double) ;
+- l'équipe de production : Bruno Martinot, Augustin Martinot (« CHIEF EXECUTIVE SON »), Margaux en invitée d'honneur ;
+- des postes très sérieux : le stagiaire (« toujours désolé pour le N »), le responsable de la physique de la balle, le service traiteur (le frigo familial) ;
+- les mentions légales ;
+- « THE END »… puis l'annonce d'une suite très improbable.
+
+**A ou START maintenu** accélère le défilement. À la fin, un applaudissement timide, puis **A** ramène à l'écran titre.
+
+## 8. Codes de reprise
+
+Dans une compétition, l'écran d'étape affiche un **code de 13 signes** (lettres et chiffres). Il contient la compétition, l'étape, vos résultats, votre personnage (et, en double, votre partenaire et qui le joue), les réglages et le nombre de trophées.
+
+Pour reprendre plus tard :
+1. À l'écran titre, choisissez **CODE DE REPRISE** (ou appuyez sur **SELECT**).
+2. HAUT/BAS change le signe, GAUCHE/DROITE change de position.
+3. **START** valide.
+
+Une somme de contrôle de 12 bits détecte les erreurs de recopie.
+
+## 8 ter. Reprendre un match interrompu
+
+Depuis la version 2.72, sur une cartouche à pile, un match hors compétition est sauvegardé à la fin de chaque point. Si la console est éteinte en plein match, l'écran titre propose au rallumage **B : REPRENDRE LE MATCH** : l'affiche du match revient, puis A le reprend au même score, avec ses statistiques, au service (« REPRISE DU MATCH »). La sauvegarde est effacée quand le match se termine, quand on l'abandonne, ou quand un autre match commence. Les matchs de compétition ont déjà leur code de reprise.
+
+## 9. Palmarès
+
+Le palmarès comporte 3 pages (GAUCHE/DROITE) :
+- **Statistiques** : matchs joués, gagnés et perdus en simple et en double ; points, aces, doubles fautes, coups gagnants, fautes, pourcentage de premières balles ; titres et compétitions disputées ; records (plus long échange, aces en un match, et depuis la version 2.71 le service le plus rapide, avec le nom du joueur : « RECORD SERVICE 212 KM/H ALEX ») ; services canon et coups parfaits, en nombre et en pourcentage.
+- **Résultats** : meilleur résultat par type de compétition et historique des 8 dernières ; une médaille d'or, d'argent ou de bronze marque chaque podium.
+- **Records d'entraînement** : meilleur score par exercice ; depuis la version 2.72, la carrière (classement, meilleur classement, points, compétitions, titres, qualités).
+
+Seuls les matchs où la manette 1 joue sont comptés ; en double, ce sont les statistiques de son équipe (donc aussi celles de la manette 2 si elle joue le partenaire). Pour tout effacer, appuyez deux fois sur **SELECT**.
+
+Il garde aussi, depuis la version 2.72, vos face-à-face contre chaque adversaire (affichés sur la fiche avant le match). Le palmarès est conservé tant que la console reste allumée. Sur une cartouche équipée d'une pile, il est conservé même éteinte.
+
+## 9 ter. Le court Margaux
+
+Un court rose bonbon, dédié à Margaux, disponible dès le départ (ligne LIEU : COURT MARGAUX). ![Court Margaux](img/court_margaux.png)
+- Le court est toujours rose ; la ligne SURFACE choisit seulement le comportement de la balle (rebond de la terre, du gazon…).
+- Pas de tribunes : des cœurs, des fleurs et des étoiles sur fond rose pâle, qui scintillent après les beaux points.
+- Un panneau « COURT MARGAUX » au-dessus du terrain et un mot d'accueil sur l'écran de présentation.
+
+## 9 bis. Bonus : le club nudiste
+
+Gagnez une compétition (tournoi, poules, championnat, saison ou personnalisé, en simple ou en double) pour débloquer un nouveau lieu : le **club nudiste « Les Bronzés »**.
+- Les joueurs y jouent au naturel. Les silhouettes sont couleur peau, sans aucun détail ; une serviette en écharpe aux couleurs de l'équipe permet de distinguer les camps.
+- Pas de gradins : quelques spectateurs, eux aussi au naturel et sans aucun détail, se tiennent debout dans l'herbe, en pied, avec cheveux, chapeau de soleil ou serviette. Ils lèvent les bras pour applaudir.
+- L'arbitre adapte ses annonces au lieu : « FAUTE — PAS DE POCHE ! », « ÉGALITÉ — NU À NU », « COUP GAGNANT — BRONZAGE TOTAL », « CHANGEMENT DE CÔTÉ — ET DE CRÈME ! »… En pause, il rappelle la crème solaire.
+
+Le déblocage est gardé dans le palmarès (définitivement si la cartouche a une pile). Un code de reprise contenant au moins un trophée débloque aussi le club sur une autre console.
+
+## 10. Conseils
+
+- Placez-vous **à côté** de la trajectoire, pas dessus : la balle doit passer à portée de raquette.
+- Armez tôt sur les balles lentes ; sur les balles rapides, une frappe courte suffit.
+- Viser les lignes avec beaucoup de puissance augmente le risque de faute.
+- Contre un volleyeur (Nina, Lina) : le **lob**, bien long. L'ordinateur Expert recule parfois sur le lob pour le smasher ou le rattraper après le rebond ; Facile et Normal restent au filet. Contre un défenseur au fond (Omar, Maya) : l'**amortie**.
+- L'ordinateur s'adapte : s'il voit que vous visez toujours le même côté, il s'y place à l'avance. Si vous montez souvent au filet, il lobe davantage. Variez votre jeu.
+
+**Version 2.98** : en salle, la vue en perspective reprend le décor de la vue à plat (gradins au bord, mur gris, panneaux verts) ; le filet en perspective ne garde plus de maille abîmée après avoir tremblé ; les noms s'affichent sur 5 lettres (TITOU, MARGA ; en double « AL/MA » en entier) ; au tout premier service du match, après le tirage au sort, pas de bandeau du score (0-0) ; le bandeau « BALLE DE MATCH » s'efface seul après 1 seconde (ou à un appui).
+
+**Version 2.99** : relecture de tous les textes affichés avec des noms de 5 lettres : en pause, JOUER remplace CONTINUER (une case libre entre le menu et les noms) ; le tirage au sort annonce le nom entier (« TITOU : PILE », « TITOU GAGNE ») ; en SAISON, la surface du tournoi s'affiche (« TOURNOI 1/4 : TERRE BATTUE ») ; palmarès : colonnes décalées après GRAND MARTINOT, le record de service donne son auteur sur la ligne suivante (« PAR TITOU »).
+
+**Version 3.00** : l'ordinateur varie davantage son service : en première balle, à plat ou coupé (selon son style : les joueurs puissants servent à plat, les défensifs coupent plus souvent), sur l'extérieur, le corps ou le T, parfois long ou court ; en seconde balle, coupé (parfois à plat au niveau Expert), au centre ou dans un coin, parfois court. Le joueur choisit la profondeur avec HAUT (long) ou BAS (court) à l'impact.
+
+**Version 3.01** : trois profondeurs de service bien distinctes : milieu du carré sans direction, sur la ligne avec HAUT, près du filet avec BAS (en 3.00, sans direction et HAUT tombaient presque au même endroit). L'ordinateur sert long une fois sur deux en première balle (une sur quatre en Facile) ; ses secondes balles tombent au milieu ou court.
+
+**Version 3.02** : à l'entraînement, les exercices sans adversaire (cibles, déplacements, régularité, précision, volée, service, personnalisé, tutoriel) ne montrent plus d'adversaire : la page TON JOUEUR n'affiche que votre joueur, et l'aperçu du court n'a plus de joueur en face. Pour l'exercice contre le joueur fixe, une page TON ADVERSAIRE permet de le choisir.
+
+**Version 3.02 (coups)** : coupé armé plus long et plus vif ; volée armée plus vive (jusqu'à 54, 56 pour la volée à plat) et, avec une direction, courte et en angle ; l'ordinateur varie davantage : parfois au centre, amortie de volée contre un joueur au fond, volée croisée ou à plat, smash coupé ou amorti, smash en angle, à plat sur balle courte ; le mode d'emploi explique enfin ce que font GAUCHE/DROITE (croisé ou le long de la ligne selon votre place) et le coup sans direction (vers le centre).
+
+**Version 3.03** : plus de frappe « dans le vide » : quand la balle passe un peu loin (au-delà d'une raquette), le joueur fait automatiquement un petit pas vers elle avant de frapper ; la zone de frappe passe de 24 à 22 px de chaque côté. Les plongeons partent un peu plus tôt (dès que la balle passera à plus de 22 px), sans autre changement.
+
+**Version 3.04** : en salle, la vue en perspective montre une tribune pleine de public jusqu'à la rambarde, comme au stade (plus petits vers le fond), traversée de bandeaux lumineux verts sur cadre gris ; à plat, la salle garde ses gradins, son mur gris et ses panneaux.
+
+**Version 3.05** : option MARQUE (page OPTIONS) : la marque d'une balle tombée près d'une ligne, à la fin du point, reste au sol jusqu'au service suivant.
+
+**Version 3.06** : la marque au sol est plus petite et disparaît en même temps que le bandeau du score.
+
+**Version 3.07** : un lancer de service non frappé ne fait plus revenir le bandeau du score déjà fermé ; la marque au sol apparaît aussi pour les coups gagnants tombés jusqu'à 10 px d'une ligne (4 avant).
+
+**Version 3.08** : en perspective au parc, la végétation en bas à gauche ne s'abîme plus pendant l'ovation du public ; le terrain du mode d'emploi a sa ligne médiane correcte ; la marque au sol suit exactement le jugement de l'arbitre (balle dehors : un écart se voit avec la ligne ; balle bonne qui touche la ligne : la marque mord dessus) ; quand le bandeau du score monte, le joueur du bas reste entier jusqu'à ce que le bandeau le recouvre ; la goutte de sueur disparaît pendant le changement de côté.
+
+**Version 3.09** : pendant l'ovation, les drapeaux des supporters sont dans le public et ne débordent plus sur le bord gauche de l'écran.
