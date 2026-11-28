@@ -857,3 +857,5 @@ Les résultats détaillés sont dans le [rapport](RAPPORT.md).
 **Version 3.07** : `band_dis` (highlight.c) n'est plus remis à zéro en `MS_TOSS` (seulement pendant l'échange, le ralenti et la fin du match). `mk_set_f` : balle bonne à 10 px ou moins de la ligne la plus proche.
 
 **Version 3.08** : `ola_row` (extras.c) ne lève les tuiles 5-8 / 13-16 que si `persp_free` (bits 2 / 3) ne les a pas rendues à d'autres dessins. `mini_court` (manual.c) : croisement seulement à la rangée 10. `mk_set_f` (play2.c) recale `mk_x`/`mk_y` (marque de x - 2 à x + 1, y - 1 à y) : dehors, écart d'au moins 1 px (+2 en perspective) ; bonne dont le disque touche une ligne, marque sur la ligne (±1 px en perspective). `band_draw` (highlight.c) : seuil de masquage des sprites = bord du bandeau - 4 pendant la montée (232 à l'écriture, 192 une fois monté), au lieu de 192 fixe. `match_fx` : goutte de sueur seulement hors cérémonie (`!cer`).
+
+**Version 3.09** : `flag_x` (train.c) : 10, 18, 10 à gauche, 238, 230, 238 à droite (la colonne x < 8 du fond est masquée, les sprites non).

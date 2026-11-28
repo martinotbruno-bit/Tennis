@@ -247,7 +247,7 @@ extern const unsigned char flag_tile;
 /* (2.79a) selon le lieu, toujours dans le public : stade et salle (public
    partout), club et parc (bancs : rangées 6-7, 12-13, 20-21, 26-27),
    château (balcons : rangées 12-13 et 20-21) */
-static const u8 flag_x[3][6] = { { 6, 14, 6, 242, 234, 242 }, { 6, 14, 6, 242, 234, 242 }, { 6, 14, 6, 242, 234, 242 } };
+static const u8 flag_x[3][6] = { { 10, 18, 10, 238, 230, 238 }, { 10, 18, 10, 238, 230, 238 }, { 10, 18, 10, 238, 230, 238 } };   /* (3.09 : plus à x 6, qui débordait sur la colonne de gauche que le fond laisse noire) */
 static const u8 flag_y[3][6] = { { 52, 96, 168, 64, 116, 176 }, { 52, 98, 164, 54, 100, 164 }, { 98, 100, 164, 98, 164, 166 } };
 /* chronomètre du match : temps réel (trames de l'écran), hors pause,
    par set ; remis à zéro à l'entrée des joueurs (cer.c) */

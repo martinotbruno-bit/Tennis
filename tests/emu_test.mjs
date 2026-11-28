@@ -3715,6 +3715,23 @@ console.log('Version 3.08 : parc, mode d\'emploi, marque, bandeau, goutte');
   check(on > 0 && nc >= 150 && bad === 0, `goutte de sueur pendant les échanges (${on} trames), jamais pendant le changement de côté (${bad} sur ${nc} trames)`);
 }
 }
+if (sec('Version 3.09 : drapeaux des supporters')) {
+console.log('Version 3.09 : drapeaux des supporters');
+{
+  // drapeaux pendant l'ovation : dans le public, plus sur la colonne de
+  // gauche que le fond laisse noire (x < 8), ni au bord droit
+  const res = [];
+  for (const [env, view] of [[0, 0], [0, 1], [6, 1]]) {
+    const e = boot(); startWith(e, { FMT: 1, REPLAY: 0, ENV: env, VIEW: view }); allCpu(e);
+    runUntil(e, () => e.peek('ms') === 3, 60 * 60);
+    e.poke('crowd_big', e.peek('crowd_big') | 1);
+    const ft = e.peek('flag_tile'); let n = 0, bad = 0;
+    for (let f = 0; f < 120; f++) { e.run(1); for (let i = 0; i < 64; i++) if (e.peek('oam_buf', i * 4 + 1) === ft && e.peek('oam_buf', i * 4) < 0xEF) { n++; const x = e.peek('oam_buf', i * 4 + 3); if (x < 8 || x > 240) bad++; } }
+    res.push(`${env}/${view}:${n}/${bad}`);
+  }
+  check(res.every(r => { const [n, b] = r.split(':')[1].split('/').map(Number); return n > 0 && b === 0; }), `drapeaux des supporters dans le public, hors des bords (lieu/vue : affichés/au bord) ${res.join(' ')}`);
+}
+}
 if (sec('Compensation 50 Hz (PAL)')) {
 console.log('Compensation 50 Hz (PAL)');
 {

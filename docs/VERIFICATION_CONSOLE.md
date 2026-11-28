@@ -227,6 +227,7 @@ Pour chaque ligne, lancez un match et regardez l'écran pendant une dizaine de s
 | 10.89 | Marque au sol (version 3.06) | Petite marque (un trait) ; elle disparaît au même instant que le bandeau du score (appui sur A) | ☐ |
 | 10.90 | Lancer non frappé (version 3.07) | Fermer le bandeau du score, lancer la balle sans frapper : la balle retombe, le bandeau ne revient pas ; un coup gagnant tombé un peu à l'intérieur d'une ligne laisse sa marque | ☐ |
 | 10.91 | Corrections de la version 3.08 | Parc en perspective : après un très long échange (ovation), le coin bas gauche reste vert ; mode d'emploi : la ligne médiane s'arrête à la ligne de service du bas ; option MARQUE : une balle dehors laisse une marque séparée de la ligne, une balle bonne sur la ligne une marque qui la recouvre ; bandeau qui monte : le joueur du bas reste entier jusqu'à ce que le bandeau l'atteigne ; changement de côté après un long échange : plus de goutte de sueur | ☐ |
+| 10.92 | Drapeaux (version 3.09) | Après un très long échange (ovation) : les drapeaux s'agitent sur le public, aucun ne dépasse sur la bande noire du bord gauche | ☐ |
 
 ## 11. Ce qu'il faut renvoyer
 
